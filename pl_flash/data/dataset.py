@@ -34,4 +34,3 @@ class PredefinedMappingDataset(Dataset):
 
     def __len__(self) -> int:
         return self.length
-
