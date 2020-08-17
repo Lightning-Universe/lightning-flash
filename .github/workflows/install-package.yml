@@ -54,7 +54,6 @@ jobs:
         run: |
           pip install virtualenv
           virtualenv vEnv ; source vEnv/bin/activate
-          # pip install -r requirements.txt
           pip install dist/*
           cd .. & python -c "import pytorch_lightning as pl ; print(pl.__version__)"
           cd .. & python -c "import pl_flash ; print(pl_flash.__version__)"
