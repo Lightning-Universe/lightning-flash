@@ -3,14 +3,15 @@
 import os
 
 from ._version import get_versions
-__version__ = get_versions()['version']
+
+__version__ = get_versions()["version"]
 del get_versions
 
-__author__ = 'PyTorchLightning et al.'
-__author_email__ = 'name@pytorchlightning.ai'
-__license__ = 'TBD'
-__copyright__ = 'Copyright (c) 2020-2020, %s.' % __author__
-__homepage__ = 'https://github.com/PyTorchLightning/pytorch-lightning-flash'
+__author__ = "PyTorchLightning et al."
+__author_email__ = "name@pytorchlightning.ai"
+__license__ = "TBD"
+__copyright__ = "Copyright (c) 2020-2020, %s." % __author__
+__homepage__ = "https://github.com/PyTorchLightning/pytorch-lightning-flash"
 __docs__ = "PyTorch Lightning flash is a simple training framework for fast research iterations"
 __long_doc__ = """
 What is it?
@@ -33,10 +34,11 @@ except NameError:
 if __LIGHTNING_FLASH_SETUP__:
     import sys  # pragma: no-cover
 
-    sys.stdout.write(f'Partial import of `{__name__}` during the build process.\n')  # pragma: no-cover
+    sys.stdout.write(f"Partial import of `{__name__}` during the build process.\n")  # pragma: no-cover
     # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
 else:
 
-    __all__ = [
-       
-    ]
+    from pl_flash.core import Flash
+    from pytorch_lightning import metrics
+
+    __all__ = ["Flash", "metrics"]
