@@ -37,3 +37,5 @@ prune notebook*
 prune temp*
 prune test*
 prune benchmark*
+include versioneer.py
+include pl_flash/_version.py
