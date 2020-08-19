@@ -11,6 +11,8 @@ Indices and tables
 
    api/pl_flash.core
    api/pl_flash.data
+   api/pl_flash.text
+   api/pl_flash.vision
 
 .. toctree::
    :maxdepth: 1
