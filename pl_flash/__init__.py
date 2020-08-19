@@ -2,7 +2,7 @@
 
 import os
 
-from ._version import get_versions
+from pl_flash._version import get_versions
 
 __version__ = get_versions()["version"]
 del get_versions
@@ -39,6 +39,6 @@ if __LIGHTNING_FLASH_SETUP__:
 else:
 
     from pl_flash.core import Flash
-    from pytorch_lightning import metrics
+    from pytorch_lightning import metrics, Trainer
 
-    __all__ = ["Flash", "metrics"]
+    __all__ = ["Flash", "metrics", "Trainer"]
