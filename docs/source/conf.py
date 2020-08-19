@@ -29,7 +29,7 @@ PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 PATH_ROOT = os.path.join(PATH_HERE, "..", "..")
 sys.path.insert(0, os.path.abspath(PATH_ROOT))
 
-builtins.__LIGHTNING_BOLT_SETUP__ = True
+builtins.__LIGHTNING_FLASH_SETUP__ = True
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get("SPHINX_MOCK_REQUIREMENTS", True))
 
@@ -75,9 +75,9 @@ needs_sphinx = "2.0"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "nbsphinx",
     "sphinx.ext.autodoc",
-    # 'sphinxcontrib.mockautodoc',  # raises error: directive 'automodule' is already registered ...
-    # 'sphinxcontrib.fulltoc',  # breaks pytorch-theme with unexpected kw argument 'titles_only'
+    "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
@@ -85,13 +85,11 @@ extensions = [
     "sphinx.ext.linkcode",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
-    "sphinx.ext.imgmath",
+    "sphinx.ext.viewcode",
     "recommonmark",
     "sphinx.ext.autosectionlabel",
-    # 'm2r',
-    "nbsphinx",
     "sphinx_autodoc_typehints",
-    "sphinx_paramlinks",
+    "sphinx.ext.mathjax",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -114,7 +112,7 @@ source_suffix = {
     ".rst": "restructuredtext",
     ".txt": "markdown",
     ".md": "markdown",
-    ".ipynb": "nbsphinx",
+    # ".ipynb": "nbsphinx",
 }
 
 # The master toctree document.
@@ -135,10 +133,12 @@ exclude_patterns = [
     "api/modules.rst",
     "api/pl_flash.submit.rst",
     "PULL_REQUEST_TEMPLATE.md",
+    "_build",
+    "**.ipynb_checkpoints",
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = "sphinx"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -254,6 +254,8 @@ intersphinx_mapping = {
     "torch": ("https://pytorch.org/docs/stable/", None),
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
     "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
+    "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
+    "pl_bolts": ("https://pytorch-lightning-bolts.readthedocs.io/en/latest/", None),
 }
 
 # -- Options for todo extension ----------------------------------------------
@@ -313,6 +315,47 @@ for path_ipynb in glob.glob(os.path.join(PATH_ROOT, "notebooks", "*.ipynb")):
     path_ipynb2 = os.path.join(path_nbs, os.path.basename(path_ipynb))
     shutil.copy(path_ipynb, path_ipynb2)
 
+github_path = r"https://github.com/%s/%s/blob/master/notebooks/{{ env.doc2path(env.docname, base=None) }}" % (
+    github_user,
+    github_repo,
+)
+colab_path = github_path.replace("https://github.com", "https://colab.research.google.com/github")
+nbsphinx_execute = "never"
+nbsphinx_kernel_name = "python3"
+nbsphinx_prolog = r"""
+
+    .. raw:: html
+
+            <div class="pytorch-call-to-action-links">
+                <a href="%s">
+                <div id="google-colab-link">
+                <img class="call-to-action-img" src="_static/images/pytorch-colab.svg"/>
+                <div class="call-to-action-desktop-view">Run in Google Colab</div>
+                <div class="call-to-action-mobile-view">Colab</div>
+                </div>
+                </a>
+                <a href="%s" download>
+                <div id="download-notebook-link">
+                <img class="call-to-action-notebook-img" src="_static/images/pytorch-download.svg"/>
+                <div class="call-to-action-desktop-view">Download Notebook</div>
+                <div class="call-to-action-mobile-view">Notebook</div>
+                </div>
+                </a>
+                <a href="%s">
+                <div id="github-view-link">
+                <img class="call-to-action-img" src="_static/images/pytorch-github.svg"/>
+                <div class="call-to-action-desktop-view">View on GitHub</div>
+                <div class="call-to-action-mobile-view">GitHub</div>
+                </div>
+                </a>
+            </div>
+
+    """ % (
+    colab_path,
+    r"{{ env.doc2path(env.docname, base=None) }}",
+    github_path,
+)
+
 
 # Ignoring Third-party packages
 # https://stackoverflow.com/questions/15889621/sphinx-how-to-exclude-imports-in-automodule
@@ -330,7 +373,7 @@ def package_list_from_file(file):
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:
     # mock also base packages when we are on RTD since we don't install them there
-    MOCK_PACKAGES += package_list_from_file(os.path.join(PATH_ROOT, "requirements.txt"))
+    MOCK_PACKAGES += package_list_from_file(os.path.join(PATH_ROOT, "requirements/install.txt"))
 
 MOCK_MANUAL_PACKAGES = [
     "pytorch_lightning",

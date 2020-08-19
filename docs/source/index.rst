@@ -4,6 +4,21 @@ PyTorch-Lightning-Flash documentation
 Indices and tables
 ==================
 
+.. toctree::
+   :maxdepth: 10
+   :name: api
+   :caption: API Documentation
+
+   api/pl_flash.core
+   api/pl_flash.data
+
+.. toctree::
+   :maxdepth: 1
+   :name: examples
+   :caption: Examples
+
+   Dummy Example <notebooks/dummy.ipynb>
+
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
@@ -13,3 +28,4 @@ Indices and tables
    :hidden:
 
    readme
+   api/pl_flash._version
