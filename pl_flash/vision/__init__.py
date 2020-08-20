@@ -1,0 +1,1 @@
+from pl_flash.vision.classification_datamodule import ImageClassificationData
