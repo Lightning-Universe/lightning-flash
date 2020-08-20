@@ -5,11 +5,7 @@ import torch
 import torch.optim
 from torch.optim import Optimizer
 
-from pytorch_lightning import (
-    LightningModule,
-    EvalResult,
-    TrainResult,
-)
+from pytorch_lightning import LightningModule, EvalResult, TrainResult
 
 # This Shall become the base class for all tasks
 class Flash(LightningModule):
