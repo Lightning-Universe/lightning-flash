@@ -1,27 +1,20 @@
-# pytorch-lightning-tasks
-Simplified lightning and predefined steps
+<div align="center">
 
-## Demo
+![Logo](https://raw.githubusercontent.com/PyTorchLightning/pytorch-lightning/master/docs/source/_images/logos/lightning_logo.svg)
 
-```python
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from torchvision.datasets import MNIST
-import torchvision.transforms as T
+# Flash
 
-from pl_flash import Flash
-from pytorch_lightning.metrics import functional as FM
+**TODO: sentence pitch**
 
-data = DataLoader(MNIST(".", download=True, transform=T.ToTensor()), batch_size=32)
+[![codecov](https://codecov.io/gh/PyTorchLightning/pytorch-lightning-flash/branch/master/graph/badge.svg)]
+(https://codecov.io/gh/PyTorchLightning/pytorch-lightning-flash)
 
-mlp = nn.Sequential(
-    nn.Flatten(),
-    nn.Linear(28 * 28, 128),
-    nn.ReLU(),
-    nn.Linear(128, 10),
-    nn.LogSoftmax(),
-)
-model = Flash(mlp, loss=F.nll_loss, metrics=[FM.accuracy])
+## Continuous Integration
+<center>
 
-model.fit(data)
-```
+| System / PyTorch ver. | 1.4 (min. req.) | 1.5 (latest) |
+| :---: | :---: | :---: |
+| Linux py3.6 / py3.7 / py3.8 | ![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg?branch=master) | ![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg?branch=master) |
+| OSX py3.6 / py3.7 / py3.8 | ![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg?branch=master) | ![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg?branch=master) |
+| Windows py3.6 / py3.7 / py3.8 | wip | wip |
+

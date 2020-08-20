@@ -1,0 +1,4 @@
+torch>=1.6.0
+torchvision>=0.5
+pytorch_lightning==0.9.0rc16
+

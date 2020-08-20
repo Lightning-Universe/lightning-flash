@@ -7,15 +7,17 @@ from torch.optim import Optimizer
 
 from pytorch_lightning import LightningModule, EvalResult, TrainResult
 
-# This Shall become the base class for all tasks
+
 class Flash(LightningModule):
     """
-    A ``Flash`` is a basic definition of a specific task and this is ne most common baseclass providing good defaults to most tasks.
+    A ``Flash`` is a basic definition of a specific task and this is ne most common baseclass providing
+    good defaults to most tasks.
 
     Args:
         model: the model to use inside this task
-        loss_functions: the functions to update the model with. All provided losses will be summed up. The resulting total loss 
-            will also be used for checkpointing and early stopping in during evaluation.
+        loss_functions: the functions to update the model with. All provided losses will be summed up.
+            The resulting total loss will also be used for checkpointing and early stopping in during
+            evaluation.
         metrics: [description]. Defaults to None.
 
     Raises:
@@ -64,9 +66,13 @@ class Flash(LightningModule):
             if isinstance(functions, Sequence):
                 functions = {get_name(func): resolve_str(func) for func in functions}
 
-            if isinstance(functions, Mapping) and not isinstance(functions, torch.nn.ModuleDict):
+            if isinstance(functions, Mapping) and not isinstance(
+                functions, torch.nn.ModuleDict
+            ):
                 functions = {k: resolve_str(v) for k, v in functions.items()}
-                if any([isinstance(func, torch.nn.Module) for func in functions.values()]):
+                if any(
+                    [isinstance(func, torch.nn.Module) for func in functions.values()]
+                ):
                     functions = torch.nn.ModuleDict(functions)
             elif isinstance(functions, torch.nn.Module):
                 functions = torch.nn.ModuleDict({get_name(functions): functions})
@@ -101,15 +107,23 @@ class Flash(LightningModule):
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
 
     def compute_loss(
-        self, y_hat: torch.Tensor, y: torch.tensor, prefix: str = "train", sep: str = "/",
+        self,
+        y_hat: torch.Tensor,
+        y: torch.tensor,
+        prefix: str = "train",
+        sep: str = "/",
     ):
         loss_dict = self.compute_dict(self.losses, y_hat, y, prefix, sep)
         return sum(loss_dict.values()), loss_dict
 
-    def compute_metrics(self, y_hat: torch.Tensor, y: torch.tensor, prefix: str = "val", sep: str = "/"):
+    def compute_metrics(
+        self, y_hat: torch.Tensor, y: torch.tensor, prefix: str = "val", sep: str = "/"
+    ):
         return self.compute_dict(self.metrics, y_hat, y, prefix, sep)
 
-    def _step(self, batch: Union[Sequence, Mapping], batch_idx: int, prefix: str) -> Union[EvalResult, TrainResult]:
+    def _step(
+        self, batch: Union[Sequence, Mapping], batch_idx: int, prefix: str
+    ) -> Union[EvalResult, TrainResult]:
 
         x, y = self.unpack_batch(batch)
         y_hat = self(x)
@@ -123,7 +137,11 @@ class Flash(LightningModule):
         elif prefix == "test":
             result = EvalResult()
         else:
-            raise ValueError("Expected prefix to be one of {{train, val, test}} but got {}".format(prefix))
+            raise ValueError(
+                "Expected prefix to be one of {{train, val, test}} but got {}".format(
+                    prefix
+                )
+            )
 
         for k, v in loss_dict.items():
             result.log(k, v, on_epoch=True, on_step=True)
@@ -153,7 +171,11 @@ class Flash(LightningModule):
             x, y = self.unpack_batch_mapping(batch)
 
         else:
-            raise TypeError("Expected Type of sequence or mapping for batch, got {}".format(type(batch).__name__))
+            raise TypeError(
+                "Expected Type of sequence or mapping for batch, got {}".format(
+                    type(batch).__name__
+                )
+            )
 
         return x, y
 
@@ -166,5 +188,9 @@ class Flash(LightningModule):
         return (batch["x"], batch["y"])
 
     @staticmethod
-    def compute_dict(functions, y_hat: torch.Tensor, y: torch.Tensor, prefix: str = "val", sep="/") -> dict:
-        return {f"{prefix}{sep}{name}": func(y_hat, y) for name, func in functions.items()}
+    def compute_dict(
+        functions, y_hat: torch.Tensor, y: torch.Tensor, prefix: str = "val", sep="/"
+    ) -> dict:
+        return {
+            f"{prefix}{sep}{name}": func(y_hat, y) for name, func in functions.items()
+        }

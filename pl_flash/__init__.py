@@ -16,9 +16,11 @@ __docs__ = "PyTorch Lightning flash is a simple training framework for fast rese
 __long_doc__ = """
 What is it?
 -----------
-flash is a simplified version of PyTorch Lightning. It automates the model training with good defaults for different tasks.
+flash is a simplified version of PyTorch Lightning. It automates the model training with good
+defaults for different tasks.
 
-Use `pl_flash` when training a model with good defaults and fast iteration, since you don't have to take care of all the update stuff - we do it for you!
+Use `pl_flash` when training a model with good defaults and fast iteration, since you don't
+have to take care of all the update stuff - we do it for you!
 
 """
 
@@ -34,7 +36,9 @@ except NameError:
 if __LIGHTNING_FLASH_SETUP__:
     import sys  # pragma: no-cover
 
-    sys.stdout.write(f"Partial import of `{__name__}` during the build process.\n")  # pragma: no-cover
+    sys.stdout.write(
+        f"Partial import of `{__name__}` during the build process.\n"
+    )  # pragma: no-cover
     # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
 else:
 

@@ -6,4 +6,3 @@ pytest-flake8
 flake8
 check-manifest
 twine==1.13.0
-torchvision==0.7.0
