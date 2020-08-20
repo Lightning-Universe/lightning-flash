@@ -29,7 +29,12 @@ class _FilepathDataset(Dataset):
 
 class ImageClassificationData(LightningDataModule):
     def __init__(
-        self, train_ds: Dataset, valid_ds: Dataset = None, test_ds: Dataset = None, batch_size=64, num_workers=4,
+        self,
+        train_ds: Dataset,
+        valid_ds: Dataset = None,
+        test_ds: Dataset = None,
+        batch_size=64,
+        num_workers=4,
     ):
         super().__init__()
         self.train_ds = train_ds
@@ -47,14 +52,28 @@ class ImageClassificationData(LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self.train_ds, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, pin_memory=True,
+            self.train_ds,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=True,
         )
 
     def _val_dataloader(self):
-        return DataLoader(self.valid_ds, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True,)
+        return DataLoader(
+            self.valid_ds,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
 
     def _test_dataloader(self):
-        return DataLoader(self.test_ds, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True,)
+        return DataLoader(
+            self.test_ds,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
 
     @classmethod
     def from_filepaths(
@@ -70,14 +89,10 @@ class ImageClassificationData(LightningDataModule):
         loader=pil_loader,
         batch_size=64,
     ):
-        """
-        TODO docstring
-        TODO arguments, should they be kwargs? should transforms be passed in
-            the dataloader functions and the datasets be lambdas to create
-            datasets?
-
-        """
-        train_ds = _FilepathDataset(train_filepaths, train_labels, train_transform, loader)
+        # TODO: DOCSTRING
+        train_ds = _FilepathDataset(
+            train_filepaths, train_labels, train_transform, loader
+        )
         valid_ds = (
             _FilepathDataset(valid_filepaths, valid_labels, valid_transform, loader)
             if valid_filepaths is not None
