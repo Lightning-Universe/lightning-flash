@@ -6,7 +6,7 @@
 
 **TODO: sentence pitch**
 
-[![codecov](https://codecov.io/gh/PyTorchLightning/pytorch-lightning-flash/branch/master/graph/badge.svg)](https://codecov.io/gh/PyTorchLightning/pytorch-lightning-flash)
+
 
 ## Continuous Integration
 <center>
