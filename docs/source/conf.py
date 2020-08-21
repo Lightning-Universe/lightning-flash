@@ -60,11 +60,7 @@ with open(os.path.join(PATH_ROOT, "README.md"), "r") as fp:
 # TODO: temp fix removing SVG badges and GIF, because PDF cannot show them
 readme = re.sub(r"(\[!\[.*\))", "", readme)
 readme = re.sub(r"(!\[.*.gif\))", "", readme)
-for dir_name in (
-    os.path.basename(p)
-    for p in glob.glob(os.path.join(PATH_ROOT, "*"))
-    if os.path.isdir(p)
-):
+for dir_name in (os.path.basename(p) for p in glob.glob(os.path.join(PATH_ROOT, "*")) if os.path.isdir(p)):
     readme = readme.replace("](%s/" % dir_name, "](%s/%s/" % (PATH_ROOT, dir_name))
 with open("readme.md", "w") as fp:
     fp.write(readme)
@@ -319,13 +315,11 @@ for path_ipynb in glob.glob(os.path.join(PATH_ROOT, "notebooks", "*.ipynb")):
     path_ipynb2 = os.path.join(path_nbs, os.path.basename(path_ipynb))
     shutil.copy(path_ipynb, path_ipynb2)
 
-github_path = (
-    r"https://github.com/%s/%s/blob/master/notebooks/{{ env.doc2path(env.docname, base=None) }}"
-    % (github_user, github_repo,)
+github_path = r"https://github.com/%s/%s/blob/master/notebooks/{{ env.doc2path(env.docname, base=None) }}" % (
+    github_user,
+    github_repo,
 )
-colab_path = github_path.replace(
-    "https://github.com", "https://colab.research.google.com/github"
-)
+colab_path = github_path.replace("https://github.com", "https://colab.research.google.com/github")
 nbsphinx_execute = "never"
 nbsphinx_kernel_name = "python3"
 nbsphinx_prolog = r"""
@@ -379,9 +373,7 @@ def package_list_from_file(file):
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:
     # mock also base packages when we are on RTD since we don't install them there
-    MOCK_PACKAGES += package_list_from_file(
-        os.path.join(PATH_ROOT, "requirements", "install.txt")
-    )
+    MOCK_PACKAGES += package_list_from_file(os.path.join(PATH_ROOT, "requirements", "install.txt"))
 
 MOCK_MANUAL_PACKAGES = [
     "pytorch_lightning",
