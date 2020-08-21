@@ -1,0 +1,3 @@
+treon
+pandas
+opencv-python
