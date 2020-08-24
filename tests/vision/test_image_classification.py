@@ -114,3 +114,20 @@ def test_from_bolts():
 
 def test_normalize():
     assert isinstance(ImageClassifier(10).default_input_norm, torchvision.transforms.Normalize)
+
+
+@pytest.mark.parametrize("model", ImageClassifier.available_models)
+def test_models_in_channels(model: str):
+
+    classification_model = ImageClassifier(num_classes=10, in_channels=1)
+
+    assert classification_model.example_input_array.size(1) == 1
+
+    with torch.no_grad():
+        output = classification_model(classification_model.example_input_array)
+
+    if isinstance(output, torchvision.models.inception.InceptionOutputs):
+        for _output in output:
+            assert _output.size(-1) == 10
+    else:
+        assert output.size(-1) == 10

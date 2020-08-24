@@ -14,6 +14,7 @@ from copy import deepcopy
 import warnings
 import torch
 from torch.optim import Optimizer
+import torchvision
 from pl_flash.core import Flash
 
 
@@ -28,7 +29,8 @@ class ImageClassifier(Flash):
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger. 
             Defaults to None.
         learning_rate: The learning rate for the optimizer to use for training. Defaults to 1e-3.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name. Defaults to Adam.
+        optimizer: The optimizer to use for training. Can either be the actual class or the class name. 
+            Defaults to Adam.
         pretrained: Whether the model from torchvision or bolts should be loaded with it's pretrained weights. 
             Has no effect for custom models. Defaults to True.
         linear_hiddens: If given, it specifies the number of linear layers as well as their hidden dimensions for the 
@@ -95,6 +97,7 @@ class ImageClassifier(Flash):
         learning_rate: float = 1e-3,
         optimizer: Union[Type[Optimizer], str] = "Adam",
         pretrained: bool = True,
+        in_channels: int = 3,
         linear_hiddens: Optional[Sequence[int]] = None,
         **kwargs,
     ) -> None:
@@ -107,6 +110,7 @@ class ImageClassifier(Flash):
         )
 
         self.num_classes = num_classes
+        self.in_channels = in_channels
 
         if isinstance(self.model, str) and self.model in self._available_models_torchvision:
             self.model, self.example_input_array = self._model_from_torchvision(model, pretrained=pretrained, **kwargs)
@@ -137,6 +141,9 @@ class ImageClassifier(Flash):
 
             except ImportError:
                 pass
+
+            if self.in_channels != self.example_input_array.size(1):
+                self._repace_input_layer()
 
             if linear_hiddens is None:
                 new_head = self._replace_last_layer_only()
@@ -294,6 +301,163 @@ class ImageClassifier(Flash):
         setattr(self, "classification_head", old_head)
 
         return num_features
+
+    def _repace_input_layer(self) -> None:
+        """Determines the classification head
+
+        Raises:
+            RuntimeError: the model is a custom one.
+            NotImplementedError: the model is from bolts
+            ValueError: Unknown model origin
+
+        Returns:
+            str: the name of the classification head attribute
+        """
+        if self._origin == "custom":
+            raise RuntimeError("Cannot infer classification head from custom model autmatically")
+
+        elif self._origin == "torchvision":
+            return self._replace_input_layer_torchvision(self.in_channels)
+
+        elif self._origin == "bolts":
+            raise NotImplementedError("Replacing input layer for bolts models is not yet implemented")
+        else:
+            raise ValueError("Unknown model origin (neither torchvision nor bolts nor custom)")
+
+    def _replace_input_layer_torchvision(self, in_channels: int) -> int:
+        try:
+            import torchvision.models
+
+        except ImportError:
+            raise ImportError(
+                "Torchvision is not installed please install it following the guides on"
+                + "https://pytorch.org/get-started/locally/"
+            )
+
+        def replace_conv(old_conv: torch.nn.Conv2d):
+            return type(old_conv)(
+                in_channels=in_channels,
+                out_channels=old_conv.out_channels,
+                kernel_size=old_conv.kernel_size,
+                stride=old_conv.stride,
+                padding=old_conv.padding,
+                dilation=old_conv.dilation,
+                bias=old_conv.bias is not None,
+            )
+
+        if isinstance(
+            self.model,
+            (
+                torchvision.models.AlexNet,
+                torchvision.models.VGG,
+                torchvision.models.SqueezeNet,
+                torchvision.models.DenseNet,
+            ),
+        ):
+            feature_extractor = self.model.features
+
+            if isinstance(feature_extractor, torch.nn.Sequential):
+                new_feat_extractor = torch.nn.Sequential(replace_conv(feature_extractor[0]), *feature_extractor[1:])
+            else:
+                raise TypeError(
+                    f"Expected feature extractor to be of type torch.nn.Sequential, "
+                    + f"got {type(feature_extractor).__name__}"
+                )
+
+            self.model.features = new_feat_extractor
+
+        elif isinstance(self.model, (torchvision.models.ResNet,)):
+            if isinstance(self.model.conv1, torch.nn.Conv2d):
+                self.model.conv1 = replace_conv(self.model.conv1)
+            else:
+                raise TypeError(
+                    f"Expected conv1 to be of type torch.nn.Conv2d, " + f"got {type(self.model.conv1).__name__}"
+                )
+
+        elif isinstance(self.model, torchvision.models.Inception3):
+            if isinstance(self.model.conv1.conv, torch.nn.Conv2d):
+                self.model.conv1.conv = replace_conv(self.model.conv1.conv)
+            else:
+                raise TypeError(
+                    f"Expected conv1.conv to be of type torch.nn.Conv2d, "
+                    + f"got {type(self.model.conv1.conv).__name__}"
+                )
+
+        elif isinstance(self.model, torchvision.models.GoogLeNet):
+            if isinstance(self.model.conv1.conv, torch.nn.Conv2d):
+                self.model.conv1.conv = replace_conv(self.model.conv1.conv)
+            else:
+                raise TypeError(
+                    f"Expected conv1.conv to be of type torch.nn.Conv2d, "
+                    + f"got {type(self.model.conv1.conv).__name__}"
+                )
+
+        elif isinstance(self.model, torchvision.models.ShuffleNetV2):
+
+            if isinstance(self.model.conv1, torch.nn.Sequential):
+
+                if isinstance(self.model.conv1[0], torch.nn.Conv2d):
+                    self.model.conv1 = torch.nn.Sequential(replace_conv(self.model.conv1[0]), *self.model.conv1[1:])
+                else:
+                    raise TypeError(
+                        f"Expected conv1[0] to be of type torch.nn.Conv2d, "
+                        + f"got {type(self.model.conv1[0]).__name__}"
+                    )
+            else:
+                raise TypeError(
+                    f"Expected conv1 to be of type torch.nn.Sequential, " + f"got {type(self.model.conv1).__name__}"
+                )
+
+        elif isinstance(self.model, torchvision.models.MobileNetV2):
+
+            if isinstance(self.model.features, torch.nn.Sequential):
+
+                if isinstance(self.model.features[0], torch.nn.Sequential):
+
+                    if isinstance(self.model.features[0][0], torch.nn.Conv2d):
+                        self.model.features = torch.nn.Sequential(
+                            torch.nn.Sequential(replace_conv(self.model.features[0][0]), *self.model.features[0][1:],),
+                            self.model.features[1:],
+                        )
+                    else:
+                        raise TypeError(
+                            f"Expected features[0][0] to be of type torch.nn.Conv2d, "
+                            + f"got {type(self.model.features[0][0]).__name__}"
+                        )
+                else:
+                    raise TypeError(
+                        f"Expected features[0] to be of type torch.nn.Sequential, "
+                        + f"got {type(self.model.features[0]).__name__}"
+                    )
+
+            else:
+                raise TypeError(
+                    f"Expected features to be of type torch.nn.Sequential, "
+                    + f"got {type(self.model.features).__name__}"
+                )
+        elif isinstance(self.model, torchvision.models.MNASNet):
+
+            if isinstance(self.model.layers, torch.nn.Sequential):
+
+                if isinstance(self.model.layers[0], torch.nn.Conv2d):
+                    self.model.layers = torch.nn.Sequential(replace_conv(self.model.layers[0]), *self.model.layers[1:])
+
+                else:
+                    raise TypeError(
+                        f"Expected layers[0] to be of type torch.nn.Conv2d, "
+                        + f"got {type(self.model.layers[0]).__name__}"
+                    )
+
+            else:
+                raise TypeError(
+                    f"Expected layers to be of type torch.nn.Sequential, " + f"got {type(self.model.layers).__name__}"
+                )
+        else:
+            raise ValueError(f"Not supported model type found: {type(self.model).__name__}")
+
+        self.example_input_array = torch.rand(
+            self.example_input_array.size(0), in_channels, *self.example_input_array.shape[2:],
+        )
 
     def _replace_last_layer_only(self) -> Union[torch.nn.Linear, torch.nn.Sequential]:
         """replaces the last layer to support a classification task with a number of class 
