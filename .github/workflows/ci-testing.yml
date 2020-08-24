@@ -68,7 +68,7 @@ jobs:
       run: |
         # python -m pip install --upgrade --user pip
         pip install --requirement requirements/install.txt --pre --upgrade --quiet --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install --requirement requirements/test.txt --quiet
+        pip install --requirement requirements/test.txt --quiet --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         # pip install tox coverage
         python --version
         pip --version
