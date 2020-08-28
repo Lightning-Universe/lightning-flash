@@ -18,6 +18,6 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Black Formatting
-      uses: RojerGS/python-black-check@master
+      uses: teddykoker/python-black-check@master
       with:
         line-length: '120'

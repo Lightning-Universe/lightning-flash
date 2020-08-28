@@ -26,19 +26,19 @@ class ImageClassifier(Flash):
         model: either a string of :attr`available_models`  or a custom nn.Module. Defaults to 'resnet18'.
         loss: the functions to update the model with. All provided losses will be summed up.
             The resulting total loss will also be used for checkpointing and early stopping in during evaluation.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger. 
+        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Defaults to None.
         learning_rate: The learning rate for the optimizer to use for training. Defaults to 1e-3.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name. 
+        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
             Defaults to Adam.
-        pretrained: Whether the model from torchvision or bolts should be loaded with it's pretrained weights. 
+        pretrained: Whether the model from torchvision or bolts should be loaded with it's pretrained weights.
             Has no effect for custom models. Defaults to True.
-        linear_hiddens: If given, it specifies the number of linear layers as well as their hidden dimensions for the 
+        linear_hiddens: If given, it specifies the number of linear layers as well as their hidden dimensions for the
             new classification head. Has no effect for custom models. Defaults to None.
 
     Raises:
-        RuntimeError: If a custom model was provided and we need to extract the classifcation head 
-            (which is not supported for custom models). Or the last layer to repalce with the correct number of 
+        RuntimeError: If a custom model was provided and we need to extract the classifcation head
+            (which is not supported for custom models). Or the last layer to repalce with the correct number of
             classes cannot be inferred.
         ValueError: If a not supported model was requested from torchvision or bolts
         NotImplementedError: When trying to request a model from bolts (which is not yet implemented)
@@ -106,7 +106,11 @@ class ImageClassifier(Flash):
             assert model in self.available_models
 
         super().__init__(
-            model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer,
+            model=model,
+            loss=loss,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
         )
 
         self.num_classes = num_classes
@@ -190,7 +194,9 @@ class ImageClassifier(Flash):
         raise NotImplementedError
 
     @staticmethod
-    def _determine_classification_head_attr_name_torchvision(model: torch.nn.Module,) -> str:
+    def _determine_classification_head_attr_name_torchvision(
+        model: torch.nn.Module,
+    ) -> str:
         """Determines the classification head for torchsivion models
 
         Args:
@@ -278,7 +284,7 @@ class ImageClassifier(Flash):
         """Infers the number of input features for the new part of the classification head
 
         Args:
-            part_before_new_layer: the part of the classification head 
+            part_before_new_layer: the part of the classification head
                 that is retained and combined with the new part of the head.
 
         Returns:
@@ -287,7 +293,9 @@ class ImageClassifier(Flash):
         old_head = deepcopy(self.classification_head)
 
         setattr(
-            self, "classification_head", torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()),
+            self,
+            "classification_head",
+            torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()),
         )
 
         with torch.no_grad():
@@ -416,7 +424,10 @@ class ImageClassifier(Flash):
 
                     if isinstance(self.model.features[0][0], torch.nn.Conv2d):
                         self.model.features = torch.nn.Sequential(
-                            torch.nn.Sequential(replace_conv(self.model.features[0][0]), *self.model.features[0][1:],),
+                            torch.nn.Sequential(
+                                replace_conv(self.model.features[0][0]),
+                                *self.model.features[0][1:],
+                            ),
                             self.model.features[1:],
                         )
                     else:
@@ -456,15 +467,17 @@ class ImageClassifier(Flash):
             raise ValueError(f"Not supported model type found: {type(self.model).__name__}")
 
         self.example_input_array = torch.rand(
-            self.example_input_array.size(0), in_channels, *self.example_input_array.shape[2:],
+            self.example_input_array.size(0),
+            in_channels,
+            *self.example_input_array.shape[2:],
         )
 
     def _replace_last_layer_only(self) -> Union[torch.nn.Linear, torch.nn.Sequential]:
-        """replaces the last layer to support a classification task with a number of class 
+        """replaces the last layer to support a classification task with a number of class
         different then to 1000 imagenet classes.
 
         Raises:
-            RuntimeError: the last layer to replace cannot be inferred 
+            RuntimeError: the last layer to replace cannot be inferred
                 (currently only Sequential and linear layers are supported as heads)
 
         Returns:
@@ -505,8 +518,8 @@ class ImageClassifier(Flash):
         """Computes the head for a given list of hidden dimensions
 
         Args:
-            hiddens: a list of hidden dimensions. 
-                The length of the list determines the number of layers. 
+            hiddens: a list of hidden dimensions.
+                The length of the list determines the number of layers.
                 If the last element is not equal to the number of classes, an additional layer is added.
 
         Returns:
@@ -552,7 +565,9 @@ class ImageClassifier(Flash):
 
         return torch.nn.Sequential(before, *new_clf, after)
 
-    def _infer_options_before_and_after_new_head(self,) -> Tuple[torch.nn.Sequential, torch.nn.Sequential]:
+    def _infer_options_before_and_after_new_head(
+        self,
+    ) -> Tuple[torch.nn.Sequential, torch.nn.Sequential]:
         """Infers which parts of the old classification head to keep and wrap the new head with.
 
         Returns:
