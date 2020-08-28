@@ -2,9 +2,12 @@
 
 ![Logo](https://raw.githubusercontent.com/PyTorchLightning/pytorch-lightning/master/docs/source/_images/logos/lightning_logo.svg)
 
-![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg?branch=master)
-
 # Flash
+
+[![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg)](https://github.com/PyTorchLightning/pytorch-lightning-flash/actions?query=workflow%3A%22CI+testing%22)
+![Check Code formatting](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/Check%20Code%20formatting/badge.svg)
+[![Documentation Status](https://readthedocs.org/projects/pt-lightning-flash/badge/?version=latest)](https://pt-lightning-flash.readthedocs.io/en/latest/?badge=latest)
+
 
 **TODO: sentence pitch**
 
