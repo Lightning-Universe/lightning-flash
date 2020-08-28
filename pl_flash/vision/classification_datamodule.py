@@ -32,7 +32,12 @@ class ImageClassificationData(LightningDataModule):
     """Data module for image classification tasks."""
 
     def __init__(
-        self, train_ds: Dataset, valid_ds: Dataset = None, test_ds: Dataset = None, batch_size=64, num_workers=4,
+        self,
+        train_ds: Dataset,
+        valid_ds: Dataset = None,
+        test_ds: Dataset = None,
+        batch_size=64,
+        num_workers=4,
     ):
         """
         Initialize ImageClassificationData
@@ -61,14 +66,28 @@ class ImageClassificationData(LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self._train_ds, batch_size=self._batch_size, shuffle=True, num_workers=self._num_workers, pin_memory=True,
+            self._train_ds,
+            batch_size=self._batch_size,
+            shuffle=True,
+            num_workers=self._num_workers,
+            pin_memory=True,
         )
 
     def _val_dataloader(self):
-        return DataLoader(self._valid_ds, batch_size=self._batch_size, num_workers=self._num_workers, pin_memory=True,)
+        return DataLoader(
+            self._valid_ds,
+            batch_size=self._batch_size,
+            num_workers=self._num_workers,
+            pin_memory=True,
+        )
 
     def _test_dataloader(self):
-        return DataLoader(self._test_ds, batch_size=self._batch_size, num_workers=self._num_workers, pin_memory=True,)
+        return DataLoader(
+            self._test_ds,
+            batch_size=self._batch_size,
+            num_workers=self._num_workers,
+            pin_memory=True,
+        )
 
     @classmethod
     def from_filepaths(

@@ -14,16 +14,16 @@ class Flash(LightningModule):
 
     Args:
         model: the model to use inside this task
-        loss: the functions to update the model with. All provided losses will be summed up. 
+        loss: the functions to update the model with. All provided losses will be summed up.
             The resulting total loss will also be used for checkpointing and early stopping in during evaluation.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger. 
+        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Defaults to None.
         learning_rate: The learning rate for the optimizer to use for training. Defaults to 1e-3.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name. 
+        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
             Defaults to "Adam".
 
     Raises:
-        ValueError: If only names were specified for metrics or functions and they could not be imported automatically 
+        ValueError: If only names were specified for metrics or functions and they could not be imported automatically
             or if metrics or losses are of invalid type
 
     """
@@ -39,7 +39,7 @@ class Flash(LightningModule):
         def format_functions(
             functions: Union[Callable, torch.nn.Module, Mapping, Sequence]
         ) -> Union[torch.nn.ModuleDict, dict]:
-            """resolves the actual class or function from given names and makes sure the result is either a dict or a 
+            """resolves the actual class or function from given names and makes sure the result is either a dict or a
                 Moduledict
 
             Args:
@@ -67,11 +67,11 @@ class Flash(LightningModule):
                 """Gets the actual function or Module from torch that matches the given name
 
                 Args:
-                    item: the name corresponding to the actual function/module or an actual function/module (will be 
+                    item: the name corresponding to the actual function/module or an actual function/module (will be
                         returned as is)
 
                 Raises:
-                    ValueError: the provided item is a string but does not correspond to a class/function 
+                    ValueError: the provided item is a string but does not correspond to a class/function
                         in ``torch.nn`` or ``torch.nn.functional``
 
                 Returns:
@@ -145,14 +145,18 @@ class Flash(LightningModule):
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
 
     def compute_loss(
-        self, y_hat: torch.Tensor, y: torch.tensor, prefix: str = "train", sep: str = "/",
+        self,
+        y_hat: torch.Tensor,
+        y: torch.tensor,
+        prefix: str = "train",
+        sep: str = "/",
     ) -> Tuple[torch.Tensor, dict]:
         """Computes the loss functions and the resulting overall loss
 
         Args:
             y_hat: the networks predictions
             y: the groundtruth
-            prefix: the prefix indicating whether the current prediction is from training, evaluation or testing. 
+            prefix: the prefix indicating whether the current prediction is from training, evaluation or testing.
                 Defaults to "train".
             sep: the separator between the actual prefix and the loss name. Defaults to "/".
 
@@ -169,7 +173,7 @@ class Flash(LightningModule):
         Args:
             y_hat: the networks predictions
             y: the groundtruth
-            prefix: the prefix indicating whether the current prediction is from training, evaluation 
+            prefix: the prefix indicating whether the current prediction is from training, evaluation
                 or testing. Defaults to "val".
             sep: the separator between the actual prefix and the loss name. Defaults to "/".
 
@@ -226,7 +230,7 @@ class Flash(LightningModule):
         return result
 
     def training_step(self, *args, **kwargs) -> Union[int, TrainResult]:
-        """The training step. 
+        """The training step.
         All inputs are directly forwarded to :attr`_step` with the train prefix
 
         Returns:
@@ -235,7 +239,7 @@ class Flash(LightningModule):
         return self._step(*args, **kwargs, prefix="train")
 
     def validation_step(self, *args, **kwargs) -> EvalResult:
-        """The validation step. 
+        """The validation step.
         All inputs are directly forwarded to :attr`_step` with the val prefix
 
         Returns:
@@ -244,7 +248,7 @@ class Flash(LightningModule):
         return self._step(*args, **kwargs, prefix="val")
 
     def test_step(self, *args, **kwargs) -> EvalResult:
-        """The test step. 
+        """The test step.
         All inputs are directly forwarded to :attr`_step` with the test prefix
 
         Returns:
@@ -261,7 +265,7 @@ class Flash(LightningModule):
             batch: the batch to extract the tuple from
 
         Raises:
-            TypeError: if the provided type is not supported 
+            TypeError: if the provided type is not supported
                 (currently only tensors, Sequences and mappings are supported)
 
         Returns:
@@ -305,8 +309,14 @@ class Flash(LightningModule):
         return (batch["x"], batch["y"])
 
     @staticmethod
-    def compute_dict(functions: Mapping, y_hat: torch.Tensor, y: torch.Tensor, prefix: str = "val", sep="/",) -> dict:
-        """computes values from a dict of functions based on prediction and groundtruth (typically losses and/or 
+    def compute_dict(
+        functions: Mapping,
+        y_hat: torch.Tensor,
+        y: torch.Tensor,
+        prefix: str = "val",
+        sep="/",
+    ) -> dict:
+        """computes values from a dict of functions based on prediction and groundtruth (typically losses and/or
             metrics)
 
         Args:
@@ -317,8 +327,8 @@ class Flash(LightningModule):
             sep: the separator between prefix and names. Necessary for loggers. Defaults to "/".
 
         Returns:
-            dict: the dictionary of calculated values. For each item in :attr:`functions` 
-                it will have one entry with key prefix + sep + name and the value to be the 
+            dict: the dictionary of calculated values. For each item in :attr:`functions`
+                it will have one entry with key prefix + sep + name and the value to be the
                 output from the corresponding function
         """
         return {f"{prefix}{sep}{name}": func(y_hat, y) for name, func in functions.items()}

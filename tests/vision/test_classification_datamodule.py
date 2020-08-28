@@ -10,7 +10,10 @@ def _dummy_image_loader(filepath):
 
 def test_from_filepaths(tmpdir):
     img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=["a", "b"], train_labels=[0, 1], loader=_dummy_image_loader, batch_size=1,
+        train_filepaths=["a", "b"],
+        train_labels=[0, 1],
+        loader=_dummy_image_loader,
+        batch_size=1,
     )
 
     imgs, labels = next(iter(img_data.train_dataloader()))
@@ -61,7 +64,11 @@ def test_from_folders(tmpdir):
     assert img_data.test_dataloader() is None
 
     img_data = ImageClassificationData.from_folders(
-        train_dir, valid_folder=train_dir, test_folder=train_dir, loader=_dummy_image_loader, batch_size=1,
+        train_dir,
+        valid_folder=train_dir,
+        test_folder=train_dir,
+        loader=_dummy_image_loader,
+        batch_size=1,
     )
 
     imgs, labels = next(iter(img_data.val_dataloader()))

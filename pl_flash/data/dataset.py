@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 
 class PredefinedSequenceDataset(Dataset):
-    """A Dataset of predefined sequences. 
+    """A Dataset of predefined sequences.
 
     Args:
         data: should be a sequence of sequence of samples
@@ -39,7 +39,7 @@ class PredefinedSequenceDataset(Dataset):
 
 
 class PredefinedMappingDataset(Dataset):
-    """A Dataset of predefined mappings. 
+    """A Dataset of predefined mappings.
 
     Args:
         data: should be a mapping of sequence of samples
