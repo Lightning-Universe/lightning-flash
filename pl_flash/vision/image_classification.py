@@ -1,15 +1,5 @@
 import math
-from typing import (
-    Any,
-    Callable,
-    Mapping,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Callable, Mapping, Mapping, Optional, Sequence, Tuple, Type, Union
 from copy import deepcopy
 import warnings
 import torch
@@ -33,9 +23,9 @@ class ImageClassifier(Flash):
             Defaults to Adam.
         pretrained: Whether the model from torchvision or bolts should be loaded with it's pretrained weights.
             Has no effect for custom models. Defaults to True.
-        in_channels: If your images have a different number of channels, this replaces the first layer by a 
+        in_channels: If your images have a different number of channels, this replaces the first layer by a
             non-pretrained one with the corresponding number of channels.
-        linear_hiddens: If given, it specifies the number of linear layers as well as their hidden dimensions for the 
+        linear_hiddens: If given, it specifies the number of linear layers as well as their hidden dimensions for the
             new classification head. Has no effect for custom models. Defaults to None.
 
     Raises:
@@ -107,9 +97,7 @@ class ImageClassifier(Flash):
         if isinstance(model, str):
             assert model in self.available_models
 
-        super().__init__(
-            model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer,
-        )
+        super().__init__(model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer)
 
         self.num_classes = num_classes
         self.in_channels = in_channels
@@ -192,7 +180,9 @@ class ImageClassifier(Flash):
         raise NotImplementedError
 
     @staticmethod
-    def _determine_classification_head_attr_name_torchvision(model: torch.nn.Module,) -> str:
+    def _determine_classification_head_attr_name_torchvision(
+        model: torch.nn.Module,
+    ) -> str:
         """Determines the classification head for torchsivion models
 
         Args:
@@ -288,9 +278,7 @@ class ImageClassifier(Flash):
         """
         old_head = deepcopy(self.classification_head)
 
-        setattr(
-            self, "classification_head", torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()),
-        )
+        setattr(self, "classification_head", torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()))
 
         with torch.no_grad():
             output = self.model(self.example_input_array)
@@ -418,7 +406,7 @@ class ImageClassifier(Flash):
 
                     if isinstance(self.model.features[0][0], torch.nn.Conv2d):
                         self.model.features = torch.nn.Sequential(
-                            torch.nn.Sequential(replace_conv(self.model.features[0][0]), *self.model.features[0][1:],),
+                            torch.nn.Sequential(replace_conv(self.model.features[0][0]), *self.model.features[0][1:]),
                             self.model.features[1:],
                         )
                     else:
@@ -458,7 +446,7 @@ class ImageClassifier(Flash):
             raise ValueError(f"Not supported model type found: {type(self.model).__name__}")
 
         self.example_input_array = torch.rand(
-            self.example_input_array.size(0), in_channels, *self.example_input_array.shape[2:],
+            self.example_input_array.size(0), in_channels, *self.example_input_array.shape[2:]
         )
 
     def _replace_last_layer_only(self) -> Union[torch.nn.Linear, torch.nn.Sequential]:
@@ -541,9 +529,7 @@ class ImageClassifier(Flash):
         if add_pool:
             _sqrt_feats = int(math.sqrt(curr_in_feats))
             new_clf = new_clf + [torch.nn.AdaptiveAvgPool2d(_sqrt_feats, int(curr_in_feats / _sqrt_feats))]
-        new_clf = new_clf + [
-            torch.nn.Flatten(),
-        ]
+        new_clf = new_clf + [torch.nn.Flatten()]
 
         for curr_out_feats in hiddens:
             new_clf += [torch.nn.Linear(curr_in_feats, curr_out_feats), torch.nn.ReLU()]
@@ -554,7 +540,9 @@ class ImageClassifier(Flash):
 
         return torch.nn.Sequential(before, *new_clf, after)
 
-    def _infer_options_before_and_after_new_head(self,) -> Tuple[torch.nn.Sequential, torch.nn.Sequential]:
+    def _infer_options_before_and_after_new_head(
+        self,
+    ) -> Tuple[torch.nn.Sequential, torch.nn.Sequential]:
         """Infers which parts of the old classification head to keep and wrap the new head with.
 
         Returns:

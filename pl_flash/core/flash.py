@@ -145,7 +145,7 @@ class Flash(LightningModule):
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
 
     def compute_loss(
-        self, y_hat: torch.Tensor, y: torch.tensor, prefix: str = "train", sep: str = "/",
+        self, y_hat: torch.Tensor, y: torch.tensor, prefix: str = "train", sep: str = "/"
     ) -> Tuple[torch.Tensor, dict]:
         """Computes the loss functions and the resulting overall loss
 
@@ -214,14 +214,14 @@ class Flash(LightningModule):
             raise ValueError("Expected prefix to be one of {{train, val, test}} but got {}".format(prefix))
 
         for k, v in loss_dict.items():
-            result.log(k, v, on_epoch=True, on_step=True, prog_bar=True)
+            result.log(k, v)
 
         if loss is not None:
-            result.log(f"{prefix}/loss", loss, on_epoch=True, on_step=True)
+            result.log(f"{prefix}/loss", loss, prog_bar=True)
 
         if y is not None:
             for k, v in self.compute_metrics(y_hat, y, prefix).items():
-                result.log(k, v, on_epoch=True, on_step=True, prog_bar=True)
+                result.log(k, v, prog_bar=True)
 
         return result
 
@@ -305,7 +305,7 @@ class Flash(LightningModule):
         return (batch["x"], batch["y"])
 
     @staticmethod
-    def compute_dict(functions: Mapping, y_hat: torch.Tensor, y: torch.Tensor, prefix: str = "val", sep="/",) -> dict:
+    def compute_dict(functions: Mapping, y_hat: torch.Tensor, y: torch.Tensor, prefix: str = "val", sep="/") -> dict:
         """computes values from a dict of functions based on prediction and groundtruth (typically losses and/or
             metrics)
 

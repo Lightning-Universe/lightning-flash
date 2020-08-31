@@ -27,7 +27,7 @@ def test_models_num_classes(model: str):
 
 
 def test_model_training(tmpdir):
-    data = DataLoader(DummyDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True,)
+    data = DataLoader(DummyDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True)
 
     model = ImageClassifier(
         num_classes=10,
