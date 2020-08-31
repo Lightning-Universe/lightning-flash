@@ -46,9 +46,7 @@ class ImageDetector(Flash):
         if loss is None:
             # TODO: maybe better way of handling no loss,
             loss = {}
-        super().__init__(
-            model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer,
-        )
+        super().__init__(model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer)
 
         self.num_classes = num_classes
         if isinstance(self.model, str) and self.model in self._available_models_torchvision:

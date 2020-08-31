@@ -194,15 +194,13 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     # 'preamble': '',
     # Latex figure (float) alignment
-    "figure_align": "htbp",
+    "figure_align": "htbp"
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, project + ".tex", project + " Documentation", author, "manual"),
-]
+latex_documents = [(master_doc, project + ".tex", project + " Documentation", author, "manual")]
 
 # -- Options for manual page output ------------------------------------------
 
@@ -224,7 +222,7 @@ texinfo_documents = [
         project,
         "The lightweight PyTorch wrapper for ML researchers. Scale your models. Write less boilerplate.",
         "Miscellaneous",
-    ),
+    )
 ]
 
 # -- Options for Epub output -------------------------------------------------
@@ -271,9 +269,7 @@ todo_include_todos = True
 # and commit them to my repo after making changes to my code.
 
 # packages for which sphinx-apidoc should generate the docs (.rst files)
-PACKAGES = [
-    pl_flash.__name__,
-]
+PACKAGES = [pl_flash.__name__]
 
 apidoc_output_folder = os.path.join(PATH_HERE, "api")
 
@@ -375,15 +371,7 @@ if SPHINX_MOCK_REQUIREMENTS:
     # mock also base packages when we are on RTD since we don't install them there
     MOCK_PACKAGES += package_list_from_file(os.path.join(PATH_ROOT, "requirements", "install.txt"))
 
-MOCK_MANUAL_PACKAGES = [
-    "pytorch_lightning",
-    "numpy",
-    "torch",
-    "torchvision",
-    "sklearn",
-    "PIL",
-    "cv2",
-]
+MOCK_MANUAL_PACKAGES = ["pytorch_lightning", "numpy", "torch", "torchvision", "sklearn", "PIL", "cv2"]
 autodoc_mock_imports = MOCK_PACKAGES + MOCK_MANUAL_PACKAGES
 # for mod_name in MOCK_REQUIRE_PACKAGES:
 #     sys.modules[mod_name] = mock.Mock()

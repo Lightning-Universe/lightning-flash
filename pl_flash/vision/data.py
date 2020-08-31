@@ -12,7 +12,7 @@ class VisionData(object):
         if path.endswith(".pt"):
             loaded = VisionData.load_torch(path, **kwargs)
 
-        elif any([path.endswith(ext) for ext in ['.npy', '.npz', '.txt']]):
+        elif any([path.endswith(ext) for ext in [".npy", ".npz", ".txt"]]):
             loaded = VisionData.load_numpy(path, **kwargs)
 
         elif path.endswith(".pkl"):

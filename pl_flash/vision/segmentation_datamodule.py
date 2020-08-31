@@ -4,8 +4,9 @@ import os
 from typing import Tuple, Union, Callable
 import torch
 
+
 class _FileSuffixDataset(torch.utils.data.Dataset):
-    def __init__(self, root_path: Union[str, pathlib.Path], loader: Callable, suffix: str = '_mask') -> None:
+    def __init__(self, root_path: Union[str, pathlib.Path], loader: Callable, suffix: str = "_mask") -> None:
         super().__init__()
 
         self.data = self.parse_dir(root_path, suffix)
@@ -42,7 +43,6 @@ class _FileSuffixDataset(torch.utils.data.Dataset):
 
         return data, mask
 
-
     @staticmethod
     def format_data(data: torch.Tensor) -> torch.Tensor:
         if data.ndim == 2:
@@ -76,9 +76,10 @@ class _FileSuffixDataset(torch.utils.data.Dataset):
     def __len__(self) -> int:
         return len(self.data)
 
+
 class _FilePathDirDataset(_FileSuffixDataset):
     def __init__(self, image_path: Union[str, pathlib.Path], mask_path, loader: Callable) -> None:
-        super().__init__((image_path, mask_path), loader, '')
+        super().__init__((image_path, mask_path), loader, "")
 
     def parse_dir(path: Tuple[Union[str, pathlib.Path], Union[str, pathlib.Path]]) -> tuple:
         image_path, mask_path = [str(_path) for _path in path]

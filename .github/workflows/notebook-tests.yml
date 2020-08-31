@@ -34,4 +34,4 @@ jobs:
         pip install --no-deps .
     - name: Run Notebooks
       run: |
-        treon --threads=1 --exclude=notebooks/kaggle_image_classification.ipynb # with more threads this requires to much RAM
+        treon --threads=1 --exclude=notebooks/kaggle_tumor.ipynb # with more threads this requires to much RAM

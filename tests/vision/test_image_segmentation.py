@@ -56,16 +56,16 @@ def test_models_num_classes(model: str):
 
 
 def test_model_training_tensor_output(tmpdir):
-    data = DataLoader(DummySegmentationDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True,)
+    data = DataLoader(DummySegmentationDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True)
 
-    model = SemanticSegmenter(num_classes=10, model=torch.nn.Sequential(torch.nn.Conv2d(3, 10, kernel_size=1),),)
+    model = SemanticSegmenter(num_classes=10, model=torch.nn.Sequential(torch.nn.Conv2d(3, 10, kernel_size=1)))
 
     Trainer(fast_dev_run=True, default_root_dir=tmpdir, max_steps=2).fit(model, data)
 
 
 @pytest.mark.parametrize("aux", [True, False])
 def test_model_training_dict_output(tmpdir, aux: bool):
-    data = DataLoader(DummySegmentationDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True,)
+    data = DataLoader(DummySegmentationDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True)
 
     model = SemanticSegmenter(10, model=DummySegmentationModule(aux=aux, num_classes=10))
 

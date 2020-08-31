@@ -17,19 +17,19 @@ class SemanticSegmenter(Flash):
         model: either a string of :attr`available_models`  or a custom nn.Module. Defaults to 'resnet18'.
         loss: the functions to update the model with. All provided losses will be summed up.
             The resulting total loss will also be used for checkpointing and early stopping in during evaluation.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger. 
+        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Defaults to None.
         learning_rate: The learning rate for the optimizer to use for training. Defaults to 1e-3.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name. 
+        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
             Defaults to Adam.
-        pretrained: Whether the model from torchvision or bolts should be loaded with it's pretrained weights. 
+        pretrained: Whether the model from torchvision or bolts should be loaded with it's pretrained weights.
             Has no effect for custom models. Defaults to True.
-        in_channels: If your images have a different number of channels, this replaces the first layer by a 
+        in_channels: If your images have a different number of channels, this replaces the first layer by a
             non-pretrained one with the corresponding number of channels.
 
     Raises:
-        RuntimeError: If a custom model was provided and we need to extract the classifcation head 
-            (which is not supported for custom models). Or the last layer to repalce with the correct number of 
+        RuntimeError: If a custom model was provided and we need to extract the classifcation head
+            (which is not supported for custom models). Or the last layer to repalce with the correct number of
             classes cannot be inferred.
         ValueError: If a not supported model was requested from torchvision or bolts
         NotImplementedError: When trying to request a model from bolts (which is not yet implemented)
@@ -37,12 +37,7 @@ class SemanticSegmenter(Flash):
 
     """
 
-    _available_models_torchvision = (
-        "fcn_resnet50",
-        "fcn_resnet101",
-        "deeplabv3_resnet50",
-        "deeplabv3_resnet101",
-    )
+    _available_models_torchvision = ("fcn_resnet50", "fcn_resnet101", "deeplabv3_resnet50", "deeplabv3_resnet101")
 
     _available_models_bolts = ()
 
@@ -64,9 +59,7 @@ class SemanticSegmenter(Flash):
         if isinstance(model, str):
             assert model in self.available_models
 
-        super().__init__(
-            model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer,
-        )
+        super().__init__(model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer)
 
         self.num_classes = num_classes
         self.in_channels = in_channels
@@ -173,9 +166,7 @@ class SemanticSegmenter(Flash):
                 + "https://pytorch.org/get-started/locally/"
             )
 
-        if not isinstance(
-            self.model, (torchvision.models.segmentation.FCN, torchvision.models.segmentation.DeepLabV3,),
-        ):
+        if not isinstance(self.model, (torchvision.models.segmentation.FCN, torchvision.models.segmentation.DeepLabV3)):
             raise TypeError(f"Expected model of types FCN or DeepLabV3. Got {type(self.model).__name__}")
 
         if not isinstance(self.model.backbone, torchvision.models._utils.IntermediateLayerGetter):
@@ -223,15 +214,15 @@ class SemanticSegmenter(Flash):
 
     @staticmethod
     def _replace_conv2d(
-        old_conv: torch.nn.Conv2d, in_channels: Optional[int] = None, out_channels: Optional[int] = None,
+        old_conv: torch.nn.Conv2d, in_channels: Optional[int] = None, out_channels: Optional[int] = None
     ) -> torch.nn.Conv2d:
         """replaces a convolution with same parameters except intput and output channels (if specified)
 
         Args:
             old_conv: the convolution to take all non-specified parameters from
-            in_channels: the number of input channels. 
+            in_channels: the number of input channels.
                 Defaults to None, which takes the parameter from :attr:`old_conv`.
-            out_channels: the number of output channels. 
+            out_channels: the number of output channels.
                 Defaults to None, which takes the parameter from :attr:`old_conv`.
 
         Returns:
@@ -260,7 +251,7 @@ class SemanticSegmenter(Flash):
         if isinstance(old_head, torchvision.models.segmentation.deeplabv3.DeepLabHead):
             # DeepLabHead -> ASPP -> ModuleList -> Sequential -> Conv
             return torchvision.models.segmentation.deeplabv3.DeepLabHead(
-                in_channels=old_head[0].convs[0][0].in_channels, num_classes=self.num_classes,
+                in_channels=old_head[0].convs[0][0].in_channels, num_classes=self.num_classes
             )
 
         elif isinstance(old_head, torchvision.models.segmentation.fcn.FCNHead):
@@ -287,9 +278,7 @@ class SemanticSegmenter(Flash):
                 + "https://pytorch.org/get-started/locally/"
             )
 
-        if not isinstance(
-            self.model, (torchvision.models.segmentation.FCN, torchvision.models.segmentation.DeepLabV3,),
-        ):
+        if not isinstance(self.model, (torchvision.models.segmentation.FCN, torchvision.models.segmentation.DeepLabV3)):
             raise TypeError(f"Expected model of types FCN or DeepLabV3. Got {type(self.model).__name__}")
 
         self.model.classifier = self._replace_head_torchvision(self.model.classifier)
