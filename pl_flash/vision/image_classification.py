@@ -33,7 +33,9 @@ class ImageClassifier(Flash):
             Defaults to Adam.
         pretrained: Whether the model from torchvision or bolts should be loaded with it's pretrained weights.
             Has no effect for custom models. Defaults to True.
-        linear_hiddens: If given, it specifies the number of linear layers as well as their hidden dimensions for the
+        in_channels: If your images have a different number of channels, this replaces the first layer by a 
+            non-pretrained one with the corresponding number of channels.
+        linear_hiddens: If given, it specifies the number of linear layers as well as their hidden dimensions for the 
             new classification head. Has no effect for custom models. Defaults to None.
 
     Raises:
@@ -106,11 +108,7 @@ class ImageClassifier(Flash):
             assert model in self.available_models
 
         super().__init__(
-            model=model,
-            loss=loss,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
+            model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer,
         )
 
         self.num_classes = num_classes
@@ -147,7 +145,7 @@ class ImageClassifier(Flash):
                 pass
 
             if self.in_channels != self.example_input_array.size(1):
-                self._repace_input_layer()
+                self._replace_input_layer()
 
             if linear_hiddens is None:
                 new_head = self._replace_last_layer_only()
@@ -194,9 +192,7 @@ class ImageClassifier(Flash):
         raise NotImplementedError
 
     @staticmethod
-    def _determine_classification_head_attr_name_torchvision(
-        model: torch.nn.Module,
-    ) -> str:
+    def _determine_classification_head_attr_name_torchvision(model: torch.nn.Module,) -> str:
         """Determines the classification head for torchsivion models
 
         Args:
@@ -293,9 +289,7 @@ class ImageClassifier(Flash):
         old_head = deepcopy(self.classification_head)
 
         setattr(
-            self,
-            "classification_head",
-            torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()),
+            self, "classification_head", torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()),
         )
 
         with torch.no_grad():
@@ -310,7 +304,7 @@ class ImageClassifier(Flash):
 
         return num_features
 
-    def _repace_input_layer(self) -> None:
+    def _replace_input_layer(self) -> None:
         """Determines the classification head
 
         Raises:
@@ -424,10 +418,7 @@ class ImageClassifier(Flash):
 
                     if isinstance(self.model.features[0][0], torch.nn.Conv2d):
                         self.model.features = torch.nn.Sequential(
-                            torch.nn.Sequential(
-                                replace_conv(self.model.features[0][0]),
-                                *self.model.features[0][1:],
-                            ),
+                            torch.nn.Sequential(replace_conv(self.model.features[0][0]), *self.model.features[0][1:],),
                             self.model.features[1:],
                         )
                     else:
@@ -467,9 +458,7 @@ class ImageClassifier(Flash):
             raise ValueError(f"Not supported model type found: {type(self.model).__name__}")
 
         self.example_input_array = torch.rand(
-            self.example_input_array.size(0),
-            in_channels,
-            *self.example_input_array.shape[2:],
+            self.example_input_array.size(0), in_channels, *self.example_input_array.shape[2:],
         )
 
     def _replace_last_layer_only(self) -> Union[torch.nn.Linear, torch.nn.Sequential]:
@@ -565,9 +554,7 @@ class ImageClassifier(Flash):
 
         return torch.nn.Sequential(before, *new_clf, after)
 
-    def _infer_options_before_and_after_new_head(
-        self,
-    ) -> Tuple[torch.nn.Sequential, torch.nn.Sequential]:
+    def _infer_options_before_and_after_new_head(self,) -> Tuple[torch.nn.Sequential, torch.nn.Sequential]:
         """Infers which parts of the old classification head to keep and wrap the new head with.
 
         Returns:

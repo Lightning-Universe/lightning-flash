@@ -30,18 +30,8 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 def instantiate_and_train(tmpdir, loss, metrics, optimizer_cls):
-    data = DataLoader(
-        DummyDataset((1, 28, 28), 10, 500),
-        batch_size=64,
-        shuffle=True,
-    )
-    mlp = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10),
-        nn.LogSoftmax(),
-    )
+    data = DataLoader(DummyDataset((1, 28, 28), 10, 500), batch_size=64, shuffle=True,)
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10), nn.LogSoftmax(),)
 
     model = Flash(mlp, loss=loss, metrics=metrics, optimizer=optimizer_cls)
 
@@ -105,13 +95,7 @@ def test_optimizers_argument_types(tmpdir, optimizer_cls):
 
 
 def test_forward():
-    mlp = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10),
-        nn.LogSoftmax(),
-    )
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10), nn.LogSoftmax(),)
     model = Flash(mlp, loss=F.nll_loss)
 
     rand_inp = torch.rand(10, 1, 28 * 28)
@@ -119,13 +103,7 @@ def test_forward():
 
 
 def test_configure_optimizer():
-    mlp = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10),
-        nn.LogSoftmax(),
-    )
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10), nn.LogSoftmax(),)
     model = Flash(mlp, loss=F.nll_loss, optimizer=Adam)
 
     opt = model.configure_optimizers()
@@ -135,17 +113,7 @@ def test_configure_optimizer():
 def test_compute_dict():
     expected_vals = {"a": torch.tensor(1), "b": 2}
     metrics = {"a": lambda y, y_hat: torch.tensor(1), "b": lambda y, y_hat: 2}
-    metric_vals = Flash.compute_dict(
-        metrics,
-        y=torch.zeros(
-            1,
-        ),
-        y_hat=torch.zeros(
-            1,
-        ),
-        prefix="",
-        sep="",
-    )
+    metric_vals = Flash.compute_dict(metrics, y=torch.zeros(1,), y_hat=torch.zeros(1,), prefix="", sep="",)
 
     assert isinstance(metric_vals, dict)
     assert len(metric_vals) == len(expected_vals)
@@ -155,29 +123,10 @@ def test_compute_dict():
 
 
 def test_compute_metrics():
-    mlp = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10),
-        nn.LogSoftmax(),
-    )
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10), nn.LogSoftmax(),)
     expected_vals = {"a": torch.tensor(1), "b": 2}
-    model = Flash(
-        mlp,
-        loss=F.nll_loss,
-        metrics={"a": lambda y, y_hat: torch.tensor(1), "b": lambda y, y_hat: 2},
-    )
-    metric_vals = model.compute_metrics(
-        y=torch.zeros(
-            1,
-        ),
-        y_hat=torch.zeros(
-            1,
-        ),
-        prefix="",
-        sep="",
-    )
+    model = Flash(mlp, loss=F.nll_loss, metrics={"a": lambda y, y_hat: torch.tensor(1), "b": lambda y, y_hat: 2},)
+    metric_vals = model.compute_metrics(y=torch.zeros(1,), y_hat=torch.zeros(1,), prefix="", sep="",)
 
     assert isinstance(metric_vals, dict)
     assert len(metric_vals) == len(expected_vals)
@@ -187,31 +136,10 @@ def test_compute_metrics():
 
 
 def test_compute_loss():
-    mlp = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10),
-        nn.LogSoftmax(),
-    )
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10), nn.LogSoftmax(),)
     expected_vals = {"a": torch.tensor(1), "b": torch.tensor(2)}
-    model = Flash(
-        mlp,
-        loss={
-            "a": lambda y, y_hat: torch.tensor(1),
-            "b": lambda y, y_hat: torch.tensor(2),
-        },
-    )
-    total_loss, loss_vals = model.compute_loss(
-        y=torch.zeros(
-            1,
-        ),
-        y_hat=torch.zeros(
-            1,
-        ),
-        prefix="",
-        sep="",
-    )
+    model = Flash(mlp, loss={"a": lambda y, y_hat: torch.tensor(1), "b": lambda y, y_hat: torch.tensor(2),},)
+    total_loss, loss_vals = model.compute_loss(y=torch.zeros(1,), y_hat=torch.zeros(1,), prefix="", sep="",)
 
     assert isinstance(loss_vals, dict)
     assert isinstance(total_loss, torch.Tensor)
@@ -229,13 +157,7 @@ def test_compute_loss():
 
 
 def test_train_step():
-    mlp = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10),
-        nn.LogSoftmax(),
-    )
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10), nn.LogSoftmax(),)
     expected_keys = ["a", "b", "c", "d"]
     model = Flash(
         mlp,
@@ -258,13 +180,7 @@ def test_train_step():
 
 
 def _val_test_step(prefix: str):
-    mlp = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10),
-        nn.LogSoftmax(),
-    )
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10), nn.LogSoftmax(),)
     expected_keys = ["a", "b", "c", "d"]
     model = Flash(
         mlp,
