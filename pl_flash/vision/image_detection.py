@@ -47,11 +47,7 @@ class ImageDetector(Flash):
             # TODO: maybe better way of handling no loss,
             loss = {}
         super().__init__(
-            model=model,
-            loss=loss,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
+            model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer,
         )
 
         self.num_classes = num_classes

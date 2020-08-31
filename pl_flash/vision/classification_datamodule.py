@@ -1,18 +1,12 @@
+from typing import Callable
 from torch.utils.data import DataLoader, Dataset
 from pytorch_lightning import LightningDataModule
 
-from torchvision.datasets import ImageFolder
-from PIL import Image
-
-
-def pil_loader(path):
-    with open(path, "rb") as f:
-        img = Image.open(f)
-        return img.convert("RGB")
+from pl_flash.vision.data import VisionData
 
 
 class _FilepathDataset(Dataset):
-    def __init__(self, filepaths, labels, transform=None, loader=pil_loader):
+    def __init__(self, filepaths, labels, loader: Callable, transform=None):
         self.fnames = filepaths
         self.labels = labels
         self.transform = transform
@@ -28,16 +22,11 @@ class _FilepathDataset(Dataset):
         return img, self.labels[index]
 
 
-class ImageClassificationData(LightningDataModule):
+class ImageClassificationData(LightningDataModule, VisionData):
     """Data module for image classification tasks."""
 
     def __init__(
-        self,
-        train_ds: Dataset,
-        valid_ds: Dataset = None,
-        test_ds: Dataset = None,
-        batch_size=64,
-        num_workers=4,
+        self, train_ds: Dataset, valid_ds: Dataset = None, test_ds: Dataset = None, batch_size=64, num_workers=4,
     ):
         """
         Initialize ImageClassificationData
@@ -66,28 +55,14 @@ class ImageClassificationData(LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self._train_ds,
-            batch_size=self._batch_size,
-            shuffle=True,
-            num_workers=self._num_workers,
-            pin_memory=True,
+            self._train_ds, batch_size=self._batch_size, shuffle=True, num_workers=self._num_workers, pin_memory=True,
         )
 
     def _val_dataloader(self):
-        return DataLoader(
-            self._valid_ds,
-            batch_size=self._batch_size,
-            num_workers=self._num_workers,
-            pin_memory=True,
-        )
+        return DataLoader(self._valid_ds, batch_size=self._batch_size, num_workers=self._num_workers, pin_memory=True,)
 
     def _test_dataloader(self):
-        return DataLoader(
-            self._test_ds,
-            batch_size=self._batch_size,
-            num_workers=self._num_workers,
-            pin_memory=True,
-        )
+        return DataLoader(self._test_ds, batch_size=self._batch_size, num_workers=self._num_workers, pin_memory=True,)
 
     @classmethod
     def from_filepaths(
@@ -100,7 +75,7 @@ class ImageClassificationData(LightningDataModule):
         valid_transform=None,
         test_filepaths=None,
         test_labels=None,
-        loader=pil_loader,
+        loader=None,
         batch_size=64,
     ):
         """
@@ -119,19 +94,23 @@ class ImageClassificationData(LightningDataModule):
             batch_size (optional): Batch size for data loading.
 
         Examples::
-            >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1])
+            >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
 
         """
+        if loader is None:
+            loader = cls.load_file
 
-        train_ds = _FilepathDataset(train_filepaths, train_labels, train_transform, loader)
+        train_ds = _FilepathDataset(
+            filepaths=train_filepaths, labels=train_labels, loader=loader, transform=train_transform
+        )
         valid_ds = (
-            _FilepathDataset(valid_filepaths, valid_labels, valid_transform, loader)
+            _FilepathDataset(filepaths=valid_filepaths, labels=valid_labels, loader=loader, transform=valid_transform)
             if valid_filepaths is not None
             else None
         )
 
         test_ds = (
-            _FilepathDataset(test_filepaths, test_labels, valid_transform, loader)
+            _FilepathDataset(filepaths=test_filepaths, labels=test_labels, loader=loader, transform=valid_transform)
             if test_filepaths is not None
             else None
         )
@@ -146,7 +125,7 @@ class ImageClassificationData(LightningDataModule):
         valid_folder=None,
         valid_transform=None,
         test_folder=None,
-        loader=pil_loader,
+        loader=None,
         batch_size=64,
     ):
         """
@@ -174,10 +153,26 @@ class ImageClassificationData(LightningDataModule):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
+        try:
+            from torchvision.datasets import ImageFolder
 
-        train_ds = ImageFolder(train_folder, train_transform, loader=loader)
-        valid_ds = ImageFolder(valid_folder, valid_transform, loader=loader) if valid_folder is not None else None
+        except ImportError:
+            raise ImportError(
+                "Torchvision is not installed please install it following the guides on"
+                + "https://pytorch.org/get-started/locally/"
+            )
 
-        test_ds = ImageFolder(test_folder, valid_transform, loader=loader) if test_folder is not None else None
+        if loader is None:
+            loader = cls.load_file
+
+        train_ds = ImageFolder(train_folder, transform=train_transform, loader=loader)
+        valid_ds = (
+            ImageFolder(valid_folder, transform=valid_transform, loader=loader) if valid_folder is not None else None
+        )
+
+        test_ds = (
+            ImageFolder(test_folder, transform=valid_transform, loader=loader) if test_folder is not None else None
+        )
 
         return cls(train_ds, valid_ds, test_ds, batch_size)
+
