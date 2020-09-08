@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 import pytorch_lightning as pl
-from pl_flash.vision.image_detection import ImageDetector
+from pl_flash.vision import ImageDetector
 
 
 def collate_fn(batch):

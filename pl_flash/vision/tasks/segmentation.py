@@ -6,10 +6,12 @@ from torch.optim import Optimizer
 
 from pytorch_lightning.core.step_result import EvalResult, TrainResult
 
-from pl_flash.core import Flash
+from pl_flash.flash import Flash
+
+__all__ = ["SemanticImageSegmenter"]
 
 
-class SemanticSegmenter(Flash):
+class SemanticImageSegmenter(Flash):
     """Semantic Image segmentation task
 
     Args:
@@ -45,8 +47,8 @@ class SemanticSegmenter(Flash):
 
     def __init__(
         self,
-        num_classes: int,
         model: Union[str, torch.nn.Module] = "fcn_resnet50",
+        num_classes: Optional[int] = None,
         loss: Union[Callable, torch.nn.Module, Mapping, Sequence] = "cross_entropy",
         metrics: Union[Callable, torch.nn.Module, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
@@ -59,7 +61,13 @@ class SemanticSegmenter(Flash):
         if isinstance(model, str):
             assert model in self.available_models
 
-        super().__init__(model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer)
+        super().__init__(
+            model=model,
+            loss=loss,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+        )
 
         self.num_classes = num_classes
         self.in_channels = in_channels
@@ -77,6 +85,7 @@ class SemanticSegmenter(Flash):
             self._origin = "custom"
 
         if self._origin != "custom":
+            assert self.num_classes is not None
 
             if self.in_channels != self.example_input_array.size(1):
                 self._replace_input_layer()
@@ -101,11 +110,11 @@ class SemanticSegmenter(Flash):
         try:
             import torchvision.models.segmentation
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
 
         try:
             pretrained_model = getattr(torchvision.models.segmentation, model)(pretrained=pretrained, **kwargs)
@@ -160,13 +169,19 @@ class SemanticSegmenter(Flash):
         try:
             import torchvision.models.segmentation
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
 
-        if not isinstance(self.model, (torchvision.models.segmentation.FCN, torchvision.models.segmentation.DeepLabV3)):
+        if not isinstance(
+            self.model,
+            (
+                torchvision.models.segmentation.FCN,
+                torchvision.models.segmentation.DeepLabV3,
+            ),
+        ):
             raise TypeError(f"Expected model of types FCN or DeepLabV3. Got {type(self.model).__name__}")
 
         if not isinstance(self.model.backbone, torchvision.models._utils.IntermediateLayerGetter):
@@ -214,7 +229,9 @@ class SemanticSegmenter(Flash):
 
     @staticmethod
     def _replace_conv2d(
-        old_conv: torch.nn.Conv2d, in_channels: Optional[int] = None, out_channels: Optional[int] = None
+        old_conv: torch.nn.Conv2d,
+        in_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
     ) -> torch.nn.Conv2d:
         """replaces a convolution with same parameters except intput and output channels (if specified)
 
@@ -243,15 +260,16 @@ class SemanticSegmenter(Flash):
         try:
             import torchvision.models.segmentation
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
         if isinstance(old_head, torchvision.models.segmentation.deeplabv3.DeepLabHead):
             # DeepLabHead -> ASPP -> ModuleList -> Sequential -> Conv
             return torchvision.models.segmentation.deeplabv3.DeepLabHead(
-                in_channels=old_head[0].convs[0][0].in_channels, num_classes=self.num_classes
+                in_channels=old_head[0].convs[0][0].in_channels,
+                num_classes=self.num_classes,
             )
 
         elif isinstance(old_head, torchvision.models.segmentation.fcn.FCNHead):
@@ -272,13 +290,19 @@ class SemanticSegmenter(Flash):
         try:
             import torchvision.models.segmentation
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
 
-        if not isinstance(self.model, (torchvision.models.segmentation.FCN, torchvision.models.segmentation.DeepLabV3)):
+        if not isinstance(
+            self.model,
+            (
+                torchvision.models.segmentation.FCN,
+                torchvision.models.segmentation.DeepLabV3,
+            ),
+        ):
             raise TypeError(f"Expected model of types FCN or DeepLabV3. Got {type(self.model).__name__}")
 
         self.model.classifier = self._replace_head_torchvision(self.model.classifier)
@@ -381,8 +405,8 @@ class SemanticSegmenter(Flash):
 
             return Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
