@@ -4,8 +4,9 @@ from copy import deepcopy
 import warnings
 import torch
 from torch.optim import Optimizer
-import torchvision
-from pl_flash.core import Flash
+from pl_flash.flash import Flash
+
+__all__ = ["ImageClassifier"]
 
 
 class ImageClassifier(Flash):
@@ -82,8 +83,8 @@ class ImageClassifier(Flash):
 
     def __init__(
         self,
-        num_classes: int,
         model: Union[str, torch.nn.Module] = "resnet18",
+        num_classes: Optional[int] = None,
         loss: Union[Callable, torch.nn.Module, Mapping, Sequence] = "cross_entropy",
         metrics: Union[Callable, torch.nn.Module, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
@@ -97,7 +98,13 @@ class ImageClassifier(Flash):
         if isinstance(model, str):
             assert model in self.available_models
 
-        super().__init__(model=model, loss=loss, metrics=metrics, learning_rate=learning_rate, optimizer=optimizer)
+        super().__init__(
+            model=model,
+            loss=loss,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+        )
 
         self.num_classes = num_classes
         self.in_channels = in_channels
@@ -116,6 +123,8 @@ class ImageClassifier(Flash):
             self._origin = "custom"
 
         if self._origin != "custom":
+
+            assert self.num_classes is not None
 
             try:
                 import torchvision
@@ -199,11 +208,11 @@ class ImageClassifier(Flash):
         try:
             import torchvision.models
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
 
         if isinstance(
             model,
@@ -278,7 +287,11 @@ class ImageClassifier(Flash):
         """
         old_head = deepcopy(self.classification_head)
 
-        setattr(self, "classification_head", torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()))
+        setattr(
+            self,
+            "classification_head",
+            torch.nn.Sequential(part_before_new_layer, torch.nn.Flatten()),
+        )
 
         with torch.no_grad():
             output = self.model(self.example_input_array)
@@ -318,11 +331,11 @@ class ImageClassifier(Flash):
         try:
             import torchvision.models
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
 
         def replace_conv(old_conv: torch.nn.Conv2d):
             return type(old_conv)(
@@ -406,7 +419,10 @@ class ImageClassifier(Flash):
 
                     if isinstance(self.model.features[0][0], torch.nn.Conv2d):
                         self.model.features = torch.nn.Sequential(
-                            torch.nn.Sequential(replace_conv(self.model.features[0][0]), *self.model.features[0][1:]),
+                            torch.nn.Sequential(
+                                replace_conv(self.model.features[0][0]),
+                                *self.model.features[0][1:],
+                            ),
                             self.model.features[1:],
                         )
                     else:
@@ -446,7 +462,9 @@ class ImageClassifier(Flash):
             raise ValueError(f"Not supported model type found: {type(self.model).__name__}")
 
         self.example_input_array = torch.rand(
-            self.example_input_array.size(0), in_channels, *self.example_input_array.shape[2:]
+            self.example_input_array.size(0),
+            in_channels,
+            *self.example_input_array.shape[2:],
         )
 
     def _replace_last_layer_only(self) -> Union[torch.nn.Linear, torch.nn.Sequential]:
@@ -592,11 +610,11 @@ class ImageClassifier(Flash):
         try:
             import torchvision.models
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on "
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e
 
         try:
             pretrained_model = getattr(torchvision.models, model)(pretrained=pretrained, **kwargs)
@@ -662,8 +680,8 @@ class ImageClassifier(Flash):
 
             return Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Torchvision is not installed please install it following the guides on"
                 + "https://pytorch.org/get-started/locally/"
-            )
+            ) from e

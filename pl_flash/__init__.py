@@ -40,7 +40,7 @@ if __LIGHTNING_FLASH_SETUP__:
     # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
 else:
 
-    from pl_flash.core import Flash
+    from pl_flash.flash import Flash
     from pytorch_lightning import metrics, Trainer
 
     __all__ = ["Flash", "metrics", "Trainer"]

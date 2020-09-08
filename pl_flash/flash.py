@@ -145,7 +145,11 @@ class Flash(LightningModule):
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
 
     def compute_loss(
-        self, y_hat: torch.Tensor, y: torch.tensor, prefix: str = "train", sep: str = "/"
+        self,
+        y_hat: torch.Tensor,
+        y: torch.tensor,
+        prefix: str = "train",
+        sep: str = "/",
     ) -> Tuple[torch.Tensor, dict]:
         """Computes the loss functions and the resulting overall loss
 
@@ -305,7 +309,13 @@ class Flash(LightningModule):
         return (batch["x"], batch["y"])
 
     @staticmethod
-    def compute_dict(functions: Mapping, y_hat: torch.Tensor, y: torch.Tensor, prefix: str = "val", sep="/") -> dict:
+    def compute_dict(
+        functions: Mapping,
+        y_hat: torch.Tensor,
+        y: torch.Tensor,
+        prefix: str = "val",
+        sep="/",
+    ) -> dict:
         """computes values from a dict of functions based on prediction and groundtruth (typically losses and/or
             metrics)
 

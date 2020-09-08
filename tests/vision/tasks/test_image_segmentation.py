@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 import torchvision
 
-from pl_flash.vision.image_segmentation import SemanticSegmenter
+from pl_flash.vision import SemanticImageSegmenter
 from pl_flash import Trainer
 
 
@@ -40,10 +40,10 @@ class DummySegmentationModule(torch.nn.Module):
         return out
 
 
-@pytest.mark.parametrize("model", SemanticSegmenter.available_models)
+@pytest.mark.parametrize("model", SemanticImageSegmenter.available_models)
 def test_models_num_classes(model: str):
 
-    segmentation_model = SemanticSegmenter(num_classes=10, model=model)
+    segmentation_model = SemanticImageSegmenter(num_classes=10, model=model)
 
     with torch.no_grad():
         output = segmentation_model(segmentation_model.example_input_array)
@@ -56,35 +56,47 @@ def test_models_num_classes(model: str):
 
 
 def test_model_training_tensor_output(tmpdir):
-    data = DataLoader(DummySegmentationDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True)
+    data = DataLoader(
+        DummySegmentationDataset((3, 224, 224), 10, 500),
+        batch_size=64,
+        shuffle=True,
+    )
 
-    model = SemanticSegmenter(num_classes=10, model=torch.nn.Sequential(torch.nn.Conv2d(3, 10, kernel_size=1)))
+    model = SemanticImageSegmenter(
+        model=torch.nn.Sequential(
+            torch.nn.Conv2d(3, 10, kernel_size=1),
+        ),
+    )
 
     Trainer(fast_dev_run=True, default_root_dir=tmpdir, max_steps=2).fit(model, data)
 
 
 @pytest.mark.parametrize("aux", [True, False])
 def test_model_training_dict_output(tmpdir, aux: bool):
-    data = DataLoader(DummySegmentationDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True)
+    data = DataLoader(
+        DummySegmentationDataset((3, 224, 224), 10, 500),
+        batch_size=64,
+        shuffle=True,
+    )
 
-    model = SemanticSegmenter(10, model=DummySegmentationModule(aux=aux, num_classes=10))
+    model = SemanticImageSegmenter(model=DummySegmentationModule(aux=aux, num_classes=10))
 
     Trainer(fast_dev_run=True, default_root_dir=tmpdir, max_steps=2).fit(model, data)
 
 
 def test_from_bolts():
     with pytest.raises(NotImplementedError):
-        SemanticSegmenter._model_from_bolts("abc", True)
+        SemanticImageSegmenter._model_from_bolts("abc", True)
 
 
 def test_normalize():
-    assert isinstance(SemanticSegmenter(10).default_input_norm, torchvision.transforms.Normalize)
+    assert isinstance(SemanticImageSegmenter(num_classes=10).default_input_norm, torchvision.transforms.Normalize)
 
 
-@pytest.mark.parametrize("model", SemanticSegmenter.available_models)
+@pytest.mark.parametrize("model", SemanticImageSegmenter.available_models)
 def test_models_in_channels(model: str):
 
-    segmentation_model = SemanticSegmenter(num_classes=10, in_channels=1)
+    segmentation_model = SemanticImageSegmenter(num_classes=10, in_channels=1)
 
     assert segmentation_model.example_input_array.size(1) == 1
 

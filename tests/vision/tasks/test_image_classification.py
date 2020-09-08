@@ -5,16 +5,16 @@ import torch
 from torch.utils.data import DataLoader
 import torchvision
 
-from pl_flash.vision.image_classification import ImageClassifier
+from pl_flash.vision import ImageClassifier
 from pl_flash import Trainer
 
-from tests.core.test_flash import DummyDataset
+from tests.test_flash import DummyDataset
 
 
 @pytest.mark.parametrize("model", ImageClassifier.available_models)
 def test_models_num_classes(model: str):
 
-    classification_model = ImageClassifier(num_classes=10, model=model)
+    classification_model = ImageClassifier(model=model, num_classes=10)
 
     with torch.no_grad():
         output = classification_model(classification_model.example_input_array)
@@ -27,10 +27,13 @@ def test_models_num_classes(model: str):
 
 
 def test_model_training(tmpdir):
-    data = DataLoader(DummyDataset((3, 224, 224), 10, 500), batch_size=64, shuffle=True)
+    data = DataLoader(
+        DummyDataset((3, 224, 224), 10, 500),
+        batch_size=64,
+        shuffle=True,
+    )
 
     model = ImageClassifier(
-        num_classes=10,
         model=torch.nn.Sequential(
             torch.nn.Conv2d(3, 1, kernel_size=1),
             torch.nn.AdaptiveAvgPool2d(32),
@@ -44,7 +47,7 @@ def test_model_training(tmpdir):
 
 @pytest.mark.parametrize("model", ImageClassifier.available_models)
 def test_classification_head_attr_name(model):
-    model = ImageClassifier(num_classes=10)
+    model = ImageClassifier(num_classes=10, model=model)
 
     assert model._determine_classification_head_attr_name() in ["fc", "classifier"]
 
