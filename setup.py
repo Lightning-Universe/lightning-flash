@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import versioneer
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
@@ -62,7 +61,6 @@ setup(
     python_requires=">=3.6",
     setup_requires=[],
     install_requires=load_requirements(PATH_ROOT),
-    cmdclass=versioneer.get_cmdclass(),
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/pytorch-lightning-flash/issues",
         "Documentation": "https://pytorch-lightning-flash.rtfd.io/en/latest/",

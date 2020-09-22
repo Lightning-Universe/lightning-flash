@@ -1,0 +1,1 @@
+from pl_flash.tabular.models.classification import TabularClassifier

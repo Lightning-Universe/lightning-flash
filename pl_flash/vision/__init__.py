@@ -1,2 +1,2 @@
-from pl_flash.vision.data import *
-from pl_flash.vision.tasks import *
+from pl_flash.vision.models import ImageClassifier, ImageDetector
+from pl_flash.vision.data import ImageClassificationData

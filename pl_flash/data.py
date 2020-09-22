@@ -1,115 +1,13 @@
 from typing import Optional, Union, Any
-import pathlib
-import pickle
 import os
 import warnings
+from torch.utils.data import Dataset, DataLoader
 
-from pytorch_lightning.core.datamodule import LightningDataModule
-
-import torch
-from torch.utils.data import DataLoader, Dataset
+import pytorch_lightning as pl
 
 
-class BaseData(object):
-    """Basic Data object providing helper functions to load various file formats
-
-    Raises:
-        RuntimeError: Trying to load a not supported file format
-        ImportError: numpy is not available
-        ValueError: Invalid file format for numpy
-
-    Returns:
-        [type]: [description]
-    """
-
-    @staticmethod
-    def load_file(path: Union[str, pathlib.Path], **kwargs) -> torch.Tensor:
-        """loads a file and maps the correct way to load based on the file extension
-
-        Args:
-            path: the file to load
-
-        Raises:
-            RuntimeError: not supported file format
-
-        Returns:
-            torch.Tensor: tensor containing the loaded file content
-        """
-        path = str(path)
-        if path.endswith(".pt"):
-            loaded = BaseData.load_torch(path, **kwargs)
-
-        elif any([path.endswith(ext) for ext in [".npy", ".npz", ".txt"]]):
-            loaded = BaseData.load_numpy(path, **kwargs)
-
-        elif path.endswith(".pkl"):
-            loaded = BaseData.load_pickle(path, **kwargs)
-
-        else:
-            raise RuntimeError
-
-        return torch.utils.data._utils.collate.default_convert(loaded)
-
-    @staticmethod
-    def load_torch(path, **kwargs) -> Union[Any, torch.Tensor]:
-        """Loads objects that have been saved with ``torch.save``
-
-        Args:
-            path: the file to load
-
-        Returns:
-            torch.Tensor: the loaded file contents
-        """
-        return torch.load(path, **kwargs)
-
-    @staticmethod
-    def load_numpy(path, **kwargs) -> torch.Tensor:
-        """loading objects with numpy
-
-        Args:
-            path: the file to load
-
-        Raises:
-            ImportError: numpy is not available
-            ValueError: invalid file extension
-
-        Returns:
-            torch.Tensor: the loaded file contents
-        """
-        try:
-            import numpy as np
-        except ImportError:
-            raise ImportError("numpy is not available. Please install it with `pip install numpy`")
-
-        if path.endswith(".npy") or path.endswith(".npz"):
-            loaded = np.load(path, **kwargs)
-
-        elif path.endswith(".txt"):
-            loaded = np.loadtxt(path, **kwargs)
-
-        else:
-            raise ValueError
-
-        return torch.from_numpy(loaded)
-
-    @staticmethod
-    def load_pickle(path, **kwargs) -> Union[Any, torch.Tensor]:
-        """loads objects that have been saved with pickle
-
-        Args:
-            path: the file to load
-
-        Returns:
-            Union[Any, torch.Tensor]: the loaded file contents
-        """
-
-        with open(path, "rb") as f:
-            return pickle.load(f, **kwargs)
-
-
-class FlashDataModule(LightningDataModule):
-    """Basic DataModule for all flash tasks
-
+class DataModule(pl.LightningDataModule):
+    """Basic DataModule class for all flash tasks
     Args:
         train_ds: Dataset for training. Defaults to None.
         valid_ds: Dataset for validating model performance during training. Defaults to None.
