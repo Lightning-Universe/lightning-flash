@@ -1,18 +1,25 @@
 import pathlib
-from typing import Callable, Optional, Sequence, Tuple, Union
+from typing import Sequence, Callable, Optional, Union, Any, Tuple
 
 import torch
-from torch.utils.data import Dataset
-
-from pl_flash.vision.data.base import VisionData
-from pl_flash.data import FlashDataModule
-
-__all__ = ["ImageClassificationData"]
+from pl_flash import DataModule
 
 
-class FilepathDataset(Dataset):
+import torchvision
+import torchvision.transforms as T
+from PIL import Image
+from torchvision.datasets import ImageFolder
+
+
+def _pil_loader(path):
+    # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+    with open(path, "rb") as f:
+        with Image.open(f) as img:
+            return img.convert("RGB")
+
+
+class FilepathDataset(torch.utils.data.Dataset):
     """Dataset that takes in filepaths and labels.
-
     Args:
         filepaths: file paths to load with :attr:`loader`
         labels: the labels corresponding to the :attr:`filepaths`. Each unique value will get a class index by sorting them.
@@ -26,7 +33,7 @@ class FilepathDataset(Dataset):
         labels: Sequence,
         loader: Callable,
         transform: Optional[Callable] = None,
-    ) -> None:
+    ):
         self.fnames = filepaths
         self.labels = labels
         self.transform = transform
@@ -43,35 +50,53 @@ class FilepathDataset(Dataset):
         return img, self.label_to_class_mapping[self.labels[index]]
 
 
-class ImageClassificationData(FlashDataModule, VisionData):
+class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
+
+    default_train_transforms = T.Compose(
+        [
+            T.RandomResizedCrop(224),
+            T.RandomHorizontalFlip(),
+            T.ToTensor(),
+            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
+
+    default_valid_transforms = T.Compose(
+        [
+            T.Resize(256),
+            T.CenterCrop(224),
+            T.ToTensor(),
+            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
 
     @classmethod
     def from_filepaths(
         cls,
         train_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
         train_labels: Optional[Sequence] = None,
-        train_transform: Optional[Callable] = None,
+        train_transform: Optional[Callable] = default_train_transforms,
         valid_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
         valid_labels: Optional[Sequence] = None,
-        valid_transform: Optional[Callable] = None,
+        valid_transform: Optional[Callable] = default_valid_transforms,
         test_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
         test_labels: Optional[Sequence] = None,
-        loader: Optional[Callable] = None,
+        loader: Callable = _pil_loader,
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         **kwargs
-    ) -> FlashDataModule:
+    ):
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
         Args:
             train_filepaths: sequence of file paths for training dataset. Defaults to None.
             train_labels: sequence of labels for training dataset. Defaults to None.
             train_transform: transforms for training dataset. Defaults to None.
-            valid_filepaths: sequence of file paths for validation dataset.. Defaults to None.
+            valid_filepaths: sequence of file paths for validation dataset. Defaults to None.
             valid_labels: sequence of labels for validation dataset. Defaults to None.
-            valid_transform: transforms for validation and testing dataset.. Defaults to None.
-            test_filepaths: sequence of file paths for test dataset.. Defaults to None.
+            valid_transform: transforms for validation and testing dataset. Defaults to None.
+            test_filepaths: sequence of file paths for test dataset. Defaults to None.
             test_labels: sequence of labels for test dataset. Defaults to None.
             loader: function to load an image file. Defaults to None.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
@@ -79,26 +104,36 @@ class ImageClassificationData(FlashDataModule, VisionData):
                 Defaults to None which equals the number of available CPU threads.
 
         Returns:
-            FlashDataModule: the constructed data module
+            ClassificationData: the constructed data module
 
         Examples:
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
+
         """
-
-        if loader is None:
-            loader = cls.load_file
-
         train_ds = FilepathDataset(
-            filepaths=train_filepaths, labels=train_labels, loader=loader, transform=train_transform
+            filepaths=train_filepaths,
+            labels=train_labels,
+            loader=loader,
+            transform=train_transform,
         )
         valid_ds = (
-            FilepathDataset(filepaths=valid_filepaths, labels=valid_labels, loader=loader, transform=valid_transform)
+            FilepathDataset(
+                filepaths=valid_filepaths,
+                labels=valid_labels,
+                loader=loader,
+                transform=valid_transform,
+            )
             if valid_filepaths is not None
             else None
         )
 
         test_ds = (
-            FilepathDataset(filepaths=test_filepaths, labels=test_labels, loader=loader, transform=valid_transform)
+            FilepathDataset(
+                filepaths=test_filepaths,
+                labels=test_labels,
+                loader=loader,
+                transform=valid_transform,
+            )
             if test_filepaths is not None
             else None
         )
@@ -116,25 +151,24 @@ class ImageClassificationData(FlashDataModule, VisionData):
     def from_folders(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]],
-        train_transform: Optional[Callable] = None,
+        train_transform: Optional[Callable] = default_train_transforms,
         valid_folder: Optional[Union[str, pathlib.Path]] = None,
-        valid_transform: Optional[Callable] = None,
+        valid_transform: Optional[Callable] = default_valid_transforms,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
-        loader: Optional[Callable] = None,
+        loader: Callable = _pil_loader,
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         **kwargs
-    ) -> FlashDataModule:
+    ):
         """
         Creates a ImageClassificationData object from folders of images arranged in this way:
 
-        train/dog/xxx.png
-        train/dog/xxy.png
-        train/dog/xxz.png
-
-        train/cat/123.png
-        train/cat/nsdf3.png
-        train/cat/asd932{_}.png
+            train/dog/xxx.png
+            train/dog/xxy.png
+            train/dog/xxz.png
+            train/cat/123.png
+            train/cat/nsdf3.png
+            train/cat/asd932{_}.png
 
         Args:
             train_folder: Path to training folder.
@@ -148,24 +182,12 @@ class ImageClassificationData(FlashDataModule, VisionData):
                 Defaults to None which equals the number of available CPU threads.
 
         Returns:
-            FlashDataModule: the constructed data module
+            ImageClassificationData: the constructed data module
 
-        Examples::
+        Examples:
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        try:
-            from torchvision.datasets import ImageFolder
-
-        except ImportError as e:
-            raise ImportError(
-                "Torchvision is not installed please install it following the guides on"
-                + "https://pytorch.org/get-started/locally/"
-            ) from e
-
-        if loader is None:
-            loader = cls.load_file
-
         train_ds = ImageFolder(train_folder, transform=train_transform, loader=loader)
         valid_ds = (
             ImageFolder(valid_folder, transform=valid_transform, loader=loader) if valid_folder is not None else None
@@ -183,48 +205,3 @@ class ImageClassificationData(FlashDataModule, VisionData):
             num_workers=num_workers,
             **kwargs
         )
-
-    @property
-    def default_train_transforms(self) -> Callable:
-        try:
-            from torchvision import transforms as T
-
-        except ImportError as e:
-            raise ImportError(
-                "Torchvision is not installed please install it following the guides on"
-                + "https://pytorch.org/get-started/locally/"
-            ) from e
-        train_transforms = T.Compose(
-            [
-                T.RandomResizedCrop(224),
-                T.RandomHorizontalFlip(),
-                T.ToTensor(),
-                # imagenet statistics
-                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
-        )
-
-        return train_transforms
-
-    @property
-    def default_validation_test_transforms(self) -> Callable:
-        try:
-            from torchvision import transforms as T
-
-        except ImportError as e:
-            raise ImportError(
-                "Torchvision is not installed please install it following the guides on"
-                + "https://pytorch.org/get-started/locally/"
-            ) from e
-
-        valid_transforms = T.Compose(
-            [
-                T.Resize(256),
-                T.CenterCrop(224),
-                T.ToTensor(),
-                # imagenet statistics
-                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
-        )
-
-        return valid_transforms

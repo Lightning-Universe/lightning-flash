@@ -7,7 +7,6 @@ docutils
 sphinxcontrib-fulltoc
 sphinxcontrib-mockautodoc
 
-git+https://github.com/PytorchLightning/lightning_sphinx_theme.git
-# pip_shims
+sphinx-rtd-theme==0.5.0
 sphinx-autodoc-typehints
 sphinx-paramlinks<0.4.0
