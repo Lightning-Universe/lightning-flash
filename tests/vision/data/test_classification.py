@@ -1,21 +1,32 @@
 from pl_flash.vision import ImageClassificationData
 from pathlib import Path
 
+from PIL import Image
+import numpy as np
+import torchvision.transforms as T
+
 import torch
 import pytest
+from unittest.mock import patch
+from imp import reload
 
 
 def _dummy_image_loader(filepath):
     return torch.rand(3, 64, 64)
 
 
+def _rand_image():
+    return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+
+
 def test_from_filepaths(tmpdir):
     img_data = ImageClassificationData.from_filepaths(
         train_filepaths=["a", "b"],
         train_labels=[0, 1],
-        train_transform=None,
+        train_transform=lambda x: x,  # make sure transform works
         loader=_dummy_image_loader,
         batch_size=1,
+        num_workers=0,
     )
 
     imgs, labels = next(iter(img_data.train_dataloader()))
@@ -36,6 +47,7 @@ def test_from_filepaths(tmpdir):
         test_labels=[0, 1],
         loader=_dummy_image_loader,
         batch_size=1,
+        num_workers=0,
     )
 
     imgs, labels = next(iter(img_data.val_dataloader()))
@@ -52,12 +64,12 @@ def test_from_folders(tmpdir):
     train_dir.mkdir()
 
     (train_dir / "a").mkdir()
-    Path(train_dir / "a" / "1.png").touch()
-    Path(train_dir / "a" / "2.png").touch()
+    _rand_image().save(train_dir / "a" / "1.png")
+    _rand_image().save(train_dir / "a" / "2.png")
 
     (train_dir / "b").mkdir()
-    Path(train_dir / "b" / "1.png").touch()
-    Path(train_dir / "b" / "2.png").touch()
+    _rand_image().save(train_dir / "b" / "1.png")
+    _rand_image().save(train_dir / "b" / "2.png")
 
     img_data = ImageClassificationData.from_folders(
         train_dir, train_transform=None, loader=_dummy_image_loader, batch_size=1
@@ -71,12 +83,12 @@ def test_from_folders(tmpdir):
 
     img_data = ImageClassificationData.from_folders(
         train_dir,
-        train_transform=None,
+        train_transform=T.ToTensor(),
         valid_folder=train_dir,
-        valid_transform=None,
+        valid_transform=T.ToTensor(),
         test_folder=train_dir,
-        loader=_dummy_image_loader,
         batch_size=1,
+        num_workers=0,
     )
 
     imgs, labels = next(iter(img_data.val_dataloader()))
