@@ -13,6 +13,8 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import pl_flash
+import pt_lightning_sphinx_theme
 
 
 # -- Project information -----------------------------------------------------
@@ -31,8 +33,9 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
     "recommonmark",
-    "sphinx_rtd_theme",
+    "sphinx_autodoc_typehints",
     "sphinx.ext.githubpages",
 ]
 
@@ -49,17 +52,37 @@ exclude_patterns = []
 #
 source_suffix = [".rst", ".md"]
 
+
+# -- Options for intersphinx extension ---------------------------------------
+
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "torch": ("https://pytorch.org/docs/stable/", None),
+    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
+}
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
+html_theme = "pt_lightning_sphinx_theme"
+html_theme_path = [pt_lightning_sphinx_theme.get_html_theme_path()]
 
-html_theme = "sphinx_rtd_theme"
+# Theme options are theme-specific and customize the look and feel of a theme
+# further.  For a list of options available for each theme, see the
+# documentation.
 
 html_theme_options = {
-    "style_nav_header_background": "#540c8c",
+    "pytorch_project": pl_flash.__homepage__,
+    "canonical_url": pl_flash.__homepage__,
+    "collapse_navigation": False,
+    "display_version": True,
+    "logo_only": False,
 }
+
 
 html_logo = "_static/images/lightning_logo.svg"
 

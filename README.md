@@ -6,12 +6,27 @@
 
 [![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg)](https://github.com/PyTorchLightning/pytorch-lightning-flash/actions?query=workflow%3A%22CI+testing%22)
 ![Check Code formatting](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/Check%20Code%20formatting/badge.svg)
-[![Documentation Status](https://readthedocs.org/projects/pt-lightning-flash/badge/?version=latest)](https://pt-lightning-flash.readthedocs.io/en/latest/?badge=latest)
-
-
-**TODO: sentence pitch**
+[Docs](https://pytorchlightning.github.io/pytorch-lightning-flash/)
 
 </div>
+
+## Installation
+
+### Install with pip
+
+```bash
+pip install git+https://github.com/PyTorchLightning/pytorch-lightning-flash/
+```
+
+### Install from source
+
+``` bash
+git clone https://github.com/PyTorchLightning/python-lightning-flash.git
+cd pytorch-lightning-flash 
+pip install -e .
+```
+
+
 
 ## Vision
 

@@ -21,6 +21,18 @@ _backbones = {
 
 
 class ImageClassifier(Model):
+    """Task that classifies images.
+
+    Args:
+        num_classes: Number of classes to classify.
+        backbone: A model to use to compute image features.
+        pretrained: Use a pretrained backbone.
+        loss_fn: Loss function for training, defaults to cross entropy.
+        optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
+        metrics: Metrics to compute for training and evaluation.
+        learning_rate: Learning rate to use for training, defaults to `1e-3`
+    """
+
     def __init__(
         self,
         num_classes,
@@ -58,9 +70,15 @@ class ImageClassifier(Model):
         return self.head(x)
 
     def freeze(self):
+        """
+        Freeze the backbone parameters.
+        """
         for p in self.backbone.parameters():
             p.requires_grad = False
 
     def unfreeze(self):
+        """
+        Unfreeze the backbone parameters.
+        """
         for p in self.backbone.parameters():
             p.requires_grad = True

@@ -43,6 +43,8 @@ def _impute(dfs: list, num_cols: list):
 
 
 class TabularData(DataModule):
+    """Data module for tabular tasks"""
+
     def __init__(
         self,
         train_df,
@@ -84,6 +86,26 @@ class TabularData(DataModule):
         batch_size=1,
         num_workers=None,
     ):
+        """Creates a TextClassificationData object from pandas DataFrames.
+
+        Args:
+            train_df: train data DataFrame
+            target_col: The column containing the class id.
+            categorical_cols: The list of categorical columns.
+            numerical_cols: The list of numerical columns.
+            valid_df: validation data DataFrame
+            test_df: test data DataFrame
+            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to None which equals the number of available CPU threads.
+
+        Returns:
+            TextClassificationData: The constructed data module.
+
+        Examples:
+            >>> text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence") # doctest: +SKIP
+
+        """
         return cls(
             train_df=train_df,
             target_col=target_col,
@@ -97,6 +119,8 @@ class TabularData(DataModule):
 
     @property
     def emb_sizes(self):
+        """Recommended embedding sizes."""
+
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
         # The following "formula" provides a general rule of thumb about the number of embedding dimensions:
         # embedding_dimensions =  number_of_categories**0.25
