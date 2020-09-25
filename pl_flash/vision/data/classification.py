@@ -104,7 +104,7 @@ class ImageClassificationData(DataModule):
                 Defaults to None which equals the number of available CPU threads.
 
         Returns:
-            ClassificationData: the constructed data module
+            ImageClassificationData: The constructed data module.
 
         Examples:
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
@@ -161,14 +161,14 @@ class ImageClassificationData(DataModule):
         **kwargs
     ):
         """
-        Creates a ImageClassificationData object from folders of images arranged in this way:
+        Creates a ImageClassificationData object from folders of images arranged in this way: ::
 
             train/dog/xxx.png
             train/dog/xxy.png
             train/dog/xxz.png
             train/cat/123.png
             train/cat/nsdf3.png
-            train/cat/asd932{_}.png
+            train/cat/asd932_.png
 
         Args:
             train_folder: Path to training folder.

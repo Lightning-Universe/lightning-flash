@@ -13,3 +13,4 @@ TabularClassifier
 
 .. autoclass:: pl_flash.tabular.TabularClassifier
     :members:
+    :exclude-members: forward

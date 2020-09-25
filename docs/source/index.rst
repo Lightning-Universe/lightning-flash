@@ -46,6 +46,7 @@ We seperate the developement process into 3 easy steps: data, model, and train:
    reference/vision.rst
    reference/text.rst
    reference/tabular.rst
+   reference/model.rst
 
 
 Indices and tables

@@ -10,6 +10,17 @@ from transformers import BertForSequenceClassification
 
 
 class TextClassifier(Model):
+    """Task that classifies text.
+
+    Args:
+        num_classes: Number of classes to classify.
+        backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
+        pretrained: Use a pretrained backbone.
+        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        metrics: Metrics to compute for training and evaluation.
+        learning_rate: Learning rate to use for training, defaults to `1e-3`
+    """
+
     def __init__(
         self,
         num_classes,

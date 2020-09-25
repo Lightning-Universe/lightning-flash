@@ -13,3 +13,4 @@ TextClassifier
 
 .. autoclass:: pl_flash.text.TextClassifier
     :members:
+    :exclude-members: forward

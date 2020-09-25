@@ -10,6 +10,16 @@ from pl_flash.utils import get_callable_dict
 
 
 class Model(pl.LightningModule):
+    """A general Task.
+
+    Args:
+        model: Model to use for task.
+        loss_fn: Loss function for training
+        optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
+        metrics: Metrics to compute for training and evaluation.
+        learning_rate: Learning rate to use for training, defaults to `1e-3`
+    """
+
     def __init__(
         self,
         model: nn.Module,
@@ -29,6 +39,9 @@ class Model(pl.LightningModule):
         self.save_hyperparameters("learning_rate", "optimizer")
 
     def step(self, batch, batch_idx):
+        """
+        The training/validation/test step. Override for custom behavior.
+        """
         x, y = batch
         y_hat = self.forward(x)
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
