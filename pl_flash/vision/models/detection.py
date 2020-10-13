@@ -3,7 +3,6 @@ from typing import Any, Optional, Union, Mapping, Sequence, Type, Callable
 import torch
 from torch import nn
 from torch.optim import Optimizer
-from pytorch_lightning import TrainResult
 
 import torchvision
 
@@ -71,8 +70,7 @@ class ImageDetector(Model):
         # fasterrcnn takes both images and targets for training, returns loss_dict
         loss_dict = self.model(images, targets)
         loss = sum(loss_dict.values())
-        result = TrainResult(loss)
         for k, v in loss_dict.items():
-            result.log(f"train_k", v)
+            self.log(f"train_k", v)
 
-        return result
+        return loss
