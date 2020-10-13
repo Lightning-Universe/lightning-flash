@@ -37,7 +37,7 @@ data = ImageClassificationData.from_folders(
 model = ImageClassifier(
     backbone="resnet18",
     num_classes=2,
-    metrics=pl.metrics.Accuracy(num_classes=2),
+    metrics=pl.metrics.Accuracy(),
     optimizer=torch.optim.SGD,
     learning_rate=0.001,
 )
