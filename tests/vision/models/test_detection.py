@@ -23,9 +23,9 @@ class DummyDetectionDataset(Dataset):
 
     def _random_bbox(self):
         c, h, w = self.img_shape
-        xs = torch.randint(w, (2,))
-        ys = torch.randint(h, (2,))
-        return [min(xs), min(ys), max(xs), max(ys)]
+        xs = torch.randint(w - 1, (2,))
+        ys = torch.randint(h - 1, (2,))
+        return [min(xs), min(ys), max(xs) + 1, max(ys) + 1]
 
     def __getitem__(self, idx):
         img = torch.rand(self.img_shape)
