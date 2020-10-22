@@ -22,7 +22,7 @@ We seperate the developement process into 3 easy steps: data, model, and train:
     # Step 1: Data
     data = ... # pick from a variety of task specific datasets
 
-    # Step 2: Model
+    # Step 2: Task
     model = ... # pick our task specific model, built with all of the best practices
 
 

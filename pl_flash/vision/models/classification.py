@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from pl_flash import Model
+from pl_flash import Task
 
 import torchvision
 
@@ -20,7 +20,7 @@ _backbones = {
 }
 
 
-class ImageClassifier(Model):
+class ImageClassifier(Task):
     """Task that classifies images.
 
     Args:
