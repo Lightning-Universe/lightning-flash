@@ -6,13 +6,13 @@ from torch.optim import Optimizer
 
 import torchvision
 
-from pl_flash import Model
+from pl_flash import Task
 
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
 
-class ImageDetector(Model):
+class ImageDetector(Task):
     """Image detection task
 
     Args:
@@ -62,7 +62,7 @@ class ImageDetector(Model):
 
     def training_step(self, batch, batch_idx):
         """The training step.
-        Overrides Model.training_step
+        Overrides Task.training_step
         """
         images, targets = batch
         targets = [{k: v for k, v in t.items()} for t in targets]

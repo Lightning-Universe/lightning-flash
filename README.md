@@ -100,11 +100,11 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from pl_flash import Model
+from pl_flash import Task
 import pytorch_lightning as pl
 
 mlp = nn.Sequential(...)
-model = Model(mlp, loss=F.cross_entropy)
+model = Task(mlp, loss=F.cross_entropy)
 
 pl.Trainer().fit(model, torch.utils.data.DataLoader(...))
 ```

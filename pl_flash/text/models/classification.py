@@ -4,12 +4,12 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from pl_flash import Model
+from pl_flash import Task
 
 from transformers import BertForSequenceClassification
 
 
-class TextClassifier(Model):
+class TextClassifier(Task):
     """Task that classifies text.
 
     Args:

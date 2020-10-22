@@ -4,10 +4,10 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from pl_flash import Model
+from pl_flash import Task
 
 
-class TabularClassifier(Model):
+class TabularClassifier(Task):
     """Task that classifies table rows.
 
     Args:

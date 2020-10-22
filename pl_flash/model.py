@@ -9,11 +9,11 @@ import pytorch_lightning as pl
 from pl_flash.utils import get_callable_dict
 
 
-class Model(pl.LightningModule):
+class Task(pl.LightningModule):
     """A general Task.
 
     Args:
-        model: Model to use for task.
+        model: Task to use for task.
         loss_fn: Loss function for training
         optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation.

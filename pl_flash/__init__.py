@@ -33,8 +33,8 @@ if __LIGHTNING_FLASH_SETUP__:
     # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
 else:
 
-    from pl_flash.model import Model
+    from pl_flash.model import Task
     from pl_flash.data import DataModule
     from pl_flash import vision
 
-    __all__ = ["Model", "vision"]
+    __all__ = ["Task", "vision"]
