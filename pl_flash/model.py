@@ -25,14 +25,14 @@ class Task(pl.LightningModule):
         model: nn.Module,
         loss_fn: Union[Callable, Mapping, Sequence],
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
+        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
     ):
         super().__init__()
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer_cls = optimizer
-        self.metrics = get_callable_dict(metrics) if metrics is not None else {}
+        self.metrics = nn.ModuleDict(get_callable_dict(metrics) if metrics is not None else {})
         self.loss_fn = get_callable_dict(loss_fn)
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics

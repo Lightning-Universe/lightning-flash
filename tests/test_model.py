@@ -24,7 +24,7 @@ class DummyDataset(torch.utils.data.Dataset):
 ##########################
 
 
-@pytest.mark.parametrize("metrics", [None, lambda y_hat, y: torch.zeros_like(y), {"dummy": dummy_metric}])
+@pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])
 def test_init_train(tmpdir, metrics):
     mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
