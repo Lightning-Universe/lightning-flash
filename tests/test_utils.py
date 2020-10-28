@@ -16,17 +16,17 @@ c = lambda: True
 
 
 def test_get_callable_name():
-    assert utils.get_callable_name(A()) == "A"
+    assert utils.get_callable_name(A()) == "a"
     assert utils.get_callable_name(b) == "b"
     assert utils.get_callable_name(c) == "<lambda>"
 
 
 def test_get_callable_dict():
     d = utils.get_callable_dict(A())
-    assert type(d["A"]) == A
+    assert type(d["a"]) == A
 
     d = utils.get_callable_dict([A(), b])
-    assert type(d["A"]) == A
+    assert type(d["a"]) == A
     assert d["b"] == b
 
     d = utils.get_callable_dict({"one": A(), "two": b, "three": c})
