@@ -53,8 +53,10 @@ class Task(pl.LightningModule):
             else:
                 logs[name] = metric(y_hat, y)
         logs.update(losses)
-        logs["total_loss"] = sum(losses.values())
-        return logs["total_loss"], logs
+        if len(losses.values()) > 1:
+            logs["total_loss"] = sum(losses.values())
+            return logs["total_loss"], logs
+        return list(losses.values())[0], logs
 
     def forward(self, x):
         return self.model(x)
