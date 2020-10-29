@@ -57,12 +57,27 @@ class TextClassificationData(DataModule):
 
         dataset_dict = load_dataset(filetype, data_files=paths)
 
+        label_to_class_mapping = {
+            v: k
+            for k, v in enumerate(
+                list(sorted(list(set(dataset_dict["train"][label_field]))))
+            )
+        }
+
+        def transform_label(ex):
+            ex[label_field] = label_to_class_mapping[ex[label_field]]
+            return ex
+
+        # convert labels to ids
+        dataset_dict = dataset_dict.map(transform_label)
+
         # tokenize text field
         dataset_dict = dataset_dict.map(
             lambda ex: tokenizer(
                 ex[text_field],
                 max_length=max_length,
                 truncation=True,
+                padding="max_length",
             ),
             batched=True,
         )
