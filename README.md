@@ -26,7 +26,15 @@ cd pytorch-lightning-flash
 pip install -e .
 ```
 
-## Train any PyTorch model
+## What is Flash
+Flash is the rapid prototyping library for transfer learning or quickly trying ideas. It is implemented in PyTorch Lightning
+so it works on GPUs and TPUs out-of-the-box.
+
+Flash does not have the full flexibility of PyTorch Lightning but it makes common applications of deep learning very easy. And when you need
+more flexibility, you can easily transfer into PyTorch Lightning because everything in Flash is just a LightningModule.
+
+
+## Example 1: Generic Task for training any nn.Module.
 
 ```python
 from pl_flash import Task
@@ -52,7 +60,7 @@ classifier = Task(model, loss_fn=nn.functional.cross_entropy, optimizer=Adam)
 pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 ```
 
-## Vision example:
+## Example 2: A task for computer vision.
 
 ```python
 from pl_flash.vision import ImageClassifier, ImageClassificationData
@@ -71,7 +79,7 @@ data = ImageClassificationData.from_folders(
 pl.Trainer().fit(model, data)
 ```
 
-## Text
+## Example 3: A task for NLP
 
 ```python
 import pytorch_lightning as pl
@@ -92,7 +100,7 @@ data = TextClassificationData.from_files(
 pl.Trainer().fit(model, data)
 ```
 
-## Tabular
+## Example 3: A task for Tabular data.
 
 ```python
 from pl_flash.tabular import TabularClassifier, TabularData
