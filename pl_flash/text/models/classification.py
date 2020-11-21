@@ -4,13 +4,13 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from pl_flash import Task
+from pl_flash import LightningTask
 
 from transformers import BertForSequenceClassification
 
 
-class TextClassifier(Task):
-    """Task that classifies text.
+class TextClassifier(LightningTask):
+    """LightningTask that classifies text.
 
     Args:
         num_classes: Number of classes to classify.

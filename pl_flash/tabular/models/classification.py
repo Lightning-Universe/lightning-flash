@@ -4,11 +4,11 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from pl_flash import Task
+from pl_flash import LightningTask
 
 
-class TabularClassifier(Task):
-    """Task that classifies table rows.
+class TabularClassifier(LightningTask):
+    """LightningTask that classifies table rows.
 
     Args:
         num_columns: Number of columns in table (not including target column).
