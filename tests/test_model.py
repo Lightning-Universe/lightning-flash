@@ -5,7 +5,7 @@ import pytest
 
 import pytorch_lightning as pl
 
-from pl_flash import Task
+from pl_flash import LightningTask
 
 
 ###### Mock functions #####
@@ -29,7 +29,7 @@ def test_init_train(tmpdir, metrics):
     mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
-    model = Task(mlp, F.nll_loss, metrics=metrics)
+    model = LightningTask(mlp, F.nll_loss, metrics=metrics)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, train_dl, val_dl)
     trainer.test(model, val_dl)

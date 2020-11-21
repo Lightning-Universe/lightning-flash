@@ -37,7 +37,7 @@ more flexibility, you can easily transfer into PyTorch Lightning because everyth
 ## Example 1: Generic Task for training any nn.Module.
 
 ```python
-from pl_flash import Task
+from pl_flash import LightningTask
 from torch import nn
 from torch.optim import Adam
 from torchvision.datasets import MNIST
@@ -56,7 +56,7 @@ model = nn.Sequential(
 dataset = MNIST('./data_folder', download=True, transform=transforms.ToTensor())
 train, val = random_split(dataset, [55000, 5000])
 
-classifier = Task(model, loss_fn=nn.functional.cross_entropy, optimizer=Adam)
+classifier = LightningTask(model, loss_fn=nn.functional.cross_entropy, optimizer=Adam)
 pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 ```
 

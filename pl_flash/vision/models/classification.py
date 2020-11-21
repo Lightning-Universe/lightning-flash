@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from pl_flash import Task
+from pl_flash import LightningTask
 
 import torchvision
 
@@ -20,8 +20,8 @@ _backbones = {
 }
 
 
-class ImageClassifier(Task):
-    """Task that classifies images.
+class ImageClassifier(LightningTask):
+    """LightningTask that classifies images.
 
     Args:
         num_classes: Number of classes to classify.
