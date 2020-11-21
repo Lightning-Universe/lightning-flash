@@ -18,6 +18,11 @@ Pip
 pip install pytorch-lightning-flash
 ```
 
+Master
+```bash
+pip install git+https://github.com/PytorchLightning/pytorch-lightning-flash.git@master --upgrade
+```
+
 Source
 
 ``` bash
@@ -27,12 +32,9 @@ pip install -e .
 ```
 
 ## What is Flash
-Flash is the rapid prototyping library for transfer learning or quickly trying ideas. It is implemented in PyTorch Lightning
-so it works on GPUs and TPUs out-of-the-box.
+PyTorch Lightning provides the ultimate flexibility for building deep learning models with PyTorch. But for common use cases, users tend to rewrite a lot of boilerplate. Flash removes this boilerplate with predefined tasks for major domains.
 
-Flash does not have the full flexibility of PyTorch Lightning but it makes common applications of deep learning very easy. And when you need
-more flexibility, you can easily transfer into PyTorch Lightning because everything in Flash is just a LightningModule.
-
+Flash is built for beginners, new data scientists, Kagglers or anyone starting out with Deep Learning. But unlike other entry-level frameworks (keras, etc...), Flash users can switch to Lightning trivially when they need added flexibility.
 
 ## Example 1: Generic Task for training any nn.Module.
 
@@ -44,7 +46,9 @@ from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 import pytorch_lightning as pl
+```
 
+```python
 model = nn.Sequential(
     nn.Flatten(),
     nn.Linear(28 * 28, 128),
