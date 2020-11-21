@@ -26,6 +26,32 @@ cd pytorch-lightning-flash
 pip install -e .
 ```
 
+## Train any PyTorch model
+
+```python
+from pl_flash import Task
+from torch import nn
+from torch.optim import Adam
+from torchvision.datasets import MNIST
+from torch.utils.data import DataLoader, random_split
+from torchvision import transforms
+import pytorch_lightning as pl
+
+model = nn.Sequential(
+    nn.Flatten(),
+    nn.Linear(28 * 28, 128),
+    nn.ReLU(),
+    nn.Linear(128, 10)
+)
+
+# data
+dataset = MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+train, val = random_split(dataset, [55000, 5000])
+
+classifier = Task(model, loss_fn=nn.functional.cross_entropy, optimizer=Adam)
+pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
+```
+
 ## Vision example:
 
 ```python
