@@ -46,6 +46,10 @@ from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 import pytorch_lightning as pl
+
+from urllib.request import urlopen
+from zipfile import ZipFile
+from io import BytesIO
 ```
 
 ```python
@@ -70,13 +74,18 @@ pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 from pl_flash.vision import ImageClassifier, ImageClassificationData
 import pytorch_lightning as pl
 
+# download data 
+with urlopen("https://download.pytorch.org/tutorial/hymenoptera_data.zip") as resp:
+    with ZipFile(BytesIO(resp.read())) as file:
+        file.extractall('data/')
+
 # 1. build our model
 model = ImageClassifier(backbone="resnet18", num_classes=2)
 
 # 2. organize our data
 data = ImageClassificationData.from_folders(
-    train_folder="train/",
-    valid_folder="validation/"
+    train_folder="data/hymenoptera_data/train/",
+    valid_folder="data/hymenoptera_data/val/"
 )
 
 # 3. train!
@@ -91,11 +100,16 @@ import pytorch_lightning as pl
 # build our model
 model = TextClassifier(backbone="bert-base-cased", num_classes=2)
 
+# download data
+with urlopen("https://pl-flash-data.s3.amazonaws.com/imdb.zip") as resp:
+    with ZipFile(BytesIO(resp.read())) as file:
+        file.extractall("data/")
+
 # structure our data
 data = TextClassificationData.from_files(
     backbone="bert-base-cased",
-    train_file="train.csv",
-    valid_file="val.csv",
+    train_file="data/imdb/train.csv",
+    valid_file="data/imdb/val.csv",
     text_field="sentence",
     label_field="label",
 )
@@ -108,25 +122,30 @@ pl.Trainer().fit(model, data)
 
 ```python
 from pl_flash.tabular import TabularClassifier, TabularData
-
 import pytorch_lightning as pl
 import pandas as pd
 
-# stucture data
+from urllib.request import urlretrieve
+
+# download data
+urlretrieve("https://pl-flash-data.s3.amazonaws.com/titanic.csv", "titanic.csv")
+
+# structure data
 data = TabularData.from_df(
-    pd.read_csv("train.csv"),
-    categorical_cols=["years_as_customer", "country"],
-    numerical_cols=["money_spent", "purchases"],
-    target_col="cancelled",
+    pd.read_csv("titanic.csv"),
+    categorical_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+    numerical_cols=["Fare"],
+    target_col="Survived",
+    num_workers=0,
+    batch_size=8
 )
 
 # build model
 model = TabularClassifier(
     num_classes=2,
-    num_columns=3,
+    num_columns=8,
     embedding_sizes=data.emb_sizes,
 )
 
-# train
 pl.Trainer().fit(model, data)
 ```
