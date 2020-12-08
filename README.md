@@ -37,22 +37,16 @@ PyTorch Lightning provides the ultimate flexibility for building deep learning m
 Flash is built for beginners, new data scientists, Kagglers or anyone starting out with Deep Learning. But unlike other entry-level frameworks (keras, etc...), Flash users can switch to Lightning trivially when they need added flexibility.
 
 ## Example 1: Generic Task for training any nn.Module.
+<img src="https://pl-flash-data.s3.amazonaws.com/images/mnist.png" width="200px">
 
 ```python
 from pl_flash import LightningTask
-from torch import nn
-from torch.optim import Adam
-from torchvision.datasets import MNIST
+from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
+from torchvision import transforms, datasets
 import pytorch_lightning as pl
 
-from urllib.request import urlopen
-from zipfile import ZipFile
-from io import BytesIO
-```
-
-```python
+# model
 model = nn.Sequential(
     nn.Flatten(),
     nn.Linear(28 * 28, 128),
@@ -61,32 +55,44 @@ model = nn.Sequential(
 )
 
 # data
-dataset = MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
 train, val = random_split(dataset, [55000, 5000])
 
-classifier = LightningTask(model, loss_fn=nn.functional.cross_entropy, optimizer=Adam)
+# task
+classifier = LightningTask(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
+
+# train
 pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 ```
 
 ## Example 2: A task for computer vision.
+<img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
+Here we classify ants vs bees.
 
 ```python
+# import our libraries
 from pl_flash.vision import ImageClassifier, ImageClassificationData
 import pytorch_lightning as pl
 
-# download data 
+from urllib.request import urlopen
+from zipfile import ZipFile
+from io import BytesIO
+
+
+# download data
 with urlopen("https://download.pytorch.org/tutorial/hymenoptera_data.zip") as resp:
     with ZipFile(BytesIO(resp.read())) as file:
         file.extractall('data/')
 
-# 1. build our model
-model = ImageClassifier(backbone="resnet18", num_classes=2)
-
-# 2. organize our data
+# 1. organize our data
 data = ImageClassificationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
     valid_folder="data/hymenoptera_data/val/"
 )
+
+# 2. build our model
+model = ImageClassifier(backbone="resnet18", num_classes=2)
+
 
 # 3. train!
 pl.Trainer().fit(model, data)
@@ -95,23 +101,28 @@ pl.Trainer().fit(model, data)
 ## Example 3: A task for NLP
 
 ```python
+from pl_flash.text import TextClassifier, TextClassificationData
 import pytorch_lightning as pl
 
-# build our model
-model = TextClassifier(backbone="bert-base-cased", num_classes=2)
+from urllib.request import urlopen
+from zipfile import ZipFile
+from io import BytesIO
 
 # download data
 with urlopen("https://pl-flash-data.s3.amazonaws.com/imdb.zip") as resp:
     with ZipFile(BytesIO(resp.read())) as file:
         file.extractall("data/")
 
+# build our model
+model = TextClassifier(backbone="bert-base-cased", num_classes=2)
+
 # structure our data
 data = TextClassificationData.from_files(
     backbone="bert-base-cased",
     train_file="data/imdb/train.csv",
-    valid_file="data/imdb/val.csv",
-    text_field="sentence",
-    label_field="label",
+    valid_file="data/imdb/valid.csv",
+    text_field="review",
+    label_field="sentiment",
 )
 
 # train
