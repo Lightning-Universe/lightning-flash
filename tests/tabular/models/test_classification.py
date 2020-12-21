@@ -4,7 +4,9 @@ import pytorch_lightning as pl
 
 from pl_flash.tabular import TabularClassifier
 
-###### Mock functions #####
+# ======== Mock functions ========
+
+
 class DummyDataset(torch.utils.data.Dataset):
     def __init__(self, num_num=16, num_cat=16):
         super().__init__()
@@ -21,7 +23,7 @@ class DummyDataset(torch.utils.data.Dataset):
         return 100
 
 
-##########################
+# ==============================
 
 
 def test_init_train(tmpdir):

@@ -1,7 +1,8 @@
 from pl_flash import utils
 
 
-###### Mock functions #####
+# ======== Mock functions ========
+
 class A:
     def __call__(self, x):
         return True
@@ -11,8 +12,9 @@ def b():
     return True
 
 
-c = lambda: True
-###########################
+c = lambda: True  # noqa: E731
+
+# ==============================
 
 
 def test_get_callable_name():

@@ -7,7 +7,9 @@ from pl_flash.vision import ImageClassifier
 from unittest.mock import patch
 from imp import reload
 
-###### Mock functions #####
+# ======== Mock functions ========
+
+
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return torch.rand(3, 224, 224), torch.randint(10, size=(1,)).item()
@@ -16,7 +18,7 @@ class DummyDataset(torch.utils.data.Dataset):
         return 100
 
 
-##########################
+# ==============================
 
 
 @pytest.mark.parametrize(
@@ -38,18 +40,18 @@ def test_init_train(tmpdir, backbone):
 
 def test_non_existent_backbone():
     with pytest.raises(NotImplementedError):
-        model = ImageClassifier(2, "i am never going to implement this lol")
+        ImageClassifier(2, "i am never going to implement this lol")
 
 
 def test_freeze():
     model = ImageClassifier(2)
     model.freeze()
     for p in model.backbone.parameters():
-        assert p.requires_grad == False
+        assert p.requires_grad is False
 
 
 def test_unfreeze():
     model = ImageClassifier(2)
     model.unfreeze()
     for p in model.backbone.parameters():
-        assert p.requires_grad == True
+        assert p.requires_grad is True

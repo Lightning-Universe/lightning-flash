@@ -42,9 +42,12 @@ class TextClassificationData(DataModule):
         Returns:
             TextClassificationData: The constructed data module.
 
-        Examples:
-            >>> train_df = pd.read_csv("train_data.csv") # doctest: +SKIP
-            >>> tab_data = TabularData.from_df(train_df, target_col="fraud", numerical_cols=["account_value"], categorical_cols=["account_type"]) # doctest: +SKIP
+        Examples::
+
+            train_df = pd.read_csv("train_data.csv")
+            tab_data = TabularData.from_df(train_df, target_col="fraud",
+                                           numerical_cols=["account_value"],
+                                           categorical_cols=["account_type"])
 
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)

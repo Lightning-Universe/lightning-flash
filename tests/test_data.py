@@ -4,7 +4,8 @@ from unittest.mock import patch
 from pl_flash import DataModule
 
 
-###### Mock functions #####
+# ======== Mock functions ========
+
 def dummy_metric(y_hat, y):
     return torch.zeros_like(y)
 
@@ -17,14 +18,14 @@ class DummyDataset(torch.utils.data.Dataset):
         return 10
 
 
-##########################
+# ===============================
 
 
 def test_init():
     train_ds, val_ds, test_ds = DummyDataset(), DummyDataset(), DummyDataset()
-    dm = DataModule(train_ds)
-    dm = DataModule(train_ds, val_ds)
-    dm = DataModule(train_ds, val_ds, test_ds)
+    DataModule(train_ds)
+    DataModule(train_ds, val_ds)
+    DataModule(train_ds, val_ds, test_ds)
 
 
 def test_dataloaders():

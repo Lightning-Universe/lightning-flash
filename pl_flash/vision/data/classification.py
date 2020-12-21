@@ -19,13 +19,7 @@ def _pil_loader(path):
 
 
 class FilepathDataset(torch.utils.data.Dataset):
-    """Dataset that takes in filepaths and labels.
-    Args:
-        filepaths: file paths to load with :attr:`loader`
-        labels: the labels corresponding to the :attr:`filepaths`. Each unique value will get a class index by sorting them.
-        loader: the function to load an image from a given file path
-        transform: the transforms to apply to the loaded images
-    """
+    """Dataset that takes in filepaths and labels."""
 
     def __init__(
         self,
@@ -34,6 +28,14 @@ class FilepathDataset(torch.utils.data.Dataset):
         loader: Callable,
         transform: Optional[Callable] = None,
     ):
+        """
+        Args:
+            filepaths: file paths to load with :attr:`loader`
+            labels: the labels corresponding to the :attr:`filepaths`.
+                Each unique value will get a class index by sorting them.
+            loader: the function to load an image from a given file path
+            transform: the transforms to apply to the loaded images
+        """
         self.fnames = filepaths
         self.labels = labels
         self.transform = transform
