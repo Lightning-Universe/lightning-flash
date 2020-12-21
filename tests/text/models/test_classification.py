@@ -8,7 +8,9 @@ from pl_flash.text import TextClassifier
 from unittest.mock import patch
 from imp import reload
 
-###### Mock functions #####
+# ======== Mock functions ========
+
+
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
@@ -20,7 +22,7 @@ class DummyDataset(torch.utils.data.Dataset):
         return 100
 
 
-##########################
+# ==============================
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 

@@ -8,8 +8,8 @@ from pl_flash import LightningTask
 
 import torchvision
 
-_resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])
-_resnet_feats = lambda model: model.fc.in_features
+_resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
+_resnet_feats = lambda model: model.fc.in_features  # noqa: E731
 
 _backbones = {
     "resnet18": (torchvision.models.resnet18, _resnet_backbone, _resnet_feats),

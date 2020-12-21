@@ -8,7 +8,8 @@ import pytorch_lightning as pl
 from pl_flash import LightningTask
 
 
-###### Mock functions #####
+# ======== Mock functions ========
+
 def dummy_metric(y_hat, y):
     return torch.zeros_like(y)
 
@@ -21,7 +22,7 @@ class DummyDataset(torch.utils.data.Dataset):
         return 100
 
 
-##########################
+# ================================
 
 
 @pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])

@@ -102,8 +102,9 @@ class TabularData(DataModule):
         Returns:
             TextClassificationData: The constructed data module.
 
-        Examples:
-            >>> text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence") # doctest: +SKIP
+        Examples::
+
+            text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence")
 
         """
         return cls(

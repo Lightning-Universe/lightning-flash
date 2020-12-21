@@ -71,6 +71,6 @@ class ImageDetector(LightningTask):
         loss_dict = self.model(images, targets)
         loss = sum(loss_dict.values())
         for k, v in loss_dict.items():
-            self.log(f"train_k", v)
+            self.log("train_k", v)
 
         return loss
