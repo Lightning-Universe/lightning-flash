@@ -34,7 +34,8 @@ if __LIGHTNING_FLASH_SETUP__:
 else:
 
     from pl_flash.model import LightningTask
-    from pl_flash.data import DataModule
+    from pl_flash import data
     from pl_flash import vision
+    from pl_flash.data import DataModule
 
-    __all__ = ["LightningTask", "vision"]
+    __all__ = ["LightningTask", "vision", "data"]

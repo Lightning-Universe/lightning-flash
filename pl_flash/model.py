@@ -5,7 +5,6 @@ from torch import nn
 import torch.nn.functional as F
 
 import pytorch_lightning as pl
-
 from pl_flash.utils import get_callable_dict
 
 

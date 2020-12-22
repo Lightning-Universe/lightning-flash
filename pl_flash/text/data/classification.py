@@ -2,7 +2,7 @@ import pathlib
 from typing import Sequence, Callable, Optional, Union, Any, Tuple
 
 import torch
-from pl_flash import DataModule
+from pl_flash.data.datamodule import DataModule
 
 from transformers import AutoTokenizer
 from datasets import DatasetDict, load_dataset, ClassLabel, Value
@@ -61,10 +61,7 @@ class TextClassificationData(DataModule):
         dataset_dict = load_dataset(filetype, data_files=paths)
 
         label_to_class_mapping = {
-            v: k
-            for k, v in enumerate(
-                list(sorted(list(set(dataset_dict["train"][label_field]))))
-            )
+            v: k for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][label_field])))))
         }
 
         def transform_label(ex):

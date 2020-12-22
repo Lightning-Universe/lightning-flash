@@ -1,9 +1,9 @@
-from typing import Optional, Union, Any
 import os
 import warnings
-from torch.utils.data import Dataset, DataLoader
+from typing import Optional
 
 import pytorch_lightning as pl
+from torch.utils.data import Dataset, DataLoader
 
 
 class DataModule(pl.LightningDataModule):
