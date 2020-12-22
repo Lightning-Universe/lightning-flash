@@ -2,13 +2,12 @@ import pathlib
 from typing import Sequence, Callable, Optional, Union, Any, Tuple
 
 import torch
-from pl_flash import DataModule
 
-
-import torchvision
 import torchvision.transforms as T
 from PIL import Image
 from torchvision.datasets import ImageFolder
+
+from pl_flash.data.datamodule import DataModule
 
 
 def _pil_loader(path):

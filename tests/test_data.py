@@ -6,6 +6,7 @@ from pl_flash import DataModule
 
 # ======== Mock functions ========
 
+
 def dummy_metric(y_hat, y):
     return torch.zeros_like(y)
 

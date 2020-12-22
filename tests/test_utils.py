@@ -3,6 +3,7 @@ from pl_flash import utils
 
 # ======== Mock functions ========
 
+
 class A:
     def __call__(self, x):
         return True

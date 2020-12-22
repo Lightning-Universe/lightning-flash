@@ -10,6 +10,7 @@ from pl_flash import LightningTask
 
 # ======== Mock functions ========
 
+
 def dummy_metric(y_hat, y):
     return torch.zeros_like(y)
 

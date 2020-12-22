@@ -1,5 +1,5 @@
 from typing import Sequence
-from pl_flash import DataModule
+from pl_flash.data.datamodule import DataModule
 from pl_flash.tabular.data.dataset import PandasDataset
 
 import pandas as pd
