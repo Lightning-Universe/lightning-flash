@@ -13,10 +13,11 @@ from imp import reload
 
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
-        return {
+        x = {
             "input_ids": torch.randint(1000, size=(100,)),
             "labels": torch.randint(2, size=(1,)).item(),
         }
+        return {"id": index, "x": x, "target": x["labels"]}
 
     def __len__(self):
         return 100

@@ -2,8 +2,7 @@
 
 import os
 
-
-__version__ = "0.0.1post2"
+__version__ = "0.0.3"
 __author__ = "PyTorchLightning et al."
 __author_email__ = "name@pytorchlightning.ai"
 __license__ = "TBD"
@@ -33,9 +32,8 @@ if __LIGHTNING_FLASH_SETUP__:
     # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
 else:
 
-    from pl_flash.model import LightningTask
-    from pl_flash import data
-    from pl_flash import vision
+    from pl_flash.model import ClassificationLightningTask, LightningTask
+    from pl_flash import data, vision
     from pl_flash.data import DataModule
 
-    __all__ = ["LightningTask", "vision", "data"]
+    __all__ = ["LightningTask", "ClassificationLightningTask, vision", "data"]

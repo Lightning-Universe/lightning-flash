@@ -85,7 +85,7 @@ jobs:
     - name: Tests
       run: |
         # tox --sitepackages
-        coverage run --source pl_flash -m py.test pl_flash tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
+        coverage run --source pl_flash -m pytest pl_flash tests -v --color=yes --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
         coverage xml
 
     - name: Upload pytest test results

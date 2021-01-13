@@ -24,7 +24,8 @@ def test_pandas():
         regression=False,
     )
     assert len(ds) == 6
-    (cat, num), target = ds[0]
+    data = ds[0]
+    (cat, num), target = data['x'], data['target']
     assert cat == np.array([0])
     assert np.allclose(num, np.array([0.0, 5.0]))
     assert target == 0

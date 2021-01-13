@@ -68,6 +68,12 @@ classifier = LightningTask(model, loss_fn=nn.functional.cross_entropy, optimizer
 pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 ```
 
+To run the example:
+
+```
+python pl_flash_examples/generic_task.py
+```
+
 ## Example 2: A task for computer vision.
 <img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
 Here we classify ants vs bees.
@@ -93,6 +99,12 @@ model = ImageClassifier(backbone="resnet18", num_classes=2)
 
 # 3. train!
 pl.Trainer().fit(model, data)
+```
+
+To run the example:
+
+```
+python pl_flash_examples/torchvision_classifier.py
 ```
 
 ## Example 3: A task for NLP
@@ -121,7 +133,13 @@ data = TextClassificationData.from_files(
 pl.Trainer().fit(model, data)
 ```
 
-## Example 3: A task for Tabular data.
+To run the example: 
+
+```bash
+python pl_flash_examples/text_classification.py
+```
+
+## Example 4: A task for Tabular data.
 
 ```python
 from pl_flash.tabular import TabularClassifier, TabularData
@@ -150,4 +168,10 @@ model = TabularClassifier(
 )
 
 pl.Trainer().fit(model, data)
+```
+
+To run the example: 
+
+```
+python pl_flash_examples/tabular_data.py
 ```

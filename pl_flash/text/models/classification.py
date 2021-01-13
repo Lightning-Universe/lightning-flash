@@ -1,15 +1,14 @@
-from typing import Callable, Mapping, Sequence, Union, Type
+from typing import Callable, Mapping, Sequence, Type, Union
 
 import torch
-from torch import nn
 import torch.nn.functional as F
-
-from pl_flash import LightningTask
-
+from torch import nn
 from transformers import BertForSequenceClassification
 
+from pl_flash import ClassificationLightningTask
 
-class TextClassifier(LightningTask):
+
+class TextClassifier(ClassificationLightningTask):
     """LightningTask that classifies text.
 
     Args:
@@ -44,8 +43,10 @@ class TextClassifier(LightningTask):
         return loss, logits
 
     def step(self, batch, batch_idx):
-        loss, logits = self.forward(batch)
-        labels = batch["labels"]
-        logs = {name: metric(logits, labels) for name, metric in self.metrics.items()}
-        logs["loss"] = loss
-        return loss, logs
+        output = {}
+        x, target = batch["x"], batch["target"]
+        loss, logits = self.forward(x)
+        output["loss"] = loss
+        output["y_hat"] = logits
+        output["logs"] = {name: metric(logits, target) for name, metric in self.metrics.items()}
+        return output

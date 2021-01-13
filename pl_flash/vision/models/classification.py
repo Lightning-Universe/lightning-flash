@@ -1,12 +1,12 @@
-from typing import Callable, Mapping, Sequence, Union, Type
+from typing import Callable, Mapping, Sequence, Type, Union
 
 import torch
-from torch import nn
 import torch.nn.functional as F
-
-from pl_flash import LightningTask
-
 import torchvision
+from pytorch_lightning.metrics import Accuracy
+from torch import nn
+
+from pl_flash import ClassificationLightningTask
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731
@@ -20,7 +20,7 @@ _backbones = {
 }
 
 
-class ImageClassifier(LightningTask):
+class ImageClassifier(ClassificationLightningTask):
     """LightningTask that classifies images.
 
     Args:
@@ -40,7 +40,7 @@ class ImageClassifier(LightningTask):
         pretrained=True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
+        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
         learning_rate: float = 1e-3,
     ):
         super().__init__(

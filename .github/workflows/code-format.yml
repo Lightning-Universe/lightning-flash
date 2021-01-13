@@ -12,15 +12,6 @@ on:
       - master
 
 jobs:
-  black:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@master
-    - name: Black Formatting
-      uses: teddykoker/python-black-check@master
-      with:
-        line-length: '120'
 
   python-pep8:
     name: Python formatting PEP8

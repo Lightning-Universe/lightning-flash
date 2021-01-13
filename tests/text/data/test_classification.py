@@ -50,8 +50,8 @@ def test_from_csv(tmpdir):
         label_field="label",
     )
     batch = next(iter(dm.train_dataloader()))
-    assert batch["labels"].item() in [0, 1]
-    assert "input_ids" in batch
+    assert batch["target"].item() in [0, 1]
+    assert "input_ids" in batch["x"]
 
 
 def test_test_valid(tmpdir):
@@ -68,12 +68,12 @@ def test_test_valid(tmpdir):
         label_field="label",
     )
     batch = next(iter(dm.val_dataloader()))
-    assert batch["labels"].item() in [0, 1]
-    assert "input_ids" in batch
+    assert batch["target"].item() in [0, 1]
+    assert "input_ids" in batch["x"]
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch["labels"].item() in [0, 1]
-    assert "input_ids" in batch
+    assert batch["target"].item() in [0, 1]
+    assert "input_ids" in batch["x"]
 
 
 def test_from_json(tmpdir):
@@ -89,5 +89,5 @@ def test_from_json(tmpdir):
         filetype="json",
     )
     batch = next(iter(dm.train_dataloader()))
-    assert batch["labels"].item() in [0, 1]
-    assert "input_ids" in batch
+    assert batch["target"].item() in [0, 1]
+    assert "input_ids" in batch["x"]

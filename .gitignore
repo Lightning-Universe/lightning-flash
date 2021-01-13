@@ -133,3 +133,6 @@ dmypy.json
 
 docs/notebooks/
 docs/api/
+data
+titanic.csv
+.vscode

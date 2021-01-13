@@ -1,24 +1,26 @@
-from pl_flash.vision import ImageClassificationData, ImageClassifier
-from pathlib import Path
+import platform
+from argparse import ArgumentParser
 
+import pytest
 import pytorch_lightning as pl
-from PIL import Image
 
-import torch
-
-
-def _dummy_image_loader(filepath):
-    return torch.rand(3, 224, 224)
+from pl_flash_examples.generic_task import train_generic_task_on_mnist
+from pl_flash_examples.torchvision_classifier import train_image_classifier
 
 
-def test_classification(tmpdir):
-    data = ImageClassificationData.from_filepaths(
-        train_filepaths=["a", "b"],
-        train_labels=[0, 1],
-        train_transform=lambda x: x,
-        loader=_dummy_image_loader,
-        num_workers=0,
-    )
-    model = ImageClassifier(2, backbone="resnet18")
-    trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    trainer.fit(model, data)
+@pytest.mark.skipif(platform.system() == "Windows", reason="Distributed training is not supported on Windows")
+def test_torchvision_classifier_example(tmpdir):
+    parser = ArgumentParser()
+    parser = pl.Trainer.add_argparse_args(parser)
+    cmd = "--max_epochs 1 --fast_dev_run 1 --num_processes 2 --accelerator ddp_cpu"
+    args = parser.parse_args(cmd.split(" "))
+    train_image_classifier(args)
+
+
+@pytest.mark.skipif(platform.system() == "Windows", reason="Distributed training is not supported on Windows")
+def test_generic_task_example(tmpdir):
+    parser = ArgumentParser()
+    parser = pl.Trainer.add_argparse_args(parser)
+    cmd = "--max_epochs 1 --fast_dev_run 1 --num_processes 2 --accelerator ddp_cpu"
+    args = parser.parse_args(cmd.split(" "))
+    train_generic_task_on_mnist(args)
