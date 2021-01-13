@@ -32,9 +32,12 @@ pip install -e .
 ```
 
 ## What is Flash
-PyTorch Lightning provides the ultimate flexibility for building deep learning models with PyTorch. But for common use cases, users tend to rewrite a lot of boilerplate. Flash removes this boilerplate with predefined tasks for major domains.
+Flash is a task-based deep learning framework for flexible deep learning built on PyTorch Lightning. Tasks can be anything from
+text classification to object segmentation.
 
-Flash is built for beginners, new data scientists, Kagglers or anyone starting out with Deep Learning. But unlike other entry-level frameworks (keras, etc...), Flash users can switch to Lightning trivially when they need added flexibility.
+Although PyTorch Lightning provides ultimate flexibility, for common tasks it does not remove 100% of the boilerplate.
+
+Flash is built for applied researchers, beginners, data scientists, Kagglers or anyone starting out with Deep Learning. But unlike other entry-level frameworks (keras, etc...), Flash users can switch to Lightning trivially when they need added flexibility.
 
 ## Example 1: Generic Task for training any nn.Module.
 <img src="https://pl-flash-data.s3.amazonaws.com/images/mnist.png" width="200px">

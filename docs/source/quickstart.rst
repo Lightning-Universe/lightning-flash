@@ -1,10 +1,57 @@
 Quick Start
 ===========
+Flash is designed for rapid applied deep learning such as.
+
+- finetuning
+- solving common problems
+- generating embeddings
+- ...
+
+In just a few short lines you can leverage the latest state of the art models for any
+particular task you want to solve.
+
+Flash is built on top of PyTorch Lightning so you can train across GPUs, TPUs etc without doing
+any code changes. Tasks are just custom LightningModules, so when you need more flexibility you can
+simply use lightning directly or modify and existing task in just a few lines.
+
+For most applied deep learning
+------------------------------
+
+Flash is designed for quickly finetuning and doing applied deep learning. The FlashTask is
+very general and can handle the majority of these problems.
+
+.. code-block:: python
+
+    from pl_flash import LightningTask
+    from torch import nn, optim
+    from torch.utils.data import DataLoader, random_split
+    from torchvision import transforms, datasets
+    import pytorch_lightning as pl
+
+    # model
+    model = nn.Sequential(
+        nn.Flatten(),
+        nn.Linear(28 * 28, 128),
+        nn.ReLU(),
+        nn.Linear(128, 10)
+    )
+
+    # data
+    dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+    train, val = random_split(dataset, [55000, 5000])
+
+    # task
+    classifier = LightningTask(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
+
+    # train
+    pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
+
+----
 
 Image Classification
 --------------------
 
-Lets say you wanted to develope a model that could classify between **ants** and **bees**. 
+Let's say you wanted to develope a model that could classify between **ants** and **bees**.
 We only need a ``train`` and ``validation`` folder, each with examples of images of dogs and cats like so: 
 
 .. code-block::
@@ -33,19 +80,12 @@ Now all we need is three lines of code to build and train our model!
 
 .. code-block:: python
 
-    # import our libraries
     from pl_flash.vision import ImageClassifier, ImageClassificationData
     import pytorch_lightning as pl
+    from pl_flash.data import download_data
 
-    from urllib.request import urlopen
-    from zipfile import ZipFile
-    from io import BytesIO
-
-
-    # download data 
-    with urlopen("https://download.pytorch.org/tutorial/hymenoptera_data.zip") as resp:
-        with ZipFile(BytesIO(resp.read())) as file:
-            file.extractall('data/')
+    # download data
+    download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
 
     # 1. organize our data
     data = ImageClassificationData.from_folders(
@@ -56,10 +96,10 @@ Now all we need is three lines of code to build and train our model!
     # 2. build our model
     model = ImageClassifier(backbone="resnet18", num_classes=2)
 
-
     # 3. train!
     pl.Trainer().fit(model, data)
 
+------
 
 Text Classification
 -------------------
@@ -82,15 +122,10 @@ Once again, all we need is three lines of code to train our model!
 
     from pl_flash.text import TextClassifier, TextClassificationData
     import pytorch_lightning as pl
-
-    from urllib.request import urlopen
-    from zipfile import ZipFile
-    from io import BytesIO
+    from pl_flash.data import download_data
 
     # download data
-    with urlopen("https://pl-flash-data.s3.amazonaws.com/imdb.zip") as resp:
-        with ZipFile(BytesIO(resp.read())) as file:
-            file.extractall("data/")
+    download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
 
     # build our model
     model = TextClassifier(backbone="bert-base-cased", num_classes=2)
@@ -107,6 +142,7 @@ Once again, all we need is three lines of code to train our model!
     # train
     pl.Trainer().fit(model, data)
 
+------
 
 Tabular Classification
 ----------------------
@@ -132,11 +168,10 @@ And now we train:
     from pl_flash.tabular import TabularClassifier, TabularData
     import pytorch_lightning as pl
     import pandas as pd
-
-    from urllib.request import urlretrieve
+    from pl_flash.data import download_data
 
     # download data
-    urlretrieve("https://pl-flash-data.s3.amazonaws.com/titanic.csv", "titanic.csv")
+    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", "titanic.csv")
 
     # structure data
     data = TabularData.from_df(
