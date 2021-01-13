@@ -1,11 +1,12 @@
-from typing import Sequence
-from pl_flash.data.datamodule import DataModule
-from pl_flash.tabular.data.dataset import PandasDataset
+from typing import List, Sequence, Tuple
 
 import pandas as pd
 
+from pl_flash.data.datamodule import DataModule
+from pl_flash.tabular.data.dataset import PandasDataset
 
-def _categorize(dfs: list, cat_cols: list):
+
+def _categorize(dfs: List, cat_cols: List):
 
     # combine all dfs together so categories are the same
     tmp = pd.concat([df.copy() for df in dfs], keys=range(len(dfs)))
@@ -26,7 +27,7 @@ def _categorize(dfs: list, cat_cols: list):
     return dfs, codes
 
 
-def _normalize(dfs: list, num_cols: list):
+def _normalize(dfs: List, num_cols: List) -> Tuple:
     dfs = [df.copy() for df in dfs]
     mean, std = dfs[0][num_cols].mean(), dfs[0][num_cols].std()
     for df in dfs:
@@ -34,7 +35,7 @@ def _normalize(dfs: list, num_cols: list):
     return dfs, mean, std
 
 
-def _impute(dfs: list, num_cols: list):
+def _impute(dfs: List, num_cols: List):
     dfs = [df.copy() for df in dfs]
     for col in num_cols:
         for df in dfs:
@@ -48,8 +49,8 @@ class TabularData(DataModule):
     def __init__(
         self,
         train_df,
-        categorical_cols: Sequence,
-        numerical_cols: Sequence,
+        categorical_cols: List,
+        numerical_cols: List,
         target_col: str,
         valid_df=None,
         test_df=None,
@@ -79,8 +80,8 @@ class TabularData(DataModule):
         cls,
         train_df: pd.DataFrame,
         target_col: str,
-        categorical_cols: Sequence,
-        numerical_cols: Sequence,
+        categorical_cols: List,
+        numerical_cols: List,
         valid_df: pd.DataFrame = None,
         test_df: pd.DataFrame = None,
         batch_size=1,

@@ -84,7 +84,8 @@ def test_tabular_data(tmpdir):
         batch_size=1,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        (cat, num), target = next(iter(dl))
+        data = next(iter(dl))
+        (cat, num), target = data['x'], data['target']
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1,)
@@ -104,7 +105,8 @@ def test_from_df(tmpdir):
         num_workers=0,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        (cat, num), target = next(iter(dl))
+        data = next(iter(dl))
+        (cat, num), target = data['x'], data['target']
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1,)

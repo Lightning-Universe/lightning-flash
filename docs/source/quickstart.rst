@@ -51,8 +51,8 @@ very general and can handle the majority of these problems.
 Image Classification
 --------------------
 
-Let's say you wanted to develope a model that could classify between **ants** and **bees**.
-We only need a ``train`` and ``validation`` folder, each with examples of images of ants and bees like so: 
+Lets say you wanted to develope a model that could classify between **ants** and **bees**. 
+We only need a ``train`` and ``validation`` folder, each with examples of images of **ants** and **bees** like so: 
 
 .. code-block::
 
@@ -101,6 +101,13 @@ Now all we need is three lines of code to build and train our model!
 
 ------
 
+To run the example:
+
+.. code-block:: python
+
+    python pl_flash_examples/torchvision_classifier.py
+
+
 Text Classification
 -------------------
 
@@ -143,6 +150,13 @@ Once again, all we need is three lines of code to train our model!
     pl.Trainer().fit(model, data)
 
 ------
+
+To run the example:
+
+.. code-block:: python
+
+    python pl_flash_examples/text_classification.py
+
 
 Tabular Classification
 ----------------------
@@ -191,3 +205,10 @@ And now we train:
     )
 
     pl.Trainer().fit(model, data)
+
+
+To run the example:
+
+.. code-block:: python
+
+    python pl_flash_examples/tabular_data.py

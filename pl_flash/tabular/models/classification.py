@@ -1,13 +1,13 @@
 from typing import Callable
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
-from pl_flash import LightningTask
+from pl_flash import ClassificationLightningTask
 
 
-class TabularClassifier(LightningTask):
+class TabularClassifier(ClassificationLightningTask):
     """LightningTask that classifies table rows.
 
     Args:

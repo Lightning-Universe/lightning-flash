@@ -6,3 +6,5 @@ pytest-flake8
 flake8
 check-manifest
 twine==1.13.0
+scikit-learn==0.24.0
+https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_inference.zip
