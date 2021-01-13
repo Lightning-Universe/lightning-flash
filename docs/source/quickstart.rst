@@ -52,7 +52,7 @@ Image Classification
 --------------------
 
 Let's say you wanted to develope a model that could classify between **ants** and **bees**.
-We only need a ``train`` and ``validation`` folder, each with examples of images of dogs and cats like so: 
+We only need a ``train`` and ``validation`` folder, each with examples of images of ants and bees like so: 
 
 .. code-block::
 
