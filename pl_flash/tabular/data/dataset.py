@@ -1,6 +1,6 @@
+import numpy as np
 import torch
 from torch.utils.data import Dataset
-import numpy as np
 
 
 class PandasDataset(Dataset):
@@ -17,4 +17,4 @@ class PandasDataset(Dataset):
         return len(self.target)
 
     def __getitem__(self, idx):
-        return {"id": idx, "x": (self.cat_vars[idx], self.num_vars[idx]), "target": self.target[idx]}
+        return (self.cat_vars[idx], self.num_vars[idx]), self.target[idx]

@@ -1,23 +1,22 @@
-import pytest
 import os
-import torch
+from imp import reload
+from unittest.mock import patch
+
+import pytest
 import pytorch_lightning as pl
+import torch
 
 from pl_flash.text import TextClassifier
-
-from unittest.mock import patch
-from imp import reload
 
 # ======== Mock functions ========
 
 
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
-        x = {
+        return {
             "input_ids": torch.randint(1000, size=(100,)),
             "labels": torch.randint(2, size=(1,)).item(),
         }
-        return {"id": index, "x": x, "target": x["labels"]}
 
     def __len__(self):
         return 100

@@ -11,7 +11,7 @@ class TabularClassifier(ClassificationLightningTask):
     """LightningTask that classifies table rows.
 
     Args:
-        num_columns: Number of columns in table (not including target column).
+        num_features: Number of columns in table (not including target column).
         num_classes: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         hidden: Hidden dimension sizes.
@@ -23,7 +23,7 @@ class TabularClassifier(ClassificationLightningTask):
 
     def __init__(
         self,
-        num_columns,
+        num_features,
         num_classes,
         embedding_sizes,
         hidden=[512],
@@ -40,7 +40,7 @@ class TabularClassifier(ClassificationLightningTask):
             learning_rate=learning_rate,
         )
 
-        num_num = num_columns - len(embedding_sizes)  # numerical columns
+        num_num = num_features - len(embedding_sizes)  # numerical columns
         input_size = num_num + sum(emb_dim for _, emb_dim in embedding_sizes)
         sizes = [input_size] + hidden + [num_classes]
 

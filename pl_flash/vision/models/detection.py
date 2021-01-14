@@ -1,18 +1,16 @@
-from typing import Any, Optional, Union, Mapping, Sequence, Type, Callable
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
+import torchvision
 from torch import nn
 from torch.optim import Optimizer
 
-import torchvision
-
-from pl_flash import LightningTask
-
+from pl_flash import ClassificationLightningTask
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
 
-class ImageDetector(LightningTask):
+class ImageDetector(ClassificationLightningTask):
     """Image detection task
 
     Args:

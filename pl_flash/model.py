@@ -80,16 +80,9 @@ class LightningTask(pl.LightningModule):
         output = self.step(batch, batch_idx)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
-        if isinstance(batch, dict) and 'id' in batch:
-            # `add_predictions` features is not released yet. Install with following command:
-            # ``pip install https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_inference.zip``
-            if getattr(self, "add_predictions", None) is not None:
-                # save predictions
-                predictions = [
-                    {"id": sample_id.item(), "prediction": prediction}
-                    for sample_id, prediction in zip(batch["id"], output["y_hat"])
-                ]
-                self.add_predictions(predictions)
+        # ``pip install https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_inference.zip``
+        if getattr(self, "add_predictions", None) is not None:
+            self.add_predictions(output["y_hat"])
 
     def configure_optimizers(self):
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
