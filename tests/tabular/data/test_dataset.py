@@ -1,8 +1,8 @@
-from pl_flash.tabular.data.dataset import PandasDataset
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 import pytest
+
+from pl_flash.tabular.data.dataset import PandasDataset
 
 TEST_DF = pd.DataFrame(
     data={
@@ -24,8 +24,7 @@ def test_pandas():
         regression=False,
     )
     assert len(ds) == 6
-    data = ds[0]
-    (cat, num), target = data['x'], data['target']
+    (cat, num), target = ds[0]
     assert cat == np.array([0])
     assert np.allclose(num, np.array([0.0, 5.0]))
     assert target == 0

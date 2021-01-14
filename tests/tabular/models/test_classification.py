@@ -1,6 +1,6 @@
 import pytest
-import torch
 import pytorch_lightning as pl
+import torch
 
 from pl_flash.tabular import TabularClassifier
 
@@ -28,20 +28,20 @@ class DummyDataset(torch.utils.data.Dataset):
 
 def test_init_train(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
-    model = TabularClassifier(num_classes=10, num_columns=16 + 16, embedding_sizes=16 * [(10, 32)])
+    model = TabularClassifier(num_classes=10, num_features=16 + 16, embedding_sizes=16 * [(10, 32)])
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, train_dl)
 
 
 def test_init_train_no_num(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_num=0), batch_size=16)
-    model = TabularClassifier(num_classes=10, num_columns=16, embedding_sizes=16 * [(10, 32)])
+    model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=16 * [(10, 32)])
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, train_dl)
 
 
 def test_init_train_no_cat(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
-    model = TabularClassifier(num_classes=10, num_columns=16, embedding_sizes=[])
+    model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, train_dl)

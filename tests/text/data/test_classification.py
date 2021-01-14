@@ -1,15 +1,15 @@
-from pl_flash.text import TextClassificationData
-from pathlib import Path
-
 import os
-from PIL import Image
-import numpy as np
-import torchvision.transforms as T
-
-import torch
-import pytest
-from unittest.mock import patch
 from imp import reload
+from pathlib import Path
+from unittest.mock import patch
+
+import numpy as np
+import pytest
+import torch
+import torchvision.transforms as T
+from PIL import Image
+
+from pl_flash.text import TextClassificationData
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
@@ -50,8 +50,8 @@ def test_from_csv(tmpdir):
         label_field="label",
     )
     batch = next(iter(dm.train_dataloader()))
-    assert batch["target"].item() in [0, 1]
-    assert "input_ids" in batch["x"]
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
 
 
 def test_test_valid(tmpdir):
@@ -68,12 +68,12 @@ def test_test_valid(tmpdir):
         label_field="label",
     )
     batch = next(iter(dm.val_dataloader()))
-    assert batch["target"].item() in [0, 1]
-    assert "input_ids" in batch["x"]
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch["target"].item() in [0, 1]
-    assert "input_ids" in batch["x"]
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
 
 
 def test_from_json(tmpdir):
@@ -89,5 +89,5 @@ def test_from_json(tmpdir):
         filetype="json",
     )
     batch = next(iter(dm.train_dataloader()))
-    assert batch["target"].item() in [0, 1]
-    assert "input_ids" in batch["x"]
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch

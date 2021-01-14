@@ -8,7 +8,9 @@ jobs:
   docs:
     runs-on: ubuntu-20.04
     steps:
+
     - uses: actions/checkout@v2
+
     - uses: ammaraskar/sphinx-action@master
       with:
         # git is required to clone the docs theme
@@ -16,8 +18,8 @@ jobs:
         pre-build-command: "apt-get update -y && apt-get install -y git pandoc && pip install -r requirements/install.txt && pip install -r requirements/docs.txt && pip install -e ."
         docs-folder: "docs/"
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
     - uses: actions/upload-artifact@v2
       with:
         name: docs-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}
         path: docs/build/html/
-

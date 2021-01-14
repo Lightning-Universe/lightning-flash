@@ -1,13 +1,12 @@
-from pl_flash.tabular import TabularData
-
-from pl_flash.tabular.data.data import _categorize, _normalize
-
+from imp import reload
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
-from unittest.mock import patch, Mock
-from imp import reload
+
+from pl_flash.tabular import TabularData
+from pl_flash.tabular.data.data import _categorize, _normalize
 
 TEST_DF_1 = pd.DataFrame(
     data={
@@ -84,8 +83,7 @@ def test_tabular_data(tmpdir):
         batch_size=1,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        data = next(iter(dl))
-        (cat, num), target = data['x'], data['target']
+        (cat, num), target = next(iter(dl))
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1,)
@@ -105,8 +103,7 @@ def test_from_df(tmpdir):
         num_workers=0,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        data = next(iter(dl))
-        (cat, num), target = data['x'], data['target']
+        (cat, num), target = next(iter(dl))
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1,)

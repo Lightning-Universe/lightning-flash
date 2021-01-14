@@ -1,5 +1,5 @@
 import pathlib
-from typing import Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import torch
 import torchvision.transforms as T
@@ -48,47 +48,13 @@ class FilepathDataset(torch.utils.data.Dataset):
     def __len__(self) -> int:
         return len(self.fnames)
 
-    def __getitem__(self, index: int) -> Dict[str, Union[str, torch.Tensor]]:
+    def __getitem__(self, index: int) -> Tuple[Any, Optional[int]]:
         filename = self.fnames[index]
         img = self.loader(filename)
         label = None
         if self.has_labels:
             label = self.label_to_class_mapping[filename]
-        return {"id": index, "filename": filename, "x" : img, "target": label}
-
-
-class FlashImageFolder(ImageFolder):
-
-    """A generic data loader where the images are arranged in this way: ::
-
-        root/dog/xxx.png
-        root/dog/xxy.png
-        root/dog/xxz.png
-
-        root/cat/123.png
-        root/cat/nsdf3.png
-        root/cat/asd932_.png
-
-    Args:
-        root (string): Root directory path.
-        transform (callable, optional): A function/transform that  takes in an PIL image
-            and returns a transformed version. E.g, ``transforms.RandomCrop``
-        target_transform (callable, optional): A function/transform that takes in the
-            target and transforms it.
-        loader (callable, optional): A function to load an image given its path.
-        is_valid_file (callable, optional): A function that takes path of an Image file
-            and check if the file is a valid file (used to check of corrupt files)
-
-     Attributes:
-        classes (list): List of the class names sorted alphabetically.
-        class_to_idx (dict): Dict with items (class_name, class_index).
-        imgs (list): List of (image path, class_index) tuples
-    """
-
-    def __getitem__(self, index):
-        sample, label = super().__getitem__(index)
-        path, _ = self.samples[index]
-        return {"id": index, "path": path, "x": sample, "target": label}
+        return img, label
 
 
 class ImageClassificationData(DataModule):
@@ -228,21 +194,25 @@ class ImageClassificationData(DataModule):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        train_ds = FlashImageFolder(train_folder, transform=train_transform, loader=loader)
+        train_ds = ImageFolder(train_folder, transform=train_transform, loader=loader)
         valid_ds = (
-            FlashImageFolder(valid_folder, transform=valid_transform, loader=loader)
+            ImageFolder(valid_folder, transform=valid_transform, loader=loader)
             if valid_folder is not None else None
         )
 
         test_ds = (
-            FlashImageFolder(test_folder, transform=valid_transform, loader=loader)
+            ImageFolder(test_folder, transform=valid_transform, loader=loader)
             if test_folder is not None else None
         )
 
-        return cls(
+        datamodule = cls(
             train_ds=train_ds,
             valid_ds=valid_ds,
             test_ds=test_ds,
             batch_size=batch_size,
             num_workers=num_workers,
         )
+
+        datamodule.num_classes = len(train_ds.classes)
+
+        return datamodule

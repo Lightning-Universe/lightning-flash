@@ -44,9 +44,8 @@ class TextClassifier(ClassificationLightningTask):
 
     def step(self, batch, batch_idx):
         output = {}
-        x, target = batch["x"], batch["target"]
-        loss, logits = self.forward(x)
+        loss, logits = self.forward(batch)
         output["loss"] = loss
         output["y_hat"] = logits
-        output["logs"] = {name: metric(logits, target) for name, metric in self.metrics.items()}
+        output["logs"] = {name: metric(logits, batch["labels"]) for name, metric in self.metrics.items()}
         return output

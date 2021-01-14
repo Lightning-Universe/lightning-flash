@@ -1,6 +1,7 @@
 from typing import List, Sequence, Tuple
 
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 from pl_flash.data.datamodule import DataModule
 from pl_flash.tabular.data.dataset import PandasDataset
@@ -58,8 +59,10 @@ class TabularData(DataModule):
         num_workers=None,
     ):
         dfs = [train_df]
+
         if valid_df is not None:
             dfs.append(valid_df)
+
         if test_df is not None:
             dfs.append(test_df)
 
@@ -70,10 +73,20 @@ class TabularData(DataModule):
         self.cat_cols = categorical_cols
         self.num_cols = numerical_cols
 
+        self._num_classes = len(train_df[target_col].unique())
+
         train_ds = PandasDataset(dfs[0], categorical_cols, numerical_cols, target_col)
         valid_ds = PandasDataset(dfs[1], categorical_cols, numerical_cols, target_col) if valid_df is not None else None
         test_ds = PandasDataset(dfs[-1], categorical_cols, numerical_cols, target_col) if test_df is not None else None
         super().__init__(train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers)
+
+    @property
+    def num_features(self):
+        return len(self.cat_cols) + len(self.num_cols)
+
+    @property
+    def num_classes(self):
+        return self._num_classes
 
     @classmethod
     def from_df(
@@ -84,8 +97,10 @@ class TabularData(DataModule):
         numerical_cols: List,
         valid_df: pd.DataFrame = None,
         test_df: pd.DataFrame = None,
-        batch_size=1,
-        num_workers=None,
+        batch_size: int = 1,
+        num_workers: int = None,
+        val_size: float = None,
+        test_size: float = None,
     ):
         """Creates a TextClassificationData object from pandas DataFrames.
 
@@ -99,6 +114,8 @@ class TabularData(DataModule):
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads.
+            val_size: float between 0 and 1 to create a validation dataset from train dataset
+            test_size: float between 0 and 1 to create a test dataset from train validation
 
         Returns:
             TextClassificationData: The constructed data module.
@@ -106,8 +123,16 @@ class TabularData(DataModule):
         Examples::
 
             text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence")
-
         """
+        if valid_df is None and isinstance(val_size, float) and isinstance(test_size, float):
+            assert 0 < val_size and val_size < 1
+            assert 0 < test_size and test_size < 1
+            train_df, valid_df = train_test_split(train_df, test_size=(val_size + test_size))
+
+        if test_df is None and isinstance(test_size, float):
+            assert 0 < test_size and test_size < 1
+            valid_df, test_df = train_test_split(valid_df, test_size=test_size)
+
         return cls(
             train_df=train_df,
             target_col=target_col,
