@@ -91,7 +91,6 @@ jobs:
     - name: Run examples
       run: |
         # tox --sitepackages
-        set -e
         python -m pip install -e .
         # python pl_flash_examples/generic_task.py
         # python pl_flash_examples/tabular_data.py

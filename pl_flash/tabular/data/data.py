@@ -4,44 +4,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from pl_flash.data.datamodule import DataModule
-from pl_flash.tabular.data.dataset import PandasDataset
-
-
-def _categorize(dfs: List, cat_cols: List):
-
-    # combine all dfs together so categories are the same
-    tmp = pd.concat([df.copy() for df in dfs], keys=range(len(dfs)))
-    for col in cat_cols:
-        tmp[col] = tmp[col].astype("category").cat.as_ordered()
-
-    # list of categories for each column (always a column for None)
-    codes = {col: [None] + list(tmp[col].cat.categories) for col in cat_cols}
-
-    # apply codes to each column
-    tmp[cat_cols] = tmp[cat_cols].apply(lambda x: x.cat.codes)
-
-    # we add one here as Nones are -1, so they turn into 0's
-    tmp[cat_cols] = tmp[cat_cols] + 1
-
-    # split dfs
-    dfs = [tmp.xs(i) for i in range(len(dfs))]
-    return dfs, codes
-
-
-def _normalize(dfs: List, num_cols: List) -> Tuple:
-    dfs = [df.copy() for df in dfs]
-    mean, std = dfs[0][num_cols].mean(), dfs[0][num_cols].std()
-    for df in dfs:
-        df[num_cols] = (df[num_cols] - mean) / std
-    return dfs, mean, std
-
-
-def _impute(dfs: List, num_cols: List):
-    dfs = [df.copy() for df in dfs]
-    for col in num_cols:
-        for df in dfs:
-            df[col].fillna(dfs[0][col].median())
-    return dfs
+from pl_flash.tabular.data.dataset import (PandasDataset, _categorize,
+                                           _compute_normalization,
+                                           _generate_codes, _impute,
+                                           _normalize, _pre_transform)
 
 
 class TabularData(DataModule):
@@ -59,17 +25,28 @@ class TabularData(DataModule):
         num_workers=None,
     ):
         dfs = [train_df]
+        self._test_df = None
 
         if valid_df is not None:
             dfs.append(valid_df)
 
         if test_df is not None:
+            # save for predict function
+            self._test_df = test_df.copy()
+            self._test_df.drop(target_col, axis=1)
             dfs.append(test_df)
 
-        dfs, self.codes = _categorize(dfs, categorical_cols)
+        # impute missing values
         dfs = _impute(dfs, numerical_cols)
-        dfs, self.mean, self.std = _normalize(dfs, numerical_cols)
 
+        # compute train dataset stats
+        self.mean, self.std = _compute_normalization(dfs[0], numerical_cols)
+
+        self.codes = _generate_codes(dfs, categorical_cols)
+
+        dfs = _pre_transform(dfs, numerical_cols, categorical_cols, self.codes, self.mean, self.std)
+
+        # normalize
         self.cat_cols = categorical_cols
         self.num_cols = numerical_cols
 
@@ -81,12 +58,25 @@ class TabularData(DataModule):
         super().__init__(train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers)
 
     @property
-    def num_features(self):
-        return len(self.cat_cols) + len(self.num_cols)
-
-    @property
     def num_classes(self):
         return self._num_classes
+
+    @property
+    def data_config(self):
+        return {
+            "num_classes": self._num_classes,
+            "num_features": len(self.cat_cols) + len(self.num_cols),
+            "embedding_sizes": self.emb_sizes,
+            "codes": self.codes,
+            "mean": self.mean,
+            "std": self.std,
+            "cat_cols": self.cat_cols,
+            "num_cols": self.num_cols,
+        }
+
+    @property
+    def test_df(self):
+        return self._test_df
 
     @classmethod
     def from_df(

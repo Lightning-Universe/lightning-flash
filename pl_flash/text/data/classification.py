@@ -10,6 +10,69 @@ from transformers import AutoTokenizer
 from pl_flash.data.datamodule import DataModule
 
 
+def tokenize_text_lambda(tokenizer, text_field, max_length):
+    return lambda ex: tokenizer(
+        ex[text_field],
+        max_length=max_length,
+        truncation=True,
+        padding="max_length",
+    )
+
+
+def prepare_dataset(train_file, valid_file, test_file, filetype,
+                    backbone, text_field, max_length,
+                    label_field=None, label_to_class_mapping=None):
+    tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+
+    data_files = {}
+
+    if train_file is not None:
+        data_files["train"] = train_file
+    if valid_file is not None:
+        data_files["validation"] = valid_file
+    if test_file is not None:
+        data_files["test"] = test_file
+
+    dataset_dict = load_dataset(filetype, data_files=data_files)
+
+    if label_to_class_mapping is None:
+        label_to_class_mapping = {
+            v: k for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][label_field])))))
+        }
+
+    def transform_label(ex):
+        ex[label_field] = label_to_class_mapping[ex[label_field]]
+        return ex
+
+        # convert labels to ids
+    dataset_dict = dataset_dict.map(transform_label)
+
+    # tokenize text field
+    dataset_dict = dataset_dict.map(
+        tokenize_text_lambda(tokenizer, text_field, max_length),
+        batched=True,
+    )
+
+    if label_field != "labels":
+        dataset_dict.rename_column_(label_field, "labels")
+    dataset_dict.set_format("torch", columns=["input_ids", "labels"])
+
+    train_ds = None
+    valid_ds = None
+    test_ds = None
+
+    if "train" in dataset_dict:
+        train_ds = dataset_dict["train"]
+
+    if "validation" in dataset_dict:
+        valid_ds = dataset_dict["validation"]
+
+    if "test" in dataset_dict:
+        test_ds = dataset_dict["test"]
+
+    return train_ds, valid_ds, test_ds, label_to_class_mapping
+
+
 class TextClassificationData(DataModule):
     """Data module for text classification tasks."""
 
@@ -52,51 +115,9 @@ class TextClassificationData(DataModule):
                                            categorical_cols=["account_type"])
 
         """
-        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-        paths = {"train": train_file}
-        if valid_file is not None:
-            paths["validation"] = valid_file
-        if test_file is not None:
-            paths["test"] = test_file
-
-        dataset_dict = load_dataset(filetype, data_files=paths)
-
-        label_to_class_mapping = {
-            v: k for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][label_field])))))
-        }
-
-        def transform_label(ex):
-            ex[label_field] = label_to_class_mapping[ex[label_field]]
-            return ex
-
-        # convert labels to ids
-        dataset_dict = dataset_dict.map(transform_label)
-
-        # tokenize text field
-        dataset_dict = dataset_dict.map(
-            lambda ex: tokenizer(
-                ex[text_field],
-                max_length=max_length,
-                truncation=True,
-                padding="max_length",
-            ),
-            batched=True,
-        )
-
-        if label_field != "labels":
-            dataset_dict.rename_column_(label_field, "labels")
-        dataset_dict.set_format("torch", columns=["input_ids", "labels"])
-
-        train_ds = dataset_dict["train"]
-        valid_ds = None
-        test_ds = None
-
-        if "validation" in dataset_dict:
-            valid_ds = dataset_dict["validation"]
-
-        if "test" in dataset_dict:
-            test_ds = dataset_dict["test"]
+        train_ds, valid_ds, test_ds, label_to_class_mapping = prepare_dataset(
+            train_file, valid_file, test_file, filetype, backbone, text_field,
+            max_length, label_field=label_field, label_to_class_mapping=None)
 
         datamodule = cls(
             train_ds=train_ds,
@@ -105,5 +126,13 @@ class TextClassificationData(DataModule):
             batch_size=batch_size,
             num_workers=num_workers,
         )
-        datamodule.num_classes = len(label_to_class_mapping)
+
+        datamodule.data_config = {
+            "backbone": backbone,
+            "num_classes": len(label_to_class_mapping),
+            "label_to_class_mapping": label_to_class_mapping,
+            "max_length": max_length,
+            "text_field": text_field,
+            "label_field": label_field
+        }
         return datamodule
