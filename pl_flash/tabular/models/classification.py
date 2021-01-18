@@ -1,10 +1,16 @@
-from typing import Callable
+from typing import Callable, Dict, List, Tuple
 
+import pandas as pd
+import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from pandas.core.frame import DataFrame
+from pytorch_lightning.metrics import Metric
 from torch import nn
+from torch.utils.data import DataLoader
 
 from pl_flash import ClassificationLightningTask
+from pl_flash.tabular.data.dataset import PandasDataset, _pre_transform
 
 
 class TabularClassifier(ClassificationLightningTask):
@@ -23,13 +29,18 @@ class TabularClassifier(ClassificationLightningTask):
 
     def __init__(
         self,
-        num_features,
-        num_classes,
-        embedding_sizes,
+        num_classes: int,
+        num_features: int,
+        embedding_sizes: List[Tuple] = None,
+        codes: Dict = None,
+        mean: DataFrame = None,
+        std: DataFrame = None,
+        cat_cols: List = None,
+        num_cols: List = None,
         hidden=[512],
         loss_fn: Callable = F.cross_entropy,
         optimizer=torch.optim.Adam,
-        metrics=None,
+        metrics: List[Metric] = None,
         learning_rate: float = 1e-3,
     ):
         super().__init__(
@@ -40,11 +51,13 @@ class TabularClassifier(ClassificationLightningTask):
             learning_rate=learning_rate,
         )
 
-        num_num = num_features - len(embedding_sizes)  # numerical columns
-        input_size = num_num + sum(emb_dim for _, emb_dim in embedding_sizes)
-        sizes = [input_size] + hidden + [num_classes]
+        self.save_hyperparameters()
 
-        self.embs = nn.ModuleList([nn.Embedding(n_emb, emb_dim) for n_emb, emb_dim in embedding_sizes])
+        num_num = self.hparams.num_features - len(self.hparams.embedding_sizes)  # numerical columns
+        input_size = num_num + sum(emb_dim for _, emb_dim in self.hparams.embedding_sizes)
+        sizes = [input_size] + hidden + [self.hparams.num_classes]
+
+        self.embs = nn.ModuleList([nn.Embedding(n_emb, emb_dim) for n_emb, emb_dim in self.hparams.embedding_sizes])
         self.bn_num = nn.BatchNorm1d(num_num) if num_num > 0 else None
         self.mlp = self._init_mlp(sizes)
 
@@ -72,3 +85,45 @@ class TabularClassifier(ClassificationLightningTask):
             x = torch.cat([x_num, x], dim=1) if len(self.embs) else x_num
         x = self.mlp(x)
         return x
+
+    def predict(self, dfs: List[DataFrame], batch_size: int = 2, num_workers: int = 0, **kwargs):
+        """
+        This function is used to make prediction directly from raw_data
+        """
+        self._predict = True
+
+        assert isinstance(dfs, list)
+        assert isinstance(dfs[0], DataFrame)
+
+        # pre-transform used during training phase
+        dfs = _pre_transform(
+            dfs,
+            self.hparams.num_cols,
+            self.hparams.cat_cols,
+            self.hparams.codes,
+            self.hparams.mean,
+            self.hparams.std
+        )
+
+        # create test dataloaders
+        test_dataloaders = [
+            DataLoader(
+                PandasDataset(df, self.hparams.cat_cols, self.hparams.num_cols, None, predict=True),
+                batch_size=batch_size,
+                num_workers=num_workers,
+            ) for df in dfs]
+
+        # create trainaer
+        trainer = pl.Trainer(**kwargs)
+
+        # perform inference using test
+        results = trainer.test(self, test_dataloaders=test_dataloaders)
+
+        # if predictions are available, convert them into DataFrame
+        outputs = []
+        if "predictions" in results[0]:
+            for r in results:
+                outputs.append(pd.json_normalize(r["predictions"], sep='_'))
+        else:
+            results = outputs
+        return outputs

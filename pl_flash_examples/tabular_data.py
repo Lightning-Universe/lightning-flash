@@ -3,6 +3,8 @@ import pandas as pd
 import pytorch_lightning as pl
 from pytorch_lightning import LightningModule
 from pytorch_lightning import _logger as log
+from pytorch_lightning.metrics.classification import (Accuracy, IoU, Precision,
+                                                      Recall)
 
 from pl_flash.data import download_data
 from pl_flash.tabular import TabularClassifier, TabularData
@@ -22,19 +24,21 @@ datamodule = TabularData.from_df(
     test_size=0.25,
 )
 
-# 3. build model
-model: LightningModule = TabularClassifier(
-    num_classes=datamodule.num_classes,
-    num_features=datamodule.num_features,
-    embedding_sizes=datamodule.emb_sizes,
-)
+# 3. create metrics
+metrics = [Accuracy(), Precision(), Recall(), IoU(datamodule.num_classes)]
 
-# 4. create trainer
-trainer = pl.Trainer(max_epochs=10, limit_test_batches=8)
+# 4. build model
+model: LightningModule = TabularClassifier(**datamodule.data_config, metrics=metrics)
 
-# 5. train mode
+# 5. create trainer
+trainer = pl.Trainer(max_epochs=1, limit_test_batches=8)
+
+# 6. train mode
 trainer.fit(model, datamodule=datamodule)
 
-# 6. test model
-results = trainer.test(model, datamodule=datamodule)
-log.info(results)
+# 7. Helper for test - In reality, you would provide your own test DataFrame.
+test_df = datamodule.test_df
+
+# 8. Predict over provided list of DataFrame.
+predictions = model.predict([test_df])
+log.info(predictions)

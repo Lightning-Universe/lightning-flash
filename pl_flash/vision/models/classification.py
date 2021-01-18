@@ -1,12 +1,17 @@
-from typing import Callable, Mapping, Sequence, Type, Union
+import os
+from typing import Callable, List, Mapping, Sequence, Type, Union
 
+import pandas as pd
+import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 import torchvision
 from pytorch_lightning.metrics import Accuracy
 from torch import nn
+from torch.utils.data import DataLoader
 
 from pl_flash import ClassificationLightningTask
+from pl_flash.vision.data.classification import FlashDatasetFolder, _pil_loader
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731
@@ -51,6 +56,8 @@ class ImageClassifier(ClassificationLightningTask):
             learning_rate=learning_rate,
         )
 
+        self._predict = False
+
         if backbone not in _backbones:
             raise NotImplementedError(f"Backbone {backbone} is not yet supported")
 
@@ -82,3 +89,41 @@ class ImageClassifier(ClassificationLightningTask):
         """
         for p in self.backbone.parameters():
             p.requires_grad = True
+
+    def _check_path_exists(self, img_paths: List[str]):
+        for p in img_paths:
+            assert os.path.exists(p)
+
+    def predict(
+        self,
+        img_paths: List[str],
+        loader: Callable = _pil_loader,
+        transform=None,
+        batch_size: int = 2,
+        num_workers: int = 0,
+        **kwargs
+    ):
+
+        self._predict = True
+        self._check_path_exists(img_paths)
+        assert transform is not None
+
+        test_dataloaders = [
+            DataLoader(
+                FlashDatasetFolder(None, loader, transform=transform, predict=True, img_paths=img_paths),
+                batch_size=batch_size,
+                num_workers=num_workers,
+            )]
+
+        trainer = pl.Trainer(**kwargs)
+
+        results = trainer.test(self, test_dataloaders=test_dataloaders)
+        outputs = []
+        if "predictions" in results[0]:
+            for r in results:
+                for pred in r["predictions"]:
+                    pred["id"] = img_paths[pred["id"]]
+                outputs.append(pd.json_normalize(r["predictions"], sep='_'))
+        else:
+            results = outputs
+        return outputs

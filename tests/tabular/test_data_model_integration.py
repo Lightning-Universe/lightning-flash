@@ -24,7 +24,7 @@ def test_classification(tmpdir):
     data = TabularData.from_df(
         train_df,
         categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
+        numerical_cols=["scalar_a", "scalar_b"],
         target_col="label",
         valid_df=valid_df,
         test_df=test_df,
