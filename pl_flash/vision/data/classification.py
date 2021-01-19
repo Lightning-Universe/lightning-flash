@@ -3,8 +3,8 @@ import pathlib
 from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import torch
-import torchvision.transforms as T
 from PIL import Image
+from torchvision import transforms as T
 from torchvision.datasets import ImageFolder, VisionDataset
 from torchvision.datasets.folder import (IMG_EXTENSIONS, default_loader,
                                          make_dataset)

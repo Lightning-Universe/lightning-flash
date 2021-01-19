@@ -1,6 +1,5 @@
 from io import BytesIO
-from urllib.request import urlopen
-from urllib.request import urlretrieve
+from urllib.request import urlopen, urlretrieve
 from zipfile import ZipFile
 
 

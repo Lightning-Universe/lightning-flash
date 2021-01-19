@@ -5,8 +5,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 import torch
-import torchvision.transforms as T
 from PIL import Image
+from torchvision import transforms as T
 
 from pl_flash.vision import ImageClassificationData
 

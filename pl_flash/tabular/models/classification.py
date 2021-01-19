@@ -3,10 +3,10 @@ from typing import Callable, Dict, List, Tuple
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-import torch.nn.functional as F
 from pandas.core.frame import DataFrame
 from pytorch_lightning.metrics import Metric
 from torch import nn
+from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from pl_flash.model import ClassificationLightningTask

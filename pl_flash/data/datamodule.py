@@ -3,7 +3,7 @@ import warnings
 from typing import Optional
 
 import pytorch_lightning as pl
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 
 class DataModule(pl.LightningDataModule):

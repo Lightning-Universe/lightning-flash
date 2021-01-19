@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 # +
 import os
-import pytorch_lightning as pl
-import torch
 from io import BytesIO
 from urllib.request import urlopen
 from zipfile import ZipFile
 
-from pl_flash.vision import ImageClassifier, ImageClassificationData
+import pytorch_lightning as pl
+import torch
+
+from pl_flash.vision import ImageClassificationData, ImageClassifier
+
 # -
 
 # First we'll download our data:

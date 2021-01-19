@@ -2,8 +2,8 @@ from typing import Callable, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
-import torch.nn.functional as F
 from torch import nn
+from torch.nn import functional as F
 
 from pl_flash.utils import get_callable_dict
 

@@ -4,10 +4,10 @@ from typing import Callable, List, Mapping, Sequence, Type, Union
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-import torch.nn.functional as F
 import torchvision
 from pytorch_lightning.metrics import Accuracy
 from torch import nn
+from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from pl_flash.model import ClassificationLightningTask

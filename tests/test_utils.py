@@ -1,6 +1,5 @@
 from pl_flash import utils
 
-
 # ======== Mock functions ========
 
 
