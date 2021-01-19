@@ -26,7 +26,6 @@ repos:
     rev: 5.7.0
     hooks:
       - id: isort
-        args: [--settings-path, ./pyproject.toml]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.790
