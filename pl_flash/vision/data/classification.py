@@ -90,10 +90,19 @@ class FlashDatasetFolder(VisionDataset):
         samples (list): List of (sample path, class_index) tuples
         targets (list): The class_index value for each image in the dataset
     """
-    def __init__(self, root, loader, extensions=IMG_EXTENSIONS, transform=None,
-                 target_transform=None, is_valid_file=None, predict=False, img_paths=[]):
-        super(FlashDatasetFolder, self).__init__(
-            root, transform=transform, target_transform=target_transform)
+
+    def __init__(
+        self,
+        root,
+        loader,
+        extensions=IMG_EXTENSIONS,
+        transform=None,
+        target_transform=None,
+        is_valid_file=None,
+        predict=False,
+        img_paths=[],  # todo: dont pass mutable defaults
+    ):
+        super(FlashDatasetFolder, self).__init__(root, transform=transform, target_transform=target_transform)
         self.predict = predict
         self.loader = loader
         self.extensions = extensions
@@ -161,23 +170,19 @@ class FlashDatasetFolder(VisionDataset):
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
-    default_train_transforms = T.Compose(
-        [
-            T.RandomResizedCrop(224),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ]
-    )
+    default_train_transforms = T.Compose([
+        T.RandomResizedCrop(224),
+        T.RandomHorizontalFlip(),
+        T.ToTensor(),
+        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
 
-    default_valid_transforms = T.Compose(
-        [
-            T.Resize(256),
-            T.CenterCrop(224),
-            T.ToTensor(),
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ]
-    )
+    default_valid_transforms = T.Compose([
+        T.Resize(256),
+        T.CenterCrop(224),
+        T.ToTensor(),
+        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
 
     @classmethod
     def from_filepaths(
@@ -230,9 +235,7 @@ class ImageClassificationData(DataModule):
                 labels=valid_labels,
                 loader=loader,
                 transform=valid_transform,
-            )
-            if valid_filepaths is not None
-            else None
+            ) if valid_filepaths is not None else None
         )
 
         test_ds = (
@@ -241,9 +244,7 @@ class ImageClassificationData(DataModule):
                 labels=test_labels,
                 loader=loader,
                 transform=valid_transform,
-            )
-            if test_filepaths is not None
-            else None
+            ) if test_filepaths is not None else None
         )
 
         return cls(

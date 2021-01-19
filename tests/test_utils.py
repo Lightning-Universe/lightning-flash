@@ -4,6 +4,7 @@ from pl_flash import utils
 
 
 class A:
+
     def __call__(self, x):
         return True
 

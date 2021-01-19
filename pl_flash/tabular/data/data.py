@@ -148,5 +148,5 @@ class TabularData(DataModule):
         # embedding_dimensions =  number_of_categories**0.25
 
         num_classes = [len(self.codes[cat]) for cat in self.cat_cols]
-        emb_dims = [max(int(n ** 0.25), 16) for n in num_classes]
+        emb_dims = [max(int(n**0.25), 16) for n in num_classes]
         return list(zip(num_classes, emb_dims))

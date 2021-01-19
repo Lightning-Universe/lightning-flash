@@ -19,9 +19,17 @@ def tokenize_text_lambda(tokenizer, text_field, max_length):
     )
 
 
-def prepare_dataset(train_file, valid_file, test_file, filetype,
-                    backbone, text_field, max_length,
-                    label_field=None, label_to_class_mapping=None):
+def prepare_dataset(
+    train_file,
+    valid_file,
+    test_file,
+    filetype,
+    backbone,
+    text_field,
+    max_length,
+    label_field=None,
+    label_to_class_mapping=None,
+):
     tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
     data_files = {}
@@ -37,7 +45,8 @@ def prepare_dataset(train_file, valid_file, test_file, filetype,
 
     if label_to_class_mapping is None:
         label_to_class_mapping = {
-            v: k for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][label_field])))))
+            v: k
+            for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][label_field])))))
         }
 
     def transform_label(ex):
@@ -45,6 +54,7 @@ def prepare_dataset(train_file, valid_file, test_file, filetype,
         return ex
 
         # convert labels to ids
+
     dataset_dict = dataset_dict.map(transform_label)
 
     # tokenize text field
@@ -116,8 +126,16 @@ class TextClassificationData(DataModule):
 
         """
         train_ds, valid_ds, test_ds, label_to_class_mapping = prepare_dataset(
-            train_file, valid_file, test_file, filetype, backbone, text_field,
-            max_length, label_field=label_field, label_to_class_mapping=None)
+            train_file,
+            valid_file,
+            test_file,
+            filetype,
+            backbone,
+            text_field,
+            max_length,
+            label_field=label_field,
+            label_to_class_mapping=None
+        )
 
         datamodule = cls(
             train_ds=train_ds,

@@ -102,7 +102,7 @@ class TabularClassifier(ClassificationLightningTask):
             self.hparams.cat_cols,
             self.hparams.codes,
             self.hparams.mean,
-            self.hparams.std
+            self.hparams.std,
         )
 
         # create test dataloaders
@@ -111,7 +111,8 @@ class TabularClassifier(ClassificationLightningTask):
                 PandasDataset(df, self.hparams.cat_cols, self.hparams.num_cols, None, predict=True),
                 batch_size=batch_size,
                 num_workers=num_workers,
-            ) for df in dfs]
+            ) for df in dfs
+        ]
 
         # create trainaer
         trainer = pl.Trainer(**kwargs)

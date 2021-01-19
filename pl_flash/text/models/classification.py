@@ -65,26 +65,39 @@ class TextClassifier(ClassificationLightningTask):
         output["logs"] = {name: metric(logits, batch["labels"]) for name, metric in self.metrics.items()}
         return output
 
-    def predict(self, sequences: Union[List[str], str] = None, path_to_csv: str = None,
-                num_workers: int = 0, batch_size: int = 2, limit_test_batches: int = 8, **kwargs):
+    def predict(
+        self,
+        sequences: Union[List[str], str] = None,
+        path_to_csv: str = None,
+        num_workers: int = 0,
+        batch_size: int = 2,
+        limit_test_batches: int = 8,
+        **kwargs,
+    ):
 
         self._predict = True
 
         if sequences and path_to_csv:
             raise MisconfigurationException(
-                "sequences or path_to_csv are mutually exclusive. Provide one or the other.")
+                "sequences or path_to_csv are mutually exclusive. Provide one or the other."
+            )
 
         if isinstance(path_to_csv, str):
             extension = path_to_csv.split('.')[-1]
             if extension != 'csv':
-                raise MisconfigurationException(
-                    "only `.csv` file are currently supported for inference.")
+                raise MisconfigurationException("only `.csv` file are currently supported for inference.")
 
             _, _, test_ds, _ = prepare_dataset(
-                None, None, path_to_csv, extension, self.hparams.backbone,
-                self.hparams.text_field, self.hparams.max_length,
+                None,
+                None,
+                path_to_csv,
+                extension,
+                self.hparams.backbone,
+                self.hparams.text_field,
+                self.hparams.max_length,
                 label_field=self.hparams.label_field,
-                label_to_class_mapping=self.hparams.label_to_class_mapping)
+                label_to_class_mapping=self.hparams.label_to_class_mapping
+            )
 
             collate_fn = None
 
@@ -95,7 +108,8 @@ class TextClassifier(ClassificationLightningTask):
             collate_fn = default_data_collator
         else:
             raise MisconfigurationException(
-                "sequences or path_to_csv should be provided to make an inference. Provide one or the other.")
+                "sequences or path_to_csv should be provided to make an inference. Provide one or the other."
+            )
 
         test_dataloaders = [DataLoader(test_ds, num_workers=num_workers, batch_size=batch_size, collate_fn=collate_fn)]
 

@@ -11,6 +11,7 @@ def collate_fn(batch):
 
 
 class DummyDetectionDataset(Dataset):
+
     def __init__(self, img_shape, num_boxes, num_classes, length):
         super().__init__()
         self.img_shape = img_shape
@@ -23,14 +24,14 @@ class DummyDetectionDataset(Dataset):
 
     def _random_bbox(self):
         c, h, w = self.img_shape
-        xs = torch.randint(w - 1, (2,))
-        ys = torch.randint(h - 1, (2,))
+        xs = torch.randint(w - 1, (2, ))
+        ys = torch.randint(h - 1, (2, ))
         return [min(xs), min(ys), max(xs) + 1, max(ys) + 1]
 
     def __getitem__(self, idx):
         img = torch.rand(self.img_shape)
         boxes = torch.tensor([self._random_bbox() for _ in range(self.num_boxes)])
-        labels = torch.randint(self.num_classes, (self.num_boxes,))
+        labels = torch.randint(self.num_classes, (self.num_boxes, ))
         return img, {"boxes": boxes, "labels": labels}
 
 

@@ -85,6 +85,7 @@ def _to_num_cols_numpy(df, num_cols):
 
 
 class PandasDataset(Dataset):
+
     def __init__(self, df, cat_cols, num_cols, target_col, regression=False, predict=False):
         self._num_samples = len(df)
         self.predict = predict

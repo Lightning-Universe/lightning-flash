@@ -10,7 +10,7 @@ model = nn.Sequential(
     nn.Flatten(),
     nn.Linear(28 * 28, 128),
     nn.ReLU(),
-    nn.Linear(128, 10)
+    nn.Linear(128, 10),
 )
 
 # data

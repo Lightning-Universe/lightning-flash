@@ -30,7 +30,6 @@ project = "Flash"
 copyright = "2020-2021, PyTorch Lightning"
 author = "PyTorch Lightning"
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -58,7 +57,6 @@ exclude_patterns = []
 # You can specify multiple suffix as a list of string:
 #
 source_suffix = [".rst", ".md"]
-
 
 # -- Options for intersphinx extension ---------------------------------------
 
@@ -89,7 +87,6 @@ html_theme_options = {
     "display_version": True,
     "logo_only": False,
 }
-
 
 html_logo = "_static/images/lightning_logo.svg"
 

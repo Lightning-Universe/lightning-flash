@@ -113,7 +113,8 @@ class ImageClassifier(ClassificationLightningTask):
                 FlashDatasetFolder(None, loader, transform=transform, predict=True, img_paths=img_paths),
                 batch_size=batch_size,
                 num_workers=num_workers,
-            )]
+            )
+        ]
 
         trainer = pl.Trainer(**kwargs)
 
