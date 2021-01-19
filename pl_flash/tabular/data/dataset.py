@@ -94,8 +94,8 @@ class PandasDataset(Dataset):
         if not predict:
             self.target = df[target_col].to_numpy().astype(np.float32 if regression else np.int64)
 
-        self.cat_vars = np.stack(cat_vars, 1)
-        self.num_vars = np.stack(num_vars, 1)
+        self.cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((len(self), 0))
+        self.num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((len(self), 0))
 
     def __len__(self):
         return self._num_samples
