@@ -22,7 +22,7 @@ very general and can handle the majority of these problems.
 
 .. code-block:: python
 
-    from pl_flash import LightningTask
+    from pl_flash.model import LightningTask
     from torch import nn, optim
     from torch.utils.data import DataLoader, random_split
     from torchvision import transforms, datasets

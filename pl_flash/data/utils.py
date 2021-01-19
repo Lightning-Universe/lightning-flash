@@ -8,14 +8,13 @@ def download_data(url, path="data/"):
     """
     Downloads data automatically from the given url to the path. Defaults to data/ for the path.
     Automatically handles:
+
         - .csv
         - .zip
 
     Args:
-        url:
-        path:
-
-    Returns:
+        url: path
+        path: local
 
     """
 

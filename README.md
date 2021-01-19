@@ -43,7 +43,7 @@ Flash is built for applied researchers, beginners, data scientists, Kagglers or 
 <img src="https://pl-flash-data.s3.amazonaws.com/images/mnist.png" width="200px">
 
 ```python
-from pl_flash import LightningTask
+from pl_flash.model import LightningTask
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms, datasets

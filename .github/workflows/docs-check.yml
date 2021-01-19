@@ -21,5 +21,5 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: docs-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}
+        name: docs-results-${{ github.sha }}
         path: docs/build/html/

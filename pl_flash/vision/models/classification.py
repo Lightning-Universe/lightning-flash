@@ -10,7 +10,7 @@ from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.utils.data import DataLoader
 
-from pl_flash import ClassificationLightningTask
+from pl_flash.model import ClassificationLightningTask
 from pl_flash.vision.data.classification import FlashDatasetFolder, _pil_loader
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
