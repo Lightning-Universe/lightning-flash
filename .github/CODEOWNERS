@@ -1,0 +1,26 @@
+# This is a comment.
+# Each line is a file pattern followed by one or more owners.
+
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @global-owner1 and @global-owner2 will be requested for
+# review when someone opens a pull request.
+* @teddykoker @borda @tchaton @justusschock
+
+# owners
+/.github/CODEOWNERS   @borda
+# main
+/README.md            @teddykoker
+# installation
+/setup.py             @borda @teddykoker
+
+# CI/CD
+/.github/workflows/   @borda @teddykoker
+# configs in root
+/*.yml                @borda @teddykoker
+
+# Docs
+/docs/                          @edenlightning @teddykoker
+/.github/*.md                   @edenlightning @teddykoker
+/.github/ISSUE_TEMPLATE/*.md    @edenlightning @teddykoker
+/docs/source/conf.py            @borda @teddykoker
