@@ -11,8 +11,9 @@ from pl_flash.vision import ImageClassifier
 
 
 class DummyDataset(torch.utils.data.Dataset):
+
     def __getitem__(self, index):
-        return torch.rand(3, 224, 224), torch.randint(10, size=(1,)).item()
+        return torch.rand(3, 224, 224), torch.randint(10, size=(1, )).item()
 
     def __len__(self):
         return 100

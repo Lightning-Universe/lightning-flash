@@ -31,17 +31,20 @@ trainer = pl.Trainer(
     limit_train_batches=64,
     limit_val_batches=2,
     limit_test_batches=2,
-    callbacks=[finetuning_callback])
+    callbacks=[finetuning_callback],
+)
 
 # 5. train our model
 trainer.fit(model, datamodule=datamodule)
 
 # 6. predict our model on list of images
-predictions = model.predict([
-    "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
-    "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
-    "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg"],
-    transform=datamodule.default_valid_transforms
+predictions = model.predict(
+    [
+        "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
+        "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
+        "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
+    ],
+    transform=datamodule.default_valid_transforms,
 )
 
 # 7. Check prediction.

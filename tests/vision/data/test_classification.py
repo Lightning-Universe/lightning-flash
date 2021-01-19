@@ -32,7 +32,7 @@ def test_from_filepaths(tmpdir):
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 64, 64)
-    assert labels.shape == (1,)
+    assert labels.shape == (1, )
 
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
@@ -54,12 +54,12 @@ def test_from_filepaths(tmpdir):
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 64, 64)
-    assert labels.shape == (1,)
+    assert labels.shape == (1, )
 
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 64, 64)
-    assert labels.shape == (1,)
+    assert labels.shape == (1, )
 
 
 def test_from_folders(tmpdir):
@@ -80,7 +80,7 @@ def test_from_folders(tmpdir):
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 64, 64)
-    assert labels.shape == (1,)
+    assert labels.shape == (1, )
 
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
@@ -98,9 +98,9 @@ def test_from_folders(tmpdir):
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 64, 64)
-    assert labels.shape == (1,)
+    assert labels.shape == (1, )
 
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 64, 64)
-    assert labels.shape == (1,)
+    assert labels.shape == (1, )

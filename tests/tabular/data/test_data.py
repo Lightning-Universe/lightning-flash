@@ -86,7 +86,7 @@ def test_tabular_data(tmpdir):
         (cat, num), target = next(iter(dl))
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
-        assert target.shape == (1,)
+        assert target.shape == (1, )
 
 
 def test_from_df(tmpdir):
@@ -106,4 +106,4 @@ def test_from_df(tmpdir):
         (cat, num), target = next(iter(dl))
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
-        assert target.shape == (1,)
+        assert target.shape == (1, )

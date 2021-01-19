@@ -12,10 +12,11 @@ from pl_flash.text import TextClassifier
 
 
 class DummyDataset(torch.utils.data.Dataset):
+
     def __getitem__(self, index):
         return {
-            "input_ids": torch.randint(1000, size=(100,)),
-            "labels": torch.randint(2, size=(1,)).item(),
+            "input_ids": torch.randint(1000, size=(100, )),
+            "labels": torch.randint(2, size=(1, )).item(),
         }
 
     def __len__(self):

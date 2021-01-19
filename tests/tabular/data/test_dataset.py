@@ -13,19 +13,15 @@ TEST_DF = pd.DataFrame(
     }
 )
 
-TEST_DF_NO_NUM = pd.DataFrame(
-    data={
-        "category": [0, 1, 2, 1, 0, 2],
-        "label": [0, 1, 0, 1, 0, 1],
-    }
-)
+TEST_DF_NO_NUM = pd.DataFrame(data={
+    "category": [0, 1, 2, 1, 0, 2],
+    "label": [0, 1, 0, 1, 0, 1],
+})
 
-TEST_DF_NO_CAT = pd.DataFrame(
-    data={
-        "category": [0, 1, 2, 1, 0, 2],
-        "label": [0, 1, 0, 1, 0, 1],
-    }
-)
+TEST_DF_NO_CAT = pd.DataFrame(data={
+    "category": [0, 1, 2, 1, 0, 2],
+    "label": [0, 1, 0, 1, 0, 1],
+})
 
 
 def test_pandas():

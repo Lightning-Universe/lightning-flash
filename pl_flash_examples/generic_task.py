@@ -10,7 +10,7 @@ model = nn.Sequential(
     nn.Flatten(),
     nn.Linear(28 * 28, 128),
     nn.ReLU(),
-    nn.Linear(128, 10)
+    nn.Linear(128, 10),
 )
 
 # 2. create dataset
@@ -21,13 +21,15 @@ train, val, test = random_split(dataset, [50000, 5000, 5000])
 
 # 4. create model
 classifier = ClassificationLightningTask(
-    model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam, learning_rate=10e-3)
+    model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam, learning_rate=10e-3
+)
 
 # 5. create trainer
 trainer = pl.Trainer(
     max_epochs=10,
     limit_train_batches=128,
-    limit_val_batches=128)
+    limit_val_batches=128,
+)
 
 # 6. train model
 trainer.fit(classifier, DataLoader(train), DataLoader(val))
