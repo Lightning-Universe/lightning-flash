@@ -13,6 +13,7 @@
 import builtins
 import os
 import sys
+
 import pt_lightning_sphinx_theme
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
@@ -21,9 +22,7 @@ _PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
 builtins.__LIGHTNING_FLASH_SETUP__ = True
-
 import pl_flash  # noqa: E402
-
 
 # -- Project information -----------------------------------------------------
 

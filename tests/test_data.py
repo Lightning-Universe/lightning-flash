@@ -1,8 +1,8 @@
-import torch
 from unittest.mock import patch
 
-from pl_flash import DataModule
+import torch
 
+from pl_flash import DataModule
 
 # ======== Mock functions ========
 

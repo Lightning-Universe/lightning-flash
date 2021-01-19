@@ -1,8 +1,8 @@
 import pytest
-import torch
-from torch.utils.data import Dataset, DataLoader
-
 import pytorch_lightning as pl
+import torch
+from torch.utils.data import DataLoader, Dataset
+
 from pl_flash.vision import ImageDetector
 
 

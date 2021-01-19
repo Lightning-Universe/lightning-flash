@@ -1,8 +1,9 @@
-from pl_flash import LightningTask
+import pytorch_lightning as pl
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
-from torchvision import transforms, datasets
-import pytorch_lightning as pl
+from torchvision import datasets, transforms
+
+from pl_flash import LightningTask
 
 # model
 model = nn.Sequential(

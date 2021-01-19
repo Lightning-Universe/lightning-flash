@@ -1,11 +1,11 @@
+from imp import reload
+from unittest.mock import patch
+
 import pytest
-import torch
 import pytorch_lightning as pl
+import torch
 
 from pl_flash.vision import ImageClassifier
-
-from unittest.mock import patch
-from imp import reload
 
 # ======== Mock functions ========
 
