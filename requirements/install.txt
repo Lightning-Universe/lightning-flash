@@ -1,6 +1,7 @@
 pytorch-lightning==1.1.2
 torch==1.6.0
 PyYAML==5.3.1
+Pillow>=7.2
 torchvision==0.7.0
 transformers==3.1.0
 datasets==1.0.1

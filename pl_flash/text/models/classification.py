@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from transformers import (AutoTokenizer, BertForSequenceClassification,
                           default_data_collator)
 
-from pl_flash import ClassificationLightningTask
+from pl_flash.model import ClassificationLightningTask
 from pl_flash.text.data.classification import (prepare_dataset,
                                                tokenize_text_lambda)
 

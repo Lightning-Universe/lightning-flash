@@ -7,6 +7,8 @@ docutils
 sphinxcontrib-fulltoc
 sphinxcontrib-mockautodoc
 
-git+https://github.com/PytorchLightning/lightning_sphinx_theme.git
+https://github.com/PyTorchLightning/lightning_sphinx_theme/archive/master.zip
 sphinx-autodoc-typehints
 sphinx-paramlinks<0.4.0
+sphinx-togglebutton
+sphinx-copybutton

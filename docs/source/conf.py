@@ -10,17 +10,25 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-import pl_flash
+import builtins
+import os
+import sys
 import pt_lightning_sphinx_theme
+
+SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
+_PATH_HERE = os.path.abspath(os.path.dirname(__file__))
+_PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
+sys.path.insert(0, os.path.abspath(_PATH_ROOT))
+
+builtins.__LIGHTNING_FLASH_SETUP__ = True
+
+import pl_flash  # noqa: E402
 
 
 # -- Project information -----------------------------------------------------
 
-project = "flash"
-copyright = "2020, PyTorch Lightning"
+project = "Flash"
+copyright = "2020-2021, PyTorch Lightning"
 author = "PyTorch Lightning"
 
 
@@ -92,3 +100,41 @@ html_logo = "_static/images/lightning_logo.svg"
 html_static_path = ["_static"]
 
 html_css_files = []
+
+
+def setup(app):
+    # this is for hiding doctest decoration,
+    # see: http://z4r.github.io/python/2011/12/02/hides-the-prompts-and-output/
+    app.add_javascript('copybutton.js')
+
+
+# Ignoring Third-party packages
+# https://stackoverflow.com/questions/15889621/sphinx-how-to-exclude-imports-in-automodule
+def _package_list_from_file(pfile):
+    assert os.path.isfile(pfile)
+    with open(pfile, 'r') as fp:
+        lines = fp.readlines()
+    list_pkgs = []
+    for ln in lines:
+        found = [ln.index(ch) for ch in list(',=<>#') if ch in ln]
+        pkg = ln[:min(found)] if found else ln
+        if pkg.strip():
+            list_pkgs.append(pkg.strip())
+    return list_pkgs
+
+
+# define mapping from PyPI names to python imports
+PACKAGE_MAPPING = {
+    'pytorch-lightning': 'pytorch_lightning',
+    'scikit-learn': 'sklearn',
+    'Pillow': 'PIL',
+    'PyYAML': 'yaml',
+}
+MOCK_PACKAGES = []
+if SPHINX_MOCK_REQUIREMENTS:
+    # mock also base packages when we are on RTD since we don't install them there
+    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'install.txt'))
+# replace PyPI packages by importing ones
+MOCK_PACKAGES = [PACKAGE_MAPPING.get(pkg, pkg) for pkg in MOCK_PACKAGES]
+
+autodoc_mock_imports = MOCK_PACKAGES

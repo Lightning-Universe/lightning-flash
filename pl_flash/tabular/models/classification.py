@@ -9,7 +9,7 @@ from pytorch_lightning.metrics import Metric
 from torch import nn
 from torch.utils.data import DataLoader
 
-from pl_flash import ClassificationLightningTask
+from pl_flash.model import ClassificationLightningTask
 from pl_flash.tabular.data.dataset import PandasDataset, _pre_transform
 
 

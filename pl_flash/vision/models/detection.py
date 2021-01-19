@@ -5,7 +5,7 @@ import torchvision
 from torch import nn
 from torch.optim import Optimizer
 
-from pl_flash import ClassificationLightningTask
+from pl_flash.model import ClassificationLightningTask
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
