@@ -18,7 +18,7 @@ builtins.__LIGHTNING_FLASH_SETUP__ = True
 import pl_flash  # noqa: E402
 
 
-def load_requirements(path_dir=PATH_ROOT, comment_char="#"):
+def _load_requirements(path_dir: str = PATH_ROOT, comment_char: str = "#") -> str:
     with open(os.path.join(path_dir, "requirements", "install.txt"), "r") as file:
         lines = [ln.strip() for ln in file.readlines()]
     reqs = [ln[: ln.index(comment_char)] if comment_char in ln else ln for ln in lines]
@@ -26,7 +26,7 @@ def load_requirements(path_dir=PATH_ROOT, comment_char="#"):
     return reqs
 
 
-def load_long_describtion():
+def _load_long_describtion() -> str:
     # https://github.com/PyTorchLightning/pytorch-lightning/raw/master/docs/source/_images/lightning_module/pt_to_pl.png
     url = os.path.join(pl_flash.__homepage__, "raw", pl_flash.__version__, "docs")
     text = open("README.md", encoding="utf-8").read()
@@ -52,14 +52,14 @@ setup(
     download_url="https://github.com/PyTorchLightning/pytorch-lightning-flash",
     license=pl_flash.__license__,
     packages=find_packages(exclude=["tests", "docs"]),
-    long_description=load_long_describtion(),
+    long_description=_load_long_describtion(),
     long_description_content_type="text/markdown",
     include_package_data=True,
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
     setup_requires=[],
-    install_requires=load_requirements(PATH_ROOT),
+    install_requires=_load_requirements(PATH_ROOT),
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/pytorch-lightning-flash/issues",
         "Documentation": "https://pytorch-lightning-flash.rtfd.io/en/latest/",
