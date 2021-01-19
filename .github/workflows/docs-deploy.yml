@@ -47,7 +47,7 @@ jobs:
           make html --jobs 2
           #touch build/html/.nojekyll
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@3.6.1
+        uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BASE_BRANCH: master
