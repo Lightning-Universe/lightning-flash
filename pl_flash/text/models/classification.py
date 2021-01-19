@@ -6,12 +6,10 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
-from transformers import (AutoTokenizer, BertForSequenceClassification,
-                          default_data_collator)
+from transformers import AutoTokenizer, BertForSequenceClassification, default_data_collator
 
 from pl_flash.model import ClassificationLightningTask
-from pl_flash.text.data.classification import (prepare_dataset,
-                                               tokenize_text_lambda)
+from pl_flash.text.data.classification import prepare_dataset, tokenize_text_lambda
 
 
 class TextClassifier(ClassificationLightningTask):

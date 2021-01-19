@@ -11,7 +11,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from pl_flash.model import ClassificationLightningTask
-from pl_flash.vision.data.classification import FlashDatasetFolder, _pil_loader
+from pl_flash.vision.data.classification import _pil_loader, FlashDatasetFolder
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731

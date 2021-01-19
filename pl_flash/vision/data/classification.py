@@ -6,8 +6,7 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 from torchvision.datasets import ImageFolder, VisionDataset
-from torchvision.datasets.folder import (IMG_EXTENSIONS, default_loader,
-                                         make_dataset)
+from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS, make_dataset
 
 from pl_flash.data.datamodule import DataModule
 
