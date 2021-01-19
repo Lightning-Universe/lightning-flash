@@ -4,10 +4,15 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from pl_flash.data.datamodule import DataModule
-from pl_flash.tabular.data.dataset import (PandasDataset, _categorize,
-                                           _compute_normalization,
-                                           _generate_codes, _impute,
-                                           _normalize, _pre_transform)
+from pl_flash.tabular.data.dataset import (
+    _categorize,
+    _compute_normalization,
+    _generate_codes,
+    _impute,
+    _normalize,
+    _pre_transform,
+    PandasDataset,
+)
 
 
 class TabularData(DataModule):

@@ -1,10 +1,9 @@
 # import our libraries
 import pandas as pd
 import pytorch_lightning as pl
-from pytorch_lightning import LightningModule
 from pytorch_lightning import _logger as log
-from pytorch_lightning.metrics.classification import (Accuracy, IoU, Precision,
-                                                      Recall)
+from pytorch_lightning import LightningModule
+from pytorch_lightning.metrics.classification import Accuracy, IoU, Precision, Recall
 
 from pl_flash.data import download_data
 from pl_flash.tabular import TabularClassifier, TabularData

@@ -10,7 +10,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from pl_flash.model import ClassificationLightningTask
-from pl_flash.tabular.data.dataset import PandasDataset, _pre_transform
+from pl_flash.tabular.data.dataset import _pre_transform, PandasDataset
 
 
 class TabularClassifier(ClassificationLightningTask):
