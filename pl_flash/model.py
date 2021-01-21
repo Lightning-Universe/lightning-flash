@@ -1,8 +1,10 @@
-from typing import Callable, Mapping, Optional, Sequence, Type, Union
+from copy import deepcopy
+from typing import Callable, Mapping, Optional, Sequence, Type, Union, List
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
 from torch.nn import functional as F
 
 from pl_flash.utils import get_callable_dict
@@ -38,6 +40,8 @@ class LightningTask(pl.LightningModule):
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
+
+        self._trainer_kwargs = None
 
     def step(self, batch, batch_idx):
         """
@@ -78,8 +82,37 @@ class LightningTask(pl.LightningModule):
         output["y"] = y
         return output
 
+    def _init_trainer(self, **kwargs):
+        if self._trainer_kwargs is None:
+            self._trainer_kwargs = {}
+
+        new_kwargs = deepcopy(self._trainer_kwargs)
+        new_kwargs.update(**kwargs)
+
+        if self.trainer is not None and new_kwargs == self._trainer_kwargs:
+            return self.trainer
+
+        self._trainer_kwargs = new_kwargs
+
+        # if the new trainer args are the same, we can reuse the same trainer
+        # TODO: do all the args need to match? or do we just care about some of them
+        return pl.Trainer(**self._trainer_kwargs)
+
     def forward(self, x):
         return self.model(x)
+
+    def predict(self):
+        raise NotImplementedError
+
+    def fit(
+        self,
+        train_dataloader: Optional[DataLoader] = None,
+        val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
+        datamodule: Optional[pl.LightningDataModule] = None,
+        **trainer_kwargs
+    ):
+        trainer = self._init_trainer(**trainer_kwargs)
+        trainer.fit(self, train_dataloader, val_dataloaders, datamodule)
 
     def training_step(self, batch, batch_idx):
         output = self.step(batch, batch_idx)

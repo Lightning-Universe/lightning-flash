@@ -35,8 +35,7 @@ class DummyDataset(torch.utils.data.Dataset):
 def test_init_train(tmpdir, backbone):
     model = ImageClassifier(10, backbone=backbone)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    trainer.fit(model, train_dl)
+    model.fit(train_dl, fast_dev_run=True, default_root_dir=tmpdir)
 
 
 def test_non_existent_backbone():
