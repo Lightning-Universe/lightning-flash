@@ -35,5 +35,4 @@ def test_init_train(tmpdir):
         return True
     model = TextClassifier(2, backbone=TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    trainer.fit(model, train_dl)
+    model.fit(train_dl, fast_dev_run=True, default_root_dir=tmpdir)

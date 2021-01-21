@@ -116,7 +116,7 @@ class ImageClassifier(ClassificationLightningTask):
             )
         ]
 
-        trainer = pl.Trainer(**kwargs)
+        trainer = self._init_trainer(**kwargs)
 
         results = trainer.test(self, test_dataloaders=test_dataloaders)
         outputs = []

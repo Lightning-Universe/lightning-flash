@@ -115,7 +115,7 @@ class TabularClassifier(ClassificationLightningTask):
         ]
 
         # create trainaer
-        trainer = pl.Trainer(**kwargs)
+        trainer = self._init_trainer(**kwargs)
 
         # perform inference using test
         results = trainer.test(self, test_dataloaders=test_dataloaders)

@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from pl_flash import ClassificationLightningTask
+from pl_flash import ClassificationLightningTask, LightningTask
 
 # ======== Mock functions ========
 
@@ -23,6 +23,24 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 # ================================
+
+
+def test_init_trainer(tmpdir):
+    mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+    model = LightningTask(mlp, F.nll_loss)
+    train_dl = torch.utils.data.DataLoader(DummyDataset())
+
+    assert model.trainer is None
+    model.fit(train_dl, fast_dev_run=True, default_root_dir=tmpdir)
+    assert model.trainer is not None
+    model.trainer.foo_bar = "foo bar"  # this attribute should stay if we fit again
+    model.fit(train_dl, fast_dev_run=True, default_root_dir=tmpdir)
+    assert model.trainer.foo_bar == "foo bar"
+
+    model.fit(train_dl, fast_dev_run=True, default_root_dir=tmpdir, min_steps=1)
+    # since we added an extra arg to the trainer, we will have to use a new one,
+    # so it won't have the foo_bar attribute
+    assert not hasattr(model.trainer, "foo_bar")
 
 
 @pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])

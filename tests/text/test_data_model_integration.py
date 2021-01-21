@@ -35,5 +35,4 @@ def test_classification(tmpdir):
         num_workers=0,
     )
     model = TextClassifier(2, backbone=TEST_BACKBONE)
-    trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    trainer.fit(model, data)
+    model.fit(data, fast_dev_run=True, default_root_dir=tmpdir)

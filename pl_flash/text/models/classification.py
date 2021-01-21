@@ -113,7 +113,7 @@ class TextClassifier(ClassificationLightningTask):
 
         test_dataloaders = [DataLoader(test_ds, num_workers=num_workers, batch_size=batch_size, collate_fn=collate_fn)]
 
-        trainer = pl.Trainer(limit_test_batches=limit_test_batches, **kwargs)
+        trainer = self._init_trainer(limit_test_batches=limit_test_batches, **kwargs)
 
         results = trainer.test(self, test_dataloaders=test_dataloaders)
 
