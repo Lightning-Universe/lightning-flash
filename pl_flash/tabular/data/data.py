@@ -97,7 +97,7 @@ class TabularData(DataModule):
         val_size: float = None,
         test_size: float = None,
     ):
-        """Creates a TextClassificationData object from pandas DataFrames.
+        """Creates a TabularData object from pandas DataFrames.
 
         Args:
             train_df: train data DataFrame
@@ -113,7 +113,7 @@ class TabularData(DataModule):
             test_size: float between 0 and 1 to create a test dataset from train validation
 
         Returns:
-            TextClassificationData: The constructed data module.
+            TabualrData: The constructed data module.
 
         Examples::
 
@@ -137,6 +137,51 @@ class TabularData(DataModule):
             test_df=test_df,
             batch_size=batch_size,
             num_workers=num_workers,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        train_csv,
+        target_col: str,
+        categorical_cols: List,
+        numerical_cols: List,
+        valid_csv=None,
+        test_csv=None,
+        batch_size: int = 1,
+        num_workers: int = None,
+        val_size: float = None,
+        test_size: float = None,
+        **pandas_kwargs,
+    ):
+        """Creates a TextClassificationData object from pandas DataFrames.
+
+        Args:
+            train_csv: train data csv file.
+            target_col: The column containing the class id.
+            categorical_cols: The list of categorical columns.
+            numerical_cols: The list of numerical columns.
+            valid_csv: validation data csv file.
+            test_csv: test data csv file.
+            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to None which equals the number of available CPU threads.
+            val_size: float between 0 and 1 to create a validation dataset from train dataset
+            test_size: float between 0 and 1 to create a test dataset from train validation
+
+        Returns:
+            TabularData: The constructed data module.
+
+        Examples::
+
+            text_data = TabularData.from_files("train.csv", label_field="class", text_field="sentence")
+        """
+        train_df = pd.read_csv(train_csv, **pandas_kwargs)
+        valid_df = pd.read_csv(valid_csv, **pandas_kwargs) if valid_csv is not None else None
+        test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv is not None else None
+        return cls.from_df(
+            train_df, target_col, categorical_cols, numerical_cols, valid_df, test_df, batch_size, num_workers,
+            val_size, test_size
         )
 
     @property
