@@ -1,4 +1,5 @@
 from imp import reload
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -100,6 +101,29 @@ def test_from_df(tmpdir):
         target_col="label",
         valid_df=valid_df,
         test_df=test_df,
+        num_workers=0,
+    )
+    for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
+        (cat, num), target = next(iter(dl))
+        assert cat.shape == (1, 1)
+        assert num.shape == (1, 2)
+        assert target.shape == (1, )
+
+
+def test_from_csv(tmpdir):
+    train_csv = Path(tmpdir) / "train.csv"
+    valid_csv = test_csv = Path(tmpdir) / "valid.csv"
+    TEST_DF_1.to_csv(train_csv)
+    TEST_DF_2.to_csv(valid_csv)
+    TEST_DF_2.to_csv(test_csv)
+
+    dm = TabularData.from_csv(
+        train_csv,
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
+        valid_csv=valid_csv,
+        test_csv=test_csv,
         num_workers=0,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
