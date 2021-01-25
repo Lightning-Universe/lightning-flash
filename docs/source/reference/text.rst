@@ -4,13 +4,13 @@ text
 TextClassificationData
 ----------------------
 
-.. autoclass:: pl_flash.text.TextClassificationData
+.. autoclass:: flash.text.TextClassificationData
 
-.. automethod:: pl_flash.text.TextClassificationData.from_files
+.. automethod:: flash.text.TextClassificationData.from_files
 
 TextClassifier
 --------------
 
-.. autoclass:: pl_flash.text.TextClassifier
+.. autoclass:: flash.text.TextClassifier
     :members:
     :exclude-members: forward

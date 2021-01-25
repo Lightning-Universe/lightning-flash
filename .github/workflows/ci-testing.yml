@@ -85,17 +85,17 @@ jobs:
     - name: Tests
       run: |
         # tox --sitepackages
-        coverage run --source pl_flash -m pytest pl_flash tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
+        coverage run --source flash -m pytest flash tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
         coverage xml
 
     #- name: Run examples
     #  run: |
     #    # tox --sitepackages
     #    python -m pip install -e .
-    #    # python pl_flash_examples/generic_task.py
-    #    # python pl_flash_examples/tabular_data.py
-    #    # python pl_flash_examples/text_classification.py
-    #    # python pl_flash_examples/torchvision_classifier.py
+    #    # python flash_examples/generic_task.py
+    #    # python flash_examples/tabular_data.py
+    #    # python flash_examples/text_classification.py
+    #    # python flash_examples/torchvision_classifier.py
 
     - name: Upload pytest test results
       uses: actions/upload-artifact@v2

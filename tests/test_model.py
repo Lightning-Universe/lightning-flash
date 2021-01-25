@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from pl_flash import ClassificationLightningTask, LightningTask
+from flash import ClassificationTask, Task
 
 # ======== Mock functions ========
 
@@ -27,7 +27,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 def test_init_trainer(tmpdir):
     mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
-    model = LightningTask(mlp, F.nll_loss)
+    model = Task(mlp, F.nll_loss)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
 
     assert model.trainer is None
@@ -48,7 +48,7 @@ def test_init_train(tmpdir, metrics):
     mlp = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
-    model = ClassificationLightningTask(mlp, F.nll_loss, metrics=metrics)
+    model = ClassificationTask(mlp, F.nll_loss, metrics=metrics)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, train_dl, val_dl)
     trainer.test(model, val_dl)

@@ -6,7 +6,7 @@ import pytest
 import pytorch_lightning as pl
 import torch
 
-from pl_flash.text import TextClassifier
+from flash.text import TextClassifier
 
 # ======== Mock functions ========
 

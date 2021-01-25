@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import torch
 
-from pl_flash import DataModule
+from flash import DataModule
 
 # ======== Mock functions ========
 

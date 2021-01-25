@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 from PIL import Image
 
-from pl_flash.vision import ImageClassificationData, ImageClassifier
+from flash.vision import ImageClassificationData, ImageClassifier
 
 
 def _dummy_image_loader(filepath):

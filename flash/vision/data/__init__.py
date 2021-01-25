@@ -1,0 +1,1 @@
+from flash.vision.data.classification import ImageClassificationData

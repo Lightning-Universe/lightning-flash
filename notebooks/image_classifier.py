@@ -8,7 +8,7 @@ from zipfile import ZipFile
 import pytorch_lightning as pl
 import torch
 
-from pl_flash.vision import ImageClassificationData, ImageClassifier
+from flash.vision import ImageClassificationData, ImageClassifier
 
 # -
 

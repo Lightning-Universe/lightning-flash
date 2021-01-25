@@ -57,6 +57,6 @@ jobs:
           source vEnv/bin/activate
           pip install dist/*
           cd .. & python -c "import pytorch_lightning as pl ; print(pl.__version__)"
-          cd .. & python -c "import pl_flash ; print(pl_flash.__version__)"
+          cd .. & python -c "import flash ; print(flash.__version__)"
           deactivate
           rm -rf vEnv

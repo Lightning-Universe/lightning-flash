@@ -1,4 +1,4 @@
-from pl_flash import utils
+from flash import utils
 
 # ======== Mock functions ========
 

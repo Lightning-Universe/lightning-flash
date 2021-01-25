@@ -8,7 +8,7 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 
-from pl_flash.vision import ImageClassificationData
+from flash.vision import ImageClassificationData
 
 
 def _dummy_image_loader(filepath):
