@@ -9,7 +9,7 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 
-from pl_flash.text import TextClassificationData
+from flash.text import TextClassificationData
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 

@@ -14,9 +14,9 @@ We seperate the developement process into 3 easy steps: data, model, and train:
 
 .. code-block:: python
 
-    from pl_flash.vision import ImageClassifier, ImageClassificationData
-    from pl_flash.text import TextClassifier, TextClassificationData
-    from pl_flash.tabular import TabularClassifier, TabularData
+    from flash.vision import ImageClassifier, ImageClassificationData
+    from flash.text import TextClassifier, TextClassificationData
+    from flash.tabular import TabularClassifier, TabularData
     import pytorch_lightning as pl
 
     # Step 1: Data

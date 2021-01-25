@@ -15,7 +15,7 @@ except ImportError:
 PATH_ROOT = os.path.dirname(__file__)
 builtins.__LIGHTNING_FLASH_SETUP__ = True
 
-import pl_flash  # noqa: E402
+import flash  # noqa: E402
 
 
 def _load_requirements(path_dir: str = PATH_ROOT, comment_char: str = "#") -> str:
@@ -28,7 +28,7 @@ def _load_requirements(path_dir: str = PATH_ROOT, comment_char: str = "#") -> st
 
 def _load_long_describtion() -> str:
     # https://github.com/PyTorchLightning/pytorch-lightning/raw/master/docs/source/_images/lightning_module/pt_to_pl.png
-    url = os.path.join(pl_flash.__homepage__, "raw", pl_flash.__version__, "docs")
+    url = os.path.join(flash.__homepage__, "raw", flash.__version__, "docs")
     text = open("README.md", encoding="utf-8").read()
     # replace relative repository path to absolute link to the release
     text = text.replace("](docs", f"]({url}")
@@ -44,13 +44,13 @@ def _load_long_describtion() -> str:
 # engineer specific practices
 setup(
     name="pytorch-lightning-flash",
-    version=pl_flash.__version__,
-    description=pl_flash.__docs__,
-    author=pl_flash.__author__,
-    author_email=pl_flash.__author_email__,
-    url=pl_flash.__homepage__,
+    version=flash.__version__,
+    description=flash.__docs__,
+    author=flash.__author__,
+    author_email=flash.__author_email__,
+    url=flash.__homepage__,
     download_url="https://github.com/PyTorchLightning/pytorch-lightning-flash",
-    license=pl_flash.__license__,
+    license=flash.__license__,
     packages=find_packages(exclude=["tests", "docs"]),
     long_description=_load_long_describtion(),
     long_description_content_type="text/markdown",

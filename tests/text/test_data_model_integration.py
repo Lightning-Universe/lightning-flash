@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 
-from pl_flash.text import TextClassificationData, TextClassifier
+from flash.text import TextClassificationData, TextClassifier
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 

@@ -22,7 +22,7 @@ very general and can handle the majority of these problems.
 
 .. code-block:: python
 
-    from pl_flash.model import LightningTask
+    from flash.model import Task
     from torch import nn, optim
     from torch.utils.data import DataLoader, random_split
     from torchvision import transforms, datasets
@@ -41,7 +41,7 @@ very general and can handle the majority of these problems.
     train, val = random_split(dataset, [55000, 5000])
 
     # task
-    classifier = LightningTask(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
+    classifier = Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
 
     # train
     pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
@@ -80,9 +80,9 @@ Now all we need is three lines of code to build and train our model!
 
 .. code-block:: python
 
-    from pl_flash.vision import ImageClassifier, ImageClassificationData
+    from flash.vision import ImageClassifier, ImageClassificationData
     import pytorch_lightning as pl
-    from pl_flash.data import download_data
+    from flash.data import download_data
 
     # download data
     download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
@@ -105,7 +105,7 @@ To run the example:
 
 .. code-block:: python
 
-    python pl_flash_examples/torchvision_classifier.py
+    python flash_examples/torchvision_classifier.py
 
 
 Text Classification
@@ -127,9 +127,9 @@ Once again, all we need is three lines of code to train our model!
 
 .. code-block:: python
 
-    from pl_flash.text import TextClassifier, TextClassificationData
+    from flash.text import TextClassifier, TextClassificationData
     import pytorch_lightning as pl
-    from pl_flash.data import download_data
+    from flash.data import download_data
 
     # download data
     download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
@@ -155,7 +155,7 @@ To run the example:
 
 .. code-block:: python
 
-    python pl_flash_examples/text_classification.py
+    python flash_examples/text_classification.py
 
 
 Tabular Classification
@@ -179,10 +179,10 @@ And now we train:
 
 .. code-block:: python
 
-    from pl_flash.tabular import TabularClassifier, TabularData
+    from flash.tabular import TabularClassifier, TabularData
     import pytorch_lightning as pl
     import pandas as pd
-    from pl_flash.data import download_data
+    from flash.data import download_data
 
     # download data
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", "titanic.csv")
@@ -211,4 +211,4 @@ To run the example:
 
 .. code-block:: python
 
-    python pl_flash_examples/tabular_data.py
+    python flash_examples/tabular_data.py

@@ -2,7 +2,7 @@ import pytest
 import pytorch_lightning as pl
 import torch
 
-from pl_flash.tabular import TabularClassifier
+from flash.tabular import TabularClassifier
 
 # ======== Mock functions ========
 

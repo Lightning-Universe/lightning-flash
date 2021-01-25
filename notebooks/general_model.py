@@ -3,7 +3,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 
-from pl_flash import LightningTask
+from flash import Task
 
 # model
 model = nn.Sequential(
@@ -18,7 +18,7 @@ dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.To
 train, val = random_split(dataset, [55000, 5000])
 
 # task
-classifier = LightningTask(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
+classifier = Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
 
 # train
 pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))

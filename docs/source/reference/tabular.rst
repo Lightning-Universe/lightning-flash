@@ -4,13 +4,13 @@ tabular
 TabularData
 --------------
 
-.. autoclass:: pl_flash.tabular.TabularData
+.. autoclass:: flash.tabular.TabularData
 
-.. automethod:: pl_flash.tabular.TabularData.from_df
+.. automethod:: flash.tabular.TabularData.from_df
 
 TabularClassifier
 -----------------
 
-.. autoclass:: pl_flash.tabular.TabularClassifier
+.. autoclass:: flash.tabular.TabularClassifier
     :members:
     :exclude-members: forward

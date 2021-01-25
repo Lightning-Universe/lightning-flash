@@ -4,7 +4,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 
-from pl_flash.tabular import TabularClassifier, TabularData
+from flash.tabular import TabularClassifier, TabularData
 
 TEST_DF_1 = pd.DataFrame(
     data={

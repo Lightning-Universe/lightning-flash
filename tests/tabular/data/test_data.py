@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pl_flash.tabular import TabularData
-from pl_flash.tabular.data.data import _categorize, _normalize
+from flash.tabular import TabularData
+from flash.tabular.data.data import _categorize, _normalize
 
 TEST_DF_1 = pd.DataFrame(
     data={

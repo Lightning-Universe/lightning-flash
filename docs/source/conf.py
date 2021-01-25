@@ -22,7 +22,7 @@ _PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
 builtins.__LIGHTNING_FLASH_SETUP__ = True
-import pl_flash  # noqa: E402
+import flash  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 
@@ -81,8 +81,8 @@ html_theme_path = [pt_lightning_sphinx_theme.get_html_theme_path()]
 # documentation.
 
 html_theme_options = {
-    "pytorch_project": pl_flash.__homepage__,
-    "canonical_url": pl_flash.__homepage__,
+    "pytorch_project": flash.__homepage__,
+    "canonical_url": flash.__homepage__,
     "collapse_navigation": False,
     "display_version": True,
     "logo_only": False,

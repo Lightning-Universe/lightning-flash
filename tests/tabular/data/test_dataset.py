@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pl_flash.tabular.data.dataset import PandasDataset
+from flash.tabular.data.dataset import PandasDataset
 
 TEST_DF = pd.DataFrame(
     data={

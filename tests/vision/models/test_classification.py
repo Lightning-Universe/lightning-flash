@@ -5,7 +5,7 @@ import pytest
 import pytorch_lightning as pl
 import torch
 
-from pl_flash.vision import ImageClassifier
+from flash.vision import ImageClassifier
 
 # ======== Mock functions ========
 
