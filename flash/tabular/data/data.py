@@ -3,7 +3,7 @@ from typing import List, Sequence, Tuple
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from flash.data.datamodule import DataModule
+from flash.core.data.datamodule import DataModule
 from flash.tabular.data.dataset import (
     _categorize,
     _compute_normalization,
