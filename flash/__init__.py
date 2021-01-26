@@ -3,16 +3,18 @@ import os
 
 __version__ = "0.0.3"
 __author__ = "PyTorchLightning et al."
-__author_email__ = "name@pytorchlightning.ai"
-__license__ = "TBD"
-__copyright__ = "Copyright (c) 2020-2020, %s." % __author__
+__author_email__ = "name@pytorchlightning.ai"  # TODO
+__license__ = "TBD"  # TODO
+__copyright__ = f"Copyright (c) 2020-2021, f{__author__}."
 __homepage__ = "https://github.com/PyTorchLightning/pytorch-lightning-flash"
-__docs__ = "PyTorch Lightning flash is a simple training framework for fast research iterations"
+__docs__ = "Flash is a framework for fast prototyping, finetuning, and solving most standard deep learning challenges"
 __long_doc__ = """
-flash is a simplified version of PyTorch Lightning. It automates the model training with good
-defaults for different tasks.
-Use `flash` when training a model with good defaults and fast iteration, since you don't
-have to take care of all the update stuff - we do it for you!
+Flash is a task-based deep learning framework for flexible deep learning built on PyTorch Lightning.
+Tasks can be anything from text classification to object segmentation.
+Although PyTorch Lightning provides ultimate flexibility, for common tasks it does not remove 100% of the boilerplate.
+Flash is built for applied researchers, beginners, data scientists, Kagglers or anyone starting out with Deep Learning.
+But unlike other entry-level frameworks (keras, etc...), Flash users can switch to Lightning trivially when they need
+the added flexibility.
 """
 
 PACKAGE_ROOT = os.path.dirname(__file__)

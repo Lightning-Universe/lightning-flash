@@ -7,12 +7,13 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class DataModule(pl.LightningDataModule):
-    """Basic DataModule class for all flash tasks
+    """Basic DataModule class for all Flash tasks
+
     Args:
         train_ds: Dataset for training. Defaults to None.
         valid_ds: Dataset for validating model performance during training. Defaults to None.
         test_ds: Dataset to test model performance. Defaults to None.
-        batch_size: the batchsize to be used by the dataloader. Defaults to 1.
+        batch_size: the batch size to be used by the DataLoader. Defaults to 1.
         num_workers: The number of workers to use for parallelized loading.
             Defaults to None which equals the number of available CPU threads.
     """

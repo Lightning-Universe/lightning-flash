@@ -2,7 +2,6 @@ import os
 from typing import Callable, List, Mapping, Sequence, Type, Union
 
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 import torchvision
 from pytorch_lightning.metrics import Accuracy

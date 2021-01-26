@@ -1,10 +1,7 @@
 from typing import Callable, Dict, List, Mapping, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
-from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, BertForSequenceClassification, default_data_collator
 

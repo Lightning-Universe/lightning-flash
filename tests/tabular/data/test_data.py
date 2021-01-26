@@ -1,13 +1,11 @@
-from imp import reload
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from flash.tabular import TabularData
-from flash.tabular.data.data import _categorize, _normalize
+from flash.tabular.data.dataset import _categorize, _normalize
 
 TEST_DF_1 = pd.DataFrame(
     data={

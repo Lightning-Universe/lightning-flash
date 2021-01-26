@@ -5,8 +5,8 @@ recursive-exclude __pycache__  *.py[cod] *.orig
 
 # Include the README and CHANGELOG
 include *.md
-recursive-include pl_flash *.md
-recursive-include pl_flash *.py
+recursive-include flash *.md
+recursive-include flash *.py
 
 # Include the license file
 include LICENSE
@@ -37,5 +37,3 @@ prune notebook*
 prune temp*
 prune test*
 prune benchmark*
-include versioneer.py
-include pl_flash/_version.py

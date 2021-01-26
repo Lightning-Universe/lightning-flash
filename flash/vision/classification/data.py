@@ -5,8 +5,8 @@ from typing import Any, Callable, Optional, Sequence, Tuple, Union
 import torch
 from PIL import Image
 from torchvision import transforms as T
-from torchvision.datasets import ImageFolder, VisionDataset
-from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS, make_dataset
+from torchvision.datasets import VisionDataset
+from torchvision.datasets.folder import IMG_EXTENSIONS, make_dataset
 
 from flash.core.data.datamodule import DataModule
 

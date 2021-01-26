@@ -1,9 +1,6 @@
-from imp import reload
 from pathlib import Path
-from unittest.mock import patch
 
 import numpy as np
-import pytest
 import torch
 from PIL import Image
 from torchvision import transforms as T

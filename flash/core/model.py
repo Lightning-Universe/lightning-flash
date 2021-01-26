@@ -14,7 +14,7 @@ class Task(pl.LightningModule):
     """A general Task.
 
     Args:
-        model: Task to use for task.
+        model: Model to use for the task.
         loss_fn: Loss function for training
         optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation.
@@ -26,17 +26,16 @@ class Task(pl.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]],
+        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
     ):
         super().__init__()
         self.model = model
-        self.loss_fn = loss_fn
-        self.optimizer_cls = optimizer
-        self.metrics = nn.ModuleDict(get_callable_dict(metrics) if metrics is not None else {})
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
+        self.optimizer_cls = optimizer
+        self.metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")

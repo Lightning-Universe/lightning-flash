@@ -1,9 +1,5 @@
 import os
-from imp import reload
-from unittest.mock import patch
 
-import pytest
-import pytorch_lightning as pl
 import torch
 
 from flash.text import TextClassifier

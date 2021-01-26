@@ -1,2 +1,2 @@
-from flash.tabular.classification.model import TabularClassifier
+from flash.tabular.classification import TabularClassifier
 from flash.tabular.data import TabularData
