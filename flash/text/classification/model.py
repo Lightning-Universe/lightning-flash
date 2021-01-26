@@ -8,8 +8,8 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, BertForSequenceClassification, default_data_collator
 
-from flash.model import ClassificationTask
-from flash.text.data.classification import prepare_dataset, tokenize_text_lambda
+from flash.core.model import ClassificationTask
+from flash.text.classification.data import prepare_dataset, tokenize_text_lambda
 
 
 class TextClassifier(ClassificationTask):

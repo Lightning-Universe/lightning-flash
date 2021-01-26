@@ -1,2 +1,2 @@
-from flash.text.data import TextClassificationData
-from flash.text.models import TextClassifier
+from flash.text.classification.data import TextClassificationData
+from flash.text.classification.model import TextClassifier

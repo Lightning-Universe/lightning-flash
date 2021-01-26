@@ -82,7 +82,7 @@ Now all we need is three lines of code to build and train our model!
 
     from flash.vision import ImageClassifier, ImageClassificationData
     import pytorch_lightning as pl
-    from flash.data import download_data
+    from flash.core.data import download_data
 
     # download data
     download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
@@ -129,7 +129,7 @@ Once again, all we need is three lines of code to train our model!
 
     from flash.text import TextClassifier, TextClassificationData
     import pytorch_lightning as pl
-    from flash.data import download_data
+    from flash.core.data import download_data
 
     # download data
     download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
@@ -182,7 +182,7 @@ And now we train:
     from flash.tabular import TabularClassifier, TabularData
     import pytorch_lightning as pl
     import pandas as pd
-    from flash.data import download_data
+    from flash.core.data import download_data
 
     # download data
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", "titanic.csv")

@@ -31,8 +31,9 @@ if __LIGHTNING_FLASH_SETUP__:
     # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
 else:
 
-    from flash import data, vision
-    from flash.data import DataModule
-    from flash.model import ClassificationTask, Task
+    from flash import tabular, text, vision
+    from flash.core import data, utils
+    from flash.core.data import DataModule
+    from flash.core.model import ClassificationTask, Task
 
-    __all__ = ["Task", "ClassificationTask, vision", "data"]
+    __all__ = ["Task", "ClassificationTask", "DataModule", "vision", "text", "tabular", "data", "utils"]

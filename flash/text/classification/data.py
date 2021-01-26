@@ -7,7 +7,7 @@ from datasets import ClassLabel, DatasetDict, load_dataset, Value
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 
-from flash.data.datamodule import DataModule
+from flash.core.data.datamodule import DataModule
 
 
 def tokenize_text_lambda(tokenizer, text_field, max_length):

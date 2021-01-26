@@ -10,8 +10,8 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from flash.model import ClassificationTask
-from flash.vision.data.classification import _pil_loader, FlashDatasetFolder
+from flash.core.model import ClassificationTask
+from flash.vision.classification.data import _pil_loader, FlashDatasetFolder
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731

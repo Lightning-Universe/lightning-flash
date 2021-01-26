@@ -28,10 +28,10 @@ def download_zip_data(url, path="data/"):
     """
     Example::
 
-        from flash.data import download_zip_data
+        from flash.core.data import download_zip_data
 
         # download titanic data
-        download_zip_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
+        download_zip_data("https://pl-flash.core.data.s3.amazonaws.com/imdb.zip", "data/")
 
     Args:
         url: must end with .zip
@@ -50,10 +50,10 @@ def download_generic_data(url, path="data/"):
 
     Example::
 
-        from flash.data import download_csv_data
+        from flash.core.data import download_csv_data
 
         # download titanic data
-        download_csv_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", "titanic.csv")
+        download_csv_data("https://pl-flash.core.data.s3.amazonaws.com/titanic.csv", "titanic.csv")
 
     Args:
         url: must end with .csv

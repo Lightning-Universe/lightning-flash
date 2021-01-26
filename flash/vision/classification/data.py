@@ -8,7 +8,7 @@ from torchvision import transforms as T
 from torchvision.datasets import ImageFolder, VisionDataset
 from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS, make_dataset
 
-from flash.data.datamodule import DataModule
+from flash.core.data.datamodule import DataModule
 
 
 def _pil_loader(path):

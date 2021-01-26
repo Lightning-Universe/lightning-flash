@@ -7,7 +7,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from flash.utils import get_callable_dict
+from flash.core.utils import get_callable_dict
 
 
 class Task(pl.LightningModule):
