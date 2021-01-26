@@ -1,7 +1,6 @@
 from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 from pandas.core.frame import DataFrame
 from pytorch_lightning.metrics import Metric

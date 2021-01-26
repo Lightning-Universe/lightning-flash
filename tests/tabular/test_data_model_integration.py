@@ -1,8 +1,5 @@
-from pathlib import Path
-
 import pandas as pd
 import pytorch_lightning as pl
-import torch
 
 from flash.tabular import TabularClassifier, TabularData
 

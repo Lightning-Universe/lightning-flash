@@ -1,5 +1,3 @@
-import pytest
-import pytorch_lightning as pl
 import torch
 
 from flash.tabular import TabularClassifier

@@ -1,18 +1,10 @@
-from typing import List, Sequence, Tuple
+from typing import List
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from flash.core.data.datamodule import DataModule
-from flash.tabular.data.dataset import (
-    _categorize,
-    _compute_normalization,
-    _generate_codes,
-    _impute,
-    _normalize,
-    _pre_transform,
-    PandasDataset,
-)
+from flash.tabular.data.dataset import _compute_normalization, _generate_codes, _impute, _pre_transform, PandasDataset
 
 
 class TabularData(DataModule):

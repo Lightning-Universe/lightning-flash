@@ -1,10 +1,4 @@
-import pathlib
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
-
-import numpy as np
-import torch
-from datasets import ClassLabel, DatasetDict, load_dataset, Value
-from torch.utils.data import Dataset
+from datasets import load_dataset
 from transformers import AutoTokenizer
 
 from flash.core.data.datamodule import DataModule

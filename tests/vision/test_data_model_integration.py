@@ -1,8 +1,4 @@
-from pathlib import Path
-
-import pytorch_lightning as pl
 import torch
-from PIL import Image
 
 from flash.vision import ImageClassificationData, ImageClassifier
 
