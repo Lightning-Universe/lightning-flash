@@ -52,7 +52,8 @@ class DataPipeline:
         ``collate_fn`` as used in ``torch.utils.data.DataLoader``.
         To avoid the before/after collate transformations, please use ``collate``.
         """
-        samples = self.before_collate(samples)
+        if not self.contains_any_tensor(samples):
+            samples = self.before_collate(samples)
         batch = self.collate(samples)
         batch = self.after_collate(batch)
         return batch
@@ -76,3 +77,16 @@ class DataPipeline:
         samples = self.uncollate(batch)
         samples = self.after_uncollate(samples)
         return samples
+
+    @staticmethod
+    def contains_any_tensor(value):
+        if isinstance(value, Tensor):
+            return True
+
+        if isinstance(value, (list, tuple)):
+            return any(DataPipeline.contains_any_tensor(v) for v in value)
+
+        elif isinstance(value, dict):
+            return any(DataPipeline.contains_any_tensor(v) for v in value.values())
+
+        return False

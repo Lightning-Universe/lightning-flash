@@ -4,10 +4,13 @@ from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import torch
 from PIL import Image
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torchvision import transforms as T
 from torchvision.datasets import VisionDataset
-from torchvision.datasets.folder import IMG_EXTENSIONS, make_dataset
+from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
+from flash.core.classification import ClassificationDataPipeline
+from flash.core.data import download_data
 from flash.core.data.datamodule import DataModule
 
 
@@ -153,7 +156,7 @@ class FlashDatasetFolder(VisionDataset):
         if self.predict:
             path = self.samples[index]
             sample = self.loader(path)
-            return self.transform(sample), -1
+            return self.transform(sample)
         else:
             path, target = self.samples[index]
             sample = self.loader(path)
@@ -167,32 +170,69 @@ class FlashDatasetFolder(VisionDataset):
         return len(self.samples)
 
 
+_default_train_transforms = T.Compose([
+    T.RandomResizedCrop(224),
+    T.RandomHorizontalFlip(),
+    T.ToTensor(),
+    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
+
+_default_valid_transforms = T.Compose([
+    T.Resize(256),
+    T.CenterCrop(224),
+    T.ToTensor(),
+    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
+
+
+class ImageClassificationDataPipeline(ClassificationDataPipeline):
+
+    def __init__(
+        self,
+        train_transform: Optional[Callable] = _default_train_transforms,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
+        use_valid_transform: bool = True,
+        loader: Callable = _pil_loader
+    ):
+        self._train_transform = train_transform
+        self._valid_transform = valid_transform
+        self._use_valid_transform = use_valid_transform
+        self._loader = loader
+
+    def before_collate(self, samples: Any) -> Any:
+        """Override to apply transformations to samples"""
+        if self.contains_any_tensor(samples):
+            return samples
+
+        elif isinstance(samples, list) and all(isinstance(p, str) for p in samples):
+            outputs = []
+            for sample in samples:
+                output = self._loader(sample)
+                transform = self._valid_transform if self._use_valid_transform else self._train_transform
+                outputs.append(transform(output))
+            return outputs
+        else:
+            raise MisconfigurationException("The samples should either be a tensor or a list of paths.")
+
+
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
-    default_train_transforms = T.Compose([
-        T.RandomResizedCrop(224),
-        T.RandomHorizontalFlip(),
-        T.ToTensor(),
-        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ])
-
-    default_valid_transforms = T.Compose([
-        T.Resize(256),
-        T.CenterCrop(224),
-        T.ToTensor(),
-        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ])
+    @staticmethod
+    def default_pipeline():
+        return ImageClassificationDataPipeline(
+            train_transform=_default_train_transforms, valid_transform=_default_valid_transforms, loader=_pil_loader
+        )
 
     @classmethod
     def from_filepaths(
         cls,
         train_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
         train_labels: Optional[Sequence] = None,
-        train_transform: Optional[Callable] = default_train_transforms,
+        train_transform: Optional[Callable] = _default_train_transforms,
         valid_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
         valid_labels: Optional[Sequence] = None,
-        valid_transform: Optional[Callable] = default_valid_transforms,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
         test_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
         test_labels: Optional[Sequence] = None,
         loader: Callable = _pil_loader,
@@ -259,9 +299,9 @@ class ImageClassificationData(DataModule):
     def from_folders(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]],
-        train_transform: Optional[Callable] = default_train_transforms,
+        train_transform: Optional[Callable] = _default_train_transforms,
         valid_folder: Optional[Union[str, pathlib.Path]] = None,
-        valid_transform: Optional[Callable] = default_valid_transforms,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
         loader: Callable = _pil_loader,
         batch_size: int = 64,
@@ -316,5 +356,71 @@ class ImageClassificationData(DataModule):
         )
 
         datamodule.num_classes = len(train_ds.classes)
+        datamodule.data_pipeline = ImageClassificationDataPipeline(
+            train_transform=train_transform, valid_transform=valid_transform, loader=loader
+        )
+        return datamodule
 
+    @classmethod
+    def from_folder(
+        cls,
+        folder: Union[str, pathlib.Path],
+        transform: Optional[Callable] = _default_valid_transforms,
+        loader: Callable = _pil_loader,
+        batch_size: int = 64,
+        num_workers: Optional[int] = 0,
+        **kwargs
+    ):
+        """
+        Creates a ImageClassificationData object from folders of images arranged in this way: ::
+
+            folder/dog_xxx.png
+            folder/dog_xxy.png
+            folder/dog_xxz.png
+            folder/cat_123.png
+            folder/cat_nsdf3.png
+            folder/cat_asd932_.png
+
+        Args:
+            folder: Path to prediction folder.
+            transform: Image transform to use for prediction set.
+            loader: A function to load an image given its path.
+            batch_size: Batch size for data loading.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to None which equals the number of available CPU threads.
+
+        Returns:
+            ImageClassificationData: the constructed data module
+
+        Examples:
+            >>> img_data = ImageClassificationData.from_folder("my_folder/") # doctest: +SKIP
+
+        """
+        if not os.path.isdir(folder):
+            raise MisconfigurationException("folder should be a directory")
+
+        filenames = os.listdir(folder)
+
+        if any(not has_file_allowed_extension(f, IMG_EXTENSIONS) for f in filenames):
+            raise MisconfigurationException(
+                "No images with allowed extensions {IMG_EXTENSIONS} where found in {folder}"
+            )
+
+        test_ds = (
+            FlashDatasetFolder(
+                folder,
+                transform=transform,
+                loader=loader,
+                predict=True,
+                img_paths=[os.path.join(folder, f) for f in filenames]
+            )
+        )
+
+        datamodule = cls(
+            test_ds=test_ds,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+
+        datamodule.data_pipeline = ImageClassificationDataPipeline(valid_transform=transform, loader=loader)
         return datamodule
