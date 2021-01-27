@@ -68,7 +68,7 @@ def test_classificationtask_trainer_predict(tmpdir):
     trainer = pl.Trainer(default_root_dir=tmpdir)
     expected = list(range(10))
     predictions = trainer.predict(task, predict_dl)
-    predictions = predictions[0]  # dataloader 0 predictions
+    predictions = predictions[0]  # TODO(tchaton): why do we need this?
     for pred in predictions[:-1]:
         # check batch sizes are correct
         assert len(pred) == batch_size
