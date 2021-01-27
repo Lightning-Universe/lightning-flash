@@ -15,7 +15,7 @@ Fixes # (issue)
 - [ ] Did you make sure to update the documentation with your changes?
 - [ ] Did you write any new necessary tests? [not needed for typos/docs]
 - [ ] Did you verify new and existing tests pass locally with your changes?
-- [ ] If you made a notable change (that affects users), did you update the [CHANGELOG](https://github.com/PyTorchLightning/pytorch-lightning-flash/blob/master/CHANGELOG.md)?
+- [ ] If you made a notable change (that affects users), did you update the [CHANGELOG](https://github.com/PyTorchLightning/lightning-flash/blob/master/CHANGELOG.md)?
 
 <!-- For CHANGELOG separate each item in unreleased section by a blank line to reduce collisions -->
 

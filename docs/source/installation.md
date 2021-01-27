@@ -5,7 +5,7 @@ Flash is tested on Python 3.6+, and PyTorch 1.6
 ## Install with pip
 
 ```bash
-pip install pytorch-lightning-flash
+pip install lightning-flash
 ```
 
 ## Install from source
