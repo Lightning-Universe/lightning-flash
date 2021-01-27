@@ -5,7 +5,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, BertForSequenceClassification, default_data_collator
 
-from flash.core.model import ClassificationTask
+from flash.core.classification import ClassificationTask
 from flash.text.classification.data import prepare_dataset, tokenize_text_lambda
 
 

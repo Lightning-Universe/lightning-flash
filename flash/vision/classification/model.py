@@ -9,7 +9,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from flash.core.model import ClassificationTask
+from flash.core.classification import ClassificationTask
 from flash.vision.classification.data import _pil_loader, FlashDatasetFolder
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731

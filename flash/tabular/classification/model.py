@@ -8,7 +8,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from flash.core.model import ClassificationTask
+from flash.core.classification import ClassificationTask
 from flash.tabular.data.dataset import _pre_transform, PandasDataset
 
 
