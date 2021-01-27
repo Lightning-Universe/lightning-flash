@@ -4,9 +4,9 @@
 
 # Flash
 
-[![CI testing](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)](https://github.com/PyTorchLightning/pytorch-lightning-flash/actions?query=workflow%3A%22CI+testing%22)
-![Check Code formatting](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/Check%20Code%20formatting/badge.svg?branch=master&event=push)
-[![Check Docs](https://github.com/PyTorchLightning/pytorch-lightning-flash/workflows/Check%20Docs/badge.svg?branch=master&event=push)](https://pytorchlightning.github.io/pytorch-lightning-flash/)
+[![CI testing](https://github.com/PyTorchLightning/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)](https://github.com/PyTorchLightning/lightning-flash/actions?query=workflow%3A%22CI+testing%22)
+![Check Code formatting](https://github.com/PyTorchLightning/lightning-flash/workflows/Check%20Code%20formatting/badge.svg?branch=master&event=push)
+[![Check Docs](https://github.com/PyTorchLightning/lightning-flash/workflows/Check%20Docs/badge.svg?branch=master&event=push)](https://pytorchlightning.github.io/lightning-flash/)
 
 </div>
 
@@ -15,19 +15,19 @@
 Pip
 
 ```bash
-pip install pytorch-lightning-flash
+pip install lightning-flash
 ```
 
 Master
 ```bash
-pip install git+https://github.com/PytorchLightning/pytorch-lightning-flash.git@master --upgrade
+pip install git+https://github.com/PytorchLightning/lightning-flash.git@master --upgrade
 ```
 
 Source
 
 ``` bash
-git clone https://github.com/PyTorchLightning/pytorch-lightning-flash.git
-cd pytorch-lightning-flash 
+git clone https://github.com/PyTorchLightning/lightning-flash.git
+cd lightning-flash 
 pip install -e .
 ```
 

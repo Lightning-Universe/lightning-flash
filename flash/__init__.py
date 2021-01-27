@@ -6,7 +6,7 @@ __author__ = "PyTorchLightning et al."
 __author_email__ = "name@pytorchlightning.ai"  # TODO
 __license__ = "TBD"  # TODO
 __copyright__ = f"Copyright (c) 2020-2021, f{__author__}."
-__homepage__ = "https://github.com/PyTorchLightning/pytorch-lightning-flash"
+__homepage__ = "https://github.com/PyTorchLightning/lightning-flash"
 __docs__ = "Flash is a framework for fast prototyping, finetuning, and solving most standard deep learning challenges"
 __long_doc__ = """
 Flash is a task-based deep learning framework for flexible deep learning built on PyTorch Lightning.
