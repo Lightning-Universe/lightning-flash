@@ -1,7 +1,7 @@
 """Root package info."""
 import os
 
-__version__ = "0.0.0rc0"
+__version__ = "0.0.0rc1"
 __author__ = "PyTorchLightning et al."
 __author_email__ = "name@pytorchlightning.ai"  # TODO
 __license__ = "TBD"  # TODO
