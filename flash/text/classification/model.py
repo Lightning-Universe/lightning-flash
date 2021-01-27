@@ -24,7 +24,7 @@ class TextClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: str= "bert-base-uncased",
+        backbone: str = "bert-base-uncased",
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-5,
