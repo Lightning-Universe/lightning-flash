@@ -2,8 +2,8 @@ from typing import Any
 
 import torch
 
-from flash.core.model import Task
 from flash.core.data import DataPipeline
+from flash.core.model import Task
 
 
 class ClassificationDataPipeline(DataPipeline):
@@ -15,6 +15,6 @@ class ClassificationDataPipeline(DataPipeline):
 
 
 class ClassificationTask(Task):
-    @property
-    def default_pipeline(self) -> ClassificationDataPipeline:
+    @staticmethod
+    def default_pipeline() -> ClassificationDataPipeline:
         return ClassificationDataPipeline()

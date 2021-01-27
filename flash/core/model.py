@@ -1,4 +1,4 @@
-from typing import Callable, Mapping, Optional, Sequence, Type, Union, Any
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -76,16 +76,18 @@ class Task(pl.LightningModule):
         output = self.step(batch, batch_idx)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
-    def predict(self, x: Any, batch_idx: Optional[int] = None, collate: bool = False) -> Any:
-        # TODO: collate default should be True
-        if collate:
-            batch = self.data_pipeline.collate_fn(x)
-        else:
-            batch, _ = (x["x"], x["target"]) if isinstance(x, dict) else x
-        y_hat = self.forward(batch)
-        predictions = self.data_pipeline.uncollate_fn(y_hat)  # TODO: pass batch and x
-        return predictions
-    
+    def predict(
+        self,
+        x: Any,
+        batch_idx: Optional[int] = None,
+        dataloader_idx: Optional[int] = None,
+        data_pipeline: Optional[DataPipeline] = None
+    ) -> Any:
+        data_pipeline = data_pipeline or self.data_pipeline
+        batch = data_pipeline.collate_fn(x)
+        predictions = self.forward(batch)
+        return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
 
@@ -94,9 +96,9 @@ class Task(pl.LightningModule):
         try:
             return self.trainer.datamodule.data_pipeline
         except AttributeError:
-            return self.default_pipeline
+            return self.default_pipeline()
 
-    @property
-    def default_pipeline(self) -> DataPipeline:
+    @staticmethod
+    def default_pipeline() -> DataPipeline:
         """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
         return DataPipeline()

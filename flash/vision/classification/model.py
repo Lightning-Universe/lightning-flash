@@ -10,7 +10,12 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from flash.core.classification import ClassificationTask
-from flash.vision.classification.data import _pil_loader, FlashDatasetFolder
+from flash.vision.classification.data import (
+    _pil_loader,
+    FlashDatasetFolder,
+    ImageClassificationData,
+    ImageClassificationDataPipeline,
+)
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731
@@ -75,55 +80,6 @@ class ImageClassifier(ClassificationTask):
         x = self.backbone(x)
         return self.head(x)
 
-    def freeze(self):
-        """
-        Freeze the backbone parameters.
-        """
-        for p in self.backbone.parameters():
-            p.requires_grad = False
-
-    def unfreeze(self):
-        """
-        Unfreeze the backbone parameters.
-        """
-        for p in self.backbone.parameters():
-            p.requires_grad = True
-
-    def _check_path_exists(self, img_paths: List[str]):
-        for p in img_paths:
-            assert os.path.exists(p)
-
-    def predict(
-        self,
-        img_paths: List[str],
-        loader: Callable = _pil_loader,
-        transform=None,
-        batch_size: int = 2,
-        num_workers: int = 0,
-        **kwargs
-    ):
-
-        self._predict = True
-        self._check_path_exists(img_paths)
-        assert transform is not None
-
-        test_dataloaders = [
-            DataLoader(
-                FlashDatasetFolder(None, loader, transform=transform, predict=True, img_paths=img_paths),
-                batch_size=batch_size,
-                num_workers=num_workers,
-            )
-        ]
-
-        trainer = self._init_trainer(**kwargs)
-
-        results = trainer.test(self, test_dataloaders=test_dataloaders)
-        outputs = []
-        if "predictions" in results[0]:
-            for r in results:
-                for pred in r["predictions"]:
-                    pred["id"] = img_paths[pred["id"]]
-                outputs.append(pd.json_normalize(r["predictions"], sep='_'))
-        else:
-            results = outputs
-        return outputs
+    @staticmethod
+    def default_pipeline() -> ImageClassificationDataPipeline:
+        return ImageClassificationData.default_pipeline()

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 import pytorch_lightning as pl
 import torch
@@ -10,10 +12,18 @@ from flash import ClassificationTask
 
 
 class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index):
-        return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
-    def __len__(self):
+    def __init__(self, predict: bool = False):
+        self._predict = predict
+
+    def __getitem__(self, index: int) -> Any:
+        sample = torch.rand(1, 28, 28)
+        if self._predict:
+            return sample
+        else:
+            return sample, torch.randint(10, size=(1, )).item()
+
+    def __len__(self) -> int:
         return 100
 
 
@@ -21,7 +31,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 @pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])
-def test_classificationtask_train(tmpdir, metrics):
+def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -40,7 +50,7 @@ def test_classificationtask_task_predict():
     expected = list(range(10))
     # single item
     x0, _ = ds[0]
-    pred0 = task.predict(x0, collate=True)
+    pred0 = task.predict(x0)
     assert pred0[0] in expected
     # list
     x1, _ = ds[1]
@@ -52,7 +62,7 @@ def test_classificationtask_task_predict():
 def test_classificationtask_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
-    ds = DummyDataset()
+    ds = DummyDataset(predict=True)
     batch_size = 3
     predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size)
     trainer = pl.Trainer(default_root_dir=tmpdir)
