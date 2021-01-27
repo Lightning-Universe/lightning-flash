@@ -12,30 +12,11 @@ except ImportError:
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
 
-PATH_ROOT = os.path.dirname(__file__)
+_PATH_ROOT = os.path.dirname(__file__)
 builtins.__LIGHTNING_FLASH_SETUP__ = True
 
 import flash  # noqa: E402
-
-
-def _load_requirements(path_dir: str = PATH_ROOT, comment_char: str = "#") -> str:
-    with open(os.path.join(path_dir, "requirements", "install.txt"), "r") as file:
-        lines = [ln.strip() for ln in file.readlines()]
-    reqs = [ln[:ln.index(comment_char)] if comment_char in ln else ln for ln in lines]
-    reqs = [ln for ln in reqs if ln]
-    return reqs
-
-
-def _load_long_describtion() -> str:
-    # https://github.com/PyTorchLightning/pytorch-lightning/raw/master/docs/source/_images/lightning_module/pt_to_pl.png
-    url = os.path.join(flash.__homepage__, "raw", flash.__version__, "docs")
-    text = open("README.md", encoding="utf-8").read()
-    # replace relative repository path to absolute link to the release
-    text = text.replace("](docs", f"]({url}")
-    # SVG images are not readable on PyPI, so replace them  with PNG
-    text = text.replace(".svg", ".png")
-    return text
-
+from flash.setup_tools import _load_readme_description, _load_requirements  # noqa: E402
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
@@ -52,14 +33,14 @@ setup(
     download_url="https://github.com/PyTorchLightning/lightning-flash",
     license=flash.__license__,
     packages=find_packages(exclude=["tests", "docs"]),
-    long_description=_load_long_describtion(),
+    long_description=_load_readme_description(_PATH_ROOT),
     long_description_content_type="text/markdown",
     include_package_data=True,
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
     setup_requires=[],
-    install_requires=_load_requirements(PATH_ROOT),
+    install_requires=_load_requirements(_PATH_ROOT, file_name=os.path.join('requirements', 'install.txt')),
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
