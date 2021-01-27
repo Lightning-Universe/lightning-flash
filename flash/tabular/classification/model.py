@@ -1,16 +1,11 @@
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, List, Tuple
 
-import pandas as pd
 import torch
-from pandas.core.frame import DataFrame
 from pytorch_lightning.metrics import Metric
 from torch import nn
 from torch.nn import functional as F
-from torch.utils.data import DataLoader
 
-from flash.core.classification import ClassificationDataPipeline, ClassificationTask
-from flash.tabular.data.data import TabularDataPipeline
-from flash.tabular.data.dataset import _pre_transform, PandasDataset
+from flash.core.classification import ClassificationTask
 
 
 class TabularClassifier(ClassificationTask):
@@ -38,23 +33,21 @@ class TabularClassifier(ClassificationTask):
         metrics: List[Metric] = None,
         learning_rate: float = 1e-3,
     ):
+        self.save_hyperparameters()
+
+        num_num = num_features - len(embedding_sizes)  # numerical columns
+        input_size = num_num + sum(emb_dim for _, emb_dim in embedding_sizes)
+        sizes = [input_size] + hidden + [num_classes]
         super().__init__(
-            model=None,
+            model=self._init_mlp(sizes),
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
         )
 
-        self.save_hyperparameters()
-
-        num_num = self.hparams.num_features - len(self.hparams.embedding_sizes)  # numerical columns
-        input_size = num_num + sum(emb_dim for _, emb_dim in self.hparams.embedding_sizes)
-        sizes = [input_size] + hidden + [self.hparams.num_classes]
-
         self.embs = nn.ModuleList([nn.Embedding(n_emb, emb_dim) for n_emb, emb_dim in self.hparams.embedding_sizes])
         self.bn_num = nn.BatchNorm1d(num_num) if num_num > 0 else None
-        self.mlp = self._init_mlp(sizes)
 
     def _init_mlp(self, sizes):
         layers = []
@@ -78,7 +71,7 @@ class TabularClassifier(ClassificationTask):
         if self.bn_num is not None:
             x_num = self.bn_num(x_num)
             x = torch.cat([x_num, x], dim=1) if len(self.embs) else x_num
-        x = self.mlp(x)
+        x = self.model(x)
         return x
 
     @classmethod
@@ -86,3 +79,8 @@ class TabularClassifier(ClassificationTask):
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
         model.datamodule = datamodule
         return model
+
+    @staticmethod
+    def default_pipeline():
+        # TabularDataPipeline depends on the data. No default
+        raise NotImplementedError

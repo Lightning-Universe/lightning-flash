@@ -82,10 +82,6 @@ class DataModule(pl.LightningDataModule):
             collate_fn=self.data_pipeline.collate_fn,
         )
 
-    @staticmethod
-    def default_pipeline() -> DataPipeline:
-        return DataPipeline()
-
     @property
     def data_pipeline(self) -> DataPipeline:
         if self._data_pipeline is None:
@@ -95,3 +91,7 @@ class DataModule(pl.LightningDataModule):
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline):
         self._data_pipeline = data_pipeline
+
+    @staticmethod
+    def default_pipeline() -> DataPipeline:
+        return DataPipeline()

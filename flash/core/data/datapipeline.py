@@ -1,6 +1,5 @@
 from typing import Any
 
-import torch
 from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
@@ -78,16 +77,3 @@ class DataPipeline:
         samples = self.uncollate(batch)
         samples = self.after_uncollate(samples)
         return samples
-
-    @staticmethod
-    def contains_any_tensor(value, dtype=torch.Tensor):
-        if isinstance(value, dtype):
-            return True
-
-        if isinstance(value, (list, tuple)):
-            return any(DataPipeline.contains_any_tensor(v, dtype=dtype) for v in value)
-
-        elif isinstance(value, dict):
-            return any(DataPipeline.contains_any_tensor(v, dtype=dtype) for v in value.values())
-
-        return False

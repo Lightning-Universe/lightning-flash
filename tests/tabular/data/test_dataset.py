@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from flash.tabular.data.dataset import PandasDataset
+from flash.tabular.classification.data.dataset import PandasDataset
 
 TEST_DF = pd.DataFrame(
     data={
