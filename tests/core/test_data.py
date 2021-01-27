@@ -10,6 +10,7 @@ from flash.core.data import DataPipeline
 
 
 class DummyDataset(torch.utils.data.Dataset):
+
     def __getitem__(self, index):
         return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
@@ -48,6 +49,7 @@ def test_cpu_count_none():
 
 
 def test_pipeline():
+
     class BoringPipeline(DataPipeline):
         called = []
 

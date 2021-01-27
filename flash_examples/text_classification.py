@@ -20,7 +20,6 @@ datamodule = TextClassificationData.from_files(
     label_field="sentiment",
 )
 
-
 # 2. build model
 model = TextClassifier(backbone, num_classes=datamodule.num_classes)
 
