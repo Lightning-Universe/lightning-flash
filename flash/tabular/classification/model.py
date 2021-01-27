@@ -8,7 +8,8 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationDataPipeline, ClassificationTask
+from flash.tabular.data.data import TabularDataPipeline
 from flash.tabular.data.dataset import _pre_transform, PandasDataset
 
 
@@ -28,14 +29,9 @@ class TabularClassifier(ClassificationTask):
 
     def __init__(
         self,
-        num_classes: int,
         num_features: int,
+        num_classes: int,
         embedding_sizes: List[Tuple] = None,
-        codes: Dict = None,
-        mean: DataFrame = None,
-        std: DataFrame = None,
-        cat_cols: List = None,
-        num_cols: List = None,
         hidden=[512],
         loss_fn: Callable = F.cross_entropy,
         optimizer=torch.optim.Adam,
@@ -85,45 +81,8 @@ class TabularClassifier(ClassificationTask):
         x = self.mlp(x)
         return x
 
-    def predict(self, dfs: List[DataFrame], batch_size: int = 2, num_workers: int = 0, **kwargs):
-        """
-        This function is used to make prediction directly from raw_data
-        """
-        self._predict = True
-
-        assert isinstance(dfs, list)
-        assert isinstance(dfs[0], DataFrame)
-
-        # pre-transform used during training phase
-        dfs = _pre_transform(
-            dfs,
-            self.hparams.num_cols,
-            self.hparams.cat_cols,
-            self.hparams.codes,
-            self.hparams.mean,
-            self.hparams.std,
-        )
-
-        # create test dataloaders
-        test_dataloaders = [
-            DataLoader(
-                PandasDataset(df, self.hparams.cat_cols, self.hparams.num_cols, None, predict=True),
-                batch_size=batch_size,
-                num_workers=num_workers,
-            ) for df in dfs
-        ]
-
-        # create trainaer
-        trainer = self._init_trainer(**kwargs)
-
-        # perform inference using test
-        results = trainer.test(self, test_dataloaders=test_dataloaders)
-
-        # if predictions are available, convert them into DataFrame
-        outputs = []
-        if "predictions" in results[0]:
-            for r in results:
-                outputs.append(pd.json_normalize(r["predictions"], sep='_'))
-        else:
-            results = outputs
-        return outputs
+    @classmethod
+    def from_data(cls, datamodule, **kwargs):
+        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
+        model.datamodule = datamodule
+        return model

@@ -84,6 +84,21 @@ def _to_num_cols_numpy(df, num_cols):
     return [c.to_numpy().astype(np.float32) for n, c in df[num_cols].items()]
 
 
+def _dfs_to_samples(dfs, cat_cols, num_cols, regression=False):
+    num_samples = sum([len(df) for df in dfs])
+    cat_vars_list = []
+    num_vars_list = []
+    for df in dfs:
+        cat_vars = _to_cat_vars_numpy(df, cat_cols)
+        num_vars = _to_num_cols_numpy(df, num_cols)
+        cat_vars_list.append(cat_vars)
+        cat_vars_list.append(num_vars_list)
+
+    cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0))
+    num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0))
+    return [(c, n) for c, n in zip(cat_vars, num_vars)]
+
+
 class PandasDataset(Dataset):
 
     def __init__(self, df, cat_cols, num_cols, target_col, regression=False, predict=False):

@@ -80,14 +80,14 @@ class DataPipeline:
         return samples
 
     @staticmethod
-    def contains_any_tensor(value):
-        if isinstance(value, torch.Tensor):
+    def contains_any_tensor(value, dtype=torch.Tensor):
+        if isinstance(value, dtype):
             return True
 
         if isinstance(value, (list, tuple)):
-            return any(DataPipeline.contains_any_tensor(v) for v in value)
+            return any(DataPipeline.contains_any_tensor(v, dtype=dtype) for v in value)
 
         elif isinstance(value, dict):
-            return any(DataPipeline.contains_any_tensor(v) for v in value.values())
+            return any(DataPipeline.contains_any_tensor(v, dtype=dtype) for v in value.values())
 
         return False

@@ -81,10 +81,11 @@ class Task(pl.LightningModule):
         x: Any,
         batch_idx: Optional[int] = None,
         dataloader_idx: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None
+        data_pipeline: Optional[DataPipeline] = None,
+        skip_collate_fn: bool = False,
     ) -> Any:
         data_pipeline = data_pipeline or self.data_pipeline
-        batch = data_pipeline.collate_fn(x)
+        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
         predictions = self.forward(batch)
         return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
 

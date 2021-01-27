@@ -137,3 +137,4 @@ titanic.csv
 .vscode
 data_folder
 data
+*.pt
