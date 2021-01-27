@@ -31,3 +31,37 @@ def test_classificationtask_train(tmpdir, metrics):
     assert result
     result = trainer.test(task, val_dl)
     assert "test_nll_loss" in result[0]
+
+
+def test_classificationtask_task_predict():
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
+    task = ClassificationTask(model)
+    ds = DummyDataset()
+    expected = list(range(10))
+    # single item
+    x0, _ = ds[0]
+    pred0 = task.predict(x0, collate=True)
+    assert pred0[0] in expected
+    # list
+    x1, _ = ds[1]
+    pred1 = task.predict([x0, x1])
+    assert all(c in expected for c in pred1)
+    assert pred0[0] == pred1[0]
+
+
+def test_classificationtask_trainer_predict(tmpdir):
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
+    task = ClassificationTask(model)
+    ds = DummyDataset()
+    batch_size = 3
+    predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size)
+    trainer = pl.Trainer(default_root_dir=tmpdir)
+    expected = list(range(10))
+    predictions = trainer.predict(task, predict_dl)
+    predictions = predictions[0]  # dataloader 0 predictions
+    for pred in predictions[:-1]:
+        # check batch sizes are correct
+        assert len(pred) == batch_size
+        assert all(c in expected for c in pred)
+    # check size of last batch (not full)
+    assert len(predictions[-1]) == len(ds) % batch_size
