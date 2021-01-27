@@ -1,5 +1,6 @@
 from typing import Any
 
+import torch
 from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
@@ -31,6 +32,7 @@ class DataPipeline:
                     return [self.tokenizer.decode(sample) for sample in samples]
 
     """
+
     def before_collate(self, samples: Any) -> Any:
         """Override to apply transformations to samples"""
         return samples
@@ -52,8 +54,7 @@ class DataPipeline:
         ``collate_fn`` as used in ``torch.utils.data.DataLoader``.
         To avoid the before/after collate transformations, please use ``collate``.
         """
-        if not self.contains_any_tensor(samples):
-            samples = self.before_collate(samples)
+        samples = self.before_collate(samples)
         batch = self.collate(samples)
         batch = self.after_collate(batch)
         return batch
@@ -80,7 +81,7 @@ class DataPipeline:
 
     @staticmethod
     def contains_any_tensor(value):
-        if isinstance(value, Tensor):
+        if isinstance(value, torch.Tensor):
             return True
 
         if isinstance(value, (list, tuple)):

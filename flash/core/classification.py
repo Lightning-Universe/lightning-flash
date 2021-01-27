@@ -7,6 +7,7 @@ from flash.core.model import Task
 
 
 class ClassificationDataPipeline(DataPipeline):
+
     def before_uncollate(self, batch: torch.Tensor) -> torch.Tensor:
         return torch.softmax(batch, -1)
 
@@ -15,6 +16,7 @@ class ClassificationDataPipeline(DataPipeline):
 
 
 class ClassificationTask(Task):
+
     @staticmethod
     def default_pipeline() -> ClassificationDataPipeline:
         return ClassificationDataPipeline()

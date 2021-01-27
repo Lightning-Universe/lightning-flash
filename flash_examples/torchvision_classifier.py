@@ -48,6 +48,6 @@ predictions = model.predict([
 log.info(predictions)
 
 # 9. Inference on an entire folder.
-datamodule = ImageClassificationData.from_folder(folder="data/hymenoptera_data/predict/")
+datamodule = ImageClassificationData.from_folder(folder="data/hymenoptera_data/predict/", num_workers=1)
 predictions = trainer.predict(model, datamodule=datamodule)
 log.info(predictions)
