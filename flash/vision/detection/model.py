@@ -5,7 +5,7 @@ import torchvision
 from torch import nn
 from torch.optim import Optimizer
 
-from flash.core.model import ClassificationTask
+from flash.core.classification import ClassificationTask
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 

@@ -1,12 +1,10 @@
-from copy import deepcopy
-from typing import Callable, List, Mapping, Optional, Sequence, Type, Union
+from typing import Callable, Mapping, Optional, Sequence, Type, Union, Any
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
-from torch.nn import functional as F
-from torch.utils.data import DataLoader
 
+from flash.core.data import DataPipeline
 from flash.core.utils import get_callable_dict
 
 
@@ -20,8 +18,6 @@ class Task(pl.LightningModule):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
     """
-
-    _predict = False
 
     def __init__(
         self,
@@ -40,35 +36,18 @@ class Task(pl.LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._trainer_kwargs = None
-
-    def step(self, batch, batch_idx):
+    def step(self, batch: Any, batch_idx: int):
         """
         The training/validation/test step. Override for custom behavior.
         """
-        output = {}
-        if not self._predict:
-            if isinstance(batch, dict):
-                x, y = batch["x"], batch["target"]
-            else:
-                x, y = batch
-        else:
-            if isinstance(batch, dict):
-                x = batch["x"]
-            else:
-                x, y = batch
-
+        x, y = (batch["x"], batch["target"]) if isinstance(batch, dict) else batch
         y_hat = self.forward(x)
-
-        if self._predict:
-            return self.output_to_metric(y_hat)
-
-        output["y_hat"] = self.output_to_metric(y_hat)
+        output = {"y_hat": self.data_pipeline.before_uncollate(y_hat)}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
             if isinstance(metric, pl.metrics.Metric):
-                metric(self.output_to_metric(y_hat), y)
+                metric(output["y_hat"], y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)
@@ -81,70 +60,33 @@ class Task(pl.LightningModule):
         output["y"] = y
         return output
 
-    def _init_trainer(self, **kwargs):
-        if self._trainer_kwargs is None:
-            self._trainer_kwargs = {}
-
-        new_kwargs = deepcopy(self._trainer_kwargs)
-        new_kwargs.update(**kwargs)
-
-        if self.trainer is not None and new_kwargs == self._trainer_kwargs:
-            return self.trainer
-
-        self._trainer_kwargs = new_kwargs
-
-        # if the new trainer args are the same, we can reuse the same trainer
-        # TODO: do all the args need to match? or do we just care about some of them
-        return pl.Trainer(**self._trainer_kwargs)
-
-    def forward(self, x):
+    def forward(self, x: Any) -> Any:
         return self.model(x)
 
-    def predict(self):
-        raise NotImplementedError
-
-    def fit(
-        self,
-        train_dataloader: Optional[DataLoader] = None,
-        val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
-        datamodule: Optional[pl.LightningDataModule] = None,
-        **trainer_kwargs
-    ):
-        trainer = self._init_trainer(**trainer_kwargs)
-        trainer.fit(self, train_dataloader, val_dataloaders, datamodule)
-
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Any, batch_idx: int):
         output = self.step(batch, batch_idx)
         self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
         return output["loss"]
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Any, batch_idx: int):
         output = self.step(batch, batch_idx)
         self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Any, batch_idx: int):
         output = self.step(batch, batch_idx)
-        if self._predict:
-            if getattr(self, "add_predictions", None) is not None:
-                self.add_predictions(output)
-            return output
-
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
-        # ``pip install https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_inference.zip``
-        if getattr(self, "add_predictions", None) is not None:
-            self.add_predictions([{"target": y, "pred": y_hat} for y, y_hat in zip(output["y"], output["y_hat"])])
-
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
 
-    @staticmethod
-    def output_to_metric(output):
-        return output
+    @property
+    def data_pipeline(self) -> DataPipeline:
+        try:
+            return self.trainer.datamodule.data_pipeline
+        except AttributeError:
+            return self.default_pipeline
 
-
-class ClassificationTask(Task):
-
-    @staticmethod
-    def output_to_metric(output):
-        return F.softmax(output, -1)
+    @property
+    def default_pipeline(self) -> DataPipeline:
+        """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
+        return DataPipeline()

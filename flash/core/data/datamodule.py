@@ -5,6 +5,8 @@ from typing import Optional
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 
+from flash.core.data.datapipeline import DataPipeline
+
 
 class DataModule(pl.LightningDataModule):
     """Basic DataModule class for all Flash tasks
@@ -45,33 +47,43 @@ class DataModule(pl.LightningDataModule):
 
         if num_workers is None:
             num_workers = os.cpu_count()
-
         if num_workers is None:
-            warnings.warn("could not infer cpu count automatically, setting it to zero")
+            warnings.warn("Could not infer cpu count automatically, setting it to zero")
             num_workers = 0
         self.num_workers = num_workers
 
-    def _train_dataloader(self):
+        self._data_pipeline = None
+
+    def _train_dataloader(self) -> DataLoader:
         return DataLoader(
             self._train_ds,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=True,
+            collate_fn=self.data_pipeline.collate_fn,
         )
 
-    def _val_dataloader(self):
+    def _val_dataloader(self) -> DataLoader:
         return DataLoader(
             self._valid_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
+            collate_fn=self.data_pipeline.collate_fn,
         )
 
-    def _test_dataloader(self):
+    def _test_dataloader(self) -> DataLoader:
         return DataLoader(
             self._test_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
+            collate_fn=self.data_pipeline.collate_fn,
         )
+
+    @property
+    def data_pipeline(self) -> DataPipeline:
+        if self._data_pipeline is None:
+            self._data_pipeline = DataPipeline()
+        return self._data_pipeline

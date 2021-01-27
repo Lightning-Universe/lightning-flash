@@ -35,7 +35,8 @@ else:
 
     from flash import tabular, text, vision
     from flash.core import data, utils
+    from flash.core.classification import ClassificationTask
     from flash.core.data import DataModule
-    from flash.core.model import ClassificationTask, Task
+    from flash.core.model import Task
 
     __all__ = ["Task", "ClassificationTask", "DataModule", "vision", "text", "tabular", "data", "utils"]
