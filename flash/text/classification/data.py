@@ -177,9 +177,9 @@ class TextClassificationData(DataModule):
         Examples::
 
             train_df = pd.read_csv("train_data.csv")
-            tab_data = TabularData.from_df(train_df, target_col="fraud",
-                                           numerical_cols=["account_value"],
-                                           categorical_cols=["account_type"])
+            tab_data = TabularData.from_df(train_df, target="fraud",
+                                           numerical_input=["account_value"],
+                                           categorical_input=["account_type"])
 
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)

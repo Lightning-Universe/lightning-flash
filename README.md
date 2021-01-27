@@ -27,7 +27,7 @@ Source
 
 ``` bash
 git clone https://github.com/PyTorchLightning/lightning-flash.git
-cd lightning-flash 
+cd lightning-flash
 pip install -e .
 ```
 
@@ -133,7 +133,7 @@ data = TextClassificationData.from_files(
 pl.Trainer().fit(model, data)
 ```
 
-To run the example: 
+To run the example:
 
 ```bash
 python flash_examples/text_classification.py
@@ -153,9 +153,9 @@ download_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", "titanic.csv
 # structure data
 data = TabularData.from_df(
     pd.read_csv("titanic.csv"),
-    categorical_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-    numerical_cols=["Fare"],
-    target_col="Survived",
+    categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+    numerical_input=["Fare"],
+    target="Survived",
     num_workers=0,
     batch_size=8
 )
@@ -170,7 +170,7 @@ model = TabularClassifier(
 pl.Trainer().fit(model, data)
 ```
 
-To run the example: 
+To run the example:
 
 ```
 python flash_examples/tabular_data.py

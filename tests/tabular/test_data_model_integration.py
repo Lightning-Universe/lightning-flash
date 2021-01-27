@@ -20,9 +20,9 @@ def test_classification(tmpdir):
     test_df = TEST_DF_1.copy()
     data = TabularData.from_df(
         train_df,
-        categorical_cols=["category"],
-        numerical_cols=["scalar_a", "scalar_b"],
-        target_col="label",
+        categorical_input=["category"],
+        numerical_input=["scalar_a", "scalar_b"],
+        target="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,

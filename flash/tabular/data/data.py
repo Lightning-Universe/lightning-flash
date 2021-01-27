@@ -1,10 +1,48 @@
-from typing import List
+from typing import Any, Dict, List
 
+import numpy as np
 import pandas as pd
+from pandas.core.frame import DataFrame
 from sklearn.model_selection import train_test_split
+from torch import Tensor
 
+from flash.core.classification import ClassificationDataPipeline
 from flash.core.data.datamodule import DataModule
-from flash.tabular.data.dataset import _compute_normalization, _generate_codes, _impute, _pre_transform, PandasDataset
+from flash.tabular.data.dataset import (
+    _compute_normalization,
+    _dfs_to_samples,
+    _generate_codes,
+    _impute,
+    _pre_transform,
+    PandasDataset,
+)
+
+
+class TabularDataPipeline(ClassificationDataPipeline):
+
+    def __init__(
+        self, categorical_input: List, numerical_input: List, target: str, mean: DataFrame, std: DataFrame, codes: Dict
+    ):
+        self._categorical_input = categorical_input
+        self._numerical_input = numerical_input
+        self._target = target
+        self._mean = mean
+        self._std = std
+        self._codes = codes
+
+    def before_collate(self, samples: Any) -> Any:
+        """Override to apply transformations to samples"""
+        if not self.contains_any_tensor(samples, dtype=(Tensor, np.ndarray)):
+            if isinstance(samples, str):
+                samples = pd.read_csv(samples)
+            if isinstance(samples, DataFrame):
+                samples = [samples]
+            dfs = _pre_transform(
+                samples, self._numerical_input, self._categorical_input, self._codes, self._mean, self._std
+            )
+            return _dfs_to_samples(dfs, self._categorical_input, self._numerical_input)
+        else:
+            return samples
 
 
 class TabularData(DataModule):
@@ -13,9 +51,9 @@ class TabularData(DataModule):
     def __init__(
         self,
         train_df,
-        categorical_cols: List,
-        numerical_cols: List,
-        target_col: str,
+        categorical_input: List,
+        numerical_input: List,
+        target: str,
         valid_df=None,
         test_df=None,
         batch_size=2,
@@ -30,28 +68,28 @@ class TabularData(DataModule):
         if test_df is not None:
             # save for predict function
             self._test_df = test_df.copy()
-            self._test_df.drop(target_col, axis=1)
+            self._test_df.drop(target, axis=1)
             dfs.append(test_df)
 
         # impute missing values
-        dfs = _impute(dfs, numerical_cols)
+        dfs = _impute(dfs, numerical_input)
 
         # compute train dataset stats
-        self.mean, self.std = _compute_normalization(dfs[0], numerical_cols)
+        self.mean, self.std = _compute_normalization(dfs[0], numerical_input)
 
-        self.codes = _generate_codes(dfs, categorical_cols)
+        self.codes = _generate_codes(dfs, categorical_input)
 
-        dfs = _pre_transform(dfs, numerical_cols, categorical_cols, self.codes, self.mean, self.std)
+        dfs = _pre_transform(dfs, numerical_input, categorical_input, self.codes, self.mean, self.std)
 
         # normalize
-        self.cat_cols = categorical_cols
-        self.num_cols = numerical_cols
+        self.cat_cols = categorical_input
+        self.num_cols = numerical_input
 
-        self._num_classes = len(train_df[target_col].unique())
+        self._num_classes = len(train_df[target].unique())
 
-        train_ds = PandasDataset(dfs[0], categorical_cols, numerical_cols, target_col)
-        valid_ds = PandasDataset(dfs[1], categorical_cols, numerical_cols, target_col) if valid_df is not None else None
-        test_ds = PandasDataset(dfs[-1], categorical_cols, numerical_cols, target_col) if test_df is not None else None
+        train_ds = PandasDataset(dfs[0], categorical_input, numerical_input, target)
+        valid_ds = PandasDataset(dfs[1], categorical_input, numerical_input, target) if valid_df is not None else None
+        test_ds = PandasDataset(dfs[-1], categorical_input, numerical_input, target) if test_df is not None else None
         super().__init__(train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers)
 
     @property
@@ -59,33 +97,20 @@ class TabularData(DataModule):
         return self._num_classes
 
     @property
-    def data_config(self):
-        return {
-            "num_classes": self._num_classes,
-            "num_features": len(self.cat_cols) + len(self.num_cols),
-            "embedding_sizes": self.emb_sizes,
-            "codes": self.codes,
-            "mean": self.mean,
-            "std": self.std,
-            "cat_cols": self.cat_cols,
-            "num_cols": self.num_cols,
-        }
-
-    @property
-    def test_df(self):
-        return self._test_df
+    def num_features(self):
+        return len(self.cat_cols) + len(self.num_cols)
 
     @classmethod
     def from_df(
         cls,
         train_df: pd.DataFrame,
-        target_col: str,
-        categorical_cols: List,
-        numerical_cols: List,
+        target: str,
+        categorical_input: List,
+        numerical_input: List,
         valid_df: pd.DataFrame = None,
         test_df: pd.DataFrame = None,
-        batch_size: int = 1,
-        num_workers: int = None,
+        batch_size: int = 8,
+        num_workers: int = 0,
         val_size: float = None,
         test_size: float = None,
     ):
@@ -93,9 +118,9 @@ class TabularData(DataModule):
 
         Args:
             train_df: train data DataFrame
-            target_col: The column containing the class id.
-            categorical_cols: The list of categorical columns.
-            numerical_cols: The list of numerical columns.
+            target: The column containing the class id.
+            categorical_input: The list of categorical columns.
+            numerical_input: The list of numerical columns.
             valid_df: validation data DataFrame
             test_df: test data DataFrame
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
@@ -120,28 +145,33 @@ class TabularData(DataModule):
             assert 0 < test_size and test_size < 1
             valid_df, test_df = train_test_split(valid_df, test_size=test_size)
 
-        return cls(
+        datamodule = cls(
             train_df=train_df,
-            target_col=target_col,
-            categorical_cols=categorical_cols,
-            numerical_cols=numerical_cols,
+            target=target,
+            categorical_input=categorical_input,
+            numerical_input=numerical_input,
             valid_df=valid_df,
             test_df=test_df,
             batch_size=batch_size,
             num_workers=num_workers,
         )
+        datamodule.data_pipeline = TabularDataPipeline(
+            categorical_input, numerical_input, target, datamodule.mean, datamodule.std, datamodule.codes
+        )
+
+        return datamodule
 
     @classmethod
     def from_csv(
         cls,
         train_csv,
-        target_col: str,
-        categorical_cols: List,
-        numerical_cols: List,
+        target: str,
+        categorical_input: List,
+        numerical_input: List,
         valid_csv=None,
         test_csv=None,
-        batch_size: int = 1,
-        num_workers: int = None,
+        batch_size: int = 8,
+        num_workers: int = 0,
         val_size: float = None,
         test_size: float = None,
         **pandas_kwargs,
@@ -150,9 +180,9 @@ class TabularData(DataModule):
 
         Args:
             train_csv: train data csv file.
-            target_col: The column containing the class id.
-            categorical_cols: The list of categorical columns.
-            numerical_cols: The list of numerical columns.
+            target: The column containing the class id.
+            categorical_input: The list of categorical columns.
+            numerical_input: The list of numerical columns.
             valid_csv: validation data csv file.
             test_csv: test data csv file.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
@@ -171,10 +201,11 @@ class TabularData(DataModule):
         train_df = pd.read_csv(train_csv, **pandas_kwargs)
         valid_df = pd.read_csv(valid_csv, **pandas_kwargs) if valid_csv is not None else None
         test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv is not None else None
-        return cls.from_df(
-            train_df, target_col, categorical_cols, numerical_cols, valid_df, test_df, batch_size, num_workers,
-            val_size, test_size
+        datamodule = cls.from_df(
+            train_df, target, categorical_input, numerical_input, valid_df, test_df, batch_size, num_workers, val_size,
+            test_size
         )
+        return datamodule
 
     @property
     def emb_sizes(self):
