@@ -43,7 +43,7 @@ def _load_long_describtion() -> str:
 # the goal of the project is simplicity for researchers, don't want to add too much
 # engineer specific practices
 setup(
-    name="pytorch-lightning-flash",
+    name="lightning-flash",
     version=flash.__version__,
     description=flash.__docs__,
     author=flash.__author__,

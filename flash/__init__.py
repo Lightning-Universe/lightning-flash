@@ -1,7 +1,7 @@
 """Root package info."""
 import os
 
-__version__ = "0.0.3"
+__version__ = "0.0.0rc0"
 __author__ = "PyTorchLightning et al."
 __author_email__ = "name@pytorchlightning.ai"  # TODO
 __license__ = "TBD"  # TODO
@@ -17,7 +17,7 @@ But unlike other entry-level frameworks (keras, etc...), Flash users can switch 
 the added flexibility.
 """
 
-PACKAGE_ROOT = os.path.dirname(__file__)
+_PACKAGE_ROOT = os.path.dirname(__file__)
 
 try:
     # This variable is injected in the __builtins__ by the build process.
@@ -39,4 +39,4 @@ else:
     from flash.core.data import DataModule
     from flash.core.model import Task
 
-    __all__ = ["Task", "ClassificationTask", "DataModule", "vision", "text", "tabular", "data", "utils"]
+    __all__ = ["Task", "ClassificationTask", "DataModule", "vision", "text", "tabular", "data", "utils",]
