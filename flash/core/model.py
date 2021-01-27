@@ -103,3 +103,10 @@ class Task(pl.LightningModule):
     def default_pipeline() -> DataPipeline:
         """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
         return DataPipeline()
+
+    def on_checkpoint_save(self, checkpoint):
+        import pdb; pdb.set_trace()
+        checkpoint["data_pipeline"] = self.data_pipeline
+    
+    def on_checkpoint_load(self, checkpoint):
+        self.data_pipeline = checkpoint["data_pipeline"]

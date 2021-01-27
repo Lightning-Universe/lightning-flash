@@ -37,11 +37,11 @@ def test_categorize():
 
 
 def test_normalize():
-    num_cols = ["scalar_a", "scalar_b"]
-    dfs, mean_one, std_one = _normalize([TEST_DF_1], num_cols)
-    assert np.allclose(dfs[0][num_cols].mean(), 0.0)
+    num_input = ["scalar_a", "scalar_b"]
+    dfs, mean_one, std_one = _normalize([TEST_DF_1], num_input)
+    assert np.allclose(dfs[0][num_input].mean(), 0.0)
 
-    _, mean_two, std_two = _normalize([TEST_DF_1, TEST_DF_2], num_cols)
+    _, mean_two, std_two = _normalize([TEST_DF_1, TEST_DF_2], num_input)
     assert np.allclose(mean_one, mean_two)
     assert np.allclose(std_one, std_two)
 
@@ -73,9 +73,9 @@ def test_tabular_data(tmpdir):
     test_df = TEST_DF_2.copy()
     dm = TabularData(
         train_df,
-        categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
-        target_col="label",
+        categorical_input=["category"],
+        numerical_input=["scalar_b", "scalar_b"],
+        target="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
@@ -94,12 +94,13 @@ def test_from_df(tmpdir):
     test_df = TEST_DF_2.copy()
     dm = TabularData.from_df(
         train_df,
-        categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
-        target_col="label",
+        categorical_input=["category"],
+        numerical_input=["scalar_b", "scalar_b"],
+        target="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
+        batch_size=1
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
         (cat, num), target = next(iter(dl))
@@ -117,12 +118,13 @@ def test_from_csv(tmpdir):
 
     dm = TabularData.from_csv(
         train_csv,
-        categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
-        target_col="label",
+        categorical_input=["category"],
+        numerical_input=["scalar_b", "scalar_b"],
+        target="label",
         valid_csv=valid_csv,
         test_csv=test_csv,
         num_workers=0,
+        batch_size=1
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
         (cat, num), target = next(iter(dl))

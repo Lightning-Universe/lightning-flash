@@ -304,7 +304,7 @@ class ImageClassificationData(DataModule):
         valid_transform: Optional[Callable] = _default_valid_transforms,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
         loader: Callable = _pil_loader,
-        batch_size: int = 64,
+        batch_size: int = 4,
         num_workers: Optional[int] = None,
         **kwargs
     ):

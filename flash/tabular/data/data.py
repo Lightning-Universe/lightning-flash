@@ -48,6 +48,10 @@ class TabularDataPipeline(ClassificationDataPipeline):
 class TabularData(DataModule):
     """Data module for tabular tasks"""
 
+    @staticmethod
+    def default_pipeline() -> ClassificationDataPipeline:
+        return ClassificationDataPipeline()
+
     def __init__(
         self,
         train_df,

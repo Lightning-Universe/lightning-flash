@@ -2,7 +2,6 @@
 import pandas as pd
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning import _logger as log
 from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
 from flash.tabular import TabularClassifier, TabularData
@@ -30,4 +29,4 @@ trainer = pl.Trainer(max_epochs=1)
 trainer.fit(model, datamodule=datamodule)
 
 # 6. Save model
-torch.save(model, "tabular_model.pt")
+torch.save(model, "tabular_classification_model.pt")

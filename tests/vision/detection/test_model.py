@@ -1,4 +1,5 @@
 import torch
+from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
 
 from flash.vision import ImageDetector
@@ -52,4 +53,5 @@ def test_training(tmpdir):
     model = ImageDetector(num_classes=2, model="fasterrcnn_resnet50_fpn")
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
     dl = DataLoader(ds, collate_fn=collate_fn)
-    model.fit(dl, fast_dev_run=True, default_root_dir=tmpdir)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.fit(model, dl)

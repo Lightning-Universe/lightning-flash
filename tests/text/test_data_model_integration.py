@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from pytorch_lightning import Trainer
+
 from flash.text import TextClassificationData, TextClassifier
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
@@ -28,9 +30,10 @@ def test_classification(tmpdir):
     data = TextClassificationData.from_files(
         backbone=TEST_BACKBONE,
         train_file=csv_path,
-        text_field="sentence",
-        label_field="label",
+        input="sentence",
+        target="label",
         num_workers=0,
     )
-    model = TextClassifier(2, backbone=TEST_BACKBONE)
-    model.fit(data, fast_dev_run=True, default_root_dir=tmpdir)
+    model = TextClassifier(TEST_BACKBONE, 2)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.fit(model, datamodule=data)

@@ -1,5 +1,5 @@
 from typing import Any, Callable
-
+from functools import partial
 import torch
 from datasets import load_dataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -10,9 +10,9 @@ from flash.core.classification import ClassificationDataPipeline
 from flash.core.data import DataModule
 
 
-def tokenize_text_lambda(tokenizer, text_field, max_length):
+def tokenize_text_lambda(tokenizer, input, max_length):
     return lambda ex: tokenizer(
-        ex[text_field],
+        ex[input],
         max_length=max_length,
         truncation=True,
         padding="max_length",
@@ -26,9 +26,9 @@ def prepare_dataset(
     test_file,
     filetype,
     backbone,
-    text_field,
+    input,
     max_length,
-    label_field=None,
+    target=None,
     label_to_class_mapping=None,
     predict=False,
 ):
@@ -48,11 +48,11 @@ def prepare_dataset(
         if label_to_class_mapping is None:
             label_to_class_mapping = {
                 v: k
-                for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][label_field])))))
+                for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][target])))))
             }
 
         def transform_label(ex):
-            ex[label_field] = label_to_class_mapping[ex[label_field]]
+            ex[target] = label_to_class_mapping[ex[target]]
             return ex
 
             # convert labels to ids
@@ -61,12 +61,12 @@ def prepare_dataset(
 
     # tokenize text field
     dataset_dict = dataset_dict.map(
-        tokenize_text_lambda(tokenizer, text_field, max_length),
+        tokenize_text_lambda(tokenizer, input, max_length),
         batched=True,
     )
 
-    if label_field != "labels" and not predict:
-        dataset_dict.rename_column_(label_field, "labels")
+    if target != "labels" and not predict:
+        dataset_dict.rename_column_(target, "labels")
     dataset_dict.set_format("torch", columns=["input_ids"] if predict else ["input_ids", "labels"])
 
     train_ds = None
@@ -87,16 +87,20 @@ def prepare_dataset(
 
 class TextClassificationDataPipeline(ClassificationDataPipeline):
 
-    def __init__(self, tokenizer, text_field: str, max_length: int):
+    def __init__(self, tokenizer, input: str, max_length: int):
         self._tokenizer = tokenizer
-        self._text_field = text_field
+        self._input = input
         self._max_length = max_length
-        self._tokenize_fn = self.tokenize_text_lambda(self._tokenizer, self._text_field, self._max_length)
+        self._tokenize_fn = partial(
+            self._tokenize_fn,
+            tokenizer=self._tokenizer, 
+            input=self._input, 
+            max_length=self._max_length)
 
     @staticmethod
-    def tokenize_text_lambda(tokenizer, text_field: str, max_length: str) -> Callable:
-        return lambda ex: tokenizer(
-            ex[text_field],
+    def _tokenize_fn(ex, tokenizer=None, input: str = None, max_length: int = None) -> Callable:
+        return tokenizer(
+            ex[input],
             max_length=max_length,
             truncation=True,
             padding="max_length",
@@ -108,7 +112,7 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
             return samples
 
         elif isinstance(samples, (list, tuple)) and len(samples) > 0 and all(isinstance(s, str) for s in samples):
-            return [self._tokenize_fn({self._text_field: s}) for s in samples]
+            return [self._tokenize_fn({self._input: s}) for s in samples]
 
         else:
             raise MisconfigurationException("samples can only be tensors or a list of sentences.")
@@ -147,8 +151,8 @@ class TextClassificationData(DataModule):
     def from_files(
         cls,
         train_file,
-        text_field,
-        label_field,
+        input,
+        target,
         filetype="csv",
         backbone="bert-base-cased",
         valid_file=None,
@@ -161,8 +165,8 @@ class TextClassificationData(DataModule):
 
         Args:
             train_file: Path to training data.
-            text_field: The field storing the text to be classified.
-            label_field: The field storing the class id of the associated text.
+            input: The field storing the text to be classified.
+            target: The field storing the class id of the associated text.
             filetype: .csv or .json
             backbone: tokenizer to use, can use any HuggingFace tokenizer.
             valid_file: Path to validation data.
@@ -191,9 +195,9 @@ class TextClassificationData(DataModule):
             test_file,
             filetype,
             backbone,
-            text_field,
+            input,
             max_length,
-            label_field=label_field,
+            target=target,
             label_to_class_mapping=None
         )
 
@@ -207,15 +211,15 @@ class TextClassificationData(DataModule):
 
         datamodule.num_classes = len(label_to_class_mapping)
         datamodule.data_pipeline = TextClassificationDataPipeline(
-            tokenizer, text_field=text_field, max_length=max_length
+            tokenizer, input=input, max_length=max_length
         )
         return datamodule
 
     @classmethod
     def from_file(
         cls,
-        predict_file,
-        text_field,
+        predict_file: str,
+        input: str,
         backbone="bert-base-cased",
         filetype="csv",
         max_length: int = 128,
@@ -226,7 +230,7 @@ class TextClassificationData(DataModule):
 
         Args:
             train_file: Path to training data.
-            text_field: The field storing the text to be classified.
+            input: The field storing the text to be classified.
             filetype: .csv or .json
             backbone: tokenizer to use, can use any HuggingFace tokenizer.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
@@ -246,7 +250,7 @@ class TextClassificationData(DataModule):
             predict_file,
             filetype,
             backbone,
-            text_field,
+            input,
             max_length,
             predict=True,
         )
@@ -260,6 +264,6 @@ class TextClassificationData(DataModule):
         )
 
         datamodule.data_pipeline = TextClassificationDataPipeline(
-            tokenizer, text_field=text_field, max_length=max_length
+            tokenizer, input=input, max_length=max_length
         )
         return datamodule

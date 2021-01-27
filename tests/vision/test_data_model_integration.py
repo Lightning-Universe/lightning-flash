@@ -1,5 +1,7 @@
 import torch
+from pytorch_lightning import Trainer
 
+from flash.core.data import datamodule
 from flash.vision import ImageClassificationData, ImageClassifier
 
 
@@ -16,4 +18,5 @@ def test_classification(tmpdir):
         num_workers=0,
     )
     model = ImageClassifier(2, backbone="resnet18")
-    model.fit(data, fast_dev_run=True, default_root_dir=tmpdir)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.fit(model, datamodule=data)
