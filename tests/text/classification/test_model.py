@@ -29,6 +29,7 @@ def test_init_train(tmpdir):
         # TODO: huggingface stuff timing out on windows
         #
         return True
-    model = TextClassifier(2, backbone=TEST_BACKBONE)
+    model = TextClassifier(TEST_BACKBONE, 2, 2)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    model.fit(train_dl, fast_dev_run=True, default_root_dir=tmpdir)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.fit(model, train_dl)

@@ -125,8 +125,8 @@ data = TextClassificationData.from_files(
     backbone="bert-base-cased",
     train_file="data/imdb/train.csv",
     valid_file="data/imdb/valid.csv",
-    text_field="review",
-    label_field="sentiment",
+    input="review",
+    target="sentiment",
 )
 
 # train

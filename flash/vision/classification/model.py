@@ -60,7 +60,7 @@ class ImageClassifier(ClassificationTask):
             learning_rate=learning_rate,
         )
 
-        self._predict = False
+        self.save_hyperparameters()
 
         if backbone not in _backbones:
             raise NotImplementedError(f"Backbone {backbone} is not yet supported")

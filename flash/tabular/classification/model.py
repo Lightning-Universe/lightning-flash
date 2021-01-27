@@ -27,6 +27,9 @@ class TabularClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to `1e-3`
     """
 
+    def default_pipeline(self):
+        return self._data_pipeline
+
     def __init__(
         self,
         num_features: int,
@@ -84,5 +87,5 @@ class TabularClassifier(ClassificationTask):
     @classmethod
     def from_data(cls, datamodule, **kwargs):
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
-        model.datamodule = datamodule
+        model._data_pipeline = datamodule.data_pipeline
         return model
