@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import torch
 from PIL import Image
@@ -10,6 +10,7 @@ from torchvision.datasets import VisionDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
 from flash.core.classification import ClassificationDataPipeline
+from flash.core.data import download_data
 from flash.core.data.datamodule import DataModule
 
 
@@ -73,20 +74,18 @@ class FlashDatasetFolder(VisionDataset):
         root/class_y/asd932_.ext
 
     Args:
-        root: Root directory path.
-        loader: A function to load a sample given its path.
-        extensions: A list of allowed extensions. both extensions
-            and is_valid_file should not be passed.
-        transform: A function/transform that takes in
+        root (string): Root directory path.
+        loader (callable): A function to load a sample given its path.
+        extensions (tuple[string]): A list of allowed extensions.
+            both extensions and is_valid_file should not be passed.
+        transform (callable, optional): A function/transform that takes in
             a sample and returns a transformed version.
             E.g, ``transforms.RandomCrop`` for images.
-        target_transform: A function/transform that takes
+        target_transform (callable, optional): A function/transform that takes
             in the target and transforms it.
-        is_valid_file: A function that takes path of a file
+        is_valid_file (callable, optional): A function that takes path of a file
             and check if the file is a valid file (used to check of corrupt files)
             both extensions and is_valid_file should not be passed.
-        with_targets: Whether to include targets
-        img_paths: List of image paths to load. Only used when ``with_targets=False``
 
      Attributes:
         classes (list): List of the class names sorted alphabetically.
@@ -97,21 +96,21 @@ class FlashDatasetFolder(VisionDataset):
 
     def __init__(
         self,
-        root: str,
-        loader: Callable,
-        extensions: Tuple[str] = IMG_EXTENSIONS,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
-        is_valid_file: Optional[Callable] = None,
-        with_targets: bool = True,
-        img_paths: Optional[List[str]] = None,
+        root,
+        loader,
+        extensions=IMG_EXTENSIONS,
+        transform=None,
+        target_transform=None,
+        is_valid_file=None,
+        predict=False,
+        img_paths=[],  # todo: dont pass mutable defaults
     ):
         super(FlashDatasetFolder, self).__init__(root, transform=transform, target_transform=target_transform)
+        self.predict = predict
         self.loader = loader
         self.extensions = extensions
-        self.with_targets = with_targets
 
-        if with_targets:
+        if not predict:
             classes, class_to_idx = self._find_classes(self.root)
             samples = make_dataset(self.root, class_to_idx, extensions, is_valid_file)
 
@@ -126,8 +125,6 @@ class FlashDatasetFolder(VisionDataset):
             self.samples = samples
             self.targets = [s[1] for s in samples]
         else:
-            if img_paths is None:
-                img_paths = []
             self.samples = img_paths
 
     def _find_classes(self, dir):
@@ -156,7 +153,11 @@ class FlashDatasetFolder(VisionDataset):
         Returns:
             tuple: (sample, target) where target is class_index of the target class.
         """
-        if self.with_targets:
+        if self.predict:
+            path = self.samples[index]
+            sample = self.loader(path)
+            return self.transform(sample)
+        else:
             path, target = self.samples[index]
             sample = self.loader(path)
             if self.transform is not None:
@@ -164,12 +165,6 @@ class FlashDatasetFolder(VisionDataset):
             if self.target_transform is not None:
                 target = self.target_transform(target)
             return sample, target
-        else:
-            path = self.samples[index]
-            sample = self.loader(path)
-            if self.transform is not None:
-                sample = self.transform(sample)
-            return sample
 
     def __len__(self):
         return len(self.samples)
@@ -205,9 +200,11 @@ class ImageClassificationDataPipeline(ClassificationDataPipeline):
         self._loader = loader
 
     def before_collate(self, samples: Any) -> Any:
-        if isinstance(samples, str):
-            samples = [samples]
-        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
+        """Override to apply transformations to samples"""
+        if self.contains_any_tensor(samples):
+            return samples
+
+        elif isinstance(samples, list) and all(isinstance(p, str) for p in samples):
             outputs = []
             for sample in samples:
                 output = self._loader(sample)
@@ -220,6 +217,12 @@ class ImageClassificationDataPipeline(ClassificationDataPipeline):
 
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
+
+    @staticmethod
+    def default_pipeline():
+        return ImageClassificationDataPipeline(
+            train_transform=_default_train_transforms, valid_transform=_default_valid_transforms, loader=_pil_loader
+        )
 
     @classmethod
     def from_filepaths(
@@ -379,8 +382,8 @@ class ImageClassificationData(DataModule):
             folder/cat_asd932_.png
 
         Args:
-            folder: Path to the data folder.
-            transform: Image transform to apply to the data.
+            folder: Path to prediction folder.
+            transform: Image transform to use for prediction set.
             loader: A function to load an image given its path.
             batch_size: Batch size for data loading.
             num_workers: The number of workers to use for parallelized loading.
@@ -408,7 +411,7 @@ class ImageClassificationData(DataModule):
                 folder,
                 transform=transform,
                 loader=loader,
-                with_targets=False,
+                predict=True,
                 img_paths=[os.path.join(folder, f) for f in filenames]
             )
         )
@@ -421,9 +424,3 @@ class ImageClassificationData(DataModule):
 
         datamodule.data_pipeline = ImageClassificationDataPipeline(valid_transform=transform, loader=loader)
         return datamodule
-
-    @staticmethod
-    def default_pipeline() -> ImageClassificationDataPipeline:
-        return ImageClassificationDataPipeline(
-            train_transform=_default_train_transforms, valid_transform=_default_valid_transforms, loader=_pil_loader
-        )

@@ -1,9 +1,14 @@
+coverage
 codecov>=2.1
-pytest>=5.0
+pytest>=3.0.5
+# pytest-cov
+# pytest-flake8
+flake8
 check-manifest
 twine==3.2
 isort
+mypy
 yapf
-flake8
-pre-commit
-#mypy
+
+scikit-learn==0.24.0
+https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_inference.zip  # todo

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from flash.tabular import TabularData
-from flash.tabular.classification.data.dataset import _categorize, _normalize
+from flash.tabular.data.dataset import _categorize, _normalize
 
 TEST_DF_1 = pd.DataFrame(
     data={

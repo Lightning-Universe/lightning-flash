@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 from torch import nn
 
-from flash.core.data import DataModule, DataPipeline
+from flash.core.data import DataPipeline
 from flash.core.utils import get_callable_dict
 
 
@@ -35,7 +35,6 @@ class Task(pl.LightningModule):
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
-        self._data_pipeline = None
 
     def step(self, batch: Any, batch_idx: int):
         """
@@ -83,42 +82,24 @@ class Task(pl.LightningModule):
         batch_idx: Optional[int] = None,
         dataloader_idx: Optional[int] = None,
         data_pipeline: Optional[DataPipeline] = None,
-        skip_collate_fn: bool = True,  # TODO: change to False once Trainer is updated
+        skip_collate_fn: bool = False,
     ) -> Any:
         data_pipeline = data_pipeline or self.data_pipeline
-        if skip_collate_fn:
-            batch_x = x["x"] if isinstance(x, dict) else x[0]
-        else:
-            batch_x = self.data_pipeline.collate_fn(x)
-        predictions = self.forward(batch_x)
-        return self.data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
+        predictions = self.forward(batch)
+        return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(self.parameters(), lr=self.learning_rate)
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        # we need to save the pipeline in case this class
-        # is loaded from checkpoint and used to predict
-        if not self._data_pipeline:
-            try:
-                # datamodule pipeline takes priority
-                self._data_pipeline = self.trainer.datamodule.data_pipeline
-            except AttributeError:
-                self._data_pipeline = self.default_pipeline()
-        return self._data_pipeline
-
-    @data_pipeline.setter
-    def data_pipeline(self, data_pipeline):
-        self._data_pipeline = data_pipeline
+        try:
+            return self.trainer.datamodule.data_pipeline
+        except AttributeError:
+            return self.default_pipeline()
 
     @staticmethod
     def default_pipeline() -> DataPipeline:
         """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
-        return DataModule.default_pipeline()
-
-    def on_checkpoint_save(self, checkpoint):
-        checkpoint["pipeline"] = self.data_pipeline
-
-    def on_checkpoint_load(self, checkpoint):
-        self.data_pipeline = checkpoint["pipeline"]
+        return DataPipeline()

@@ -13,8 +13,15 @@ from flash import ClassificationTask
 
 class DummyDataset(torch.utils.data.Dataset):
 
+    def __init__(self, predict: bool = False):
+        self._predict = predict
+
     def __getitem__(self, index: int) -> Any:
-        return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
+        sample = torch.rand(1, 28, 28)
+        if self._predict:
+            return sample
+        else:
+            return sample, torch.randint(10, size=(1, )).item()
 
     def __len__(self) -> int:
         return 100
@@ -43,7 +50,7 @@ def test_classificationtask_task_predict():
     expected = list(range(10))
     # single item
     x0, _ = ds[0]
-    pred0 = task.predict(x0, skip_collate_fn=False)
+    pred0 = task.predict(x0)
     assert pred0[0] in expected
     # list
     x1, _ = ds[1]
@@ -55,7 +62,7 @@ def test_classificationtask_task_predict():
 def test_classificationtask_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
-    ds = DummyDataset()
+    ds = DummyDataset(predict=True)
     batch_size = 3
     predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size)
     trainer = pl.Trainer(default_root_dir=tmpdir)
