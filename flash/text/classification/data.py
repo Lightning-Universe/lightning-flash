@@ -92,10 +92,8 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
         self._input = input
         self._max_length = max_length
         self._tokenize_fn = partial(
-            self._tokenize_fn,
-            tokenizer=self._tokenizer, 
-            input=self._input, 
-            max_length=self._max_length)
+            self._tokenize_fn, tokenizer=self._tokenizer, input=self._input, max_length=self._max_length
+        )
 
     @staticmethod
     def _tokenize_fn(ex, tokenizer=None, input: str = None, max_length: int = None) -> Callable:
@@ -210,9 +208,7 @@ class TextClassificationData(DataModule):
         )
 
         datamodule.num_classes = len(label_to_class_mapping)
-        datamodule.data_pipeline = TextClassificationDataPipeline(
-            tokenizer, input=input, max_length=max_length
-        )
+        datamodule.data_pipeline = TextClassificationDataPipeline(tokenizer, input=input, max_length=max_length)
         return datamodule
 
     @classmethod
@@ -263,7 +259,5 @@ class TextClassificationData(DataModule):
             num_workers=num_workers,
         )
 
-        datamodule.data_pipeline = TextClassificationDataPipeline(
-            tokenizer, input=input, max_length=max_length
-        )
+        datamodule.data_pipeline = TextClassificationDataPipeline(tokenizer, input=input, max_length=max_length)
         return datamodule

@@ -11,10 +11,10 @@ model = torch.load("text_classification_model.pt")
 # 2.1 Perform inference from list of sequences
 predictions = model.predict([
     "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-    "The worst movie in the history of cinema. I don't know if it was trying to be funny or sad, poignant or droll, but the end result was unwatchable.",
-    "Well , I come from Bulgaria where it 's almost impossible to have a tornado but my imagination tells me to be "
-    "very , very afraid"
-    "!!!This guy (Devon Sawa) has done a great job with this movie!I don't know exactly how old he was but he didn't act like a child (WELL DONE)!",
+    "The worst movie in the history of cinema.",
+    "I come from Bulgaria where it 's almost impossible to have a tornado but my imagination tells me to be careful."
+    "Very, very afraid"
+    "This guy has done a great job with this movie!I don't know exactly how old he was but he didn't act like a child!",
 ])
 print(predictions)
 
