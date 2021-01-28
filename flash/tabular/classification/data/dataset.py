@@ -69,10 +69,21 @@ def _categorize(dfs: List, cat_cols: List, codes: Dict = None):
     return dfs
 
 
-def _pre_transform(dfs: List, num_cols: List, cat_cols: List, codes: Dict, mean: DataFrame, std: DataFrame):
+def _pre_transform(
+    dfs: List,
+    num_cols: List,
+    cat_cols: List,
+    codes: Dict,
+    mean: DataFrame,
+    std: DataFrame,
+    target: str = None,
+    target_codes: Dict = None,
+):
     dfs = _impute(dfs, num_cols)
     dfs = _normalize(dfs, num_cols, mean=mean, std=std)
     dfs = _categorize(dfs, cat_cols, codes=codes)
+    if target_codes is not None and target is not None:
+        dfs = _categorize(dfs, [target], codes=target_codes)
     return dfs
 
 

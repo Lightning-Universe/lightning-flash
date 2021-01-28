@@ -88,6 +88,31 @@ def test_tabular_data(tmpdir):
         assert target.shape == (1, )
 
 
+def test_categorical_target(tmpdir):
+    train_df = TEST_DF_1.copy()
+    valid_df = TEST_DF_2.copy()
+    test_df = TEST_DF_2.copy()
+    for df in [train_df, valid_df, test_df]:
+        # change int label to string
+        df["label"] = df["label"].astype(str)
+
+    dm = TabularData(
+        train_df,
+        categorical_input=["category"],
+        numerical_input=["scalar_b", "scalar_b"],
+        target="label",
+        valid_df=valid_df,
+        test_df=test_df,
+        num_workers=0,
+        batch_size=1,
+    )
+    for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
+        (cat, num), target = next(iter(dl))
+        assert cat.shape == (1, 1)
+        assert num.shape == (1, 2)
+        assert target.shape == (1, )
+
+
 def test_from_df(tmpdir):
     train_df = TEST_DF_1.copy()
     valid_df = TEST_DF_2.copy()
