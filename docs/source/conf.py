@@ -58,6 +58,8 @@ exclude_patterns = []
 #
 source_suffix = [".rst", ".md"]
 
+needs_sphinx = '3.4'
+
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
