@@ -1,10 +1,10 @@
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
 
-from flash.core.data import DataPipeline
+from flash.core.data import DataModule, DataPipeline
 from flash.core.utils import get_callable_dict
 
 
@@ -21,26 +21,28 @@ class Task(pl.LightningModule):
 
     def __init__(
         self,
-        model: nn.Module,
+        model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
     ):
         super().__init__()
-        self.model = model
+        if model is not None:
+            self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer_cls = optimizer
         self.metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
+        self._data_pipeline = None
 
     def step(self, batch: Any, batch_idx: int):
         """
         The training/validation/test step. Override for custom behavior.
         """
-        x, y = (batch["x"], batch["target"]) if isinstance(batch, dict) else batch
+        x, y = batch
         y_hat = self.forward(x)
         output = {"y_hat": self.data_pipeline.before_uncollate(y_hat)}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
@@ -80,13 +82,30 @@ class Task(pl.LightningModule):
         self,
         x: Any,
         batch_idx: Optional[int] = None,
+        skip_collate_fn: bool = False,
         dataloader_idx: Optional[int] = None,
         data_pipeline: Optional[DataPipeline] = None,
-        skip_collate_fn: bool = False,
     ) -> Any:
+        """
+        Predict function for raw data or processed data
+
+        Args:
+            x: Input to predict. Can be raw data or processed data.
+            batch_idx: Batch index
+            dataloader_idx: Dataloader index
+            skip_collate_fn: Whether to skip the collate step.
+                this is required when passing data already processed
+                for the model, for example, data from a dataloader
+            data_pipeline: Use this to override the current data pipeline
+
+        Returns:
+            The post-processed model predictions
+
+        """
         data_pipeline = data_pipeline or self.data_pipeline
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        predictions = self.forward(batch)
+        batch_x, batch_y = batch if len(batch) == 2 else (batch, None)
+        predictions = self.forward(batch_x)
         return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
@@ -94,18 +113,27 @@ class Task(pl.LightningModule):
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        try:
-            return self.trainer.datamodule.data_pipeline
-        except AttributeError:
-            return self.default_pipeline()
+        # we need to save the pipeline in case this class
+        # is loaded from checkpoint and used to predict
+        if not self._data_pipeline:
+            try:
+                # datamodule pipeline takes priority
+                self._data_pipeline = self.trainer.datamodule.data_pipeline
+            except AttributeError:
+                self._data_pipeline = self.default_pipeline()
+        return self._data_pipeline
+
+    @data_pipeline.setter
+    def data_pipeline(self, data_pipeline):
+        self._data_pipeline = data_pipeline
 
     @staticmethod
     def default_pipeline() -> DataPipeline:
         """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
-        return DataPipeline()
+        return DataModule.default_pipeline()
 
-    def on_checkpoint_save(self, checkpoint):
-        checkpoint["data_pipeline"] = self.data_pipeline
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
+        self.data_pipeline = checkpoint["pipeline"]
 
-    def on_checkpoint_load(self, checkpoint):
-        self.data_pipeline = checkpoint["data_pipeline"]
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]):
+        checkpoint["pipeline"] = self.data_pipeline

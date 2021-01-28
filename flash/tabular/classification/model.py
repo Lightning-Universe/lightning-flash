@@ -1,16 +1,12 @@
-from typing import Callable, Dict, List, Tuple
+from typing import Any, Callable, List, Optional, Tuple, Type, Union
 
-import pandas as pd
 import torch
-from pandas.core.frame import DataFrame
 from pytorch_lightning.metrics import Metric
 from torch import nn
 from torch.nn import functional as F
-from torch.utils.data import DataLoader
 
-from flash.core.classification import ClassificationDataPipeline, ClassificationTask
-from flash.tabular.data.data import TabularDataPipeline
-from flash.tabular.data.dataset import _pre_transform, PandasDataset
+from flash.core.classification import ClassificationTask
+from flash.core.data import DataPipeline
 
 
 class TabularClassifier(ClassificationTask):
@@ -27,37 +23,34 @@ class TabularClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to `1e-3`
     """
 
-    def default_pipeline(self):
-        return self._data_pipeline
-
     def __init__(
         self,
         num_features: int,
         num_classes: int,
         embedding_sizes: List[Tuple] = None,
-        hidden=[512],
+        hidden: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
-        optimizer=torch.optim.Adam,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: List[Metric] = None,
         learning_rate: float = 1e-3,
     ):
+        self.save_hyperparameters()
+
+        num_num = num_features - len(embedding_sizes)  # numerical columns
+        input_size = num_num + sum(emb_dim for _, emb_dim in embedding_sizes)
+        if isinstance(hidden, int):
+            hidden = [hidden]
+        sizes = [input_size] + hidden + [num_classes]
         super().__init__(
-            model=None,
+            model=self._init_mlp(sizes),
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
         )
 
-        self.save_hyperparameters()
-
-        num_num = self.hparams.num_features - len(self.hparams.embedding_sizes)  # numerical columns
-        input_size = num_num + sum(emb_dim for _, emb_dim in self.hparams.embedding_sizes)
-        sizes = [input_size] + hidden + [self.hparams.num_classes]
-
         self.embs = nn.ModuleList([nn.Embedding(n_emb, emb_dim) for n_emb, emb_dim in self.hparams.embedding_sizes])
         self.bn_num = nn.BatchNorm1d(num_num) if num_num > 0 else None
-        self.mlp = self._init_mlp(sizes)
 
     def _init_mlp(self, sizes):
         layers = []
@@ -72,6 +65,20 @@ class TabularClassifier(ClassificationTask):
         layers.append(nn.Linear(sizes[-2], sizes[-1]))
         return nn.Sequential(*layers)
 
+    def predict(
+        self,
+        x: Any,
+        batch_idx: Optional[int] = None,
+        skip_collate_fn: bool = False,
+        dataloader_idx: Optional[int] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+    ) -> Any:
+        # override parent predict because forward is called here with the whole batch
+        data_pipeline = data_pipeline or self.data_pipeline
+        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
+        predictions = self.forward(batch)
+        return data_pipeline.uncollate_fn(predictions)
+
     def forward(self, x_in):
         x_cat, x_num = x_in
         if len(self.embs):
@@ -81,11 +88,15 @@ class TabularClassifier(ClassificationTask):
         if self.bn_num is not None:
             x_num = self.bn_num(x_num)
             x = torch.cat([x_num, x], dim=1) if len(self.embs) else x_num
-        x = self.mlp(x)
+        x = self.model(x)
         return x
 
     @classmethod
     def from_data(cls, datamodule, **kwargs):
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
-        model._data_pipeline = datamodule.data_pipeline
         return model
+
+    @staticmethod
+    def default_pipeline():
+        # TabularDataPipeline depends on the data. No default
+        raise NotImplementedError

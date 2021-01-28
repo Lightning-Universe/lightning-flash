@@ -1,11 +1,11 @@
 # import our libraries
 import pandas as pd
-import torch
 import pytorch_lightning as pl
+import torch
 from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
 from flash.tabular import TabularClassifier, TabularData
-from flash.tabular.classification.dataset import titanic_data_download
+from flash.tabular.classification.data.dataset import titanic_data_download
 
 # 1. Download data
 titanic_data_download("./data/titanic")

@@ -2,6 +2,8 @@ from io import BytesIO
 from urllib.request import urlopen, urlretrieve
 from zipfile import ZipFile
 
+import torch
+
 
 def download_data(url, path="data/"):
     """
@@ -62,3 +64,16 @@ def download_generic_data(url, path="data/"):
     Returns:
     """
     urlretrieve(url, path)
+
+
+def _contains_any_tensor(value, dtype=torch.Tensor):
+    # TODO: we should refactor FlashDatasetFolder to better integrate
+    # with DataPipeline. That way, we wouldn't need this check.
+    # This is because we are running transforms in both places.
+    if isinstance(value, dtype):
+        return True
+    if isinstance(value, (list, tuple)):
+        return any(_contains_any_tensor(v, dtype=dtype) for v in value)
+    elif isinstance(value, dict):
+        return any(_contains_any_tensor(v, dtype=dtype) for v in value.values())
+    return False

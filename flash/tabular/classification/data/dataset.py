@@ -1,9 +1,13 @@
+import os
 from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
+from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
+
+from flash.core.data import download_data
 
 
 def _impute(dfs: List, num_cols: List):
@@ -84,7 +88,7 @@ def _to_num_cols_numpy(df, num_cols):
     return [c.to_numpy().astype(np.float32) for n, c in df[num_cols].items()]
 
 
-def _dfs_to_samples(dfs, cat_cols, num_cols, regression=False):
+def _dfs_to_samples(dfs, cat_cols, num_cols):
     num_samples = sum([len(df) for df in dfs])
     cat_vars_list = []
     num_vars_list = []
@@ -119,3 +123,19 @@ class PandasDataset(Dataset):
     def __getitem__(self, idx):
         target = -1 if self.predict else self.target[idx]
         return (self.cat_vars[idx], self.num_vars[idx]), target
+
+
+def titanic_data_download(path: str, predict_size: float = 0.1):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    path_data = os.path.join(path, "titanic.csv")
+    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", path_data)
+
+    if set(os.listdir(path)) != {"predict.csv", "titanic.csv"}:
+        assert predict_size > 0 and predict_size < 1
+        df = pd.read_csv(path_data)
+        df_train, df_predict = train_test_split(df, test_size=predict_size)
+        df_train.to_csv(path_data)
+        df_predict = df_predict.drop(columns=["Survived"])
+        df_predict.to_csv(os.path.join(path, "predict.csv"))

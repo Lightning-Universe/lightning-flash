@@ -1,6 +1,5 @@
 from typing import Any
 
-import torch
 from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
@@ -37,17 +36,17 @@ class DataPipeline:
         """Override to apply transformations to samples"""
         return samples
 
-    def collate(self, samples: Any) -> Tensor:
+    def collate(self, samples: Any) -> Any:
         """Override to convert a set of samples to a batch"""
         if not isinstance(samples, Tensor):
             return default_collate(samples)
         return samples
 
-    def after_collate(self, batch: Tensor) -> Tensor:
+    def after_collate(self, batch: Any) -> Any:
         """Override to apply transformations to the batch"""
         return batch
 
-    def collate_fn(self, samples: Any) -> Tensor:
+    def collate_fn(self, samples: Any) -> Any:
         """
         Utility funtion to convert raw data to batched data
 
@@ -59,11 +58,11 @@ class DataPipeline:
         batch = self.after_collate(batch)
         return batch
 
-    def before_uncollate(self, batch: Tensor) -> Tensor:
+    def before_uncollate(self, batch: Any) -> Any:
         """Override to apply transformations to the batch"""
         return batch
 
-    def uncollate(self, batch: Tensor) -> Any:
+    def uncollate(self, batch: Any) -> Any:
         """Override to convert a batch to a set of samples"""
         samples = batch
         return samples
@@ -72,22 +71,9 @@ class DataPipeline:
         """Override to apply transformations to samples"""
         return samples
 
-    def uncollate_fn(self, batch: Tensor) -> Any:
+    def uncollate_fn(self, batch: Any) -> Any:
         """Utility function to convert batched data back to raw data"""
         batch = self.before_uncollate(batch)
         samples = self.uncollate(batch)
         samples = self.after_uncollate(samples)
         return samples
-
-    @staticmethod
-    def contains_any_tensor(value, dtype=torch.Tensor):
-        if isinstance(value, dtype):
-            return True
-
-        if isinstance(value, (list, tuple)):
-            return any(DataPipeline.contains_any_tensor(v, dtype=dtype) for v in value)
-
-        elif isinstance(value, dict):
-            return any(DataPipeline.contains_any_tensor(v, dtype=dtype) for v in value.values())
-
-        return False

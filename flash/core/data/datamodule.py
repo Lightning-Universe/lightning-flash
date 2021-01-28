@@ -1,11 +1,17 @@
 import os
 import warnings
-from typing import Optional
+from typing import Any, Optional
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 
 from flash.core.data.datapipeline import DataPipeline
+
+
+class TaskDataPipeline(DataPipeline):
+
+    def after_collate(self, batch: Any) -> Any:
+        return (batch["x"], batch["target"]) if isinstance(batch, dict) else batch
 
 
 class DataModule(pl.LightningDataModule):
@@ -82,10 +88,6 @@ class DataModule(pl.LightningDataModule):
             collate_fn=self.data_pipeline.collate_fn,
         )
 
-    @staticmethod
-    def default_pipeline() -> DataPipeline:
-        return DataPipeline()
-
     @property
     def data_pipeline(self) -> DataPipeline:
         if self._data_pipeline is None:
@@ -95,3 +97,7 @@ class DataModule(pl.LightningDataModule):
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline):
         self._data_pipeline = data_pipeline
+
+    @staticmethod
+    def default_pipeline() -> DataPipeline:
+        return TaskDataPipeline()
