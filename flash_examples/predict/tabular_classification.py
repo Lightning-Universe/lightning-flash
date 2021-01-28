@@ -1,9 +1,14 @@
 # import our libraries
 import torch
+from flash.core.model import download_model
 
-# 1. Load model from checkpoint
-model = torch.load("tabular_classification_model.pt")
 
-# 2. Predict over a path to a `.csv` file
-predictions = model.predict("./data/titanic/predict.csv")
-print(predictions)
+if __name__ == "__main__":
+
+    # 1. Download and load model from checkpoint
+    download_model("tabular_classification_model.pt")
+    model = torch.load("tabular_classification_model.pt", map_location=torch.device('cpu'))
+
+    # 2. Predict over a path to a `.csv` file
+    predictions = model.predict("data/titanic/titanic.csv")
+    print(predictions)

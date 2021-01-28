@@ -2,14 +2,14 @@ import warnings
 from typing import List, Optional, Union
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import BaseFinetuningCallback
+from pytorch_lightning.callbacks import BaseFinetuning
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 
 # NOTE: copied from:
 # https://github.com/PyTorchLightning/pytorch-lightning/blob/9d165f6f5655a44f1e5cd02ab36f21bc14e2a604/pl_examples/domain_templates/computer_vision_fine_tuning.py#L66
-class MilestonesFinetuningCallback(BaseFinetuningCallback):
+class MilestonesFinetuningCallback(BaseFinetuning):
 
     def __init__(self, milestones: tuple = (5, 10), train_bn: bool = True):
         self.milestones = milestones
@@ -33,11 +33,12 @@ class MilestonesFinetuningCallback(BaseFinetuningCallback):
         optimizer: Optimizer,
         opt_idx: int,
     ):
+        backbone_modules = list(pl_module.backbone.modules())
         if epoch == self.milestones[0]:
             # unfreeze 5 last layers
             # TODO last N layers should be parameter
             self.unfreeze_and_add_param_group(
-                module=pl_module.backbone[-5:],
+                module=backbone_modules[-5:],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
@@ -46,7 +47,7 @@ class MilestonesFinetuningCallback(BaseFinetuningCallback):
             # unfreeze remaing layers
             # TODO last N layers should be parameter
             self.unfreeze_and_add_param_group(
-                module=pl_module.backbone[:-5],
+                module=backbone_modules[:-5],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
@@ -75,7 +76,7 @@ class Trainer(pl.Trainer):
             val_dataloaders: Either a single Pytorch Dataloader or a list of them, specifying validation samples.
                 If the model has a predefined val_dataloaders method this will be skipped
         """
-        if any(isinstance(c, BaseFinetuningCallback) for c in self.callbacks):
+        if any(isinstance(c, BaseFinetuning) for c in self.callbacks):
             # TODO: if we find a finetuning callback in the trainer should we remove it? or just warn the user?
             warnings.warn("Warning: You are calling fit(), but your trainer is using a fine-tuning callback")
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
@@ -111,7 +112,7 @@ class Trainer(pl.Trainer):
         if hasattr(model, "backbone"):
             # TODO: if we find a finetuning callback in the trainer should we change it?
             # or should we warn the user?
-            if not any(isinstance(c, BaseFinetuningCallback) for c in self.callbacks):
+            if not any(isinstance(c, BaseFinetuning) for c in self.callbacks):
                 # TODO: should pass config from arguments
                 self.callbacks.append(MilestonesFinetuningCallback(milestones=unfreeze_milestones))
         else:
