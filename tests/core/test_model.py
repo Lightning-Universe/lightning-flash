@@ -13,15 +13,8 @@ from flash import ClassificationTask
 
 class DummyDataset(torch.utils.data.Dataset):
 
-    def __init__(self, predict: bool = False):
-        self._predict = predict
-
     def __getitem__(self, index: int) -> Any:
-        sample = torch.rand(1, 28, 28)
-        if self._predict:
-            return sample
-        else:
-            return sample, torch.randint(10, size=(1, )).item()
+        return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
     def __len__(self) -> int:
         return 100
@@ -62,9 +55,9 @@ def test_classificationtask_task_predict():
 def test_classificationtask_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
-    ds = DummyDataset(predict=True)
+    ds = DummyDataset()
     batch_size = 3
-    predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size)
+    predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size, collate_fn=task.data_pipeline.collate_fn)
     trainer = pl.Trainer(default_root_dir=tmpdir)
     expected = list(range(10))
     predictions = trainer.predict(task, predict_dl)
@@ -75,3 +68,29 @@ def test_classificationtask_trainer_predict(tmpdir):
         assert all(c in expected for c in pred)
     # check size of last batch (not full)
     assert len(predictions[-1]) == len(ds) % batch_size
+
+
+def test_task_datapipeline_save(tmpdir):
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
+    train_dl = torch.utils.data.DataLoader(DummyDataset())
+    task = ClassificationTask(model, F.nll_loss)
+
+    # to check later
+    task.data_pipeline.test = True
+
+    # generate a checkpoint
+    trainer = pl.Trainer(
+        default_root_dir=tmpdir,
+        limit_train_batches=1,
+        max_epochs=1,
+        progress_bar_refresh_rate=0,
+        weights_summary=None,
+        logger=False,
+    )
+    trainer.fit(task, train_dl)
+    path = str(tmpdir / "model.ckpt")
+    trainer.save_checkpoint(path)
+
+    # load from file
+    task = ClassificationTask.load_from_checkpoint(path, model=model)
+    assert task.data_pipeline.test

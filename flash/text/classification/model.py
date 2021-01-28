@@ -1,12 +1,12 @@
-from typing import Callable, Dict, List, Mapping, Sequence, Type, Union
+import os
+import warnings
+from typing import Callable, Mapping, Sequence, Type, Union
 
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data import DataLoader
-from transformers import AutoTokenizer, BertForSequenceClassification, default_data_collator
+from transformers import BertForSequenceClassification
 
 from flash.core.classification import ClassificationTask
-from flash.text.classification.data import prepare_dataset, TextClassificationData, tokenize_text_lambda
+from flash.text.classification.data import TextClassificationData
 
 
 class TextClassifier(ClassificationTask):
@@ -15,7 +15,6 @@ class TextClassifier(ClassificationTask):
     Args:
         num_classes: Number of classes to classify.
         backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
-        pretrained: Use a pretrained backbone.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
@@ -31,7 +30,11 @@ class TextClassifier(ClassificationTask):
     ):
         self.save_hyperparameters()
 
-        self._predict = False
+        os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
+        # disable HF thousand warnings
+        warnings.simplefilter("ignore")
+        # set os environ variable for multiprocesses
+        os.environ["PYTHONWARNINGS"] = "ignore"
 
         super().__init__(
             model=None,
@@ -53,8 +56,6 @@ class TextClassifier(ClassificationTask):
     def step(self, batch, batch_idx):
         output = {}
         loss, logits = self.forward(batch)
-        if self._predict:
-            return logits
         output["loss"] = loss
         output["y_hat"] = logits
         output["logs"] = {name: metric(logits, batch["labels"]) for name, metric in self.metrics.items()}

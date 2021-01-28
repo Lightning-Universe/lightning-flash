@@ -1,6 +1,6 @@
 # import our libraries
-import torch
 import pytorch_lightning as pl
+import torch
 
 from flash.core.data import download_data
 from flash.text import TextClassificationData, TextClassifier

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,8 @@ from torch import Tensor
 
 from flash.core.classification import ClassificationDataPipeline
 from flash.core.data.datamodule import DataModule
-from flash.tabular.data.dataset import (
+from flash.core.data.utils import _contains_any_tensor
+from flash.tabular.classification.data.dataset import (
     _compute_normalization,
     _dfs_to_samples,
     _generate_codes,
@@ -32,25 +33,20 @@ class TabularDataPipeline(ClassificationDataPipeline):
 
     def before_collate(self, samples: Any) -> Any:
         """Override to apply transformations to samples"""
-        if not self.contains_any_tensor(samples, dtype=(Tensor, np.ndarray)):
-            if isinstance(samples, str):
-                samples = pd.read_csv(samples)
-            if isinstance(samples, DataFrame):
-                samples = [samples]
-            dfs = _pre_transform(
-                samples, self._numerical_input, self._categorical_input, self._codes, self._mean, self._std
-            )
-            return _dfs_to_samples(dfs, self._categorical_input, self._numerical_input)
-        else:
+        if _contains_any_tensor(samples, dtype=(Tensor, np.ndarray)):
             return samples
+        if isinstance(samples, str):
+            samples = pd.read_csv(samples)
+        if isinstance(samples, DataFrame):
+            samples = [samples]
+        dfs = _pre_transform(
+            samples, self._numerical_input, self._categorical_input, self._codes, self._mean, self._std
+        )
+        return _dfs_to_samples(dfs, self._categorical_input, self._numerical_input)
 
 
 class TabularData(DataModule):
     """Data module for tabular tasks"""
-
-    @staticmethod
-    def default_pipeline() -> ClassificationDataPipeline:
-        return ClassificationDataPipeline()
 
     def __init__(
         self,
@@ -61,7 +57,7 @@ class TabularData(DataModule):
         valid_df=None,
         test_df=None,
         batch_size=2,
-        num_workers=None,
+        num_workers: Optional[int] = None,
     ):
         dfs = [train_df]
         self._test_df = None
@@ -114,7 +110,7 @@ class TabularData(DataModule):
         valid_df: pd.DataFrame = None,
         test_df: pd.DataFrame = None,
         batch_size: int = 8,
-        num_workers: int = 0,
+        num_workers: Optional[int] = None,
         val_size: float = None,
         test_size: float = None,
     ):
@@ -172,12 +168,12 @@ class TabularData(DataModule):
         target: str,
         categorical_input: List,
         numerical_input: List,
-        valid_csv=None,
-        test_csv=None,
+        valid_csv: Optional[str] = None,
+        test_csv: Optional[str] = None,
         batch_size: int = 8,
-        num_workers: int = 0,
-        val_size: float = None,
-        test_size: float = None,
+        num_workers: Optional[int] = None,
+        val_size: Optional[float] = None,
+        test_size: Optional[float] = None,
         **pandas_kwargs,
     ):
         """Creates a TextClassificationData object from pandas DataFrames.
@@ -222,3 +218,8 @@ class TabularData(DataModule):
         num_classes = [len(self.codes[cat]) for cat in self.cat_cols]
         emb_dims = [max(int(n**0.25), 16) for n in num_classes]
         return list(zip(num_classes, emb_dims))
+
+    @staticmethod
+    def default_pipeline():
+        # TabularDataPipeline depends on the data. No default
+        raise NotImplementedError

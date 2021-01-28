@@ -1,8 +1,7 @@
 # import our libraries
 import torch
-from pytorch_lightning import _logger as log, Trainer
+from pytorch_lightning import Trainer
 
-from flash.core.data import download_data
 from flash.text import TextClassificationData
 
 # 1 Load finetuned model

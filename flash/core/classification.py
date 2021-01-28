@@ -2,11 +2,11 @@ from typing import Any
 
 import torch
 
-from flash.core.data import DataPipeline
+from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
 
 
-class ClassificationDataPipeline(DataPipeline):
+class ClassificationDataPipeline(TaskDataPipeline):
 
     def before_uncollate(self, batch: torch.Tensor) -> torch.Tensor:
         return torch.softmax(batch, -1)

@@ -1,5 +1,6 @@
-from typing import Any, Callable
 from functools import partial
+from typing import Any, Callable, Optional
+
 import torch
 from datasets import load_dataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -8,6 +9,7 @@ from transformers import AutoTokenizer, default_data_collator
 
 from flash.core.classification import ClassificationDataPipeline
 from flash.core.data import DataModule
+from flash.core.data.utils import _contains_any_tensor
 
 
 def tokenize_text_lambda(tokenizer, input, max_length):
@@ -106,14 +108,11 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
 
     def before_collate(self, samples: Any) -> Any:
         """Override to apply transformations to samples"""
-        if self.contains_any_tensor(samples):
+        if _contains_any_tensor(samples):
             return samples
-
         elif isinstance(samples, (list, tuple)) and len(samples) > 0 and all(isinstance(s, str) for s in samples):
             return [self._tokenize_fn({self._input: s}) for s in samples]
-
-        else:
-            raise MisconfigurationException("samples can only be tensors or a list of sentences.")
+        raise MisconfigurationException("samples can only be tensors or a list of sentences.")
 
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
@@ -126,9 +125,7 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
             # todo: understand why an extra dimension has been added.
             if batch["input_ids"].dim() == 3:
                 batch["input_ids"] = batch["input_ids"].squeeze(0)
-            return batch
-        else:
-            return batch
+        return batch
 
     def before_uncollate(self, batch: torch.Tensor) -> torch.Tensor:
         return torch.softmax(batch[0], -1)
@@ -156,8 +153,8 @@ class TextClassificationData(DataModule):
         valid_file=None,
         test_file=None,
         max_length: int = 128,
-        batch_size=1,
-        num_workers=0,
+        batch_size: int = 1,
+        num_workers: Optional[int] = None,
     ):
         """Creates a TextClassificationData object from files.
 
@@ -219,8 +216,8 @@ class TextClassificationData(DataModule):
         backbone="bert-base-cased",
         filetype="csv",
         max_length: int = 128,
-        batch_size=2,
-        num_workers=0,
+        batch_size: int = 2,
+        num_workers: Optional[int] = None,
     ):
         """Creates a TextClassificationData object from files.
 
