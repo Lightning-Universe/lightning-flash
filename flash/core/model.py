@@ -1,4 +1,3 @@
-import os
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
@@ -6,15 +5,7 @@ import torch
 from torch import nn
 
 from flash.core.data import DataModule, DataPipeline
-from flash.core.data.utils import download_data
 from flash.core.utils import get_callable_dict
-
-FLASH_S3_MODELS_BUCKET = "https://flash-weights.s3.amazonaws.com/"
-
-
-def download_model(model_name):
-    url = os.path.join(FLASH_S3_MODELS_BUCKET, model_name)
-    download_data(url, model_name)
 
 
 class Task(pl.LightningModule):
