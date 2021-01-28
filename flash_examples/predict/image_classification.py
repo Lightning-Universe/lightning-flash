@@ -1,7 +1,6 @@
 # import our libraries
 from flash import Trainer
 from flash.core.data import download_data
-from flash.core.model import download_model
 from flash.vision import ImageClassificationData, ImageClassifier
 
 if __name__ == "__main__":
@@ -10,8 +9,7 @@ if __name__ == "__main__":
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
     # 2. Download and load model from checkpoint
-    download_model("image_classification_model.pt")
-    model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
+    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
 
     # 3.1 Make predictions on list of image paths
     predictions = model.predict([

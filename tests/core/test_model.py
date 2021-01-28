@@ -7,6 +7,9 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash import ClassificationTask
+from flash.tabular import TabularClassifier
+from flash.text import TextClassifier
+from flash.vision import ImageClassifier
 
 # ======== Mock functions ========
 
@@ -94,3 +97,15 @@ def test_task_datapipeline_save(tmpdir):
     # load from file
     task = ClassificationTask.load_from_checkpoint(path, model=model)
     assert task.data_pipeline.test
+
+
+@pytest.mark.parametrize(["cls", "filename"], [
+    (ImageClassifier, "image_classification_model.pt"),
+    (TabularClassifier, "tabular_classification_model.pt"),
+    (TextClassifier, "text_classification_model.pt"),
+])
+def test_model_download(tmpdir, cls, filename):
+    url = "https://flash-weights.s3.amazonaws.com/"
+    with tmpdir.as_cwd():
+        task = cls.load_from_checkpoint(url + filename)
+        assert isinstance(task, cls)
