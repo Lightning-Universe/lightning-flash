@@ -18,8 +18,8 @@ You can install flash using pip:
     pip install pytorch-lightning-flash
 
 
-Inference
----------
+Quick Inference
+---------------
 .. code-block:: python
 
     # import our libraries
@@ -114,39 +114,6 @@ Customize
 
 Tasks can be built in just a few minutes because Flash is built on top of PyTorch Lightning LightningModules, which
 are infinitely extensible and let you train across GPUs, TPUs etc without doing any code changes.
-
----------
-
-Task for 99% of ML problems
----------------------------
-
-The Task can be used to tackle the majority of machine learning problems data scientists encounter.
-
-.. code-block:: python
-
-    from flash.model import Task
-    from torch import nn, optim
-    from torch.utils.data import DataLoader, random_split
-    from torchvision import transforms, datasets
-    import pytorch_lightning as pl
-
-    # model
-    model = nn.Sequential(
-        nn.Flatten(),
-        nn.Linear(28 * 28, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10)
-    )
-
-    # data
-    dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
-    train, val = random_split(dataset, [55000, 5000])
-
-    # task
-    classifier = Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
-
-    # train
-    pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 
 ---------
 
@@ -317,6 +284,37 @@ To run the example:
     python flash_examples/tabular_data.py
 
 ---------
+
+Task for 99% of ML problems
+---------------------------
+
+The Task can be used to tackle the majority of machine learning problems data scientists encounter.
+
+.. code-block:: python
+
+    from flash.model import Task
+    from torch import nn, optim
+    from torch.utils.data import DataLoader, random_split
+    from torchvision import transforms, datasets
+    import pytorch_lightning as pl
+
+    # model
+    model = nn.Sequential(
+        nn.Flatten(),
+        nn.Linear(28 * 28, 128),
+        nn.ReLU(),
+        nn.Linear(128, 10)
+    )
+
+    # data
+    dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+    train, val = random_split(dataset, [55000, 5000])
+
+    # task
+    classifier = Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
+
+    # train
+    pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 
 Other tasks
 -----------
