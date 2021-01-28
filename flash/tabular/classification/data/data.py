@@ -78,9 +78,17 @@ class TabularData(DataModule):
         # compute train dataset stats
         self.mean, self.std = _compute_normalization(dfs[0], numerical_input)
 
+        if dfs[0][target].dtype == object:
+            # if the target is a category, not an int
+            self.target_codes = _generate_codes(dfs, [target])
+        else:
+            self.target_codes = None
+
         self.codes = _generate_codes(dfs, categorical_input)
 
-        dfs = _pre_transform(dfs, numerical_input, categorical_input, self.codes, self.mean, self.std)
+        dfs = _pre_transform(
+            dfs, numerical_input, categorical_input, self.codes, self.mean, self.std, target, self.target_codes
+        )
 
         # normalize
         self.cat_cols = categorical_input
