@@ -68,6 +68,7 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=True,
             collate_fn=self.data_pipeline.collate_fn,
+            drop_last=True,
         )
 
     def _val_dataloader(self) -> DataLoader:
