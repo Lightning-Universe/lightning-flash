@@ -1,11 +1,10 @@
 import torch
 
 from flash import Trainer
-from flash.core.data import datamodule
 from flash.vision import ImageClassificationData, ImageClassifier
 
 
-def _dummy_image_loader(filepath):
+def _dummy_image_loader(_):
     return torch.rand(3, 224, 224)
 
 
@@ -16,6 +15,7 @@ def test_classification(tmpdir):
         train_transform=lambda x: x,
         loader=_dummy_image_loader,
         num_workers=0,
+        batch_size=2,
     )
     model = ImageClassifier(2, backbone="resnet18")
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
