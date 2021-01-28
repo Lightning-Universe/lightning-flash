@@ -1,4 +1,4 @@
-pytorch-lightning @ git+https://github.com/PyTorchLightning/pytorch-lightning@flash-changes
+pytorch-lightning @ https://github.com/PyTorchLightning/pytorch-lightning/archive/flash-changes.zip
 torch
 PyYAML==5.3.1
 Pillow>=7.2
