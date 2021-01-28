@@ -188,6 +188,10 @@ _default_valid_transforms = T.Compose([
     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
 
+# todo: torch.nn.modules.module.ModuleAttributeError: 'Resize' object has no attribute '_forward_hooks'
+# Find better fix and raised issue on torchvision.
+_default_valid_transforms.transforms[0]._forward_hooks = {}
+
 
 class ImageClassificationDataPipeline(ClassificationDataPipeline):
 
