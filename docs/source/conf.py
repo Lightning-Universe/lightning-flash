@@ -112,7 +112,7 @@ def _package_list_from_file(pfile):
         lines = fp.readlines()
     list_pkgs = []
     for ln in lines:
-        found = [ln.index(ch) for ch in list(',=<>#') if ch in ln]
+        found = [ln.index(ch) for ch in list(',=<>#@') if ch in ln]
         pkg = ln[:min(found)] if found else ln
         if pkg.strip():
             list_pkgs.append(pkg.strip())
