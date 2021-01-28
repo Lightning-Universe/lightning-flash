@@ -31,7 +31,7 @@ _DEFAULT_BADGES = (
 )
 
 
-def _load_requirements(path_dir: str, file_name: str = 'requirements.txt', comment_char: str = '#') -> List[str]:
+def _load_requirements(path_dir: str, file_name: str = 'requirements.txt', comment_chars: str = '#@') -> List[str]:
     """Load requirements from a file
 
     >>> _load_requirements(_PROJECT_ROOT)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -42,10 +42,11 @@ def _load_requirements(path_dir: str, file_name: str = 'requirements.txt', comme
     reqs = []
     for ln in lines:
         # filer all comments
-        if comment_char in ln:
-            ln = ln[:ln.index(comment_char)].strip()
+        found = [ln.index(ch) for ch in comment_chars if ch in ln]
+        if found:
+            ln = ln[:min(found)].strip()
         # skip directly installed dependencies
-        if ln.startswith('http'):
+        if ln.startswith('http') or ln.startswith('git'):
             continue
         if ln:  # if requirement is not empty
             reqs.append(ln)
