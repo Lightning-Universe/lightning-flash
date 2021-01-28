@@ -1,5 +1,4 @@
 # import our libraries
-import torch
 from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
 import flash
@@ -30,4 +29,4 @@ if __name__ == "__main__":
     trainer.fit(model, datamodule=datamodule)
 
     # 6. Save model
-    torch.save(model, "tabular_classification_model.pt")
+    trainer.save_checkpoint("tabular_classification_model.pt")

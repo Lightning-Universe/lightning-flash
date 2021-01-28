@@ -1,15 +1,18 @@
 # import our libraries
-import torch
 from pytorch_lightning import Trainer
 
 from flash.core.data import download_data
 from flash.core.model import download_model
-from flash.text import TextClassificationData
+from flash.text import TextClassificationData, TextClassifier
 
 if __name__ == "__main__":
 
-    # 1. Load finetuned model - Run `python flash_examples/finetuning/text_classification.py` first.
-    model = torch.load("text_classification_model.pt", map_location=torch.device('cpu'))
+    # 1. Download data
+    download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
+
+    # 2 Load finetuned model
+    download_model("text_classification_model.pt")
+    model = TextClassifier.load_from_checkpoint("text_classification_model.pt")
 
     # 2.1 Perform inference from list of sequences
     predictions = model.predict([
