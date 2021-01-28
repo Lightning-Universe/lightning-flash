@@ -23,7 +23,7 @@ if __name__ == "__main__":
     model = TextClassifier(num_classes=datamodule.num_classes)
 
     # 4. Create trainer - Make training slightly faster for demo.
-    trainer = flash.Trainer(max_epochs=2)
+    trainer = flash.Trainer(max_epochs=1)
 
     # 5. Finetune the model
     trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))

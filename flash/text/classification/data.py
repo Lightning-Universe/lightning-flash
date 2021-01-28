@@ -3,6 +3,7 @@ from typing import Any, Callable, Optional
 
 import torch
 from datasets import load_dataset
+from datasets.utils.download_manager import GenerateMode
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
@@ -44,7 +45,7 @@ def prepare_dataset(
     if test_file is not None:
         data_files["test"] = test_file
 
-    dataset_dict = load_dataset(filetype, data_files=data_files)
+    dataset_dict = load_dataset(filetype, data_files=data_files, download_mode=GenerateMode.FORCE_REDOWNLOAD)
 
     if not predict:
         if label_to_class_mapping is None:
