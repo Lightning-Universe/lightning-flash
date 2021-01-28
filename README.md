@@ -1,7 +1,22 @@
 <div align="center">
 
-<img src="docs/source/_static/images/Lightning_Flash_Logo-name.svg" width="400px">
+<img src="docs/source/_static/images/flash_logo.png" width="200px">
 
+
+**Collection of tasks for fast prototyping, finetuning, and solving applied deep learning problems**
+
+---
+
+<p align="center">
+  <a href="#installation">Installation</a> •
+  <a href="#what-is-flash">About</a> •
+  <a href="#predictions">Prediction</a> •
+  <a href="#finetuning">Finetuning</a> •
+  <a href="#tasks">Tasks</a> •
+  <a href="#contribute">Contribute</a> •
+  <a href="https://www.pytorchlightning.ai/">Website</a> •
+  <a href="#license">License</a>
+</p>
 </div>
 
 ## Installation
@@ -34,7 +49,7 @@ Flash is a framework for applied deep learning focused on:
 
 It is built for data scientists, machine learning practicioners, and applied researchers.
 
-**Trivial predictions**
+### Predictions
 
 ```python
 # import our libraries
@@ -54,7 +69,7 @@ predictions = model.predict([
 print(predictions)
 ```
 
-**Trivial finetuning**
+### Finetuning
 
 ```python
 import flash
@@ -90,7 +105,7 @@ print(predictions)
 trainer.save_checkpoint("image_classification_model.pt")
 ```
 
-**Trivial Task-based training**
+### Task-based training
 
 Tasks let you focus on solving applied problems without any of the boilerplate. Here's a built-in
 task that works for 99% of machine learning problems that data scientists, kagglers and practicioners
@@ -122,7 +137,7 @@ classifier = flash.Task(model, loss_fn=nn.functional.cross_entropy, optimizer=op
 flash.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 ```
 
-**Infinitely customizable**
+### Infinitely customizable
 
 Tasks can be built in just a few minutes because Flash is built on top of PyTorch Lightning LightningModules, which
 are infinitely extensible and let you train across GPUs, TPUs etc without doing any code changes.
@@ -312,4 +327,11 @@ python flash_examples/finetuning/tabular_data.py
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases. But we're looking for incredible contributors like you to submit new tasks!
 
 Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A) to get help becoming a contributor!
+
+---
+
+## License
+
+Please observe the Apache 2.0 license that is listed in this repository. In addition
+the Lightning framework is Patent Pending.
 
