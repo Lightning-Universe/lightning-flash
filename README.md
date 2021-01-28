@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/source/_static/images/flash_logo.png" width="400px">
+![Logo](docs/source/_images/flash_logo.png)
 
 
 **Collection of tasks for fast prototyping, finetuning, and solving applied deep learning problems**
@@ -154,8 +154,7 @@ are infinitely extensible and let you train across GPUs, TPUs etc without doing 
 import torch
 import torch.nn.functional as F
 from flash.core.classification import ClassificationTask
-from pytorch_lightning import Trainer
-​
+
 class LinearClassifier(ClassificationTask):
     def __init__(
         self,
@@ -232,7 +231,7 @@ predictions = model.predict([
 print(predictions)
 ```
 To run the example:
-```
+```bash
 python flash_examples/finetuning/image_classifier.py
 ```
 ### Text classification
@@ -325,7 +324,7 @@ predictions = model.predict("data/titanic/titanic.csv")
 print(predictions)
 ```
 To run the example:
-```
+```bash
 python flash_examples/finetuning/tabular_data.py
 ```
 
