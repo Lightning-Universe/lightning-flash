@@ -28,8 +28,8 @@ if __name__ == "__main__":
     # 5. Train the model
     trainer.fit(model, datamodule=datamodule)
 
-    # 6. Save it!
-    trainer.save_checkpoint("tabular_classification_model.pt")
-
     # 6. Test model
     trainer.test()
+
+    # 7. Save it!
+    trainer.save_checkpoint("tabular_classification_model.pt")

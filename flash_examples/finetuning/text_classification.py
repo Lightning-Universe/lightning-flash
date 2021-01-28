@@ -26,8 +26,9 @@ if __name__ == "__main__":
     # 5. Fine-tune the model
     trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
-    # 6. Save it!
-    trainer.save_checkpoint("text_classification_model.pt")
-
     # 6. Test model
     trainer.test()
+
+    # 7. Save it!
+    trainer.save_checkpoint("text_classification_model.pt")
+

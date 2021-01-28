@@ -23,8 +23,8 @@ if __name__ == "__main__":
     # 5. Train the model
     trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
-    # 6. Save it!
-    trainer.save_checkpoint("image_classification_model.pt")
-
-    # 7. Test the model
+    # 6. Test the model
     trainer.test()
+
+    # 7. Save it!
+    trainer.save_checkpoint("image_classification_model.pt")
