@@ -12,6 +12,6 @@ pip install lightning-flash
 
 ``` bash
 git clone https://github.com/PyTorchLightning/flash.git
-cd flash 
+cd flash
 pip install -e .
 ```

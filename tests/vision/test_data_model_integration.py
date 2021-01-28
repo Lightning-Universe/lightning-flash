@@ -1,4 +1,5 @@
 import torch
+
 from flash import Trainer
 from flash.core.data import datamodule
 from flash.vision import ImageClassificationData, ImageClassifier

@@ -16,7 +16,7 @@ ImageClassifier
 .. autoclass:: flash.vision.ImageClassifier
     :members:
     :exclude-members: forward
-   
+
 ImageDetector
 ---------------
 

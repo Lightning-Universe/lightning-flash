@@ -32,7 +32,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/install.txt') }}
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-pip-
 
@@ -41,14 +41,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -U pip wheel
         #pip install treon
-        pip install --requirement requirements/install.txt --pre --upgrade --quiet --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install . --pre --upgrade --quiet --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install --requirement requirements/test.txt --quiet --find-links https://download.pytorch.org/whl/torch_stable.html
         pip install --requirement requirements/notebooks.txt --quiet --find-links https://download.pytorch.org/whl/torch_stable.html
-        pip install --no-deps .
 
     - name: Run Notebooks
       run: |
         #treon --threads=1 --exclude=notebooks/kaggle_tumor.ipynb # with more threads this requires to much RAM
         # ignore error code 5 (no tests)
         sh -c 'pytest notebooks/ ; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
-
