@@ -42,6 +42,11 @@ class TextClassifier(ClassificationTask):
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
 
+    @property
+    def backbone(self):
+        # see huggingface's BertForSequenceClassification
+        return self.model.bert
+
     def forward(self, batch_dict):
         return self.model(**batch_dict)
 
