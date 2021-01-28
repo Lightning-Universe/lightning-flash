@@ -1,10 +1,10 @@
 """Root package info."""
 import os
 
-__version__ = "0.0.0rc1"
+__version__ = "0.1.0rc0"
 __author__ = "PyTorchLightning et al."
-__author_email__ = "name@pytorchlightning.ai"  # TODO
-__license__ = "TBD"  # TODO
+__author_email__ = "name@pytorchlightning.ai"
+__license__ = 'Apache-2.0'
 __copyright__ = f"Copyright (c) 2020-2021, f{__author__}."
 __homepage__ = "https://github.com/PyTorchLightning/lightning-flash"
 __docs__ = "Flash is a framework for fast prototyping, finetuning, and solving most standard deep learning challenges"
