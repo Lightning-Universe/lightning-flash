@@ -1,4 +1,7 @@
+import os
+
 from flash import utils
+from flash.core.data import download_data
 
 # ======== Mock functions ========
 
@@ -36,3 +39,9 @@ def test_get_callable_dict():
     assert type(d["one"]) == A
     assert d["two"] == b
     assert d["three"] == c
+
+
+def test_download_data(tmpdir):
+    path = os.path.join(tmpdir, "data")
+    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", path)
+    assert set(os.listdir(path)) == {'titanic', 'titanic.zip'}
