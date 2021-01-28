@@ -1,18 +1,17 @@
 # import our libraries
-import pandas as pd
-import pytorch_lightning as pl
 import torch
 from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
+import flash
 from flash.tabular import TabularClassifier, TabularData
-from flash.tabular.classification.data.dataset import titanic_data_download
+from flash.core.data import download_data
 
 # 1. Download data
-titanic_data_download("./data/titanic")
+download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 
 # 2. Organize our data - create a LightningDataModule
-datamodule = TabularData.from_df(
-    pd.read_csv("./data/titanic/titanic.csv"),
+datamodule = TabularData.from_csv(
+    "./data/titanic/titanic.csv",
     categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
     numerical_input=["Fare"],
     target="Survived",
@@ -23,7 +22,7 @@ datamodule = TabularData.from_df(
 model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
 # 4. Create trainer
-trainer = pl.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=1)
 
 # 5. Train model
 trainer.fit(model, datamodule=datamodule)

@@ -1,7 +1,7 @@
 # import our libraries
-import pytorch_lightning as pl
 import torch
 
+import flash
 from flash.core.data import download_data
 from flash.text import TextClassificationData, TextClassifier
 
@@ -20,10 +20,10 @@ datamodule = TextClassificationData.from_files(
 model = TextClassifier(num_classes=datamodule.num_classes)
 
 # 4. Create trainer - Make training slightly faster for demo.
-trainer = pl.Trainer(max_epochs=1, limit_train_batches=8, limit_val_batches=8)
+trainer = flash.Trainer(max_epochs=1, limit_train_batches=8, limit_val_batches=8)
 
 # 5. Finetune the model
-trainer.fit(model, datamodule=datamodule)
+trainer.finetune(model, datamodule=datamodule)
 
 # 6. Save model
 torch.save(model, "text_classification_model.pt")

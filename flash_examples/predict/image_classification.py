@@ -1,7 +1,7 @@
 # import our libraries
 import torch
-from pytorch_lightning import Trainer
 
+from flash import Trainer
 from flash.vision import ImageClassificationData
 
 # 1. Load model from checkpoint
