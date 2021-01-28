@@ -1,10 +1,10 @@
-from typing import Optional, Union, List
-from torch.utils.data import DataLoader
-from torch.optim import Optimizer
 import warnings
+from typing import List, Optional, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import BaseFinetuningCallback
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 
 # NOTE: copied from:
@@ -21,7 +21,9 @@ class MilestonesFinetuningCallback(BaseFinetuningCallback):
         # self.freeze(module=pl_module.getattr(self.feature_attr), train_bn=self.train_bn)
         # where self.feature_attr can be "backbone" or "feature_extractor", etc.
         # (configured in init)
-        assert hasattr(pl_module, "backbone"), "To use MilestonesFinetuningCallback your model must have a backbone attribute"
+        assert hasattr(
+            pl_module, "backbone"
+        ), "To use MilestonesFinetuningCallback your model must have a backbone attribute"
         self.freeze(module=pl_module.backbone, train_bn=self.train_bn)
 
     def finetunning_function(
@@ -87,7 +89,7 @@ class Trainer(pl.Trainer):
         unfreeze_milestones: tuple = (5, 10),
     ):
         r"""
-        Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers 
+        Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
         of the backbone throughout training layers of the backbone throughout training.
 
         Args:

@@ -1,8 +1,9 @@
 # import our libraries
 import torch
+
 import flash
-from flash.vision import ImageClassificationData, ImageClassifier
 from flash.core.data import download_data
+from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')

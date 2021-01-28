@@ -34,6 +34,6 @@ def test_classification(tmpdir):
         target="label",
         num_workers=0,
     )
-    model = TextClassifier(TEST_BACKBONE, 2)
+    model = TextClassifier(2, TEST_BACKBONE)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, datamodule=data)

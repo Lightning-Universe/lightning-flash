@@ -97,6 +97,6 @@ class TabularClassifier(ClassificationTask):
         return model
 
     @staticmethod
-    def default_pipeline():
-        # TabularDataPipeline depends on the data. No default
-        raise NotImplementedError
+    def default_pipeline() -> DataPipeline():
+        # TabularDataPipeline depends on the data
+        return DataPipeline()

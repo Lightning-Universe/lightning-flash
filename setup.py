@@ -40,7 +40,7 @@ setup(
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
     setup_requires=[],
-    install_requires=_load_requirements(_PATH_ROOT, file_name=os.path.join('requirements', 'install.txt')),
+    install_requires=_load_requirements(_PATH_ROOT, file_name='requirements.txt'),
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",

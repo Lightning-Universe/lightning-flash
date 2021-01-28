@@ -1,14 +1,12 @@
-import torch
-from torch import nn
-
 from typing import Any
 
 import pytest
+import torch
 from torch import nn
 from torch.nn import functional as F
 
-from flash import ClassificationTask
-from flash import Trainer
+from flash import ClassificationTask, Trainer
+
 
 class DummyDataset(torch.utils.data.Dataset):
 
@@ -25,7 +23,9 @@ class DummyDataset(torch.utils.data.Dataset):
     def __len__(self) -> int:
         return 100
 
+
 class DummyClassifier(nn.Module):
+
     def __init__(self):
         super().__init__()
         self.backbone = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
@@ -43,7 +43,6 @@ def test_task_fit(tmpdir: str):
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     result = trainer.fit(task, train_dl, val_dl)
     assert result
-
 
 
 def test_task_finetune(tmpdir: str):

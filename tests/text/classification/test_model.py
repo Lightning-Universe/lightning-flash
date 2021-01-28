@@ -2,6 +2,7 @@ import os
 
 import torch
 
+from flash import Trainer
 from flash.text import TextClassifier
 
 # ======== Mock functions ========
@@ -29,7 +30,7 @@ def test_init_train(tmpdir):
         # TODO: huggingface stuff timing out on windows
         #
         return True
-    model = TextClassifier(TEST_BACKBONE, 2, 2)
+    model = TextClassifier(2, TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
