@@ -10,8 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # fixme: this is temporal job limitation
-        os: [ubuntu-20.04]  # , macOS-10.15, windows-2019
+        os: [ubuntu-20.04, macOS-10.15, windows-2019]
         python-version: [3.8]  # 3.6,
     env:
       TEST_ENV: TRUE

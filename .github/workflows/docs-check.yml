@@ -3,9 +3,8 @@ name: "Check Docs"
 
 on: # Trigger the workflow on push or pull request, but only for the master branch
   push: {}
-# fixme
-#  pull_request:
-#    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
   sphinx-docs:
