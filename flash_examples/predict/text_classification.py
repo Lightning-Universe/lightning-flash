@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # 2.2 Or perform inference from `.csv` file
     datamodule = TextClassificationData.from_file(
-        predict_file="data/imdb/test.csv",
+        predict_file="data/imdb/predict.csv",
         input="review",
     )
     predictions = Trainer().predict(model, datamodule=datamodule)
