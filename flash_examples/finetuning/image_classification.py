@@ -1,11 +1,11 @@
 # import our libraries
-import pytorch_lightning as pl
 import torch
+import flash
 from flash.vision import ImageClassificationData, ImageClassifier
-from flash.vision.classification.dataset import hymenoptera_data_download
+from flash.core.data import download_data
 
 # 1. Download data
-hymenoptera_data_download('data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
 # 2. Organize our data
 datamodule = ImageClassificationData.from_folders(
@@ -17,10 +17,10 @@ datamodule = ImageClassificationData.from_folders(
 model = ImageClassifier(num_classes=datamodule.num_classes)
 
 # 4. Create trainer
-trainer = pl.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=1)
 
 # 5. Train the model
-trainer.fit(model, datamodule=datamodule)
+trainer.finetune(model, datamodule=datamodule)
 
 # 6. Save model
 torch.save(model, "image_classification_model.pt")
