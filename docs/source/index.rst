@@ -38,16 +38,19 @@ We seperate the developement process into 3 easy steps: data, model, and train:
 
    quickstart
    installation
+   custom_task
 
 .. toctree::
    :maxdepth: 3
    :caption: API Reference:
 
-   reference/vision.rst
-   reference/text.rst
-   reference/tabular.rst
-   reference/model.rst
-   reference/data.rst
+   reference/image_classification
+   reference/text_classification
+   reference/tabular_classification
+   reference/model
+   reference/data
+   reference/training
+   reference/predictions
 
 
 Indices and tables
