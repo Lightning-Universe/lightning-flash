@@ -33,6 +33,7 @@ def test_classification(tmpdir):
         input="sentence",
         target="label",
         num_workers=0,
+        batch_size=2,
     )
     model = TextClassifier(2, TEST_BACKBONE)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
