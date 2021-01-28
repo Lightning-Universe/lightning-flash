@@ -34,7 +34,6 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 1,
         num_workers: Optional[int] = None,
     ):
-
         super().__init__()
         self._train_ds = train_ds
         self._valid_ds = valid_ds

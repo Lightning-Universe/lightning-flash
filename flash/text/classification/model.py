@@ -3,6 +3,7 @@ import warnings
 from typing import Callable, Mapping, Sequence, Type, Union
 
 import torch
+from pytorch_lightning.metrics.classification import Accuracy
 from transformers import BertForSequenceClassification
 
 from flash.core.classification import ClassificationTask
@@ -23,10 +24,10 @@ class TextClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "bert-base-uncased",
+        backbone: str = "prajjwal1/bert-tiny",
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-5,
+        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
+        learning_rate: float = 1e-3,
     ):
         self.save_hyperparameters()
 
@@ -58,7 +59,8 @@ class TextClassifier(ClassificationTask):
         loss, logits = self.forward(batch)
         output["loss"] = loss
         output["y_hat"] = logits
-        output["logs"] = {name: metric(logits, batch["labels"]) for name, metric in self.metrics.items()}
+        probs = self.data_pipeline.before_uncollate(logits)
+        output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
         return output
 
     @staticmethod

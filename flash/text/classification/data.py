@@ -127,9 +127,6 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
                 batch["input_ids"] = batch["input_ids"].squeeze(0)
         return batch
 
-    def before_uncollate(self, batch: torch.Tensor) -> torch.Tensor:
-        return torch.softmax(batch[0], -1)
-
 
 class TextClassificationData(DataModule):
     """Data module for text classification tasks."""
@@ -137,7 +134,7 @@ class TextClassificationData(DataModule):
     @staticmethod
     def default_pipeline():
         return TextClassificationDataPipeline(
-            AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=True),
+            AutoTokenizer.from_pretrained("prajjwal1/bert-tiny", use_fast=True),
             "sentiment",  # Todo: find a way to get the target column name or impose target
             128,
         )
@@ -149,11 +146,11 @@ class TextClassificationData(DataModule):
         input,
         target,
         filetype="csv",
-        backbone="bert-base-cased",
+        backbone="prajjwal1/bert-tiny",
         valid_file=None,
         test_file=None,
         max_length: int = 128,
-        batch_size: int = 1,
+        batch_size: int = 16,
         num_workers: Optional[int] = None,
     ):
         """Creates a TextClassificationData object from files.
@@ -216,7 +213,7 @@ class TextClassificationData(DataModule):
         backbone="bert-base-cased",
         filetype="csv",
         max_length: int = 128,
-        batch_size: int = 2,
+        batch_size: int = 16,
         num_workers: Optional[int] = None,
     ):
         """Creates a TextClassificationData object from files.

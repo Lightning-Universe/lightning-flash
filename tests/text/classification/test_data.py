@@ -36,10 +36,7 @@ def test_from_csv(tmpdir):
         return True
     csv_path = csv_data(tmpdir)
     dm = TextClassificationData.from_files(
-        backbone=TEST_BACKBONE,
-        train_file=csv_path,
-        input="sentence",
-        target="label",
+        backbone=TEST_BACKBONE, train_file=csv_path, input="sentence", target="label", batch_size=1
     )
     batch = next(iter(dm.train_dataloader()))
     assert batch["labels"].item() in [0, 1]
@@ -58,6 +55,7 @@ def test_test_valid(tmpdir):
         test_file=csv_path,
         input="sentence",
         target="label",
+        batch_size=1
     )
     batch = next(iter(dm.val_dataloader()))
     assert batch["labels"].item() in [0, 1]
@@ -74,11 +72,7 @@ def test_from_json(tmpdir):
         return True
     json_path = json_data(tmpdir)
     dm = TextClassificationData.from_files(
-        backbone=TEST_BACKBONE,
-        train_file=json_path,
-        input="sentence",
-        target="lab",
-        filetype="json",
+        backbone=TEST_BACKBONE, train_file=json_path, input="sentence", target="lab", filetype="json", batch_size=1
     )
     batch = next(iter(dm.train_dataloader()))
     assert batch["labels"].item() in [0, 1]
