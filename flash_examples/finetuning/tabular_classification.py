@@ -3,8 +3,8 @@ import torch
 from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
 import flash
-from flash.tabular import TabularClassifier, TabularData
 from flash.core.data import download_data
+from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download data
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
