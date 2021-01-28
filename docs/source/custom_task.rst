@@ -8,11 +8,10 @@ See this example for defining a linear classifier task:
 
 .. code-block:: python
 
-
 	import torch
 	import torch.nn.functional as F
 	from flash.core.classification import ClassificationTask
-	​
+
 	class LinearClassifier(ClassificationTask):
 		def __init__(
 	        self,
@@ -36,5 +35,3 @@ See this example for defining a linear classifier task:
 			
 		def forward(self, x):
 		    return self.linear(x)
-
-
