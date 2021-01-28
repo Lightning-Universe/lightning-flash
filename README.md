@@ -283,7 +283,7 @@ print(predictions)
 ```
 To run the example:
 ```bash
-python flash_examples/finetuning/text_classification.py
+python flash_examples/finetuning/classify_text.py
 ```
 
 ### Tabular classification

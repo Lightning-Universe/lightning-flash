@@ -35,17 +35,18 @@ def run_test(filepath):
 
 
 @pytest.mark.parametrize(
-    "file",
+    "step,file",
     [
-        "image_classification.py",
-        "tabular_classification.py",
-        # "text_classification.py" TODO: takes too long
+        ("finetuning", "image_classification.py"),
+        ("finetuning", "tabular_classification.py"),
+        ("predict", "classify_image.py"),
+        ("predict", "classify_tabular.py"),
+        # "classify_text.py" TODO: takes too long
     ]
 )
-def test_finetune_example(tmpdir, file):
-    for step in ("finetuning", "predict"):
-        with tmpdir.as_cwd():
-            run_test(str(root / "flash_examples" / step / file))
+def test_finetune_example(tmpdir, step, file):
+    with tmpdir.as_cwd():
+        run_test(str(root / "flash_examples" / step / file))
 
 
 def test_generic_example(tmpdir):

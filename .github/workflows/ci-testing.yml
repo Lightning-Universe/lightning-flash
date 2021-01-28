@@ -89,9 +89,6 @@ jobs:
     #  run: |
     #    # tox --sitepackages
     #    python -m pip install -e .
-    #    # python flash_examples/generic_task.py
-    #    # python flash_examples/tabular_data.py
-    #    # python flash_examples/text_classification.py
     #    # python flash_examples/torchvision_classifier.py
 
     - name: Upload pytest test results

@@ -17,7 +17,7 @@ model = nn.Sequential(
 dataset = datasets.MNIST('./data', download=True, transform=transforms.ToTensor())
 
 # 3. Split the data randomly
-train, val, test = random_split(dataset, [50000, 5000, 5000])
+train, val, test = random_split(dataset, [50000, 5000, 5000])  # type: ignore
 
 # 4. Create the model
 classifier = ClassificationTask(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam, learning_rate=10e-3)
