@@ -1,24 +1,126 @@
 Quick Start
 ===========
-Flash is designed for rapid applied deep learning such as.
+Flash is a toolkit to solve deep learning challanges using the latest state-of-the-art models in just a few lines of code. You can use Flash to finetune on you own data, generate embeddings, etc.
 
-- finetuning
-- solving common problems
-- generating embeddings
-- ...
+Flash is built on top of `Pytorch Lightning
+<https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes. 
 
-In just a few short lines you can leverage the latest state of the art models for any
-particular task you want to solve.
+Continue reading to train your deep learning models in a flash!
 
-Flash is built on top of PyTorch Lightning so you can train across GPUs, TPUs etc without doing
-any code changes. Tasks are just custom LightningModules, so when you need more flexibility you can
-simply use lightning directly or modify and existing task in just a few lines.
 
-For most applied deep learning
-------------------------------
+Install
+-------
 
-Flash is designed for quickly finetuning and doing applied deep learning. The FlashTask is
-very general and can handle the majority of these problems.
+You can install flash using pip:
+
+.. code-block:: bash
+
+    pip install pytorch-lightning-flash
+
+
+Inference
+---------
+.. code-block:: python
+
+    # import our libraries
+    from flash.text import TextClassifier
+
+
+    # Load finetuned task
+    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+
+    # 2. Perform inference from list of sequences
+    predictions = model.predict([
+        "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+        "The worst movie in the history of cinema.",
+        "I come from Bulgaria where it 's almost impossible to have a tornado."
+        "Very, very afraid"
+        "This guy has done a great job with this movie!",
+    ])
+    print(predictions)
+
+Finetune
+--------
+
+.. code-block:: python
+
+    import flash
+    from flash.core.data import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
+
+
+    # 1. Download the data
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+
+    # 2. Load the data
+    datamodule = ImageClassificationData.from_folders(
+        backbone="resnet18",
+        train_folder="data/hymenoptera_data/train/",
+        valid_folder="data/hymenoptera_data/val/",
+        test_folder="data/hymenoptera_data/test/",
+    )
+
+    # 3. Build the model
+    model = ImageClassifier(num_classes=datamodule.num_classes)
+
+    # 4. Create the trainer. Run once on data
+    trainer = flash.Trainer(max_epochs=1)
+
+    # 5. Train the model
+    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+
+    # 6. Test the model
+    trainer.test()
+
+    # 7. Save it!
+    trainer.save_checkpoint("image_classification_model.pt")
+
+Train
+-----
+
+Tasks let you focus on solving applied problems without any of the boilerplate. Here's a built-in
+task that works for 99% of machine learning problems that data scientists, kagglers and practicioners
+encounter.
+
+.. code-block:: python
+
+    import flash
+    from torch import nn, optim
+    from torch.utils.data import DataLoader, random_split
+    from torchvision import transforms, datasets
+    import pytorch_lightning as pl
+
+    # model
+    model = nn.Sequential(
+        nn.Flatten(),
+        nn.Linear(28 * 28, 128),
+        nn.ReLU(),
+        nn.Linear(128, 10)
+    )
+
+    # data
+    dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+    train, val = random_split(dataset, [55000, 5000])
+
+    # task
+    classifier = flash.Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
+
+    # train
+    flash.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
+
+
+Customize
+---------
+
+Tasks can be built in just a few minutes because Flash is built on top of PyTorch Lightning LightningModules, which
+are infinitely extensible and let you train across GPUs, TPUs etc without doing any code changes.
+
+---------
+
+Task for 99% of ML problems
+---------------------------
+
+The Task can be used to tackle the majority of machine learning problems data scientists encounter.
 
 .. code-block:: python
 
@@ -46,12 +148,13 @@ very general and can handle the majority of these problems.
     # train
     pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 
-----
+---------
 
 Image Classification
 --------------------
 
-Let's say you wanted to develope a model that could classify between **ants** and **bees**.
+Flash has an ImageClassification task to tackle any image classification problem.
+To illustrate, Let's say we wanted to develop a model that could classify between **ants** and **bees**.
 We only need a ``train`` and ``validation`` folder, each with examples of images of ants and bees like so:
 
 .. code-block::
@@ -99,19 +202,19 @@ Now all we need is three lines of code to build and train our model!
     # 3. train!
     pl.Trainer().fit(model, data)
 
-------
-
 To run the example:
 
 .. code-block:: python
 
     python flash_examples/torchvision_classifier.py
 
+---------
 
 Text Classification
 -------------------
 
-Say you wanted to classify movie reviews as **positive** or **negative**. From a ``train.csv`` and ``valid.csv``, structured like so:
+Flash has a TextClassification task to tackle any text classification problem.
+To illustrate, say you wanted to classify movie reviews as **positive** or **negative**. From a ``train.csv`` and ``valid.csv``, structured like so:
 
 .. code-block::
 
@@ -149,19 +252,19 @@ Once again, all we need is three lines of code to train our model!
     # train
     pl.Trainer().fit(model, data)
 
-------
-
 To run the example:
 
 .. code-block:: python
 
     python flash_examples/text_classification.py
 
+-----
 
 Tabular Classification
 ----------------------
 
-Lastly, say we want to build a model to predict if a passenger survived on the
+Flash has a TabularClassification task to tackle any tabular classification problem.
+To illustrate, say we want to build a model to predict if a passenger survived on the
 Titanic. Once again we can organize our data in ``.csv`` files
 (exportable from Excel):
 
@@ -212,3 +315,12 @@ To run the example:
 .. code-block:: python
 
     python flash_examples/tabular_data.py
+
+---------
+
+Other tasks
+-----------
+The lightning + Flash team is hard at work building more tasks for common deep-learning use cases.
+But we're looking for incredible contributors like you to submit new tasks!
+
+Join our `Slack <https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A>`_ to get help becoming a contributor!
