@@ -11,6 +11,7 @@ if __name__ == "__main__":
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/",
+        test_folder="data/hymenoptera_data/test/",
     )
 
     # 3. Build the model
@@ -24,3 +25,6 @@ if __name__ == "__main__":
 
     # 6. Save it!
     trainer.save_checkpoint("image_classification_model.pt")
+
+    # 7. Test the model
+    trainer.test()

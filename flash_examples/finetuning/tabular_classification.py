@@ -12,6 +12,7 @@ if __name__ == "__main__":
     # 2. Load the data
     datamodule = TabularData.from_csv(
         "./data/titanic/titanic.csv",
+        test_csv="./data/titanic/test.csv",
         categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
         numerical_input=["Fare"],
         target="Survived",
@@ -29,3 +30,6 @@ if __name__ == "__main__":
 
     # 6. Save it!
     trainer.save_checkpoint("tabular_classification_model.pt")
+
+    # 6. Test model
+    trainer.test()

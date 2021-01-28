@@ -11,6 +11,7 @@ if __name__ == "__main__":
     datamodule = TextClassificationData.from_files(
         train_file="data/imdb/train.csv",
         valid_file="data/imdb/valid.csv",
+        test_file="data/imdb/test.csv",
         input="review",
         target="sentiment",
         batch_size=512
@@ -27,3 +28,6 @@ if __name__ == "__main__":
 
     # 6. Save it!
     trainer.save_checkpoint("text_classification_model.pt")
+
+    # 6. Test model
+    trainer.test()
