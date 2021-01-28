@@ -1,6 +1,6 @@
 <div align="center">
 
-![Logo](docs/source/_images/flash_logo.png)
+<img src="docs/source/_images/flash_logo.png" width="400px">
 
 
 **Collection of tasks for fast prototyping, finetuning, and solving applied deep learning problems**
