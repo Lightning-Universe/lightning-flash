@@ -30,7 +30,7 @@
 
 ## Installation
 
-Pip
+Pip / conda
 
 ```bash
 pip install lightning-flash
