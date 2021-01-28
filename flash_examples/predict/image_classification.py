@@ -1,10 +1,8 @@
 # import our libraries
-import torch
-from flash.core.data import download_data
-
 from flash import Trainer
-from flash.vision import ImageClassificationData
+from flash.core.data import download_data
 from flash.core.model import download_model
+from flash.vision import ImageClassificationData, ImageClassifier
 
 if __name__ == "__main__":
 
@@ -13,7 +11,7 @@ if __name__ == "__main__":
 
     # 2. Download and load model from checkpoint
     download_model("image_classification_model.pt")
-    model = torch.load("image_classification_model.pt", map_location=torch.device('cpu'))
+    model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
     # 3.1 Make predictions on list of image paths
     predictions = model.predict([

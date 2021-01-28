@@ -1,6 +1,4 @@
 # import our libraries
-import torch
-
 import flash
 from flash.core.data import download_data
 from flash.text import TextClassificationData, TextClassifier
@@ -29,4 +27,4 @@ if __name__ == "__main__":
     trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
     # 6. Save model
-    torch.save(model, "text_classification_model.pt")
+    trainer.save_checkpoint("text_classification_model.pt")
