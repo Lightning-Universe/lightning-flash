@@ -31,4 +31,3 @@ if __name__ == "__main__":
 
     # 7. Save it!
     trainer.save_checkpoint("text_classification_model.pt")
-
