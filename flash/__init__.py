@@ -40,6 +40,7 @@ else:
     from flash.core.data import DataModule
     from flash.core.model import Task
     from flash.core.trainer import Trainer
+    from flash.core.data.utils import download_data
 
     __all__ = [
         "Task",
@@ -50,4 +51,5 @@ else:
         "tabular",
         "data",
         "utils",
+        "download_data"
     ]

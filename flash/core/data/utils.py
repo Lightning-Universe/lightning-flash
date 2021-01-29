@@ -62,6 +62,10 @@ def download_data(url, path="data/"):
         url: path
         path: local
 
+    Example::
+
+        from flash import download_data
+
     """
 
     download_file(url, path)
