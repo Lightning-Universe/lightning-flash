@@ -188,7 +188,7 @@ A few Built-in Tasks
 - :doc:`TextClassification <reference/text_classification>`
 - :doc:`TabularClassification <reference/tabular_classification>`
 
----
+-----
 
 Contribute a task
 -----------------
