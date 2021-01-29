@@ -91,21 +91,21 @@ You can make predcitions on a pretrained model, taht has already been trained fo
 .. code-block:: python
 
 
-	from flash import download_data
-	from flash.tabular import TabularClassifier
+    from flash import download_data
+    from flash.tabular import TabularClassifier
 
 
-  # 1. Download the data
-  download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+    # 1. Download the data
+    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 
-  # 2. Load the model from a checkpoint
-  model = TabularClassifier.load_from_checkpoint(
-      "https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt"
-  )
+    # 2. Load the model from a checkpoint
+    model = TabularClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt"
+    )
 
-  # 3. Generate predictions from a sheet file! Who would survive?
-  predictions = model.predict("data/titanic/titanic.csv")
-  print(predictions)
+    # 3. Generate predictions from a sheet file! Who would survive?
+    predictions = model.predict("data/titanic/titanic.csv")
+    print(predictions)
 
 
 
@@ -118,30 +118,30 @@ Or you can finetune your own model and use that for prediction:
 	from flash import download_data
 	from flash.tabular import TabularClassifier, TabularData
 
-  # 1. Load the data
-  datamodule = TabularData.from_csv(
-      "my_data_file.csv",
-      test_csv="./data/titanic/test.csv",
-      categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-      numerical_input=["Fare"],
-      target="Survived",
-      val_size=0.25,
-  )
+    # 1. Load the data
+    datamodule = TabularData.from_csv(
+        "my_data_file.csv",
+        test_csv="./data/titanic/test.csv",
+        categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+        numerical_input=["Fare"],
+        target="Survived",
+        val_size=0.25,
+    )
 
-  # 3. Build the model
-  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+    # 3. Build the model
+    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-  # 4. Create the trainer
-  trainer = flash.Trainer()
+    # 4. Create the trainer
+    trainer = flash.Trainer()
 
-  # 5. Train the model
-  trainer.fit(model, datamodule=datamodule)
+    # 5. Train the model
+    trainer.fit(model, datamodule=datamodule)
 
-  # 6. Test model
-  trainer.test()
+    # 6. Test model
+    trainer.test()
 
-  predictions = model.predict("data/titanic/titanic.csv")
-  print(predictions)
+    predictions = model.predict("data/titanic/titanic.csv")
+    print(predictions)
 
 ------
 

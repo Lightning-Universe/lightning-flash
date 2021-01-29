@@ -26,7 +26,6 @@ Use the :class:`~flash.text.ImageClassificatier` pretrained model for inference 
 	# import our libraries
 	from flash.text import TextClassifier
 
-
 	# Load finetuned task
 	model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
 
@@ -45,10 +44,8 @@ Or on a given dataset:
 .. code-block:: python
 
 	# import our libraries
-
 	from flash import download_data
 	from flash.text import TextClassifier
-
 
 	# 1. Download dataset, save it under 'data' dir
 	download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
@@ -103,7 +100,6 @@ Now all we need is three lines of code to build and train our task!
 	import flash
 	from flash import download_data
 	from flash.vision import ImageClassificationData, ImageClassifier
-
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
