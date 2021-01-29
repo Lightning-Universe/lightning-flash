@@ -38,18 +38,10 @@ else:
     from flash.core import data, utils
     from flash.core.classification import ClassificationTask
     from flash.core.data import DataModule
+    from flash.core.data.utils import download_data
     from flash.core.model import Task
     from flash.core.trainer import Trainer
-    from flash.core.data.utils import download_data
 
     __all__ = [
-        "Task",
-        "ClassificationTask",
-        "DataModule",
-        "vision",
-        "text",
-        "tabular",
-        "data",
-        "utils",
-        "download_data"
+        "Task", "ClassificationTask", "DataModule", "vision", "text", "tabular", "data", "utils", "download_data"
     ]
