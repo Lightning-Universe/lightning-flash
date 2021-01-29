@@ -2,7 +2,8 @@
 General Task
 ############
 
-A majority of data science problems that involve machine learning can be tackled using Task. With task you can:
+A majority of data science problems that involve machine learning can be tackled using Task. With Task you can:
+
 - Pass an arbitrary model
 - Pass an arbitrary loss
 - Pass an arbitrary optimizer
@@ -48,7 +49,7 @@ API reference
 Task
 ----
 
-.. autoclass:: flash.core.model.Task
+.. autoclass:: flash.core.Task
     :members:
     :noindex:
     :exclude-members: forward
