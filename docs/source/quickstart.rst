@@ -5,6 +5,12 @@ Flash is a high-level deep learning framework for fast prototyping, finetuning a
 Flash is built on top of `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes. 
 
+Flash is built for 3 major use-cases:
+
+- Inference (predictions)
+- Finetuning
+- Training
+
 -----
 
 Flexibility
