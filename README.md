@@ -95,7 +95,6 @@ import flash
 from flash import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 
-
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
@@ -123,7 +122,10 @@ trainer.save_checkpoint("image_classification_model.pt")
 Then use the finetuned model
 
 ```python
+# load the finetuned model
 classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
+
+# predict!
 predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
 print(predictions)
 ```
