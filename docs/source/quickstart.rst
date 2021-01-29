@@ -39,7 +39,7 @@ When you need more flexibility you can build your own tasks or simply use Lightn
 Install
 -------
 
-You can install flash using pip:
+You can install flash using pip/conda:
 
 .. code-block:: bash
 
