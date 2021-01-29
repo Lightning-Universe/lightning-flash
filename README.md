@@ -136,101 +136,108 @@ print(predictions)
 ## Tasks
 Flash is built as a collection of community-built tasks. A task is highly opinionated and laser-focused on solving a single problem well, using state-of-the-art methods.
 
-### Example 1: image classification
+### Example 1: Image classification
 Flash has an ImageClassification task to tackle any image classification problem. To illustrate, Let's say we wanted to develop a model that could classify between ants and bees.
+  
+<details>
+  <summary>View example</summary>
 
-<img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
-Here we classify ants vs bees.
+  <img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
+  Here we classify ants vs bees.
 
-```python
-import flash
-from flash import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+  ```python
+  import flash
+  from flash import download_data
+  from flash.vision import ImageClassificationData, ImageClassifier
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+  # 1. Download the data
+  download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
-# 2. Load the data
-datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    valid_folder="data/hymenoptera_data/val/",
-    test_folder="data/hymenoptera_data/test/",
-)
+  # 2. Load the data
+  datamodule = ImageClassificationData.from_folders(
+      train_folder="data/hymenoptera_data/train/",
+      valid_folder="data/hymenoptera_data/val/",
+      test_folder="data/hymenoptera_data/test/",
+  )
 
-# 3. Build the model
-model = ImageClassifier(num_classes=datamodule.num_classes)
+  # 3. Build the model
+  model = ImageClassifier(num_classes=datamodule.num_classes)
 
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
+  # 4. Create the trainer. Run once on data
+  trainer = flash.Trainer(max_epochs=1)
 
-# 5. Train the model
-trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+  # 5. Train the model
+  trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
-# 6. Test the model
-trainer.test()
+  # 6. Test the model
+  trainer.test()
 
-# 7. Predict!
-predictions = model.predict([
-    "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
-    "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
-    "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
-])
-print(predictions)
-```
+  # 7. Predict!
+  predictions = model.predict([
+      "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
+      "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
+      "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
+  ])
+  print(predictions)
+  ```
 
-To run the example:
-```bash
-python flash_examples/finetuning/image_classifier.py
-```
+  To run the example:
+  ```bash
+  python flash_examples/finetuning/image_classifier.py
+  ```
+</details>
 
 ### Example 2: Text Classification
 Flash has a TextClassification task to tackle any text classification problem. To illustrate, say you wanted to classify movie reviews as positive or negative. From a train.csv and valid.csv, structured like so:
 
+<details>
+  <summary>View example</summary>
 
-```python
-import flash
-from flash import download_data
-from flash.text import TextClassificationData, TextClassifier
+  ```python
+  import flash
+  from flash import download_data
+  from flash.text import TextClassificationData, TextClassifier
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
+  # 1. Download the data
+  download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
 
-# 2. Load the data
-datamodule = TextClassificationData.from_files(
-    train_file="data/imdb/train.csv",
-    valid_file="data/imdb/valid.csv",
-    test_file="data/imdb/test.csv",
-    input="review",
-    target="sentiment",
-    batch_size=512
-)
+  # 2. Load the data
+  datamodule = TextClassificationData.from_files(
+      train_file="data/imdb/train.csv",
+      valid_file="data/imdb/valid.csv",
+      test_file="data/imdb/test.csv",
+      input="review",
+      target="sentiment",
+      batch_size=512
+  )
 
-# 3. Build the model
-model = TextClassifier(num_classes=datamodule.num_classes)
+  # 3. Build the model
+  model = TextClassifier(num_classes=datamodule.num_classes)
 
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
+  # 4. Create the trainer. Run once on data
+  trainer = flash.Trainer(max_epochs=1)
 
-# 5. Fine-tune the model
-trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+  # 5. Fine-tune the model
+  trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
-# 6. Test model
-trainer.test()
+  # 6. Test model
+  trainer.test()
 
-# 7. Classify a few sentences! How was the movie?
-predictions = model.predict([
-    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-    "The worst movie in the history of cinema.",
-    "I come from Bulgaria where it 's almost impossible to have a tornado."
-    "Very, very afraid"
-    "This guy has done a great job with this movie!",
-])
-print(predictions)
-```
-To run the example:
-```bash
-python flash_examples/finetuning/classify_text.py
-```
+  # 7. Classify a few sentences! How was the movie?
+  predictions = model.predict([
+      "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+      "The worst movie in the history of cinema.",
+      "I come from Bulgaria where it 's almost impossible to have a tornado."
+      "Very, very afraid"
+      "This guy has done a great job with this movie!",
+  ])
+  print(predictions)
+  ```
+  To run the example:
+  ```bash
+  python flash_examples/finetuning/classify_text.py
+  ```
+</details>
 
 ### Example 3: Tabular Classification
 
