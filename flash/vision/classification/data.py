@@ -318,7 +318,7 @@ class ImageClassificationData(DataModule):
             train/dog/xxz.png
             train/cat/123.png
             train/cat/nsdf3.png
-            train/cat/asd932_.png
+            train/cat/asd932.png
 
         Args:
             train_folder: Path to training folder.
