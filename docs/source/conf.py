@@ -36,13 +36,21 @@ author = "PyTorch Lightning"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.coverage",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.intersphinx",
-    "recommonmark",
-    "sphinx_autodoc_typehints",
-    "sphinx.ext.githubpages",
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.imgmath',
+    'recommonmark',
+    #'sphinx.ext.autosectionlabel',
+    # 'nbsphinx',  # it seems some sphinx issue
+    'sphinx_autodoc_typehints',
+    'sphinx_copybutton',
+    'sphinx_paramlinks',
+    'sphinx_togglebutton',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

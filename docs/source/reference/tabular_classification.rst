@@ -161,7 +161,7 @@ TabularClassifier
 .. _tabular_data:
 
 TabularData
---------------
+-----------
 
 .. autoclass:: flash.tabular.TabularData
 
