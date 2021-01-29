@@ -11,6 +11,7 @@ jobs:
   pytest:
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       # max-parallel: 6

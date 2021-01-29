@@ -61,22 +61,5 @@ jobs:
 
     - name: Run Notebooks
       run: |
-        set -e
-        python -m pip install ipython
-
-        # convert notebooks
-        jupyter nbconvert --to script flash_notebooks/finetuning/image_classification.ipynb
-        jupyter nbconvert --to script flash_notebooks/finetuning/tabular_classification.ipynb
-        jupyter nbconvert --to script flash_notebooks/finetuning/text_classification.ipynb
-        jupyter nbconvert --to script flash_notebooks/predict/classify_image.ipynb
-        jupyter nbconvert --to script flash_notebooks/predict/classify_tabular.ipynb
-        jupyter nbconvert --to script flash_notebooks/predict/classify_text.ipynb
-
-        python -m pip install ipython
-        ipython flash_notebooks/finetuning/image_classification.py
-        ipython flash_notebooks/finetuning/tabular_classification.py
-        ipython flash_notebooks/finetuning/text_classification.py
-        ipython flash_notebooks/finetuning/classify_image.py
-        ipython flash_notebooks/finetuning/classify_tabular.py
-        ipython flash_notebooks/finetuning/classify_text.py
-
+        python -m pip install treon
+        treon
