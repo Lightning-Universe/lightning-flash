@@ -7,7 +7,7 @@ Some Flash tasks have been pretrained on large data sets, to accelorate your tra
 .. code-block:: python
 
   import flash
-  from flash.core.data import download_data
+  from flash import download_data
   from flash.vision import ImageClassificationData, ImageClassifier
 
   # 1. download and organize the data

@@ -45,7 +45,7 @@ Or on a given dataset:
 
 	# import our libraries
 
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.text import TextClassifier
 
 
@@ -85,7 +85,7 @@ All we need is three lines of code to train our model!
 
 	# import our libraries
 	import flash
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.text import TextClassificationData, TextClassifier
 
     # 1. Download data

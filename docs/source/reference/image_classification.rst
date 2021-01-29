@@ -46,7 +46,7 @@ Or on a given dataset:
 
 	# import our libraries
 
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.text import TextClassifier
 
 
@@ -101,7 +101,7 @@ Now all we need is three lines of code to build and train our task!
 .. code-block:: python
 
 	import flash
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.vision import ImageClassificationData, ImageClassifier
 
 
