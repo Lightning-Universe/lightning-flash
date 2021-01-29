@@ -1,7 +1,8 @@
 name: "Deploy Docs"
-on:
-  push:
-    branches: [master]
+# drop this event since we moved to RTD
+#on:
+#  push:
+#    branches: [master]
 
 jobs:
   # https://github.com/marketplace/actions/deploy-to-github-pages
