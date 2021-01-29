@@ -45,7 +45,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.imgmath',
     'recommonmark',
-    #'sphinx.ext.autosectionlabel',
+    # 'sphinx.ext.autosectionlabel',
     # 'nbsphinx',  # it seems some sphinx issue
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
