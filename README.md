@@ -88,6 +88,8 @@ print(predictions)
 
 ### Finetuning
 
+First, finetune:
+
 ```python
 import flash
 from flash import download_data
@@ -114,12 +116,16 @@ trainer = flash.Trainer(max_epochs=1)
 # 5. Finetune the model
 trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
-# 6. Use the model
-predictions = model.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
-print(predictions)
-
 # 7. Save it!
 trainer.save_checkpoint("image_classification_model.pt")
+```
+
+Then use the finetuned model
+
+```python
+classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
+predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
+print(predictions)
 ```
 
 ### Task-based training
