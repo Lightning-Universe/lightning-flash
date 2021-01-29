@@ -3,55 +3,40 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Pytorch Lightning Flash
-=======================
-
-Flash is a lightweight wrapper of `Pytorch Lightning
-<https://github.com/PyTorchLightning/pytorch-lightning>`_, designed to make it
-super easy to apply common deep learning models to your own data.
-
-We seperate the developement process into 3 easy steps: data, model, and train:
-
-.. code-block:: python
-
-    from flash.vision import ImageClassifier, ImageClassificationData
-    from flash.text import TextClassifier, TextClassificationData
-    from flash.tabular import TabularClassifier, TabularData
-    import pytorch_lightning as pl
-
-    # Step 1: Data
-    data = ... # pick from a variety of task specific datasets
-
-    # Step 2: Task
-    model = ... # pick our task specific model, built with all of the best practices
-
-
-    # Step 3: Train
-    # Train your model using PyTorchLightning, gaining access to all of its features like
-    # multi-GPU training and even TPU support!
-    pl.Trainer().fit(model, data)
-
+Lightning Flash
+===============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Get started:
 
    quickstart
    installation
    custom_task
+   reference/flash_to_pl
 
 .. toctree::
-   :maxdepth: 3
-   :caption: API Reference:
+   :maxdepth: 1
+   :caption: Tasks
 
+   reference/task
    reference/image_classification
    reference/text_classification
    reference/tabular_classification
-   reference/model
-   reference/data
-   reference/training
-   reference/predictions
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Flash API
+
+   general/model
+   general/data
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Common Use Cases
+
+   general/training
+   general/predictions
 
 Indices and tables
 ==================
