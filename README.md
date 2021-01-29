@@ -243,45 +243,49 @@ Flash has a TextClassification task to tackle any text classification problem. T
 
 Flash has a TabularClassification task to tackle any tabular classification problem. To illustrate, say we want to build a model to predict if a passenger survived on the Titanic. 
 
-```python
-from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
-import flash
-from flash import download_data
-from flash.tabular import TabularClassifier, TabularData
+<details>
+  <summary>View example</summary>
+  
+  ```python
+  from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+  import flash
+  from flash import download_data
+  from flash.tabular import TabularClassifier, TabularData
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+  # 1. Download the data
+  download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 
-# 2. Load the data
-datamodule = TabularData.from_csv(
-    "./data/titanic/titanic.csv",
-    test_csv="./data/titanic/test.csv",
-    categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-    numerical_input=["Fare"],
-    target="Survived",
-    val_size=0.25,
-)
+  # 2. Load the data
+  datamodule = TabularData.from_csv(
+      "./data/titanic/titanic.csv",
+      test_csv="./data/titanic/test.csv",
+      categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+      numerical_input=["Fare"],
+      target="Survived",
+      val_size=0.25,
+  )
 
-# 3. Build the model
-model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+  # 3. Build the model
+  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-# 4. Create the trainer. Run 10 times on data
-trainer = flash.Trainer(max_epochs=10)
+  # 4. Create the trainer. Run 10 times on data
+  trainer = flash.Trainer(max_epochs=10)
 
-# 5. Train the model
-trainer.fit(model, datamodule=datamodule)
+  # 5. Train the model
+  trainer.fit(model, datamodule=datamodule)
 
-# 6. Test model
-trainer.test()
+  # 6. Test model
+  trainer.test()
 
-# 7. Predict!
-predictions = model.predict("data/titanic/titanic.csv")
-print(predictions)
-```
-To run the example:
-```bash
-python flash_examples/finetuning/tabular_data.py
-```
+  # 7. Predict!
+  predictions = model.predict("data/titanic/titanic.csv")
+  print(predictions)
+  ```
+  To run the example:
+  ```bash
+  python flash_examples/finetuning/tabular_data.py
+  ```
+</details>
 
 ---
 
