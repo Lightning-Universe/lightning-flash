@@ -116,7 +116,7 @@ All we need is three lines of code to train our model!
 
 To run the example:
 
-.. code-block:: python
+.. code-block:: bash
 
     python flash_examples/finetuning/text_classification.py
 
