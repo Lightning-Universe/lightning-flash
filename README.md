@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/source/_images/flash_logo.png" width="400px">
+<img src="docs/source/_static/images/logo.svg" width="400px">
 
 
 **Collection of tasks for fast prototyping, baselining, finetuning and solving problems with deep learning**
