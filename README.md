@@ -14,6 +14,7 @@
   <a href="#predictions">Prediction</a> •
   <a href="#finetuning">Finetuning</a> •
   <a href="#tasks">Tasks</a> •
+  <a href="#a-general-task">General Task</a> •
   <a href="#contribute">Contribute</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
   <a href="#license">License</a>
@@ -58,10 +59,10 @@ pip install -e .
 ```
 
 ## What is Flash
-Flash is a framework for applied deep learning focused on:
+Flash is a framework for solving business and scientific problems with applied deep learning. It is focused on:
 
-- Finetuning
 - Predictions
+- Finetuning
 - Task-based training
 
 It is built for data scientists, machine learning practicioners, and applied researchers.
@@ -88,11 +89,12 @@ print(predictions)
 
 ### Finetuning
 
+First, finetune:
+
 ```python
 import flash
 from flash import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
-
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -114,19 +116,186 @@ trainer = flash.Trainer(max_epochs=1)
 # 5. Finetune the model
 trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
-# 6. Use the model
-predictions = model.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
-print(predictions)
-
 # 7. Save it!
 trainer.save_checkpoint("image_classification_model.pt")
 ```
 
-### Task-based training
+Then use the finetuned model
 
-Tasks let you focus on solving applied problems without any of the boilerplate. Here's a built-in
-task that works for 99% of machine learning problems that data scientists, kagglers and practicioners
-encounter.
+```python
+# load the finetuned model
+classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
+
+# predict!
+predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
+print(predictions)
+```
+
+---
+
+## Tasks
+Flash is built as a collection of community-built tasks. A task is highly opinionated and laser-focused on solving a single problem well, using state-of-the-art methods.
+
+### Example 1: Image classification
+Flash has an ImageClassification task to tackle any image classification problem.
+  
+<details>
+  <summary>View example</summary>
+  To illustrate, Let's say we wanted to develop a model that could classify between ants and bees.
+  
+  <img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
+  
+  Here we classify ants vs bees.
+
+  ```python
+  import flash
+  from flash import download_data
+  from flash.vision import ImageClassificationData, ImageClassifier
+
+  # 1. Download the data
+  download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+
+  # 2. Load the data
+  datamodule = ImageClassificationData.from_folders(
+      train_folder="data/hymenoptera_data/train/",
+      valid_folder="data/hymenoptera_data/val/",
+      test_folder="data/hymenoptera_data/test/",
+  )
+
+  # 3. Build the model
+  model = ImageClassifier(num_classes=datamodule.num_classes)
+
+  # 4. Create the trainer. Run once on data
+  trainer = flash.Trainer(max_epochs=1)
+
+  # 5. Train the model
+  trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+
+  # 6. Test the model
+  trainer.test()
+
+  # 7. Predict!
+  predictions = model.predict([
+      "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
+      "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
+      "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
+  ])
+  print(predictions)
+  ```
+
+  To run the example:
+  ```bash
+  python flash_examples/finetuning/image_classifier.py
+  ```
+</details>
+
+### Example 2: Text Classification
+Flash has a TextClassification task to tackle any text classification problem.
+
+<details>
+  <summary>View example</summary>
+  To illustrate, say you wanted to classify movie reviews as positive or negative.
+  
+  ```python
+  import flash
+  from flash import download_data
+  from flash.text import TextClassificationData, TextClassifier
+
+  # 1. Download the data
+  download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
+
+  # 2. Load the data
+  datamodule = TextClassificationData.from_files(
+      train_file="data/imdb/train.csv",
+      valid_file="data/imdb/valid.csv",
+      test_file="data/imdb/test.csv",
+      input="review",
+      target="sentiment",
+      batch_size=512
+  )
+
+  # 3. Build the model
+  model = TextClassifier(num_classes=datamodule.num_classes)
+
+  # 4. Create the trainer. Run once on data
+  trainer = flash.Trainer(max_epochs=1)
+
+  # 5. Fine-tune the model
+  trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+
+  # 6. Test model
+  trainer.test()
+
+  # 7. Classify a few sentences! How was the movie?
+  predictions = model.predict([
+      "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+      "The worst movie in the history of cinema.",
+      "I come from Bulgaria where it 's almost impossible to have a tornado."
+      "Very, very afraid"
+      "This guy has done a great job with this movie!",
+  ])
+  print(predictions)
+  ```
+  To run the example:
+  ```bash
+  python flash_examples/finetuning/classify_text.py
+  ```
+</details>
+
+### Example 3: Tabular Classification
+
+Flash has a TabularClassification task to tackle any tabular classification problem.
+
+<details>
+  <summary>View example</summary>
+  
+  To illustrate, say we want to build a model to predict if a passenger survived on the Titanic. 
+  
+  ```python
+  from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+  import flash
+  from flash import download_data
+  from flash.tabular import TabularClassifier, TabularData
+
+  # 1. Download the data
+  download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+
+  # 2. Load the data
+  datamodule = TabularData.from_csv(
+      "./data/titanic/titanic.csv",
+      test_csv="./data/titanic/test.csv",
+      categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+      numerical_input=["Fare"],
+      target="Survived",
+      val_size=0.25,
+  )
+
+  # 3. Build the model
+  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+
+  # 4. Create the trainer. Run 10 times on data
+  trainer = flash.Trainer(max_epochs=10)
+
+  # 5. Train the model
+  trainer.fit(model, datamodule=datamodule)
+
+  # 6. Test model
+  trainer.test()
+
+  # 7. Predict!
+  predictions = model.predict("data/titanic/titanic.csv")
+  print(predictions)
+  ```
+  To run the example:
+  ```bash
+  python flash_examples/finetuning/tabular_data.py
+  ```
+</details>
+
+---
+
+## A general task
+Flash comes prebuilt with a task to handle a huge portion of deep learning problems.
 
 ```python
 import flash
@@ -154,7 +323,9 @@ classifier = flash.Task(model, loss_fn=nn.functional.cross_entropy, optimizer=op
 flash.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 ```
 
-### Infinitely customizable
+---
+
+## Infinitely customizable
 
 Tasks can be built in just a few minutes because Flash is built on top of PyTorch Lightning LightningModules, which
 are infinitely extensible and let you train across GPUs, TPUs etc without doing any code changes.
@@ -193,149 +364,8 @@ classifier = LinearClassifier()
 
 ```
 
-## Tasks
-Flash comes prebuilt with off-the-shelf tasks for common deep learning problems (and many more are being built by the community!).
-Here are examples for image, text and tabular.
-
-### Image classification
-
-Flash has an ImageClassification task to tackle any image classification problem. To illustrate, Let's say we wanted to develop a model that could classify between ants and bees.
-
-<img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
-Here we classify ants vs bees.
-
-```python
-import flash
-from flash import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
-
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
-
-# 2. Load the data
-datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    valid_folder="data/hymenoptera_data/val/",
-    test_folder="data/hymenoptera_data/test/",
-)
-
-# 3. Build the model
-model = ImageClassifier(num_classes=datamodule.num_classes)
-
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
-
-# 5. Train the model
-trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
-
-# 6. Test the model
-trainer.test()
-
-# 7. Predict!
-predictions = model.predict([
-    "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
-    "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
-    "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
-])
-print(predictions)
-```
-To run the example:
-```bash
-python flash_examples/finetuning/image_classifier.py
-```
-### Text classification
-
-Flash has a TextClassification task to tackle any text classification problem. To illustrate, say you wanted to classify movie reviews as positive or negative. From a train.csv and valid.csv, structured like so:
-
-
-```python
-import flash
-from flash import download_data
-from flash.text import TextClassificationData, TextClassifier
-
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
-
-# 2. Load the data
-datamodule = TextClassificationData.from_files(
-    train_file="data/imdb/train.csv",
-    valid_file="data/imdb/valid.csv",
-    test_file="data/imdb/test.csv",
-    input="review",
-    target="sentiment",
-    batch_size=512
-)
-
-# 3. Build the model
-model = TextClassifier(num_classes=datamodule.num_classes)
-
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
-
-# 5. Fine-tune the model
-trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
-
-# 6. Test model
-trainer.test()
-
-# 7. Classify a few sentences! How was the movie?
-predictions = model.predict([
-    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-    "The worst movie in the history of cinema.",
-    "I come from Bulgaria where it 's almost impossible to have a tornado."
-    "Very, very afraid"
-    "This guy has done a great job with this movie!",
-])
-print(predictions)
-```
-To run the example:
-```bash
-python flash_examples/finetuning/classify_text.py
-```
-
-### Tabular classification
-
-Flash has a TabularClassification task to tackle any tabular classification problem. To illustrate, say we want to build a model to predict if a passenger survived on the Titanic. 
-
-```python
-from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
-import flash
-from flash import download_data
-from flash.tabular import TabularClassifier, TabularData
-
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
-
-# 2. Load the data
-datamodule = TabularData.from_csv(
-    "./data/titanic/titanic.csv",
-    test_csv="./data/titanic/test.csv",
-    categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-    numerical_input=["Fare"],
-    target="Survived",
-    val_size=0.25,
-)
-
-# 3. Build the model
-model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
-
-# 4. Create the trainer. Run 10 times on data
-trainer = flash.Trainer(max_epochs=10)
-
-# 5. Train the model
-trainer.fit(model, datamodule=datamodule)
-
-# 6. Test model
-trainer.test()
-
-# 7. Predict!
-predictions = model.predict("data/titanic/titanic.csv")
-print(predictions)
-```
-To run the example:
-```bash
-python flash_examples/finetuning/tabular_data.py
-```
+When you reach the limits of the flexibility provided by tasks, then seamlessly transition to PyTorch Lightning which
+gives you the most flexibility because it is simply organized PyTorch.
 
 ---
 
