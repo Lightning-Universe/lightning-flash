@@ -78,6 +78,8 @@ Inference is the process of generating predictions. To use a task for inference:
 2. Load pretrained weights.
 3. Feed in the raw predictions
 
+Here's an example of inference.
+
 .. code-block:: python
 
     # import our libraries
@@ -108,6 +110,8 @@ To use a Task for finetuning:
 3. Init a flash (or lightning trainer)
 4. call trainer.finetune
 5. Use your model!
+
+Here's an example of finetuning.
 
 .. code-block:: python
 
