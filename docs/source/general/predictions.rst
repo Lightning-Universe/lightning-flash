@@ -15,9 +15,9 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
 	
 .. code-block:: python
 
-	from flash import Trainer
-	from flash import download_data
-	from flash.vision import ImageClassificationData, ImageClassifier
+    from flash import Trainer
+    from flash import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data set
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -36,8 +36,8 @@ Predict on a csv file
 
 .. code-block:: python
 
-	from flash import download_data
-	from flash.tabular import TabularClassifier
+    from flash import download_data
+    from flash.tabular import TabularClassifier
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
@@ -59,9 +59,9 @@ For more advnced options like distributed inference, you need to use the :func:`
 
 .. code-block:: python
 
-	from flash import Trainer
-	from flash import download_data
-	from flash.vision import ImageClassificationData, ImageClassifier
+    from flash import Trainer
+    from flash import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
 
 
     # 1. Download the data set
