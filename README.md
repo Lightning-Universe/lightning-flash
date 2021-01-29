@@ -137,12 +137,14 @@ print(predictions)
 Flash is built as a collection of community-built tasks. A task is highly opinionated and laser-focused on solving a single problem well, using state-of-the-art methods.
 
 ### Example 1: Image classification
-Flash has an ImageClassification task to tackle any image classification problem. To illustrate, Let's say we wanted to develop a model that could classify between ants and bees.
+Flash has an ImageClassification task to tackle any image classification problem.
   
 <details>
   <summary>View example</summary>
-
+  To illustrate, Let's say we wanted to develop a model that could classify between ants and bees.
+  
   <img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
+  
   Here we classify ants vs bees.
 
   ```python
@@ -188,11 +190,12 @@ Flash has an ImageClassification task to tackle any image classification problem
 </details>
 
 ### Example 2: Text Classification
-Flash has a TextClassification task to tackle any text classification problem. To illustrate, say you wanted to classify movie reviews as positive or negative. From a train.csv and valid.csv, structured like so:
+Flash has a TextClassification task to tackle any text classification problem.
 
 <details>
   <summary>View example</summary>
-
+  To illustrate, say you wanted to classify movie reviews as positive or negative.
+  
   ```python
   import flash
   from flash import download_data
@@ -241,10 +244,12 @@ Flash has a TextClassification task to tackle any text classification problem. T
 
 ### Example 3: Tabular Classification
 
-Flash has a TabularClassification task to tackle any tabular classification problem. To illustrate, say we want to build a model to predict if a passenger survived on the Titanic. 
+Flash has a TabularClassification task to tackle any tabular classification problem.
 
 <details>
   <summary>View example</summary>
+  
+  To illustrate, say we want to build a model to predict if a passenger survived on the Titanic. 
   
   ```python
   from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
