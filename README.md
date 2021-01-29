@@ -21,7 +21,7 @@
 </p>
 
 
-[![Stable API](https://img.shields.io/static/v1.svg?label=API&message=Stable&color=green)](https://img.shields.io/static/v1.svg?label=API&message=stable&color=green)
+[![Stable API](https://img.shields.io/static/v1.svg?label=API&message=stable&color=green)](https://img.shields.io/static/v1.svg?label=API&message=stable&color=green)
 [![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=latest)](https://lightning-flash.readthedocs.io/en/latest/?badge=latest)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/lightning-flash)](https://pypi.org/project/lightning-flash/)
 [![PyPI Status](https://badge.fury.io/py/lightning-flash.svg)](https://badge.fury.io/py/lightning-flash)
