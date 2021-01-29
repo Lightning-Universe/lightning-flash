@@ -8,6 +8,7 @@ version: 2
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py
+  fail_on_warning: true
 
 # Build documentation with MkDocs
 #mkdocs:
@@ -22,10 +23,3 @@ python:
   install:
     - requirements: requirements/docs.txt
     #- requirements: requirements.txt
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
-        - method: setuptools
-          path: another/package
-  system_packages: true
