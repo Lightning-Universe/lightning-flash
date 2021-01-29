@@ -55,7 +55,7 @@ well, using state-of-the-art methods.
 
 Here are examples of tasks:
 
-.. code-block:: python
+.. testcode::
 
     from flash.text import TextClassifier
     from flash.vision import ImageClassifier
