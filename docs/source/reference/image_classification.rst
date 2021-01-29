@@ -66,7 +66,7 @@ Finetuning
 **********
 
 Lets say you wanted to develope a model that could classify between **ants** and **bees**, using the hymenoptera dataset.
-Once we doanload the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.ImageClassificationData`.
+Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.ImageClassificationData`.
 
 .. note:: The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
 

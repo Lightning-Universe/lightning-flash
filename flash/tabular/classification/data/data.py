@@ -139,7 +139,7 @@ class TabularData(DataModule):
             test_size: float between 0 and 1 to create a test dataset from train validation
 
         Returns:
-            TabualrData: The constructed data module.
+            TabularData: The constructed data module.
 
         Examples::
 

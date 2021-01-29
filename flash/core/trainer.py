@@ -44,7 +44,7 @@ class MilestonesFinetuningCallback(BaseFinetuning):
             )
 
         elif epoch == self.milestones[1]:
-            # unfreeze remaing layers
+            # unfreeze remaining layers
             # TODO last N layers should be parameter
             self.unfreeze_and_add_param_group(
                 module=backbone_modules[:-5],

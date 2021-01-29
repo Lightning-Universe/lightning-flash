@@ -2,7 +2,7 @@
 From Flash to Lightning
 #######################
 
-Flash is built on top of PyTorch Lightning to abstract away the unecessary boilerplate for:
+Flash is built on top of PyTorch Lightning to abstract away the unnecessary boilerplate for:
 
 - data science
 - kaggle
@@ -24,7 +24,7 @@ level of abstraction that works for them.
 
    * - Approach
      - Flexibility
-     - Minumum DL Expertise level
+     - Minimum DL Expertise level
      - PyTorch Knowledge
      - Use cases
    * - Using an out-of-the-box task

@@ -8,7 +8,7 @@ Text Classification
 The task
 ********
 
-Text classification is the task of assigning a piece of text (word, sentence or document) an appropriate class, or category. The categories depend on the chosen dataset and can range from topics. For example, we can use text classification to understand the sentiment of a given sentance- if it is positive or negative. 
+Text classification is the task of assigning a piece of text (word, sentence or document) an appropriate class, or category. The categories depend on the chosen dataset and can range from topics. For example, we can use text classification to understand the sentiment of a given sentence- if it is positive or negative.
 
 -----
 
@@ -100,7 +100,7 @@ All we need is three lines of code to train our model!
         batch_size=512
     )
 
-    # 2. Build the task (using the defult backbone="bert-base-cased")
+    # 2. Build the task (using the default backbone="bert-base-cased")
     model = TextClassifier(num_classes=datamodule.num_classes)
 
     # 4. Create trainer

@@ -55,7 +55,7 @@ Predict on a csv file
 Distributed predictions
 =======================
 
-For more advnced options like distributed inference, you need to use the :func:`~flash.core.trainer.Trainer.predict` method.   
+For more advanced options like distributed inference, you need to use the :func:`~flash.core.trainer.Trainer.predict` method.
 
 .. code-block:: python
 

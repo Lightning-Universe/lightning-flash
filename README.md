@@ -66,7 +66,7 @@ Flash is a framework for solving business and scientific problems with applied d
 - Finetuning
 - Task-based training
 
-It is built for data scientists, machine learning practicioners, and applied researchers.
+It is built for data scientists, machine learning practitioners, and applied researchers.
 
 ### Predictions
 
