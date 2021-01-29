@@ -58,13 +58,13 @@ def download_data(url, path="data/"):
         - .csv
         - .zip
 
-    Args:
-        url: path
-        path: local
-
     Example::
 
         from flash import download_data
+
+    Args:
+        url: path
+        path: local
 
     """
 
