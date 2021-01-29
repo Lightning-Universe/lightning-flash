@@ -106,4 +106,3 @@ jobs:
           apt-get update && sudo apt-get install -y cmake
           cd docs
           make doctest
-          make coverage
