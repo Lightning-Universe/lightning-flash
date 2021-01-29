@@ -22,4 +22,10 @@ python:
   install:
     - requirements: requirements/docs.txt
     #- requirements: requirements.txt
-  setup_py_install: true
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
+        - method: setuptools
+          path: another/package
+  system_packages: true
