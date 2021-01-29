@@ -53,10 +53,7 @@ def download_file(url, path, verbose=False):
 def download_data(url, path="data/"):
     """
     Downloads data automatically from the given url to the path. Defaults to data/ for the path.
-    Automatically handles:
-
-        - .csv
-        - .zip
+    Automatically handles .csv, .zip
 
     Example::
 
