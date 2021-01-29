@@ -7,7 +7,7 @@ Pytorch Lightning Flash
 =======================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Get started:
 
    quickstart
@@ -16,14 +16,7 @@ Pytorch Lightning Flash
    reference/flash_to_pl
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Flash API
-
-   reference/model
-   reference/data
-
-.. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
    :caption: Tasks
 
    reference/task
@@ -32,7 +25,14 @@ Pytorch Lightning Flash
    reference/tabular_classification
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
+   :caption: Flash API
+
+   reference/model
+   reference/data
+
+.. toctree::
+   :maxdepth: 1
    :caption: Common Use Cases
 
    reference/training
