@@ -1,17 +1,20 @@
 .. _tabular_classification:
 
-
+######################
 Tabular Classification
-======================
+######################
 
+********
 The task
---------
+********
 
 The task of assiging a class to samples of structued or relational data is called tabular classification. Classification is the process of predicting the class (sometimes called target or labels) of given data points. The Flash Tabular Classification task can be used for multi-class classification, or classification of samples in more than two classes. The Tabular data we'll use is structured into rows and columns, where columns represent properties or features. The task will learn to predict a single column, which we will call the target column.
 
+-----
 
-Fientuning
-----------
+**********
+Finetuning
+**********
 
 Say we want to build a model to predict if a passenger survived on the
 Titanic. We can organize our data in ``.csv`` files
@@ -77,9 +80,11 @@ Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the
   predictions = model.predict("data/titanic/titanic.csv")
   print(predictions)
 
+-----
 
+*********
 Inference
----------
+*********
 
 You can make predcitions on a pretrained model, taht has already been trained for the titanic task:
 
@@ -140,8 +145,9 @@ Or you can finetune your own model and use that for prediction:
 
 ------
 
+*************
 API reference
-=============
+*************
 
 .. _tabular_classifier:
 
