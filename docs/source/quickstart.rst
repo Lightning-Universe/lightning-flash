@@ -4,6 +4,11 @@ Flash is a high-level deep learning framework for fast prototyping, finetuning a
 Flash is built on top of `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes. 
 
+-----
+
+Flexibility
+-----------
+
 Unlike high-level frameworks, once you need more flexibility you can directly write a LightningModule which is just
 organized PyTorch with unecessary engineering details abstracted away.
 
@@ -52,11 +57,15 @@ Tasks are designed for:
 - finetuning
 - training from scratch
 
----
+------
 
 Inference
 ---------
-Inference is the process of generating predictions.
+Inference is the process of generating predictions. To use a task for inference:
+
+1. Init the task.
+2. Load pretrained weights.
+3. Feed in the raw predictions
 
 .. code-block:: python
 
@@ -64,7 +73,7 @@ Inference is the process of generating predictions.
     from flash.text import TextClassifier
 
     # Load finetuned task
-    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
 
     # 2. Perform inference from list of sequences
     predictions = model.predict([
@@ -76,11 +85,18 @@ Inference is the process of generating predictions.
     ])
     print(predictions)
 
----
+-------
 
 Finetune
 --------
 Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset.
+To use a Task for finetuning:
+
+1. Download and set up your own data (pytorch dataloaders or lightning datamodules work)
+2. Init your task
+3. Init a flash (or lightning trainer)
+4. call trainer.finetune
+5. Use your model!
 
 .. code-block:: python
 
@@ -108,17 +124,29 @@ Finetuning (or transfer-learning) is the process of tweaking a model trained on 
     # 5. Train the model
     trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
 
-    # 6. Test the model
-    trainer.test()
+    # 6. Use the model
+    predictions = model.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
+    print(predictions)
 
-    # 7. Save it!
+    # 7. Save the new model!
     trainer.save_checkpoint("image_classification_model.pt")
+
+Once your model is finetuned, use it for prediction anywhere you want!
+
+.. code-block:: python
+
+    from flash.vision import ImageClassifier
+
+    # load finetuned checkpoint
+    model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
+
+    predictions = model.predict('path/to/your/own/image.png")
 
 ----
 
 Train
 -----
-When you have enough data, you're likely better off training from scratch than finetuning.
+When you have enough data, you're likely better off training from scratch instead of finetuning.
 
 .. code-block:: python
 
@@ -150,10 +178,12 @@ When you have enough data, you're likely better off training from scratch than f
 A few Built-in Tasks
 --------------------
 
-Task
-****
-`General Task <reference/task>`_
+- :doc:`Task <reference/task>`
+- :doc:`ImageClassification <reference/image_classification>`
+- :doc:`TextClassification <reference/text_classification>`
+- :doc:`TabularClassification <reference/tabular_classification>`
 
+---
 
 Contribute a task
 -----------------
