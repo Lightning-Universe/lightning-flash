@@ -7,7 +7,6 @@ on:
 
 jobs:
   build:
-    timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -58,9 +57,23 @@ jobs:
       with:
         path: flash_examples/predict # This path is specific to Ubuntu
         # Look to see if there is a cache hit for the corresponding requirements file
-        key: flash-datasets_predict
+        key: flash-datasets_predict  
 
     - name: Run Notebooks
       run: |
-        python -m pip install treon
-        treon --threads=1 --exclude=flash_notebooks/finetuning/tabular_classification.ipynb --exclude=flash_notebooks/finetuning/text_classification.ipynb
+        set -e 
+        jupyter nbconvert --to script flash_notebooks/finetuning/image_classification.ipynb
+        jupyter nbconvert --to script flash_notebooks/finetuning/tabular_classification.ipynb
+        jupyter nbconvert --to script flash_notebooks/finetuning/text_classification.ipynb
+
+        jupyter nbconvert --to script flash_notebooks/predict/classify_image.ipynb
+        jupyter nbconvert --to script flash_notebooks/predict/classify_tabular.ipynb
+        jupyter nbconvert --to script flash_notebooks/predict/classify_text.ipynb
+
+        ipython flash_notebooks/finetuning/image_classification.py
+        ipython flash_notebooks/finetuning/tabular_classification.py
+        ipython flash_notebooks/finetuning/text_classification.py
+        
+        ipython flash_notebooks/predict/classify_image.py
+        ipython flash_notebooks/predict/classify_tabular.py
+        ipython flash_notebooks/predict/classify_text.py
