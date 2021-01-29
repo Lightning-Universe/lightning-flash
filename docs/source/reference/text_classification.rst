@@ -1,16 +1,20 @@
 .. _text_classification:
 
+###################
 Text Classification
-===================
+###################
 
+********
 The task
---------
+********
 
 Text classification is the task of assigning a piece of text (word, sentence or document) an appropriate class, or category. The categories depend on the chosen dataset and can range from topics. For example, we can use text classification to understand the sentiment of a given sentance- if it is positive or negative. 
 
+-----
 
+*********
 Inference
----------
+*********
 
 The :class:`~flash.text.TextClassificatier` is already pre-trained on [IMDB](https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews), a dataset of highly polarized movie reviews, trained for binary classification- to predict if a given review has a positive or negative sentiment.
 
@@ -57,8 +61,11 @@ Or on a given dataset:
 
 For more advanced inference options, see :ref:`predictions`.
 
+-----
+
+**********
 Finetuning
-----------
+**********
 
 Say you wanted to create a model that can predict whether a movie review is **positive** or **negative**. We will be using the IMDB dataset, that contains a ``train.csv`` and ``valid.csv``, structured like so:
 
@@ -116,8 +123,9 @@ To run the example:
 
 ------
 
+*********************
 Changing the backbone
----------------------
+*********************
 By default, we use the `bert-base-uncased <https://arxiv.org/abs/1810.04805>`_ model for text classification. You can change the model run by the task to any BERT model from `HuggingFace/transformers <https://huggingface.co/models>`_ by passing in a different backbone.
 
 .. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
@@ -135,9 +143,11 @@ By default, we use the `bert-base-uncased <https://arxiv.org/abs/1810.04805>`_ m
 
     task = TextClassifier(backbone="bert-base-chinese", num_classes=datamodule.num_classes)
 
+------
 
+*************
 API reference
--------------
+*************
 
 .. _text_classifier:
 

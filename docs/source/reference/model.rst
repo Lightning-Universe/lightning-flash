@@ -1,5 +1,6 @@
-model
-=====
+#####
+Model
+#####
 
 .. autoclass:: flash.core.model.Task
     :members:

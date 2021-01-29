@@ -13,19 +13,30 @@ Pytorch Lightning Flash
    quickstart
    installation
    custom_task
+   reference/flash_to_pl
 
 .. toctree::
    :maxdepth: 3
-   :caption: API Reference:
+   :caption: Flash API
 
+   reference/model
+   reference/data
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Tasks
+
+   reference/task
    reference/image_classification
    reference/text_classification
    reference/tabular_classification
-   reference/model
-   reference/data
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Common Use Cases
+
    reference/training
    reference/predictions
-
 
 Indices and tables
 ==================
