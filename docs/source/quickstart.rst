@@ -5,6 +5,12 @@ Flash is a high-level deep learning framework for fast prototyping, finetuning a
 Flash is built on top of `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes. 
 
+Flash is built for 3 major use-cases:
+
+- Inference (predictions)
+- Finetuning
+- Training
+
 -----
 
 Flexibility
@@ -33,7 +39,7 @@ When you need more flexibility you can build your own tasks or simply use Lightn
 Install
 -------
 
-You can install flash using pip:
+You can install flash using pip/conda:
 
 .. code-block:: bash
 
@@ -72,6 +78,10 @@ Inference is the process of generating predictions. To use a task for inference:
 2. Load pretrained weights.
 3. Feed in the raw predictions
 
+|
+
+Here's an example of inference.
+
 .. code-block:: python
 
     # import our libraries
@@ -97,11 +107,15 @@ Finetune
 Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset.
 To use a Task for finetuning:
 
-1. Download and set up your own data (pytorch dataloaders or lightning datamodules work)
-2. Init your task
-3. Init a flash (or lightning trainer)
-4. call trainer.finetune
-5. Use your model!
+1. Download and set up your own data (pytorch dataloaders or lightning datamodules work).
+2. Init your task.
+3. Init a flash (or lightning trainer).
+4. call trainer.finetune.
+5. Use your model.
+
+|
+
+Here's an example of finetuning.
 
 .. code-block:: python
 
@@ -188,7 +202,7 @@ A few Built-in Tasks
 - :doc:`TextClassification <reference/text_classification>`
 - :doc:`TabularClassification <reference/tabular_classification>`
 
----
+-----
 
 Contribute a task
 -----------------

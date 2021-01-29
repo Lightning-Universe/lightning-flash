@@ -2,7 +2,7 @@
 
 Flash is tested on Python 3.6+, and PyTorch 1.6
 
-## Install with pip
+## Install with pip/conda
 
 ```bash
 pip install lightning-flash
