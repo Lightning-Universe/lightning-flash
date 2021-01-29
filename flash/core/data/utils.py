@@ -53,10 +53,11 @@ def download_file(url, path, verbose=False):
 def download_data(url, path="data/"):
     """
     Downloads data automatically from the given url to the path. Defaults to data/ for the path.
-    Automatically handles:
+    Automatically handles .csv, .zip
 
-        - .csv
-        - .zip
+    Example::
+
+        from flash import download_data
 
     Args:
         url: path

@@ -16,7 +16,7 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
 .. code-block:: python
 
 	from flash import Trainer
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data set
@@ -36,7 +36,7 @@ Predict on a csv file
 
 .. code-block:: python
 
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.tabular import TabularClassifier
 
     # 1. Download the data
@@ -60,7 +60,7 @@ For more advnced options like distributed inference, you need to use the :func:`
 .. code-block:: python
 
 	from flash import Trainer
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.vision import ImageClassificationData, ImageClassifier
 
 

@@ -90,7 +90,7 @@ print(predictions)
 
 ```python
 import flash
-from flash.core.data import download_data
+from flash import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 
 
@@ -206,7 +206,7 @@ Here we classify ants vs bees.
 
 ```python
 import flash
-from flash.core.data import download_data
+from flash import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
@@ -250,7 +250,7 @@ Flash has a TextClassification task to tackle any text classification problem. T
 
 ```python
 import flash
-from flash.core.data import download_data
+from flash import download_data
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Download the data
@@ -300,7 +300,7 @@ Flash has a TabularClassification task to tackle any tabular classification prob
 ```python
 from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 import flash
-from flash.core.data import download_data
+from flash import download_data
 from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data
