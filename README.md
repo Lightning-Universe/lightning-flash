@@ -9,6 +9,7 @@
 
 <p align="center">
   <a href="#installation">Installation</a> •
+  <a href="https://lightning-flash.readthedocs.io/en/latest/?badge=latest">Docs</a> •
   <a href="#what-is-flash">About</a> •
   <a href="#predictions">Prediction</a> •
   <a href="#finetuning">Finetuning</a> •
@@ -18,6 +19,7 @@
   <a href="#license">License</a>
 </p>
 
+[![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=latest)](https://lightning-flash.readthedocs.io/en/latest/?badge=latest)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/lightning-flash)](https://pypi.org/project/lightning-flash/)
 [![PyPI Status](https://badge.fury.io/py/lightning-flash.svg)](https://badge.fury.io/py/lightning-flash)
 [![PyPI Status](https://pepy.tech/badge/lightning-flash)](https://pepy.tech/project/lightning-flash)
