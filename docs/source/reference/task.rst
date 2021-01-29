@@ -36,3 +36,19 @@ Example: Image Classification
 
     # train
     pl.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
+
+-----
+
+*************
+API reference
+*************
+
+.. _task:
+
+Task
+----
+
+.. autoclass:: flash.core.model.Task
+    :members:
+    :noindex:
+    :exclude-members: forward
