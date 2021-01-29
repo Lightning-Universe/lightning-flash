@@ -14,6 +14,7 @@
   <a href="#predictions">Prediction</a> •
   <a href="#finetuning">Finetuning</a> •
   <a href="#tasks">Tasks</a> •
+  <a href="#a-general-task">General Task</a> •
   <a href="#contribute">Contribute</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
   <a href="#license">License</a>
@@ -58,10 +59,10 @@ pip install -e .
 ```
 
 ## What is Flash
-Flash is a framework for applied deep learning focused on:
+Flash is a framework for solving business and scientific problems with applied deep learning. It is focused on:
 
-- Finetuning
 - Predictions
+- Finetuning
 - Task-based training
 
 It is built for data scientists, machine learning practicioners, and applied researchers.
@@ -130,83 +131,12 @@ predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d
 print(predictions)
 ```
 
-### Task-based training
-
-Tasks let you focus on solving applied problems without any of the boilerplate. Here's a built-in
-task that works for 99% of machine learning problems that data scientists, kagglers and practicioners
-encounter.
-
-```python
-import flash
-from torch import nn, optim
-from torch.utils.data import DataLoader, random_split
-from torchvision import transforms, datasets
-import pytorch_lightning as pl
-
-# model
-model = nn.Sequential(
-    nn.Flatten(),
-    nn.Linear(28 * 28, 128),
-    nn.ReLU(),
-    nn.Linear(128, 10)
-)
-
-# data
-dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
-train, val = random_split(dataset, [55000, 5000])
-
-# task
-classifier = flash.Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
-
-# train
-flash.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
-```
-
-### Infinitely customizable
-
-Tasks can be built in just a few minutes because Flash is built on top of PyTorch Lightning LightningModules, which
-are infinitely extensible and let you train across GPUs, TPUs etc without doing any code changes.
-
-```python
-import torch
-import torch.nn.functional as F
-from flash.core.classification import ClassificationTask
-
-class LinearClassifier(ClassificationTask):
-    def __init__(
-        self,
-        num_inputs,
-        num_classes,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
-        learning_rate: float = 1e-3,
-    ):
-        super().__init__(
-            model=None,
-            loss_fn=loss_fn,
-            optimizer=optimizer,
-            metrics=metrics,
-            learning_rate=learning_rate,
-        )
-        self.save_hyperparameters()
-
-        self.linear = torch.nn.Linear(num_inputs, num_classes)
-
-    def forward(self, x):
-        return self.linear(x)
-
-classifier = LinearClassifier()
-...
-
-```
+---
 
 ## Tasks
-Flash comes prebuilt with off-the-shelf tasks for common deep learning problems (and many more are being built by the community!).
-Here are examples for image, text and tabular.
+Flash is built as a collection of community-built tasks. A task is highly opinionated and laser-focused on solving a single problem well, using state-of-the-art methods.
 
-### Image classification
-
+### Example 1: image classification
 Flash has an ImageClassification task to tackle any image classification problem. To illustrate, Let's say we wanted to develop a model that could classify between ants and bees.
 
 <img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
@@ -247,12 +177,13 @@ predictions = model.predict([
 ])
 print(predictions)
 ```
+
 To run the example:
 ```bash
 python flash_examples/finetuning/image_classifier.py
 ```
-### Text classification
 
+### Example 2: Text Classification
 Flash has a TextClassification task to tackle any text classification problem. To illustrate, say you wanted to classify movie reviews as positive or negative. From a train.csv and valid.csv, structured like so:
 
 
@@ -301,7 +232,7 @@ To run the example:
 python flash_examples/finetuning/classify_text.py
 ```
 
-### Tabular classification
+### Example 3: Tabular Classification
 
 Flash has a TabularClassification task to tackle any tabular classification problem. To illustrate, say we want to build a model to predict if a passenger survived on the Titanic. 
 
@@ -344,6 +275,81 @@ To run the example:
 ```bash
 python flash_examples/finetuning/tabular_data.py
 ```
+
+---
+
+## A general task
+Flash comes prebuilt with a task to handle a huge portion of deep learning problems.
+
+```python
+import flash
+from torch import nn, optim
+from torch.utils.data import DataLoader, random_split
+from torchvision import transforms, datasets
+import pytorch_lightning as pl
+
+# model
+model = nn.Sequential(
+    nn.Flatten(),
+    nn.Linear(28 * 28, 128),
+    nn.ReLU(),
+    nn.Linear(128, 10)
+)
+
+# data
+dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+train, val = random_split(dataset, [55000, 5000])
+
+# task
+classifier = flash.Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
+
+# train
+flash.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
+```
+
+---
+
+## Infinitely customizable
+
+Tasks can be built in just a few minutes because Flash is built on top of PyTorch Lightning LightningModules, which
+are infinitely extensible and let you train across GPUs, TPUs etc without doing any code changes.
+
+```python
+import torch
+import torch.nn.functional as F
+from flash.core.classification import ClassificationTask
+
+class LinearClassifier(ClassificationTask):
+    def __init__(
+        self,
+        num_inputs,
+        num_classes,
+        loss_fn: Callable = F.cross_entropy,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
+        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
+        learning_rate: float = 1e-3,
+    ):
+        super().__init__(
+            model=None,
+            loss_fn=loss_fn,
+            optimizer=optimizer,
+            metrics=metrics,
+            learning_rate=learning_rate,
+        )
+        self.save_hyperparameters()
+
+        self.linear = torch.nn.Linear(num_inputs, num_classes)
+
+    def forward(self, x):
+        return self.linear(x)
+
+classifier = LinearClassifier()
+...
+
+```
+
+When you reach the limits of the flexibility provided by tasks, then seamlessly transition to PyTorch Lightning which
+gives you the most flexibility because it is simply organized PyTorch.
 
 ---
 
