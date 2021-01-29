@@ -1,17 +1,20 @@
 
 .. _image_classification:
 
-
+####################
 Image Classification
-====================
+####################
 
+********
 The task
---------
+********
 The task of identifying what an image represents is called `image classification <https://arxiv.org/abs/1912.12162>`_. Typically, Image Classification would be used to analyze images that contain a single object. The task will identify the ‘class’ the image falls under, or the probability of the image being part of a ‘class’.  A class is essentially a label, such as ‘car’, ‘house’, ‘cat’ etc. For example, we can train the image classifier task on images of ants and it will learn to predict the probability that an image contains an ant.
 
+------
 
+*********
 Inference
----------
+*********
 
 The :class:`~flash.vision.ImageClassificatier` is already pre-trained on [ImageNet](http://www.image-net.org/), a dataset of over 14 million images.
 
@@ -22,7 +25,6 @@ Use the :class:`~flash.text.ImageClassificatier` pretrained model for inference 
 
 	# import our libraries
 	from flash.text import TextClassifier
-
 
 	# Load finetuned task
 	model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
@@ -42,10 +44,8 @@ Or on a given dataset:
 .. code-block:: python
 
 	# import our libraries
-
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.text import TextClassifier
-
 
 	# 1. Download dataset, save it under 'data' dir
 	download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
@@ -59,9 +59,11 @@ Or on a given dataset:
 
 For more advanced inference options, see :ref:`predictions`.
 
+------
 
+**********
 Finetuning
-----------
+**********
 
 Lets say you wanted to develope a model that could classify between **ants** and **bees**, using the hymenoptera dataset.
 Once we doanload the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.ImageClassificationData`.
@@ -96,9 +98,8 @@ Now all we need is three lines of code to build and train our task!
 .. code-block:: python
 
 	import flash
-	from flash.core.data import download_data
+	from flash import download_data
 	from flash.vision import ImageClassificationData, ImageClassifier
-
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -126,10 +127,11 @@ Now all we need is three lines of code to build and train our task!
     # 7. Save it!
     trainer.save_checkpoint("image_classification_model.pt")
 
+------
 
-
+*********************
 Changing the backbone
-=====================
+*********************
 By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image classification. You can change the model run by the task by passing in a different backbone.
 
 .. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
@@ -155,9 +157,9 @@ Available backbones:
 
 ------
 
-
+*************
 API reference
-=============
+*************
 
 .. _image_classifier:
 
