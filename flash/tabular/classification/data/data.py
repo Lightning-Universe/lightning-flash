@@ -23,7 +23,13 @@ from flash.tabular.classification.data.dataset import (
 class TabularDataPipeline(ClassificationDataPipeline):
 
     def __init__(
-        self, categorical_input: List, numerical_input: List, target: str, mean: DataFrame, std: DataFrame, codes: Dict,
+        self,
+        categorical_input: List,
+        numerical_input: List,
+        target: str,
+        mean: DataFrame,
+        std: DataFrame,
+        codes: Dict,
     ):
         self._categorical_input = categorical_input
         self._numerical_input = numerical_input
