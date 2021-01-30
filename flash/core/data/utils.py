@@ -1,6 +1,7 @@
 import os.path
 import zipfile
 from io import BytesIO
+from typing import Any, Type
 from urllib.request import urlopen, urlretrieve
 from zipfile import ZipFile
 
@@ -12,7 +13,7 @@ from tqdm.auto import tqdm as tq
 # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
 # __author__  = "github.com/ruxi"
 # __license__ = "MIT"
-def download_file(url, path, verbose=False):
+def download_file(url: str, path: str, verbose: bool = False) -> None:
     """
     Download file with progressbar
 
@@ -40,17 +41,15 @@ def download_file(url, path, verbose=False):
                 desc=local_filename,
                 leave=True  # progressbar stays
             ):
-                fp.write(chunk)
+                fp.write(chunk)  # type: ignore
 
     if '.zip' in local_filename:
         if os.path.exists(local_filename):
             with zipfile.ZipFile(local_filename, 'r') as zip_ref:
                 zip_ref.extractall(path)
 
-    return
 
-
-def download_data(url, path="data/"):
+def download_data(url: str, path: str = "data/") -> None:
     """
     Downloads data automatically from the given url to the path. Defaults to data/ for the path.
     Automatically handles .csv, .zip
@@ -64,11 +63,10 @@ def download_data(url, path="data/"):
         path: local
 
     """
-
     download_file(url, path)
 
 
-def _contains_any_tensor(value, dtype=torch.Tensor):
+def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
     # TODO: we should refactor FlashDatasetFolder to better integrate
     # with DataPipeline. That way, we wouldn't need this check.
     # This is because we are running transforms in both places.

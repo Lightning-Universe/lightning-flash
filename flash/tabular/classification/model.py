@@ -92,11 +92,11 @@ class TabularClassifier(ClassificationTask):
         return x
 
     @classmethod
-    def from_data(cls, datamodule, **kwargs):
+    def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
         return model
 
     @staticmethod
-    def default_pipeline() -> DataPipeline():
+    def default_pipeline() -> DataPipeline:
         # TabularDataPipeline depends on the data
         return DataPipeline()

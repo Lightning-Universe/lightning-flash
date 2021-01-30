@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from flash.core.data import download_data
 
 
-def _impute(dfs: List, num_cols: List):
+def _impute(dfs: List, num_cols: List) -> list:
     dfs = [df.copy() for df in dfs]
     for col in num_cols:
         for df in dfs:
@@ -22,7 +22,7 @@ def _compute_normalization(df: DataFrame, num_cols: List) -> Tuple:
     return df[num_cols].mean(), df[num_cols].std()
 
 
-def _normalize(dfs: List[DataFrame], num_cols: List, mean: DataFrame = None, std: DataFrame = None):
+def _normalize(dfs: List[DataFrame], num_cols: List, mean: DataFrame = None, std: DataFrame = None) -> list:
     no_normalization = mean is None and std is None
     if no_normalization:
         mean, std = _compute_normalization(dfs[0], num_cols)
@@ -34,7 +34,7 @@ def _normalize(dfs: List[DataFrame], num_cols: List, mean: DataFrame = None, std
     return dfs
 
 
-def _generate_codes(dfs: List, cat_cols: List):
+def _generate_codes(dfs: List, cat_cols: List) -> dict:
     # combine all dfs together so categories are the same
     tmp = pd.concat([df.copy() for df in dfs], keys=range(len(dfs)))
     for col in cat_cols:
@@ -46,7 +46,7 @@ def _generate_codes(dfs: List, cat_cols: List):
     return codes
 
 
-def _categorize(dfs: List, cat_cols: List, codes: Dict = None):
+def _categorize(dfs: List, cat_cols: List, codes: Dict = None) -> list:
     # combine all dfs together so categories are the same
     tmp = pd.concat([df.copy() for df in dfs], keys=range(len(dfs)))
     for col in cat_cols:
@@ -87,19 +87,19 @@ def _pre_transform(
     return dfs
 
 
-def _to_cat_vars_numpy(df, cat_cols):
+def _to_cat_vars_numpy(df, cat_cols) -> list:
     if isinstance(df, list) and len(df) == 1:
         df = df[0]
     return [c.to_numpy().astype(np.int64) for n, c in df[cat_cols].items()]
 
 
-def _to_num_cols_numpy(df, num_cols):
+def _to_num_cols_numpy(df, num_cols) -> list:
     if isinstance(df, list) and len(df) == 1:
         df = df[0]
     return [c.to_numpy().astype(np.float32) for n, c in df[num_cols].items()]
 
 
-def _dfs_to_samples(dfs, cat_cols, num_cols):
+def _dfs_to_samples(dfs, cat_cols, num_cols) -> list:
     num_samples = sum([len(df) for df in dfs])
     cat_vars_list = []
     num_vars_list = []
@@ -128,7 +128,7 @@ class PandasDataset(Dataset):
         self.cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((len(self), 0))
         self.num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((len(self), 0))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._num_samples
 
     def __getitem__(self, idx):
@@ -136,7 +136,7 @@ class PandasDataset(Dataset):
         return (self.cat_vars[idx], self.num_vars[idx]), target
 
 
-def titanic_data_download(path: str, predict_size: float = 0.1):
+def titanic_data_download(path: str, predict_size: float = 0.1) -> None:
     if not os.path.exists(path):
         os.makedirs(path)
 

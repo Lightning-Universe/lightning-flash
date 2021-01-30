@@ -14,11 +14,10 @@ from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
 
 
-def _pil_loader(path):
+def _pil_loader(path) -> Image:
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
-    with open(path, "rb") as f:
-        with Image.open(f) as img:
-            return img.convert("RGB")
+    with open(path, "rb") as f, Image.open(f) as img:
+        return img.convert("RGB")
 
 
 class FilepathDataset(torch.utils.data.Dataset):
@@ -47,7 +46,7 @@ class FilepathDataset(torch.utils.data.Dataset):
             self.label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(self.fnames)))))}
 
     @property
-    def has_labels(self):
+    def has_labels(self) -> bool:
         return self.labels is not None
 
     def __len__(self) -> int:
@@ -170,7 +169,7 @@ class FlashDatasetFolder(VisionDataset):
             sample = self.transform(sample)
         return (sample, target) if self.with_targets else sample
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.samples)
 
 

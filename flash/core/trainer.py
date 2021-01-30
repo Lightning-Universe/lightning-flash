@@ -15,7 +15,7 @@ class MilestonesFinetuningCallback(BaseFinetuning):
         self.milestones = milestones
         self.train_bn = train_bn
 
-    def freeze_before_training(self, pl_module: pl.LightningModule):
+    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
         # TODO: might need some config to say which attribute is model
         # maybe something like:
         # self.freeze(module=pl_module.getattr(self.feature_attr), train_bn=self.train_bn)
@@ -32,7 +32,7 @@ class MilestonesFinetuningCallback(BaseFinetuning):
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
-    ):
+    ) -> None:
         backbone_modules = list(pl_module.backbone.modules())
         if epoch == self.milestones[0]:
             # unfreeze 5 last layers

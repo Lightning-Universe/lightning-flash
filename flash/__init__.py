@@ -25,7 +25,7 @@ try:
     # It used to enable importing subpackages when the binaries are not built.
     __LIGHTNING_FLASH_SETUP__
 except NameError:
-    __LIGHTNING_FLASH_SETUP__ = False
+    __LIGHTNING_FLASH_SETUP__: bool = False
 
 if __LIGHTNING_FLASH_SETUP__:
     import sys  # pragma: no-cover
