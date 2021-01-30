@@ -6,24 +6,24 @@ Some Flash tasks have been pretrained on large data sets, to accelerate your tra
 
 .. code-block:: python
 
-  import flash
-  from flash import download_data
-  from flash.vision import ImageClassificationData, ImageClassifier
+    import flash
+    from flash import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
 
-  # 1. download and organize the data
-  download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
+    # 1. download and organize the data
+    download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
 
-  data = ImageClassificationData.from_folders(
-      train_folder="data/hymenoptera_data/train/",
-      valid_folder="data/hymenoptera_data/val/"
-  )
+    data = ImageClassificationData.from_folders(
+        train_folder="data/hymenoptera_data/train/",
+        valid_folder="data/hymenoptera_data/val/"
+    )
 
-  # 2. build the task, and turn off pre-training
-  task = ImageClassifier(num_classes=2, pretrained=False)
+    # 2. build the task, and turn off pre-training
+    task = ImageClassifier(num_classes=2, pretrained=False)
 
-  # 3. train!
-  trainer = flash.Trainer()
-  trainer.fit(model, data)
+    # 3. train!
+    trainer = flash.Trainer()
+    trainer.fit(model, data)
 
 
 Training options
