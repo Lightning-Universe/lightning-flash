@@ -1,4 +1,4 @@
-from typing import Callable, Mapping, Sequence, Type, Union, Any
+from typing import Any, Callable, Mapping, Sequence, Type, Union
 
 import torch
 import torchvision

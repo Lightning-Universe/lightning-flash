@@ -6,7 +6,7 @@ import torch
 from pytorch_lightning.metrics.classification import Accuracy
 from transformers import BertForSequenceClassification
 
-from flash.core.classification import ClassificationTask, ClassificationDataPipeline
+from flash.core.classification import ClassificationDataPipeline, ClassificationTask
 from flash.text.classification.data import TextClassificationData
 
 
