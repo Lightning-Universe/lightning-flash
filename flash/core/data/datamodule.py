@@ -96,7 +96,7 @@ class DataModule(pl.LightningDataModule):
         return self._data_pipeline
 
     @data_pipeline.setter
-    def data_pipeline(self, data_pipeline):
+    def data_pipeline(self, data_pipeline) -> None:
         self._data_pipeline = data_pipeline
 
     @staticmethod

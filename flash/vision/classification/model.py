@@ -1,4 +1,4 @@
-from typing import Callable, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Sequence, Type, Union
 
 import torch
 import torchvision
@@ -41,7 +41,7 @@ class ImageClassifier(ClassificationTask):
         pretrained=True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
+        metrics: Union[Callable, Mapping, Sequence, None] = (Accuracy()),
         learning_rate: float = 1e-3,
     ):
         super().__init__(
@@ -68,7 +68,7 @@ class ImageClassifier(ClassificationTask):
             nn.Linear(num_features, num_classes),
         )
 
-    def forward(self, x):
+    def forward(self, x) -> Any:
         x = self.backbone(x)
         return self.head(x)
 

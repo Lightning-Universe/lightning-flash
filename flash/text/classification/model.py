@@ -6,7 +6,7 @@ import torch
 from pytorch_lightning.metrics.classification import Accuracy
 from transformers import BertForSequenceClassification
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationDataPipeline, ClassificationTask
 from flash.text.classification.data import TextClassificationData
 
 
@@ -54,7 +54,7 @@ class TextClassifier(ClassificationTask):
     def forward(self, batch_dict):
         return self.model(**batch_dict)
 
-    def step(self, batch, batch_idx):
+    def step(self, batch, batch_idx) -> dict:
         output = {}
         loss, logits = self.forward(batch)
         output["loss"] = loss
@@ -64,5 +64,5 @@ class TextClassifier(ClassificationTask):
         return output
 
     @staticmethod
-    def default_pipeline():
+    def default_pipeline() -> ClassificationDataPipeline:
         return TextClassificationData.default_pipeline()

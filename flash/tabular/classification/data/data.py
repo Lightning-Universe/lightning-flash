@@ -23,7 +23,13 @@ from flash.tabular.classification.data.dataset import (
 class TabularDataPipeline(ClassificationDataPipeline):
 
     def __init__(
-        self, categorical_input: List, numerical_input: List, target: str, mean: DataFrame, std: DataFrame, codes: Dict
+        self,
+        categorical_input: List,
+        numerical_input: List,
+        target: str,
+        mean: DataFrame,
+        std: DataFrame,
+        codes: Dict,
     ):
         self._categorical_input = categorical_input
         self._numerical_input = numerical_input
@@ -102,11 +108,11 @@ class TabularData(DataModule):
         super().__init__(train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers)
 
     @property
-    def num_classes(self):
+    def num_classes(self) -> int:
         return self._num_classes
 
     @property
-    def num_features(self):
+    def num_features(self) -> int:
         return len(self.cat_cols) + len(self.num_cols)
 
     @classmethod
@@ -217,7 +223,7 @@ class TabularData(DataModule):
         return datamodule
 
     @property
-    def emb_sizes(self):
+    def emb_sizes(self) -> list:
         """Recommended embedding sizes."""
 
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html

@@ -1,4 +1,4 @@
-from typing import Callable, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Sequence, Type, Union
 
 import torch
 import torchvision
@@ -58,7 +58,7 @@ class ImageDetector(ClassificationTask):
             optimizer=optimizer,
         )
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, batch_idx) -> Any:
         """The training step.
         Overrides Task.training_step
         """

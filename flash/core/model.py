@@ -38,7 +38,7 @@ class Task(pl.LightningModule):
         self.save_hyperparameters("learning_rate", "optimizer")
         self._data_pipeline = None
 
-    def step(self, batch: Any, batch_idx: int):
+    def step(self, batch: Any, batch_idx: int) -> Any:
         """
         The training/validation/test step. Override for custom behavior.
         """
@@ -65,16 +65,16 @@ class Task(pl.LightningModule):
     def forward(self, x: Any) -> Any:
         return self.model(x)
 
-    def training_step(self, batch: Any, batch_idx: int):
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx)
         self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
         return output["loss"]
 
-    def validation_step(self, batch: Any, batch_idx: int):
+    def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx)
         self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
-    def test_step(self, batch: Any, batch_idx: int):
+    def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
@@ -124,7 +124,7 @@ class Task(pl.LightningModule):
         return self._data_pipeline
 
     @data_pipeline.setter
-    def data_pipeline(self, data_pipeline):
+    def data_pipeline(self, data_pipeline: DataPipeline) -> None:
         self._data_pipeline = data_pipeline
 
     @staticmethod
@@ -132,8 +132,8 @@ class Task(pl.LightningModule):
         """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
         return DataModule.default_pipeline()
 
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         self.data_pipeline = checkpoint["pipeline"]
 
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]):
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         checkpoint["pipeline"] = self.data_pipeline
