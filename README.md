@@ -16,6 +16,7 @@
   <a href="#tasks">Tasks</a> •
   <a href="#a-general-task">General Task</a> •
   <a href="#contribute">Contribute</a> •
+  <a href="#community">Community</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
   <a href="#license">License</a>
 </p>
@@ -377,8 +378,12 @@ Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6b
 
 ---
 
-## License
+## Community
+For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A)!
 
+---
+
+## License
 Please observe the Apache 2.0 license that is listed in this repository. In addition
 the Lightning framework is Patent Pending.
 
