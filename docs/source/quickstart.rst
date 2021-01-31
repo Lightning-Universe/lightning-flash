@@ -17,8 +17,7 @@ Flash is built for 3 major use-cases:
 Flexibility
 -----------
 
-Unlike high-level frameworks, once you need more flexibility you can directly write a LightningModule which is just
-organized PyTorch with unecessary engineering details abstracted away.
+Unlike other high-level frameworks, Flash provides full flexibility, all tasks can be customized, overidden and extended using Lightning.
 
 - Flash (high level)
 - Lightning (mid-level)
@@ -26,10 +25,10 @@ organized PyTorch with unecessary engineering details abstracted away.
 
 Flash is excellent for:
 
-- data scientists
-- kagglers
-- applied corporate researchers
-- applied academic researchers
+- Data scientists
+- Kagglers
+- Applied Corporate Researchers
+- Applied Academic Researchers
 
 When you need more flexibility you can build your own tasks or simply use Lightning directly.
 
@@ -50,8 +49,7 @@ You can install flash using pip/conda:
 
 Tasks
 -----
-Flash is built as a collection of Tasks. A task is highly opinionated and laser-focused on solving a single problem
-well, using state-of-the-art methods.
+Flash is comprised of a collection of Tasks. A task is a laser-focused solution for a single problem using state-of-the-art methods, enabling you Inference, Finetune and Train a model on your own data in minutes.
 
 Here are examples of tasks:
 
@@ -65,9 +63,9 @@ Here are examples of tasks:
 
 Tasks are designed for:
 
-- inference
-- finetuning
-- training from scratch
+- Inference
+- Finetuning
+- Training from scratch
 
 ------
 
