@@ -45,8 +45,27 @@ jobs:
         pip install --requirement requirements/test.txt --quiet --find-links https://download.pytorch.org/whl/torch_stable.html
         pip install --requirement requirements/notebooks.txt --quiet --find-links https://download.pytorch.org/whl/torch_stable.html
 
+    - name: Cache datasets
+      uses: actions/cache@v2
+      with:
+        path: flash_examples/finetuning # This path is specific to Ubuntu
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: flash-datasets_finetuning
+
+    - name: Cache datasets
+      uses: actions/cache@v2
+      with:
+        path: flash_examples/predict # This path is specific to Ubuntu
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: flash-datasets_predict  
+
     - name: Run Notebooks
       run: |
-        #treon --threads=1 --exclude=notebooks/kaggle_tumor.ipynb # with more threads this requires to much RAM
-        # ignore error code 5 (no tests)
-        sh -c 'pytest notebooks/ ; ret=$?; [ $ret = 5 ] && exit 0 || exit $ret'
+        set -e 
+        jupyter nbconvert --to script flash_notebooks/finetuning/tabular_classification.ipynb
+        jupyter nbconvert --to script flash_notebooks/predict/classify_image.ipynb
+        jupyter nbconvert --to script flash_notebooks/predict/classify_tabular.ipynb
+
+        ipython flash_notebooks/finetuning/tabular_classification.py
+        ipython flash_notebooks/predict/classify_image.py
+        ipython flash_notebooks/predict/classify_tabular.py

@@ -6,33 +6,32 @@ If the task you wish to solve is not yes implemented, you can create your own Fl
 
 See this example for defining a linear classifier task:
 
-.. code-block:: python
+.. testcode::
 
-	import torch
-	import torch.nn.functional as F
-	from flash.core.classification import ClassificationTask
+    import torch
+    import torch.nn.functional as F
+    from pytorch_lightning.metrics import Accuracy
+    from flash.core.classification import ClassificationTask
 
-	class LinearClassifier(ClassificationTask):
-		def __init__(
-	        self,
-	        num_inputs,
-	        num_classes,
-	        loss_fn: Callable = F.cross_entropy,
-	        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-	        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
-	        learning_rate: float = 1e-3,
-	    ):
-	        super().__init__(
-	            model=None,
-	            loss_fn=loss_fn,
-	            optimizer=optimizer,
-	            metrics=metrics,
-	            learning_rate=learning_rate,
-	        )
+    class LinearClassifier(ClassificationTask):
+        def __init__(
+            self,
+            num_inputs: int,
+            num_classes: int,
+            loss_fn=F.cross_entropy,
+            optimizer=torch.optim.SGD,
+            metrics=[Accuracy()],
+            learning_rate=1e-3,
+        ):
+            super().__init__(model=None,
+                loss_fn=loss_fn,
+                optimizer=optimizer,
+                metrics=metrics,
+                learning_rate=learning_rate,
+            )
+            self.save_hyperparameters()
 
-	        self.save_hyperparameters()
+            self.linear = torch.nn.Linear(num_inputs, num_classes)
 
-	        self.linear = torch.nn.Linear(num_inputs, num_classes)
-			
-		def forward(self, x):
-		    return self.linear(x)
+        def forward(self, x):
+            return self.linear(x)

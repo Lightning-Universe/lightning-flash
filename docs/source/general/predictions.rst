@@ -5,7 +5,7 @@
 Predictions (inference)
 #######################
 
-You can use Flash to get predictions on pretraine dor finetuned models.
+You can use Flash to get predictions on pretrained or finetuned models.
 
 Predict on a single sample of data
 ==================================
@@ -18,6 +18,7 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
 	from flash import Trainer
 	from flash.core.data import download_data
 	from flash.vision import ImageClassificationData, ImageClassifier
+
 
 	# 1. Download the data set
 	download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -50,7 +51,5 @@ Predict on a csv file
 	# 3. Generate predictions from a csv file! Who would survive?
 	predictions = model.predict("data/titanic/titanic.csv")
 	print(predictions)
-
-
 
 

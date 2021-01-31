@@ -48,7 +48,7 @@ class DataPipeline:
 
     def collate_fn(self, samples: Any) -> Any:
         """
-        Utility funtion to convert raw data to batched data
+        Utility function to convert raw data to batched data
 
         ``collate_fn`` as used in ``torch.utils.data.DataLoader``.
         To avoid the before/after collate transformations, please use ``collate``.

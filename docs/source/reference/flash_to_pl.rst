@@ -5,10 +5,10 @@ From Flash to Lightning
 Flash is built on top of `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ to abstract away the unecessary boilerplate for:
 
-- data science
-- kaggle
-- business use cases
-- applied research
+- Data science
+- Kaggle
+- Business use cases
+- Applied research
 
 Flash is a HIGH level library and Lightning is a LOW level library.
 
@@ -25,14 +25,14 @@ level of abstraction that works for them.
 
    * - Approach
      - Flexibility
-     - Minumum DL Expertise level
+     - Minimum DL Expertise level
      - PyTorch Knowledge
      - Use cases
    * - Using an out-of-the-box task
      - Low
      - Novice+
      - Low+
-     - Fast baseline, data science, analysis, applied research
+     - Fast baseline, Data Science, Analysis, Applied Research
    * - Using the Generic Task
      - Medium
      - Intermediate+

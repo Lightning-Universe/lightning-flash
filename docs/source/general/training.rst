@@ -4,26 +4,27 @@ Training from scratch
 
 Some Flash tasks have been pretrained on large data sets, to accelorate your training (calling the :func:`~flash.core.trainer.Trainer.finetune` method using a pretrained backbone will fine-tune the backbone to generate a model customized to your data set and desired task). If you want to train the task from scratch instead, pass `pretrained=False` parameter when creating your task. Then, use the :func:`~flash.core.trainer.Trainer.fit` method to train your model.
 
+
 .. code-block:: python
 
-  import flash
-  from flash import download_data
-  from flash.vision import ImageClassificationData, ImageClassifier
+    import flash
+    from flash.core.data import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
 
-  # 1. download and organize the data
-  download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
+    # 1. download and organize the data
+    download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
 
-  data = ImageClassificationData.from_folders(
-      train_folder="data/hymenoptera_data/train/",
-      valid_folder="data/hymenoptera_data/val/"
-  )
+    data = ImageClassificationData.from_folders(
+        train_folder="data/hymenoptera_data/train/",
+        valid_folder="data/hymenoptera_data/val/"
+    )
 
-  # 2. build the task, and turn off pre-training
-  task = ImageClassifier(num_classes=2, pretrained=False)
+    # 2. build the task, and turn off pre-training
+    task = ImageClassifier(num_classes=2, pretrained=False)
 
-  # 3. train!
-  trainer = flash.Trainer()
-  trainer.fit(model, data)
+    # 3. train!
+    trainer = flash.Trainer()
+    trainer.fit(model, data)
 
 
 Training options
@@ -31,12 +32,12 @@ Training options
 
 Flash tasks supports many advanced training functionalities out-of-the-box, such as:
 
-* limit number of epohcs
+* limit number of epochs
 
 .. code-block:: python
 
-    # train for 10 epohcs
-    trainer.fit(max_ephocs=10)
+    # train for 10 epochs
+    trainer.fit(max_epochs=10)
 
 * Training on GPUs
 

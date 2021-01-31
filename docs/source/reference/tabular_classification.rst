@@ -8,7 +8,7 @@ Tabular Classification
 The task
 ********
 
-The task of assiging a class to samples of structued or relational data is called tabular classification. Classification is the process of predicting the class (sometimes called target or labels) of given data points. The Flash Tabular Classification task can be used for multi-class classification, or classification of samples in more than two classes. The Tabular data we'll use is structured into rows and columns, where columns represent properties or features. The task will learn to predict a single column, which we will call the target column.
+Tabular classification is the task of assigning a class to samples of structured or relational data. The Flash Tabular Classification task can be used for multi-class classification, or classification of samples in more than two classes. In the following example, the Tabular data is structured into rows and columns, where columns represent properties or features. The task will learn to predict a single target column.
 
 -----
 
@@ -30,13 +30,13 @@ Titanic. We can organize our data in ``.csv`` files
     6,0,3,"Moran, Mr. James",male,,0,0,330877,8.4583,,Q
     ...
 
-We can use the Flash Tabular classification task to predict the probability a passanger survived (1 means survived, 0 otherwise), using the feature columns. 
+We can use the Flash Tabular classification task to predict the probability a passenger survived (1 means survived, 0 otherwise), using the feature columns.
 
 We can create :class:`~flash.tabular.TabularData` from csv files using the :func:`~flash.tabular.TabularData.from_csv` method. We will pass in:
 
-* **train_csv**- csv file containing the training data convereted to a Pandas DataFrame
+* **train_csv**- csv file containing the training data converted to a Pandas DataFrame
 * **categorical_input**- a list of the names of columns that contain categorical data (strings or integers)
-* **numerical_input**- a list of the names of columns that contain numerical continous data (floats)
+* **numerical_input**- a list of the names of columns that contain numerical continuous data (floats)
 * **target**- the name of the column we want to predict
 
 .. tip:: you can pass in val_size and test_size to partition your training data into a separate validation and test set like so:
@@ -46,7 +46,8 @@ Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the
 
 .. code-block:: python
 
-from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+<<<<<<< HEAD
+  from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
   import flash
   from flash.core.data import download_data
@@ -65,24 +66,24 @@ from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
       val_size=0.25,
       )
 
-  # 3. Build the model
-  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+    # 3. Build the model
+    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-  # 4. Create the trainer. Run 10 times on data
-  trainer = flash.Trainer(max_epochs=10)
+    # 4. Create the trainer. Run 10 times on data
+    trainer = flash.Trainer(max_epochs=10)
 
-  # 5. Train the model
-  trainer.fit(model, datamodule=datamodule)
+    # 5. Train the model
+    trainer.fit(model, datamodule=datamodule)
 
-  # 6. Test model
-  trainer.test()
+    # 6. Test model
+    trainer.test()
 
-  # 7. Save it!
-  trainer.save_checkpoint("tabular_classification_model.pt")
+    # 7. Save it!
+    trainer.save_checkpoint("tabular_classification_model.pt")
 
-  # 7. Predict!
-  predictions = model.predict("data/titanic/titanic.csv")
-  print(predictions)
+    # 8. Predict!
+    predictions = model.predict("data/titanic/titanic.csv")
+    print(predictions)
 
 -----
 
@@ -111,40 +112,38 @@ You can make predcitions on a pretrained model, that has already been trained fo
   print(predictions)
 
 
-
 Or you can finetune your own model and use that for prediction:
 
 .. code-block:: python
-
 
 	import flash
 	from flash import download_data
 	from flash.tabular import TabularClassifier, TabularData
 
-  # 1. Load the data
-  datamodule = TabularData.from_csv(
-      "my_data_file.csv",
-      test_csv="./data/titanic/test.csv",
-      categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-      numerical_input=["Fare"],
-      target="Survived",
-      val_size=0.25,
-  )
+    # 1. Load the data
+    datamodule = TabularData.from_csv(
+        "my_data_file.csv",
+        test_csv="./data/titanic/test.csv",
+        categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+        numerical_input=["Fare"],
+        target="Survived",
+        val_size=0.25,
+    )
 
-  # 3. Build the model
-  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+    # 3. Build the model
+    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-  # 4. Create the trainer
-  trainer = flash.Trainer()
+    # 4. Create the trainer
+    trainer = flash.Trainer()
 
-  # 5. Train the model
-  trainer.fit(model, datamodule=datamodule)
+    # 5. Train the model
+    trainer.fit(model, datamodule=datamodule)
 
-  # 6. Test model
-  trainer.test()
+    # 6. Test model
+    trainer.test()
 
-  predictions = model.predict("data/titanic/titanic.csv")
-  print(predictions)
+    predictions = model.predict("data/titanic/titanic.csv")
+    print(predictions)
 
 ------
 
@@ -164,7 +163,7 @@ TabularClassifier
 .. _tabular_data:
 
 TabularData
---------------
+-----------
 
 .. autoclass:: flash.tabular.TabularData
 

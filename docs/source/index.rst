@@ -28,15 +28,15 @@ Lightning Flash
    :maxdepth: 1
    :caption: Flash API
 
-   reference/model
-   reference/data
+   general/model
+   general/data
 
 .. toctree::
    :maxdepth: 1
    :caption: Common Use Cases
 
-   reference/training
-   reference/predictions
+   general/training
+   general/predictions
 
 Indices and tables
 ==================

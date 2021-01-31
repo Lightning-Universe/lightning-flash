@@ -24,6 +24,8 @@ sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 builtins.__LIGHTNING_FLASH_SETUP__ = True
 import flash  # noqa: E402
 
+html_favicon = '_static/images/icon.svg'
+
 # -- Project information -----------------------------------------------------
 
 project = "Flash"
@@ -36,13 +38,21 @@ author = "PyTorch Lightning"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.coverage",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.intersphinx",
-    "recommonmark",
-    "sphinx_autodoc_typehints",
-    "sphinx.ext.githubpages",
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    # 'sphinx.ext.todo',
+    # 'sphinx.ext.coverage',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.imgmath',
+    'recommonmark',
+    # 'sphinx.ext.autosectionlabel',
+    # 'nbsphinx',  # it seems some sphinx issue
+    'sphinx_autodoc_typehints',
+    'sphinx_copybutton',
+    'sphinx_paramlinks',
+    'sphinx_togglebutton',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -90,14 +100,10 @@ html_theme_options = {
     "logo_only": False,
 }
 
-html_logo = "_images/flash_logo.png"
-
-html_icon = "source/_static/images/flash_icon.png"
-
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_images"]
+html_static_path = ["_static"]
 
 html_css_files = []
 

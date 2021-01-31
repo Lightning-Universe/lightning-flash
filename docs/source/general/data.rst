@@ -2,7 +2,7 @@
 Data
 ####
 
-Use these utilites to download data.
+Use these utilities to download data.
 
 -----
 

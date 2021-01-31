@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import warnings
 from typing import List, Optional, Union
 
@@ -15,7 +28,7 @@ class MilestonesFinetuningCallback(BaseFinetuning):
         self.milestones = milestones
         self.train_bn = train_bn
 
-    def freeze_before_training(self, pl_module: pl.LightningModule):
+    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
         # TODO: might need some config to say which attribute is model
         # maybe something like:
         # self.freeze(module=pl_module.getattr(self.feature_attr), train_bn=self.train_bn)
@@ -32,7 +45,7 @@ class MilestonesFinetuningCallback(BaseFinetuning):
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
-    ):
+    ) -> None:
         backbone_modules = list(pl_module.backbone.modules())
         if epoch == self.milestones[0]:
             # unfreeze 5 last layers
@@ -44,7 +57,7 @@ class MilestonesFinetuningCallback(BaseFinetuning):
             )
 
         elif epoch == self.milestones[1]:
-            # unfreeze remaing layers
+            # unfreeze remaining layers
             # TODO last N layers should be parameter
             self.unfreeze_and_add_param_group(
                 module=backbone_modules[:-5],

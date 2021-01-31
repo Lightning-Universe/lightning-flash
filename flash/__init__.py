@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Root package info."""
 import os
 
@@ -25,7 +38,7 @@ try:
     # It used to enable importing subpackages when the binaries are not built.
     __LIGHTNING_FLASH_SETUP__
 except NameError:
-    __LIGHTNING_FLASH_SETUP__ = False
+    __LIGHTNING_FLASH_SETUP__: bool = False
 
 if __LIGHTNING_FLASH_SETUP__:
     import sys  # pragma: no-cover
@@ -38,18 +51,10 @@ else:
     from flash.core import data, utils
     from flash.core.classification import ClassificationTask
     from flash.core.data import DataModule
+    from flash.core.data.utils import download_data
     from flash.core.model import Task
     from flash.core.trainer import Trainer
-    from flash.core.data.utils import download_data
 
     __all__ = [
-        "Task",
-        "ClassificationTask",
-        "DataModule",
-        "vision",
-        "text",
-        "tabular",
-        "data",
-        "utils",
-        "download_data"
+        "Task", "ClassificationTask", "DataModule", "vision", "text", "tabular", "data", "utils", "download_data"
     ]

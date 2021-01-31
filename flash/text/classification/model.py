@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import os
 import warnings
 from typing import Callable, Mapping, Sequence, Type, Union
@@ -6,7 +19,7 @@ import torch
 from pytorch_lightning.metrics.classification import Accuracy
 from transformers import BertForSequenceClassification
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationDataPipeline, ClassificationTask
 from flash.text.classification.data import TextClassificationData
 
 
@@ -54,7 +67,7 @@ class TextClassifier(ClassificationTask):
     def forward(self, batch_dict):
         return self.model(**batch_dict)
 
-    def step(self, batch, batch_idx):
+    def step(self, batch, batch_idx) -> dict:
         output = {}
         loss, logits = self.forward(batch)
         output["loss"] = loss
@@ -64,5 +77,5 @@ class TextClassifier(ClassificationTask):
         return output
 
     @staticmethod
-    def default_pipeline():
+    def default_pipeline() -> ClassificationDataPipeline:
         return TextClassificationData.default_pipeline()

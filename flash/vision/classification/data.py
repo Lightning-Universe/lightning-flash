@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import os
 import pathlib
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
@@ -14,11 +27,10 @@ from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
 
 
-def _pil_loader(path):
+def _pil_loader(path) -> Image:
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
-    with open(path, "rb") as f:
-        with Image.open(f) as img:
-            return img.convert("RGB")
+    with open(path, "rb") as f, Image.open(f) as img:
+        return img.convert("RGB")
 
 
 class FilepathDataset(torch.utils.data.Dataset):
@@ -47,7 +59,7 @@ class FilepathDataset(torch.utils.data.Dataset):
             self.label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(self.fnames)))))}
 
     @property
-    def has_labels(self):
+    def has_labels(self) -> bool:
         return self.labels is not None
 
     def __len__(self) -> int:
@@ -170,7 +182,7 @@ class FlashDatasetFolder(VisionDataset):
             sample = self.transform(sample)
         return (sample, target) if self.with_targets else sample
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.samples)
 
 
@@ -318,7 +330,7 @@ class ImageClassificationData(DataModule):
             train/dog/xxz.png
             train/cat/123.png
             train/cat/nsdf3.png
-            train/cat/asd932_.png
+            train/cat/asd932.png
 
         Args:
             train_folder: Path to training folder.
