@@ -44,14 +44,12 @@ We can create :class:`~flash.tabular.TabularData` from csv files using the :func
 
 Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the Data module we created.
 
-.. code-block:: python
-
-<<<<<<< HEAD
-  from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+.. code-block::
 
   import flash
   from flash.core.data import download_data
   from flash.tabular import TabularClassifier, TabularData
+  from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
   # 1. Download the data
   download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')

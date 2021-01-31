@@ -33,8 +33,6 @@ Scalability
 Flash is built on top of `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes. 
 
-<<<<<<< HEAD
-
 Flexibility
 ^^^^^^^^^^^
 Unlike other high-level frameworks, it's easy to customize the Flash tasks with `Pytorch Lightning
