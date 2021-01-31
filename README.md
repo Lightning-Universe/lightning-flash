@@ -16,6 +16,7 @@
   <a href="#tasks">Tasks</a> •
   <a href="#a-general-task">General Task</a> •
   <a href="#contribute">Contribute</a> •
+  <a href="#community">Community</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
   <a href="#license">License</a>
 </p>
@@ -38,6 +39,8 @@
 
 </div>
 
+---
+
 ## Installation
 
 Pip / conda
@@ -59,14 +62,23 @@ cd lightning-flash
 pip install -e .
 ```
 
+---
+
 ## What is Flash
-Flash is a framework for solving business and scientific problems with applied deep learning. It is focused on:
+Flash is a framework of tasks for fast prototyping, baselining, finetuning and solving business and scientific problems with deep learning. It is focused on:
 
 - Predictions
 - Finetuning
 - Task-based training
 
 It is built for data scientists, machine learning practitioners, and applied researchers.
+
+
+## Scalability
+Flash is built on top of [PyTorch Lightning](https://github.com/PyTorchLightning/pytorch-lightning) (by the Lightning team), which is a thin organizational layer on top of PyTorch. If you know PyTorch, you know PyTorch Lightning and Flash already!
+
+As a result, Flash can scale up across any hardware (GPUs, TPUS) with zero changes to your code. It also has the best practices
+in AI research embedded into each task so you don't have to be a deep learning PhD to leverage its power :)
 
 ### Predictions
 
@@ -293,8 +305,6 @@ Flash has a TabularClassification task to tackle any tabular classification prob
   ```
 </details>
 
----
-
 ## A general task
 Flash comes prebuilt with a task to handle a huge portion of deep learning problems.
 
@@ -323,8 +333,6 @@ classifier = flash.Task(model, loss_fn=nn.functional.cross_entropy, optimizer=op
 # train
 flash.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
 ```
-
----
 
 ## Infinitely customizable
 
@@ -368,17 +376,14 @@ classifier = LinearClassifier()
 When you reach the limits of the flexibility provided by tasks, then seamlessly transition to PyTorch Lightning which
 gives you the most flexibility because it is simply organized PyTorch.
 
----
-
 ## Contribute!
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases. But we're looking for incredible contributors like you to submit new tasks!
 
 Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A) to get help becoming a contributor!
 
----
+## Community
+For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A)!
 
 ## License
-
 Please observe the Apache 2.0 license that is listed in this repository. In addition
 the Lightning framework is Patent Pending.
-
