@@ -39,6 +39,8 @@
 
 </div>
 
+---
+
 ## Installation
 
 Pip / conda
