@@ -8,7 +8,7 @@ Image Classification
 ********
 The task
 ********
-The task of identifying what an image represents is called `image classification <https://arxiv.org/abs/1912.12162>`_. Typically, Image Classification would be used to analyze images that contain a single object. The task will identify the ‘class’ the image falls under, or the probability of the image being part of a ‘class’.  A class is essentially a label, such as ‘car’, ‘house’, ‘cat’ etc. For example, we can train the image classifier task on images of ants and it will learn to predict the probability that an image contains an ant.
+The task of identifying what is in an image is called `image classification <https://arxiv.org/abs/1912.12162>`_. Typically, Image Classification is used to identify images containing a single object. The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.  A class is a label that desecribes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc. For example, we can train the image classifier task on images of ants and it will learn to predict the probability that an image contains an ant.
 
 ------
 
@@ -65,7 +65,7 @@ For more advanced inference options, see :ref:`predictions`.
 Finetuning
 **********
 
-Lets say you wanted to develope a model that could classify between **ants** and **bees**, using the hymenoptera dataset.
+Lets say you wanted to develope a model that could determine whether an image contains **ants** or **bees**, using the hymenoptera dataset.
 Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.ImageClassificationData`.
 
 .. note:: The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
