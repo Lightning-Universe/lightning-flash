@@ -2,7 +2,7 @@
 Write a Task
 ############
 
-If the task you wish to solve is not yes implemented, you can create your own Flash :class:`flash.core.model.Task`.
+If the task you wish to solve is not yet implemented, you can create your own Flash :class:`flash.core.model.Task`.
 
 See this example for defining a linear classifier task:
 
