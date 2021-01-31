@@ -2,7 +2,8 @@
 From Flash to Lightning
 #######################
 
-Flash is built on top of PyTorch Lightning to abstract away the unecessary boilerplate for:
+Flash is built on top of `Pytorch Lightning
+<https://github.com/PyTorchLightning/pytorch-lightning>`_ to abstract away the unecessary boilerplate for:
 
 - data science
 - kaggle
@@ -54,6 +55,7 @@ level of abstraction that works for them.
 Using an out-of-the-box task
 ****************************
 Tasks can come from a variety of places:
+
 - Flash
 - Other Lightning-based libraries
 - Your own library
@@ -93,6 +95,7 @@ building your own task. This requires a decent amount of PyTorch knowledge, but 
 LightningModules that already abstract a lot of the details for you.
 
 This is great for:
+
 - data science
 - researchers building for corporate data science teams
 - applied research
@@ -110,6 +113,7 @@ LightningModule is organized PyTorch but gives you the same flexibility. However
 fairly well and be comfortable with at least basic deep learning concepts.
 
 This is great for:
+
 - experts
 - academic AI research
 - corporate AI research

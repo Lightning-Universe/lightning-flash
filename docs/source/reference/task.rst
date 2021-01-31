@@ -14,7 +14,7 @@ Example: Image Classification
 
 .. code-block:: python
 
-    from flash.model import Task
+    from flash.core.model import Task
     from torch import nn, optim
     from torch.utils.data import DataLoader, random_split
     from torchvision import transforms, datasets

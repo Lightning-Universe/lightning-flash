@@ -2,7 +2,7 @@
 Write a Task
 ############
 
-You can create your own Flash task to if you want to solve any other deep learning problem.
+If the task you wish to solve is not yes implemented, you can create your own Flash :class:`flash.core.model.Task`.
 
 See this example for defining a linear classifier task:
 
@@ -15,7 +15,7 @@ See this example for defining a linear classifier task:
 	class LinearClassifier(ClassificationTask):
 		def __init__(
 	        self,
-			num_inputs,
+	        num_inputs,
 	        num_classes,
 	        loss_fn: Callable = F.cross_entropy,
 	        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
@@ -29,9 +29,10 @@ See this example for defining a linear classifier task:
 	            metrics=metrics,
 	            learning_rate=learning_rate,
 	        )
+
 	        self.save_hyperparameters()
-			
-			self.linear = torch.nn.Linear(num_inputs, num_classes)
+
+	        self.linear = torch.nn.Linear(num_inputs, num_classes)
 			
 		def forward(self, x):
 		    return self.linear(x)
