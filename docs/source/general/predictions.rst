@@ -5,7 +5,7 @@
 Predictions (inference)
 #######################
 
-You can use Flash to get predictions on pretraine dor finetuned models.
+You can use Flash to get predictions on pretrained or finetuned models.
 
 Predict on a single sample of data
 ==================================
