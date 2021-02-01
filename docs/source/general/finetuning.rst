@@ -33,7 +33,7 @@ Finetune options
 Flash finetune `strategy` argument can either a string or an instance of :class:`~python_lightning.callbacks.finetuning.BaseFinetuning`.
 Furthermore, Flash supports 4 builts-in Finetuning Callback accessible via those strings:
 
-* `no_freeze: Don't freeze anything.
+* `no_freeze`: Don't freeze anything.
 * `freeze`: Freeze the backbone parameters when training starts.
 * `freeze_unfreeze`: Freeze the backbone parameters when training starts and unfreeze the backbone when reaching `unfreeze_epoch`.
 * `unfreeze_milestones`: Freeze the backbone parameters when training starts and unfreeze the end backbone when reaching first milestones and begining when reaching second one.
