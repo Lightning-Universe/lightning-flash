@@ -1,0 +1,2 @@
+from flash.vision.classification.components.backbones import torchvision_backbone_and_num_features
+from flash.vision.classification.components.model_zoo import TORCHVISION_MODEL_ZOO
