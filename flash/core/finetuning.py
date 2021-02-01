@@ -130,8 +130,8 @@ _DEFAULTS_FINETUNE_STRATEGIES = {
 def instantiate_default_finetuning_callbacks(strategy):
     if strategy is None or strategy not in _DEFAULTS_FINETUNE_STRATEGIES:
         raise MisconfigurationException(
-            f"a strategy should be provided. Use {list(_DEFAULTS_FINETUNE_STRATEGIES)} or provide a callback instance of "
-            "`flash.core.finetuning.FlashBaseFinetuning`. Found {strategy} "
+            f"a strategy should be provided. Use {list(_DEFAULTS_FINETUNE_STRATEGIES)} or provide a callback"
+            " instance of `flash.core.finetuning.FlashBaseFinetuning`. Found {strategy} "
         )
     if isinstance(strategy, str):
         strategy = strategy.lower()
