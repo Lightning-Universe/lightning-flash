@@ -2,9 +2,9 @@
 Finetuning
 **********
 
-Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset. All Flash tasks have a pre-trained backbone that was trained on large datasets such as ImageNet, and that allows to decrease training time significantly. 
+Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset. All Flash tasks have a pre-trained backbone that was trained on large datasets such as ImageNet, and that allows to decrease training time significantly.
 
-.. note:: If you have a huge dataset and prefer to train from scratch, see :ref:`training` guide.
+.. note:: If you have a huge dataset and prefer to train from scratch.
 
 When using :func:`~flash.Trainer.finetune`, you also need to provide a finetune `strategy`.
 
