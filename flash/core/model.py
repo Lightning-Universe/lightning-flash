@@ -95,7 +95,6 @@ class Task(pl.LightningModule):
     @property
     @contextmanager
     def predict_context(self):
-        # todo: Move this within Lightning.
         try:
             self.eval()
             torch.set_grad_enabled(False)
