@@ -2,8 +2,9 @@
 Finetuning
 **********
 
-Some Flash tasks have been pretrained on large data sets, to accelerate your training (calling the :func:`~flash.Trainer.finetune` method using a pretrained backbone will fine-tune the backbone to generate a model customized to your data set and desired task). If you want to train the task from scratch instead, pass `pretrained=False` parameter when creating your task. Then, use the :func:`~flash.Trainer.fit` method to train your model.
-When calling the :func:`~flash.Trainer.finetune`, one also needs to provide a finetune `strategy`.
+When training a Flash task, calling the :func:`~flash.Trainer.finetune` using a pre-trained backbone will finetune the backbone onto your data and desired task. If you would like to train from scratch, pass `pretrained=False` when creating your task whilst using the :func:`~flash.Trainer.fit` method to start training.
+
+When using :func:`~flash.Trainer.finetune`, you also need to provide a finetune `strategy`.
 
 .. code-block:: python
 
