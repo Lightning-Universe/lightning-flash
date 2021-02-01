@@ -42,7 +42,7 @@ We can create :class:`~flash.tabular.TabularData` from csv files using the :func
 .. tip:: you can pass in val_size and test_size to partition your training data into a separate validation and test set like so:
 
 
-Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the Data module we created.
+Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Data module we created.
 
 .. code-block::
 
@@ -64,24 +64,24 @@ Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the
       val_size=0.25,
       )
 
-    # 3. Build the model
-    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+  # 3. Build the model
+  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-    # 4. Create the trainer. Run 10 times on data
-    trainer = flash.Trainer(max_epochs=10)
+  # 4. Create the trainer. Run 10 times on data
+  trainer = flash.Trainer(max_epochs=10)
 
-    # 5. Train the model
-    trainer.fit(model, datamodule=datamodule)
+  # 5. Train the model
+  trainer.fit(model, datamodule=datamodule)
 
-    # 6. Test model
-    trainer.test()
+  # 6. Test model
+  trainer.test()
 
-    # 7. Save it!
-    trainer.save_checkpoint("tabular_classification_model.pt")
+  # 7. Save it!
+  trainer.save_checkpoint("tabular_classification_model.pt")
 
-    # 8. Predict!
-    predictions = model.predict("data/titanic/titanic.csv")
-    print(predictions)
+  # 8. Predict!
+  predictions = model.predict("data/titanic/titanic.csv")
+  print(predictions)
 
 -----
 
@@ -118,30 +118,30 @@ Or you can finetune your own model and use that for prediction:
 	from flash import download_data
 	from flash.tabular import TabularClassifier, TabularData
 
-    # 1. Load the data
-    datamodule = TabularData.from_csv(
-        "my_data_file.csv",
-        test_csv="./data/titanic/test.csv",
-        categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-        numerical_input=["Fare"],
-        target="Survived",
-        val_size=0.25,
-    )
+  # 1. Load the data
+  datamodule = TabularData.from_csv(
+      "my_data_file.csv",
+      test_csv="./data/titanic/test.csv",
+      categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+      numerical_input=["Fare"],
+      target="Survived",
+      val_size=0.25,
+  )
 
-    # 3. Build the model
-    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+  # 3. Build the model
+  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-    # 4. Create the trainer
-    trainer = flash.Trainer()
+  # 4. Create the trainer
+  trainer = flash.Trainer()
 
-    # 5. Train the model
-    trainer.fit(model, datamodule=datamodule)
+  # 5. Train the model
+  trainer.fit(model, datamodule=datamodule)
 
-    # 6. Test model
-    trainer.test()
+  # 6. Test model
+  trainer.test()
 
-    predictions = model.predict("data/titanic/titanic.csv")
-    print(predictions)
+  predictions = model.predict("data/titanic/titanic.csv")
+  print(predictions)
 
 ------
 

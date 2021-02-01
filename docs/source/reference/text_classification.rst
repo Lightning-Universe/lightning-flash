@@ -16,9 +16,9 @@ Text classification is the task of assigning a piece of text (word, sentence or 
 Inference
 *********
 
-The :class:`~flash.core.classification.TextClassificatier` is already pre-trained on `IMDB <https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews>`_, a dataset of highly polarized movie reviews, trained for binary classification- to predict if a given review has a positive or negative sentiment.
+The :class:`~flash.text.classification.model.TextClassifier` is already pre-trained on `IMDB <https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews>`_, a dataset of highly polarized movie reviews, trained for binary classification- to predict if a given review has a positive or negative sentiment.
 
-Use the :class:`~flash.core.classification.TextClassificatier` pretrained model for inference on any string sequence using :func:`~flash.core.classification.TextClassifier.predict`:
+Use the :class:`~flash.text.classification.model.TextClassifier` pretrained model for inference on any string sequence using :func:`~flash.text.classification.model.TextClassifier.predict`:
 
 .. code-block:: python
 

@@ -16,10 +16,10 @@ The task of identifying what is in an image is called `image classification <htt
 Inference
 *********
 
-The :class:`~flash.vision.ImageClassificatier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
+The :class:`~flash.vision.ImageClassifier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
 
 
-Use the :class:`~flash.text.ImageClassificatier` pretrained model for inference on any string sequence using :func:`~flash.text.TextClassifier.predict`:
+Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on any string sequence using :func:`~flash.vision.ImageClassifier.predict`:
 
 .. code-block:: python
 
