@@ -21,6 +21,7 @@ Lightning Flash
 
    reference/task
    reference/image_classification
+   reference/image_embedder
    reference/text_classification
    reference/tabular_classification
 
