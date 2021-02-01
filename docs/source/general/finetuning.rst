@@ -2,7 +2,9 @@
 Finetuning
 **********
 
-When training a Flash task, calling the :func:`~flash.Trainer.finetune` using a pre-trained backbone will finetune the backbone onto your data and desired task. If you would like to train from scratch, pass `pretrained=False` when creating your task whilst using the :func:`~flash.Trainer.fit` method to start training.
+Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset. All Flash tasks have a pre-trained backbone that was trained on large datasets such as ImageNet, and that allows to decrease training time significantly. 
+
+.. note:: If you have a huge dataset and prefer to train from scratch, see :ref:`training` guide.
 
 When using :func:`~flash.Trainer.finetune`, you also need to provide a finetune `strategy`.
 
