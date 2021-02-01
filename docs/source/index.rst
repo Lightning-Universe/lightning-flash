@@ -21,8 +21,10 @@ Lightning Flash
 
    reference/task
    reference/image_classification
+   reference/summarization
    reference/text_classification
    reference/tabular_classification
+   reference/translation
 
 .. toctree::
    :maxdepth: 1
