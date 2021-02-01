@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added flash_notebook examples ([#9](https://github.com/PyTorchLightning/pytorch-lightning/pull/9))
 
+
+- Added `3 BaseFinetuning Callbacks` and `configure_finetuning_callbacks` ([#39](https://github.com/PyTorchLightning/pytorch-lightning/pull/39))
+
 ### Changed
 
 ### Fixed
