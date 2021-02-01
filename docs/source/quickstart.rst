@@ -1,7 +1,7 @@
 Quick Start
 ===========
 
-Flash is a high-level deep learning framework for fast prototyping, baselining, finetuning and solving deep learning problems. It features a collaction of tasks for you to use for inference and finetuning out of the box, and an easy to implement API to customuzie every step of the process.
+Flash is a high-level deep learning framework for fast prototyping, baselining, finetuning and solving deep learning problems. It features a set of tasks for you to use for inference and finetuning out of the box, and an easy to implement API to customize every step of the process.
 
 
 Flash is excellent for:
@@ -37,7 +37,7 @@ Flexibility
 ^^^^^^^^^^^
 Unlike other high-level frameworks, it's easy to customize the Flash tasks with `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ components to get all the flexibility you need. Lightning is just
-organized PyTorch with unecessary engineering details abstracted away.
+organized PyTorch with the unecessary engineering details abstracted away.
 
 - Flash (high level)
 - Lightning (mid-level)
@@ -127,7 +127,7 @@ Here's an example of finetuning.
 .. code-block:: python
 
     import flash
-    from flash.core.data import download_data
+    from flash import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data

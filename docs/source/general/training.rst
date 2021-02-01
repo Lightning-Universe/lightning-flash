@@ -2,13 +2,13 @@
 Training from scratch
 *********************
 
-Some Flash tasks have been pretrained on large data sets, to accelorate your training (calling the :func:`~flash.core.trainer.Trainer.finetune` method using a pretrained backbone will fine-tune the backbone to generate a model customized to your data set and desired task). If you want to train the task from scratch instead, pass `pretrained=False` parameter when creating your task. Then, use the :func:`~flash.core.trainer.Trainer.fit` method to train your model.
+Some Flash tasks have been pretrained on large data sets. To accelerate your training, calling the :func:`~flash.core.trainer.Trainer.finetune` method using a pretrained backbone will fine-tune the backbone to generate a model customized to your data set and desired task. If you want to train the task from scratch instead, pass `pretrained=False` parameter when creating your task. Then, use the :func:`~flash.core.trainer.Trainer.fit` method to train your model.
 
 
 .. code-block:: python
 
     import flash
-    from flash.core.data import download_data
+    from flash import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. download and organize the data
@@ -72,7 +72,7 @@ Flash tasks supports many advanced training functionalities out-of-the-box, such
     # Train on TPUs
     trainer.fit(tpu_cores=8)
 
-You can add to the flahs Trainer any argument from the Lightning trainer! Learn more about the Lightning Trainer `here <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_.
+You can add to the flash Trainer any argument from the Lightning trainer! Learn more about the Lightning Trainer `here <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_.
 
 
 Trainer API

@@ -24,7 +24,7 @@ Use the :class:`~flash.text.classification.model.TextClassifier` pretrained mode
 
     from pytorch_lightning import Trainer
 
-    from flash.core.data import download_data
+    from flash import download_data
     from flash.text import TextClassificationData, TextClassifier
 
 
@@ -162,6 +162,5 @@ TextClassificationData
 .. autoclass:: flash.text.classification.data.TextClassificationData
 
 .. automethod:: flash.text.classification.data.TextClassificationData.from_files
-
 
 

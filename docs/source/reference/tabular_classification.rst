@@ -47,7 +47,7 @@ Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Da
 .. code-block::
 
   import flash
-  from flash.core.data import download_data
+  from flash import download_data
   from flash.tabular import TabularClassifier, TabularData
   from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
@@ -94,7 +94,7 @@ You can make predcitions on a pretrained model, that has already been trained fo
 .. code-block:: python
 
 
-  from flash.core.data import download_data
+  from flash import download_data
   from flash.tabular import TabularClassifier
 
   # 1. Download the data
@@ -168,4 +168,3 @@ TabularData
 .. automethod:: flash.tabular.TabularData.from_csv
 
 .. automethod:: flash.tabular.TabularData.from_df
-
