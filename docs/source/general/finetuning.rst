@@ -39,9 +39,9 @@ Furthermore, Flash supports 4 builts-in Finetuning Callback accessible via those
 * `no_freeze`: Don't freeze anything.
 * `freeze`: Freeze the backbone parameters when training starts.
 * `freeze_unfreeze`: Freeze the backbone parameters when training starts and unfreeze the backbone when reaching `unfreeze_epoch`.
-* `unfreeze_milestones`: Freeze the backbone parameters when training starts and unfreeze the end backbone when reaching first milestones and begining when reaching second one.
+* `unfreeze_milestones`: Freeze the backbone parameters when training starts and unfreeze the laster layers of backbone when reaching first milestones and the remaining layers when reaching second one.
 
-Use the builts-in Finetuning Strategy Callback.
+Use the built-in Finetuning Strategy Callbacks.
 
 .. code-block:: python
 
@@ -64,16 +64,9 @@ Create a custom Finetuning Strategy Callback.
 
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
 
-        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = true)
-            # this will set self.attr_names as ["feature_extractor"]
+        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = True)
             super().__init__("feature_extractor", train_bn)
             self._unfreeze_at_epoch = unfreeze_at_epoch
-
-        def freeze_before_training(self, pl_module):
-            # freeze any module you want by overriding this function
-
-            # Here, we are freezing ``feature_extractor``
-            self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
         def finetune_function(self, pl_module, current_epoch, optimizer, opt_idx):
             # unfreeze any module you want by overriding this function
