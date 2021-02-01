@@ -32,7 +32,7 @@ Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
     # 2. Load the model from a checkpoint
-    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+    model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
     # 3a. Predict what's on a few images! ants or bees?
     predictions = model.predict([
@@ -96,7 +96,7 @@ Now all we need is three lines of code to build to train our task!
 
     # 2. Load the data
     datamodule = ImageClassificationData.from_folders(
-      backbone="resnet18",
+        backbone="resnet18",
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
@@ -109,7 +109,7 @@ Now all we need is three lines of code to build to train our task!
     trainer = flash.Trainer(max_epochs=1)
 
     # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
     # 6. Test the model
     trainer.test()
@@ -130,7 +130,7 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
 
     # 1. organize the data
     data = ImageClassificationData.from_folders(
-    	backbone="resnet34",
+        backbone="resnet34",
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/"
     )
@@ -170,6 +170,3 @@ ImageClassificationData
 .. automethod:: flash.vision.ImageClassificationData.from_filepaths
 
 .. automethod:: flash.vision.ImageClassificationData.from_folders
-
-
-

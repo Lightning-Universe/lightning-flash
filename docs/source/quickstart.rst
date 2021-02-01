@@ -148,7 +148,7 @@ Here's an example of finetuning.
     trainer = flash.Trainer(max_epochs=1)
 
     # 5. Finetune the model
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
     # 6. Use the model for predictions
     predictions = model.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')

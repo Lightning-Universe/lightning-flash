@@ -99,8 +99,8 @@ All we need is three lines of code to train our model!
     # 4. Create the trainer. Run once on data
     trainer = flash.Trainer(max_epochs=1)
 
-    # 5. Fine-tune the model
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    # 5. Finetune the task
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
     # 6. Test model
     trainer.test()
@@ -162,5 +162,3 @@ TextClassificationData
 .. autoclass:: flash.text.classification.data.TextClassificationData
 
 .. automethod:: flash.text.classification.data.TextClassificationData.from_files
-
-
