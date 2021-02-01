@@ -181,7 +181,7 @@ When you have enough data, you're likely better off training from scratch instea
 Steps here are similar to finetune:
 
 
-1. Download and set up your own data (:class:`~torch.utils.data.DataLoader` or `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/lightning_module.html>`_` work).
+1. Download and set up your own data (:class:`~torch.utils.data.DataLoader` or `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/lightning_module.html>`_ work).
 2. Init your task.
 3. Init a :class:`flash.core.trainer.Trainer` (or a `Lightning Trainer <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_).
 4. Call :func:`flash.core.trainer.Trainer.fit` with your data set.
