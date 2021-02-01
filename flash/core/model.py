@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from contextlib import contextmanager
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
@@ -19,6 +20,25 @@ from torch import nn
 
 from flash.core.data import DataModule, DataPipeline
 from flash.core.utils import get_callable_dict
+
+
+def predict_context(func: Callable) -> Callable:
+    """
+    This decorator is used as context manager
+    to put model in eval mode before running predict and reset to train after.
+    """
+
+    def wrapper(self, *args, **kwargs) -> Any:
+        self.eval()
+        torch.set_grad_enabled(False)
+
+        result = func(self, *args, **kwargs)
+
+        self.train()
+        torch.set_grad_enabled(True)
+        return result
+
+    return wrapper
 
 
 class Task(pl.LightningModule):
@@ -91,6 +111,7 @@ class Task(pl.LightningModule):
         output = self.step(batch, batch_idx)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
+    @predict_context
     def predict(
         self,
         x: Any,
@@ -103,12 +124,17 @@ class Task(pl.LightningModule):
         Predict function for raw data or processed data
 
         Args:
+
             x: Input to predict. Can be raw data or processed data.
+
             batch_idx: Batch index
+
             dataloader_idx: Dataloader index
+
             skip_collate_fn: Whether to skip the collate step.
                 this is required when passing data already processed
                 for the model, for example, data from a dataloader
+
             data_pipeline: Use this to override the current data pipeline
 
         Returns:
@@ -119,7 +145,8 @@ class Task(pl.LightningModule):
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
         batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
         predictions = self.forward(batch_x)
-        return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+        output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+        return output
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
