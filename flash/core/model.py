@@ -172,3 +172,6 @@ class Task(pl.LightningModule):
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         checkpoint["pipeline"] = self.data_pipeline
+
+    def configure_finetune_callback(self):
+        return []

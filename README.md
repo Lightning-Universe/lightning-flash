@@ -127,7 +127,7 @@ model = ImageClassifier(num_classes=datamodule.num_classes)
 trainer = flash.Trainer(max_epochs=1)
 
 # 5. Finetune the model
-trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 7. Save it!
 trainer.save_checkpoint("image_classification_model.pt")
@@ -151,13 +151,13 @@ Flash is built as a collection of community-built tasks. A task is highly opinio
 
 ### Example 1: Image classification
 Flash has an ImageClassification task to tackle any image classification problem.
-  
+
 <details>
   <summary>View example</summary>
   To illustrate, Let's say we wanted to develop a model that could classify between ants and bees.
-  
+
   <img src="https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png" width="300px">
-  
+
   Here we classify ants vs bees.
 
   ```python
@@ -208,7 +208,7 @@ Flash has a TextClassification task to tackle any text classification problem.
 <details>
   <summary>View example</summary>
   To illustrate, say you wanted to classify movie reviews as positive or negative.
-  
+
   ```python
   import flash
   from flash import download_data
@@ -261,9 +261,9 @@ Flash has a TabularClassification task to tackle any tabular classification prob
 
 <details>
   <summary>View example</summary>
-  
-  To illustrate, say we want to build a model to predict if a passenger survived on the Titanic. 
-  
+
+  To illustrate, say we want to build a model to predict if a passenger survived on the Titanic.
+
   ```python
   from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
   import flash
