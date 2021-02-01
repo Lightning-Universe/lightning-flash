@@ -29,7 +29,7 @@ class Task(pl.LightningModule):
         loss_fn: Loss function for training
         optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation.
-        learning_rate: Learning rate to use for training, defaults to `1e-3`
+        learning_rate: Learning rate to use for training, defaults to `5e-5`
     """
 
     def __init__(
@@ -38,7 +38,7 @@ class Task(pl.LightningModule):
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
+        learning_rate: float = 5e-5,
     ):
         super().__init__()
         if model is not None:
@@ -117,7 +117,7 @@ class Task(pl.LightningModule):
         """
         data_pipeline = data_pipeline or self.data_pipeline
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        batch_x, batch_y = batch if len(batch) == 2 else (batch, None)
+        batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
         predictions = self.forward(batch_x)
         return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
 
