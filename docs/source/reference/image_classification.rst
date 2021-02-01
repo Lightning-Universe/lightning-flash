@@ -119,7 +119,7 @@ Now all we need is three lines of code to build to train our task!
     trainer = flash.Trainer(max_epochs=1)
 
     # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
     # 6. Test the model
     trainer.test()
@@ -180,7 +180,3 @@ ImageClassificationData
 .. automethod:: flash.vision.ImageClassificationData.from_filepaths
 
 .. automethod:: flash.vision.ImageClassificationData.from_folders
-
-
-
-
