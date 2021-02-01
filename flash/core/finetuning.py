@@ -41,7 +41,7 @@ class NeverUnfreeze(BaseFinetuning):
             self.freeze(module=attr, train_bn=self.train_bn)
 
 
-class FreezeUnFreeze(NeverUnfreeze):
+class FreezeUnfreeze(NeverUnfreeze):
 
     def __init__(
         self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True, unfreeze_at_epoch: int = 10
@@ -126,7 +126,7 @@ def instantiate_cls(cls, kwargs):
 _DEFAULTS_FINETUNE_STRATEGIES = {
     "never_freeze": NeverFreeze,
     "never_unfreeze": NeverUnfreeze,
-    "freeze_unfreeze": FreezeUnFreeze,
+    "freeze_unfreeze": FreezeUnfreeze,
     "unfreeze_milestones": MilestonesFinetuning
 }
 
