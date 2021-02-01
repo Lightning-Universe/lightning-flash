@@ -60,15 +60,22 @@ Or on a given dataset:
 .. code-block:: python
 
 	# import our libraries
+	from pytorch_lightning import Trainer
 	from flash import download_data
-	from flash.text import SummarizationTask
+	from flash.text import SummarizationData, SummarizationTask
 
     # 2. Load the model from a checkpoint
     model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
 
-	# 3. Perform inference from a csv file
-	predictions = model.predict("data/xsum/predict.csv")
-	print(predictions)
+	# 3. Create dataset from file
+    datamodule = SummarizationData.from_file(
+        predict_file="data/xsum/predict.csv",
+        input="input",
+    )
+
+    # 4. generate summaries
+    predictions = Trainer().predict(model, datamodule=datamodule)
+    print(predictions)
 
 For more advanced inference options, see :ref:`predictions`.
 

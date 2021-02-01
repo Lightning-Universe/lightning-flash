@@ -42,15 +42,22 @@ Or on a given dataset:
 .. code-block:: python
 
 	# import our libraries
+	from pytorch_lightning import Trainer
 	from flash import download_data
-	from flash.text import TranslationTask
+	from flash.text import TranslationData, TranslationTask
 
     # 2. Load the model from a checkpoint
     model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 
-	# 3. Perform inference from a csv file
-	predictions = model.predict("data/wmt_en_ro/predict.csv")
-	print(predictions)
+	# 3. Create dataset from file
+    datamodule = TranslationData.from_file(
+        predict_file="data/wmt_en_ro/predict.csv",
+        input="input",
+    )
+
+    # 4. generate translations
+    predictions = Trainer().predict(model, datamodule=datamodule)
+    print(predictions)
 
 For more advanced inference options, see :ref:`predictions`.
 
