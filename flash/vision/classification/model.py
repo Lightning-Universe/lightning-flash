@@ -25,12 +25,25 @@ from flash.vision.classification.data import ImageClassificationData, ImageClass
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731
 
+_densenet_backbone = lambda model: nn.Sequential(*model.features, nn.ReLU(inplace=True))
+_densenet_feats = lambda model: model.classifier.in_features
+
+_mobilenet_backbone = lambda model: model.features
+_mobilenet_feats = lambda model: model.classifier[-1].in_features
+
 _backbones = {
     "resnet18": (torchvision.models.resnet18, _resnet_backbone, _resnet_feats),
     "resnet34": (torchvision.models.resnet34, _resnet_backbone, _resnet_feats),
     "resnet50": (torchvision.models.resnet50, _resnet_backbone, _resnet_feats),
     "resnet101": (torchvision.models.resnet101, _resnet_backbone, _resnet_feats),
     "resnet152": (torchvision.models.resnet152, _resnet_backbone, _resnet_feats),
+    "resnext50_32x4d": (torchvision.models.resnext50_32x4d, _resnet_backbone, _resnet_feats),
+    "resnext101_32x8d": (torchvision.models.resnext101_32x8d, _resnet_backbone, _resnet_feats),
+    "densenet121": (torchvision.models.densenet121, _densenet_backbone, _densenet_feats),
+    "densenet169": (torchvision.models.densenet169, _densenet_backbone, _densenet_feats),
+    "densenet161": (torchvision.models.densenet161, _densenet_backbone, _densenet_feats),
+    "densenet201": (torchvision.models.densenet201, _densenet_backbone, _densenet_feats),
+    "mobilenet_v2": (torchvision.models.mobilenet_v2, _mobilenet_backbone, _mobilenet_feats)
 }
 
 
