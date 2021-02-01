@@ -21,6 +21,10 @@ from torch import nn
 from torch.optim import Optimizer
 
 
+class NoFreeze(BaseFinetuning):
+    pass
+
+
 class FlashBaseFinetuning(BaseFinetuning):
 
     def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True):
@@ -49,6 +53,10 @@ class FlashBaseFinetuning(BaseFinetuning):
             if attr is None or not isinstance(attr, nn.Module):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(module=attr, train_bn=train_bn)
+
+
+class Freeze(FlashBaseFinetuning):
+    pass
 
 
 class FreezeUnfreeze(FlashBaseFinetuning):
@@ -113,8 +121,8 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
 
 _DEFAULTS_FINETUNE_STRATEGIES = {
-    "no_freeze": BaseFinetuning,
-    "freeze": FlashBaseFinetuning,
+    "no_freeze": NoFreeze,
+    "freeze": Freeze,
     "freeze_unfreeze": FreezeUnfreeze,
     "unfreeze_milestones": UnfreezeMilestones
 }
