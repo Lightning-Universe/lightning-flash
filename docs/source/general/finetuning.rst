@@ -57,19 +57,24 @@ Create a custom Finetuning Strategy Callback.
 
 .. code-block:: python
 
-    from flash.core.finetuning import BaseFinetuning
+    from flash.core.finetuning import FlashBaseFinetuning
 
-    class FeatureExtractorFreezeUnfreeze(BaseFinetuning):
+    class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
 
-        def __init__(self, unfreeze_at_epoch=5)
+        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = true)
+            # this will set self.attr_names as ["feature_extractor"]
+            super().__init__("feature_extractor", train_bn)
             self._unfreeze_at_epoch = unfreeze_at_epoch
 
         def freeze_before_training(self, pl_module):
-            # freeze any module you want
+            # freeze any module you want by overriding this function
+
             # Here, we are freezing ``feature_extractor``
-            self.freeze(pl_module.feature_extractor)
+            self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
         def finetune_function(self, pl_module, current_epoch, optimizer, opt_idx):
+            # unfreeze any module you want by overriding this function
+
             # When ``current_epoch`` is 5, feature_extractor will start to be trained.
             if current_epoch == self._unfreeze_at_epoch:
                 self.unfreeze_and_add_param_group(
