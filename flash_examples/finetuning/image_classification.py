@@ -18,10 +18,10 @@ if __name__ == "__main__":
     model = ImageClassifier(num_classes=datamodule.num_classes)
 
     # 4. Create the trainer. Run once on data
-    trainer = flash.Trainer(max_epochs=1)
+    trainer = flash.Trainer(max_epochs=2)
 
     # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    trainer.finetune(model, datamodule=datamodule, finetune_strategy='freeze_unfreeze', unfreeze_at_epoch=1)
 
     # 6. Test the model
     trainer.test()

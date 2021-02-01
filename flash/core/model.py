@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
 
 from flash.core.data import DataModule, DataPipeline
+from flash.core.finetuning import instantiate_default_finetuning_callbacks
 from flash.core.utils import get_callable_dict
 
 
@@ -150,3 +151,6 @@ class Task(pl.LightningModule):
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         checkpoint["pipeline"] = self.data_pipeline
+
+    def configure_finetune_callbacks(self, **kwargs) -> List:
+        return instantiate_default_finetuning_callbacks(kwargs)
