@@ -52,7 +52,7 @@ When you need more flexibility you can build your own tasks or simply use Lightn
 Install
 -------
 
-You can install flash using `pip/conda <https://pypi.org/project/lightning-flash/0.1.0rc2/>`_:
+You can install flash using `pip install lightning-flash -U -pre`_:
 
 .. code-block:: bash
 
