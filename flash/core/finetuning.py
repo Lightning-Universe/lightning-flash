@@ -20,14 +20,14 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim import Optimizer
 
-_EXCLUDE_PARAMTERS = ["self", "args", "kwargs"]
+_EXCLUDE_PARAMTERS = ("self", "args", "kwargs")
 
 
 class NeverFreeze(BaseFinetuning):
     pass
 
 
-class NeverUnFreeze(BaseFinetuning):
+class NeverUnfreeze(BaseFinetuning):
 
     def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True):
         self.attr_names = [attr_names] if isinstance(attr_names, str) else attr_names
@@ -37,11 +37,11 @@ class NeverUnFreeze(BaseFinetuning):
         for attr_name in self.attr_names:
             attr = getattr(pl_module, attr_name, None)
             if attr is None or not isinstance(attr, nn.Module):
-                MisconfigurationException("To use NeverUnFreeze your model must have a {attr} attribute")
+                MisconfigurationException("To use NeverUnfreeze your model must have a {attr} attribute")
             self.freeze(module=attr, train_bn=self.train_bn)
 
 
-class FreezeUnFreeze(NeverUnFreeze):
+class FreezeUnFreeze(NeverUnfreeze):
 
     def __init__(
         self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True, unfreeze_at_epoch: int = 10
@@ -68,8 +68,6 @@ class FreezeUnFreeze(NeverUnFreeze):
             )
 
 
-# NOTE: copied from:
-# https://github.com/PyTorchLightning/pytorch-lightning/blob/9d165f6f5655a44f1e5cd02ab36f21bc14e2a604/pl_examples/domain_templates/computer_vision_fine_tuning.py#L66
 class MilestonesFinetuning(BaseFinetuning):
 
     def __init__(self, unfreeze_milestones: tuple = (5, 10), train_bn: bool = True, num_layers: int = 5):
@@ -127,7 +125,7 @@ def instantiate_cls(cls, kwargs):
 
 _DEFAULTS_FINETUNE_STRATEGIES = {
     "never_freeze": NeverFreeze,
-    "never_unfreeze": NeverUnFreeze,
+    "never_unfreeze": NeverUnfreeze,
     "freeze_unfreeze": FreezeUnFreeze,
     "unfreeze_milestones": MilestonesFinetuning
 }
