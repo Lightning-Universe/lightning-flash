@@ -27,14 +27,6 @@ class NoFreeze(BaseFinetuning):
     pass
 
 
-def freeze_using_attr_names(pl_module, attr_names: List[str], train_bn: bool = True):
-    for attr_name in attr_names:
-        attr = getattr(pl_module, attr_name, None)
-        if attr is None or not isinstance(attr, nn.Module):
-            MisconfigurationException("To use Freeze your model must have a {attr} attribute")
-        BaseFinetuning.freeze(module=attr, train_bn=train_bn)
-
-
 class FlashBaseBaseFinetuning(BaseFinetuning):
 
     def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True):
@@ -42,7 +34,15 @@ class FlashBaseBaseFinetuning(BaseFinetuning):
         self.train_bn = train_bn
 
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
+        self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
+
+    @staticmethod
+    def freeze_using_attr_names(pl_module, attr_names: List[str], train_bn: bool = True):
+        for attr_name in attr_names:
+            attr = getattr(pl_module, attr_name, None)
+            if attr is None or not isinstance(attr, nn.Module):
+                MisconfigurationException("To use Freeze your model must have a {attr} attribute")
+            BaseFinetuning.freeze(module=attr, train_bn=train_bn)
 
 
 class Freeze(FlashBaseBaseFinetuning):
@@ -56,7 +56,7 @@ class FreezeUnfreeze(FlashBaseBaseFinetuning):
         self.unfreeze_epoch = unfreeze_epoch
 
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
+        self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
     def finetunning_function(
         self,
@@ -92,7 +92,7 @@ class UnfreezeMilestones(FlashBaseBaseFinetuning):
         super().__init__(attr_names, train_bn)
 
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
+        self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
     def finetunning_function(
         self,
