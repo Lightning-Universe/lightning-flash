@@ -57,9 +57,6 @@ class FreezeUnfreeze(FlashBaseFinetuning):
         super().__init__(attr_names, train_bn)
         self.unfreeze_epoch = unfreeze_epoch
 
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
-
     def finetunning_function(
         self,
         pl_module: pl.LightningModule,
@@ -68,10 +65,7 @@ class FreezeUnfreeze(FlashBaseFinetuning):
         opt_idx: int,
     ) -> None:
         if epoch == self.unfreeze_epoch:
-            modules = []
-            for attr_name in self.attr_names:
-                modules.append(getattr(pl_module, attr_name))
-
+            modules = [getattr(pl_module, attr_name) for attr_name in self.attr_names]
             self.unfreeze_and_add_param_group(
                 module=modules,
                 optimizer=optimizer,
@@ -93,9 +87,6 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
         super().__init__(attr_names, train_bn)
 
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
-
     def finetunning_function(
         self,
         pl_module: pl.LightningModule,
@@ -105,8 +96,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
     ) -> None:
         backbone_modules = list(pl_module.backbone.modules())
         if epoch == self.unfreeze_milestones[0]:
-            # unfreeze 5 last layers
-            # TODO last N layers should be parameter
+            # unfreeze num_layers last layers
             self.unfreeze_and_add_param_group(
                 module=backbone_modules[-self.num_layers:],
                 optimizer=optimizer,
@@ -115,7 +105,6 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
         elif epoch == self.unfreeze_milestones[1]:
             # unfreeze remaining layers
-            # TODO last N layers should be parameter
             self.unfreeze_and_add_param_group(
                 module=backbone_modules[:-self.num_layers],
                 optimizer=optimizer,
