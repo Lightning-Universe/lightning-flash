@@ -182,7 +182,7 @@ Flash has an ImageClassification task to tackle any image classification problem
   trainer = flash.Trainer(max_epochs=1)
 
   # 5. Train the model
-  trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+  trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
   # 6. Test the model
   trainer.test()
@@ -234,7 +234,7 @@ Flash has a TextClassification task to tackle any text classification problem.
   trainer = flash.Trainer(max_epochs=1)
 
   # 5. Fine-tune the model
-  trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+  trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
   # 6. Test model
   trainer.test()

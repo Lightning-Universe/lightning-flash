@@ -19,4 +19,4 @@ def test_classification(tmpdir):
     )
     model = ImageClassifier(2, backbone="resnet18")
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, datamodule=data)
+    trainer.finetune(model, datamodule=data, strategy="freeze")

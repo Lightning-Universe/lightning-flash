@@ -15,10 +15,13 @@ from typing import List, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim import Optimizer
+
+
+class NoFreeze(BaseFinetuning):
+    pass
 
 
 class FlashBaseFinetuning(BaseFinetuning):
@@ -49,6 +52,10 @@ class FlashBaseFinetuning(BaseFinetuning):
             if attr is None or not isinstance(attr, nn.Module):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(module=attr, train_bn=train_bn)
+
+
+class Freeze(FlashBaseFinetuning):
+    pass
 
 
 class FreezeUnfreeze(FlashBaseFinetuning):
@@ -113,23 +120,21 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
 
 _DEFAULTS_FINETUNE_STRATEGIES = {
-    "no_freeze": BaseFinetuning,
-    "freeze": FlashBaseFinetuning,
+    "no_freeze": NoFreeze,
+    "freeze": Freeze,
     "freeze_unfreeze": FreezeUnfreeze,
     "unfreeze_milestones": UnfreezeMilestones
 }
 
 
 def instantiate_default_finetuning_callbacks(strategy):
-    if strategy is None:
-        strategy = "no_freeze"
-        rank_zero_warn("strategy is None. Setting strategy to `no_freeze` by default.", UserWarning)
+    if strategy is None or strategy not in _DEFAULTS_FINETUNE_STRATEGIES:
+        raise MisconfigurationException(
+            f"a strategy should be provided. Use {list(_DEFAULTS_FINETUNE_STRATEGIES)} or provide a callback"
+            " instance of `flash.core.finetuning.FlashBaseFinetuning`. Found {strategy} "
+        )
     if isinstance(strategy, str):
         strategy = strategy.lower()
         if strategy in _DEFAULTS_FINETUNE_STRATEGIES:
             return [_DEFAULTS_FINETUNE_STRATEGIES[strategy]()]
-        raise MisconfigurationException(
-            f"strategy should be within {list(_DEFAULTS_FINETUNE_STRATEGIES)}"
-            f". Found {strategy}"
-        )
     return []
