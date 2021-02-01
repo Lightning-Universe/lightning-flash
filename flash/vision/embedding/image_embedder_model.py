@@ -19,9 +19,8 @@ from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
 from pytorch_lightning.utilities.distributed import rank_zero_warn
-from pl_bolts.models.self_supervised import SimCLR
 
-from flash import Task
+from flash.core import Task
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
 from flash.model_map import models
 
@@ -56,34 +55,6 @@ class ImageEmbedder(Task):
         embedder = ImageEmbedder(backbone='swav-imagenet')
         image = torch.rand(32, 3, 32, 32)
         embeddings = embedder(image)
-
-    Backbones available
-
-    .. list-table:: Backbones
-       :widths: 50 20 20
-       :header-rows: 1
-
-       * - backbone
-         - dataset
-         - training method
-       * - resnet18
-         - Imagenet
-         - supervised
-       * - resnet34
-         - Imagenet
-         - supervised
-       * - resnet50
-         - Imagenet
-         - supervised
-       * - resnet101
-         - Imagenet
-         - supervised
-       * - resnet152
-         - Imagenet
-         - supervised
-       * - swav-imagenet
-         - Imagenet
-         - self-supervised (clustering)
 
     """
 
@@ -156,5 +127,5 @@ class ImageEmbedder(Task):
 if __name__ == '__main__':
     embedder = ImageEmbedder(backbone='resnet50')
     image = torch.rand(32, 3, 128, 128)
-    embeddings = embedder(image)
+    embeddings = embedder.predict('/Users/williamfalcon/Desktop/abcd.jpeg')
     print(embeddings.shape)

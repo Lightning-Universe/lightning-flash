@@ -8,7 +8,8 @@ Image Embedder
 ********
 The task
 ********
-Image embedding encodes an image into a feature vector. This feature vector can be used for any downstream task
+Image embedding encodes an image into a vector of image features which can be used for anything like clustering, similarity
+search or classification.
 
 ------
 
@@ -18,44 +19,31 @@ Inference
 
 The :class:`~flash.vision.ImageEmbedder` is already pre-trained on [ImageNet](http://www.image-net.org/), a dataset of over 14 million images.
 
-TODO:
-
-Use the :class:`~flash.text.ImageEmbedder` pretrained model for inference on any string sequence using :func:`~flash.text.TextClassifier.predict`:
+Use the :class:`~flash.text.ImageEmbedder` pretrained model for inference on any image tensor or image path using :func:`~flash.text.ImageEmbedder.predict`:
 
 .. code-block:: python
 
-	# import our libraries
-	from flash.text import TextClassifier
+	from flash.vision import ImageEmbedder
 
 	# Load finetuned task
-	model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+	embedder = ImageEmbedder(backbone='swav-imagenet')
 
-	# 2. Perform inference from list of sequences
-	predictions = model.predict([
-	    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-	    "The worst movie in the history of cinema.",
-	    "I come from Bulgaria where it 's almost impossible to have a tornado."
-	    "Very, very afraid"
-	    "This guy has done a great job with this movie!",
-	])
+	# 2. Perform inference on an image file
+	embeddings = model.predict('path/to/image.png')
 	print(predictions)
 
-Or on a given dataset:
+Or on an image tensor
 
 .. code-block:: python
 
-	# import our libraries
-	from flash import download_data
-	from flash.text import TextClassifier
+	from flash.vision import ImageEmbedder
 
-	# 1. Download dataset, save it under 'data' dir
-	download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
+	# Load finetuned task
+	embedder = ImageEmbedder(backbone='swav-imagenet')
 
-	# 2. Load finetuned task
-	model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
-
-	# 3. Perform inference from a csv file
-	predictions = model.predict("data/imdb/test.csv")
+	# 2. Perform inference on an image file
+	images = torch.rand(32, 3, 224, 224)
+	embeddings = model.predict(images)
 	print(predictions)
 
 For more advanced inference options, see :ref:`predictions`.
@@ -65,42 +53,13 @@ For more advanced inference options, see :ref:`predictions`.
 **********
 Finetuning
 **********
-
-Lets say you wanted to develope a model that could determine whether an image contains **ants** or **bees**, using the hymenoptera dataset.
-Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.ImageClassificationData`.
-
-.. note:: The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
-
-.. code-block::
-
-    hymenoptera_data
-    ├── train
-    │   ├── ants
-    │   │   ├── 0013035.jpg
-    │   │   ├── 1030023514_aad5c608f9.jpg
-    │   │   ...
-    │   └── bees
-    │       ├── 1092977343_cb42b38d62.jpg
-    │       ├── 1093831624_fb5fbe2308.jpg
-    │       ...
-    └── val
-        ├── ants
-        │   ├── 10308379_1b6c72e180.jpg
-        │   ├── 1053149811_f62a3410d3.jpg
-        │   ...
-        └── bees
-            ├── 1032546534_06907fe3b3.jpg
-            ├── 10870992_eebeeb3a12.jpg
-            ...
-
-
-Now all we need is three lines of code to build to train our task!
+To tailor this image embedder to your dataset, finetune first.
 
 .. code-block:: python
 
-	import flash
-	from flash import download_data
-	from flash.vision import ImageClassificationData, ImageClassifier
+    import flash
+    from flash import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -114,7 +73,7 @@ Now all we need is three lines of code to build to train our task!
     )
 
     # 3. Build the model
-    model = ImageClassifier(num_classes=datamodule.num_classes)
+    embedder = ImageEmbedder()
 
     # 4. Create the trainer. Run once on data
     trainer = flash.Trainer(max_epochs=1)
@@ -133,7 +92,7 @@ Now all we need is three lines of code to build to train our task!
 *********************
 Changing the backbone
 *********************
-By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image classification. You can change the model run by the task by passing in a different backbone.
+By default, we use the encoder from `Swav <https://arxiv.org/pdf/2006.09882.pdf>`_ pretrained on Imagenet via contrastive learning. You can change the model run by the task by passing in a different backbone.
 
 .. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
 
@@ -149,12 +108,33 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
     # 2. build the task
     task = ImageClassifier(num_classes=2, backbone="resnet34")
 
-Available backbones:
+Backbones available
 
-* resnet34
-* resnet50
-* resnet101
-* resnet152
+.. list-table:: Backbones
+   :widths: 50 20 20
+   :header-rows: 1
+
+   * - backbone
+     - dataset
+     - training method
+   * - resnet18
+     - Imagenet
+     - supervised
+   * - resnet34
+     - Imagenet
+     - supervised
+   * - resnet50
+     - Imagenet
+     - supervised
+   * - resnet101
+     - Imagenet
+     - supervised
+   * - resnet152
+     - Imagenet
+     - supervised
+   * - swav-imagenet
+     - Imagenet
+     - self-supervised (clustering)
 
 ------
 
@@ -162,26 +142,13 @@ Available backbones:
 API reference
 *************
 
-.. _image_classifier:
+.. _image_embedder_class:
 
-ImageClassifier
+ImageEmbedder
 ---------------
 
-.. autoclass:: flash.vision.ImageClassifier
+.. autoclass:: flash.vision.ImageEmbedder
     :members:
     :exclude-members: forward
 
-.. _image_classification_data:
-
-ImageClassificationData
------------------------
-
-.. autoclass:: flash.vision.ImageClassificationData
-
-.. automethod:: flash.vision.ImageClassificationData.from_filepaths
-
-.. automethod:: flash.vision.ImageClassificationData.from_folders
-
-
-
-
+.. _image_embedder_data:

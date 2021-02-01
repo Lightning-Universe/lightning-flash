@@ -115,10 +115,11 @@ class Task(pl.LightningModule):
             The post-processed model predictions
 
         """
-        data_pipeline = data_pipeline or self.data_pipeline
-        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        batch_x, batch_y = batch if len(batch) == 2 else (batch, None)
-        predictions = self.forward(batch_x)
+        with torch.no_grad():
+            data_pipeline = data_pipeline or self.data_pipeline
+            batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
+            batch_x, batch_y = batch if len(batch) == 2 else (batch, None)
+            predictions = self.forward(batch_x)
         return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
