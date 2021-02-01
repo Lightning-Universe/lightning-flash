@@ -30,7 +30,7 @@ class SummarizationData(Seq2SeqData):
     def from_files(
         cls,
         train_file,
-        input: str = 'src_text',
+        input: str = 'input',
         target: Optional[str] = None,
         filetype="csv",
         backbone="t5-small",
@@ -72,6 +72,8 @@ class SummarizationData(Seq2SeqData):
         """
         return super().from_files(
             train_file=train_file,
+            valid_file=valid_file,
+            test_file=test_file,
             input=input,
             target=target,
             backbone=backbone,

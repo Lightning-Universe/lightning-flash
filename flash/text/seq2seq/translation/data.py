@@ -32,7 +32,7 @@ class TranslationData(Seq2SeqData):
     def from_files(
         cls,
         train_file,
-        input: str = 'src_text',
+        input: str = 'input',
         target: Optional[str] = None,
         filetype="csv",
         backbone="sshleifer/student_marian_en_ro_6_3",
@@ -74,6 +74,8 @@ class TranslationData(Seq2SeqData):
         """
         return super().from_files(
             train_file=train_file,
+            valid_file=valid_file,
+            test_file=test_file,
             input=input,
             target=target,
             backbone=backbone,
@@ -89,7 +91,7 @@ class TranslationData(Seq2SeqData):
     def from_file(
         cls,
         predict_file: str,
-        input: str = 'src_text',
+        input: str = 'input',
         target: Optional[str] = None,
         backbone="sshleifer/student_marian_en_ro_6_3",
         filetype="csv",
