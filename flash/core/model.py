@@ -22,6 +22,25 @@ from flash.core.data import DataModule, DataPipeline
 from flash.core.utils import get_callable_dict
 
 
+def predict_context(func: Callable) -> Callable:
+    """
+    This decorator is used as context manager
+    to put model in eval mode before running predict and reset to train after.
+    """
+
+    def wrapper(self, *args, **kwargs) -> Any:
+        self.eval()
+        torch.set_grad_enabled(False)
+
+        result = func(self, *args, **kwargs)
+
+        self.train()
+        torch.set_grad_enabled(True)
+        return result
+
+    return wrapper
+
+
 class Task(pl.LightningModule):
     """A general Task.
 
@@ -92,17 +111,7 @@ class Task(pl.LightningModule):
         output = self.step(batch, batch_idx)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
-    @property
-    @contextmanager
-    def predict_context(self):
-        try:
-            self.eval()
-            torch.set_grad_enabled(False)
-            yield
-        finally:
-            self.train()
-            torch.set_grad_enabled(True)
-
+    @predict_context
     def predict(
         self,
         x: Any,
@@ -127,12 +136,11 @@ class Task(pl.LightningModule):
             The post-processed model predictions
 
         """
-        with self.predict_context:
-            data_pipeline = data_pipeline or self.data_pipeline
-            batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-            batch_x, batch_y = batch if len(batch) == 2 else (batch, None)
-            predictions = self.forward(batch_x)
-            output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+        data_pipeline = data_pipeline or self.data_pipeline
+        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
+        batch_x, batch_y = batch if len(batch) == 2 else (batch, None)
+        predictions = self.forward(batch_x)
+        output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
         return output
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
