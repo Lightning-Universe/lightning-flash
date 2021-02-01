@@ -47,7 +47,7 @@ def test_from_csv(tmpdir):
     assert "input_ids" in batch
 
 
-def test_test_valid(tmpdir):
+def test_from_files(tmpdir):
     if os.name == "nt":
         # TODO: huggingface stuff timing out on windows
         return True

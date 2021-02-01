@@ -1,6 +1,6 @@
 from pytorch_lightning import Trainer
 
-from flash.core.data import download_data
+from flash import download_data
 from flash.text import TranslationData, TranslationTask
 
 if __name__ == "__main__":

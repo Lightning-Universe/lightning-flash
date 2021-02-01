@@ -28,7 +28,6 @@ TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 def test_init_train(tmpdir):
     if os.name == "nt":
         # TODO: huggingface stuff timing out on windows
-        #
         return True
     model = SummarizationTask(TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
