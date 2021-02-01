@@ -79,7 +79,7 @@ To tailor this image embedder to your dataset, finetune first.
     trainer.test()
 
     # 7. Save it!
-    trainer.save_checkpoint("image_classification_model.pt")
+    trainer.save_checkpoint("image_embedder_model.pt")
 
 ------
 
@@ -88,7 +88,7 @@ Changing the backbone
 *********************
 By default, we use the encoder from `Swav <https://arxiv.org/pdf/2006.09882.pdf>`_ pretrained on Imagenet via contrastive learning. You can change the model run by the task by passing in a different backbone.
 
-.. note:: 
+.. note::
 
    When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
 

@@ -15,8 +15,8 @@ if __name__ == "__main__":
     # 3. Generate an embedding from an image path.
     embeddings = embedder.predict('data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg')
 
-    # 4. Assert dimension
-    assert embeddings.shape == torch.Size((1, 128))
+    # 4. Print embeddings shape
+    print(embeddings.shape)
 
     # 5. Create a tensor random image
     random_image = torch.randn(1, 3, 32, 32)
@@ -24,5 +24,5 @@ if __name__ == "__main__":
     # 6. Generate an embedding from this random image
     embeddings = embedder.predict(random_image)
 
-    # 7. Assert dimension
-    assert embeddings.shape == torch.Size((1, 128))
+    # 7. Print embeddings shape
+    print(embeddings.shape)

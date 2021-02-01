@@ -24,10 +24,9 @@ def load_swav_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/
 _models = {'simclr-imagenet': load_simclr_imagenet, 'swav-imagenet': load_swav_imagenet}
 
 
-def load_model(name):
+def _load_model(name):
     if not _BOLTS_AVAILABLE:
-        raise MisconfigurationException("Bolts isn't installed. Please, use pip install `lightning-bolts`.")
+        raise MisconfigurationException("Bolts isn't installed. Please, use ``pip install lightning-bolts``.")
     if name in _models:
         return _models[name]()
-    else:
-        raise MisconfigurationException("Currently, only `simclr-imagenet` and `swav-imagenet` are supported.")
+    raise MisconfigurationException("Currently, only `simclr-imagenet` and `swav-imagenet` are supported.")
