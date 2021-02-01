@@ -32,14 +32,9 @@ Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on a
 	embeddings = model.predict('path/to/image.png')
 	print(predictions)
 
-Or on an image tensor
+Or on a random image tensor
 
 .. testcode:: python
-
-	from flash.vision import ImageEmbedder
-
-	# Load finetuned task
-	embedder = ImageEmbedder(backbone='swav-imagenet')
 
 	# 2. Perform inference on an image file
 	images = torch.rand(32, 3, 224, 224)
@@ -93,7 +88,9 @@ Changing the backbone
 *********************
 By default, we use the encoder from `Swav <https://arxiv.org/pdf/2006.09882.pdf>`_ pretrained on Imagenet via contrastive learning. You can change the model run by the task by passing in a different backbone.
 
-.. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
+.. note:: 
+
+   When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
 
 .. code-block:: python
 
