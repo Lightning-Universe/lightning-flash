@@ -88,13 +88,14 @@ class Trainer(pl.Trainer):
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
     def _resolve_callbacks(self, model, strategy):
+        """
+        This function is used to select the `BaseFinetuning` to be used for finetuning.
+        """
         if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
             raise MisconfigurationException(
                 "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
                 f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES.keys())}"
             )
-
-        callbacks = self.callbacks
 
         if isinstance(strategy, BaseFinetuning):
             callback = strategy
@@ -110,20 +111,24 @@ class Trainer(pl.Trainer):
                     rank_zero_warn(
                         "The model contains a default finetune callback. "
                         f"The provided {strategy} will be overriden. "
-                        "HINT: Provide a `BaseFinetuning callback as strategy to be prioritized. ", UserWarning
+                        "HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
                     )
                 callback = [model_callback]
             else:
                 callback = instantiate_default_finetuning_callbacks(strategy)
 
-        self.callbacks = self._merge_callbacks(callbacks, [callback])
+        self.callbacks = self._merge_callbacks(self.callbacks, [callback])
 
     @staticmethod
-    def _merge_callbacks(current_callbacks: List, new_callbacks: List) -> List:
+    def _merge_callbacks(old_callbacks: List, new_callbacks: List) -> List:
+        """
+        This function keeps only 1 instance of each callback type,
+        extending new_callbacks with old_callbacks
+        """
         if len(new_callbacks):
-            return current_callbacks
+            return old_callbacks
         new_callbacks_types = set(type(c) for c in new_callbacks)
-        current_callbacks_types = set(type(c) for c in current_callbacks)
-        override_types = new_callbacks_types.intersection(current_callbacks_types)
-        new_callbacks.extend(c for c in current_callbacks if type(c) not in override_types)
+        old_callbacks_types = set(type(c) for c in old_callbacks)
+        override_types = new_callbacks_types.intersection(old_callbacks_types)
+        new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
         return new_callbacks
