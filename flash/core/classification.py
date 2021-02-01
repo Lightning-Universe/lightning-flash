@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
+from typing import Any, Union
 
 import torch
+from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
@@ -21,9 +22,11 @@ from flash.core.model import Task
 
 class ClassificationDataPipeline(TaskDataPipeline):
 
-    def before_uncollate(self, batch: torch.Tensor) -> torch.Tensor:
+    def before_uncollate(self, batch: Union[torch.Tensor, tuple, SequenceClassifierOutput]) -> torch.Tensor:
         if isinstance(batch, tuple):
             batch = batch[0]
+        elif isinstance(batch, SequenceClassifierOutput):
+            batch = batch.logits
         return torch.softmax(batch, -1)
 
     def after_uncollate(self, samples: Any) -> Any:
