@@ -23,7 +23,7 @@ When using :func:`~flash.Trainer.finetune`, you also need to provide a finetune 
     )
 
     # 2. build the task, and turn off pre-training
-    task = ImageClassifier(num_classes=2, pretrained=False)
+    task = ImageClassifier(num_classes=2)
 
     # 3. train!
     trainer = flash.Trainer()
