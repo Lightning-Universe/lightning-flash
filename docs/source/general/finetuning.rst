@@ -103,12 +103,6 @@ For even more customization, create your own finetuning callback.
             super().__init__("feature_extractor", train_bn)
             self._unfreeze_at_epoch = unfreeze_at_epoch
 
-        def freeze_before_training(self, pl_module):
-            # freeze any module you want by overriding this function
-
-            # Here, we are freezing ``feature_extractor``
-            self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
-
         def finetune_function(self, pl_module, current_epoch, optimizer, opt_idx):
             # unfreeze any module you want by overriding this function
 
