@@ -69,7 +69,8 @@ class TextClassifier(ClassificationTask):
 
     def step(self, batch, batch_idx) -> dict:
         output = {}
-        loss, logits = self.forward(batch)
+        out = self.forward(batch)
+        loss, logits = out[:2]
         output["loss"] = loss
         output["y_hat"] = logits
         probs = self.data_pipeline.before_uncollate(logits)
