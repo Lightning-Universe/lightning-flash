@@ -37,6 +37,7 @@ Lightning Flash
 
    general/training
    general/predictions
+   general/new_task
 
 Indices and tables
 ==================
