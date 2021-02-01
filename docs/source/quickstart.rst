@@ -187,40 +187,6 @@ Steps here are similar to finetune:
 4. Call :func:`flash.core.trainer.Trainer.fit` with your data set.
 5. Use your finetuned model for predictions
 
-.. code-block:: python
-
-    import torch
-    import torch.nn.functional as F
-    from flash.core.classification import ClassificationTask
-    from pytorch_lightning.metrics import Accuracy
-    from typing import Type, Callable, Mapping, Sequence, Union
-
-
-    class LinearClassifier(ClassificationTask):
-        def __init__(
-            self,
-            num_inputs,
-            num_classes,
-            loss_fn: F.cross_entropy,
-            optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-            metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = [Accuracy()],
-            learning_rate: float = 1e-3,
-        ):
-          super().__init__(
-            model=None,
-              loss_fn=loss_fn,
-              optimizer=optimizer,
-              metrics=metrics,
-              learning_rate=learning_rate,
-          )
-
-          self.save_hyperparameters()
-
-          self.linear = torch.nn.Linear(num_inputs, num_classes)
-
-        def forward(self, x):
-            return self.linear(x)
-
 -----
 
 A few Built-in Tasks
