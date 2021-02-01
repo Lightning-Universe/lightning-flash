@@ -4,7 +4,7 @@ from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning import _logger as log
+from pytorch_lightning.utilities import rank_zero_info
 from transformers import AutoModelForSeq2SeqLM
 
 from flash.core import Task
@@ -123,7 +123,7 @@ class Seq2SeqTask(Task):
 
         if task_specific_params is not None:
             pars = task_specific_params.get(self.task, {})
-            log.info(f"Setting model params for {self.task}:\n {pars}")
+            rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
     @property
