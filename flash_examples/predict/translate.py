@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     # 2. Load the model from a checkpoint
     # model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
-    model = TranslationTask.load_from_checkpoint("translation_model_en_ro.pt")
+    model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 
     # 2a. Translate a few sentences!
     predictions = model.predict([
@@ -25,4 +25,4 @@ if __name__ == "__main__":
         input="input",
     )
     predictions = Trainer().predict(model, datamodule=datamodule)
-    print(predictions[:10])  # print the sample of results
+    print(predictions)

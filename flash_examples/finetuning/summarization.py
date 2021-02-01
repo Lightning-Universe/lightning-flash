@@ -4,7 +4,7 @@ from flash.text import SummarizationData, SummarizationTask
 
 if __name__ == "__main__":
     # 1. Download the data
-    # download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
 
     # 2. Load the data
     datamodule = SummarizationData.from_files(
@@ -28,4 +28,4 @@ if __name__ == "__main__":
     trainer.test()
 
     # 7. Save it!
-    trainer.save_checkpoint("summarization_model.pt")
+    trainer.save_checkpoint("summarization_model_xsum.pt")
