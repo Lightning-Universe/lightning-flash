@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import inspect
 from typing import List, Union
 
 import pytorch_lightning as pl
@@ -20,8 +19,6 @@ from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim import Optimizer
-
-_EXCLUDE_PARAMTERS = ("self", "args", "kwargs")
 
 
 class FlashBaseFinetuning(BaseFinetuning):
@@ -46,13 +43,12 @@ class FlashBaseFinetuning(BaseFinetuning):
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
         self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
-    @staticmethod
-    def freeze_using_attr_names(pl_module, attr_names: List[str], train_bn: bool = True):
+    def freeze_using_attr_names(self, pl_module, attr_names: List[str], train_bn: bool = True):
         for attr_name in attr_names:
             attr = getattr(pl_module, attr_name, None)
             if attr is None or not isinstance(attr, nn.Module):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
-            BaseFinetuning.freeze(module=attr, train_bn=train_bn)
+            self.freeze(module=attr, train_bn=train_bn)
 
 
 class FreezeUnfreeze(FlashBaseFinetuning):
