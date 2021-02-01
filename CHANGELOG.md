@@ -9,10 +9,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added flash_notebook examples ([#9](https://github.com/PyTorchLightning/pytorch-lightning/pull/9))
+- Added flash_notebook examples ([#9](https://github.com/PyTorchLightning/lightning-flash/pull/9))
 
 
-- Added `strategy` to `trainer.finetune` with `NoFreeze`, `Freeze`, `FreezeUnfreeze`, `UnfreezeMilestones` Callbacks([#39](https://github.com/PyTorchLightning/pytorch-lightning/pull/39))
+- Added `strategy` to `trainer.finetune` with `NoFreeze`, `Freeze`, `FreezeUnfreeze`, `UnfreezeMilestones` Callbacks([#39](https://github.com/PyTorchLightning/lightning-flash/pull/39))
 
 
 ### Changed

@@ -15,12 +15,13 @@ import warnings
 from typing import List, Optional, Union
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import BaseFinetuning, Callback
+from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
-from flash.core.finetuning import instantiate_default_finetuning_callbacks
-from flash.core.model import Task
+from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
 
 
 class Trainer(pl.Trainer):
@@ -53,7 +54,7 @@ class Trainer(pl.Trainer):
 
     def finetune(
         self,
-        model: Task,
+        model: LightningModule,
         train_dataloader: Optional[DataLoader] = None,
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[pl.LightningDataModule] = None,
@@ -76,29 +77,46 @@ class Trainer(pl.Trainer):
 
             strategy: Should either be a string or a finetuning callback subclassing
                 ``pytorch_lightning.callbacks.BaseFinetuning``.
-                Currently default strategies can be create with strings such as:
+                Currently, default strategies can be enabled with these strings:
                     * ``no_freeze``,
-                    * ``freeze``
-                    * ``freeze_unfreeze``
+                    * ``freeze``,
+                    * ``freeze_unfreeze``,
                     * ``unfreeze_milestones``
 
         """
-        if not isinstance(strategy, (BaseFinetuning, str)):
-            raise MisconfigurationException(
-                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning`` Callback or a str"
-            )
-
-        self._resolve_callbacks(strategy)
+        self._resolve_callbacks(model, strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
-    def _resolve_callbacks(self, strategy):
-        if sum((isinstance(c, BaseFinetuning) for c in [strategy])) > 1:
-            raise MisconfigurationException("Only 1 callback subclassing `BaseFinetuning` should be provided.")
-        # todo: change to ``configure_callbacks`` when merged to Lightning.
+    def _resolve_callbacks(self, model, strategy):
+        if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
+            raise MisconfigurationException(
+                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
+                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES.keys())}"
+            )
+
         callbacks = self.callbacks
-        if isinstance(strategy, str):
-            strategy = instantiate_default_finetuning_callbacks(strategy)
-        self.callbacks = self._merge_callbacks(callbacks, [strategy])
+
+        if isinstance(strategy, BaseFinetuning):
+            callback = strategy
+        else:
+            # todo: change to ``configure_callbacks`` when merged to Lightning.
+            model_callback = model.configure_finetune_callback()
+            if len(model_callback) > 1:
+                raise MisconfigurationException(
+                    f"{model} configure_finetune_callback should create a list with only 1 callback"
+                )
+            if len(model_callback) == 1:
+                if strategy is not None:
+                    rank_zero_warn(
+                        "The model contains a default finetune callback. "
+                        f"The provided {strategy} will be overriden. "
+                        "HINT: Provide a `BaseFinetuning callback as strategy to be prioritized. ", UserWarning
+                    )
+                callback = [model_callback]
+            else:
+                callback = instantiate_default_finetuning_callbacks(strategy)
+
+        self.callbacks = self._merge_callbacks(callbacks, [callback])
 
     @staticmethod
     def _merge_callbacks(current_callbacks: List, new_callbacks: List) -> List:

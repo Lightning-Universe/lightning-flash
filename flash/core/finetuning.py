@@ -16,6 +16,7 @@ from typing import List, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim import Optimizer
@@ -23,13 +24,22 @@ from torch.optim import Optimizer
 _EXCLUDE_PARAMTERS = ("self", "args", "kwargs")
 
 
-class NoFreeze(BaseFinetuning):
-    pass
-
-
-class FlashBaseBaseFinetuning(BaseFinetuning):
+class FlashBaseFinetuning(BaseFinetuning):
 
     def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True):
+        r"""
+
+        FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
+
+        Override ``finetunning_function`` to put your unfreeze logic.
+
+        Args:
+            attr_names: Name(s) of the module attributes of the model to be frozen.
+
+            train_bn: Wether to train Batch Norm layer
+
+        """
+
         self.attr_names = [attr_names] if isinstance(attr_names, str) else attr_names
         self.train_bn = train_bn
 
@@ -41,15 +51,11 @@ class FlashBaseBaseFinetuning(BaseFinetuning):
         for attr_name in attr_names:
             attr = getattr(pl_module, attr_name, None)
             if attr is None or not isinstance(attr, nn.Module):
-                MisconfigurationException("To use Freeze your model must have a {attr} attribute")
+                MisconfigurationException(f"Your model must have a {attr} attribute")
             BaseFinetuning.freeze(module=attr, train_bn=train_bn)
 
 
-class Freeze(FlashBaseBaseFinetuning):
-    pass
-
-
-class FreezeUnfreeze(FlashBaseBaseFinetuning):
+class FreezeUnfreeze(FlashBaseFinetuning):
 
     def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True, unfreeze_epoch: int = 10):
         super().__init__(attr_names, train_bn)
@@ -77,7 +83,7 @@ class FreezeUnfreeze(FlashBaseBaseFinetuning):
             )
 
 
-class UnfreezeMilestones(FlashBaseBaseFinetuning):
+class UnfreezeMilestones(FlashBaseFinetuning):
 
     def __init__(
         self,
@@ -122,21 +128,23 @@ class UnfreezeMilestones(FlashBaseBaseFinetuning):
 
 
 _DEFAULTS_FINETUNE_STRATEGIES = {
-    "no_freeze": NoFreeze,
-    "freeze": Freeze,
+    "no_freeze": BaseFinetuning,
+    "freeze": FlashBaseFinetuning,
     "freeze_unfreeze": FreezeUnfreeze,
     "unfreeze_milestones": UnfreezeMilestones
 }
 
 
 def instantiate_default_finetuning_callbacks(strategy):
+    if strategy is None:
+        strategy = "no_freeze"
+        rank_zero_warn("strategy is None. Setting strategy to `no_freeze` by default.", UserWarning)
     if isinstance(strategy, str):
         strategy = strategy.lower()
         if strategy in _DEFAULTS_FINETUNE_STRATEGIES:
             return [_DEFAULTS_FINETUNE_STRATEGIES[strategy]()]
-        else:
-            raise MisconfigurationException(
-                f"strategy should be within {list(_DEFAULTS_FINETUNE_STRATEGIES)}"
-                f". Found {strategy}"
-            )
+        raise MisconfigurationException(
+            f"strategy should be within {list(_DEFAULTS_FINETUNE_STRATEGIES)}"
+            f". Found {strategy}"
+        )
     return []
