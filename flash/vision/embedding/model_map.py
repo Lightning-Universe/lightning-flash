@@ -1,10 +1,12 @@
-from functools import partial
+from contextlib import suppress
+from typing import Type
 
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 if _BOLTS_AVAILABLE:
-    from pl_bolts.models.self_supervised import SimCLR, SwAV
+    with suppress(TypeError):
+        from pl_bolts.models.self_supervised import SimCLR, SwAV
 
 ROOT_S3_BUCKET = "https://pl-bolts-weights.s3.us-east-2.amazonaws.com"
 
