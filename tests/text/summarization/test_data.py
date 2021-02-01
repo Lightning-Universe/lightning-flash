@@ -36,11 +36,7 @@ def test_from_csv(tmpdir):
         return True
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_files(
-        backbone=TEST_BACKBONE,
-        train_file=csv_path,
-        input="input",
-        target="target",
-        batch_size=1
+        backbone=TEST_BACKBONE, train_file=csv_path, input="input", target="target", batch_size=1
     )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
@@ -76,12 +72,7 @@ def test_from_json(tmpdir):
         return True
     json_path = json_data(tmpdir)
     dm = SummarizationData.from_files(
-        backbone=TEST_BACKBONE,
-        train_file=json_path,
-        input="input",
-        target="target",
-        filetype="json",
-        batch_size=1
+        backbone=TEST_BACKBONE, train_file=json_path, input="input", target="target", filetype="json", batch_size=1
     )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
