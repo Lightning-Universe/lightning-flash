@@ -9,7 +9,6 @@ if __name__ == "__main__":
     download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", 'data/')
 
     # 2. Load the model from a checkpoint
-    # model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
     model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 
     # 2a. Translate a few sentences!

@@ -8,7 +8,7 @@ if __name__ == "__main__":
     download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
 
     # 2. Load the model from a checkpoint
-    model = SummarizationTask.load_from_checkpoint("summarization_model_xsum.pt")
+    model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
 
     # 2a. Summarize an article!
     predictions = model.predict([
@@ -35,10 +35,10 @@ if __name__ == "__main__":
     ])
     print(predictions)
 
-    # 2b. Or generate translations from a sheet file!
+    # 2b. Or generate summaries from a sheet file!
     datamodule = SummarizationData.from_file(
         predict_file="data/xsum/predict.csv",
         input="input",
     )
     predictions = Trainer().predict(model, datamodule=datamodule)
-    print(predictions)  # print the sample of results
+    print(predictions)
