@@ -153,7 +153,7 @@ API reference
 TranslationTask
 ---------------
 
-.. autoclass:: flash.text.translation.model.TranslationTask
+.. autoclass:: flash.text.seq2seq.translation.model.TranslationTask
     :members:
     :exclude-members: forward
 
@@ -162,6 +162,6 @@ TranslationTask
 TranslationData
 ---------------
 
-.. autoclass:: flash.text.translation.data.TranslationData
+.. autoclass:: flash.text.seq2seq.translation.data.TranslationData
 
-.. automethod:: flash.text.translation.data.TranslationData.from_files
+.. automethod:: flash.text.seq2seq.translation.data.TranslationData.from_files
