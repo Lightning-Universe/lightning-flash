@@ -33,7 +33,7 @@ def test_init_train(tmpdir, backbone):
     model = ImageClassifier(10, backbone=backbone)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl)
+    trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
 
 
 def test_non_existent_backbone():
