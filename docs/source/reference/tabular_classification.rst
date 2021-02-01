@@ -46,42 +46,43 @@ Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Da
 
 .. code-block::
 
-  import flash
-  from flash.core.data import download_data
-  from flash.tabular import TabularClassifier, TabularData
-  from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+    import flash
+    from flash import download_data
+    from flash.tabular import TabularClassifier, TabularData
+    from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
-  # 1. Download the data
-  download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+    # 1. Download the data
+    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 
-  # 2. Load the data
-  datamodule = TabularData.from_csv(
-      "./data/titanic/titanic.csv",
-      test_csv="./data/titanic/test.csv",
-      categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-      numerical_input=["Fare"],
-      target="Survived",
-      val_size=0.25,
-      )
+    # 2. Load the data
+    datamodule = TabularData.from_csv(
+        "./data/titanic/titanic.csv",
+        test_csv="./data/titanic/test.csv",
+        categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+        numerical_input=["Fare"],
+        target="Survived",
+        val_size=0.25,
+        )
 
-  # 3. Build the model
-  model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+    # 3. Build the model
+    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-  # 4. Create the trainer. Run 10 times on data
-  trainer = flash.Trainer(max_epochs=10)
+    # 4. Create the trainer. Run 10 times on data
+    trainer = flash.Trainer(max_epochs=10)
 
-  # 5. Train the model
-  trainer.fit(model, datamodule=datamodule)
+    # 5. Train the model
+    trainer.fit(model, datamodule=datamodule)
 
-  # 6. Test model
-  trainer.test()
+    # 6. Test model
+    trainer.test()
 
-  # 7. Save it!
-  trainer.save_checkpoint("tabular_classification_model.pt")
+    # 7. Save it!
+    trainer.save_checkpoint("tabular_classification_model.pt")
 
-  # 8. Predict!
-  predictions = model.predict("data/titanic/titanic.csv")
-  print(predictions)
+    # 8. Predict!
+    predictions = model.predict("data/titanic/titanic.csv")
+    print(predictions)
+
 
 -----
 
