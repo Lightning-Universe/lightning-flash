@@ -22,11 +22,9 @@ from flash.core.model import Task
 
 class ClassificationDataPipeline(TaskDataPipeline):
 
-    def before_uncollate(self, batch: Union[torch.Tensor, tuple, SequenceClassifierOutput]) -> torch.Tensor:
+    def before_uncollate(self, batch: Union[torch.Tensor, tuple]) -> torch.Tensor:
         if isinstance(batch, tuple):
             batch = batch[0]
-        elif isinstance(batch, SequenceClassifierOutput):
-            batch = batch.logits
         return torch.softmax(batch, -1)
 
     def after_uncollate(self, samples: Any) -> Any:
