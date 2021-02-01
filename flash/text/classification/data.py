@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 import torch
 from datasets import load_dataset
@@ -20,6 +20,7 @@ from datasets.utils.download_manager import GenerateMode
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
+from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationDataPipeline
 from flash.core.data import DataModule
@@ -48,7 +49,6 @@ def prepare_dataset(
     label_to_class_mapping=None,
     predict=False,
 ):
-
     data_files = {}
 
     if train_file is not None:
@@ -140,6 +140,12 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
             if batch["input_ids"].dim() == 3:
                 batch["input_ids"] = batch["input_ids"].squeeze(0)
         return batch
+
+    def before_uncollate(self, batch: Union[torch.Tensor, tuple,
+                                            SequenceClassifierOutput]) -> Union[tuple, torch.Tensor]:
+        if isinstance(batch, SequenceClassifierOutput):
+            batch = batch.logits
+        return super().before_uncollate(batch)
 
 
 class TextClassificationData(DataModule):
