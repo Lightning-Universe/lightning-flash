@@ -21,7 +21,7 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
         num_features = model.fc.in_features
         return backbone, num_features
 
-    elif model_name in ["dense121", "densenet169", "densenet161", "densenet161"]:
+    elif model_name in ["densenet121", "densenet169", "densenet161", "densenet161"]:
         backbone = nn.Sequential(*model.features, nn.ReLU(inplace=True))
         num_features = model.classifier.in_features
         return backbone, num_features
