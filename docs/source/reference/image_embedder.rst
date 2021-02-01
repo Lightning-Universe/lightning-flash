@@ -26,7 +26,7 @@ Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on a
 	from flash.vision import ImageEmbedder
 
 	# Load finetuned task
-	embedder = ImageEmbedder(backbone='swav-imagenet')
+	embedder = ImageEmbedder(backbone='resnet18')
 
 	# 2. Perform inference on an image file
 	embeddings = model.predict('path/to/image.png')
@@ -35,6 +35,8 @@ Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on a
 Or on a random image tensor
 
 .. testcode:: python
+
+  import torch
 
 	# 2. Perform inference on an image file
 	images = torch.rand(32, 3, 224, 224)
