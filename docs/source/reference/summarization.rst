@@ -23,8 +23,8 @@ Use the :class:`~flash.text.SummarizationTask` pretrained model for inference on
 
 .. code-block:: python
 
-	# import our libraries
-	from flash.text import SummarizationTask
+    # import our libraries
+    from flash.text import SummarizationTask
 
 
     # 2. Load the model from a checkpoint
@@ -59,15 +59,15 @@ Or on a given dataset:
 
 .. code-block:: python
 
-	# import our libraries
-	from pytorch_lightning import Trainer
-	from flash import download_data
-	from flash.text import SummarizationData, SummarizationTask
+    # import our libraries
+    from pytorch_lightning import Trainer
+    from flash import download_data
+    from flash.text import SummarizationData, SummarizationTask
 
     # 2. Load the model from a checkpoint
     model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
 
-	# 3. Create dataset from file
+    # 3. Create dataset from file
     datamodule = SummarizationData.from_file(
         predict_file="data/xsum/predict.csv",
         input="input",
@@ -100,10 +100,10 @@ All we need is three lines of code to train our model!
 
 .. code-block:: python
 
-	# import our libraries
-	import flash
-	from flash import download_data
-	from flash.text import SummarizationData, SummarizationTask
+    # import our libraries
+    import flash
+    from flash import download_data
+    from flash.text import SummarizationData, SummarizationTask
 
     # 1. Download data
     download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')

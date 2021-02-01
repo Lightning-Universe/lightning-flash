@@ -23,8 +23,8 @@ Use the :class:`~flash.text.TranslationTask` pretrained model for inference on a
 
 .. code-block:: python
 
-	# import our libraries
-	from flash.text import TranslationTask
+    # import our libraries
+    from flash.text import TranslationTask
 
 
     # 2. Load the model from a checkpoint
@@ -41,15 +41,15 @@ Or on a given dataset:
 
 .. code-block:: python
 
-	# import our libraries
-	from pytorch_lightning import Trainer
-	from flash import download_data
-	from flash.text import TranslationData, TranslationTask
+    # import our libraries
+    from pytorch_lightning import Trainer
+    from flash import download_data
+    from flash.text import TranslationData, TranslationTask
 
     # 2. Load the model from a checkpoint
     model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 
-	# 3. Create dataset from file
+    # 3. Create dataset from file
     datamodule = TranslationData.from_file(
         predict_file="data/wmt_en_ro/predict.csv",
         input="input",
@@ -82,10 +82,10 @@ All we need is three lines of code to train our model!
 
 .. code-block:: python
 
-	# import our libraries
-	import flash
-	from flash import download_data
-	from flash.text import TranslationData, TranslationTask
+    # import our libraries
+    import flash
+    from flash import download_data
+    from flash.text import TranslationData, TranslationTask
 
     # 1. Download data
     download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", 'data/')

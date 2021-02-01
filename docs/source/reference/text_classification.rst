@@ -83,10 +83,10 @@ All we need is three lines of code to train our model!
 
 .. code-block:: python
 
-	# import our libraries
-	import flash
-	from flash import download_data
-	from flash.text import TextClassificationData, TextClassifier
+    # import our libraries
+    import flash
+    from flash import download_data
+    from flash.text import TextClassificationData, TextClassifier
 
     # 1. Download data
     download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
