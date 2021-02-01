@@ -73,6 +73,7 @@ class ImageEmbedder(Task):
         optimizer: Optimizer to use for training and finetuning, defaults to `torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
+        pooling_fn: Function used to pool image to generate embeddings. (Default: torch.max)
 
     Example::
 
@@ -93,6 +94,7 @@ class ImageEmbedder(Task):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = (Accuracy()),
         learning_rate: float = 1e-3,
+        pooling_fn: Callable = torch.max
     ):
         super().__init__(
             model=None,
@@ -105,6 +107,8 @@ class ImageEmbedder(Task):
         self.save_hyperparameters()
         self.backbone_name = backbone
         self.embedding_dim = embedding_dim
+        assert pooling_fn in [torch.mean, torch.max]
+        self.pooling_fn = pooling_fn
 
         if backbone in models:
             config = models[backbone]()
@@ -121,7 +125,6 @@ class ImageEmbedder(Task):
             num_features = num_feats(backbone)
 
         if embedding_dim is None:
-            self.pooling = nn.Identity()
             self.head = nn.Identity()
         else:
             self.head = nn.Sequential(
@@ -130,6 +133,15 @@ class ImageEmbedder(Task):
             )
             rank_zero_warn('embedding_dim is not None. Remember to finetune first!')
 
+    def apply_pool(self, x):
+        if self.pooling_fn == torch.max:
+            x = self.pooling_fn(x, dim=-1)[0]
+            x = self.pooling_fn(x, dim=-1)[0]
+        else:
+            x = self.pooling_fn(x, dim=-1)
+            x = self.pooling_fn(x, dim=-1)
+        return x
+
     def forward(self, x) -> Any:
         x = self.backbone(x)
 
@@ -137,8 +149,8 @@ class ImageEmbedder(Task):
         if isinstance(x, tuple):
             x = x[-1]
 
-        if len(x.size()) == 4 and self.embedding_dim is not None:
-            x = x.mean(-1).mean(-1)
+        if x.dim() == 4 and self.embedding_dim is not None:
+            x = self.apply_pool(x)
 
         x = self.head(x)
         return x
@@ -146,10 +158,3 @@ class ImageEmbedder(Task):
     @staticmethod
     def default_pipeline() -> ImageEmbedderDataPipeline:
         return ImageEmbedderDataPipeline()
-
-
-if __name__ == '__main__':
-    embedder = ImageEmbedder(backbone='resnet50')
-    image = torch.rand(32, 3, 128, 128)
-    embeddings = embedder.predict('/Users/williamfalcon/Desktop/abcd.jpeg')
-    print(embeddings.shape)
