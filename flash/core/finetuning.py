@@ -15,7 +15,6 @@ from typing import List, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim import Optimizer
@@ -129,15 +128,13 @@ _DEFAULTS_FINETUNE_STRATEGIES = {
 
 
 def instantiate_default_finetuning_callbacks(strategy):
-    if strategy is None:
-        strategy = "no_freeze"
-        rank_zero_warn("strategy is None. Setting strategy to `no_freeze` by default.", UserWarning)
+    if strategy is None or strategy not in _DEFAULTS_FINETUNE_STRATEGIES:
+        raise MisconfigurationException(
+            f"a strategy should be provided. Use {list(_DEFAULTS_FINETUNE_STRATEGIES)} or provide a callback instance of "
+            "`flash.core.finetuning.FlashBaseFinetuning`. Found {strategy} "
+        )
     if isinstance(strategy, str):
         strategy = strategy.lower()
         if strategy in _DEFAULTS_FINETUNE_STRATEGIES:
             return [_DEFAULTS_FINETUNE_STRATEGIES[strategy]()]
-        raise MisconfigurationException(
-            f"strategy should be within {list(_DEFAULTS_FINETUNE_STRATEGIES)}"
-            f". Found {strategy}"
-        )
     return []
