@@ -77,7 +77,7 @@ class FreezeUnfreeze(FlashBaseBaseFinetuning):
             )
 
 
-class MilestonesFinetuning(FlashBaseBaseFinetuning):
+class UnfreezeMilestones(FlashBaseBaseFinetuning):
 
     def __init__(
         self,
@@ -125,7 +125,7 @@ _DEFAULTS_FINETUNE_STRATEGIES = {
     "no_freeze": NoFreeze,
     "freeze": Freeze,
     "freeze_unfreeze": FreezeUnfreeze,
-    "unfreeze_milestones": MilestonesFinetuning
+    "unfreeze_milestones": UnfreezeMilestones
 }
 
 
