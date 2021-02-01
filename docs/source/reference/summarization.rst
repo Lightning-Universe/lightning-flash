@@ -169,7 +169,7 @@ API reference
 .. _summarization_task:
 
 SummarizationTask
---------------
+-----------------
 
 .. autoclass:: flash.text.summarization.model.SummarizationTask
     :members:
@@ -178,7 +178,7 @@ SummarizationTask
 .. _summarization_data:
 
 SummarizationData
-----------------------
+-----------------
 
 .. autoclass:: flash.text.summarization.data.SummarizationData
 

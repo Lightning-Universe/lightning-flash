@@ -151,7 +151,7 @@ API reference
 .. _translation_task:
 
 TranslationTask
---------------
+---------------
 
 .. autoclass:: flash.text.translation.model.TranslationTask
     :members:
@@ -160,7 +160,7 @@ TranslationTask
 .. _translation_data:
 
 TranslationData
-----------------------
+---------------
 
 .. autoclass:: flash.text.translation.data.TranslationData
 
