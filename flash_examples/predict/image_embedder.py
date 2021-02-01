@@ -19,10 +19,10 @@ if __name__ == "__main__":
     print(embeddings.shape)
 
     # 5. Create a tensor random image
-    random_image = torch.randn(1, 3, 32, 32, requires_grad=True)
+    random_image = torch.randn(1, 3, 32, 32)
 
-    # 6. Generate an embedding from this random image. Can be used
-    embeddings = embedder.predict(random_image, grad_enabled=True)
+    # 6. Generate an embedding from this random image.
+    embeddings = embedder.predict(random_image)
 
     # 7. Print embeddings shape
-    print(embeddings.shape, embeddings.requires_grad)
+    print(embeddings.shape)

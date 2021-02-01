@@ -30,7 +30,7 @@ def predict_context(func: Callable) -> Callable:
 
     def wrapper(self, *args, **kwargs) -> Any:
         self.eval()
-        torch.set_grad_enabled(kwargs.get("grad_enabled", False))
+        torch.set_grad_enabled(False)
 
         result = func(self, *args, **kwargs)
 
@@ -119,7 +119,6 @@ class Task(pl.LightningModule):
         skip_collate_fn: bool = False,
         dataloader_idx: Optional[int] = None,
         data_pipeline: Optional[DataPipeline] = None,
-        grad_enabled: bool = False,
     ) -> Any:
         """
         Predict function for raw data or processed data
@@ -137,8 +136,6 @@ class Task(pl.LightningModule):
                 for the model, for example, data from a dataloader
 
             data_pipeline: Use this to override the current data pipeline
-
-            grad_enabled: Wether to activate gradients.
 
         Returns:
             The post-processed model predictions
