@@ -19,7 +19,7 @@ The Task: Linear regression
 
 Here we create a basic linear regression task by subclassing
 ``flash.Task``. For the majority of tasks, you will likely only need to
-override the ``__init__`` and ``__forward__`` methods of task.
+override the ``__init__`` and ``forward`` methods.
 
 .. code:: ipython3
 
