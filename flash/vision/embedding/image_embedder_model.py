@@ -11,18 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
+import pytorch_lightning
 import torch
 import torchvision
 from pytorch_lightning.metrics import Accuracy
+from pytorch_lightning.utilities.distributed import rank_zero_warn
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
-from pytorch_lightning.utilities.distributed import rank_zero_warn
 
 from flash.core import Task
-from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
+from flash.core.data import TaskDataPipeline
+from flash.core.data.utils import _contains_any_tensor
 from flash.model_map import models
+from flash.vision.classification.data import _default_valid_transforms, _pil_loader, ImageClassificationData
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731
@@ -34,6 +38,28 @@ _backbones = {
     "resnet101": (torchvision.models.resnet101, _resnet_backbone, _resnet_feats),
     "resnet152": (torchvision.models.resnet152, _resnet_backbone, _resnet_feats),
 }
+
+
+class ImageEmbedderDataPipeline(TaskDataPipeline):
+
+    def __init__(self, valid_transform: Optional[Callable] = _default_valid_transforms, loader: Callable = _pil_loader):
+        self._valid_transform = valid_transform
+        self._loader = loader
+
+    def before_collate(self, samples: Any) -> Any:
+        if _contains_any_tensor(samples):
+            return samples
+
+        if isinstance(samples, str):
+            samples = [samples]
+
+        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
+            outputs = []
+            for sample in samples:
+                output = self._loader(sample)
+                outputs.append(self._valid_transform(output))
+            return outputs
+        raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
 
 
 class ImageEmbedder(Task):
@@ -98,7 +124,6 @@ class ImageEmbedder(Task):
             self.pooling = nn.Identity()
             self.head = nn.Identity()
         else:
-            self.pooling = nn.AdaptiveAvgPool2d((1, 1)),
             self.head = nn.Sequential(
                 nn.Flatten(),
                 nn.Linear(num_features, embedding_dim),
@@ -113,15 +138,14 @@ class ImageEmbedder(Task):
             x = x[-1]
 
         if len(x.size()) == 4 and self.embedding_dim is not None:
-            x = self.pooling(x)
+            x = x.mean(-1).mean(-1)
 
         x = self.head(x)
-        x = x.view(x.size(0), -1)
         return x
 
     @staticmethod
-    def default_pipeline() -> ImageClassificationDataPipeline:
-        return ImageClassificationData.default_pipeline()
+    def default_pipeline() -> ImageEmbedderDataPipeline:
+        return ImageEmbedderDataPipeline()
 
 
 if __name__ == '__main__':

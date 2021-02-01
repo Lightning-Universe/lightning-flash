@@ -115,6 +115,7 @@ class Task(pl.LightningModule):
             The post-processed model predictions
 
         """
+        self.eval()
         with torch.no_grad():
             data_pipeline = data_pipeline or self.data_pipeline
             batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
