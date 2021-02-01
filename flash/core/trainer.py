@@ -61,6 +61,7 @@ class Trainer(pl.Trainer):
         strategy: Optional[Union[str, BaseFinetuning]] = None,
     ):
         r"""
+
         Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
         of the backbone throughout training layers of the backbone throughout training.
 
@@ -77,11 +78,12 @@ class Trainer(pl.Trainer):
 
             strategy: Should either be a string or a finetuning callback subclassing
                 ``pytorch_lightning.callbacks.BaseFinetuning``.
+
                 Currently, default strategies can be enabled with these strings:
-                    * ``no_freeze``,
-                    * ``freeze``,
-                    * ``freeze_unfreeze``,
-                    * ``unfreeze_milestones``
+                    - ``no_freeze``,
+                    - ``freeze``,
+                    - ``freeze_unfreeze``,
+                    - ``unfreeze_milestones``
 
         """
         self._resolve_callbacks(model, strategy)

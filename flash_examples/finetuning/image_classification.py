@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # 3. Build the model
     model = ImageClassifier(num_classes=datamodule.num_classes)
 
-    # 4. Create the trainer. Run once on data
+    # 4. Create the trainer. Run twice on data
     trainer = flash.Trainer(max_epochs=2)
 
     # 5. Train the model
