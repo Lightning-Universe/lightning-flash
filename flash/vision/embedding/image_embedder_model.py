@@ -135,6 +135,7 @@ class ImageEmbedder(Task):
 
     def apply_pool(self, x):
         if self.pooling_fn == torch.max:
+            # torch.max also returns argmax
             x = self.pooling_fn(x, dim=-1)[0]
             x = self.pooling_fn(x, dim=-1)[0]
         else:
