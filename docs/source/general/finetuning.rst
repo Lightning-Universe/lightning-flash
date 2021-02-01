@@ -6,13 +6,13 @@ Finetuning (or transfer-learning) is the process of tweaking a model trained on 
 
 Finetuning process can be splitted into 4 steps:
 
-- 1. Train a source neural network model on a source dataset. For computer vision, it is traditionally  the [ImageNet dataset](http://www.image-net.org/search?q=cat). As training is costly, library such as [Torchvion](https://pytorch.org/docs/stable/torchvision/index.html) library supports popular pre-trainer model architectures.
+1. Train a source neural network model on a source dataset. For computer vision, it is traditionally  the [ImageNet dataset](http://www.image-net.org/search?q=cat). As training is costly, library such as [Torchvion](https://pytorch.org/docs/stable/torchvision/index.html) library supports popular pre-trainer model architectures.
 
-- 2. Create a new neural network called the target model. Its architecture replicates the source model and parameters, expect the latest layer which is removed. This model without its latest layer is traditionally called a backbone
+2. Create a new neural network called the target model. Its architecture replicates the source model and parameters, expect the latest layer which is removed. This model without its latest layer is traditionally called a backbone
 
-- 3. Add new layers after the backbone where the latest output size is the number of target dataset categories. Those new layers, traditionally called head will be randomly initialized while backbone will conserve its pre-trained weights from ImageNet.
+3. Add new layers after the backbone where the latest output size is the number of target dataset categories. Those new layers, traditionally called head will be randomly initialized while backbone will conserve its pre-trained weights from ImageNet.
 
-- 4. Train the target model on a smaller target dataset. However, as new layers are randomly initialized, the first gradients will be random when training starts and will destabilize the backbone pre-trained parameters. Therefore, it is good pratice to freeze the backbone, which means the parameters of the backbone won't be trainable for some epochs. After some epochs, the backbone are being unfreezed, meaning the weights will be trainable.
+4. Train the target model on a smaller target dataset. However, as new layers are randomly initialized, the first gradients will be random when training starts and will destabilize the backbone pre-trained parameters. Therefore, it is good pratice to freeze the backbone, which means the parameters of the backbone won't be trainable for some epochs. After some epochs, the backbone are being unfreezed, meaning the weights will be trainable.
 
 
 .. tip:: If you have a huge dataset and prefer to train from scratch, see the training guide.
@@ -29,19 +29,19 @@ You can finetune any Flash tasks on your own data in just a 3 simple steps:
 Finetune options
 ================
 
-Flash supports 4 builts-in Finetuning options:
+Flash provides a very simple interface for finetuning through `trainer.finetune` with its `strategy` parameters.
+
+Flash finetune `strategy` argument can either a string or an instance of :class:`~python_lightning.callbacks.finetuning.BaseFinetuning`.
+Furthermore, Flash supports 4 builts-in Finetuning Callback accessible via those strings:
 
 * `no_freeze`: Don't freeze anything.
-* `freeze`: Freeze the backbone parameters when training starts.
-* `freeze_unfreeze`: Freeze the backbone parameters when training starts and unfreeze the backbone when reaching `unfreeze_epoch`.
-* `unfreeze_milestones`: Freeze the backbone parameters when training starts and unfreeze the end backbone when reaching first milestones and begining when reaching second one.
+* `freeze`: The parameters of the backbone won't be trainable after training starts.
+* `freeze_unfreeze`: The parameters of the backbone won't be trainable when training start and then those parameters will become trainable when training epoch reaches `unfreeze_epoch`.
+* `unfreeze_milestones`: The parameters of the backbone won't be trainable when training start. However, the latest layers of the backbone will become trainable when training epoch reaches the first milestone and the remaining layers when reaching the second one.
 
 For more options, you can pass in an instance of :class:`~python_lightning.callbacks.finetuning.BaseFinetuning` to the `strategy` parameter.
-Furthermore,
-
 
 Once training is completed, you can use the model for inference to make predictions using the `predict` method.
-
 
 .. code-block:: python
 
@@ -64,17 +64,6 @@ Once training is completed, you can use the model for inference to make predicti
     trainer = flash.Trainer()
     trainer.finetune(model, data, strategy="no_freeze")
 
-
-
-Flash provides a very simple interface for finetuning through `trainer.finetune` with its `strategy` parameters.
-
-Flash finetune `strategy` argument can either a string or an instance of :class:`~python_lightning.callbacks.finetuning.BaseFinetuning`.
-Furthermore, Flash supports 4 builts-in Finetuning Callback accessible via those strings:
-
-* `no_freeze`: Don't freeze anything.
-* `freeze`: The parameters of the backbone won't be trainable after training starts.
-* `freeze_unfreeze`: The parameters of the backbone won't be trainable when training start and then those parameters will become trainable when training epoch reaches `unfreeze_epoch`.
-* `unfreeze_milestones`: The parameters of the backbone won't be trainable when training start. However, the latest layers of the backbone will become trainable when training epoch reaches the first milestone and the remaining layers when reaching the second one.
 
 ==========================
 Custom callback finetuning
