@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch.nn as nn
 
-from flash.vision.classification.components import TORCHVISION_MODEL_ZOO
+from flash.vision.classification.components.model_zoo import TORCHVISION_MODEL_ZOO
 
 
 def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
