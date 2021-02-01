@@ -18,7 +18,6 @@ import torch
 from torch import nn
 
 from flash.core.data import DataModule, DataPipeline
-from flash.core.finetuning import instantiate_default_finetuning_callbacks
 from flash.core.utils import get_callable_dict
 
 
@@ -151,6 +150,3 @@ class Task(pl.LightningModule):
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         checkpoint["pipeline"] = self.data_pipeline
-
-    def configure_finetune_callbacks(self, **kwargs) -> List:
-        return instantiate_default_finetuning_callbacks(kwargs)

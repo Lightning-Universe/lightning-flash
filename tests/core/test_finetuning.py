@@ -18,13 +18,12 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash import ClassificationTask, Trainer
-from flash.core.finetuning import NeverFreeze
+from flash.core.finetuning import NoFreeze
 from tests.core.test_model import DummyDataset
 
 
 @pytest.mark.parametrize(
-    "finetune_strategy",
-    ['never_freeze', 'never_unfreeze', 'freeze_unfreeze', 'unfreeze_milestones', None, 'cls', 'chocolat']
+    "finetune_strategy", ['no_freeze', 'freeze', 'freeze_unfreeze', 'unfreeze_milestones', None, 'cls', 'chocolat']
 )
 def test_finetuning(tmpdir: str, finetune_strategy):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
@@ -33,9 +32,12 @@ def test_finetuning(tmpdir: str, finetune_strategy):
     task = ClassificationTask(model, F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     if finetune_strategy == "cls":
-        finetune_strategy = NeverFreeze()
+        finetune_strategy = NoFreeze()
     if finetune_strategy == 'chocolat':
         with pytest.raises(MisconfigurationException, match="finetune_strategy should be within"):
+            trainer.finetune(task, train_dl, val_dl, finetune_strategy=finetune_strategy)
+    elif finetune_strategy is None:
+        with pytest.raises(MisconfigurationException, match="finetune_strategy should"):
             trainer.finetune(task, train_dl, val_dl, finetune_strategy=finetune_strategy)
     else:
         trainer.finetune(task, train_dl, val_dl, finetune_strategy=finetune_strategy)

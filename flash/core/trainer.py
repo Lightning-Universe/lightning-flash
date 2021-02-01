@@ -19,6 +19,7 @@ from pytorch_lightning.callbacks import BaseFinetuning, Callback
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
+from flash.core.finetuning import instantiate_default_finetuning_callbacks
 from flash.core.model import Task
 
 
@@ -57,7 +58,6 @@ class Trainer(pl.Trainer):
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[pl.LightningDataModule] = None,
         finetune_strategy: Optional[Union[str, Callback]] = None,
-        **callbacks_kwargs,
     ):
         r"""
         Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
@@ -76,27 +76,29 @@ class Trainer(pl.Trainer):
 
             finetune_strategy: Should either be a string or a finetuning callback subclassing
                 ``pytorch_lightning.callbacks.BaseFinetuning``.
-
-            callbacks_kwargs: Those arguments will be provided to `model.configure_finetune_callbacks`
-                to instantiante your own finetuning callbacks.
+                Currently default strategies can be create with strings such as:
+                    * ``no_freeze``,
+                    * ``freeze``
+                    * ``freeze_unfreeze``
+                    * ``unfreeze_milestones``
 
         """
-        if isinstance(finetune_strategy, Callback) and not isinstance(finetune_strategy, BaseFinetuning):
-            raise Exception("finetune_strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning`` Callback")
+        if not isinstance(finetune_strategy, (BaseFinetuning, str)):
+            raise MisconfigurationException(
+                "finetune_strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning`` Callback or a str"
+            )
 
-        self._resolve_callbacks(model, finetune_strategy, **callbacks_kwargs)
+        self._resolve_callbacks(finetune_strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
-    def _resolve_callbacks(self, model, finetune_strategy, **callbacks_kwargs):
+    def _resolve_callbacks(self, finetune_strategy):
         if sum((isinstance(c, BaseFinetuning) for c in [finetune_strategy])) > 1:
             raise MisconfigurationException("Only 1 callback subclassing `BaseFinetuning` should be provided.")
-        # provided callbacks are higher priorities than model callbacks.
+        # todo: change to ``configure_callbacks`` when
         callbacks = self.callbacks
         if isinstance(finetune_strategy, str):
-            callbacks_kwargs["finetune_strategy"] = finetune_strategy
-        else:
-            callbacks = self._merge_callbacks(callbacks, [finetune_strategy])
-        self.callbacks = self._merge_callbacks(callbacks, model.configure_finetune_callbacks(**callbacks_kwargs))
+            finetune_strategy = instantiate_default_finetuning_callbacks(finetune_strategy)
+        self.callbacks = self._merge_callbacks(callbacks, [finetune_strategy])
 
     @staticmethod
     def _merge_callbacks(current_callbacks: List, new_callbacks: List) -> List:
