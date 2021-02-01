@@ -4,7 +4,7 @@ Tutorial: Creating a Custom Task
 In this tutorial we will go over the process of creating a custom task,
 along with a custom data module.
 
-.. code:: ipython3
+.. code:: python
 
     import flash
     
@@ -15,13 +15,13 @@ along with a custom data module.
     from sklearn.model_selection import train_test_split
 
 The Task: Linear regression
---------
+---------------------------
 
 Here we create a basic linear regression task by subclassing
 ``flash.Task``. For the majority of tasks, you will likely only need to
 override the ``__init__`` and ``forward`` methods.
 
-.. code:: ipython3
+.. code:: python
 
     class LinearRegression(flash.Task):
         def __init__(self, num_inputs, learning_rate=0.001, metrics=None):
@@ -67,7 +67,7 @@ for the prediction of diabetes disease progression. We can create this
 ``DataModule`` below, wrapping the scikit-learn `Diabetes
 dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
 
-.. code:: ipython3
+.. code:: python
 
     class DiabetesPipeline(flash.core.data.TaskDataPipeline):
         def after_uncollate(self, samples):
@@ -98,7 +98,7 @@ dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-data
 You’ll notice we added a ``DataPipeline``, which will be used when we
 call ``.predict()`` on our model. In this case we want to nicely format
 our ouput from the model with the string ``"disease progression"``, but
-you could do any sort of post processing you want!
+you could do any sort of post processing you want (see :ref:`datapipeline`).
 
 Fit
 ---
@@ -106,7 +106,7 @@ Fit
 Like any Flash Task, we can fit our model using the ``flash.Trainer`` by
 supplying the task itself, and the associated data:
 
-.. code:: ipython3
+.. code:: python
 
     data = DiabetesData()
     model = LinearRegression(num_inputs=data.num_inputs)
@@ -117,7 +117,7 @@ supplying the task itself, and the associated data:
 With a trained model we can now perform inference. Here we will use a
 few examples from the test set of our data:
 
-.. code:: ipython3
+.. code:: python
 
     predict_data = torch.tensor([
         [ 0.0199,  0.0507,  0.1048,  0.0701, -0.0360, -0.0267, -0.0250, -0.0026, 0.0037,  0.0403],
