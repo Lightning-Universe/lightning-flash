@@ -21,7 +21,7 @@ The :class:`~flash.vision.ImageEmbedder` is already pre-trained on [ImageNet](ht
 
 Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on any image tensor or image path using :func:`~flash.vision.ImageEmbedder.predict`:
 
-.. testcode:: python
+.. code-block:: python
 
 	from flash.vision import ImageEmbedder
 
@@ -34,14 +34,13 @@ Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on a
 
 Or on a random image tensor
 
-.. testcode:: python
+.. code-block:: python
 
+  # 2. Perform inference on an image file
   import torch
-
-	# 2. Perform inference on an image file
-	images = torch.rand(32, 3, 224, 224)
-	embeddings = model.predict(images)
-	print(predictions)
+  images = torch.rand(32, 3, 224, 224)
+  embeddings = model.predict(images)
+  print(predictions)
 
 For more advanced inference options, see :ref:`predictions`.
 
