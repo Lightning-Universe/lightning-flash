@@ -16,54 +16,12 @@ from typing import List, Optional, Union
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import BaseFinetuning
-from torch.optim import Optimizer
+from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
-
-# NOTE: copied from:
-# https://github.com/PyTorchLightning/pytorch-lightning/blob/9d165f6f5655a44f1e5cd02ab36f21bc14e2a604/pl_examples/domain_templates/computer_vision_fine_tuning.py#L66
-class MilestonesFinetuningCallback(BaseFinetuning):
-
-    def __init__(self, milestones: tuple = (5, 10), train_bn: bool = True):
-        self.milestones = milestones
-        self.train_bn = train_bn
-
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        # TODO: might need some config to say which attribute is model
-        # maybe something like:
-        # self.freeze(module=pl_module.getattr(self.feature_attr), train_bn=self.train_bn)
-        # where self.feature_attr can be "backbone" or "feature_extractor", etc.
-        # (configured in init)
-        assert hasattr(
-            pl_module, "backbone"
-        ), "To use MilestonesFinetuningCallback your model must have a backbone attribute"
-        self.freeze(module=pl_module.backbone, train_bn=self.train_bn)
-
-    def finetunning_function(
-        self,
-        pl_module: pl.LightningModule,
-        epoch: int,
-        optimizer: Optimizer,
-        opt_idx: int,
-    ) -> None:
-        backbone_modules = list(pl_module.backbone.modules())
-        if epoch == self.milestones[0]:
-            # unfreeze 5 last layers
-            # TODO last N layers should be parameter
-            self.unfreeze_and_add_param_group(
-                module=backbone_modules[-5:],
-                optimizer=optimizer,
-                train_bn=self.train_bn,
-            )
-
-        elif epoch == self.milestones[1]:
-            # unfreeze remaining layers
-            # TODO last N layers should be parameter
-            self.unfreeze_and_add_param_group(
-                module=backbone_modules[:-5],
-                optimizer=optimizer,
-                train_bn=self.train_bn,
-            )
+from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
 
 
 class Trainer(pl.Trainer):
@@ -96,13 +54,14 @@ class Trainer(pl.Trainer):
 
     def finetune(
         self,
-        model: pl.LightningModule,
+        model: LightningModule,
         train_dataloader: Optional[DataLoader] = None,
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[pl.LightningDataModule] = None,
-        unfreeze_milestones: tuple = (5, 10),
+        strategy: Optional[Union[str, BaseFinetuning]] = None,
     ):
         r"""
+
         Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
         of the backbone throughout training layers of the backbone throughout training.
 
@@ -117,18 +76,61 @@ class Trainer(pl.Trainer):
             val_dataloaders: Either a single Pytorch Dataloader or a list of them, specifying validation samples.
                 If the model has a predefined val_dataloaders method this will be skipped
 
-            unfreeze_milestones: A tuple of two integers. First value marks the epoch in which the last 5
-            layers of the backbone will be unfrozen. The second value marks the epoch in which the full backbone will
-            be unfrozen.
+            strategy: Should either be a string or a finetuning callback subclassing
+                ``pytorch_lightning.callbacks.BaseFinetuning``.
+
+                Currently, default strategies can be enabled with these strings:
+                    - ``no_freeze``,
+                    - ``freeze``,
+                    - ``freeze_unfreeze``,
+                    - ``unfreeze_milestones``
 
         """
-        if hasattr(model, "backbone"):
-            # TODO: if we find a finetuning callback in the trainer should we change it?
-            # or should we warn the user?
-            if not any(isinstance(c, BaseFinetuning) for c in self.callbacks):
-                # TODO: should pass config from arguments
-                self.callbacks.append(MilestonesFinetuningCallback(milestones=unfreeze_milestones))
-        else:
-            warnings.warn("Warning: model does not have a 'backbone' attribute, will train normally")
-
+        self._resolve_callbacks(model, strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
+
+    def _resolve_callbacks(self, model, strategy):
+        """
+        This function is used to select the `BaseFinetuning` to be used for finetuning.
+        """
+        if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
+            raise MisconfigurationException(
+                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
+                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES.keys())}"
+            )
+
+        if isinstance(strategy, BaseFinetuning):
+            callback = strategy
+        else:
+            # todo: change to ``configure_callbacks`` when merged to Lightning.
+            model_callback = model.configure_finetune_callback()
+            if len(model_callback) > 1:
+                raise MisconfigurationException(
+                    f"{model} configure_finetune_callback should create a list with only 1 callback"
+                )
+            if len(model_callback) == 1:
+                if strategy is not None:
+                    rank_zero_warn(
+                        "The model contains a default finetune callback. "
+                        f"The provided {strategy} will be overriden. "
+                        "HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
+                    )
+                callback = [model_callback]
+            else:
+                callback = instantiate_default_finetuning_callbacks(strategy)
+
+        self.callbacks = self._merge_callbacks(self.callbacks, [callback])
+
+    @staticmethod
+    def _merge_callbacks(old_callbacks: List, new_callbacks: List) -> List:
+        """
+        This function keeps only 1 instance of each callback type,
+        extending new_callbacks with old_callbacks
+        """
+        if len(new_callbacks):
+            return old_callbacks
+        new_callbacks_types = set(type(c) for c in new_callbacks)
+        old_callbacks_types = set(type(c) for c in old_callbacks)
+        override_types = new_callbacks_types.intersection(old_callbacks_types)
+        new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
+        return new_callbacks
