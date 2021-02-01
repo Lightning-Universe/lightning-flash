@@ -19,9 +19,9 @@ Inference
 
 The :class:`~flash.vision.ImageEmbedder` is already pre-trained on [ImageNet](http://www.image-net.org/), a dataset of over 14 million images.
 
-Use the :class:`~flash.text.ImageEmbedder` pretrained model for inference on any image tensor or image path using :func:`~flash.text.ImageEmbedder.predict`:
+Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on any image tensor or image path using :func:`~flash.vision.ImageEmbedder.predict`:
 
-.. code-block:: python
+.. testcode:: python
 
 	from flash.vision import ImageEmbedder
 
@@ -34,7 +34,7 @@ Use the :class:`~flash.text.ImageEmbedder` pretrained model for inference on any
 
 Or on an image tensor
 
-.. code-block:: python
+.. testcode:: python
 
 	from flash.vision import ImageEmbedder
 
@@ -66,20 +66,19 @@ To tailor this image embedder to your dataset, finetune first.
 
     # 2. Load the data
     datamodule = ImageClassificationData.from_folders(
-    	backbone="resnet18",
-        train_folder="data/hymenoptera_data/train/",
-        valid_folder="data/hymenoptera_data/val/",
-        test_folder="data/hymenoptera_data/test/",
+      train_folder="data/hymenoptera_data/train/",
+      valid_folder="data/hymenoptera_data/val/",
+      test_folder="data/hymenoptera_data/test/",
     )
 
     # 3. Build the model
-    embedder = ImageEmbedder()
+    embedder = ImageEmbedder(backbone="resnet18")
 
     # 4. Create the trainer. Run once on data
     trainer = flash.Trainer(max_epochs=1)
 
     # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    trainer.finetune(model, datamodule=datamodule)
 
     # 6. Test the model
     trainer.test()

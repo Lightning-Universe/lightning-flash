@@ -25,7 +25,7 @@ from torch.nn import functional as F
 from flash.core import Task
 from flash.core.data import TaskDataPipeline
 from flash.core.data.utils import _contains_any_tensor
-from flash.model_map import models
+from flash.model_map import _models
 from flash.vision.classification.data import _default_valid_transforms, _pil_loader, ImageClassificationData
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
@@ -110,8 +110,8 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        if backbone in models:
-            config = models[backbone]()
+        if backbone in _models:
+            config = _models[backbone]()
             self.backbone = config['model']
             num_features = config['num_features']
 

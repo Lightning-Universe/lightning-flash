@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from contextlib import contextmanager
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
@@ -91,6 +92,17 @@ class Task(pl.LightningModule):
         output = self.step(batch, batch_idx)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
+    @property
+    @contextmanager
+    def predict_context(self):
+        try:
+            self.eval()
+            torch.set_grad_enabled(False)
+            yield
+        finally:
+            self.train()
+            torch.set_grad_enabled(True)
+
     def predict(
         self,
         x: Any,
@@ -115,13 +127,13 @@ class Task(pl.LightningModule):
             The post-processed model predictions
 
         """
-        self.eval()
-        with torch.no_grad():
+        with self.predict_context:
             data_pipeline = data_pipeline or self.data_pipeline
             batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
             batch_x, batch_y = batch if len(batch) == 2 else (batch, None)
             predictions = self.forward(batch_x)
-        return data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+            output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+        return output
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
