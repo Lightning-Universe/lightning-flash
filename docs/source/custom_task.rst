@@ -14,7 +14,7 @@ along with a custom data module.
     from sklearn import datasets
     from sklearn.model_selection import train_test_split
 
-The Task
+The Task: Linear regression
 --------
 
 Here we create a basic linear regression task by subclassing
