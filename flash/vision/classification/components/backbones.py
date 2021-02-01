@@ -17,6 +17,7 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
     elif model_name in [
         "resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnext50_32x4d", "resnext101_32x8d"
     ]:
+        # remove the last two layers & turn it into a Sequential model
         backbone = nn.Sequential(*list(model.children())[:-2])
         num_features = model.fc.in_features
         return backbone, num_features
