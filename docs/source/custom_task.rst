@@ -43,6 +43,7 @@ override the ``__init__`` and ``forward`` methods.
             )
             
         def forward(self, x):
+            # we don't actually need to override this method for this example
             return self.model(x)
 
 Where is the training step?
