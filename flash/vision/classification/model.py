@@ -20,7 +20,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
-from flash.vision.classification.components import torchvision_backbone_and_num_features, TORCHVISION_MODEL_ZOO
+from flash.vision.classification.backbones import torchvision_backbone_and_num_features
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
 
 
@@ -56,9 +56,6 @@ class ImageClassifier(ClassificationTask):
         )
 
         self.save_hyperparameters()
-
-        if backbone not in TORCHVISION_MODEL_ZOO:
-            raise NotImplementedError(f"Backbone {backbone} is not yet supported")
 
         self.backbone, num_features = torchvision_backbone_and_num_features(backbone, pretrained)
 
