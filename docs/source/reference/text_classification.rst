@@ -107,7 +107,7 @@ All we need is three lines of code to train our model!
     trainer = flash.Trainer()
 
     # 5. Finetune the task
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
     # 6. Save trainer task
     trainer.save_checkpoint("text_classification_model.pt")

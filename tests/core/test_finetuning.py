@@ -33,8 +33,8 @@ def test_finetuning(tmpdir: str, strategy):
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     if strategy == "cls":
         strategy = FlashBaseFinetuning()
-    if strategy == 'chocolat':
-        with pytest.raises(MisconfigurationException, match="strategy should be within"):
+    if strategy == 'chocolat' or strategy is None:
+        with pytest.raises(MisconfigurationException, match="strategy should be provided"):
             trainer.finetune(task, train_dl, val_dl, strategy=strategy)
     else:
         trainer.finetune(task, train_dl, val_dl, strategy=strategy)

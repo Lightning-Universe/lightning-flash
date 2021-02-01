@@ -39,6 +39,7 @@ Lightning Flash
    :caption: Common Use Cases
 
    general/training
+   general/finetuning
    general/predictions
 
 Indices and tables
