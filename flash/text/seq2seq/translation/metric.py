@@ -29,6 +29,7 @@ def _count_ngram(ngram_input_list: List[str], n_gram: int) -> Counter:
     Args:
         ngram_input_list: A list of translated text or reference texts
         n_gram: gram value ranged 1 to 4
+
     Return:
         ngram_counter: a collections.Counter object of ngram
     """
@@ -46,6 +47,7 @@ def _count_ngram(ngram_input_list: List[str], n_gram: int) -> Counter:
 class BLEUScore(Metric):
     """
     Calculate BLEU score of machine translated text with one or more references.
+
     Example:
         >>> translate_corpus = ['the cat is on the mat'.split()]
         >>> reference_corpus = [['there is a cat on the mat'.split(), 'a cat is on the mat'.split()]]

@@ -106,8 +106,13 @@ class Seq2SeqDataPipeline(TaskDataPipeline):
 
     @staticmethod
     def _tokenize_fn(
-        ex, tokenizer, input: str, target: Optional[str], max_source_length: int, max_target_length: int,
-        padding: Union[str, bool]
+        ex,
+        tokenizer,
+        input: str,
+        target: Optional[str],
+        max_source_length: int,
+        max_target_length: int,
+        padding: Union[str, bool],
     ) -> Callable:
         output = tokenizer.prepare_seq2seq_batch(
             src_texts=ex[input],
