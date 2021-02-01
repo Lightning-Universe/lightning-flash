@@ -32,14 +32,9 @@ Use the :class:`~flash.text.ImageEmbedder` pretrained model for inference on any
 	embeddings = model.predict('path/to/image.png')
 	print(predictions)
 
-Or on an image tensor
+Or on a random image tensor
 
 .. code-block:: python
-
-	from flash.vision import ImageEmbedder
-
-	# Load finetuned task
-	embedder = ImageEmbedder(backbone='swav-imagenet')
 
 	# 2. Perform inference on an image file
 	images = torch.rand(32, 3, 224, 224)
