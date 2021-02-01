@@ -19,7 +19,7 @@ if __name__ == "__main__":
     model = SummarizationTask()
 
     # 4. Create the trainer. Run once on data
-    trainer = flash.Trainer(max_epochs=1, gpus=1)
+    trainer = flash.Trainer(max_epochs=1)
 
     # 5. Fine-tune the model
     trainer.finetune(model, datamodule=datamodule)

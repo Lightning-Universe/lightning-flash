@@ -21,6 +21,7 @@ from pytorch_lightning.utilities import rank_zero_info
 from transformers import AutoModelForSeq2SeqLM
 
 from flash.core import Task
+from flash.core.finetuning import FlashBaseFinetuning
 
 
 def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
@@ -34,6 +35,24 @@ def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
     padded_tensor = pad_token_id * torch.ones((tensor.shape[0], max_length), dtype=tensor.dtype, device=tensor.device)
     padded_tensor[:, :tensor.shape[-1]] = tensor
     return padded_tensor
+
+
+class Seq2SeqTaskFinetuning(FlashBaseFinetuning):
+
+    def __init__(self, model_type: str, train_bn: bool = True):
+        super().__init__(None, train_bn)
+        self.model_type = model_type
+
+    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+        self.freeze(module=pl_module.model.shared, train_bn=self.train_bn)
+        if self.model_type in ["t5", "mt5"]:
+            for layer in (pl_module.model.encoder, pl_module.model.decoder):
+                self.freeze(layer.embed_tokens)
+        else:
+            self.freeze(module=pl_module.model.model.shared, train_bn=self.train_bn)
+            for d in [pl_module.model.model.encoder, pl_module.model.model.decoder]:
+                self.freeze(d.embed_positions)
+                self.freeze(d.embed_tokens)
 
 
 class Seq2SeqTask(Task):
@@ -69,6 +88,7 @@ class Seq2SeqTask(Task):
         self.val_target_max_length = val_target_max_length
         self.num_beams = num_beams
         self.freeze_embeds = freeze_embeds
+        self._initialize_model_specific_parameters()
 
     def forward(self, x: Any) -> Any:
         max_length = self.val_target_max_length if self.val_target_max_length else self.model.config.max_length
@@ -102,28 +122,6 @@ class Seq2SeqTask(Task):
     def compute_metrics(self, generated_tokens, batch, prefix):
         pass
 
-    def on_fit_start(self):
-        self._initialize_model_specific_parameters()
-        self._freeze_embeds()
-
-    def _freeze_embeds(self):
-        model_type = self.model.config.model_type
-
-        # handle T5 model separately
-        if model_type in ["t5", "mt5"]:
-            self._freeze_parameters(self.model.shared)
-            for layer in (self.model.encoder, self.model.decoder):
-                self._freeze_parameters(layer.embed_tokens)
-        else:
-            self._freeze_parameters(self.model.model.shared)
-            for d in [self.model.model.encoder, self.model.model.decoder]:
-                self._freeze_parameters(d.embed_positions)
-                self._freeze_parameters(d.embed_tokens)
-
-    def _freeze_parameters(self, model: torch.nn.Module):
-        for par in model.parameters():
-            par.requires_grad = False
-
     @property
     def task(self) -> Optional[str]:
         """
@@ -146,3 +144,6 @@ class Seq2SeqTask(Task):
     def tokenize_labels(self, labels: torch.Tensor) -> List[str]:
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
         return [str.strip(s) for s in label_str]
+
+    def configure_finetune_callback(self):
+        return [Seq2SeqTaskFinetuning(self.model.config.model_type, train_bn=True)]
