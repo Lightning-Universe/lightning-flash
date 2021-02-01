@@ -57,7 +57,7 @@ class Trainer(pl.Trainer):
         train_dataloader: Optional[DataLoader] = None,
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[pl.LightningDataModule] = None,
-        finetune_strategy: Optional[Union[str, Callback]] = None,
+        strategy: Optional[Union[str, BaseFinetuning]] = None,
     ):
         r"""
         Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
@@ -74,7 +74,7 @@ class Trainer(pl.Trainer):
             val_dataloaders: Either a single Pytorch Dataloader or a list of them, specifying validation samples.
                 If the model has a predefined val_dataloaders method this will be skipped
 
-            finetune_strategy: Should either be a string or a finetuning callback subclassing
+            strategy: Should either be a string or a finetuning callback subclassing
                 ``pytorch_lightning.callbacks.BaseFinetuning``.
                 Currently default strategies can be create with strings such as:
                     * ``no_freeze``,
@@ -83,22 +83,22 @@ class Trainer(pl.Trainer):
                     * ``unfreeze_milestones``
 
         """
-        if not isinstance(finetune_strategy, (BaseFinetuning, str)):
+        if not isinstance(strategy, (BaseFinetuning, str)):
             raise MisconfigurationException(
-                "finetune_strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning`` Callback or a str"
+                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning`` Callback or a str"
             )
 
-        self._resolve_callbacks(finetune_strategy)
+        self._resolve_callbacks(strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
-    def _resolve_callbacks(self, finetune_strategy):
-        if sum((isinstance(c, BaseFinetuning) for c in [finetune_strategy])) > 1:
+    def _resolve_callbacks(self, strategy):
+        if sum((isinstance(c, BaseFinetuning) for c in [strategy])) > 1:
             raise MisconfigurationException("Only 1 callback subclassing `BaseFinetuning` should be provided.")
-        # todo: change to ``configure_callbacks`` when
+        # todo: change to ``configure_callbacks`` when merged to Lightning.
         callbacks = self.callbacks
-        if isinstance(finetune_strategy, str):
-            finetune_strategy = instantiate_default_finetuning_callbacks(finetune_strategy)
-        self.callbacks = self._merge_callbacks(callbacks, [finetune_strategy])
+        if isinstance(strategy, str):
+            strategy = instantiate_default_finetuning_callbacks(strategy)
+        self.callbacks = self._merge_callbacks(callbacks, [strategy])
 
     @staticmethod
     def _merge_callbacks(current_callbacks: List, new_callbacks: List) -> List:

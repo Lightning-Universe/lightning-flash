@@ -24,7 +24,7 @@ if __name__ == "__main__":
     trainer = flash.Trainer(max_epochs=1)
 
     # 5. Fine-tune the model
-    trainer.finetune(model, datamodule=datamodule, finetune_strategy='never_freeze')
+    trainer.finetune(model, datamodule=datamodule, strategy='freeze')
 
     # 6. Test model
     trainer.test()

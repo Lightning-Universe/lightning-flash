@@ -23,21 +23,21 @@ from tests.core.test_model import DummyDataset
 
 
 @pytest.mark.parametrize(
-    "finetune_strategy", ['no_freeze', 'freeze', 'freeze_unfreeze', 'unfreeze_milestones', None, 'cls', 'chocolat']
+    "strategy", ['no_freeze', 'freeze', 'freeze_unfreeze', 'unfreeze_milestones', None, 'cls', 'chocolat']
 )
-def test_finetuning(tmpdir: str, finetune_strategy):
+def test_finetuning(tmpdir: str, strategy):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    if finetune_strategy == "cls":
-        finetune_strategy = NoFreeze()
-    if finetune_strategy == 'chocolat':
-        with pytest.raises(MisconfigurationException, match="finetune_strategy should be within"):
-            trainer.finetune(task, train_dl, val_dl, finetune_strategy=finetune_strategy)
-    elif finetune_strategy is None:
-        with pytest.raises(MisconfigurationException, match="finetune_strategy should"):
-            trainer.finetune(task, train_dl, val_dl, finetune_strategy=finetune_strategy)
+    if strategy == "cls":
+        strategy = NoFreeze()
+    if strategy == 'chocolat':
+        with pytest.raises(MisconfigurationException, match="strategy should be within"):
+            trainer.finetune(task, train_dl, val_dl, strategy=strategy)
+    elif strategy is None:
+        with pytest.raises(MisconfigurationException, match="strategy should"):
+            trainer.finetune(task, train_dl, val_dl, strategy=strategy)
     else:
-        trainer.finetune(task, train_dl, val_dl, finetune_strategy=finetune_strategy)
+        trainer.finetune(task, train_dl, val_dl, strategy=strategy)

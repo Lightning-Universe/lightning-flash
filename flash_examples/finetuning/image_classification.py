@@ -1,5 +1,6 @@
 import flash
 from flash.core.data import download_data
+from flash.core.finetuning import FreezeUnfreeze
 from flash.vision import ImageClassificationData, ImageClassifier
 
 if __name__ == "__main__":
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     trainer = flash.Trainer(max_epochs=2)
 
     # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, finetune_strategy='freeze_unfreeze')
+    trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
 
     # 6. Test the model
     trainer.test()

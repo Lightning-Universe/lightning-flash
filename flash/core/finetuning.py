@@ -129,14 +129,14 @@ _DEFAULTS_FINETUNE_STRATEGIES = {
 }
 
 
-def instantiate_default_finetuning_callbacks(finetune_strategy):
-    if isinstance(finetune_strategy, str):
-        finetune_strategy = finetune_strategy.lower()
-        if finetune_strategy in _DEFAULTS_FINETUNE_STRATEGIES:
-            return [_DEFAULTS_FINETUNE_STRATEGIES[finetune_strategy]()]
+def instantiate_default_finetuning_callbacks(strategy):
+    if isinstance(strategy, str):
+        strategy = strategy.lower()
+        if strategy in _DEFAULTS_FINETUNE_STRATEGIES:
+            return [_DEFAULTS_FINETUNE_STRATEGIES[strategy]()]
         else:
             raise MisconfigurationException(
-                f"finetune_strategy should be within {list(_DEFAULTS_FINETUNE_STRATEGIES)}"
-                f". Found {finetune_strategy}"
+                f"strategy should be within {list(_DEFAULTS_FINETUNE_STRATEGIES)}"
+                f". Found {strategy}"
             )
     return []
