@@ -135,6 +135,8 @@ PACKAGE_MAPPING = {
     'scikit-learn': 'sklearn',
     'Pillow': 'PIL',
     'PyYAML': 'yaml',
+    'rouge-score': 'rouge_score',
+    'pytorch-lightning-bolts': 'pl_bolts',
 }
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:
