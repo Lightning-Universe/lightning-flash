@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from contextlib import contextmanager
-from typing import Any, Callable, Dict, IO, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
 
-from flash.core.data import DataModule, DataPipeline, download_data
+from flash.core.data import DataModule, DataPipeline
 from flash.core.utils import get_callable_dict
 
 

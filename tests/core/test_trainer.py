@@ -13,13 +13,12 @@
 # limitations under the License.
 from typing import Any
 
-import pytest
 import torch
 from torch import nn
 from torch.nn import functional as F
 
 from flash import ClassificationTask, Trainer
-from flash.core.finetuning import Freeze, NoFreeze
+from flash.core.finetuning import NoFreeze
 
 
 class DummyDataset(torch.utils.data.Dataset):
