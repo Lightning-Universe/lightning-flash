@@ -16,48 +16,41 @@ Text classification is the task of assigning a piece of text (word, sentence or 
 Inference
 *********
 
-The :class:`~flash.text.TextClassificatier` is already pre-trained on [IMDB](https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews), a dataset of highly polarized movie reviews, trained for binary classification- to predict if a given review has a positive or negative sentiment.
+The :class:`~flash.text.classification.model.TextClassifier` is already pre-trained on `IMDB <https://www.kaggle.com/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews>`_, a dataset of highly polarized movie reviews, trained for binary classification- to predict if a given review has a positive or negative sentiment.
 
-Use the :class:`~flash.text.TextClassificatier` pretrained model for inference on any string sequence using :func:`~flash.text.TextClassifier.predict`:
-
-.. code-block:: python
-
-	# import our libraries
-	from flash.text import TextClassifier
-
-
-	# Load finetuned task from URL
-    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
-
-	# 2. Perform inference from list of sequences
-	predictions = model.predict([
-	    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-	    "The worst movie in the history of cinema.",
-	    "I come from Bulgaria where it 's almost impossible to have a tornado."
-	    "Very, very afraid"
-	    "This guy has done a great job with this movie!",
-	])
-	print(predictions)
-
-Or on a given dataset:
+Use the :class:`~flash.text.classification.model.TextClassifier` pretrained model for inference on any string sequence using :func:`~flash.text.classification.model.TextClassifier.predict`:
 
 .. code-block:: python
 
-	# import our libraries
+    from pytorch_lightning import Trainer
 
-	from flash import download_data
-	from flash.text import TextClassifier
+    from flash import download_data
+    from flash.text import TextClassificationData, TextClassifier
 
 
-	# 1. Download dataset, save it under 'data' dir
-	download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
+    # 1. Download the data
+    download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
 
-	# 2. Load finetuned task
+    # 2. Load the model from a checkpoint
     model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
 
-	# 3. Perform inference from a csv file
-	predictions = model.predict("data/imdb/test.csv")
-	print(predictions)
+    # 2a. Classify a few sentences! How was the movie?
+    predictions = model.predict([
+        "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+        "The worst movie in the history of cinema.",
+        "I come from Bulgaria where it 's almost impossible to have a tornado."
+        "Very, very afraid"
+        "This guy has done a great job with this movie!",
+    ])
+    print(predictions)
+
+    # 2b. Or generate predictions from a sheet file!
+    datamodule = TextClassificationData.from_file(
+        predict_file="data/imdb/predict.csv",
+        input="review",
+    )
+    predictions = Trainer().predict(model, datamodule=datamodule)
+    print(predictions)
 
 For more advanced inference options, see :ref:`predictions`.
 
@@ -83,33 +76,36 @@ All we need is three lines of code to train our model!
 
 .. code-block:: python
 
-	# import our libraries
-	import flash
-	from flash import download_data
-	from flash.text import TextClassificationData, TextClassifier
+    import flash
+    from flash.core.data import download_data
+    from flash.text import TextClassificationData, TextClassifier
 
-    # 1. Download data
+    # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
 
-    # Organize the data
+    # 2. Load the data
     datamodule = TextClassificationData.from_files(
         train_file="data/imdb/train.csv",
         valid_file="data/imdb/valid.csv",
+        test_file="data/imdb/test.csv",
         input="review",
         target="sentiment",
         batch_size=512
     )
 
-    # 2. Build the task (using the default backbone="bert-base-cased")
+    # 3. Build the task (using the default backbone="bert-base-cased")
     model = TextClassifier(num_classes=datamodule.num_classes)
 
-    # 4. Create trainer
-    trainer = flash.Trainer()
+    # 4. Create the trainer. Run once on data
+    trainer = flash.Trainer(max_epochs=1)
 
     # 5. Finetune the task
     trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
-    # 6. Save trainer task
+    # 6. Test model
+    trainer.test()
+
+    # 7. Save it!
     trainer.save_checkpoint("text_classification_model.pt")
 
 ----

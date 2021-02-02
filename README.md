@@ -114,14 +114,13 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'da
 
 # 2. Load the data
 datamodule = ImageClassificationData.from_folders(
-    backbone="resnet18",
     train_folder="data/hymenoptera_data/train/",
     valid_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
 )
 
 # 3. Build the model
-model = ImageClassifier(num_classes=datamodule.num_classes)
+model = ImageClassifier(num_classes=datamodule.num_classes, backbone="resnet18")
 
 # 4. Create the trainer. Run once on data
 trainer = flash.Trainer(max_epochs=1)

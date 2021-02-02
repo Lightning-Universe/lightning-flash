@@ -16,25 +16,25 @@ The task of identifying what is in an image is called `image classification <htt
 Inference
 *********
 
-The :class:`~flash.vision.ImageClassificatier` is already pre-trained on [ImageNet](http://www.image-net.org/), a dataset of over 14 million images.
+The :class:`~flash.vision.ImageClassifier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
 
 
-Use the :class:`~flash.text.ImageClassificatier` pretrained model for inference on any string sequence using :func:`~flash.text.TextClassifier.predict`:
+Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on any string sequence using :func:`~flash.vision.ImageClassifier.predict`:
 
 .. code-block:: python
 
     # import our libraries
     from flash import Trainer
-    from flash.core.data import download_data
+    from flash import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
-    # Download the data
+    # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
-    # Load the model from a checkpoint
+    # 2. Load the model from a checkpoint
     model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
-    # Predict what's on a few images! ants or bees?
+    # 3a. Predict what's on a few images! ants or bees?
     predictions = model.predict([
         "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
         "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
@@ -42,16 +42,7 @@ Use the :class:`~flash.text.ImageClassificatier` pretrained model for inference 
     ])
     print(predictions)
 
-    # Or generate predictions with a whole folder!
-    datamodule = ImageClassificationData.from_folder(folder="data/hymenoptera_data/predict/")
-    predictions = Trainer().predict(model, datamodule=datamodule)
-    print(predictions)
-
-Or on a given dataset:
-
-.. code-block:: python
-
-    # Or generate predictions with a whole folder!
+    # 3b. Or generate predictions with a whole folder!
     datamodule = ImageClassificationData.from_folder(folder="data/hymenoptera_data/predict/")
     predictions = Trainer().predict(model, datamodule=datamodule)
     print(predictions)
