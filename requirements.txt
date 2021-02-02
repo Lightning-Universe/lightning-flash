@@ -1,14 +1,13 @@
 pytorch-lightning==1.2.0rc0
-torch==1.7.1
-PyYAML==5.3.1
+torch>=1.4
+PyYAML>=5.1
 Pillow>=7.2
-torchvision==0.8.2
-transformers==4.2.2
-pytorch-tabnet==3.1.1
-datasets==1.2.1
-pandas==1.1.5 ; python_version < "3.7"
-pandas==1.2.2 ; python_version >= "3.7"
-scikit-learn==0.24.0
+torchvision>=0.5
+transformers>=4.0
+pytorch-tabnet==3.1
+datasets>=1.2
+pandas>=1.1
+scikit-learn>=0.24
 numpy  # comes with 3rd-party dependency
 tqdm  # comes with 3rd-party dependency
 rouge-score>=0.0.4
