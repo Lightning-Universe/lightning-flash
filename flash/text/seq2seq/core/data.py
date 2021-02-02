@@ -44,7 +44,6 @@ def prepare_dataset(
     dataset_dict = load_dataset(
         filetype,
         data_files=data_files,
-        download_mode=GenerateMode.FORCE_REDOWNLOAD,
     )
 
     # tokenize the dataset

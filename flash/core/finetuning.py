@@ -64,6 +64,9 @@ class FlashBaseFinetuning(BaseFinetuning):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(module=attr, train_bn=train_bn)
 
+    def finetunning_function(self, pl_module: pl.LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
+        pass
+
 
 class Freeze(FlashBaseFinetuning):
 

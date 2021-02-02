@@ -10,7 +10,6 @@ from flash import ClassificationTask
 from flash.core.model import download_model
 from flash.tabular import TabularClassifier
 from flash.text import TextClassifier
-from flash.text.seq2seq import TranslationTask
 from flash.vision import ImageClassifier
 
 # ======== Mock functions ========
@@ -105,7 +104,6 @@ def test_task_datapipeline_save(tmpdir):
     (ImageClassifier, "image_classification_model.pt"),
     (TabularClassifier, "tabular_classification_model.pt"),
     (TextClassifier, "text_classification_model.pt"),
-    (TranslationTask, "translation_model_en_ro.pt"),
 ])
 def test_model_download(tmpdir, cls, filename):
     url = "https://flash-weights.s3.amazonaws.com/"

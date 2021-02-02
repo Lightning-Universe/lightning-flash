@@ -40,19 +40,17 @@ def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
 class Seq2SeqTaskFinetuning(FlashBaseFinetuning):
 
     def __init__(self, model_type: str, train_bn: bool = True):
-        super().__init__(None, train_bn)
+        super().__init__("", train_bn)
         self.model_type = model_type
 
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        self.freeze(module=pl_module.model.shared, train_bn=self.train_bn)
-        if self.model_type in ["t5", "mt5"]:
-            for layer in (pl_module.model.encoder, pl_module.model.decoder):
-                self.freeze(layer.embed_tokens)
-        else:
-            self.freeze(module=pl_module.model.model.shared, train_bn=self.train_bn)
-            for d in [pl_module.model.model.encoder, pl_module.model.model.decoder]:
-                self.freeze(d.embed_positions)
-                self.freeze(d.embed_tokens)
+        is_t5 = self.model_type in ["t5", "mt5"]
+        model = pl_module.model if is_t5 else pl_module.model.model
+        self.freeze(module=model.shared, train_bn=self.train_bn)
+        for layer in (model.encoder, model.decoder):
+            self.freeze(layer.embed_tokens)
+            if not is_t5:
+                self.freeze(layer.embed_positions)
 
 
 class Seq2SeqTask(Task):
