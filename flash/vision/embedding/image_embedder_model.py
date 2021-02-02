@@ -53,7 +53,11 @@ class ImageEmbedderDataPipeline(TaskDataPipeline):
     >>> os.remove('sample-image.png')
     """
 
-    def __init__(self, valid_transform: Optional[Callable] = _default_valid_transforms, loader: Callable = _pil_loader,):
+    def __init__(
+        self,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
+        loader: Callable = _pil_loader,
+    ):
         self._valid_transform = valid_transform
         self._loader = loader
 

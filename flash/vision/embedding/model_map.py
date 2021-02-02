@@ -23,7 +23,10 @@ def load_swav_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/
     return model_config
 
 
-_models = {'simclr-imagenet': load_simclr_imagenet, 'swav-imagenet': load_swav_imagenet,}
+_models = {
+    'simclr-imagenet': load_simclr_imagenet,
+    'swav-imagenet': load_swav_imagenet,
+}
 
 
 def _load_bolts_model(name):
