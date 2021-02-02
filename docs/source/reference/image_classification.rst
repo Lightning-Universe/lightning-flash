@@ -124,7 +124,9 @@ Changing the backbone
 *********************
 By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image classification. You can change the model run by the task by passing in a different backbone.
 
-.. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
+.. note::
+
+    When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
 
 .. code-block:: python
 

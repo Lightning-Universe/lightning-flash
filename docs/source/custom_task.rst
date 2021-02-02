@@ -4,7 +4,7 @@ Tutorial: Creating a Custom Task
 In this tutorial we will go over the process of creating a custom task,
 along with a custom data module.
 
-.. code:: python
+.. testcode:: python
 
     import flash
 
@@ -21,7 +21,7 @@ Here we create a basic linear regression task by subclassing
 ``flash.Task``. For the majority of tasks, you will likely only need to
 override the ``__init__`` and ``forward`` methods.
 
-.. code:: python
+.. testcode::
 
     class LinearRegression(flash.Task):
         def __init__(self, num_inputs, learning_rate=0.001, metrics=None):
@@ -67,7 +67,7 @@ for the prediction of diabetes disease progression. We can create this
 ``DataModule`` below, wrapping the scikit-learn `Diabetes
 dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
 
-.. code:: python
+.. testcode::
 
     class DiabetesPipeline(flash.core.data.TaskDataPipeline):
         def after_uncollate(self, samples):
