@@ -15,8 +15,6 @@ from functools import partial
 from typing import Any, Callable, Optional, Union
 
 from datasets import load_dataset
-from datasets.utils.download_manager import GenerateMode
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 
