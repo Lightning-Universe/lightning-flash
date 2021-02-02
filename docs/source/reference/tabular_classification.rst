@@ -83,7 +83,6 @@ Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Da
     predictions = model.predict("data/titanic/titanic.csv")
     print(predictions)
 
-
 -----
 
 *********
@@ -115,9 +114,9 @@ Or you can finetune your own model and use that for prediction:
 
 .. code-block:: python
 
-  	import flash
-  	from flash import download_data
-  	from flash.tabular import TabularClassifier, TabularData
+    import flash
+    from flash import download_data
+    from flash.tabular import TabularClassifier, TabularData
 
     # 1. Load the data
     datamodule = TabularData.from_csv(
@@ -169,3 +168,4 @@ TabularData
 .. automethod:: flash.tabular.TabularData.from_csv
 
 .. automethod:: flash.tabular.TabularData.from_df
+

@@ -1,3 +1,6 @@
+
+.. _training:
+
 *********************
 Training from scratch
 *********************

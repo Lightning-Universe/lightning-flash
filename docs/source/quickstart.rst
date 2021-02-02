@@ -52,11 +52,11 @@ When you need more flexibility you can build your own tasks or simply use Lightn
 Install
 -------
 
-You can install flash using `pip install lightning-flash -U -pre`_:
+You can install flash using pip or conda:
 
 .. code-block:: bash
 
-    pip install pytorch-lightning-flash
+    pip install pytorch-lightning-flash -U -pre
 
 ------
 
