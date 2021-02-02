@@ -26,7 +26,7 @@ from flash.core import Task
 from flash.core.data import TaskDataPipeline
 from flash.core.data.utils import _contains_any_tensor
 from flash.vision.classification.data import _default_valid_transforms, _pil_loader, ImageClassificationData
-from flash.vision.embedding.model_map import _load_model, _models
+from flash.vision.embedding.model_map import _load_bolts_model, _models
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731
@@ -120,7 +120,7 @@ class ImageEmbedder(Task):
         self.pooling_fn = pooling_fn
 
         if backbone in _models:
-            config = _load_model(backbone)
+            config = _load_bolts_model(backbone)
             self.backbone = config['model']
             num_features = config['num_features']
 
