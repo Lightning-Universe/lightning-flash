@@ -32,5 +32,4 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
         num_features = model.classifier.in_features
         return backbone, num_features
 
-    else:
-        raise ValueError(f"{model_name} is not supported yet.")
+    raise ValueError(f"{model_name} is not supported yet.")
