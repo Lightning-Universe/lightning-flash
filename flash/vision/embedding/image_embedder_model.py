@@ -92,6 +92,7 @@ class ImageEmbedder(Task):
 
     Example:
 
+        >>> import torch
         >>> embedder = ImageEmbedder(backbone='resnet18')
         >>> image = torch.rand(32, 3, 32, 32)
         >>> embeddings = embedder(image)
