@@ -69,7 +69,7 @@ def _load_readme_description(path_dir: str, homepage: str = __homepage__, ver: s
     github_source_url = os.path.join(homepage, "raw", ver)
     # replace relative repository path to absolute link to the release
     #  do not replace all "docs" as in the readme we reger some other sources with particular path to docs
-    text = text.replace("docs/source/_static/images/", f"{os.path.join(github_source_url, 'docs/source/_static/images/')}")
+    text = text.replace("docs/source/_static/", f"{os.path.join(github_source_url, 'docs/source/_static/')}")
 
     # readthedocs badge
     text = text.replace('badge/?version=stable', f'badge/?version={ver}')
