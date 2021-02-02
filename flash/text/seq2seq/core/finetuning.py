@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytorch_lightning as pl
+
 from flash.core.finetuning import FlashBaseFinetuning
-from flash.text.seq2seq.core import Seq2SeqTask
 
 
 class Seq2SeqFreezeEmbeddings(FlashBaseFinetuning):
@@ -20,12 +21,12 @@ class Seq2SeqFreezeEmbeddings(FlashBaseFinetuning):
     Freezes the embedding layers during Seq2Seq training.
     """
 
-    def __init__(self, train_bn: bool = True):
+    def __init__(self, model_type: str, train_bn: bool = True):
         super().__init__("", train_bn)
+        self.model_type = model_type
 
-    def freeze_before_training(self, pl_module: Seq2SeqTask) -> None:
-        model_type = pl_module.model.config.model_type
-        is_t5 = model_type in ["t5", "mt5"]
+    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+        is_t5 = self.model_type in ["t5", "mt5"]
         model = pl_module.model if is_t5 else pl_module.model.model
         self.freeze(module=model.shared, train_bn=self.train_bn)
         for layer in (model.encoder, model.decoder):

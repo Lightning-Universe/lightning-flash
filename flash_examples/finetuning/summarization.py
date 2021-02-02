@@ -1,7 +1,6 @@
 import flash
 from flash import download_data
 from flash.text import SummarizationData, SummarizationTask
-from flash.text.seq2seq import Seq2SeqFreezeEmbeddings
 
 if __name__ == "__main__":
     # 1. Download the data
@@ -23,7 +22,7 @@ if __name__ == "__main__":
     trainer = flash.Trainer(max_epochs=1)
 
     # 5. Fine-tune the model
-    trainer.finetune(model, datamodule=datamodule, strategy=Seq2SeqFreezeEmbeddings())
+    trainer.finetune(model, datamodule=datamodule)
 
     # 6. Test model
     trainer.test()

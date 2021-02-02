@@ -21,6 +21,7 @@ from pytorch_lightning.utilities import rank_zero_info
 from transformers import AutoModelForSeq2SeqLM
 
 from flash.core import Task
+from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 
 def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
@@ -124,4 +125,4 @@ class Seq2SeqTask(Task):
         return [str.strip(s) for s in label_str]
 
     def configure_finetune_callback(self):
-        return [Seq2SeqTaskFinetuning(self.model.config.model_type, train_bn=True)]
+        return [Seq2SeqFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
