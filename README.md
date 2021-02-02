@@ -1,7 +1,8 @@
 <div align="center">
 
-<img src="docs/source/_static/images/logo.svg" width="400px">
-
+<a href="https://github.com/PyTorchLightning/lightning-flash">
+    <img src="docs/source/_static/images/logo.svg" width="400px">
+</a>
 
 **Collection of tasks for fast prototyping, baselining, finetuning and solving problems with deep learning**
 
