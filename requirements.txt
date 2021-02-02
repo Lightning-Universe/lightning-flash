@@ -12,3 +12,4 @@ tqdm
 rouge-score>=0.0.4
 sentencepiece>=0.1.95
 pytorch-lightning-bolts==0.3.0
+filelock
