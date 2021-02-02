@@ -23,6 +23,9 @@ from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_se
 
 
 class RougeMetric(Metric):
+    """
+    Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
+    """
 
     def __init__(
         self,
@@ -72,6 +75,9 @@ class RougeMetric(Metric):
 
 
 class RougeBatchAggregator(scoring.BootstrapAggregator):
+    """
+    Aggregates rouge scores and provides confidence intervals.
+    """
 
     def aggregate(self):
         """

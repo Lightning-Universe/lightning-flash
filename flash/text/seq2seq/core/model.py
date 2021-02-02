@@ -18,9 +18,10 @@ from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities import rank_zero_info
-from transformers import AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
 
 from flash.core import Task
+from flash.core.finetuning import FlashBaseFinetuning
 from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 
@@ -117,12 +118,12 @@ class Seq2SeqTask(Task):
             self.model.config.update(pars)
 
     @property
-    def tokenizer(self):
+    def tokenizer(self) -> PreTrainedTokenizerBase:
         return self.data_pipeline.tokenizer
 
     def tokenize_labels(self, labels: torch.Tensor) -> List[str]:
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
         return [str.strip(s) for s in label_str]
 
-    def configure_finetune_callback(self):
+    def configure_finetune_callback(self) -> List[FlashBaseFinetuning]:
         return [Seq2SeqFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
