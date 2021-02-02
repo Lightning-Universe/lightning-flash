@@ -39,12 +39,10 @@ We can create :class:`~flash.tabular.TabularData` from csv files using the :func
 * **numerical_input**- a list of the names of columns that contain numerical continuous data (floats)
 * **target**- the name of the column we want to predict
 
-.. tip:: you can pass in val_size and test_size to partition your training data into a separate validation and test set like so:
-
 
 Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Data module we created.
 
-.. code-block::
+.. code-block:: python
 
     import flash
     from flash import download_data

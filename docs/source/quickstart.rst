@@ -45,7 +45,9 @@ organized PyTorch with the unecessary engineering details abstracted away.
 
 When you need more flexibility you can build your own tasks or simply use Lightning directly.
 
-.. note:: Read :doc:`here <reference/flash_to_pl>` to understand when to use Flash vs Lightning.
+.. tip::
+
+    Read :doc:`here <reference/flash_to_pl>` to understand when to use Flash vs Lightning.
 
 ----
 
@@ -56,7 +58,7 @@ You can install flash using pip or conda:
 
 .. code-block:: bash
 
-    pip install pytorch-lightning-flash -U -pre
+    pip install pytorch-lightning-flash -U
 
 ------
 
