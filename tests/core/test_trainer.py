@@ -6,6 +6,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash import ClassificationTask, Trainer
+from flash.core.finetuning import Freeze, NoFreeze
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -51,5 +52,5 @@ def test_task_finetune(tmpdir: str):
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    result = trainer.finetune(task, train_dl, val_dl, strategy="freeze")
+    result = trainer.finetune(task, train_dl, val_dl, strategy=NoFreeze())
     assert result

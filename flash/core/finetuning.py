@@ -21,7 +21,18 @@ from torch.optim import Optimizer
 
 
 class NoFreeze(BaseFinetuning):
-    pass
+
+    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+        pass
+
+    def finetunning_function(
+        self,
+        pl_module: pl.LightningModule,
+        epoch: int,
+        optimizer: Optimizer,
+        opt_idx: int,
+    ) -> None:
+        pass
 
 
 class FlashBaseFinetuning(BaseFinetuning):
@@ -53,9 +64,20 @@ class FlashBaseFinetuning(BaseFinetuning):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(module=attr, train_bn=train_bn)
 
+    def finetunning_function(self, pl_module: pl.LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
+        pass
+
 
 class Freeze(FlashBaseFinetuning):
-    pass
+
+    def finetunning_function(
+        self,
+        pl_module: pl.LightningModule,
+        epoch: int,
+        optimizer: Optimizer,
+        opt_idx: int,
+    ) -> None:
+        pass
 
 
 class FreezeUnfreeze(FlashBaseFinetuning):
