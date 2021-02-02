@@ -14,9 +14,7 @@
 from typing import Any, Callable, Mapping, Sequence, Type, Union
 
 import torch
-import torchvision
 from pytorch_lightning.metrics import Accuracy
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 
