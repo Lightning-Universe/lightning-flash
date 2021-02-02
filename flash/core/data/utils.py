@@ -14,10 +14,7 @@
 
 import os.path
 import zipfile
-from io import BytesIO
 from typing import Any, Type
-from urllib.request import urlopen, urlretrieve
-from zipfile import ZipFile
 
 import requests
 import torch

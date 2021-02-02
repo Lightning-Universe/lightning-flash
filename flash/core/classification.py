@@ -14,7 +14,6 @@
 from typing import Any, Union
 
 import torch
-from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
