@@ -24,7 +24,7 @@ class TranslationData(Seq2SeqData):
     @staticmethod
     def default_pipeline():
         return Seq2SeqDataPipeline(
-            AutoTokenizer.from_pretrained("sshleifer/student_marian_en_ro_6_3", use_fast=True),
+            AutoTokenizer.from_pretrained("facebook/mbart-large-en-ro", use_fast=True),
             input="input",
         )
 
@@ -35,13 +35,13 @@ class TranslationData(Seq2SeqData):
         input: str = 'input',
         target: Optional[str] = None,
         filetype="csv",
-        backbone="sshleifer/student_marian_en_ro_6_3",
+        backbone="facebook/mbart-large-en-ro",
         valid_file=None,
         test_file=None,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',
-        batch_size: int = 64,
+        batch_size: int = 8,
         num_workers: Optional[int] = None,
     ):
         """Creates a TranslateData object from files.
@@ -57,7 +57,7 @@ class TranslationData(Seq2SeqData):
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 32.
+            batch_size: the batchsize to use for parallel loading. Defaults to 8.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads.
 
@@ -93,12 +93,12 @@ class TranslationData(Seq2SeqData):
         predict_file: str,
         input: str = 'input',
         target: Optional[str] = None,
-        backbone="sshleifer/student_marian_en_ro_6_3",
+        backbone="facebook/mbart-large-en-ro",
         filetype="csv",
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'longest',
-        batch_size: int = 64,
+        batch_size: int = 8,
         num_workers: Optional[int] = None,
     ):
         """Creates a TranslationData object from files.
@@ -112,7 +112,7 @@ class TranslationData(Seq2SeqData):
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 32.
+            batch_size: the batchsize to use for parallel loading. Defaults to 8.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads.
 

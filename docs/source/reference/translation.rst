@@ -125,7 +125,7 @@ To run the example:
 *********************
 Changing the backbone
 *********************
-By default, we use the `MarianNMT <https://marian-nmt.github.io/>`_ model for translation. You can change the model run by passing in the backbone parameter.
+By default, we use `mBART <https://github.com/pytorch/fairseq/tree/master/examples/mbart/>`_ model for translation. You can change the model run by passing in the backbone parameter.
 
 .. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object! Since this is a Seq2Seq task, make sure you use a Seq2Seq model.
 
