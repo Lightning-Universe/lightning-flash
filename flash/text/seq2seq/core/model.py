@@ -21,7 +21,6 @@ from pytorch_lightning.utilities import rank_zero_info
 from transformers import AutoModelForSeq2SeqLM
 
 from flash.core import Task
-from flash.core.finetuning import FlashBaseFinetuning
 
 
 def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
@@ -37,22 +36,6 @@ def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
     return padded_tensor
 
 
-class Seq2SeqTaskFinetuning(FlashBaseFinetuning):
-
-    def __init__(self, model_type: str, train_bn: bool = True):
-        super().__init__("", train_bn)
-        self.model_type = model_type
-
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        is_t5 = self.model_type in ["t5", "mt5"]
-        model = pl_module.model if is_t5 else pl_module.model.model
-        self.freeze(module=model.shared, train_bn=self.train_bn)
-        for layer in (model.encoder, model.decoder):
-            self.freeze(layer.embed_tokens)
-            if not is_t5:
-                self.freeze(layer.embed_positions)
-
-
 class Seq2SeqTask(Task):
     """General Task for Sequence2Sequence.
     Args:
@@ -62,7 +45,6 @@ class Seq2SeqTask(Task):
         learning_rate: Learning rate to use for training, defaults to `3e-4`
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
-        freeze_embeds: Freeze Embedding layers within the backbone. Defaults to `True`
     """
 
     def __init__(
@@ -74,7 +56,6 @@ class Seq2SeqTask(Task):
         learning_rate: float = 5e-5,
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
-        freeze_embeds: bool = True
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -85,7 +66,6 @@ class Seq2SeqTask(Task):
         self.model = AutoModelForSeq2SeqLM.from_pretrained(backbone)
         self.val_target_max_length = val_target_max_length
         self.num_beams = num_beams
-        self.freeze_embeds = freeze_embeds
         self._initialize_model_specific_parameters()
 
     def forward(self, x: Any) -> Any:

@@ -99,13 +99,16 @@ def test_task_datapipeline_save(tmpdir):
     assert task.data_pipeline.test
 
 
-@pytest.mark.parametrize(["cls", "filename"], [
-    (ImageClassifier, "image_classification_model.pt"),
-    (TabularClassifier, "tabular_classification_model.pt"),
-    (TextClassifier, "text_classification_model.pt"),
-    (TranslationTask, "translation_model_en_ro.pt"),
-    (SummarizationTask, "summarization_model_xsum.pt"),
-])
+@pytest.mark.parametrize(
+    ["cls", "filename"],
+    [
+        (ImageClassifier, "image_classification_model.pt"),
+        (TabularClassifier, "tabular_classification_model.pt"),
+        (TextClassifier, "text_classification_model.pt"),
+        (SummarizationTask, "summarization_model_xsum.pt"),
+        # (TranslationTask, "translation_model_en_ro.pt"), todo: reduce model size or create CI friendly file size
+    ]
+)
 def test_model_download(tmpdir, cls, filename):
     url = "https://flash-weights.s3.amazonaws.com/"
     with tmpdir.as_cwd():
