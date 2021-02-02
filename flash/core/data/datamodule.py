@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 from typing import Any, Optional
 
 import pytorch_lightning as pl
@@ -63,11 +63,11 @@ class DataModule(pl.LightningDataModule):
         self.batch_size = batch_size
 
         # TODO: figure out best solution for setting num_workers
-        # if num_workers is None:
-        #    num_workers = os.cpu_count()
         if num_workers is None:
-            #    warnings.warn("Could not infer cpu count automatically, setting it to zero")
-            num_workers = 0
+           num_workers = os.cpu_count()
+        # if num_workers is None:
+        #     #    warnings.warn("Could not infer cpu count automatically, setting it to zero")
+        #     num_workers = 0
         self.num_workers = num_workers
 
         self._data_pipeline = None
