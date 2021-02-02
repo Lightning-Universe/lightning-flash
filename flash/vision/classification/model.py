@@ -16,6 +16,7 @@ from typing import Any, Callable, Mapping, Sequence, Type, Union
 import torch
 import torchvision
 from pytorch_lightning.metrics import Accuracy
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 
@@ -41,6 +42,7 @@ class ImageClassifier(ClassificationTask):
         self,
         num_classes,
         backbone="resnet18",
+        num_features: int = None,
         pretrained=True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,

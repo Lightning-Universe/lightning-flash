@@ -42,14 +42,14 @@ We can create :class:`~flash.tabular.TabularData` from csv files using the :func
 .. tip:: you can pass in val_size and test_size to partition your training data into a separate validation and test set like so:
 
 
-Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the Data module we created.
+Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Data module we created.
 
-.. code-block:: python
+.. code-block::
 
-    from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
     import flash
     from flash import download_data
     from flash.tabular import TabularClassifier, TabularData
+    from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
@@ -62,7 +62,7 @@ Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the
         numerical_input=["Fare"],
         target="Survived",
         val_size=0.25,
-    )
+        )
 
     # 3. Build the model
     model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
@@ -76,7 +76,10 @@ Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the
     # 6. Test model
     trainer.test()
 
-    # 7. Predict!
+    # 7. Save it!
+    trainer.save_checkpoint("tabular_classification_model.pt")
+
+    # 8. Predict!
     predictions = model.predict("data/titanic/titanic.csv")
     print(predictions)
 
@@ -86,14 +89,13 @@ Next, we create the :class:`~pl_flash.tabular.TabularClassifier` task, using the
 Inference
 *********
 
-You can make predictions on a pretrained model, that has already been trained for the titanic task:
+You can make predcitions on a pretrained model, that has already been trained for the titanic task:
 
 .. code-block:: python
 
 
-    from flash import download_data
+    from flash.core.data import download_data
     from flash.tabular import TabularClassifier
-
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
@@ -112,9 +114,9 @@ Or you can finetune your own model and use that for prediction:
 
 .. code-block:: python
 
-	import flash
-	from flash import download_data
-	from flash.tabular import TabularClassifier, TabularData
+    import flash
+    from flash import download_data
+    from flash.tabular import TabularClassifier, TabularData
 
     # 1. Load the data
     datamodule = TabularData.from_csv(
