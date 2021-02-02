@@ -1,7 +1,6 @@
 from pytorch_lightning import Trainer
 
 from flash.core.data import download_data
-from flash.core.model import download_model
 from flash.text import TextClassificationData, TextClassifier
 
 if __name__ == "__main__":

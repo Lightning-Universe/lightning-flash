@@ -22,10 +22,6 @@ from flash.core.data import DataModule, DataPipeline, download_data
 from flash.core.utils import get_callable_dict
 
 
-def download_model(url: str):
-    download_data(url, './')
-
-
 def predict_context(func: Callable) -> Callable:
     """
     This decorator is used as context manager
@@ -184,23 +180,3 @@ class Task(pl.LightningModule):
 
     def configure_finetune_callback(self):
         return []
-
-    @classmethod
-    def load_from_checkpoint(
-        cls,
-        checkpoint_path: Union[str, IO],
-        map_location: Optional[Union[Dict[str, str], str, torch.device, int, Callable]] = None,
-        hparams_file: Optional[str] = None,
-        strict: bool = True,
-        **kwargs,
-    ):
-        # todo: resolve ModuleNotFoundError: No module named 'transformers.tokenization_bert'
-        try:
-            if "http" in checkpoint_path:
-                download_model(checkpoint_path)
-                checkpoint_path = checkpoint_path.split("/")[-1]
-        except Exception:
-            pass
-        return super().load_from_checkpoint(
-            checkpoint_path, map_location=map_location, hparams_file=hparams_file, strict=strict, **kwargs
-        )

@@ -7,7 +7,6 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash import ClassificationTask
-from flash.core.model import download_model
 from flash.tabular import TabularClassifier
 from flash.text import TextClassifier
 from flash.vision import ImageClassifier
