@@ -41,8 +41,19 @@ _backbones = {
 
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
+    """
+    >>> iedata = ImageEmbedderDataPipeline()
+    >>> iedata.before_collate(torch.tensor([1]))
+    tensor([1])
+    >>> import os, numpy, PIL
+    >>> img = PIL.Image.fromarray(numpy.random.randint(0, 255, (150, 200, 3)), 'RGB')
+    >>> img.save('sample-image.png')
+    >>> iedata.before_collate('sample-image.png')  # doctest: +ELLIPSIS
+    [tensor([[[...]]])]
+    >>> os.remove('sample-image.png')
+    """
 
-    def __init__(self, valid_transform: Optional[Callable] = _default_valid_transforms, loader: Callable = _pil_loader):
+    def __init__(self, valid_transform: Optional[Callable] = _default_valid_transforms, loader: Callable = _pil_loader,):
         self._valid_transform = valid_transform
         self._loader = loader
 
@@ -75,13 +86,11 @@ class ImageEmbedder(Task):
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         pooling_fn: Function used to pool image to generate embeddings. (Default: torch.max)
 
-    Example::
+    Example:
 
-        from flash.vision import ImageEmbedder
-
-        embedder = ImageEmbedder(backbone='swav-imagenet')
-        image = torch.rand(32, 3, 32, 32)
-        embeddings = embedder(image)
+        >>> embedder = ImageEmbedder(backbone='resnet18')
+        >>> image = torch.rand(32, 3, 32, 32)
+        >>> embeddings = embedder(image)
 
     """
 
