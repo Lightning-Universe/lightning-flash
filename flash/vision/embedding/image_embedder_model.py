@@ -41,6 +41,7 @@ _backbones = {
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
     """
+    >>> from flash.vision.embedding import ImageEmbedderDataPipeline
     >>> iedata = ImageEmbedderDataPipeline()
     >>> iedata.before_collate(torch.tensor([1]))
     tensor([1])
