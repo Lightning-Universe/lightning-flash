@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, IO, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
 
-from flash.core.data import DataModule, DataPipeline
+from flash.core.data import DataModule, DataPipeline, download_data
 from flash.core.utils import get_callable_dict
+
+
+def download_model(url: str):
+    download_data(url, './')
 
 
 def predict_context(func: Callable) -> Callable:
@@ -180,3 +184,23 @@ class Task(pl.LightningModule):
 
     def configure_finetune_callback(self):
         return []
+
+    @classmethod
+    def load_from_checkpoint(
+        cls,
+        checkpoint_path: Union[str, IO],
+        map_location: Optional[Union[Dict[str, str], str, torch.device, int, Callable]] = None,
+        hparams_file: Optional[str] = None,
+        strict: bool = True,
+        **kwargs,
+    ):
+        # todo: resolve ModuleNotFoundError: No module named 'transformers.tokenization_bert'
+        try:
+            if "http" in checkpoint_path:
+                download_model(checkpoint_path)
+                checkpoint_path = checkpoint_path.split("/")[-1]
+        except Exception:
+            pass
+        return super().load_from_checkpoint(
+            checkpoint_path, map_location=map_location, hparams_file=hparams_file, strict=strict, **kwargs
+        )
