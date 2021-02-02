@@ -21,18 +21,8 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
+from flash.vision.classification.backbones import torchvision_backbone_and_num_features
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
-
-_resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
-_resnet_feats = lambda model: model.fc.in_features  # noqa: E731
-
-_backbones = {
-    "resnet18": (torchvision.models.resnet18, _resnet_backbone, _resnet_feats),
-    "resnet34": (torchvision.models.resnet34, _resnet_backbone, _resnet_feats),
-    "resnet50": (torchvision.models.resnet50, _resnet_backbone, _resnet_feats),
-    "resnet101": (torchvision.models.resnet101, _resnet_backbone, _resnet_feats),
-    "resnet152": (torchvision.models.resnet152, _resnet_backbone, _resnet_feats),
-}
 
 
 class ImageClassifier(ClassificationTask):
@@ -69,13 +59,7 @@ class ImageClassifier(ClassificationTask):
 
         self.save_hyperparameters()
 
-        if backbone not in _backbones:
-            raise MisconfigurationException(f"Backbone {backbone} is not yet supported")
-
-        backbone_fn, split, num_feats = _backbones[backbone]
-        backbone = backbone_fn(pretrained=pretrained)
-        self.backbone = split(backbone)
-        num_features = num_feats(backbone)
+        self.backbone, num_features = torchvision_backbone_and_num_features(backbone, pretrained)
 
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
