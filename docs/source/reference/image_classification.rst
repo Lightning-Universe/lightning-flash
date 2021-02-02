@@ -23,39 +23,38 @@ Use the :class:`~flash.text.ImageClassificatier` pretrained model for inference 
 
 .. code-block:: python
 
-	# import our libraries
-	from flash.text import TextClassifier
+    # import our libraries
+    from flash import Trainer
+    from flash.core.data import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
 
-	# Load finetuned task
-	model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+    # Download the data
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
-	# 2. Perform inference from list of sequences
-	predictions = model.predict([
-	    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-	    "The worst movie in the history of cinema.",
-	    "I come from Bulgaria where it 's almost impossible to have a tornado."
-	    "Very, very afraid"
-	    "This guy has done a great job with this movie!",
-	])
-	print(predictions)
+    # Load the model from a checkpoint
+    model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
+
+    # Predict what's on a few images! ants or bees?
+    predictions = model.predict([
+        "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
+        "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
+        "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
+    ])
+    print(predictions)
+
+    # Or generate predictions with a whole folder!
+    datamodule = ImageClassificationData.from_folder(folder="data/hymenoptera_data/predict/")
+    predictions = Trainer().predict(model, datamodule=datamodule)
+    print(predictions)
 
 Or on a given dataset:
 
 .. code-block:: python
 
-	# import our libraries
-	from flash import download_data
-	from flash.text import TextClassifier
-
-	# 1. Download dataset, save it under 'data' dir
-	download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
-
-	# 2. Load finetuned task
-	model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
-
-	# 3. Perform inference from a csv file
-	predictions = model.predict("data/imdb/test.csv")
-	print(predictions)
+    # Or generate predictions with a whole folder!
+    datamodule = ImageClassificationData.from_folder(folder="data/hymenoptera_data/predict/")
+    predictions = Trainer().predict(model, datamodule=datamodule)
+    print(predictions)
 
 For more advanced inference options, see :ref:`predictions`.
 
@@ -97,16 +96,16 @@ Now all we need is three lines of code to build to train our task!
 
 .. code-block:: python
 
-	import flash
-	from flash import download_data
-	from flash.vision import ImageClassificationData, ImageClassifier
+    import flash
+    from flash import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
     # 2. Load the data
     datamodule = ImageClassificationData.from_folders(
-    	backbone="resnet18",
+        backbone="resnet18",
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
@@ -119,7 +118,7 @@ Now all we need is three lines of code to build to train our task!
     trainer = flash.Trainer(max_epochs=1)
 
     # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, unfreeze_milestones=(0, 1))
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze_unfreeze")
 
     # 6. Test the model
     trainer.test()
@@ -140,7 +139,7 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
 
     # 1. organize the data
     data = ImageClassificationData.from_folders(
-    	backbone="resnet34",
+        backbone="resnet34",
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/"
     )
@@ -180,7 +179,3 @@ ImageClassificationData
 .. automethod:: flash.vision.ImageClassificationData.from_filepaths
 
 .. automethod:: flash.vision.ImageClassificationData.from_folders
-
-
-
-

@@ -21,6 +21,7 @@ Lightning Flash
 
    reference/task
    reference/image_classification
+   reference/image_embedder
    reference/text_classification
    reference/tabular_classification
 
@@ -36,6 +37,7 @@ Lightning Flash
    :caption: Common Use Cases
 
    general/training
+   general/finetuning
    general/predictions
 
 Indices and tables
