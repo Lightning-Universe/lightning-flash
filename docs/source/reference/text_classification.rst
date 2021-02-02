@@ -81,7 +81,7 @@ Say you wanted to create a model that can predict whether a movie review is **po
 
 All we need is three lines of code to train our model!
 
-.. code-block:: python
+.. testcode::
 
     # import our libraries
     import flash
