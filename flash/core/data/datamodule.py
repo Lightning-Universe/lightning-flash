@@ -64,7 +64,7 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-           num_workers = os.cpu_count()
+            num_workers = os.cpu_count()
         # if num_workers is None:
         #     #    warnings.warn("Could not infer cpu count automatically, setting it to zero")
         #     num_workers = 0
