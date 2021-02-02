@@ -100,7 +100,7 @@ class Trainer(pl.Trainer):
             )
 
         if isinstance(strategy, BaseFinetuning):
-            callback = strategy
+            callback = [strategy]
         else:
             # todo: change to ``configure_callbacks`` when merged to Lightning.
             model_callback = model.configure_finetune_callback()
@@ -115,11 +115,11 @@ class Trainer(pl.Trainer):
                         f"The provided {strategy} will be overriden. "
                         "HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
                     )
-                callback = [model_callback]
+                callback = model_callback
             else:
                 callback = instantiate_default_finetuning_callbacks(strategy)
 
-        self.callbacks = self._merge_callbacks(self.callbacks, [callback])
+        self.callbacks = self._merge_callbacks(self.callbacks, callback)
 
     @staticmethod
     def _merge_callbacks(old_callbacks: List, new_callbacks: List) -> List:
@@ -127,7 +127,7 @@ class Trainer(pl.Trainer):
         This function keeps only 1 instance of each callback type,
         extending new_callbacks with old_callbacks
         """
-        if len(new_callbacks):
+        if len(new_callbacks) == 0:
             return old_callbacks
         new_callbacks_types = set(type(c) for c in new_callbacks)
         old_callbacks_types = set(type(c) for c in old_callbacks)
