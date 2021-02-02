@@ -17,6 +17,7 @@ import torch
 from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
+from torch.nn import Linear
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn import global_mean_pool
 
@@ -39,6 +40,7 @@ class GraphClassifier(ClassificationTask):
 
     def __init__(
         self,
+        num_features: int,
         num_classes: int,
         hidden: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
@@ -50,23 +52,51 @@ class GraphClassifier(ClassificationTask):
         if isinstance(hidden, int):
             hidden = [hidden]
 
-        sizes = [input_size] + hidden + [num_classes]
+        #sizes = [input_size] + hidden + [num_classes]
 
         super().__init__(
-            model=self._init_model(sizes),
+            model = GCN(in_features = num_features, hidden_channels=hidden, out_features = num_classes),
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
         )
 
-    def _init_model():
-        return 
+    #train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 
-    def forward(self, x) -> Any:
-        x = x = self.model(x)
+    def forward(self, data) -> Any:
+        x = self.model(data.x, data.edge_index, data.batch) #This line is probably something to change
         return self.head(x)
+
+    
 
     @staticmethod
     def default_pipeline() -> ClassificationDataPipeline:
         return GraphClassificationData.default_pipeline()
+
+#Taken from https://colab.research.google.com/drive/1I8a0DfQ3fI7Njc62__mVXUlcAleUclnb?usp=sharing#scrollTo=CN3sRVuaQ88l
+class GCN(torch.nn.Module):
+    def __init__(self, num_features, hidden_channels, num_classes):
+        super(GCN, self).__init__() #I don't understand why we need to call super here with GCN as an argument
+        #torch.manual_seed(12345)
+        self.conv1 = GCNConv(num_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.lin = Linear(hidden_channels, num_classes)
+
+    def forward(self, x, edge_index, batch):
+        # 1. Obtain node embeddings 
+        x = self.conv1(x, edge_index)
+        x = x.relu()
+        x = self.conv2(x, edge_index)
+        x = x.relu()
+        x = self.conv3(x, edge_index)
+
+        # 2. Readout layer
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        # 3. Apply a final classifier
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.lin(x)
+        
+        return x
