@@ -20,6 +20,11 @@ from torchvision import transforms as T
 
 from flash.core.data.datamodule import DataModule
 
+try:
+    from pycocotools.coco import COCO
+except ImportError:
+    COCO = None
+
 
 class CustomCOCODataset(torch.utils.data.Dataset):
 
@@ -29,7 +34,8 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         ann_file: str,
         transforms: Optional[Callable] = None,
     ):
-        from pycocotools.coco import COCO
+        if COCO is None:
+            raise ImportError("Kindly install the COCO API `pycocotools` to use the Dataset")
 
         self.root = root
         self.transforms = transforms
@@ -89,7 +95,7 @@ _default_transform = T.Compose([T.ToTensor()])
 class ImageDetectionData(DataModule):
 
     @classmethod
-    def coco_format(
+    def from_coco(
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
