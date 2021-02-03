@@ -55,7 +55,7 @@ def test_cpu_count_none():
     train_ds = DummyDataset()
     # with patch("os.cpu_count", return_value=None), pytest.warns(UserWarning, match="Could not infer"):
     dm = DataModule(train_ds, num_workers=None)
-    assert dm.num_workers == 0
+    assert dm.num_workers > 0
 
 
 def test_pipeline():
