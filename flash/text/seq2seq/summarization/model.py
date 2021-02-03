@@ -32,9 +32,7 @@ class SummarizationTask(Seq2SeqTask):
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         use_stemmer: Whether Porter stemmer should be used to strip word suffixes to improve matching.
-            Defaults to `True`
         rouge_newline_sep: Add a new line at the beginning of each sentence in Rouge Metric calculation.
-            Defaults to `True`
     """
 
     def __init__(
