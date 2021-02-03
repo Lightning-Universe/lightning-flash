@@ -19,7 +19,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
-from flash.vision.classification.backbones import torchvision_backbone_and_num_features
+from flash.vision.backbones import torchvision_backbone_and_num_features
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
 
 

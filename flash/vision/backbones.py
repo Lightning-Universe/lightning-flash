@@ -27,7 +27,6 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
     >>> torchvision_backbone_and_num_features('densenet121')  # doctest: +ELLIPSIS
     (Sequential(...), 1024)
     """
-
     model = getattr(torchvision.models, model_name, None)
     if model is None:
         raise MisconfigurationException(f"{model_name} is not supported by torchvision")
