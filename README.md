@@ -53,22 +53,23 @@ Pip / conda
 pip install lightning-flash -U
 ```
 
-The latest version from source
-- using `pip`
-    ```bash
-    # with git
-    pip install git+https://github.com/PytorchLightning/lightning-flash.git@master
-    # OR from an archive
-    pip install https://github.com/PyTorchLightning/lightning-flash/archive/master.zip
-    ```
-- using native `setuptools`
-    ``` bash
-    # clone flash repository locally
-    git clone https://github.com/PyTorchLightning/lightning-flash.git
-    cd lightning-flash
-    # install in editable mode
-    pip install -e .
-    ```
+Pip from source
+
+```bash
+# with git
+pip install git+https://github.com/PytorchLightning/lightning-flash.git@master
+# OR from an archive
+pip install https://github.com/PyTorchLightning/lightning-flash/archive/master.zip
+```
+
+From source using `setuptools`
+``` bash
+# clone flash repository locally
+git clone https://github.com/PyTorchLightning/lightning-flash.git
+cd lightning-flash
+# install in editable mode
+pip install -e .
+```
 
 ---
 
