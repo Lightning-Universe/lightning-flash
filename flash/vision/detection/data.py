@@ -19,6 +19,8 @@ from PIL import Image
 from torchvision import transforms as T
 
 from flash.core.data.datamodule import DataModule
+from flash.vision.classification.data import _pil_loader
+from flash.vision.embedding.image_embedder_model import ImageEmbedderDataPipeline
 
 try:
     from pycocotools.coco import COCO
@@ -92,6 +94,10 @@ class CustomCOCODataset(torch.utils.data.Dataset):
 _default_transform = T.Compose([T.ToTensor()])
 
 
+def collate_fn(batch):
+    return tuple(zip(*batch))
+
+
 class ImageDetectionData(DataModule):
 
     @classmethod
@@ -127,4 +133,6 @@ class ImageDetectionData(DataModule):
         )
 
         datamodule.num_classes = train_ds.num_classes
+        datamodule.data_pipeline = ImageEmbedderDataPipeline(valid_transform=_default_transform, loader=_pil_loader)
+        datamodule.data_pipeline.collate_fn = collate_fn
         return datamodule
