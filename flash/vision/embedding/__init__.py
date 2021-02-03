@@ -1,1 +1,1 @@
-from flash.vision.embedding.image_embedder_model import ImageEmbedder
+from flash.vision.embedding.image_embedder_model import ImageEmbedder, ImageEmbedderDataPipeline

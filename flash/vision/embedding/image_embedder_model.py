@@ -25,7 +25,7 @@ from flash.core import Task
 from flash.core.data import TaskDataPipeline
 from flash.core.data.utils import _contains_any_tensor
 from flash.vision.classification.data import _default_valid_transforms, _pil_loader
-from flash.vision.embedding.model_map import _load_model, _models
+from flash.vision.embedding.model_map import _load_bolts_model, _models
 
 _resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
 _resnet_feats = lambda model: model.fc.in_features  # noqa: E731
@@ -40,8 +40,24 @@ _backbones = {
 
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
+    """
+    >>> from flash.vision.embedding import ImageEmbedderDataPipeline
+    >>> iedata = ImageEmbedderDataPipeline()
+    >>> iedata.before_collate(torch.tensor([1]))
+    tensor([1])
+    >>> import os, numpy, PIL
+    >>> img = PIL.Image.fromarray(numpy.random.randint(0, 255, (150, 200, 3)), 'RGB')
+    >>> img.save('sample-image.png')
+    >>> iedata.before_collate('sample-image.png')  # doctest: +ELLIPSIS
+    [tensor([[[...]]])]
+    >>> os.remove('sample-image.png')
+    """
 
-    def __init__(self, valid_transform: Optional[Callable] = _default_valid_transforms, loader: Callable = _pil_loader):
+    def __init__(
+        self,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
+        loader: Callable = _pil_loader,
+    ):
         self._valid_transform = valid_transform
         self._loader = loader
 
@@ -74,13 +90,13 @@ class ImageEmbedder(Task):
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         pooling_fn: Function used to pool image to generate embeddings. (Default: torch.max)
 
-    Example::
+    Example:
 
-        from flash.vision import ImageEmbedder
-
-        embedder = ImageEmbedder(backbone='swav-imagenet')
-        image = torch.rand(32, 3, 32, 32)
-        embeddings = embedder(image)
+        >>> import torch
+        >>> from flash.vision.embedding import ImageEmbedder
+        >>> embedder = ImageEmbedder(backbone='resnet18')
+        >>> image = torch.rand(32, 3, 32, 32)
+        >>> embeddings = embedder(image)
 
     """
 
@@ -110,7 +126,7 @@ class ImageEmbedder(Task):
         self.pooling_fn = pooling_fn
 
         if backbone in _models:
-            config = _load_model(backbone)
+            config = _load_bolts_model(backbone)
             self.backbone = config['model']
             num_features = config['num_features']
 

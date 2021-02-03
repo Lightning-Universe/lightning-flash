@@ -19,6 +19,14 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 
 def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
+    """
+    >>> torchvision_backbone_and_num_features('mobilenet_v2')  # doctest: +ELLIPSIS
+    (Sequential(...), 1280)
+    >>> torchvision_backbone_and_num_features('resnet18')  # doctest: +ELLIPSIS
+    (Sequential(...), 512)
+    >>> torchvision_backbone_and_num_features('densenet121')  # doctest: +ELLIPSIS
+    (Sequential(...), 1024)
+    """
 
     model = getattr(torchvision.models, model_name, None)
     if model is None:
