@@ -17,6 +17,8 @@ import torch.nn as nn
 import torchvision
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
+from flash.vision.embedding.model_map import load_simclr_imagenet, load_swav_imagenet
+
 
 def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
     """
@@ -25,6 +27,10 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
     >>> torchvision_backbone_and_num_features('resnet18')  # doctest: +ELLIPSIS
     (Sequential(...), 512)
     >>> torchvision_backbone_and_num_features('densenet121')  # doctest: +ELLIPSIS
+    (Sequential(...), 1024)
+    >>> torchvision_backbone_and_num_features('simclr-imagenet')  # doctest: +ELLIPSIS
+    (Sequential(...), 1024)
+    >>> torchvision_backbone_and_num_features('swav-imagenet')  # doctest: +ELLIPSIS
     (Sequential(...), 1024)
     """
     model = getattr(torchvision.models, model_name, None)
@@ -51,5 +57,14 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
         backbone = nn.Sequential(*model.features, nn.ReLU(inplace=True))
         num_features = model.classifier.in_features
         return backbone, num_features
+
+    elif model_name == "simclr-imagenet":
+        config = load_simclr_imagenet()
+        return config["model"], config["emb_size"]
+
+    elif model_name == "swav-imagenet":
+        config = load_swav_imagenet()
+        return config["model"], config["emb_size"]
+
 
     raise ValueError(f"{model_name} is not supported yet.")
