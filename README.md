@@ -50,21 +50,25 @@
 Pip / conda
 
 ```bash
-pip install lightning-flash
+pip install lightning-flash -U
 ```
 
-Master
-```bash
-pip install git+https://github.com/PytorchLightning/lightning-flash.git@master --upgrade
-```
-
-Source
-
-``` bash
-git clone https://github.com/PyTorchLightning/lightning-flash.git
-cd lightning-flash
-pip install -e .
-```
+The latest version from source
+- using `pip`
+    ```bash
+    # with git
+    pip install git+https://github.com/PytorchLightning/lightning-flash.git@master
+    # OR as archive
+    pip install https://github.com/PyTorchLightning/lightning-flash/archive/master.zip
+    ```
+- using native `setuptools`
+    ``` bash
+    # clone the repository locally
+    git clone https://github.com/PyTorchLightning/lightning-flash.git
+    cd lightning-flash
+    # install with native setup
+    pip install -e .
+    ```
 
 ---
 
