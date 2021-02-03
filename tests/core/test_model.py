@@ -21,7 +21,7 @@ from torch.nn import functional as F
 
 from flash import ClassificationTask
 from flash.tabular import TabularClassifier
-from flash.text import SummarizationTask, TextClassifier, TranslationTask
+from flash.text import SummarizationTask, TextClassifier
 from flash.vision import ImageClassifier
 
 # ======== Mock functions ========

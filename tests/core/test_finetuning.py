@@ -11,18 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any
 
 import pytest
-import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
-from torch.nn import functional as F
 
 from flash import Trainer
 from flash.core.finetuning import NoFreeze
-from flash.core.model import Task
 from flash.vision.classification import ImageClassifier
 
 
