@@ -147,3 +147,11 @@ if SPHINX_MOCK_REQUIREMENTS:
 MOCK_PACKAGES = [PACKAGE_MAPPING.get(pkg, pkg) for pkg in MOCK_PACKAGES]
 
 autodoc_mock_imports = MOCK_PACKAGES
+
+# only run doctests marked with a ".. doctest::" directive
+doctest_test_doctest_blocks = ''
+doctest_global_setup = """
+import torch
+import pytorch_lightning as pl
+import flash
+"""

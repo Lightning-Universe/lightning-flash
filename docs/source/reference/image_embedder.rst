@@ -36,11 +36,11 @@ Or on a random image tensor
 
 .. code-block:: python
 
-  # 2. Perform inference on an image file
-  import torch
-  images = torch.rand(32, 3, 224, 224)
-  embeddings = model.predict(images)
-  print(predictions)
+    # 2. Perform inference on an image file
+    import torch
+    images = torch.rand(32, 3, 224, 224)
+    embeddings = model.predict(images)
+    print(predictions)
 
 For more advanced inference options, see :ref:`predictions`.
 
