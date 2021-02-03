@@ -24,19 +24,9 @@ from torch.nn import functional as F
 from flash.core import Task
 from flash.core.data import TaskDataPipeline
 from flash.core.data.utils import _contains_any_tensor
+from flash.vision.backbones import torchvision_backbone_and_num_features
 from flash.vision.classification.data import _default_valid_transforms, _pil_loader
 from flash.vision.embedding.model_map import _load_bolts_model, _models
-
-_resnet_backbone = lambda model: nn.Sequential(*list(model.children())[:-2])  # noqa: E731
-_resnet_feats = lambda model: model.fc.in_features  # noqa: E731
-
-_backbones = {
-    "resnet18": (torchvision.models.resnet18, _resnet_backbone, _resnet_feats),
-    "resnet34": (torchvision.models.resnet34, _resnet_backbone, _resnet_feats),
-    "resnet50": (torchvision.models.resnet50, _resnet_backbone, _resnet_feats),
-    "resnet101": (torchvision.models.resnet101, _resnet_backbone, _resnet_feats),
-    "resnet152": (torchvision.models.resnet152, _resnet_backbone, _resnet_feats),
-}
 
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
@@ -129,15 +119,8 @@ class ImageEmbedder(Task):
             config = _load_bolts_model(backbone)
             self.backbone = config['model']
             num_features = config['num_features']
-
-        elif backbone not in _backbones:
-            raise NotImplementedError(f"Backbone {backbone} is not yet supported")
-
         else:
-            backbone_fn, split, num_feats = _backbones[backbone]
-            backbone = backbone_fn(pretrained=pretrained)
-            self.backbone = split(backbone)
-            num_features = num_feats(backbone)
+            self.backbone, num_features = torchvision_backbone_and_num_features(backbone, pretrained)
 
         if embedding_dim is None:
             self.head = nn.Identity()
