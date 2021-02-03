@@ -37,6 +37,9 @@ def _evaluate_iou(target, pred):
     return box_iou(target["boxes"], pred["boxes"]).diag().mean()
 
 
+# Ref: Lightning Bolts https://github.com/PyTorchLightning/pytorch-lightning-bolts
+
+
 class ImageDetector(Task):
     """Image detection task
 
