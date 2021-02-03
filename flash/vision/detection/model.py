@@ -17,10 +17,22 @@ import torch
 import torchvision
 from torch import nn
 from torch.optim import Optimizer
+from torchvision.ops import box_iou
 
 from flash.core import Task
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
+
+
+def _evaluate_iou(target, pred):
+    """
+    Evaluate intersection over union (IOU) for target from dataset and output prediction
+    from model
+    """
+    if pred["boxes"].shape[0] == 0:
+        # no box detected, 0 IOU
+        return torch.tensor(0.0, device=pred["boxes"].device)
+    return box_iou(target["boxes"], pred["boxes"]).diag().mean()
 
 
 class ImageDetector(Task):
@@ -59,8 +71,6 @@ class ImageDetector(Task):
                 head = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
                 model.roi_heads.box_predictor = head
 
-        loss = {} if loss is None else loss
-
         super().__init__(
             model=model,
             loss_fn=loss,
@@ -69,27 +79,27 @@ class ImageDetector(Task):
             optimizer=optimizer,
         )
 
-    def step(self, batch: Any, batch_idx: int) -> Any:
+    def training_step(self, batch, batch_idx) -> Any:
+        """The training step.
+        Overrides Task.training_step
+        """
         images, targets = batch
         targets = [{k: v for k, v in t.items()} for t in targets]
 
         # fasterrcnn takes both images and targets for training, returns loss_dict
         loss_dict = self.model(images, targets)
-        return loss_dict
-
-    def training_step(self, batch, batch_idx) -> Any:
-        """The training step.
-        Overrides Task.training_step
-        """
-        loss_dict = self.step(batch, batch_idx)
         loss = sum(loss_dict.values())
         self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
-    def validation_step(self, batch: Any, batch_idx: int) -> None:
-        loss_dict = self.step(batch, batch_idx)
-        self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
+    def validation_step(self, batch, batch_idx):
+        images, targets = batch
+        # fasterrcnn takes only images for eval() mode
+        outs = self.model(images)
+        iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
+        return {"val_iou": iou}
 
-    def test_step(self, batch: Any, batch_idx: int) -> None:
-        loss_dict = self.step(batch, batch_idx)
-        self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
+    def validation_epoch_end(self, outs):
+        avg_iou = torch.stack([o["val_iou"] for o in outs]).mean()
+        logs = {"val_iou": avg_iou}
+        return {"avg_val_iou": avg_iou, "log": logs}
