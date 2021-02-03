@@ -22,10 +22,10 @@ if _BOLTS_AVAILABLE:
 
 ROOT_S3_BUCKET = "https://pl-bolts-weights.s3.us-east-2.amazonaws.com"
 
-
 # TODO: move this stuff to backbones
 # also, we should consider uploading plain pytorch weights so we don't need to rely on bolts to load these
 # also mabye just use torchhub for the ssl lib
+
 
 def load_simclr_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt"):
     simclr = SimCLR.load_from_checkpoint(path_or_url, strict=False)
