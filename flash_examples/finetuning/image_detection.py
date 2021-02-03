@@ -25,4 +25,4 @@ if __name__ == "__main__":
     trainer.finetune(model, datamodule)
 
     # 6. Save it!
-    trainer.save_checkpoint("image_classification_model.pt")
+    trainer.save_checkpoint("image_detection_model.pt")
