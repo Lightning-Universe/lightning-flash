@@ -58,15 +58,15 @@ The latest version from source
     ```bash
     # with git
     pip install git+https://github.com/PytorchLightning/lightning-flash.git@master
-    # OR as archive
+    # OR from an archive
     pip install https://github.com/PyTorchLightning/lightning-flash/archive/master.zip
     ```
 - using native `setuptools`
     ``` bash
-    # clone the repository locally
+    # clone flash repository locally
     git clone https://github.com/PyTorchLightning/lightning-flash.git
     cd lightning-flash
-    # install with native setup
+    # install in editable mode
     pip install -e .
     ```
 
