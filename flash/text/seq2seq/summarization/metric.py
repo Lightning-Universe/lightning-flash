@@ -25,12 +25,32 @@ from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_se
 class RougeMetric(Metric):
     """
     Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
+
+    Example:
+
+        >>> target = "Is your name John".split()
+        >>> preds = "My name is John".split()
+        >>> rouge = RougeMetric()
+        >>> from pprint import pprint
+        >>> pprint(rouge(preds, target))  # doctest: +NORMALIZE_WHITESPACE
+        {'rouge1_fmeasure': 0.25,
+         'rouge1_precision': 0.25,
+         'rouge1_recall': 0.25,
+         'rouge2_fmeasure': 0.0,
+         'rouge2_precision': 0.0,
+         'rouge2_recall': 0.0,
+         'rougeL_fmeasure': 0.25,
+         'rougeL_precision': 0.25,
+         'rougeL_recall': 0.25,
+         'rougeLsum_fmeasure': 0.25,
+         'rougeLsum_precision': 0.25,
+         'rougeLsum_recall': 0.25}
     """
 
     def __init__(
         self,
-        rouge_newline_sep: bool,
-        use_stemmer: bool,
+        rouge_newline_sep: bool = False,
+        use_stemmer: bool = False,
         rouge_keys: Tuple[str] = ("rouge1", "rouge2", "rougeL", "rougeLsum"),
     ):
         super().__init__()
