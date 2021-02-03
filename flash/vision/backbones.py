@@ -66,5 +66,4 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
         config = load_swav_imagenet()
         return config["model"], config["emb_size"]
 
-
     raise ValueError(f"{model_name} is not supported yet.")
