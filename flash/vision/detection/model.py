@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchvision
@@ -20,6 +20,8 @@ from torch.optim import Optimizer
 from torchvision.ops import box_iou
 
 from flash.core import Task
+from flash.vision.detection.data import _default_transform
+from flash.vision.embedding.image_embedder_model import ImageEmbedderDataPipeline
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
@@ -103,3 +105,7 @@ class ImageDetector(Task):
         avg_iou = torch.stack([o["val_iou"] for o in outs]).mean()
         logs = {"val_iou": avg_iou}
         return {"avg_val_iou": avg_iou, "log": logs}
+
+    @staticmethod
+    def default_pipeline() -> ImageEmbedderDataPipeline:
+        return ImageEmbedderDataPipeline(_default_transform)
