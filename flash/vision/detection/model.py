@@ -18,12 +18,12 @@ import torchvision
 from torch import nn
 from torch.optim import Optimizer
 
-from flash.core.classification import ClassificationTask
+from flash.core import Task
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
 
-class ImageDetector(ClassificationTask):
+class ImageDetector(Task):
     """Image detection task
 
     Args:
@@ -59,9 +59,7 @@ class ImageDetector(ClassificationTask):
                 head = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
                 model.roi_heads.box_predictor = head
 
-        if loss is None:
-            # TODO: maybe better way of handling no loss,
-            loss = {}
+        loss = {} if loss is None else loss
 
         super().__init__(
             model=model,
@@ -71,17 +69,27 @@ class ImageDetector(ClassificationTask):
             optimizer=optimizer,
         )
 
-    def training_step(self, batch, batch_idx) -> Any:
-        """The training step.
-        Overrides Task.training_step
-        """
+    def step(self, batch: Any, batch_idx: int) -> Any:
         images, targets = batch
         targets = [{k: v for k, v in t.items()} for t in targets]
 
         # fasterrcnn takes both images and targets for training, returns loss_dict
         loss_dict = self.model(images, targets)
-        loss = sum(loss_dict.values())
-        for k, v in loss_dict.items():
-            self.log("train_k", v)
+        return loss_dict
 
+    def training_step(self, batch, batch_idx) -> Any:
+        """The training step.
+        Overrides Task.training_step
+        """
+        loss_dict = self.step(batch, batch_idx)
+        loss = sum(loss_dict.values())
+        self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
+
+    def validation_step(self, batch: Any, batch_idx: int) -> None:
+        loss_dict = self.step(batch, batch_idx)
+        self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
+
+    def test_step(self, batch: Any, batch_idx: int) -> None:
+        loss_dict = self.step(batch, batch_idx)
+        self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
