@@ -21,6 +21,7 @@ from torchvision.ops import box_iou
 
 from flash.core import Task
 from flash.vision.detection.data import _default_transform
+from flash.vision.detection.finetuning import ImageDetectorFineTuning
 from flash.vision.embedding.image_embedder_model import ImageEmbedderDataPipeline
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
@@ -112,3 +113,6 @@ class ImageDetector(Task):
     @staticmethod
     def default_pipeline() -> ImageEmbedderDataPipeline:
         return ImageEmbedderDataPipeline(_default_transform)
+
+    def configure_finetune_callback(self):
+        return [ImageDetectorFineTuning(train_bn=True)]
