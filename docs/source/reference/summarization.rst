@@ -171,7 +171,7 @@ API reference
 SummarizationTask
 -----------------
 
-.. autoclass:: flash.text.seq2seq.summarization.model.SummarizationTask
+.. autoclass:: flash.text.SummarizationTask
     :members:
     :exclude-members: forward
 
@@ -180,6 +180,6 @@ SummarizationTask
 SummarizationData
 -----------------
 
-.. autoclass:: flash.text.seq2seq.summarization.data.SummarizationData
+.. autoclass:: flash.text.SummarizationData
 
-.. automethod:: flash.text.seq2seq.summarization.data.SummarizationData.from_files
+.. automethod:: flash.text.SummarizationData.from_files

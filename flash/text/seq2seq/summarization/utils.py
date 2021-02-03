@@ -13,14 +13,12 @@
 # limitations under the License.
 import re
 
-from filelock import FileLock
 from pytorch_lightning.utilities import _module_available
 
 nltk = None
 if _module_available('nltk'):
     import nltk
-    with FileLock(".lock") as lock:
-        nltk.download("punkt", quiet=True)
+    nltk.download("punkt", quiet=True)
 
 
 def add_newline_to_end_of_each_sentence(x: str) -> str:

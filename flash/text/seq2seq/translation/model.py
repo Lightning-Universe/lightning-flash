@@ -22,6 +22,7 @@ from flash.text.seq2seq.translation.metric import BLEUScore
 
 class TranslationTask(Seq2SeqTask):
     """Task for Sequence2Sequence Translation.
+
     Args:
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.

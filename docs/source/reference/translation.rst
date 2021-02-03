@@ -5,7 +5,7 @@ Translation
 ###########
 
 ********
-The task
+The Task
 ********
 
 Translation is the task of translating text from a source language to another, such as English to Romanian.
@@ -17,7 +17,7 @@ This task is a subset of Sequence to Sequence tasks, which requires the model to
 Inference
 *********
 
-The :class:`~flash.text.TranslationTask` is already pre-trained on [WMT16 English/Romanian](https://www.statmt.org/wmt16/translation-task.html), a dataset of English to Romanian samples, based on the Europarl corpora.
+The :class:`~flash.text.TranslationTask` is already pre-trained on `WMT16 English/Romanian <https://www.statmt.org/wmt16/translation-task.html>`_, a dataset of English to Romanian samples, based on the `Europarl corpora <http://www.statmt.org/europarl/>`_.
 
 Use the :class:`~flash.text.TranslationTask` pretrained model for inference on any string sequence using :func:`~flash.text.TranslationTask.predict`:
 
@@ -78,7 +78,7 @@ Say you want to finetune to your own translation data. We use the English/Romani
 
 In the above the input/target columns represent the English and Romanian translation respectively.
 
-All we need is three lines of code to train our model!
+All we need is three lines of code to train our model! By default, we use a `mBART <https://github.com/pytorch/fairseq/tree/master/examples/mbart/>`_ backbone for translation which requires a GPU to train.
 
 .. code-block:: python
 
@@ -125,7 +125,7 @@ To run the example:
 *********************
 Changing the backbone
 *********************
-By default, we use `mBART <https://github.com/pytorch/fairseq/tree/master/examples/mbart/>`_ model for translation. You can change the model run by passing in the backbone parameter.
+You can change the model run by passing in the backbone parameter.
 
 .. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object! Since this is a Seq2Seq task, make sure you use a Seq2Seq model.
 
@@ -153,7 +153,7 @@ API reference
 TranslationTask
 ---------------
 
-.. autoclass:: flash.text.seq2seq.translation.model.TranslationTask
+.. autoclass:: flash.text.TranslationTask
     :members:
     :exclude-members: forward
 
@@ -162,6 +162,6 @@ TranslationTask
 TranslationData
 ---------------
 
-.. autoclass:: flash.text.seq2seq.translation.data.TranslationData
+.. autoclass:: flash.text.TranslationData
 
-.. automethod:: flash.text.seq2seq.translation.data.TranslationData.from_files
+.. automethod:: flash.text.TranslationData.from_files
