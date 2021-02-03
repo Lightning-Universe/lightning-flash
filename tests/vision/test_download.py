@@ -13,14 +13,9 @@
 # limitations under the License.
 import pytest
 
-from flash.vision.classification.dataset import hymenoptera_data_download
 from flash.vision.embedding.model_map import _load_bolts_model
 
 
 @pytest.mark.parametrize("name", ['simclr-imagenet', 'swav-imagenet'])
 def test_load_bolts(name):
     _load_bolts_model(name)
-
-
-def test_pull_hymenoptera(tmpdir):
-    hymenoptera_data_download(path=tmpdir)
