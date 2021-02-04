@@ -20,9 +20,10 @@ from torch.optim import Optimizer
 from torchvision.ops import box_iou
 
 from flash.core import Task
-from flash.vision.detection.data import _default_transform
+from flash.core.data import DataPipeline
+from flash.core.model import predict_context
+from flash.vision.detection.data import _default_transform, ImageDetectorDataPipeline
 from flash.vision.detection.finetuning import ImageDetectorFineTuning
-from flash.vision.embedding.image_embedder_model import ImageEmbedderDataPipeline
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
@@ -38,12 +39,10 @@ def _evaluate_iou(target, pred):
     return box_iou(target["boxes"], pred["boxes"]).diag().mean()
 
 
-# Ref: Lightning Bolts https://github.com/PyTorchLightning/pytorch-lightning-bolts
-
-
 class ImageDetector(Task):
     """Image detection task
 
+    Ref: Lightning Bolts https://github.com/PyTorchLightning/pytorch-lightning-bolts
     Args:
         num_classes: the number of classes for detection, including background
         model: either a string of :attr`_models` or a custom nn.Module.
@@ -110,9 +109,24 @@ class ImageDetector(Task):
         logs = {"val_iou": avg_iou}
         return {"avg_val_iou": avg_iou, "log": logs}
 
+    @predict_context
+    def predict(
+        self,
+        x: Any,
+        batch_idx: Optional[int] = None,
+        skip_collate_fn: bool = False,
+        dataloader_idx: Optional[int] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+    ) -> Any:
+
+        data_pipeline = data_pipeline or self.default_pipeline()
+        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
+        predictions = self.forward(batch)
+        return data_pipeline.uncollate_fn(predictions)
+
     @staticmethod
-    def default_pipeline() -> ImageEmbedderDataPipeline:
-        return ImageEmbedderDataPipeline(_default_transform)
+    def default_pipeline() -> ImageDetectorDataPipeline:
+        return ImageDetectorDataPipeline()
 
     def configure_finetune_callback(self):
         return [ImageDetectorFineTuning(train_bn=True)]

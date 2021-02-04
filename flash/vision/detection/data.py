@@ -16,11 +16,13 @@ from typing import Any, Callable, Optional, Tuple
 
 import torch
 from PIL import Image
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torchvision import transforms as T
 
+from flash.core.data import TaskDataPipeline
 from flash.core.data.datamodule import DataModule
+from flash.core.data.utils import _contains_any_tensor
 from flash.vision.classification.data import _pil_loader
-from flash.vision.embedding.image_embedder_model import ImageEmbedderDataPipeline
 
 try:
     from pycocotools.coco import COCO
@@ -47,7 +49,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
     @property
     def num_classes(self):
         categories = self.coco.loadCats(self.coco.getCatIds())
-        return len(categories)
+        return len(categories) + 1
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         coco = self.coco
@@ -98,6 +100,28 @@ def collate_fn(batch):
     return tuple(zip(*batch))
 
 
+class ImageDetectorDataPipeline(TaskDataPipeline):
+
+    def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = _pil_loader):
+        self._valid_transform = valid_transform
+        self._loader = loader
+
+    def before_collate(self, samples: Any) -> Any:
+        if _contains_any_tensor(samples):
+            return samples
+
+        if isinstance(samples, str):
+            samples = [samples]
+
+        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
+            outputs = []
+            for sample in samples:
+                output = self._loader(sample)
+                outputs.append(self._valid_transform(output))
+            return outputs
+        raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
+
+
 class ImageDetectionData(DataModule):
 
     @classmethod
@@ -133,6 +157,6 @@ class ImageDetectionData(DataModule):
         )
 
         datamodule.num_classes = train_ds.num_classes
-        datamodule.data_pipeline = ImageEmbedderDataPipeline(valid_transform=_default_transform, loader=_pil_loader)
+        datamodule.data_pipeline = ImageDetectorDataPipeline()
         datamodule.data_pipeline.collate_fn = collate_fn
         return datamodule
