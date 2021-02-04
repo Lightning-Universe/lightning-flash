@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from contextlib import suppress
 from typing import Tuple
 
 import torchvision
@@ -20,8 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
 
 if _BOLTS_AVAILABLE:
-    with suppress(TypeError):
-        from pl_bolts.models.self_supervised import SimCLR, SwAV
+    from pl_bolts.models.self_supervised import SimCLR, SwAV
 
 ROOT_S3_BUCKET = "https://pl-bolts-weights.s3.us-east-2.amazonaws.com"
 
