@@ -9,7 +9,7 @@ The Task
 ********
 
 Translation is the task of translating text from a source language to another, such as English to Romanian.
-This task is a subset of Sequence to Sequence tasks, which requires the model to generate a variable length sequence given an input sequence. In our case the English text would be our input sequence, and the Romanian sentence would be the output sequence from the model.
+This task is a subset of `Sequence to Sequence tasks <https://paperswithcode.com/method/seq2seq>`_, which requires the model to generate a variable length sequence given an input sequence. In our case, the task will take an English sequence as input, and output the same sequence in Romanian.
 
 -----
 
@@ -19,15 +19,14 @@ Inference
 
 The :class:`~flash.text.TranslationTask` is already pre-trained on `WMT16 English/Romanian <https://www.statmt.org/wmt16/translation-task.html>`_, a dataset of English to Romanian samples, based on the `Europarl corpora <http://www.statmt.org/europarl/>`_.
 
-Use the :class:`~flash.text.TranslationTask` pretrained model for inference on any string sequence using :func:`~flash.text.TranslationTask.predict`:
+Use the :class:`~flash.text.TranslationTask` pretrained model for inference on any string sequence using :class:`~flash.text.TranslationTask` `predict` method:
 
 .. code-block:: python
 
     # import our libraries
     from flash.text import TranslationTask
 
-
-    # 2. Load the model from a checkpoint
+    # 1. Load the model from a checkpoint
     model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 
     # 2. Perform inference from list of sequences
@@ -37,14 +36,17 @@ Use the :class:`~flash.text.TranslationTask` pretrained model for inference on a
     ])
     print(predictions)
 
-Or on a given dataset:
+Or on a given dataset, use :class:`~flash.core.trainer.Trainer` `predict` method:
 
 .. code-block:: python
 
     # import our libraries
-    from pytorch_lightning import Trainer
+    from flash import Trainer
     from flash import download_data
     from flash.text import TranslationData, TranslationTask
+
+    # 1. Download data
+    download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", 'data/')
 
     # 2. Load the model from a checkpoint
     model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
@@ -102,13 +104,13 @@ All we need is three lines of code to train our model! By default, we use a `mBA
     # 2. Build the task
     model = TranslationTask()
 
-    # 4. Create trainer
+    # 4. Create trainer- in this case we need to run on gpus, `precision=16` boosts speed
     trainer = flash.Trainer(max_epochs=5, gpus=1, precision=16)
 
     # 5. Finetune the task
     trainer.finetune(model, datamodule=datamodule)
 
-    # 6. Save trainer task
+    # 6. Save model to checkpoint
     trainer.save_checkpoint("translation_model_en_ro.pt")
 
 ----
@@ -140,7 +142,6 @@ You can change the model run by passing in the backbone parameter.
         backbone="t5-small",
     )
 
-    model = TranslationTask(backbone="t5-small")
 
 ------
 
