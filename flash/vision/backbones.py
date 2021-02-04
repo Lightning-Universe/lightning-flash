@@ -56,7 +56,7 @@ def bolts_backbone_and_num_features(model_name: str) -> Tuple[nn.Module, int]:
     # also mabye just use torchhub for the ssl lib
     def load_simclr_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt"):
         simclr = SimCLR.load_from_checkpoint(path_or_url, strict=False)
-        return simclr.model, 2048
+        return simclr.encoder, 2048
 
     def load_swav_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar"):
         swav = SwAV.load_from_checkpoint(path_or_url, strict=True)
