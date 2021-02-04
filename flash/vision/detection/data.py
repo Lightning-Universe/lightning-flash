@@ -84,7 +84,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         target["labels"] = torch.as_tensor(labels, dtype=torch.int64)
         target["image_id"] = torch.tensor([img_idx])
         target["area"] = torch.as_tensor(areas, dtype=torch.float32)
-        target["iscrowd"] = iscrowd = torch.as_tensor(iscrowd, dtype=torch.int64)
+        target["iscrowd"] = torch.as_tensor(iscrowd, dtype=torch.int64)
 
         if self.transforms is not None:
             img = self.transforms(img)
