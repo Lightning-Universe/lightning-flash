@@ -109,6 +109,18 @@ class ImageDetector(Task):
         logs = {"val_iou": avg_iou}
         return {"avg_val_iou": avg_iou, "log": logs}
 
+    def test_step(self, batch, batch_idx):
+        images, targets = batch
+        # fasterrcnn takes only images for eval() mode
+        outs = self.model(images)
+        iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
+        return {"test_iou": iou}
+
+    def test_epoch_end(self, outs):
+        avg_iou = torch.stack([o["test_iou"] for o in outs]).mean()
+        logs = {"test_iou": avg_iou}
+        return {"avg_test_iou": avg_iou, "log": logs}
+
     @predict_context
     def predict(
         self,
