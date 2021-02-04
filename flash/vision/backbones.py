@@ -14,10 +14,10 @@
 from contextlib import suppress
 from typing import Tuple
 
-import torch.nn as nn
 import torchvision
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import nn as nn
 
 if _BOLTS_AVAILABLE:
     with suppress(TypeError):
