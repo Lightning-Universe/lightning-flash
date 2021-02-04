@@ -25,7 +25,7 @@ class NoFreeze(BaseFinetuning):
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
         pass
 
-    def finetunning_function(
+    def finetuning_function(
         self,
         pl_module: pl.LightningModule,
         epoch: int,
@@ -42,7 +42,7 @@ class FlashBaseFinetuning(BaseFinetuning):
 
         FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
 
-        Override ``finetunning_function`` to put your unfreeze logic.
+        Override ``finetuning_function`` to put your unfreeze logic.
 
         Args:
             attr_names: Name(s) of the module attributes of the model to be frozen.
@@ -64,13 +64,13 @@ class FlashBaseFinetuning(BaseFinetuning):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(module=attr, train_bn=train_bn)
 
-    def finetunning_function(self, pl_module: pl.LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
+    def finetuning_function(self, pl_module: pl.LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
         pass
 
 
 class Freeze(FlashBaseFinetuning):
 
-    def finetunning_function(
+    def finetuning_function(
         self,
         pl_module: pl.LightningModule,
         epoch: int,
@@ -86,7 +86,7 @@ class FreezeUnfreeze(FlashBaseFinetuning):
         super().__init__(attr_names, train_bn)
         self.unfreeze_epoch = unfreeze_epoch
 
-    def finetunning_function(
+    def finetuning_function(
         self,
         pl_module: pl.LightningModule,
         epoch: int,
@@ -116,7 +116,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
         super().__init__(attr_names, train_bn)
 
-    def finetunning_function(
+    def finetuning_function(
         self,
         pl_module: pl.LightningModule,
         epoch: int,
