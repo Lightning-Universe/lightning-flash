@@ -134,14 +134,15 @@ You can change the model run by passing in the backbone parameter.
 .. code-block:: python
 
     datamodule = TranslationData.from_files(
+        backbone="t5-small",
         train_file="data/wmt_en_ro/train.csv",
         valid_file="data/wmt_en_ro/valid.csv",
         test_file="data/wmt_en_ro/test.csv",
         input="input",
         target="target",
-        backbone="t5-small",
     )
 
+    model = TranslationTask(backbone="t5-small")
 
 ------
 
