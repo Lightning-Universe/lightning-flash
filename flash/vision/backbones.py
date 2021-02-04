@@ -52,11 +52,6 @@ def bolts_backbone_and_num_features(model_name: str) -> Tuple[nn.Module, int]:
     (Sequential(...), 1024)
     """
 
-    models = {
-        'simclr-imagenet': load_simclr_imagenet,
-        'swav-imagenet': load_swav_imagenet,
-    }
-
     # TODO: maybe we should plain pytorch weights so we don't need to rely on bolts to load these
     # also mabye just use torchhub for the ssl lib
     def load_simclr_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt"):
@@ -67,6 +62,10 @@ def bolts_backbone_and_num_features(model_name: str) -> Tuple[nn.Module, int]:
         swav = SwAV.load_from_checkpoint(path_or_url, strict=True)
         return swav.model, 3000
 
+    models = {
+        'simclr-imagenet': load_simclr_imagenet,
+        'swav-imagenet': load_swav_imagenet,
+    }
     if not _BOLTS_AVAILABLE:
         raise MisconfigurationException("Bolts isn't installed. Please, use ``pip install lightning-bolts``.")
     if model_name in models:
