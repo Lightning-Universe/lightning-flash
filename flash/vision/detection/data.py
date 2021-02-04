@@ -49,7 +49,9 @@ class CustomCOCODataset(torch.utils.data.Dataset):
     @property
     def num_classes(self):
         categories = self.coco.loadCats(self.coco.getCatIds())
-        return len(categories) + 1
+        if not categories:
+            raise ValueError("No Categories found")
+        return categories[-1]["id"] + 1
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         coco = self.coco
@@ -100,6 +102,32 @@ def collate_fn(batch):
     return tuple(zip(*batch))
 
 
+def _coco_remove_images_without_annotations(dataset):
+    # Ref: https://github.com/pytorch/vision/blob/master/references/detection/coco_utils.py
+
+    def _has_only_empty_bbox(anno):
+        return all(any(o <= 1 for o in obj["bbox"][2:]) for obj in anno)
+
+    def _has_valid_annotation(anno):
+        # if it's empty, there is no annotation
+        if len(anno) == 0:
+            return False
+        # if all boxes have close to zero area, there is no annotation
+        if _has_only_empty_bbox(anno):
+            return False
+        return True
+
+    ids = []
+    for ds_idx, img_id in enumerate(dataset.ids):
+        ann_ids = dataset.coco.getAnnIds(imgIds=img_id, iscrowd=None)
+        anno = dataset.coco.loadAnns(ann_ids)
+        if _has_valid_annotation(anno):
+            ids.append(ds_idx)
+
+    dataset = torch.utils.data.Subset(dataset, ids)
+    return dataset
+
+
 class ImageDetectorDataPipeline(TaskDataPipeline):
 
     def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = _pil_loader):
@@ -141,6 +169,8 @@ class ImageDetectionData(DataModule):
         **kwargs
     ):
         train_ds = CustomCOCODataset(train_folder, train_ann_file, train_transform)
+        num_classes = train_ds.num_classes
+        train_ds = _coco_remove_images_without_annotations(train_ds)
 
         valid_ds = (
             CustomCOCODataset(valid_folder, valid_ann_file, valid_transform) if valid_folder is not None else None
@@ -156,7 +186,7 @@ class ImageDetectionData(DataModule):
             num_workers=num_workers,
         )
 
-        datamodule.num_classes = train_ds.num_classes
+        datamodule.num_classes = num_classes
         datamodule.data_pipeline = ImageDetectorDataPipeline()
         datamodule.data_pipeline.collate_fn = collate_fn
         return datamodule

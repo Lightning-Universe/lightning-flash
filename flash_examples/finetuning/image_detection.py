@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     # 2. Load the Data
     datamodule = ImageDetectionData.from_coco(
-        train_folder="data/coco128/train2017/",
+        train_folder="data/coco128/images/train2017/",
         train_ann_file="data/coco128/annotations/instances_train2017.json",
         batch_size=2
     )
