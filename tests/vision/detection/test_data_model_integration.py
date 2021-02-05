@@ -11,12 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
+
 import flash
 from flash.vision import ImageDetector
 from flash.vision.detection.data import ImageDetectionData
 from tests.vision.detection.test_data import _create_synth_coco_dataset
 
+try:
+    from pycocotools.coco import COCO
+except ImportError:
+    COCO = None
 
+
+@pytest.mark.skipif(COCO is None, reason="pycocotools is not installed for testing")
 def test_detection(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
