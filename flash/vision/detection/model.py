@@ -69,6 +69,9 @@ class ImageDetector(Task):
         learning_rate=1e-3,
         **kwargs,
     ):
+
+        self.save_hyperparameters()
+
         if model in _models:
             model = _models[model](pretrained=pretrained)
             if isinstance(model, torchvision.models.detection.FasterRCNN):
