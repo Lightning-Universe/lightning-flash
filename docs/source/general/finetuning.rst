@@ -30,8 +30,8 @@ Once training is completed, you can use the model for inference to make predicti
         valid_folder="data/hymenoptera_data/val/"
     )
 
-    # 2. build the task
-    task = ImageClassifier(num_classes=2)
+    # 2. build the model
+    model = ImageClassifier(num_classes=2)
 
     # 3. Build the trainer and finetune! In this case, using the no_freeze strategy
     trainer = flash.Trainer()
