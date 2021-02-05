@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
 import pytest
+from PIL import Image
 
 import flash
 from flash.vision import ImageDetector
@@ -35,3 +38,13 @@ def test_detection(tmpdir):
     trainer = flash.Trainer(fast_dev_run=True)
 
     trainer.finetune(model, data)
+
+    test_image_one = os.fspath(tmpdir / "test_one.png")
+    test_image_two = os.fspath(tmpdir / "test_two.png")
+
+    Image.new('RGB', (500, 500)).save(test_image_one)
+    Image.new('RGB', (500, 500)).save(test_image_two)
+
+    test_images = [test_image_one, test_image_two]
+
+    model.predict(test_images)
