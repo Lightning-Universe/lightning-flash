@@ -20,13 +20,13 @@ def _create_dummy_coco_json(dummy_json_path):
     dummy_json = {
         "images": [{
             "id": 0,
-            'width': 500,
-            'height': 500,
+            'width': 1920,
+            'height': 1080,
             'file_name': 'sample_one.png',
         }, {
             "id": 1,
-            "width": 500,
-            "height": 500,
+            "width": 1920,
+            "height": 1080,
             "file_name": "sample_two.png",
         }],
         "annotations": [{
@@ -67,8 +67,8 @@ def _create_synth_coco_dataset(tmpdir):
     train_dir.mkdir()
 
     (train_dir / "images").mkdir()
-    Image.new('RGB', (500, 500)).save(train_dir / "images" / "sample_one.png")
-    Image.new('RGB', (500, 500)).save(train_dir / "images" / "sample_two.png")
+    Image.new('RGB', (1920, 1080)).save(train_dir / "images" / "sample_one.png")
+    Image.new('RGB', (1920, 1080)).save(train_dir / "images" / "sample_two.png")
 
     (train_dir / "annotations").mkdir()
     dummy_json = train_dir / "annotations" / "sample.json"
@@ -91,7 +91,7 @@ def test_image_detector_data_from_coco(tmpdir):
     imgs, labels = data
 
     assert len(imgs) == 1
-    assert imgs[0].shape == (3, 500, 500)
+    assert imgs[0].shape == (3, 1080, 1920)
     assert len(labels) == 1
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
 
@@ -113,7 +113,7 @@ def test_image_detector_data_from_coco(tmpdir):
     imgs, labels = data
 
     assert len(imgs) == 1
-    assert imgs[0].shape == (3, 500, 500)
+    assert imgs[0].shape == (3, 1080, 1920)
     assert len(labels) == 1
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
 
@@ -121,6 +121,6 @@ def test_image_detector_data_from_coco(tmpdir):
     imgs, labels = data
 
     assert len(imgs) == 1
-    assert imgs[0].shape == (3, 500, 500)
+    assert imgs[0].shape == (3, 1080, 1920)
     assert len(labels) == 1
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']

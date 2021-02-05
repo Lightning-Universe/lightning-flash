@@ -42,8 +42,8 @@ def test_detection(tmpdir):
     test_image_one = os.fspath(tmpdir / "test_one.png")
     test_image_two = os.fspath(tmpdir / "test_two.png")
 
-    Image.new('RGB', (500, 500)).save(test_image_one)
-    Image.new('RGB', (500, 500)).save(test_image_two)
+    Image.new('RGB', (1920, 1080)).save(test_image_one)
+    Image.new('RGB', (1920, 1080)).save(test_image_two)
 
     test_images = [test_image_one, test_image_two]
 
