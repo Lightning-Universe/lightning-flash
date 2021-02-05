@@ -13,9 +13,9 @@
 # limitations under the License.
 import pytest
 
-from flash.vision.embedding.model_map import _load_bolts_model
+from flash.vision.backbones import bolts_backbone_and_num_features
 
 
 @pytest.mark.parametrize("name", ['simclr-imagenet', 'swav-imagenet'])
 def test_load_bolts(name):
-    _load_bolts_model(name)
+    bolts_backbone_and_num_features(name)
