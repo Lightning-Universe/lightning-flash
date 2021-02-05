@@ -87,3 +87,33 @@ def test_image_detector_data_from_coco(tmpdir):
     assert imgs[0].shape == (3, 500, 500)
     assert len(labels) == 1
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+
+    assert datamodule.val_dataloader() is None
+    assert datamodule.test_dataloader() is None
+
+    datamodule = ImageDetectionData.from_coco(
+        train_folder=train_folder,
+        train_ann_file=coco_ann_path,
+        valid_folder=train_folder,
+        valid_ann_file=coco_ann_path,
+        test_folder=train_folder,
+        test_ann_file=coco_ann_path,
+        batch_size=1,
+        num_workers=0
+    )
+
+    data = next(iter(datamodule.val_dataloader()))
+    imgs, labels = data
+
+    assert len(imgs) == 1
+    assert imgs[0].shape == (3, 500, 500)
+    assert len(labels) == 1
+    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+
+    data = next(iter(datamodule.test_dataloader()))
+    imgs, labels = data
+
+    assert len(imgs) == 1
+    assert imgs[0].shape == (3, 500, 500)
+    assert len(labels) == 1
+    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
