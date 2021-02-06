@@ -68,8 +68,6 @@ class GraphClassifier(ClassificationTask):
         x = self.model(data.x, data.edge_index, data.batch) #This line is probably something to change
         return self.head(x)
 
-    
-
     @staticmethod
     def default_pipeline() -> ClassificationDataPipeline:
         return GraphClassificationData.default_pipeline()
