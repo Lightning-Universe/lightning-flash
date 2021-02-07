@@ -75,7 +75,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
             ymax = ymin + obj["bbox"][3]
 
             boxes.append([xmin, ymin, xmax, ymax])
-            labels.append(obj["category_id"] - 1)
+            labels.append(obj["category_id"])
             areas.append(obj["area"])
             iscrowd.append(obj["iscrowd"])
 
