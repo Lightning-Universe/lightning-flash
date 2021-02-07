@@ -148,7 +148,7 @@ Then use the finetuned model
 classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
 
 # predict!
-predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
+predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
 print(predictions)
 ```
 
