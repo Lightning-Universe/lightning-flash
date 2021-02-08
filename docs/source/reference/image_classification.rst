@@ -96,14 +96,13 @@ Now all we need is three lines of code to build to train our task!
 
     # 2. Load the data
     datamodule = ImageClassificationData.from_folders(
-        backbone="resnet18",
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
     )
 
     # 3. Build the model
-    model = ImageClassifier(num_classes=datamodule.num_classes)
+    model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
     # 4. Create the trainer. Run once on data
     trainer = flash.Trainer(max_epochs=1)
