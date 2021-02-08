@@ -378,3 +378,32 @@ class GraphClassificationData(DataModule):
             train_transform=train_transform, valid_transform=valid_transform, loader=loader
         )
         return datamodule
+
+class GraphClassificationDataPipeline(ClassificationDataPipeline):
+
+    def __init__(
+        self,
+        train_transform: Optional[Callable] = None,
+        valid_transform: Optional[Callable] = None,
+        use_valid_transform: bool = True,
+        loader: Callable = torch.load
+    ):
+        self._train_transform = train_transform
+        self._valid_transform = valid_transform
+        self._use_valid_transform = use_valid_transform
+        self._loader = loader
+
+    def before_collate(self, samples: Any) -> Any:
+        if _contains_any_tensor(samples):
+            return samples
+
+        if isinstance(samples, str):
+            samples = [samples]
+        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
+            outputs = []
+            for sample in samples:
+                output = self._loader(sample)
+                transform = self._valid_transform if self._use_valid_transform else self._train_transform
+                outputs.append(transform(output))
+            return outputs
+        raise MisconfigurationException("The samples should either be a tensor or a list of paths.")
