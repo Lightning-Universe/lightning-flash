@@ -16,7 +16,11 @@ from typing import Any, Callable, Optional, Tuple
 
 import torch
 from PIL import Image
+from pytorch_lightning.utilities import _module_available
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import Tensor
+from torch._six import container_abcs
+from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 
 from flash.core.data import TaskDataPipeline
@@ -24,10 +28,9 @@ from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
 from flash.vision.classification.data import _pil_loader
 
-try:
+_COCO_AVAILABLE = _module_available("pycocotools")
+if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
-except ImportError:
-    COCO = None
 
 
 class CustomCOCODataset(torch.utils.data.Dataset):
@@ -38,7 +41,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         ann_file: str,
         transforms: Optional[Callable] = None,
     ):
-        if COCO is None:
+        if not _COCO_AVAILABLE:
             raise ImportError("Kindly install the COCO API `pycocotools` to use the Dataset")
 
         self.root = root
@@ -95,13 +98,6 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         return len(self.ids)
 
 
-_default_transform = T.Compose([T.ToTensor()])
-
-
-def collate_fn(batch):
-    return tuple(zip(*batch))
-
-
 def _coco_remove_images_without_annotations(dataset):
     # Ref: https://github.com/pytorch/vision/blob/master/references/detection/coco_utils.py
 
@@ -128,6 +124,9 @@ def _coco_remove_images_without_annotations(dataset):
     return dataset
 
 
+_default_transform = T.ToTensor()
+
+
 class ImageDetectorDataPipeline(TaskDataPipeline):
 
     def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = _pil_loader):
@@ -148,6 +147,14 @@ class ImageDetectorDataPipeline(TaskDataPipeline):
                 outputs.append(self._valid_transform(output))
             return outputs
         raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
+
+    def collate(self, samples: Any) -> Any:
+        if not isinstance(samples, Tensor):
+            elem = samples[0]
+            if isinstance(elem, container_abcs.Sequence):
+                return tuple(zip(*samples))
+            return default_collate(samples)
+        return samples
 
 
 class ImageDetectionData(DataModule):
@@ -188,5 +195,4 @@ class ImageDetectionData(DataModule):
 
         datamodule.num_classes = num_classes
         datamodule.data_pipeline = ImageDetectorDataPipeline()
-        datamodule.data_pipeline.collate_fn = collate_fn
         return datamodule

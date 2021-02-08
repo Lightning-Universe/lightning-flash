@@ -15,19 +15,19 @@ import os
 
 import pytest
 from PIL import Image
+from pytorch_lightning.utilities import _module_available
 
 import flash
 from flash.vision import ImageDetector
 from flash.vision.detection.data import ImageDetectionData
 from tests.vision.detection.test_data import _create_synth_coco_dataset
 
-try:
+_COCO_AVAILABLE = _module_available("pycocotools")
+if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
-except ImportError:
-    COCO = None
 
 
-@pytest.mark.skipif(COCO is None, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
 def test_detection(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)

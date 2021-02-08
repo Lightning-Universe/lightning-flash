@@ -22,7 +22,7 @@ from torchvision.ops import box_iou
 from flash.core import Task
 from flash.core.data import DataPipeline
 from flash.core.model import predict_context
-from flash.vision.detection.data import _default_transform, ImageDetectorDataPipeline
+from flash.vision.detection.data import ImageDetectorDataPipeline
 from flash.vision.detection.finetuning import ImageDetectorFineTuning
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
