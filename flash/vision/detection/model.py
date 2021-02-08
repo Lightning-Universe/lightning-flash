@@ -21,7 +21,6 @@ from torchvision.ops import box_iou
 
 from flash.core import Task
 from flash.core.data import DataPipeline
-from flash.core.model import predict_context
 from flash.vision.detection.data import ImageDetectorDataPipeline
 from flash.vision.detection.finetuning import ImageDetectorFineTuning
 
@@ -123,21 +122,6 @@ class ImageDetector(Task):
         avg_iou = torch.stack([o["test_iou"] for o in outs]).mean()
         logs = {"test_iou": avg_iou}
         return {"avg_test_iou": avg_iou, "log": logs}
-
-    @predict_context
-    def predict(
-        self,
-        x: Any,
-        batch_idx: Optional[int] = None,
-        skip_collate_fn: bool = False,
-        dataloader_idx: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-    ) -> Any:
-
-        data_pipeline = data_pipeline or self.default_pipeline()
-        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        predictions = self.forward(batch)
-        return data_pipeline.uncollate_fn(predictions)
 
     @staticmethod
     def default_pipeline() -> ImageDetectorDataPipeline:

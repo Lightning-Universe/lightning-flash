@@ -154,7 +154,7 @@ class ImageDetectorDataPipeline(TaskDataPipeline):
             if isinstance(elem, container_abcs.Sequence):
                 return tuple(zip(*samples))
             return default_collate(samples)
-        return samples
+        return samples.unsqueeze(dim=0)
 
 
 class ImageDetectionData(DataModule):
