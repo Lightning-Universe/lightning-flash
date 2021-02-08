@@ -70,13 +70,13 @@ class TabularData(DataModule):
 
     def __init__(
         self,
-        train_df,
+        train_df: DataFrame,
         categorical_input: List,
         numerical_input: List,
         target: str,
-        valid_df=None,
-        test_df=None,
-        batch_size=2,
+        valid_df: Optional[DataFrame] = None,
+        test_df: Optional[DataFrame] = None,
+        batch_size: int = 2,
         num_workers: Optional[int] = None,
     ):
         dfs = [train_df]
@@ -131,12 +131,12 @@ class TabularData(DataModule):
     @classmethod
     def from_df(
         cls,
-        train_df: pd.DataFrame,
+        train_df: DataFrame,
         target: str,
         categorical_input: List,
         numerical_input: List,
-        valid_df: pd.DataFrame = None,
-        test_df: pd.DataFrame = None,
+        valid_df: Optional[DataFrame] = None,
+        test_df: Optional[DataFrame] = None,
         batch_size: int = 8,
         num_workers: Optional[int] = None,
         val_size: float = None,
@@ -192,7 +192,7 @@ class TabularData(DataModule):
     @classmethod
     def from_csv(
         cls,
-        train_csv,
+        train_csv: str,
         target: str,
         categorical_input: List,
         numerical_input: List,
