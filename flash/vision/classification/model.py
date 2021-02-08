@@ -40,7 +40,6 @@ class ImageClassifier(ClassificationTask):
         self,
         num_classes,
         backbone="resnet18",
-        num_features: int = None,
         pretrained=True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
