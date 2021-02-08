@@ -13,8 +13,7 @@
 # limitations under the License.
 import flash
 from flash.core.data import download_data
-from flash.vision.detection.data import ImageDetectionData
-from flash.vision.detection.model import ImageDetector
+from flash.vision import ImageDetectionData, ImageDetector
 
 # 1. Download the data
 # Dataset Credit: https://www.kaggle.com/ultralytics/coco128
