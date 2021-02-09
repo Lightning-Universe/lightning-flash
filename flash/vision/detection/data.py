@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import torch
 from PIL import Image
@@ -77,10 +77,13 @@ class CustomCOCODataset(torch.utils.data.Dataset):
             xmax = xmin + obj["bbox"][2]
             ymax = ymin + obj["bbox"][3]
 
-            boxes.append([xmin, ymin, xmax, ymax])
-            labels.append(obj["category_id"])
-            areas.append(obj["area"])
-            iscrowd.append(obj["iscrowd"])
+            bbox = [xmin, ymin, xmax, ymax]
+            keep = (bbox[3] > bbox[1]) & (bbox[2] > bbox[0])
+            if keep:
+                boxes.append(bbox)
+                labels.append(obj["category_id"])
+                areas.append(obj["area"])
+                iscrowd.append(obj["iscrowd"])
 
         target = {}
         target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
@@ -101,10 +104,10 @@ class CustomCOCODataset(torch.utils.data.Dataset):
 def _coco_remove_images_without_annotations(dataset):
     # Ref: https://github.com/pytorch/vision/blob/master/references/detection/coco_utils.py
 
-    def _has_only_empty_bbox(anno):
+    def _has_only_empty_bbox(anno: List):
         return all(any(o <= 1 for o in obj["bbox"][2:]) for obj in anno)
 
-    def _has_valid_annotation(anno):
+    def _has_valid_annotation(anno: List):
         # if it's empty, there is no annotation
         if len(anno) == 0:
             return False
