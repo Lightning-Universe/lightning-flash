@@ -70,7 +70,8 @@ class FilepathDataset(torch.utils.data.Dataset):
         img = self.loader(filename)
         label = None
         if self.has_labels:
-            label = self.label_to_class_mapping[filename]
+            label = self.labels[index]
+            label = self.label_to_class_mapping[label]
         return img, label
 
 
