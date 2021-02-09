@@ -56,7 +56,7 @@ class FilepathDataset(torch.utils.data.Dataset):
         self.transform = transform
         self.loader = loader
         if self.has_labels:
-            self.label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(self.fnames)))))}
+            self.label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(self.labels)))))}
 
     @property
     def has_labels(self) -> bool:
