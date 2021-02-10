@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
@@ -27,6 +28,7 @@ def predict_context(func: Callable) -> Callable:
     to put model in eval mode before running predict and reset to train after.
     """
 
+    @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
         self.eval()
         torch.set_grad_enabled(False)

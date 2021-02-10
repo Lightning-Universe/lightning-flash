@@ -129,7 +129,15 @@ def _dfs_to_samples(dfs, cat_cols, num_cols) -> list:
 
 class PandasDataset(Dataset):
 
-    def __init__(self, df, cat_cols, num_cols, target_col, regression=False, predict=False):
+    def __init__(
+        self,
+        df: DataFrame,
+        cat_cols: List,
+        num_cols: List,
+        target_col: str,
+        regression: bool = False,
+        predict: bool = False
+    ):
         self._num_samples = len(df)
         self.predict = predict
         cat_vars = _to_cat_vars_numpy(df, cat_cols)
