@@ -29,7 +29,7 @@ Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the model from a checkpoint
     model = ImageClassifier.load_from_checkpoint(
@@ -94,7 +94,7 @@ Now all we need is three lines of code to build to train our task!
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the data
     datamodule = ImageClassificationData.from_folders(
