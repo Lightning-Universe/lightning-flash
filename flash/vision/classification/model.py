@@ -32,7 +32,8 @@ class ImageClassifier(ClassificationTask):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation, defaults to :class:`pytorch_lightning.metrics.Accuracy`.
+        metrics: Metrics to compute for training and evaluation,
+            defaults to :class:`pytorch_lightning.metrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
