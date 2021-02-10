@@ -14,6 +14,7 @@
 import os
 from pathlib import Path
 
+import pytest
 from pytorch_lightning import Trainer
 
 from flash.text import TextClassificationData, TextClassifier
@@ -33,10 +34,8 @@ def csv_data(tmpdir):
     return path
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_classification(tmpdir):
-    if os.name == "nt":
-        # TODO: huggingface stuff timing out on windows
-        return True
 
     csv_path = csv_data(tmpdir)
 

@@ -38,10 +38,9 @@ class ImageClassifier(ClassificationTask):
 
     def __init__(
         self,
-        num_classes,
-        backbone="resnet18",
-        num_features: int = None,
-        pretrained=True,
+        num_classes: int,
+        backbone: str = "resnet18",
+        pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = (Accuracy()),

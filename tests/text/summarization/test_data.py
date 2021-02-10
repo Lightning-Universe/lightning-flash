@@ -14,6 +14,8 @@
 import os
 from pathlib import Path
 
+import pytest
+
 from flash.text import SummarizationData
 
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
@@ -43,10 +45,8 @@ def json_data(tmpdir):
     return path
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_from_csv(tmpdir):
-    if os.name == "nt":
-        # TODO: huggingface stuff timing out on windows
-        return True
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_files(
         backbone=TEST_BACKBONE, train_file=csv_path, input="input", target="target", batch_size=1
@@ -56,10 +56,8 @@ def test_from_csv(tmpdir):
     assert "input_ids" in batch
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_from_files(tmpdir):
-    if os.name == "nt":
-        # TODO: huggingface stuff timing out on windows
-        return True
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_files(
         backbone=TEST_BACKBONE,
@@ -79,10 +77,8 @@ def test_from_files(tmpdir):
     assert "input_ids" in batch
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_from_json(tmpdir):
-    if os.name == "nt":
-        # TODO: huggingface stuff timing out on windows
-        return True
     json_path = json_data(tmpdir)
     dm = SummarizationData.from_files(
         backbone=TEST_BACKBONE, train_file=json_path, input="input", target="target", filetype="json", batch_size=1
