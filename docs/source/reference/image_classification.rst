@@ -143,10 +143,10 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
 
 Available backbones:
 
-* resnet34
-* resnet50
-* resnet101
-* resnet152
+* ``"resnet34"``
+* ``"resnet50"``
+* ``"resnet101"``
+* ``"resnet152"``
 
 ------
 
