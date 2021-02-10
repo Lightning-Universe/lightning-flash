@@ -135,7 +135,7 @@ trainer = flash.Trainer(max_epochs=1)
 # 5. Finetune the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-# 7. Save it!
+# 6. Save it!
 trainer.save_checkpoint("image_classification_model.pt")
 ```
 
