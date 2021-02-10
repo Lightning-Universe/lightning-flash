@@ -49,14 +49,13 @@ def get_melspectrogram_db(file_path, sr=None, n_fft=2048, hop_length=512, n_mels
     # https://gist.github.com/hasithsura/78a1fb909a4271d6287c3b273038177f
     wav, sr = librosa.load(file_path, sr=sr)
     if wav.shape[0] < 5 * sr:
-    wav = np.pad(wav, int(np.ceil((5 * sr - wav.shape[0]) / 2)), mode='reflect')
+        wav = np.pad(wav, int(np.ceil((5 * sr - wav.shape[0]) / 2)), mode='reflect')
     else:
-    wav = wav[:5 * sr]
-    spec = librosa.feature.melspectrogram(wav, sr=sr, n_fft=n_fft,
-                                          hop_length=hop_length, n_mels=n_mels, fmin=fmin, fmax=fmax)
-    spec_db = librosa.power_to_db(spec, top_db=top_db)
+        wav = wav[:5 * sr]
+        spec = librosa.feature.melspectrogram(wav, sr=sr, n_fft=n_fft,
+                                            hop_length=hop_length, n_mels=n_mels, fmin=fmin, fmax=fmax)
+        spec_db = librosa.power_to_db(spec, top_db=top_db)
     return spec_db
-
 
 def row_to_spec_img(base, filename, label, split):
     output = os.path.join(base, 'spectrograms', split, label, f'${filename[:-3]}png')
