@@ -56,7 +56,7 @@ class FilepathDataset(torch.utils.data.Dataset):
         self.transform = transform
         self.loader = loader
         if self.has_labels:
-            self.label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(self.fnames)))))}
+            self.label_to_class_mapping = dict(map(reversed, enumerate(sorted(set(self.labels)))))
 
     @property
     def has_labels(self) -> bool:
@@ -68,9 +68,12 @@ class FilepathDataset(torch.utils.data.Dataset):
     def __getitem__(self, index: int) -> Tuple[Any, Optional[int]]:
         filename = self.fnames[index]
         img = self.loader(filename)
+        if self.transform is not None:
+            img = self.transform(img)
         label = None
         if self.has_labels:
-            label = self.label_to_class_mapping[filename]
+            label = self.labels[index]
+            label = self.label_to_class_mapping[label]
         return img, label
 
 

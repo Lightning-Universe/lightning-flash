@@ -24,9 +24,8 @@ from torch.nn import functional as F
 from flash.core import Task
 from flash.core.data import TaskDataPipeline
 from flash.core.data.utils import _contains_any_tensor
-from flash.vision.backbones import torchvision_backbone_and_num_features
+from flash.vision.backbones import backbone_and_num_features
 from flash.vision.classification.data import _default_valid_transforms, _pil_loader
-from flash.vision.embedding.model_map import _load_bolts_model, _models
 
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
@@ -115,12 +114,7 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        if backbone in _models:
-            config = _load_bolts_model(backbone)
-            self.backbone = config['model']
-            num_features = config['num_features']
-        else:
-            self.backbone, num_features = torchvision_backbone_and_num_features(backbone, pretrained)
+        self.backbone, num_features = backbone_and_num_features(backbone, pretrained)
 
         if embedding_dim is None:
             self.head = nn.Identity()

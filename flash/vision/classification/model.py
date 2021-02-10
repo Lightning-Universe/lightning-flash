@@ -19,7 +19,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
-from flash.vision.backbones import torchvision_backbone_and_num_features
+from flash.vision.backbones import backbone_and_num_features
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
 
 
@@ -38,10 +38,9 @@ class ImageClassifier(ClassificationTask):
 
     def __init__(
         self,
-        num_classes,
-        backbone="resnet18",
-        num_features: int = None,
-        pretrained=True,
+        num_classes: int,
+        backbone: str = "resnet18",
+        pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = (Accuracy()),
@@ -57,7 +56,7 @@ class ImageClassifier(ClassificationTask):
 
         self.save_hyperparameters()
 
-        self.backbone, num_features = torchvision_backbone_and_num_features(backbone, pretrained)
+        self.backbone, num_features = backbone_and_num_features(backbone, pretrained)
 
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
