@@ -217,8 +217,8 @@ class SpectrogramClassificationData(ImageClassificationData):
             **kwargs
         )
     @staticmethod
-    def default_pipeline() -> SpectrogramClassificationData:
-        return SpectrogramClassificationData(
+    def default_pipeline() -> SpectrogramClassificationDataPipeline:
+        return SpectrogramClassificationDataPipeline(
             train_transform=_default_train_transforms, valid_transform=_default_valid_transforms, loader=_pil_loader
         )
 
