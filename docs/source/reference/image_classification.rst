@@ -143,10 +143,21 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
 
 Available backbones:
 
-* ``"resnet34"``
-* ``"resnet50"``
-* ``"resnet101"``
-* ``"resnet152"``
+* resnet18 (default)
+* resnet34
+* resnet50
+* resnet101
+* resnet152
+* resnext50_32x4d
+* resnext101_32x8d
+* mobilenet_v2
+* vgg11
+* vgg13
+* vgg16
+* vgg19
+* densenet121
+* densenet169
+* densenet161
 
 ------
 
