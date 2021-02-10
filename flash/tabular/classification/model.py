@@ -30,11 +30,12 @@ class TabularClassifier(ClassificationTask):
         num_features: Number of columns in table (not including target column).
         num_classes: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
-        hidden: Hidden dimension sizes.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
+        **tabnet_kwargs: Optional additional arguments for the TabNet model, see
+            `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
     """
 
     def __init__(
