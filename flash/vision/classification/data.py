@@ -68,6 +68,8 @@ class FilepathDataset(torch.utils.data.Dataset):
     def __getitem__(self, index: int) -> Tuple[Any, Optional[int]]:
         filename = self.fnames[index]
         img = self.loader(filename)
+        if self.transform is not None:
+            img = self.transform(img)
         label = None
         if self.has_labels:
             label = self.labels[index]
