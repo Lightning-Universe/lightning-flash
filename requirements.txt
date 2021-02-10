@@ -13,3 +13,5 @@ tqdm  # comes with 3rd-party dependency
 rouge-score>=0.0.4
 sentencepiece>=0.1.95
 pytorch-lightning-bolts==0.3.0
+filelock  # comes with 3rd-party dependency
+pycocotools>=2.0.2 ; python_version >= "3.7"
