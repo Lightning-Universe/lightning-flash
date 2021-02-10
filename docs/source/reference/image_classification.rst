@@ -173,3 +173,5 @@ ImageClassificationData
 .. automethod:: flash.vision.ImageClassificationData.from_filepaths
 
 .. automethod:: flash.vision.ImageClassificationData.from_folders
+
+.. automethod:: flash.vision.ImageClassificationData.from_folder
