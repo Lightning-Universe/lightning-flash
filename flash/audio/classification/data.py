@@ -159,7 +159,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        super().from_folders(
+        return super().from_folders(
             train_folder,
             train_transform,
             valid_folder,
@@ -206,7 +206,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folder("my_folder/") # doctest: +SKIP
 
         """
-        super().from_folder(
+        return super().from_folder(
             folder,
             transform,
             loader,
