@@ -71,7 +71,6 @@ class TabularClassifier(ClassificationTask):
             learning_rate=learning_rate,
         )
 
-
     def predict(
         self,
         x: Any,
@@ -87,7 +86,8 @@ class TabularClassifier(ClassificationTask):
         return data_pipeline.uncollate_fn(predictions)
 
     def forward(self, x_in):
-        x = torch.cat([x for x in x_in if x.numel()], dim=1) # TabNet takes single input, x_in is composed of (categorical, numerical)
+        x = torch.cat([x for x in x_in if x.numel()],
+                      dim=1)  # TabNet takes single input, x_in is composed of (categorical, numerical)
         return self.model(x)[0]
 
     @classmethod
