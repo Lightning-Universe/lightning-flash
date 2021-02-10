@@ -68,7 +68,7 @@ def row_to_spec_img(base, filename, label, split):
 def wav2spec(filename, visualize=False):
     spec = spec_to_image(get_melspectrogram_db(filename))
     img = Image.fromarray(spec)
-    img.save(f'${filename[:-3]}png')
+    img.save(f'{filename[:-3]}png')
     if visualize:
         IPython.display.display(IPython.display.Audio(filename=filename))
         IPython.display.display(img)
