@@ -52,7 +52,7 @@ class SpectrogramClassifier(ImageClassifier):
             loss_fn,
             optimizer,
             metrics,
-            learning_rate: float = 1e-3,
+            learning_rate,
         )
 
     @staticmethod
