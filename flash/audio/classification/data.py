@@ -59,7 +59,7 @@ class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
         use_valid_transform: bool = True,
         loader: Callable = _pil_loader
     ):
-        super.__init__(train_transform,
+        super().__init__(train_transform,
                        valid_transform,
                        use_valid_transform,
                        loader)
@@ -104,7 +104,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
 
         """
-        return super.from_filepaths(cls,
+        return super().from_filepaths(
                                     train_filepaths,
                                     train_labels,
                                     train_transform,
@@ -159,8 +159,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        super.from_folders(
-            cls,
+        super().from_folders(
             train_folder,
             train_transform,
             valid_folder,
@@ -207,8 +206,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folder("my_folder/") # doctest: +SKIP
 
         """
-        super.from_folder(
-            cls,
+        super().from_folder(
             folder,
             transform,
             loader,
