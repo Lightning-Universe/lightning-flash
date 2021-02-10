@@ -109,7 +109,7 @@ def _coco_remove_images_without_annotations(dataset):
 
     def _has_valid_annotation(anno: List):
         # if it's empty, there is no annotation
-        if len(anno) == 0:
+        if not anno:
             return False
         # if all boxes have close to zero area, there is no annotation
         if _has_only_empty_bbox(anno):
