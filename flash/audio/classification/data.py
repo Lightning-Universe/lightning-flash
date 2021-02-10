@@ -22,7 +22,7 @@ from torchvision import transforms as T
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
-from flash.vision.data import ImageClassificationDataPipeline, ImageClassificationData
+from flash.vision.classification.data import ImageClassificationDataPipeline, ImageClassificationData
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
 

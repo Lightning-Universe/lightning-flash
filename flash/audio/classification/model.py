@@ -18,8 +18,6 @@ from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
 
-from flash.core.classification import ClassificationTask
-from flash.vision.backbones import backbone_and_num_features
 from flash.vision.classification.model import ImageClassifier
 from flash.audio.classification.data import SpectrogramClassificationData, SpectrogramClassificationDataPipeline
 
