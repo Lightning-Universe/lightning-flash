@@ -11,21 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchvision
 from torch import nn
 from torch.optim import Optimizer
+from torchvision.ops import box_iou
 
-from flash.core.classification import ClassificationTask
+from flash.core import Task
+from flash.core.data import DataPipeline
+from flash.vision.detection.data import ImageDetectorDataPipeline
+from flash.vision.detection.finetuning import ImageDetectorFineTuning
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
 
-class ImageDetector(ClassificationTask):
+def _evaluate_iou(target, pred):
+    """
+    Evaluate intersection over union (IOU) for target from dataset and output prediction
+    from model
+    """
+    if pred["boxes"].shape[0] == 0:
+        # no box detected, 0 IOU
+        return torch.tensor(0.0, device=pred["boxes"].device)
+    return box_iou(target["boxes"], pred["boxes"]).diag().mean()
+
+
+class ImageDetector(Task):
     """Image detection task
 
+    Ref: Lightning Bolts https://github.com/PyTorchLightning/pytorch-lightning-bolts
     Args:
         num_classes: the number of classes for detection, including background
         model: either a string of :attr`_models` or a custom nn.Module.
@@ -52,16 +68,15 @@ class ImageDetector(ClassificationTask):
         learning_rate=1e-3,
         **kwargs,
     ):
+
+        self.save_hyperparameters()
+
         if model in _models:
             model = _models[model](pretrained=pretrained)
             if isinstance(model, torchvision.models.detection.FasterRCNN):
                 in_features = model.roi_heads.box_predictor.cls_score.in_features
                 head = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
                 model.roi_heads.box_predictor = head
-
-        if loss is None:
-            # TODO: maybe better way of handling no loss,
-            loss = {}
 
         super().__init__(
             model=model,
@@ -81,7 +96,36 @@ class ImageDetector(ClassificationTask):
         # fasterrcnn takes both images and targets for training, returns loss_dict
         loss_dict = self.model(images, targets)
         loss = sum(loss_dict.values())
-        for k, v in loss_dict.items():
-            self.log("train_k", v)
-
+        self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
+
+    def validation_step(self, batch, batch_idx):
+        images, targets = batch
+        # fasterrcnn takes only images for eval() mode
+        outs = self.model(images)
+        iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
+        return {"val_iou": iou}
+
+    def validation_epoch_end(self, outs):
+        avg_iou = torch.stack([o["val_iou"] for o in outs]).mean()
+        logs = {"val_iou": avg_iou}
+        return {"avg_val_iou": avg_iou, "log": logs}
+
+    def test_step(self, batch, batch_idx):
+        images, targets = batch
+        # fasterrcnn takes only images for eval() mode
+        outs = self.model(images)
+        iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
+        return {"test_iou": iou}
+
+    def test_epoch_end(self, outs):
+        avg_iou = torch.stack([o["test_iou"] for o in outs]).mean()
+        logs = {"test_iou": avg_iou}
+        return {"avg_test_iou": avg_iou, "log": logs}
+
+    @staticmethod
+    def default_pipeline() -> ImageDetectorDataPipeline:
+        return ImageDetectorDataPipeline()
+
+    def configure_finetune_callback(self):
+        return [ImageDetectorFineTuning(train_bn=True)]
