@@ -1,8 +1,8 @@
 import flash
 from flash.core.finetuning import FreezeUnfreeze
-from flash.audio import SpectrogramClassificationData, SpectrogramClassifier, download_ESC10, wav2spec
+from flash.audio import SpectrogramClassificationData, SpectrogramClassifier, download_ESC, wav2spec
 
-download_ESC10('.')
+download_ESC('.')
 
 datamodule = SpectrogramClassificationData.from_folders(
     train_folder="./ESC-50-master/spectrograms/train",
@@ -12,6 +12,6 @@ datamodule = SpectrogramClassificationData.from_folders(
 
 model = SpectrogramClassifier(num_classes=datamodule.num_classes)
 
-trainer = flash.Trainer(max_epochs=2, gpus=1)
+trainer = flash.Trainer(max_epochs=2)
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
 trainer.test()

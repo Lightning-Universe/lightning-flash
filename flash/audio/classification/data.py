@@ -23,6 +23,7 @@ from torchvision.datasets import VisionDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
 from flash.vision.classification.data import ImageClassificationDataPipeline, ImageClassificationData
+from flash.audio.classification.utils import wav2spec
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
 
@@ -63,6 +64,28 @@ class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
                        valid_transform,
                        use_valid_transform,
                        loader)
+
+    def before_collate(self, samples: Any) -> Any:
+
+         
+        if _contains_any_tensor(samples):
+            return samples
+
+        if isinstance(samples, str):
+            samples = [samples]
+        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
+            outputs = []
+            for sample in samples:
+                if sample[:-3].lower() == 'wav': ## If filepath is a wav convert it to a png spectrogram 
+                    wav2spec(sample)
+                    sample = f'{sample[:-3]}png'
+                output = self._loader(sample)
+                transform = self._valid_transform if self._use_valid_transform else self._train_transform
+                outputs.append(transform(output))
+            return outputs
+        raise MisconfigurationException("The samples should either be a tensor or a list of paths.")
+            
+    
 
 class SpectrogramClassificationData(ImageClassificationData):
     @classmethod

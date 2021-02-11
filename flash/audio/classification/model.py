@@ -54,6 +54,7 @@ class SpectrogramClassifier(ImageClassifier):
             metrics,
             learning_rate,
         )
+    
 
     @staticmethod
     def default_pipeline() -> SpectrogramClassificationDataPipeline:
