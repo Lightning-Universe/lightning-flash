@@ -18,8 +18,8 @@ from PIL import Image
 from pytorch_lightning.utilities import _module_available
 
 import flash
-from flash.vision import ImageDetector
-from flash.vision.detection.data import ImageDetectionData
+from flash.vision import ObjectDetector
+from flash.vision.detection import ObjectDetectionData
 from tests.vision.detection.test_data import _create_synth_coco_dataset
 
 _COCO_AVAILABLE = _module_available("pycocotools")
@@ -32,8 +32,8 @@ def test_detection(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
-    data = ImageDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
-    model = ImageDetector(num_classes=data.num_classes)
+    data = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
+    model = ObjectDetector(num_classes=data.num_classes)
 
     trainer = flash.Trainer(fast_dev_run=True)
 
