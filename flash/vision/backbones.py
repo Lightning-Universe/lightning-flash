@@ -47,7 +47,7 @@ def bolts_backbone_and_num_features(model_name: str) -> Tuple[nn.Module, int]:
     >>> bolts_backbone_and_num_features('simclr-imagenet')  # doctest: +ELLIPSIS
     (Sequential(...), 2048)
     >>> bolts_backbone_and_num_features('swav-imagenet')  # doctest: +ELLIPSIS
-    (Sequential(...), 3000)
+    (Sequential(...), 2048)
     """
 
     # TODO: maybe we should plain pytorch weights so we don't need to rely on bolts to load these
