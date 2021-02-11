@@ -10,7 +10,7 @@ from tqdm import tqdm
 from PIL import Image
 
 
-def download_ESC10(data_dir):
+def download_ESC(data_dir, ESC10=True):
     """Saves ESC50 files from https://github.com/karolpiczak/ESC-50 to `data_dir`"""
     # download files
     zipfile_url = "https://github.com/karoldvl/ESC-50/archive/master.zip"
@@ -20,7 +20,8 @@ def download_ESC10(data_dir):
     # read meta data
     esc50_path = os.path.join(data_dir, 'ESC-50-master')
     df = pd.read_csv(os.path.join(esc50_path, 'meta/esc50.csv'))
-    df = df[df['esc10'] == True]
+    if ESC10:
+        df = df[df['esc10'] == True]
     df["category"] = pd.Categorical(df["category"])
     train_df, valid_df = df[df['fold'] != 5], df[df['fold'] == 5]
     # write spectrogram images to spectrograms folder
@@ -33,7 +34,6 @@ def download_ESC10(data_dir):
     valid_df.progress_apply(lambda row: row_to_spec_img(
         base=esc50_path, filename=row['filename'], label=row['category'], split='valid'), axis=1)
 
-
 def spec_to_image(spec, eps=1e-6):
   # https://gist.github.com/hasithsura/b798c972448bed0b4fa0ab891f244d19
     mean = spec.mean()
@@ -43,7 +43,6 @@ def spec_to_image(spec, eps=1e-6):
     spec_scaled = 255 * (spec_norm - spec_min) / (spec_max - spec_min)
     spec_scaled = spec_scaled.astype(np.uint8)
     return spec_scaled
-
 
 def get_melspectrogram_db(file_path, sr=None, n_fft=2048, hop_length=512, n_mels=128, fmin=20, fmax=8300, top_db=80):
     # https://gist.github.com/hasithsura/78a1fb909a4271d6287c3b273038177f
@@ -64,11 +63,11 @@ def row_to_spec_img(base, filename, label, split):
     img = Image.fromarray(spec)
     img.save(output)
 
-
-def wav2spec(filename, visualize=False):
+def wav2spec(filename):
     spec = spec_to_image(get_melspectrogram_db(filename))
     img = Image.fromarray(spec)
     img.save(f'{filename[:-3]}png')
-    if visualize:
-        IPython.display.display(IPython.display.Audio(filename=filename))
-        IPython.display.display(img)
+
+def display_wavspec(filename):
+    IPython.display.display(IPython.display.Audio(filename=filename))
+    IPython.display.display(IPython.display.Image(filename=f'{filename[:-3]}png'))

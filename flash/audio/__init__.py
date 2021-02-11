@@ -1,1 +1,1 @@
-from flash.audio.classification import SpectrogramClassificationData, SpectrogramClassifier, download_ESC10, wav2spec
+from flash.audio.classification import SpectrogramClassificationData, SpectrogramClassifier, download_ESC, wav2spec, display_wavspec
