@@ -127,7 +127,7 @@ class SpectrogramClassificationData(ImageClassificationData):
 
         """
         return ImageClassificationData.from_filepaths(
-                                    SpectrogramClassificationData
+                                    SpectrogramClassificationData,
                                     train_filepaths,
                                     train_labels,
                                     train_transform,
