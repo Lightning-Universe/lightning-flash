@@ -70,17 +70,16 @@ class ImageEmbedder(Task):
     """Task that classifies images.
 
     Args:
-        embedding_dim: Dimension of the embedded vector. None uses the default from the backbone
-        backbone: A model to use to extract image features.
-        pretrained: Use a pretrained backbone.
-        loss_fn: Loss function for training and finetuning, defaults to cross entropy.
-        optimizer: Optimizer to use for training and finetuning, defaults to `torch.optim.SGD`.
+        embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
+        backbone: A model to use to extract image features, defaults to ``"swav-imagenet"``.
+        pretrained: Use a pretrained backbone, defaults to ``True``.
+        loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
+        optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation.
-        learning_rate: Learning rate to use for training, defaults to `1e-3`
-        pooling_fn: Function used to pool image to generate embeddings. (Default: torch.max)
+        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
 
     Example:
-
         >>> import torch
         >>> from flash.vision.embedding import ImageEmbedder
         >>> embedder = ImageEmbedder(backbone='resnet18')
