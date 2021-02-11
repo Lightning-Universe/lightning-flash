@@ -21,8 +21,8 @@ from torchvision.ops import box_iou
 
 from flash.core import Task
 from flash.core.data import DataPipeline
-from flash.vision.detection.data import ImageDetectorDataPipeline
-from flash.vision.detection.finetuning import ImageDetectorFineTuning
+from flash.vision.detection.data import ObjectDetectionDataPipeline
+from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 
 _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_resnet50_fpn}
 
@@ -38,7 +38,7 @@ def _evaluate_iou(target, pred):
     return box_iou(target["boxes"], pred["boxes"]).diag().mean()
 
 
-class ImageDetector(Task):
+class ObjectDetector(Task):
     """Image detection task
 
     Ref: Lightning Bolts https://github.com/PyTorchLightning/pytorch-lightning-bolts
@@ -77,6 +77,8 @@ class ImageDetector(Task):
                 in_features = model.roi_heads.box_predictor.cls_score.in_features
                 head = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
                 model.roi_heads.box_predictor = head
+        else:
+            ValueError(f"{model} is not supported yet.")
 
         super().__init__(
             model=model,
@@ -124,8 +126,8 @@ class ImageDetector(Task):
         return {"avg_test_iou": avg_iou, "log": logs}
 
     @staticmethod
-    def default_pipeline() -> ImageDetectorDataPipeline:
-        return ImageDetectorDataPipeline()
+    def default_pipeline() -> ObjectDetectionDataPipeline:
+        return ObjectDetectionDataPipeline()
 
     def configure_finetune_callback(self):
-        return [ImageDetectorFineTuning(train_bn=True)]
+        return [ObjectDetectionFineTuning(train_bn=True)]

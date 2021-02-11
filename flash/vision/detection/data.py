@@ -130,7 +130,7 @@ def _coco_remove_images_without_annotations(dataset):
 _default_transform = T.ToTensor()
 
 
-class ImageDetectorDataPipeline(TaskDataPipeline):
+class ObjectDetectionDataPipeline(TaskDataPipeline):
 
     def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = _pil_loader):
         self._valid_transform = valid_transform
@@ -160,7 +160,7 @@ class ImageDetectorDataPipeline(TaskDataPipeline):
         return samples.unsqueeze(dim=0)
 
 
-class ImageDetectionData(DataModule):
+class ObjectDetectionData(DataModule):
 
     @classmethod
     def from_coco(
@@ -197,5 +197,5 @@ class ImageDetectionData(DataModule):
         )
 
         datamodule.num_classes = num_classes
-        datamodule.data_pipeline = ImageDetectorDataPipeline()
+        datamodule.data_pipeline = ObjectDetectionDataPipeline()
         return datamodule

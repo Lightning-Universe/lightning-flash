@@ -1,2 +1,2 @@
-from flash.vision.detection.data import ImageDetectionData
-from flash.vision.detection.model import ImageDetector
+from flash.vision.detection.data import ObjectDetectionData
+from flash.vision.detection.model import ObjectDetector

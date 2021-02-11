@@ -8,7 +8,7 @@ from PIL import Image
 from pytorch_lightning.utilities import _module_available
 from torchvision import transforms as T
 
-from flash.vision.detection.data import ImageDetectionData
+from flash.vision.detection.data import ObjectDetectionData
 
 _COCO_AVAILABLE = _module_available("pycocotools")
 if _COCO_AVAILABLE:
@@ -85,7 +85,7 @@ def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
-    datamodule = ImageDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
+    datamodule = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
 
     data = next(iter(datamodule.train_dataloader()))
     imgs, labels = data
@@ -98,7 +98,7 @@ def test_image_detector_data_from_coco(tmpdir):
     assert datamodule.val_dataloader() is None
     assert datamodule.test_dataloader() is None
 
-    datamodule = ImageDetectionData.from_coco(
+    datamodule = ObjectDetectionData.from_coco(
         train_folder=train_folder,
         train_ann_file=coco_ann_path,
         valid_folder=train_folder,
