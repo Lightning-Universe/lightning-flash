@@ -138,8 +138,8 @@ class SpectrogramClassificationData(ImageClassificationData):
                                     test_labels,
                                     loader,
                                     batch_size,
-                                    num_workers,
-                                    **kwargs)
+                                    num_workers
+                                    )
 
     @classmethod
     def from_folders(
@@ -191,9 +191,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             test_folder,
             loader,
             batch_size,
-            num_workers,
-            **kwargs
-        )
+            num_workers)
 
     @classmethod
     def from_folder(
@@ -236,8 +234,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             transform,
             loader,
             batch_size,
-            num_workers,
-            **kwargs
+            num_workers
         )
     @staticmethod
     def default_pipeline() -> SpectrogramClassificationDataPipeline:
