@@ -47,7 +47,7 @@ class FlashBaseFinetuning(BaseFinetuning):
         Args:
             attr_names: Name(s) of the module attributes of the model to be frozen.
 
-            train_bn: Wether to train Batch Norm layer
+            train_bn: Whether to train Batch Norm layer
 
         """
 
