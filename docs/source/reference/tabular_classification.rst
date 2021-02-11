@@ -100,7 +100,7 @@ You can make predcitions on a pretrained model, that has already been trained fo
 
     # 2. Load the model from a checkpoint
     model = TabularClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt"
+        "https://flash-weights.s3.amazonaws.com/tabnet_classification_model.pt"
     )
 
     # 3. Generate predictions from a sheet file! Who would survive?
