@@ -62,7 +62,7 @@ def bolts_backbone_and_num_features(model_name: str) -> Tuple[nn.Module, int]:
         swav = SwAV.load_from_checkpoint(path_or_url, strict=True)
         # remove the last two layers & turn it into a Sequential model
         backbone = nn.Sequential(*list(swav.model.children())[:-2])
-        return backbone, 3000
+        return backbone, 2048
 
     models = {
         'simclr-imagenet': load_simclr_imagenet,
