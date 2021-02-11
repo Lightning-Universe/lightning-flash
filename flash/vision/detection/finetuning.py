@@ -16,7 +16,7 @@ import pytorch_lightning as pl
 from flash.core.finetuning import FlashBaseFinetuning
 
 
-class ImageDetectorFineTuning(FlashBaseFinetuning):
+class ObjectDetectionFineTuning(FlashBaseFinetuning):
     """
     Freezes the backbone during Detector training.
     """
