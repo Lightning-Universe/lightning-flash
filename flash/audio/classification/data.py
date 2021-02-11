@@ -67,7 +67,6 @@ class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
 
     def before_collate(self, samples: Any) -> Any:
 
-         
         if _contains_any_tensor(samples):
             return samples
 
@@ -127,7 +126,8 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
 
         """
-        return super().from_filepaths(
+        return ImageClassificationData.from_filepaths(
+                                    SpectrogramClassificationData
                                     train_filepaths,
                                     train_labels,
                                     train_transform,
@@ -182,7 +182,8 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        return super().from_folders(
+        return ImageClassificationData.from_folders(
+            SpectrogramClassificationData,
             train_folder,
             train_transform,
             valid_folder,
@@ -229,7 +230,8 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folder("my_folder/") # doctest: +SKIP
 
         """
-        return super().from_folder(
+        return ImageClassificationData.from_folder(
+            SpectrogramClassificationData,
             folder,
             transform,
             loader,
