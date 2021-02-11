@@ -126,8 +126,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
 
         """
-        return ImageClassificationData.from_filepaths(
-                                    SpectrogramClassificationData,
+        dm =  super().from_filepaths(
                                     train_filepaths,
                                     train_labels,
                                     train_transform,
@@ -138,8 +137,12 @@ class SpectrogramClassificationData(ImageClassificationData):
                                     test_labels,
                                     loader,
                                     batch_size,
-                                    num_workers
-                                    )
+                                    num_workers,
+                                    **kwargs)
+        dm.data_pipeline = SpectrogramClassificationDataPipeline(
+            train_transform=train_transform, valid_transform=valid_transform, loader=loader
+        )
+        return dm
 
     @classmethod
     def from_folders(
@@ -182,8 +185,7 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        return ImageClassificationData.from_folders(
-            SpectrogramClassificationData,
+        dm = super().from_folders(
             train_folder,
             train_transform,
             valid_folder,
@@ -191,7 +193,13 @@ class SpectrogramClassificationData(ImageClassificationData):
             test_folder,
             loader,
             batch_size,
-            num_workers)
+            num_workers,
+            **kwargs
+        )
+        dm.data_pipeline = SpectrogramClassificationDataPipeline(
+            train_transform=train_transform, valid_transform=valid_transform, loader=loader
+        )
+        return dm
 
     @classmethod
     def from_folder(
@@ -228,14 +236,19 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folder("my_folder/") # doctest: +SKIP
 
         """
-        return ImageClassificationData.from_folder(
-            SpectrogramClassificationData,
+        return super().from_folder(
             folder,
             transform,
             loader,
             batch_size,
-            num_workers
+            num_workers,
+            **kwargs
         )
+        dm.data_pipeline = SpectrogramClassificationDataPipeline(
+            train_transform=train_transform, valid_transform=valid_transform, loader=loader
+        )
+        return dm
+        
     @staticmethod
     def default_pipeline() -> SpectrogramClassificationDataPipeline:
         return SpectrogramClassificationDataPipeline(
