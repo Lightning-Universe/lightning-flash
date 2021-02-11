@@ -11,15 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data import download_data
-from flash.tabular import TabularClassifier
+import pytorch_lightning as pl
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+from flash.core.finetuning import FlashBaseFinetuning
 
-# 2. Load the model from a checkpoint
-model = TabularClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/tabnet_classification_model.pt")
 
-# 3. Generate predictions from a sheet file! Who would survive?
-predictions = model.predict("data/titanic/titanic.csv")
-print(predictions)
+class ObjectDetectionFineTuning(FlashBaseFinetuning):
+    """
+    Freezes the backbone during Detector training.
+    """
+
+    def __init__(self, train_bn: bool = True):
+        self.train_bn = train_bn
+
+    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+        model = pl_module.model
+        self.freeze(module=model.backbone, train_bn=self.train_bn)
