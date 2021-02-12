@@ -8,6 +8,7 @@ Object Detection
 ********
 The task
 ********
+
 Object Detection task helps to identify and locate objects in images.
 
 ------
@@ -16,7 +17,7 @@ Object Detection task helps to identify and locate objects in images.
 Inference
 *********
 
-The :class:`~flash.vision.ObjectDetector` is already pre-trained on `COCO train2017 <https://cocodataset.org/>`_, a dataset with `91 classes <https://cocodataset.org/#explore>`_ (123,287 images, 886,284 instances)
+The :class:`~flash.vision.ObjectDetector` is already pre-trained on `COCO train2017 <https://cocodataset.org/>`_, a dataset with `91 classes <https://cocodataset.org/#explore>`_ (123,287 images, 886,284 instances).
 
 
 Use the :class:`~flash.vision.ObjectDetector` pretrained model for inference on any image tensor or image path using :func:`~flash.vision.ObjectDetector.predict`:
@@ -95,10 +96,10 @@ By default, we use the `Faster R-CNN <https://arxiv.org/abs/1506.01497>`_ model 
 API reference
 *************
 
-.. _object_detector_class:
+.. _object_detector:
 
 ObjectDetector
----------------
+--------------
 
 .. autoclass:: flash.vision.ObjectDetector
     :members:
@@ -107,7 +108,7 @@ ObjectDetector
 .. _object_detection_data:
 
 ObjectDetectionData
------------------------
+-------------------
 
 .. autoclass:: flash.vision.ObjectDetectionData
 
