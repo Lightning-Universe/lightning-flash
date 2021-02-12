@@ -82,7 +82,7 @@ class TabularData(DataModule):
         dfs = [train_df]
         self._test_df = None
 
-        if categorical_input is None and numerical_input is None:
+        if not categorical_input and not numerical_input:
             raise RuntimeError('Both `categorical_input` and `numerical_input` are None!')
 
         if categorical_input is None:
