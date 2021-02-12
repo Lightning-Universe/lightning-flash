@@ -21,9 +21,11 @@ import pytest
 root = Path(__file__).parent.parent.parent
 
 
-def call_script(filepath: str,
-                args: Optional[List[str]] = None,
-                timeout: Optional[int] = 60 * 5) -> Tuple[int, str, str]:
+def call_script(
+    filepath: str,
+    args: Optional[List[str]] = None,
+    timeout: Optional[int] = 60 * 5,
+) -> Tuple[int, str, str]:
     if args is None:
         args = []
     args = [str(a) for a in args]
