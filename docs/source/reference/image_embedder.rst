@@ -29,7 +29,7 @@ Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on a
 	embedder = ImageEmbedder(backbone="resnet18")
 
 	# 2. Perform inference on an image file
-	embeddings = model.predict("path/to/image.png")
+	embeddings = embedder.predict("path/to/image.png")
 	print(embeddings)
 
 Or on a random image tensor
@@ -91,13 +91,12 @@ By default, we use the encoder from `SwAV <https://arxiv.org/pdf/2006.09882.pdf>
 
 .. note::
 
-   When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
+   When changing the backbone, make sure you pass in the same backbone to the Task!
 
 .. code-block:: python
 
     # 1. organize the data
     data = ImageClassificationData.from_folders(
-    	backbone="resnet34",
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/"
     )

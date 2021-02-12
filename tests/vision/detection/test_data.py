@@ -3,16 +3,12 @@ import os
 from pathlib import Path
 
 import pytest
-import torch
 from PIL import Image
 from pytorch_lightning.utilities import _module_available
-from torchvision import transforms as T
 
 from flash.vision.detection.data import ObjectDetectionData
 
 _COCO_AVAILABLE = _module_available("pycocotools")
-if _COCO_AVAILABLE:
-    from pycocotools.coco import COCO
 
 
 def _create_dummy_coco_json(dummy_json_path):

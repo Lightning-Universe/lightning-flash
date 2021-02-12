@@ -14,7 +14,6 @@
 from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
-import torchvision
 from pytorch_lightning.metrics import Accuracy
 from pytorch_lightning.utilities.distributed import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
