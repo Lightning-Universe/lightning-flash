@@ -72,7 +72,7 @@ jobs:
       with:
         path: data # This path is specific to Ubuntu
         # Look to see if there is a cache hit for the corresponding requirements file
-        key: flash-datasets-${{ hashFiles("tests/examples/test_examples.py") }}
+        key: flash-datasets-${{ hashFiles('tests/examples/test_examples.py') }}
 
     - name: Tests
       run: |
