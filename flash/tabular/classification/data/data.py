@@ -72,8 +72,8 @@ class TabularData(DataModule):
         self,
         train_df: DataFrame,
         target: str,
-        categorical_input: Optional[List] = None,
-        numerical_input: Optional[List] = None,
+        categorical_input: List,
+        numerical_input: List,
         valid_df: Optional[DataFrame] = None,
         test_df: Optional[DataFrame] = None,
         batch_size: int = 2,
@@ -82,14 +82,8 @@ class TabularData(DataModule):
         dfs = [train_df]
         self._test_df = None
 
-        if categorical_input is None and numerical_input is None:
-            raise TypeError('Both categorical_input and numerical_input are None!')
-
-        if categorical_input is None:
-            categorical_input = []
-
-        if numerical_input is None:
-            numerical_input = []
+        if not categorical_input and not numerical_input:
+            raise ValueError('Both categorical_input and numerical_input are empty!')
 
         if valid_df is not None:
             dfs.append(valid_df)
@@ -142,8 +136,8 @@ class TabularData(DataModule):
         cls,
         train_df: DataFrame,
         target: str,
-        categorical_input: Optional[List] = None,
-        numerical_input: Optional[List] = None,
+        categorical_input: List = (),
+        numerical_input: List = (),
         valid_df: Optional[DataFrame] = None,
         test_df: Optional[DataFrame] = None,
         batch_size: int = 8,
@@ -203,8 +197,8 @@ class TabularData(DataModule):
         cls,
         train_csv: str,
         target: str,
-        categorical_input: Optional[List] = None,
-        numerical_input: Optional[List] = None,
+        categorical_input: List = (),
+        numerical_input: List = (),
         valid_csv: Optional[str] = None,
         test_csv: Optional[str] = None,
         batch_size: int = 8,
