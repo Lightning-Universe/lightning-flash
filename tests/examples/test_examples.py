@@ -21,9 +21,11 @@ import pytest
 root = Path(__file__).parent.parent.parent
 
 
-def call_script(filepath: str,
-                args: Optional[List[str]] = None,
-                timeout: Optional[int] = 60 * 5) -> Tuple[int, str, str]:
+def call_script(
+    filepath: str,
+    args: Optional[List[str]] = None,
+    timeout: Optional[int] = 60 * 5,
+) -> Tuple[int, str, str]:
     if args is None:
         args = []
     args = [str(a) for a in args]
@@ -42,9 +44,9 @@ def call_script(filepath: str,
 
 def run_test(filepath):
     code, stdout, stderr = call_script(filepath)
-    assert not code
     print(f"{filepath} STDOUT: {stdout}")
     print(f"{filepath} STDERR: {stderr}")
+    assert not code
 
 
 @pytest.mark.parametrize(
@@ -58,10 +60,8 @@ def run_test(filepath):
     ]
 )
 def test_finetune_example(tmpdir, step, file):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / step / file))
+    run_test(str(root / "flash_examples" / step / file))
 
 
 def test_generic_example(tmpdir):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / "generic_task.py"))
+    run_test(str(root / "flash_examples" / "generic_task.py"))
