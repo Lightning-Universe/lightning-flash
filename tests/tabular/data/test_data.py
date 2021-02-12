@@ -176,5 +176,5 @@ def test_empty_inputs():
     train_df = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
         TabularData.from_df(
-            train_df, categorical_input=[], numerical_input=[], target="label", num_workers=0, batch_size=1
+            train_df, categorical_input=None, numerical_input=None, target="label", num_workers=0, batch_size=1
         )
