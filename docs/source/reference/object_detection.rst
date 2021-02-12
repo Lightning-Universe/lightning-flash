@@ -9,7 +9,7 @@ Object Detection
 The task
 ********
 
-The object detection task identifies instances of objects of a certain class within an image.```
+The object detection task identifies instances of objects of a certain class within an image.
 
 ------
 
