@@ -44,9 +44,9 @@ def call_script(
 
 def run_test(filepath):
     code, stdout, stderr = call_script(filepath)
-    assert not code
     print(f"{filepath} STDOUT: {stdout}")
     print(f"{filepath} STDERR: {stderr}")
+    assert not code
 
 
 @pytest.mark.parametrize(
