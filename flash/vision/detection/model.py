@@ -29,8 +29,7 @@ _models = {"fasterrcnn_resnet50_fpn": torchvision.models.detection.fasterrcnn_re
 
 def _evaluate_iou(target, pred):
     """
-    Evaluate intersection over union (IOU) for target from dataset and output prediction
-    from model
+    Evaluate intersection over union (IOU) for target from dataset and output prediction from model
     """
     if pred["boxes"].shape[0] == 0:
         # no box detected, 0 IOU
@@ -42,17 +41,16 @@ class ObjectDetector(Task):
     """Image detection task
 
     Ref: Lightning Bolts https://github.com/PyTorchLightning/pytorch-lightning-bolts
+
     Args:
         num_classes: the number of classes for detection, including background
         model: either a string of :attr`_models` or a custom nn.Module.
             Defaults to 'fasterrcnn_resnet50_fpn'.
         loss: the function(s) to update the model with. Has no effect for torchvision detection models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
-            Defaults to None.
         optimizer: The optimizer to use for training. Can either be the actual class or the class name.
-            Defaults to Adam.
         pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
-            Has no effect for custom models. Defaults to True.
+            Has no effect for custom models.
         learning_rate: The learning rate to use for training
 
     """
@@ -89,8 +87,7 @@ class ObjectDetector(Task):
         )
 
     def training_step(self, batch, batch_idx) -> Any:
-        """The training step.
-        Overrides Task.training_step
+        """The training step. Overrides ``Task.training_step``
         """
         images, targets = batch
         targets = [{k: v for k, v in t.items()} for t in targets]
