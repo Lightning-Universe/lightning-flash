@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
 from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from flash.tabular import TabularData
 from flash.tabular.classification.data.dataset import _categorize, _normalize
