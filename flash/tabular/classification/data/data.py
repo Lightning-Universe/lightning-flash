@@ -71,9 +71,9 @@ class TabularData(DataModule):
     def __init__(
         self,
         train_df: DataFrame,
-        categorical_input: List,
-        numerical_input: List,
         target: str,
+        categorical_input: Optional[List] = None,
+        numerical_input: Optional[List] = None,
         valid_df: Optional[DataFrame] = None,
         test_df: Optional[DataFrame] = None,
         batch_size: int = 2,
@@ -81,6 +81,15 @@ class TabularData(DataModule):
     ):
         dfs = [train_df]
         self._test_df = None
+
+        if categorical_input is None and numerical_input is None:
+            raise TypeError('Both categorical_input and numerical_input are None!')
+
+        if categorical_input is None:
+            categorical_input = []
+
+        if numerical_input is None:
+            numerical_input = []
 
         if valid_df is not None:
             dfs.append(valid_df)
