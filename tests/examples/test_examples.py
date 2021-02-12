@@ -60,10 +60,8 @@ def run_test(filepath):
     ]
 )
 def test_finetune_example(tmpdir, step, file):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / step / file))
+    run_test(str(root / "flash_examples" / step / file))
 
 
 def test_generic_example(tmpdir):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / "generic_task.py"))
+    run_test(str(root / "flash_examples" / "generic_task.py"))
