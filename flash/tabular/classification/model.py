@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
 from pytorch_lightning.metrics import Metric
 from pytorch_tabnet.tab_network import TabNet
-from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask

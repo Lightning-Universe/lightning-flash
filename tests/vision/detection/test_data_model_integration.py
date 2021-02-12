@@ -23,8 +23,6 @@ from flash.vision.detection import ObjectDetectionData
 from tests.vision.detection.test_data import _create_synth_coco_dataset
 
 _COCO_AVAILABLE = _module_available("pycocotools")
-if _COCO_AVAILABLE:
-    from pycocotools.coco import COCO
 
 
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
