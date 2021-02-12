@@ -80,12 +80,6 @@ jobs:
         coverage run --source flash -m pytest flash tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
         coverage xml
 
-    #- name: Run examples
-    #  run: |
-    #    # tox --sitepackages
-    #    python -m pip install -e .
-    #    # python flash_examples/torchvision_classifier.py
-
     - name: Upload pytest test results
       uses: actions/upload-artifact@v2
       with:
