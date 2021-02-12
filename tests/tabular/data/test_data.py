@@ -173,8 +173,11 @@ def test_from_csv(tmpdir):
 
 
 def test_empty_inputs():
+    train_df = TEST_DF_1.copy()
+    valid_df = TEST_DF_2.copy()
+    test_df = TEST_DF_2.copy()
     with pytest.raises(RuntimeError):
-        dm = TabularData.from_df(
+        TabularData.from_df(
             train_df,
             categorical_input=[],
             numerical_input=[],
