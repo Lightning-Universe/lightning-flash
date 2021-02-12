@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -169,3 +170,17 @@ def test_from_csv(tmpdir):
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1, )
+
+def test_non_existent_backbone():
+    with pytest.raises(ValueError):
+        dm = TabularData.from_df(
+            train_df,
+            categorical_input=["category"],
+            numerical_input=["scalar_b", "scalar_b"],
+            target="label",
+            valid_df=valid_df,
+            test_df=test_df,
+            num_workers=0,
+            batch_size=1
+        )
+        ImageClassifier(2, "i am never going to implement this lol")
