@@ -57,6 +57,7 @@ Pip from source
 ```bash
 # with git
 pip install git+https://github.com/PytorchLightning/lightning-flash.git@master
+
 # OR from an archive
 pip install https://github.com/PyTorchLightning/lightning-flash/archive/master.zip
 ```
