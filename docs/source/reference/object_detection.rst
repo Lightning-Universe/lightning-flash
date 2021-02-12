@@ -19,6 +19,23 @@ Inference
 
 The :class:`~flash.vision.ObjectDetector` is already pre-trained on `COCO train2017 <https://cocodataset.org/>`_, a dataset with `91 classes <https://cocodataset.org/#explore>`_ (123,287 images, 886,284 instances).
 
+.. code-block:: json
+
+    annotation{
+        "id": int, 
+        "image_id": int, 
+        "category_id": int, 
+        "segmentation": RLE or [polygon], 
+        "area": float, 
+        "bbox": [x,y,width,height], 
+        "iscrowd": 0 or 1,
+    }
+
+    categories[{
+        "id": int, 
+        "name": str, 
+        "supercategory": str,
+    }]
 
 Use the :class:`~flash.vision.ObjectDetector` pretrained model for inference on any image tensor or image path using :func:`~flash.vision.ObjectDetector.predict`:
 
