@@ -15,7 +15,9 @@ Object Detection task helps to identify and locate objects in images.
 *********
 Inference
 *********
+
 The :class:`~flash.vision.ObjectDetector` is already pre-trained on `COCO train2017 <https://cocodataset.org/>`_, a dataset with `91 classes <https://cocodataset.org/#explore>`_ (123,287 images, 886,284 instances)
+
 
 Use the :class:`~flash.vision.ObjectDetector` pretrained model for inference on any image tensor or image path using :func:`~flash.vision.ObjectDetector.predict`:
 
@@ -47,6 +49,7 @@ For more advanced inference options, see :ref:`predictions`.
 **********
 Finetuning
 **********
+
 To tailor the object detector to your dataset, you would need to have it in `COCO Format <https://cocodataset.org/#format-data>`_, and then finetune the model.
 
 .. code-block:: python
@@ -83,6 +86,7 @@ To tailor the object detector to your dataset, you would need to have it in `COC
 *****
 Model
 *****
+
 By default, we use the `Faster R-CNN <https://arxiv.org/abs/1506.01497>`_ model with a ResNet-50 FPN backbone. The inputs could be images of different sizes. The model behaves differently for training and evaluation. For training, it expects both the input tensors as well as the targets. And during evaluation, it expects only the input tensors and returns predictions for each image. The predictions are a list of boxes, labels and scores.
 
 ------
@@ -100,7 +104,7 @@ ObjectDetector
     :members:
     :exclude-members: forward
 
-.. _object_detector_data:
+.. _object_detection_data:
 
 ObjectDetectionData
 -----------------------
