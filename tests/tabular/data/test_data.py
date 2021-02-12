@@ -171,16 +171,16 @@ def test_from_csv(tmpdir):
         assert num.shape == (1, 2)
         assert target.shape == (1, )
 
-def test_non_existent_backbone():
-    with pytest.raises(ValueError):
+
+def test_empty_inputs():
+    with pytest.raises(RuntimeError):
         dm = TabularData.from_df(
             train_df,
-            categorical_input=["category"],
-            numerical_input=["scalar_b", "scalar_b"],
+            categorical_input=[],
+            numerical_input=[],
             target="label",
             valid_df=valid_df,
             test_df=test_df,
             num_workers=0,
             batch_size=1
         )
-        ImageClassifier(2, "i am never going to implement this lol")
