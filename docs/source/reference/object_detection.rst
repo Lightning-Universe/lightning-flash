@@ -19,7 +19,7 @@ Inference
 
 The :class:`~flash.vision.ObjectDetector` is already pre-trained on `COCO train2017 <https://cocodataset.org/>`_, a dataset with `91 classes <https://cocodataset.org/#explore>`_ (123,287 images, 886,284 instances).
 
-.. code-block:: json
+.. code-block::
 
     annotation{
         "id": int, 
