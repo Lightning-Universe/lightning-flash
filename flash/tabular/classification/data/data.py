@@ -83,7 +83,7 @@ class TabularData(DataModule):
         self._test_df = None
 
         if categorical_input is None and numerical_input is None:
-            raise TypeError('Both categorical_input and numerical_input are None!')
+            raise RuntimeError('Both `categorical_input` and `numerical_input` are None!')
 
         if categorical_input is None:
             categorical_input = []
