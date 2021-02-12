@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Sequence, Type, Union
 
 import torch
 import torchvision
@@ -20,7 +20,6 @@ from torch.optim import Optimizer
 from torchvision.ops import box_iou
 
 from flash.core import Task
-from flash.core.data import DataPipeline
 from flash.vision.detection.data import ObjectDetectionDataPipeline
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 

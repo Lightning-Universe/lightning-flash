@@ -13,7 +13,6 @@
 # limitations under the License.
 import pytest
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.vision import ImageClassifier
