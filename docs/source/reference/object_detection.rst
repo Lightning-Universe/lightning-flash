@@ -9,7 +9,7 @@ Object Detection
 The task
 ********
 
-Object Detection task helps to identify and locate objects in images.
+The object detection task identifies instances of objects of a certain class within an image.```
 
 ------
 
@@ -26,7 +26,7 @@ Use the :class:`~flash.vision.ObjectDetector` pretrained model for inference on 
 
 	from flash.vision import ObjectDetector
 
-	# Load the model
+	# 1. Load the model
 	detector = ObjectDetector()
 
 	# 2. Perform inference on an image file
@@ -37,7 +37,7 @@ Or on a random image tensor
 
 .. code-block:: python
 
-    # 2. Perform inference on a random image tensor
+    # Perform inference on a random image tensor
     import torch
     images = torch.rand(32, 3, 1080, 1920)
     predictions = detector.predict(images)
