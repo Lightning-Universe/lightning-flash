@@ -85,11 +85,8 @@ class TabularData(DataModule):
         if categorical_input is None and numerical_input is None:
             raise RuntimeError('Both `categorical_input` and `numerical_input` are None!')
 
-        if categorical_input is None:
-            categorical_input = []
-
-        if numerical_input is None:
-            numerical_input = []
+        categorical_input = categorical_input if categorical_input is not None else []
+        numerical_input = numerical_input if numerical_input is not None else []
 
         if valid_df is not None:
             dfs.append(valid_df)
