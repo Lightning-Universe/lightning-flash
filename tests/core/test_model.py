@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from PIL import Image
 import pytest
 import pytorch_lightning as pl
 import torch
+from PIL import Image
 from torch import nn
 from torch.nn import functional as F
 
