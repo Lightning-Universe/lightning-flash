@@ -93,27 +93,33 @@ def test_categorical_csv_labels(tmpdir):
     train_csv = os.path.join(tmpdir, 'some_dataset', 'train.csv')
     text_file = open(train_csv, 'w')
     text_file.write(
-        'my_id, label_a, label_b, label_c\n"train_1.png", 0, 1, 0\n"train_2.png", 0, 0, 1\n"train_2.png", 1, 0, 0\n'
+        'my_id,label_a,label_b,label_c\n"train_1.png", 0, 1, 0\n"train_2.png", 0, 0, 1\n"train_2.png", 1, 0, 0\n'
     )
     text_file.close()
 
     valid_csv = os.path.join(tmpdir, 'some_dataset', 'valid.csv')
     text_file = open(valid_csv, 'w')
     text_file.write(
-        'my_id, label_a, label_b, label_c\n"valid_1.png", 0, 1, 0\n"valid_2.png", 0, 0, 1\n"valid_3.png", 1, 0, 0\n'
+        'my_id,label_a,label_b,label_c\n"valid_1.png", 0, 1, 0\n"valid_2.png", 0, 0, 1\n"valid_3.png", 1, 0, 0\n'
     )
     text_file.close()
 
     test_csv = os.path.join(tmpdir, 'some_dataset', 'test.csv')
     text_file = open(test_csv, 'w')
     text_file.write(
-        'my_id, label_a, label_b, label_c\n"test_1.png", 0, 1, 0\n"test_2.png", 0, 0, 1\n"test_3.png", 1, 0, 0\n'
+        'my_id,label_a,label_b,label_c\n"test_1.png", 0, 1, 0\n"test_2.png", 0, 0, 1\n"test_3.png", 1, 0, 0\n'
     )
     text_file.close()
 
-    train_labels = labels_from_categorical_csv(train_csv, 'my_id')
-    valid_labels = labels_from_categorical_csv(valid_csv, 'my_id')
-    test_labels = labels_from_categorical_csv(test_csv, 'my_id')
+    def index_col_collate_fn(x):
+        return os.path.splitext(x)[0]
+
+    train_labels = labels_from_categorical_csv(
+        train_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
+    valid_labels = labels_from_categorical_csv(
+        valid_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
+    test_labels = labels_from_categorical_csv(
+        test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
 
     data = ImageClassificationData.from_filepaths(
         batch_size=2,
@@ -133,6 +139,16 @@ def test_categorical_csv_labels(tmpdir):
 
     for (x, y) in data.test_dataloader():
         assert len(x) == 2
+
+    data = ImageClassificationData.from_filepaths(
+        batch_size=2,
+        train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
+        train_labels=train_labels,
+        valid_split=0.5
+    )
+
+    for (x, y) in data.val_dataloader():
+        assert len(x) == 1
 
 
 def test_from_folders(tmpdir):
