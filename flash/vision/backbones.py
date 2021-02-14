@@ -40,6 +40,14 @@ def backbone_and_num_features(
     trainable_backbone_layers: int = 3,
     **kwargs
 ) -> Tuple[nn.Module, int]:
+    """
+    >>> backbone_and_num_features('mobilenet_v2')  # doctest: +ELLIPSIS
+    (Sequential(...), 1280)
+    >>> backbone_and_num_features('resnet50', fpn=True)  # doctest: +ELLIPSIS
+    (Sequential(...), 256)
+    >>> backbone_and_num_features('swav-imagenet')  # doctest: +ELLIPSIS
+    (Sequential(...), 2048)
+    """
     if fpn:
         if model_name in RESNET_MODELS:
             backbone = resnet_fpn_backbone(
