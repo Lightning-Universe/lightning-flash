@@ -92,17 +92,20 @@ def test_categorical_csv_labels(tmpdir):
 
     train_csv = os.path.join(tmpdir, 'some_dataset', 'train.csv')
     text_file = open(train_csv, 'w')
-    text_file.write('my_id, label_a, label_b, label_c\n"train_1.png", 0, 1, 0\n"train_2.png", 0, 0, 1\n"train_2.png", 1, 0, 0\n')
+    text_file.write('my_id, label_a, label_b, label_c\n"train_1.png", 0, 1, 0\n'
+                    '"train_2.png", 0, 0, 1\n"train_2.png", 1, 0, 0\n')
     text_file.close()
 
     valid_csv = os.path.join(tmpdir, 'some_dataset', 'valid.csv')
     text_file = open(valid_csv, 'w')
-    text_file.write('my_id, label_a, label_b, label_c\n"valid_1.png", 0, 1, 0\n"valid_2.png", 0, 0, 1\n"valid_3.png", 1, 0, 0\n')
+    text_file.write('my_id, label_a, label_b, label_c\n"valid_1.png", 0, 1, 0\n'
+                    '"valid_2.png", 0, 0, 1\n"valid_3.png", 1, 0, 0\n')
     text_file.close()
 
     test_csv = os.path.join(tmpdir, 'some_dataset', 'test.csv')
     text_file = open(test_csv, 'w')
-    text_file.write('my_id, label_a, label_b, label_c\n"test_1.png", 0, 1, 0\n"test_2.png", 0, 0, 1\n"test_3.png", 1, 0, 0\n')
+    text_file.write('my_id, label_a, label_b, label_c\n"test_1.png", 0, 1, 0\n'
+                    '"test_2.png", 0, 0, 1\n"test_3.png", 1, 0, 0\n')
     text_file.close()
 
     train_labels = labels_from_categorical_csv(train_csv, 'my_id')
