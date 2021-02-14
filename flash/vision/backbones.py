@@ -33,12 +33,28 @@ TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MO
 BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
 
-def backbone_and_num_features(model_name: str, *args, **kwargs) -> Tuple[nn.Module, int]:
+def backbone_and_num_features(
+    model_name: str,
+    fpn: bool = False,
+    pretrained: bool = True,
+    trainable_backbone_layers: int = 3,
+    **kwargs
+) -> Tuple[nn.Module, int]:
+    if fpn:
+        if model_name in RESNET_MODELS:
+            backbone = resnet_fpn_backbone(
+                model_name, pretrained=pretrained, trainable_layers=trainable_backbone_layers, **kwargs
+            )
+            fpn_out_channels = 256
+            return backbone, fpn_out_channels
+        else:
+            rank_zero_warn(f"{model_name} backbone is not supported with `fpn=True`, `fpn` won't be added.")
+
     if model_name in BOLTS_MODELS:
         return bolts_backbone_and_num_features(model_name)
 
     if model_name in TORCHVISION_MODELS:
-        return torchvision_backbone_and_num_features(model_name, *args, **kwargs)
+        return torchvision_backbone_and_num_features(model_name, pretrained)
 
     raise ValueError(f"{model_name} is not supported yet.")
 
@@ -110,23 +126,3 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
         return backbone, num_features
 
     raise ValueError(f"{model_name} is not supported yet.")
-
-
-def fetch_fasterrcnn_backbone_and_num_features(
-    backbone: str,
-    fpn: bool = True,
-    pretrained: bool = True,
-    trainable_backbone_layers: int = 3,
-    **kwargs: Any
-) -> nn.Module:
-    if fpn:
-        if backbone in RESNET_MODELS:
-            backbone = resnet_fpn_backbone(
-                backbone, pretrained=pretrained, trainable_layers=trainable_backbone_layers, **kwargs
-            )
-            fpn_out_channels = 256
-            return backbone, fpn_out_channels
-        else:
-            rank_zero_warn(f"{backbone} backbone is not supported with `fpn=True`, `fpn` won't be added.")
-    backbone, num_features = backbone_and_num_features(backbone, pretrained)
-    return backbone, num_features

@@ -17,15 +17,20 @@ import torch
 import torchvision
 from torch import nn
 from torch.optim import Optimizer
-from torchvision.models.detection.faster_rcnn import FasterRCNN as torchvision_FasterRCNN
-from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn, FastRCNNPredictor
+from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
+from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead
 from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import box_iou
 
 from flash.core import Task
-from flash.vision.backbones import fetch_fasterrcnn_backbone_and_num_features
+from flash.vision.backbones import backbone_and_num_features
 from flash.vision.detection.data import ObjectDetectionDataPipeline
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
+
+_models = {
+    "fasterrcnn": torchvision.models.detection.fasterrcnn_resnet50_fpn,
+    "retinanet": torchvision.models.detection.retinanet_resnet50_fpn,
+}
 
 
 def _evaluate_iou(target, pred):
@@ -45,11 +50,14 @@ class ObjectDetector(Task):
 
     Args:
         num_classes: the number of classes for detection, including background
-        backbone: Pretained backbone CNN architecture.
+        model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
+        backbone: Pretained backbone CNN architecture. Constructs a model with a
+            ResNet-50-FPN backbone when no backbone is specified.
         fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
         pretrained: if true, returns a model pre-trained on COCO train2017
         pretrained_backbone: if true, returns a model with backbone pre-trained on Imagenet
-        trainable_backbone_layers: number of trainable resnet layers starting from final block
+        trainable_backbone_layers: number of trainable resnet layers starting from final block.
+            Only applicable for `fasterrcnn`.
         loss: the function(s) to update the model with. Has no effect for torchvision detection models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
         optimizer: The optimizer to use for training. Can either be the actual class or the class name.
@@ -62,6 +70,7 @@ class ObjectDetector(Task):
     def __init__(
         self,
         num_classes: int,
+        model: str = "fasterrcnn",
         backbone: Optional[str] = None,
         fpn: bool = True,
         pretrained: bool = True,
@@ -76,17 +85,46 @@ class ObjectDetector(Task):
 
         self.save_hyperparameters()
 
-        if backbone is None:
-            model = fasterrcnn_resnet50_fpn(
-                pretrained=pretrained,
-                pretrained_backbone=pretrained_backbone,
-                trainable_backbone_layers=trainable_backbone_layers,
+        if model in _models:
+            model = ObjectDetector.get_model(
+                model, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers, **kwargs
             )
-            in_features = model.roi_heads.box_predictor.cls_score.in_features
-            head = FastRCNNPredictor(in_features, num_classes)
-            model.roi_heads.box_predictor = head
         else:
-            backbone_model, num_features = fetch_fasterrcnn_backbone_and_num_features(
+            ValueError(f"{model} is not supported yet.")
+
+        super().__init__(
+            model=model,
+            loss_fn=loss,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+        )
+
+    @staticmethod
+    def get_model(
+        model_name, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers, **kwargs
+    ):
+        if backbone is None:
+            # Constructs a model with a ResNet-50-FPN backbone when no backbone is specified.
+            if model_name == "fasterrcnn":
+                model = _models[model_name](
+                    pretrained=pretrained,
+                    pretrained_backbone=pretrained_backbone,
+                    trainable_backbone_layers=trainable_backbone_layers,
+                )
+                in_features = model.roi_heads.box_predictor.cls_score.in_features
+                head = FastRCNNPredictor(in_features, num_classes)
+                model.roi_heads.box_predictor = head
+            else:
+                model = _models[model_name](pretrained=pretrained, pretrained_backbone=pretrained_backbone)
+                model.head = RetinaNetHead(
+                    in_channels=model.backbone.out_channels,
+                    num_anchors=model.head.classification_head.num_anchors,
+                    num_classes=num_classes,
+                    **kwargs
+                )
+        else:
+            backbone_model, num_features = backbone_and_num_features(
                 backbone,
                 fpn,
                 pretrained_backbone,
@@ -97,17 +135,12 @@ class ObjectDetector(Task):
             anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512), ),
                                                aspect_ratios=((0.5, 1.0,
                                                                2.0), )) if not hasattr(backbone_model, "fpn") else None
-            model = torchvision_FasterRCNN(
-                backbone_model, num_classes=num_classes, rpn_anchor_generator=anchor_generator, **kwargs
-            )
 
-        super().__init__(
-            model=model,
-            loss_fn=loss,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
-        )
+            if model_name == "fasterrcnn":
+                model = FasterRCNN(backbone_model, num_classes=num_classes, rpn_anchor_generator=anchor_generator)
+            else:
+                model = RetinaNet(backbone_model, num_classes=num_classes, anchor_generator=anchor_generator)
+        return model
 
     def training_step(self, batch, batch_idx) -> Any:
         """The training step. Overrides ``Task.training_step``
