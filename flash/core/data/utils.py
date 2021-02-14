@@ -19,7 +19,7 @@ from typing import Any, Type
 import requests
 import torch
 from tqdm.auto import tqdm as tq
-import pandas as pd
+
 
 # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
 # __author__  = "github.com/ruxi"
