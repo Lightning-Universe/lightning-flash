@@ -3,7 +3,7 @@ from typing import Dict, List, Union
 import pandas as pd
 
 
-def labels_from_categorical_csv(csv: str, index_col: str, return_dict: bool = True) -> Union[Dict, List]:
+def labels_from_categorical_csv(csv: str, index_col: str, feature_cols: List, return_dict: bool = True) -> Union[Dict, List]:
     """
     Returns a dictionary with {index_col: label} for each entry in the csv.
 
@@ -17,13 +17,13 @@ def labels_from_categorical_csv(csv: str, index_col: str, return_dict: bool = Tr
     df = pd.read_csv(csv)
     # get names
     names = df[index_col].to_list()
-    del df[index_col]
 
     # remove extensions
     names = [os.path.splitext(x)[0] for x in names]
 
     # everything else is binary
-    labels = df.to_numpy().argmax(1).tolist()
+    feature_df = df[feature_cols]
+    labels = feature_df.to_numpy().argmax(1).tolist()
 
     if return_dict:
         labels = {name: label for name, label in zip(names, labels)}
