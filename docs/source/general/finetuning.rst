@@ -79,7 +79,7 @@ Finetune strategies
 ===================
 
 Finetuning is very task specific. Each task encodes the best finetuning practices for that task.
-However, Flash gives you many alternatives for finetuning.
+However, Flash gives you a few default strategies for finetuning.
 
 Finetuning operates on two things, the model backbone and the head. The backbone
 is the neural network that was pre-trained. The head is another neural network that bridges between the backbone
