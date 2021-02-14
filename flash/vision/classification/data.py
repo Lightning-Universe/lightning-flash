@@ -17,7 +17,7 @@ from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import torch
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torchvision import transforms as T
 from torchvision.datasets import VisionDataset
@@ -241,9 +241,13 @@ class ImageClassificationDataPipeline(ClassificationDataPipeline):
         if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
             outputs = []
             for sample in samples:
-                output = self._loader(sample)
-                transform = self._valid_transform if self._use_valid_transform else self._train_transform
-                outputs.append(transform(output))
+                try:
+                    output = self._loader(sample)
+                    transform = self._valid_transform if self._use_valid_transform else self._train_transform
+                    outputs.append(transform(output))
+                except UnidentifiedImageError as e:
+                    print(f'Skipping: could not read file {sample}')
+
             return outputs
         raise MisconfigurationException("The samples should either be a tensor or a list of paths.")
 
