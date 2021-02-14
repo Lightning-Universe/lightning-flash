@@ -127,7 +127,7 @@ class Task(pl.LightningModule):
 
         Args:
 
-            x: Input to predict. Can be raw data or processed data.
+            x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
 
             batch_idx: Batch index
 
