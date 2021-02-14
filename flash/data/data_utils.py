@@ -1,9 +1,14 @@
-import os
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Any
 import pandas as pd
 
 
-def labels_from_categorical_csv(csv: str, index_col: str, feature_cols: List, return_dict: bool = True) -> Union[Dict, List]:
+def labels_from_categorical_csv(
+        csv: str,
+        index_col: str,
+        feature_cols: List,
+        return_dict: bool = True,
+        index_col_collate_fn: Any = None
+    ) -> Union[Dict, List]:
     """
     Returns a dictionary with {index_col: label} for each entry in the csv.
 
@@ -18,8 +23,10 @@ def labels_from_categorical_csv(csv: str, index_col: str, feature_cols: List, re
     # get names
     names = df[index_col].to_list()
 
-    # remove extensions
-    names = [os.path.splitext(x)[0] for x in names]
+    # apply colate fn to index_col
+    if index_col_collate_fn:
+        for i in range(len(names)):
+            names[i] = index_col_collate_fn(names[i])
 
     # everything else is binary
     feature_df = df[feature_cols]

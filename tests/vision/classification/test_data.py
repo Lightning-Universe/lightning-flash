@@ -111,9 +111,15 @@ def test_categorical_csv_labels(tmpdir):
     )
     text_file.close()
 
-    train_labels = labels_from_categorical_csv(train_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'])
-    valid_labels = labels_from_categorical_csv(valid_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'])
-    test_labels = labels_from_categorical_csv(test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'])
+    def index_col_collate_fn(x):
+        return os.path.splitext(x)[0]
+
+    train_labels = labels_from_categorical_csv(
+        train_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
+    valid_labels = labels_from_categorical_csv(
+        valid_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
+    test_labels = labels_from_categorical_csv(
+        test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
 
     data = ImageClassificationData.from_filepaths(
         batch_size=2,
