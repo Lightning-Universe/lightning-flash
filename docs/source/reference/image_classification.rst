@@ -158,6 +158,7 @@ Available backbones:
 * densenet121
 * densenet169
 * densenet161
+* swav-imagenet
 
 ------
 
