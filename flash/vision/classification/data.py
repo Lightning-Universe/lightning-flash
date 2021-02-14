@@ -245,7 +245,7 @@ class ImageClassificationDataPipeline(ClassificationDataPipeline):
                     output = self._loader(sample)
                     transform = self._valid_transform if self._use_valid_transform else self._train_transform
                     outputs.append(transform(output))
-                except UnidentifiedImageError as e:
+                except UnidentifiedImageError:
                     print(f'Skipping: could not read file {sample}')
 
             return outputs
