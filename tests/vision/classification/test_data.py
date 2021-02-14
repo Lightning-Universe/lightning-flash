@@ -19,8 +19,8 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 
-from flash.vision import ImageClassificationData
 from flash.data import labels_from_categorical_csv
+from flash.vision import ImageClassificationData
 
 
 def _dummy_image_loader(filepath):
