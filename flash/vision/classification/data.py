@@ -77,7 +77,8 @@ class FilepathDataset(torch.utils.data.Dataset):
             img = self.transform(img)
         label = None
         if self.has_dict_labels:
-            name = os.path.basename(filename)
+            name = os.path.splitext(filename)[0]
+            name = os.path.basename(name)
             label = self.labels[name]
 
         elif self.has_labels:

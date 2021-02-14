@@ -1,5 +1,5 @@
+import os
 from typing import Dict, List, Union
-
 import pandas as pd
 
 
@@ -18,6 +18,9 @@ def labels_from_categorical_csv(csv: str, index_col: str, return_dict: bool = Tr
     # get names
     names = df[index_col].to_list()
     del df[index_col]
+
+    # remove extensions
+    names = [os.path.splitext(x)[0] for x in names]
 
     # everything else is binary
     labels = df.to_numpy().argmax(1).tolist()
