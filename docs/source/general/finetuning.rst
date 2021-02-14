@@ -8,17 +8,41 @@ Finetuning (or transfer-learning) is the process of tweaking a model trained on 
 
 ------
 
-3 steps to finetuning
-=====================
+Terminology
+===========
+Here are common terms you need to be familiar with:
+
+.. list-table:: Terminology
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Term
+     - Definition
+   * - Finetuning
+     - The process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset
+   * - Transfer learning
+     - The common name for finetuning
+   * - Backbone
+     - The neural network that was pretrained on a different dataset
+   * - Head
+     - Another neural network (usually smaller) that maps the backbone to your particular dataset
+   * - Freeze
+     - Disabling gradient updates to a model (ie: not learning)
+   * - Unfreeze
+     - Enabling gradient updates to a model
+
+
+------
+
+3 steps to finetune in Flash
+============================
 
 All Flash tasks have a pre-trained backbone that was already trained on large datasets such as ImageNet. Finetuning on already pretrained models decrease training time significantly.
 
-You can finetune any Flash task on your own data in just a 3 simple steps:
+To finetune using Flash, follow these 3 steps:
 
 1. Load your data and organize it using a DataModule customized for the task.
-
 2. Pick a Task which has all the state-of-the-art built in (example: :class:`~flash.vision.ImageClassifier`).
-
 3. Choose a Finetune strategy and call the :func:`~flash.core.trainer.Trainer.finetune` method
 
 |
