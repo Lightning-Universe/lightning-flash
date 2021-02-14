@@ -266,6 +266,7 @@ class ImageClassificationData(DataModule):
         loader: Callable = _pil_loader,
         batch_size: int = 64,
         num_workers: Optional[int] = None,
+        seed: int = 1234,
         **kwargs
     ):
         """Creates a ImageClassificationData object from lists of image filepaths and labels
@@ -284,6 +285,7 @@ class ImageClassificationData(DataModule):
             batch_size: the batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
+            seed: Used for the train/val splits when valid_split is not None
 
         Returns:
             ImageClassificationData: The constructed data module.
@@ -327,7 +329,9 @@ class ImageClassificationData(DataModule):
             full_length = len(train_ds)
             train_split = int((1.0 - valid_split) * full_length)
             valid_split = full_length - train_split
-            train_ds, valid_ds = torch.utils.data.random_split(train_ds, [train_split, valid_split])
+            train_ds, valid_ds = torch.utils.data.random_split(train_ds,
+                                                               [train_split, valid_split],
+                                                               generator=torch.Generator().manual_seed(seed))
         else:
             valid_ds = (
                 FilepathDataset(
