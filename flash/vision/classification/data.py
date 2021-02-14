@@ -329,9 +329,11 @@ class ImageClassificationData(DataModule):
             full_length = len(train_ds)
             train_split = int((1.0 - valid_split) * full_length)
             valid_split = full_length - train_split
-            train_ds, valid_ds = torch.utils.data.random_split(train_ds,
-                                                               [train_split, valid_split],
-                                                               generator=torch.Generator().manual_seed(seed))
+            train_ds, valid_ds = torch.utils.data.random_split(
+                train_ds,
+                [train_split, valid_split],
+                generator=torch.Generator().manual_seed(seed)
+            )
         else:
             valid_ds = (
                 FilepathDataset(
