@@ -346,11 +346,6 @@ class ImageClassificationData(DataModule):
         )
 
     @classmethod
-    def __auto_generate_labels_from_csv(cls, csv):
-        df = pd.read_csv(csv)
-        print('a')
-
-    @classmethod
     def from_folders(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]],
