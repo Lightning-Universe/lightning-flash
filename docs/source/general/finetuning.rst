@@ -114,7 +114,7 @@ For even more customization, create your own finetuning callback. Learn more abo
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
 
-        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = true)
+        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = True):
             # this will set self.attr_names as ["feature_extractor"]
             super().__init__("feature_extractor", train_bn)
             self._unfreeze_at_epoch = unfreeze_at_epoch
