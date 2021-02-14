@@ -121,7 +121,9 @@ def fetch_fasterrcnn_backbone_and_num_features(
 ) -> nn.Module:
     if fpn:
         if backbone in RESNET_MODELS:
-            backbone = resnet_fpn_backbone(backbone, pretrained, trainable_backbone_layers, **kwargs)
+            backbone = resnet_fpn_backbone(
+                backbone, pretrained=pretrained, trainable_layers=trainable_backbone_layers, **kwargs
+            )
             num_features = 512 if backbone in RESNET_MODELS[:2] else 2048
             return backbone, num_features
         else:
