@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Tuple
+from typing import Any, Optional, Tuple
 
 import torchvision
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
+from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 if _BOLTS_AVAILABLE:
     from pl_bolts.models.self_supervised import SimCLR, SwAV
@@ -109,3 +110,22 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
         return backbone, num_features
 
     raise ValueError(f"{model_name} is not supported yet.")
+
+
+def fetch_fasterrcnn_backbone_and_num_features(
+    backbone: str,
+    fpn: bool = True,
+    pretrained: Optional[str] = None,
+    trainable_backbone_layers: int = 3,
+    **kwargs: Any
+) -> nn.Module:
+    if fpn:
+        if backbone in RESNET_MODELS:
+            backbone = resnet_fpn_backbone(backbone, pretrained, trainable_backbone_layers, **kwargs)
+            num_features = 512 if backbone in RESNET_MODELS[:2] else 2048
+            return backbone, num_features
+        else:
+            raise MisconfigurationException(f"{backbone} is not supported with `fpn=True`")
+    else:
+        backbone, num_features = backbone_and_num_features(backbone, pretrained)
+        return backbone, num_features
