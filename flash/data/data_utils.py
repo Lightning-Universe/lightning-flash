@@ -3,7 +3,7 @@ from typing import Dict, List, Union
 import pandas as pd
 
 
-def labels_from_categorical_csv(csv, index_col, return_dict=True) -> Union[Dict, List]:
+def labels_from_categorical_csv(csv: str, index_col: str, return_dict: dict =True) -> Union[Dict, List]:
     """
     Returns a dictionary with {index_col: label} for each entry in the csv.
 
