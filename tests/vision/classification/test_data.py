@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from pathlib import Path
 
 import numpy as np
@@ -19,7 +20,6 @@ from PIL import Image
 from torchvision import transforms as T
 
 from flash.vision import ImageClassificationData
-import os
 from flash.data import labels_from_categorical_csv
 
 
