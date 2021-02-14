@@ -115,7 +115,7 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
 def fetch_fasterrcnn_backbone_and_num_features(
     backbone: str,
     fpn: bool = True,
-    pretrained: Optional[str] = None,
+    pretrained: bool = True,
     trainable_backbone_layers: int = 3,
     **kwargs: Any
 ) -> nn.Module:
@@ -124,9 +124,9 @@ def fetch_fasterrcnn_backbone_and_num_features(
             backbone = resnet_fpn_backbone(
                 backbone, pretrained=pretrained, trainable_layers=trainable_backbone_layers, **kwargs
             )
-            num_features = 512 if backbone in RESNET_MODELS[:2] else 2048
-            return backbone, num_features
+            fpn_out_channels = 256
+            return backbone, fpn_out_channels
         else:
-            rank_zero_warn(f"{backbone} is not supported with `fpn=True`, `fpn` won't be added.")
+            rank_zero_warn(f"{backbone} backbone is not supported with `fpn=True`, `fpn` won't be added.")
     backbone, num_features = backbone_and_num_features(backbone, pretrained)
     return backbone, num_features

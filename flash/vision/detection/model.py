@@ -64,7 +64,7 @@ class ObjectDetector(Task):
         num_classes: int,
         backbone: Optional[str] = None,
         fpn: bool = True,
-        pretrained: bool = False,
+        pretrained: bool = True,
         pretrained_backbone: bool = True,
         trainable_backbone_layers: int = 3,
         loss=None,
@@ -94,7 +94,9 @@ class ObjectDetector(Task):
                 **kwargs,
             )
             backbone_model.out_channels = num_features
-            anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512), ), aspect_ratios=((0.5, 1.0, 2.0), ))
+            anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512), ),
+                                               aspect_ratios=((0.5, 1.0,
+                                                               2.0), )) if not hasattr(backbone_model, "fpn") else None
             model = torchvision_FasterRCNN(
                 backbone_model, num_classes=num_classes, rpn_anchor_generator=anchor_generator, **kwargs
             )

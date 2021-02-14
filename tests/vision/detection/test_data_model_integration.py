@@ -26,12 +26,13 @@ _COCO_AVAILABLE = _module_available("pycocotools")
 
 
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
-def test_detection(tmpdir):
+@pytest.mark.parametrize("backbone", [None, "resnet34", "mobilenet_v2", "simclr-imagenet"])
+def test_detection(tmpdir, backbone):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
     data = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
-    model = ObjectDetector(num_classes=data.num_classes)
+    model = ObjectDetector(backbone=backbone, num_classes=data.num_classes)
 
     trainer = flash.Trainer(fast_dev_run=True)
 

@@ -63,7 +63,7 @@ def test_init():
 
 
 def test_training(tmpdir):
-    model = ObjectDetector(num_classes=2, model="fasterrcnn_resnet50_fpn")
+    model = ObjectDetector(num_classes=2)
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
     dl = DataLoader(ds, collate_fn=collate_fn)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
