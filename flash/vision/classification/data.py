@@ -15,6 +15,7 @@ import os
 import pathlib
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
+import pandas as pd
 import torch
 from PIL import Image
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -55,8 +56,12 @@ class FilepathDataset(torch.utils.data.Dataset):
         self.labels = labels or []
         self.transform = transform
         self.loader = loader
-        if self.has_labels:
+        if not self.has_dict_labels and self.has_labels:
             self.label_to_class_mapping = dict(map(reversed, enumerate(sorted(set(self.labels)))))
+
+    @property
+    def has_dict_labels(self) -> bool:
+        return isinstance(self.labels, dict)
 
     @property
     def has_labels(self) -> bool:
@@ -71,7 +76,11 @@ class FilepathDataset(torch.utils.data.Dataset):
         if self.transform is not None:
             img = self.transform(img)
         label = None
-        if self.has_labels:
+        if self.has_dict_labels:
+            name = os.path.basename(filename)
+            label = self.labels[name]
+
+        elif self.has_labels:
             label = self.labels[index]
             label = self.label_to_class_mapping[label]
         return img, label
@@ -244,13 +253,13 @@ class ImageClassificationData(DataModule):
     @classmethod
     def from_filepaths(
         cls,
-        train_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        train_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         train_labels: Optional[Sequence] = None,
         train_transform: Optional[Callable] = _default_train_transforms,
-        valid_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        valid_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         valid_labels: Optional[Sequence] = None,
         valid_transform: Optional[Callable] = _default_valid_transforms,
-        test_filepaths: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        test_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         test_labels: Optional[Sequence] = None,
         loader: Callable = _pil_loader,
         batch_size: int = 64,
@@ -260,13 +269,13 @@ class ImageClassificationData(DataModule):
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
         Args:
-            train_filepaths: sequence of file paths for training dataset. Defaults to ``None``.
+            train_filepaths: string or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: sequence of labels for training dataset. Defaults to ``None``.
             train_transform: transforms for training dataset. Defaults to ``None``.
-            valid_filepaths: sequence of file paths for validation dataset. Defaults to ``None``.
+            valid_filepaths: string or sequence of file paths for validation dataset. Defaults to ``None``.
             valid_labels: sequence of labels for validation dataset. Defaults to ``None``.
             valid_transform: transforms for validation and testing dataset. Defaults to ``None``.
-            test_filepaths: sequence of file paths for test dataset. Defaults to ``None``.
+            test_filepaths: string or sequence of file paths for test dataset. Defaults to ``None``.
             test_labels: sequence of labels for test dataset. Defaults to ``None``.
             loader: function to load an image file. Defaults to ``None``.
             batch_size: the batchsize to use for parallel loading. Defaults to ``64``.
@@ -278,7 +287,32 @@ class ImageClassificationData(DataModule):
 
         Examples:
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
+
+        Example when labels are in .csv file::
+
+            train_labels = labels_from_categorical_csv('path/to/train.csv', 'my_id')
+            valid_labels = labels_from_categorical_csv(path/to/valid.csv', 'my_id')
+            test_labels = labels_from_categorical_csv(path/to/tests.csv', 'my_id')
+
+            data = ImageClassificationData.from_filepaths(
+                batch_size=2,
+                train_filepaths='path/to/train',
+                train_labels=train_labels,
+                valid_filepaths='path/to/valid',
+                valid_labels=valid_labels,
+                test_filepaths='path/to/test',
+                test_labels=test_labels,
+            )
+
         """
+        # enable passing in a string which loads all files in that folder as a list
+        if isinstance(train_filepaths, str):
+            train_filepaths = [os.path.join(train_filepaths, x) for x in os.listdir(train_filepaths)]
+        if isinstance(valid_filepaths, str):
+            valid_filepaths = [os.path.join(valid_filepaths, x) for x in os.listdir(valid_filepaths)]
+        if isinstance(test_filepaths, str):
+            test_filepaths = [os.path.join(test_filepaths, x) for x in os.listdir(test_filepaths)]
+
         train_ds = FilepathDataset(
             filepaths=train_filepaths,
             labels=train_labels,
