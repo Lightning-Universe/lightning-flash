@@ -14,7 +14,7 @@
 from typing import Any, Optional, Tuple
 
 import torchvision
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE
+from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
@@ -125,7 +125,6 @@ def fetch_fasterrcnn_backbone_and_num_features(
             num_features = 512 if backbone in RESNET_MODELS[:2] else 2048
             return backbone, num_features
         else:
-            raise MisconfigurationException(f"{backbone} is not supported with `fpn=True`")
-    else:
-        backbone, num_features = backbone_and_num_features(backbone, pretrained)
-        return backbone, num_features
+            rank_zero_warn(f"{backbone} is not supported with `fpn=True`, `fpn` won't be added.")
+    backbone, num_features = backbone_and_num_features(backbone, pretrained)
+    return backbone, num_features
