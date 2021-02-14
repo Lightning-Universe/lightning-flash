@@ -19,7 +19,7 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 
-from flash.data import labels_from_categorical_csv
+from flash.data.data_utils import labels_from_categorical_csv
 from flash.vision import ImageClassificationData
 
 
