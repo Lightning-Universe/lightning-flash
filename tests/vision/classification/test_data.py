@@ -140,6 +140,16 @@ def test_categorical_csv_labels(tmpdir):
     for (x, y) in data.test_dataloader():
         assert len(x) == 2
 
+    data = ImageClassificationData.from_filepaths(
+        batch_size=2,
+        train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
+        train_labels=train_labels,
+        valid_split=0.5
+    )
+
+    for (x, y) in data.val_dataloader():
+        assert len(x) == 1
+
 
 def test_from_folders(tmpdir):
     train_dir = Path(tmpdir / "train")

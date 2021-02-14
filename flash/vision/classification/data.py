@@ -257,6 +257,7 @@ class ImageClassificationData(DataModule):
         train_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         train_labels: Optional[Sequence] = None,
         train_transform: Optional[Callable] = _default_train_transforms,
+        valid_split: Union[None, float] = None,
         valid_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         valid_labels: Optional[Sequence] = None,
         valid_transform: Optional[Callable] = _default_valid_transforms,
@@ -273,6 +274,7 @@ class ImageClassificationData(DataModule):
             train_filepaths: string or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: sequence of labels for training dataset. Defaults to ``None``.
             train_transform: transforms for training dataset. Defaults to ``None``.
+            valid_split: if not None, generates val split from train dataloader using this value.
             valid_filepaths: string or sequence of file paths for validation dataset. Defaults to ``None``.
             valid_labels: sequence of labels for validation dataset. Defaults to ``None``.
             valid_transform: transforms for validation and testing dataset. Defaults to ``None``.
@@ -320,14 +322,21 @@ class ImageClassificationData(DataModule):
             loader=loader,
             transform=train_transform,
         )
-        valid_ds = (
-            FilepathDataset(
-                filepaths=valid_filepaths,
-                labels=valid_labels,
-                loader=loader,
-                transform=valid_transform,
-            ) if valid_filepaths is not None else None
-        )
+
+        if valid_split:
+            full_length = len(train_ds)
+            train_split = int((1.0 - valid_split) * full_length)
+            valid_split = full_length - train_split
+            train_ds, valid_ds = torch.utils.data.random_split(train_ds, [train_split, valid_split])
+        else:
+            valid_ds = (
+                FilepathDataset(
+                    filepaths=valid_filepaths,
+                    labels=valid_labels,
+                    loader=loader,
+                    transform=valid_transform,
+                ) if valid_filepaths is not None else None
+            )
 
         test_ds = (
             FilepathDataset(
