@@ -288,7 +288,7 @@ class ImageClassificationData(DataModule):
         Examples:
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
 
-        Example when labels are in .csv file:
+        Example when labels are in .csv file::
 
             train_labels = labels_from_categorical_csv('path/to/train.csv', 'my_id')
             valid_labels = labels_from_categorical_csv(path/to/valid.csv', 'my_id')
