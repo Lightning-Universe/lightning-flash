@@ -105,7 +105,7 @@ To tailor the object detector to your dataset, you would need to have it in `COC
 Model
 *****
 
-By default, we use the `Faster R-CNN <https://arxiv.org/abs/1506.01497>`_ model with a ResNet-50 FPN backbone. We have support for `RetinaNet <https://arxiv.org/abs/1708.02002>`_ as well. The inputs could be images of different sizes. The model behaves differently for training and evaluation. For training, it expects both the input tensors as well as the targets. And during evaluation, it expects only the input tensors and returns predictions for each image. The predictions are a list of boxes, labels and scores.
+By default, we use the `Faster R-CNN <https://arxiv.org/abs/1506.01497>`_ model with a ResNet-50 FPN backbone. We also support `RetinaNet <https://arxiv.org/abs/1708.02002>`_. The inputs could be images of different sizes. The model behaves differently for training and evaluation. For training, it expects both the input tensors as well as the targets. And during evaluation, it expects only the input tensors and returns predictions for each image. The predictions are a list of boxes, labels and scores.
 
 ------
 
