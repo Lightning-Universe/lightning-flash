@@ -1,7 +1,3 @@
-from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
-
-import flash
-from flash.core.data import download_data
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +11,14 @@ from flash.core.data import download_data
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+
+import flash
+from flash.core.data import download_data
 from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 
 # 2. Load the data
 datamodule = TabularData.from_csv(

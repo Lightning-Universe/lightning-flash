@@ -1,5 +1,3 @@
-import flash
-from flash import download_data
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +11,12 @@ from flash import download_data
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import flash
+from flash import download_data
 from flash.text import TranslationData, TranslationTask
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 
 # 2. Load the data
 datamodule = TranslationData.from_files(

@@ -16,7 +16,7 @@ from flash.core.data import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Load the model from a checkpoint
 model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
