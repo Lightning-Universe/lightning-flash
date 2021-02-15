@@ -41,6 +41,12 @@ def backbone_and_num_features(
     **kwargs
 ) -> Tuple[nn.Module, int]:
     """
+    Args:
+        model_name: backbone supported by `torchvision` and `bolts`
+        fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
+        pretrained: if true, returns a model with backbone pre-trained on Imagenet
+        trainable_backbone_layers: number of trainable resnet layers starting from final block.
+
     >>> backbone_and_num_features('mobilenet_v2')  # doctest: +ELLIPSIS
     (Sequential(...), 1280)
     >>> backbone_and_num_features('resnet50', fpn=True)  # doctest: +ELLIPSIS
