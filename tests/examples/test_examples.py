@@ -53,13 +53,20 @@ def run_test(filepath):
     "step,file",
     [
         ("finetuning", "image_classification.py"),
+        # ("finetuning", "object_detection.py"),  # TODO: takes too long.
+        # ("finetuning", "summarization.py"),  # TODO: takes too long.
         ("finetuning", "tabular_classification.py"),
+        ("finetuning", "text_classification.py"),
+        # ("finetuning", "translation.py"),  # TODO: takes too long.
         ("predict", "classify_image.py"),
         ("predict", "classify_tabular.py"),
-        # "classify_text.py" TODO: takes too long
+        ("predict", "classify_text.py"),
+        ("predict", "image_embedder.py"),
+        ("predict", "summarize.py"),
+        # ("predict", "translate.py"),  # TODO: takes too long
     ]
 )
-def test_finetune_example(tmpdir, step, file):
+def test_example(tmpdir, step, file):
     run_test(str(root / "flash_examples" / step / file))
 
 
