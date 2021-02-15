@@ -44,7 +44,7 @@ def backbone_and_num_features(
     >>> backbone_and_num_features('mobilenet_v2')  # doctest: +ELLIPSIS
     (Sequential(...), 1280)
     >>> backbone_and_num_features('resnet50', fpn=True)  # doctest: +ELLIPSIS
-    (Sequential(...), 256)
+    (BackboneWithFPN((...), 256)
     >>> backbone_and_num_features('swav-imagenet')  # doctest: +ELLIPSIS
     (Sequential(...), 2048)
     """
