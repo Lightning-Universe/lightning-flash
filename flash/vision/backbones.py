@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Tuple
+from typing import Any, Optional, Tuple
 
 import torchvision
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE
+from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
+from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 if _BOLTS_AVAILABLE:
     from pl_bolts.models.self_supervised import SimCLR, SwAV
@@ -32,12 +33,42 @@ TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MO
 BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
 
-def backbone_and_num_features(model_name: str, *args, **kwargs) -> Tuple[nn.Module, int]:
+def backbone_and_num_features(
+    model_name: str,
+    fpn: bool = False,
+    pretrained: bool = True,
+    trainable_backbone_layers: int = 3,
+    **kwargs
+) -> Tuple[nn.Module, int]:
+    """
+    Args:
+        model_name: backbone supported by `torchvision` and `bolts`
+        fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
+        pretrained: if true, returns a model with backbone pre-trained on Imagenet
+        trainable_backbone_layers: number of trainable resnet layers starting from final block.
+
+    >>> backbone_and_num_features('mobilenet_v2')  # doctest: +ELLIPSIS
+    (Sequential(...), 1280)
+    >>> backbone_and_num_features('resnet50', fpn=True)  # doctest: +ELLIPSIS
+    (BackboneWithFPN(...), 256)
+    >>> backbone_and_num_features('swav-imagenet')  # doctest: +ELLIPSIS
+    (Sequential(...), 2048)
+    """
+    if fpn:
+        if model_name in RESNET_MODELS:
+            backbone = resnet_fpn_backbone(
+                model_name, pretrained=pretrained, trainable_layers=trainable_backbone_layers, **kwargs
+            )
+            fpn_out_channels = 256
+            return backbone, fpn_out_channels
+        else:
+            rank_zero_warn(f"{model_name} backbone is not supported with `fpn=True`, `fpn` won't be added.")
+
     if model_name in BOLTS_MODELS:
         return bolts_backbone_and_num_features(model_name)
 
     if model_name in TORCHVISION_MODELS:
-        return torchvision_backbone_and_num_features(model_name, *args, **kwargs)
+        return torchvision_backbone_and_num_features(model_name, pretrained)
 
     raise ValueError(f"{model_name} is not supported yet.")
 

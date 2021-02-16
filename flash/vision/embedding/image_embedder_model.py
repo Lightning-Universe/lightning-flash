@@ -112,7 +112,7 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone, num_features = backbone_and_num_features(backbone, pretrained)
+        self.backbone, num_features = backbone_and_num_features(backbone, pretrained=pretrained)
 
         if embedding_dim is None:
             self.head = nn.Identity()

@@ -22,6 +22,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 
+## [Unreleased] - 2021-02-15
+
+### Added
+
+- Added `RetinaNet` & `backbones` to `ObjectDetector` Task ([#121](https://github.com/PyTorchLightning/lightning-flash/pull/121))
+
+### Changed
+
+
+
+### Fixed
+
+
+
+### Removed
+
 
 
 ## [0.2.0] - 2021-02-12
