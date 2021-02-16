@@ -68,7 +68,9 @@ For more advanced inference options, see :ref:`predictions`.
 Finetuning
 **********
 
-To tailor the object detector to your dataset, you would need to have it in `COCO Format <https://cocodataset.org/#format-data>`_, and then finetune the model. You could also pass `trainable_backbone_layers` to :class:`~flash.vision.ObjectDetector` and train the model.
+To tailor the object detector to your dataset, you would need to have it in `COCO Format <https://cocodataset.org/#format-data>`_, and then finetune the model.
+
+.. tip:: You could also pass `trainable_backbone_layers` to :class:`~flash.vision.ObjectDetector` and train the model.
 
 .. code-block:: python
 
