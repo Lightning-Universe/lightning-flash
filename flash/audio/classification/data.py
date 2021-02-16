@@ -77,7 +77,7 @@ class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
             for sample in samples:
                 if sample[-3:].lower() == 'wav': ## If filepath is a wav convert it to a png spectrogram 
                     wav2spec(sample)
-                    sample = f'{sample[-3:]}png'
+                    sample = f'{sample[:-3]}png'
                 output = self._loader(sample)
                 transform = self._valid_transform if self._use_valid_transform else self._train_transform
                 outputs.append(transform(output))
