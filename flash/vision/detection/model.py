@@ -76,7 +76,7 @@ class ObjectDetector(Task):
         pretrained: bool = True,
         pretrained_backbone: bool = True,
         trainable_backbone_layers: int = 3,
-        achnor_generator: Optional[Type[AnchorGenerator]] = None,
+        anchor_generator: Optional[Type[AnchorGenerator]] = None,
         loss=None,
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.Adam,
