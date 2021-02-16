@@ -76,6 +76,7 @@ class ObjectDetector(Task):
         pretrained: bool = True,
         pretrained_backbone: bool = True,
         trainable_backbone_layers: int = 3,
+        achnor_generator: Optional[Type[AnchorGenerator]] = None,
         loss=None,
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.Adam,
@@ -87,7 +88,8 @@ class ObjectDetector(Task):
 
         if model in _models:
             model = ObjectDetector.get_model(
-                model, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers, **kwargs
+                model, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers,
+                anchor_generator, **kwargs
             )
         else:
             ValueError(f"{model} is not supported yet.")
@@ -102,7 +104,8 @@ class ObjectDetector(Task):
 
     @staticmethod
     def get_model(
-        model_name, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers, **kwargs
+        model_name, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers,
+        anchor_generator, **kwargs
     ):
         if backbone is None:
             # Constructs a model with a ResNet-50-FPN backbone when no backbone is specified.
@@ -132,9 +135,10 @@ class ObjectDetector(Task):
                 **kwargs,
             )
             backbone_model.out_channels = num_features
-            anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512), ),
-                                               aspect_ratios=((0.5, 1.0,
-                                                               2.0), )) if not hasattr(backbone_model, "fpn") else None
+            if anchor_generator is None:
+                anchor_generator = AnchorGenerator(
+                    sizes=((32, 64, 128, 256, 512), ), aspect_ratios=((0.5, 1.0, 2.0), )
+                ) if not hasattr(backbone_model, "fpn") else None
 
             if model_name == "fasterrcnn":
                 model = FasterRCNN(backbone_model, num_classes=num_classes, rpn_anchor_generator=anchor_generator)
