@@ -250,7 +250,11 @@ class SpectrogramClassificationData(ImageClassificationData):
             train_transform=train_transform, valid_transform=valid_transform, loader=loader
         )
         return dm
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 477597745e8db89b8e1720b8d7fad751b9416b28
     @staticmethod
     def default_pipeline() -> SpectrogramClassificationDataPipeline:
         return SpectrogramClassificationDataPipeline(

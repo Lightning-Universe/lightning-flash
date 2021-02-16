@@ -68,6 +68,8 @@ class FilepathDataset(torch.utils.data.Dataset):
     def __getitem__(self, index: int) -> Tuple[Any, Optional[int]]:
         filename = self.fnames[index]
         img = self.loader(filename)
+        if self.transform is not None:
+            img = self.transform(img)
         label = None
         if self.has_labels:
             label = self.labels[index]
@@ -258,25 +260,24 @@ class ImageClassificationData(DataModule):
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
         Args:
-            train_filepaths: sequence of file paths for training dataset. Defaults to None.
-            train_labels: sequence of labels for training dataset. Defaults to None.
-            train_transform: transforms for training dataset. Defaults to None.
-            valid_filepaths: sequence of file paths for validation dataset. Defaults to None.
-            valid_labels: sequence of labels for validation dataset. Defaults to None.
-            valid_transform: transforms for validation and testing dataset. Defaults to None.
-            test_filepaths: sequence of file paths for test dataset. Defaults to None.
-            test_labels: sequence of labels for test dataset. Defaults to None.
-            loader: function to load an image file. Defaults to None.
-            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            train_filepaths: sequence of file paths for training dataset. Defaults to ``None``.
+            train_labels: sequence of labels for training dataset. Defaults to ``None``.
+            train_transform: transforms for training dataset. Defaults to ``None``.
+            valid_filepaths: sequence of file paths for validation dataset. Defaults to ``None``.
+            valid_labels: sequence of labels for validation dataset. Defaults to ``None``.
+            valid_transform: transforms for validation and testing dataset. Defaults to ``None``.
+            test_filepaths: sequence of file paths for test dataset. Defaults to ``None``.
+            test_labels: sequence of labels for test dataset. Defaults to ``None``.
+            loader: function to load an image file. Defaults to ``None``.
+            batch_size: the batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to ``None`` which equals the number of available CPU threads.
 
         Returns:
             ImageClassificationData: The constructed data module.
 
         Examples:
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
-
         """
         train_ds = FilepathDataset(
             filepaths=train_filepaths,
@@ -342,7 +343,7 @@ class ImageClassificationData(DataModule):
             loader: A function to load an image given its path.
             batch_size: Batch size for data loading.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to ``None`` which equals the number of available CPU threads.
 
         Returns:
             ImageClassificationData: the constructed data module
@@ -408,7 +409,7 @@ class ImageClassificationData(DataModule):
             ImageClassificationData: the constructed data module
 
         Examples:
-            >>> img_data = ImageClassificationData.from_folder("my_folder/") # doctest: +SKIP
+            >>> img_data = ImageClassificationData.from_folder("folder/") # doctest: +SKIP
 
         """
         if not os.path.isdir(folder):
