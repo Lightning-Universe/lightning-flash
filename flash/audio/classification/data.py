@@ -22,16 +22,17 @@ from torchvision import transforms as T
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
-from flash.vision.classification.data import ImageClassificationDataPipeline, ImageClassificationData
 from flash.audio.classification.utils import wav2spec
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
+from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
 
 
 def _pil_loader(path) -> Image:
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     with open(path, "rb") as f, Image.open(f) as img:
         return img.convert("RGB")
+
 
 _default_train_transforms = T.Compose([
     # T.RandomResizedCrop(224),
@@ -51,6 +52,7 @@ _default_valid_transforms = T.Compose([
 # Find better fix and raised issue on torchvision.
 _default_valid_transforms.transforms[0]._forward_hooks = {}
 
+
 class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
 
     def __init__(
@@ -60,10 +62,7 @@ class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
         use_valid_transform: bool = True,
         loader: Callable = _pil_loader
     ):
-        super().__init__(train_transform,
-                       valid_transform,
-                       use_valid_transform,
-                       loader)
+        super().__init__(train_transform, valid_transform, use_valid_transform, loader)
 
     def before_collate(self, samples: Any) -> Any:
 
@@ -75,7 +74,7 @@ class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
         if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
             outputs = []
             for sample in samples:
-                if sample[-3:].lower() == 'wav': ## If filepath is a wav convert it to a png spectrogram 
+                if sample[-3:].lower() == 'wav':  ## If filepath is a wav convert it to a png spectrogram
                     wav2spec(sample)
                     sample = f'{sample[:-3]}png'
                 output = self._loader(sample)
@@ -83,10 +82,10 @@ class SpectrogramClassificationDataPipeline(ImageClassificationDataPipeline):
                 outputs.append(transform(output))
             return outputs
         raise MisconfigurationException("The samples should either be a tensor or a list of paths.")
-            
-    
+
 
 class SpectrogramClassificationData(ImageClassificationData):
+
     @classmethod
     def from_filepaths(
         cls,
@@ -126,19 +125,10 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
 
         """
-        dm =  super().from_filepaths(
-                                    train_filepaths,
-                                    train_labels,
-                                    train_transform,
-                                    valid_filepaths,
-                                    valid_labels,
-                                    valid_transform,
-                                    test_filepaths,
-                                    test_labels,
-                                    loader,
-                                    batch_size,
-                                    num_workers,
-                                    **kwargs)
+        dm = super().from_filepaths(
+            train_filepaths, train_labels, train_transform, valid_filepaths, valid_labels, valid_transform,
+            test_filepaths, test_labels, loader, batch_size, num_workers, **kwargs
+        )
         dm.data_pipeline = SpectrogramClassificationDataPipeline(
             train_transform=train_transform, valid_transform=valid_transform, loader=loader
         )
@@ -186,14 +176,7 @@ class SpectrogramClassificationData(ImageClassificationData):
 
         """
         dm = super().from_folders(
-            train_folder,
-            train_transform,
-            valid_folder,
-            valid_transform,
-            test_folder,
-            loader,
-            batch_size,
-            num_workers,
+            train_folder, train_transform, valid_folder, valid_transform, test_folder, loader, batch_size, num_workers,
             **kwargs
         )
         dm.data_pipeline = SpectrogramClassificationDataPipeline(
@@ -236,22 +219,14 @@ class SpectrogramClassificationData(ImageClassificationData):
             >>> img_data = ImageClassificationData.from_folder("my_folder/") # doctest: +SKIP
 
         """
-        return super().from_folder(
-            folder,
-            transform,
-            loader,
-            batch_size,
-            num_workers,
-            **kwargs
-        )
+        return super().from_folder(folder, transform, loader, batch_size, num_workers, **kwargs)
         dm.data_pipeline = SpectrogramClassificationDataPipeline(
             train_transform=train_transform, valid_transform=valid_transform, loader=loader
         )
         return dm
+
     @staticmethod
     def default_pipeline() -> SpectrogramClassificationDataPipeline:
         return SpectrogramClassificationDataPipeline(
             train_transform=_default_train_transforms, valid_transform=_default_valid_transforms, loader=_pil_loader
         )
-
-  

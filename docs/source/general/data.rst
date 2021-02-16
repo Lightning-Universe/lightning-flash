@@ -7,7 +7,7 @@ Data
 DataPipeline
 ------------
 
-To make tasks work for inference, one must create a ``DataPipeline``. 
+To make tasks work for inference, one must create a ``DataPipeline``.
 The ``flash.core.data.DataPipeline`` exposes 6 hooks to override:
 
 .. code:: python

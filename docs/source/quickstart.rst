@@ -31,7 +31,7 @@ Flash is built for 3 major use-cases:
 Scalability
 ^^^^^^^^^^^
 Flash is built on top of `Pytorch Lightning
-<https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes. 
+<https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes.
 
 Flexibility
 ^^^^^^^^^^^
@@ -64,7 +64,7 @@ You can install flash using pip or conda:
 
 Tasks
 -----
-Flash is comprised of a collection of Tasks. The Flash tasks are opinionated and laser-focused objects designed to solve a specific type of problem, using state-of-the-art methods. 
+Flash is comprised of a collection of Tasks. The Flash tasks are opinionated and laser-focused objects designed to solve a specific type of problem, using state-of-the-art methods.
 
 The Flash tasks contain all the relevant information to solve the task at hand- the number of class labels you want to predict, number of columns in your dataset, as well as details on the model architecture used such as loss function, optimizers, etc.
 

@@ -12,7 +12,7 @@ Predict on a single sample of data
 
 You can pass in a sample of data (image file path, a string of text, etc) to the :func:`~flash.core.model.Task.predict` method.
 
-	
+
 .. code-block:: python
 
 	from flash import Trainer
@@ -51,5 +51,3 @@ Predict on a csv file
 	# 3. Generate predictions from a csv file! Who would survive?
 	predictions = model.predict("data/titanic/titanic.csv")
 	print(predictions)
-
-

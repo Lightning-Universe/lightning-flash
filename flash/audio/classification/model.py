@@ -18,8 +18,8 @@ from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
 
-from flash.vision.classification.model import ImageClassifier
 from flash.audio.classification.data import SpectrogramClassificationData, SpectrogramClassificationDataPipeline
+from flash.vision.classification.model import ImageClassifier
 
 
 class SpectrogramClassifier(ImageClassifier):
@@ -54,7 +54,6 @@ class SpectrogramClassifier(ImageClassifier):
             metrics,
             learning_rate,
         )
-    
 
     @staticmethod
     def default_pipeline() -> SpectrogramClassificationDataPipeline:

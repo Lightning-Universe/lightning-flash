@@ -74,7 +74,7 @@ For more options, you can pass in an instance of :class:`~python_lightning.callb
 Custom callback finetuning
 ==========================
 
-For more advanced finetuning, you can use flash built-in finetuning callbacks. 
+For more advanced finetuning, you can use flash built-in finetuning callbacks.
 
 * :class:`~flash.core.finetuning.FreezeUnfreeze`: The backbone parameters will be frozen for a given number of epochs (by default the `unfreeze_epoch` is set to 10).
 
