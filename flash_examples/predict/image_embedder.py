@@ -17,14 +17,14 @@ from flash.core.data import download_data
 from flash.vision import ImageEmbedder
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Create an ImageEmbedder with swav trained on imagenet.
 # Check out SWAV: https://pytorch-lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#swav
 embedder = ImageEmbedder(backbone="swav-imagenet", embedding_dim=128)
 
 # 3. Generate an embedding from an image path.
-embeddings = embedder.predict('data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg')
+embeddings = embedder.predict(["data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg"])
 
 # 4. Print embeddings shape
 print(embeddings.shape)

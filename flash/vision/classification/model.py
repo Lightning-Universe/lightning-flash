@@ -57,7 +57,7 @@ class ImageClassifier(ClassificationTask):
 
         self.save_hyperparameters()
 
-        self.backbone, num_features = backbone_and_num_features(backbone, pretrained)
+        self.backbone, num_features = backbone_and_num_features(backbone, pretrained=pretrained)
 
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),

@@ -16,6 +16,7 @@ from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from flash.tabular import TabularData
 from flash.tabular.classification.data.dataset import _categorize, _normalize
@@ -169,3 +170,11 @@ def test_from_csv(tmpdir):
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1, )
+
+
+def test_empty_inputs():
+    train_df = TEST_DF_1.copy()
+    with pytest.raises(RuntimeError):
+        TabularData.from_df(
+            train_df, categorical_input=None, numerical_input=None, target="label", num_workers=0, batch_size=1
+        )

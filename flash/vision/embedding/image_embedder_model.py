@@ -14,7 +14,6 @@
 from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
-import torchvision
 from pytorch_lightning.metrics import Accuracy
 from pytorch_lightning.utilities.distributed import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -113,7 +112,7 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone, num_features = backbone_and_num_features(backbone, pretrained)
+        self.backbone, num_features = backbone_and_num_features(backbone, pretrained=pretrained)
 
         if embedding_dim is None:
             self.head = nn.Identity()
