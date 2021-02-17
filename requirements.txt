@@ -1,11 +1,11 @@
 pytorch-lightning==1.2.0rc0
-torch>=1.6
+torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
 Pillow>=7.2
-torchvision>=0.7
+torchvision>=0.8  # lower to 0.7 after PT 1.6
 transformers>=4.0
 pytorch-tabnet==3.1
-datasets>=1.2
+datasets>=1.2, <1.3
 pandas>=1.1
 scikit-learn>=0.24
 numpy  # comes with 3rd-party dependency
