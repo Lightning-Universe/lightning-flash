@@ -17,7 +17,7 @@ from flash.core.data import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 
 # 2. Load the model from a checkpoint
 model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
