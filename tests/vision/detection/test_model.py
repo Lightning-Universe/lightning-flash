@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
 import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
@@ -62,8 +63,9 @@ def test_init():
     assert {"boxes", "labels", "scores"} <= out[0].keys()
 
 
-def test_training(tmpdir):
-    model = ObjectDetector(num_classes=2, model="fasterrcnn_resnet50_fpn")
+@pytest.mark.parametrize("model", ["fasterrcnn", "retinanet"])
+def test_training(tmpdir, model):
+    model = ObjectDetector(num_classes=2, model=model, pretrained=False, pretrained_backbone=False)
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
     dl = DataLoader(ds, collate_fn=collate_fn)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
