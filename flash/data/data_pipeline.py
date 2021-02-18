@@ -1,11 +1,11 @@
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Union
-import torch
 from functools import wraps
-from torch.utils.data.dataloader import default_collate, DataLoader
-from pytorch_lightning.core import LightningModule
+from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Union
 
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
+import torch
+from pytorch_lightning.core import LightningModule
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data.dataloader import DataLoader, default_collate
 
 
 class DataPipeline:
@@ -22,7 +22,7 @@ class DataPipeline:
 
     def post_collate(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency)
-        
+
         .. note::
             This option is mutually exclusive with :meth:`device_pre_collate`, since if both are specified, uncollation has to be applied.
         """
@@ -30,7 +30,7 @@ class DataPipeline:
 
     def device_pre_collate(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
-        
+
         .. note::
             This option is mutually exclusive with :meth:`post_collate`, since if both are specified, uncollation has to be applied.
 

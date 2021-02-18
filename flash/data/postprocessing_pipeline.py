@@ -1,7 +1,8 @@
-from functools import wraps
 import os
-import torch
+from functools import wraps
 from typing import Any, Callable, Mapping, Optional, Sequence
+
+import torch
 
 from flash.core.model import Task
 
@@ -19,7 +20,7 @@ class PostProcessingPipeline:
         return batch
 
     def post_uncollate(self, sample: Any) -> Any:
-        """Transforms to apply to a single sample after splitting up the batch. 
+        """Transforms to apply to a single sample after splitting up the batch.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return sample
