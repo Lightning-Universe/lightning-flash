@@ -46,8 +46,7 @@ def run_test(filepath):
     code, stdout, stderr = call_script(filepath)
     print(f"{filepath} STDOUT: {stdout}")
     print(f"{filepath} STDERR: {stderr}")
-    if code:
-        raise RuntimeError(stderr)
+    assert not code
 
 
 @pytest.mark.parametrize(
