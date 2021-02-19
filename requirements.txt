@@ -1,4 +1,4 @@
-pytorch-lightning==1.2.0rc0  # todo: we shall align with real 1.2
+pytorch-lightning==1.2.0
 torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
 Pillow>=7.2
