@@ -1,8 +1,8 @@
 pytorch-lightning==1.2.0rc0
-torch>=1.7  # TODO: regenerate weights with lewer PT version
+torch>=1.7.1  # TODO: regenerate weights with lewer PT version
 PyYAML==5.3.1
 Pillow>=7.2
-torchvision>=0.8  # lower to 0.7 after PT 1.6
+torchvision>=0.8.2  # lower to 0.7 after PT 1.6
 transformers==4.2.2
 pytorch-tabnet==3.1.1
 datasets==1.2.1
