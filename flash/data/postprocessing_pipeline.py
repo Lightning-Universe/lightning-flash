@@ -52,7 +52,7 @@ class PostProcessingPipeline:
     def _save_sample(self, sample: Any) -> None:
         self.save_sample(sample, self.format_sample_save_path(self._save_path))
 
-    def is_overriden(self, method_name: str) -> bool:
+    def _is_overriden(self, method_name: str) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
 
@@ -64,7 +64,7 @@ class PostProcessingPipeline:
         return getattr(self, method_name).__code__ is not getattr(super_obj, method_name)
 
     @staticmethod
-    def model_predict_wrapper(func: Callable, uncollater: UnCollater) -> Callable:
+    def _model_predict_wrapper(func: Callable, uncollater: UnCollater) -> Callable:
 
         @wraps(func)
         def new_func(*args, **kwargs):
@@ -73,21 +73,23 @@ class PostProcessingPipeline:
 
         return new_func
 
-    def attach_to_model(self, model: Task) -> Task:
+    def _attach_to_model(self, model: Task) -> Task:
 
         if self._save_path is None:
             save_per_sample = None
             save_fn = None
 
         else:
-            save_per_sample = self.is_overriden('save_sample')
+            save_per_sample = self._is_overriden('save_sample')
 
             if save_per_sample:
                 save_fn = self._save_sample
             else:
                 save_fn = self._save_data
-        model.predict = self.model_predict_wrapper(
-            model.predict,
+
+        # TODO: move this to on_predict_end?
+        model.predict_step = self._model_predict_wrapper(
+            model.predict_step,
             UnCollater(
                 self.uncollate,
                 self.pre_uncollate,
