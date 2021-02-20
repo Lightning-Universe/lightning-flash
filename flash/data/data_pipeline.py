@@ -5,16 +5,19 @@ import torch
 from pytorch_lightning.core import LightningModule
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data.dataloader import DataLoader, default_collate
+from torch.utils.data._utils.collate import default_collate, default_convert
+from torch.utils.data.dataloader import DataLoader
 
 
 class DataPipeline:
 
     def load_data(self, data: Any) -> Any:
         """Loads entire data from Dataset"""
+        return data
 
     def load_sample(self, sample: Any) -> Any:
         """Loads single sample from dataset"""
+        return sample
 
     def pre_collate(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis)"""
@@ -48,7 +51,7 @@ class DataPipeline:
         """
         return batch
 
-    def is_overriden(self, method_name: str) -> bool:
+    def _is_overriden(self, method_name: str) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
 
@@ -60,7 +63,7 @@ class DataPipeline:
         return getattr(self, method_name).__code__ is not getattr(super_obj, method_name)
 
     @staticmethod
-    def do_nothing_collate(samples: Sequence[Any]) -> Sequence[Any]:
+    def _do_nothing_collate(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
 
     def split_around_collate(self, collate_fn: Optional[Callable] = None) -> Tuple[Collater, Collater]:
@@ -68,8 +71,8 @@ class DataPipeline:
         if collate_fn is None:
             collate_fn = default_collate
 
-        post_collate_overriden = self.is_overriden('post_collate')
-        device_pre_collate_overriden = self.is_overriden('device_pre_collate')
+        post_collate_overriden = self._is_overriden('post_collate')
+        device_pre_collate_overriden = self._is_overriden('device_pre_collate')
 
         if post_collate_overriden and device_pre_collate_overriden:
             raise MisconfigurationException(
@@ -78,15 +81,15 @@ class DataPipeline:
 
         elif post_collate_overriden:
             worker_collate = collate_fn
-            device_collate = self.do_nothing_collate
+            device_collate = self._do_nothing_collate
 
         elif device_pre_collate_overriden:
-            worker_collate = self.do_nothing_collate
+            worker_collate = self._do_nothing_collate
             device_collate = collate_fn
 
         else:
             worker_collate = collate_fn
-            device_collate = self.do_nothing_collate
+            device_collate = self._do_nothing_collate
 
         worker_callable = Collater(worker_collate, self.pre_collate, self.post_collate)
         device_callable = Collater(device_collate, self.device_pre_collate, self.device_post_collate)
@@ -94,7 +97,7 @@ class DataPipeline:
         return worker_callable, device_callable
 
     @staticmethod
-    def model_transfer_to_device_wrapper(func: Callable, collater: Collater) -> Callable:
+    def _model_transfer_to_device_wrapper(func: Callable, collater: Collater) -> Callable:
 
         @wraps(func)
         def new_func(*args, **kwargs):
@@ -103,7 +106,7 @@ class DataPipeline:
 
         return new_func
 
-    def attach_to_model(self, model: LightningModule, loader_stage: str = 'all') -> LightningModule:
+    def _attach_to_model(self, model: LightningModule, loader_stage: str = 'all') -> LightningModule:
         if loader_stage == 'all':
             loader_stage = ['train', 'test', 'val', 'predict']
 
@@ -150,11 +153,11 @@ class DataPipeline:
                 setattr(model, loader_name, dataloader)
 
         model.transfer_batch_to_device = (
-            self.model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collater)
+            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collater)
         )
         return model
 
-    def generate_auto_dset(self, data: Union[Iterable, Any]):
+    def _generate_auto_dset(self, data: Union[Iterable, Any]) -> AutoDataset:
         if isinstance(data, Iterable) and self.is_overriden('load_sample'):
             load_per_sample = True
             load_fn = self.load_sample
@@ -163,6 +166,24 @@ class DataPipeline:
             load_fn = self.load_data
 
         return AutoDataset(data=data, load_fn=load_fn, load_per_sample=load_per_sample)
+
+    def _generate_loader(
+        self, data: Union[Iterable, Any], auto_collate: Optional[bool] = None, **loader_kwargs
+    ) -> DataLoader:
+        if 'collate_fn' in loader_kwargs:
+            if auto_collate is not None:
+                raise MisconfigurationException('auto_collate and collate_fn are mutually exclusive')
+
+        else:
+            if auto_collate is None:
+                auto_collate = True
+
+            if auto_collate:
+                loader_kwargs['collate_fn'] = default_collate
+            else:
+                loader_kwargs['collate_fn'] = default_convert
+
+        return DataLoader(self.generate_auto_dset(data), **loader_kwargs)
 
 
 class Collater:
