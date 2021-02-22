@@ -14,7 +14,6 @@
 from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
-import torchvision
 from pytorch_lightning.metrics import Accuracy
 from pytorch_lightning.utilities.distributed import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -24,9 +23,8 @@ from torch.nn import functional as F
 from flash.core import Task
 from flash.core.data import TaskDataPipeline
 from flash.core.data.utils import _contains_any_tensor
-from flash.vision.backbones import torchvision_backbone_and_num_features
+from flash.vision.backbones import backbone_and_num_features
 from flash.vision.classification.data import _default_valid_transforms, _pil_loader
-from flash.vision.embedding.model_map import _load_bolts_model, _models
 
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
@@ -71,17 +69,16 @@ class ImageEmbedder(Task):
     """Task that classifies images.
 
     Args:
-        embedding_dim: Dimension of the embedded vector. None uses the default from the backbone
-        backbone: A model to use to extract image features.
-        pretrained: Use a pretrained backbone.
-        loss_fn: Loss function for training and finetuning, defaults to cross entropy.
-        optimizer: Optimizer to use for training and finetuning, defaults to `torch.optim.SGD`.
+        embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
+        backbone: A model to use to extract image features, defaults to ``"swav-imagenet"``.
+        pretrained: Use a pretrained backbone, defaults to ``True``.
+        loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
+        optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation.
-        learning_rate: Learning rate to use for training, defaults to `1e-3`
-        pooling_fn: Function used to pool image to generate embeddings. (Default: torch.max)
+        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
 
     Example:
-
         >>> import torch
         >>> from flash.vision.embedding import ImageEmbedder
         >>> embedder = ImageEmbedder(backbone='resnet18')
@@ -115,12 +112,7 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        if backbone in _models:
-            config = _load_bolts_model(backbone)
-            self.backbone = config['model']
-            num_features = config['num_features']
-        else:
-            self.backbone, num_features = torchvision_backbone_and_num_features(backbone, pretrained)
+        self.backbone, num_features = backbone_and_num_features(backbone, pretrained=pretrained)
 
         if embedding_dim is None:
             self.head = nn.Identity()

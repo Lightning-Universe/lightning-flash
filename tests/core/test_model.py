@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
+from PIL import Image
 from torch import nn
 from torch.nn import functional as F
 
@@ -68,6 +71,18 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
+def test_classification_task_predict_folder_path(tmpdir):
+    train_dir = Path(tmpdir / "train")
+    train_dir.mkdir()
+
+    _rand_image().save(train_dir / "1.png")
+    _rand_image().save(train_dir / "2.png")
+
+    task = ImageClassifier(num_classes=10)
+    predictions = task.predict(str(train_dir))
+    assert len(predictions) == 2
+
+
 def test_classificationtask_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
@@ -116,7 +131,7 @@ def test_task_datapipeline_save(tmpdir):
     ["cls", "filename"],
     [
         (ImageClassifier, "image_classification_model.pt"),
-        (TabularClassifier, "tabular_classification_model.pt"),
+        (TabularClassifier, "tabnet_classification_model.pt"),
         (TextClassifier, "text_classification_model.pt"),
         (SummarizationTask, "summarization_model_xsum.pt"),
         # (TranslationTask, "translation_model_en_ro.pt"), todo: reduce model size or create CI friendly file size
@@ -127,3 +142,7 @@ def test_model_download(tmpdir, cls, filename):
     with tmpdir.as_cwd():
         task = cls.load_from_checkpoint(url + filename)
         assert isinstance(task, cls)
+
+
+def _rand_image():
+    return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))

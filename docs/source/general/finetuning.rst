@@ -4,17 +4,50 @@
 Finetuning
 **********
 
-Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset. All Flash tasks have a pre-trained backbone that was already trained on large datasets such as ImageNet. Finetuning on already pretrained models decrease training time significantly.
+Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset.
 
-You can finetune any Flash task on your own data in just a 3 simple steps:
+------
 
-1. Load your data and organize it using Flash Data Modules. Note that different tasks have different data modules (The :class:`~flash.vision.ImageClassificationData` for image classification, :class:`~flash.text.classification.data.TextClassificationData` for text classification, etc.).
+Terminology
+===========
+Here are common terms you need to be familiar with:
 
-2. Pick a model to run from a variety of Flash tasks: :class:`~flash.vision.ImageClassifier`, :class:`~flash.text.classification.model.TextClassifier`, :class:`~flash.tabular.TabularClassifier`, all optimized with the latest best practices.
+.. list-table:: Terminology
+   :widths: 20 80
+   :header-rows: 1
 
-3. Finetune your model using :func:`~flash.core.trainer.Trainer.finetune` method. You will need to choose a finetune strategy.
+   * - Term
+     - Definition
+   * - Finetuning
+     - The process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset
+   * - Transfer learning
+     - The common name for finetuning
+   * - Backbone
+     - The neural network that was pretrained on a different dataset
+   * - Head
+     - Another neural network (usually smaller) that maps the backbone to your particular dataset
+   * - Freeze
+     - Disabling gradient updates to a model (ie: not learning)
+   * - Unfreeze
+     - Enabling gradient updates to a model
 
-Once training is completed, you can use the model for inference to make predictions using the `predict` method.
+
+------
+
+3 steps to finetune in Flash
+============================
+
+All Flash tasks have a pre-trained backbone that was already trained on large datasets such as ImageNet. Finetuning on already pretrained models decrease training time significantly.
+
+To finetune using Flash, follow these 3 steps:
+
+1. Load your data and organize it using a DataModule customized for the task.
+2. Pick a Task which has all the state-of-the-art built in (example: :class:`~flash.vision.ImageClassifier`).
+3. Choose a Finetune strategy and call the :func:`~flash.core.trainer.Trainer.finetune` method
+
+|
+
+Here are the steps in code
 
 .. code-block:: python
 
@@ -35,76 +68,187 @@ Once training is completed, you can use the model for inference to make predicti
 
     # 3. Build the trainer and finetune! In this case, using the no_freeze strategy
     trainer = flash.Trainer()
-    trainer.finetune(model, data, strategy="no_freeze")
+    trainer.finetune(task, data, strategy="no_freeze")
 
 .. tip:: If you have a large dataset and prefer to train from scratch, see the :ref:`training` guide.
 
+----
+
+Using a finetuned model
+=======================
+Once you've finetuned, use the model to predict.
+
+.. code-block:: python
+
+    predictions = task.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
+    print(predictions)
+
+Or use a different checkpoint for prediction
+
+.. code-block:: python
+
+    # Save the checkpoint while training.
+    trainer.save_checkpoint("image_classification_model.pt")
+
+    # load the finetuned model
+    classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
+
+    # predict!
+    predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
+    print(predictions)
+
+------
 
 Finetune strategies
 ===================
 
-The flash tasks contain pre-trained models trained on large datasets such as `ImageNet <http://www.image-net.org/>`_, which contains millions of images. These models are called **backbones**. This will be used as the starting point for finetuning.
+Finetuning is very task specific. Each task encodes the best finetuning practices for that task.
+However, Flash gives you a few default strategies for finetuning.
 
-The model needs to be adapted or refined for the new data available for the task. Usually, the last layers of the backbone need to be modified, to match the backbone output to the number of target classes of the new data. These layers are commonly referred to as the **head**.
-For example, our backbone might be trained to classify 10 types of animals, but maybe our new dataset only contains images of bees and ants, so we would have to modify our final layer to fit just 2 classes.
-The head is randomly initialized whereas the backbone conserves its pre-trained weights.
+Finetuning operates on two things, the model backbone and the head. The backbone
+is the neural network that was pre-trained. The head is another neural network that bridges between the backbone
+and your particular dataset.
 
-The :func:`~flash.core.trainer.Trainer.finetune` method trains the new modified model using the new dataset. As the head (new layers) is untrained, the first results (gradients) will be random when training starts and could decrease the backbone performance (by changing its pre-trained parameters). Therefore, it is a good practice to "freeze" the backbone, meaning the parameters of the backbone won't be updated until they are "unfrozen" a few epochs later.
-
-You can choose a finetuning strategy using :func:`~flash.core.trainer.Trainer.finetune` `strategy` parameter. Flash finetune `strategy` argument can either a string or an instance of :class:`~flash.core.finetuning.FlashBaseFinetuning`.
-
-Flash supports 2 builts-in Finetuning strategies, that can be passed as strings:
-
-* `no_freeze`: Don't freeze anything, the backbone parameters can be modified during finetuning.
-* `freeze`: The parameters of the backbone won't be modified during finetuning.
+no_freeze
+---------
+In this strategy, the backbone and the head are unfrozen from the beginning.
 
 .. code-block:: python
 
-    # using the freeze strategy
-    trainer.finetune(model, data, strategy="freeze")
+    trainer.finetune(task, data, strategy='no_freeze')
 
-    # using the no_freeze strategy
-    trainer.finetune(model, data, strategy="no_freeze")
-
-
-For more options, you can pass in an instance of :class:`~python_lightning.callbacks.finetuning.BaseFinetuning` to the `strategy` parameter.
-
-
-==========================
-Custom callback finetuning
-==========================
-
-For more advanced finetuning, you can use flash built-in finetuning callbacks. 
-
-* :class:`~flash.core.finetuning.FreezeUnfreeze`: The backbone parameters will be frozen for a given number of epochs (by default the `unfreeze_epoch` is set to 10).
-
+In pseudocode, this looks like:
 
 .. code-block:: python
 
-    # import FreezeUnfreeze
+    backbone = Resnet50()
+    head = nn.Linear(...)
+
+    backbone.unfreeze()
+    head.unfreeze()
+
+    train(backbone, head)
+
+freeze
+------
+The freeze strategy keeps the backbone frozen throughout.
+
+.. code-block:: python
+
+    trainer.finetune(task, data, strategy='freeze')
+
+The psedocode looks like:
+
+.. code-block:: python
+
+    backbone = Resnet50()
+    head = nn.Linear(...)
+
+    # freeze backbone
+    backbone.freeze()
+    head.unfreeze()
+
+    train(backbone, head)
+
+freeze_unfreeze
+---------------
+In this strategy, the backbone is frozen for 10 epochs then unfrozen.
+
+.. code-block:: python
+
+    trainer.finetune(model, data, strategy='freeze_unfreeze')
+
+.. code-block:: python
+
     from flash.core.finetuning import FreezeUnfreeze
 
     # finetune for 10 epochs. Backbone will be frozen for 5 epochs.
     trainer = flash.Trainer(max_epochs=10)
     trainer.finetune(model, data, strategy=FreezeUnfreeze(unfreeze_epoch=5))
 
-* :class:`~flash.core.finetuning.UnfreezeMilestones`: This strategy define 2 milestones, one milestone (epoch number) to unfreeze the last layers of the backbone, and a second milestone to unfreeze the remaining layers. For example, by default the first milestone is 5 and the second is 10. So for the first 4 epochs, the backbone parameters will be frozen. In epochs 5-9, only the last layers (5 by deafult) can be trained. After the 10thg epoch, all parameters in all layers can be trained.
-
+Under the hood, the pseudocode looks like:
 
 .. code-block:: python
 
-    # import UnfreezeMilestones
+    backbone = Resnet50()
+    head = nn.Linear(...)
+
+    # freeze backbone
+    backbone.freeze()
+    head.unfreeze()
+
+    train(backbone, head, epochs=10)
+
+    # unfreeze after 10 epochs
+    backbone.unfreeze()
+
+    train(backbone, head)
+
+-------
+
+Advanced strategies
+===================
+
+Every finetune strategy can also be customized.
+
+
+freeze_unfreeze
+---------------
+In this strategy, the backbone is frozen for x epochs then unfrozen.
+
+Here we unfreeze the backbone at epoch 11.
+
+.. code-block:: python
+
+    from flash.core.finetuning import FreezeUnfreeze
+
+    trainer = flash.Trainer(max_epochs=10)
+    trainer.finetune(model, data, strategy=FreezeUnfreeze(unfreeze_epoch=11))
+
+unfreeze_milestones
+-------------------
+This strategy allows you to unfreeze part of the backbone at predetermined intervals
+
+Here's an example where:
+- backbone starts frozen
+- at epoch 3 the last 2 layers unfreeze
+- at epoch 8 the full backbone unfreezes
+
+|
+
+.. code-block:: python
+
     from flash.core.finetuning import UnfreezeMilestones
 
-    # finetune for 10 epochs. Backbone will be frozen for 3 epochs. The last 2 layers will be unfrozen for the first 4 epochs,
-    # and then the rest will be unfrozen on the 8th epoch
+    # finetune for 10 epochs.
     trainer = flash.Trainer(max_epochs=10)
-    trainer.finetune(model, data, strategy=UnfreezeMilestones(unfreeze_milestones=(5,8), num_layers=2))
+    trainer.finetune(model, data, strategy=UnfreezeMilestones(unfreeze_milestones=(3, 8), num_layers=2))
 
+Under the hood, the pseudocode looks like:
 
-Custom callback finetuning
-==========================
+.. code-block:: python
 
+    backbone = Resnet50()
+    head = nn.Linear(...)
+
+    # freeze backbone
+    backbone.freeze()
+    head.unfreeze()
+
+    train(backbone, head, epochs=3)
+
+    # unfreeze last 2 layers at epoch 3
+    backbone.unfreeze_last_layers(2)
+
+    train(backbone, head, epochs=8)
+
+    # unfreeze the full backbone
+    backbone.unfreeze()
+
+--------
+
+Custom Strategy
+===============
 For even more customization, create your own finetuning callback. Learn more about callbacks `here <https://pytorch-lightning.readthedocs.io/en/stable/callbacks.html>`_.
 
 .. code-block:: python

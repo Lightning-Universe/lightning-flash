@@ -13,30 +13,27 @@
 # limitations under the License.
 import flash
 from flash.core.data import download_data
-from flash.core.finetuning import FreezeUnfreeze
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.vision import ObjectDetectionData, ObjectDetector
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
+# Dataset Credit: https://www.kaggle.com/ultralytics/coco128
+download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
 
-# 2. Load the data
-datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    valid_folder="data/hymenoptera_data/val/",
-    test_folder="data/hymenoptera_data/test/",
+# 2. Load the Data
+datamodule = ObjectDetectionData.from_coco(
+    train_folder="data/coco128/images/train2017/",
+    train_ann_file="data/coco128/annotations/instances_train2017.json",
+    batch_size=2
 )
 
 # 3. Build the model
-model = ImageClassifier(num_classes=datamodule.num_classes)
+model = ObjectDetector(num_classes=datamodule.num_classes)
 
 # 4. Create the trainer. Run twice on data
-trainer = flash.Trainer(max_epochs=2)
+trainer = flash.Trainer(max_epochs=3)
 
-# 5. Train the model
-trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
+# 5. Finetune the model
+trainer.finetune(model, datamodule)
 
-# 6. Test the model
-trainer.test()
-
-# 7. Save it!
-trainer.save_checkpoint("image_classification_model.pt")
+# 6. Save it!
+trainer.save_checkpoint("object_detection_model.pt")

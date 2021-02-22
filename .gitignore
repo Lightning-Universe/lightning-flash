@@ -137,6 +137,5 @@ docs/api/
 titanic.csv
 .vscode
 data_folder
-data
 *.pt
 *.zip

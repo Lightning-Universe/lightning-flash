@@ -14,7 +14,7 @@
 """Root package info."""
 import os
 
-__version__ = "0.1.0post1"
+__version__ = "0.2.1-dev"
 __author__ = "PyTorchLightning et al."
 __author_email__ = "name@pytorchlightning.ai"
 __license__ = 'Apache-2.0'
@@ -56,5 +56,13 @@ else:
     from flash.core.trainer import Trainer
 
     __all__ = [
-        "Task", "ClassificationTask", "DataModule", "vision", "text", "tabular", "data", "utils", "download_data"
+        "Task",
+        "ClassificationTask",
+        "DataModule",
+        "vision",
+        "text",
+        "tabular",
+        "data",
+        "utils",
+        "download_data",
     ]

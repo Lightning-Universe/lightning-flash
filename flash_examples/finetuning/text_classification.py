@@ -1,5 +1,3 @@
-import flash
-from flash.core.data import download_data
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +11,12 @@ from flash.core.data import download_data
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import flash
+from flash.core.data import download_data
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
 
 # 2. Load the data
 datamodule = TextClassificationData.from_files(
@@ -35,7 +35,7 @@ model = TextClassifier(num_classes=datamodule.num_classes)
 trainer = flash.Trainer(max_epochs=1)
 
 # 5. Fine-tune the model
-trainer.finetune(model, datamodule=datamodule, strategy='freeze')
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 6. Test model
 trainer.test()

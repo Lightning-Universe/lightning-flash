@@ -21,9 +21,11 @@ import pytest
 root = Path(__file__).parent.parent.parent
 
 
-def call_script(filepath: str,
-                args: Optional[List[str]] = None,
-                timeout: Optional[int] = 60 * 5) -> Tuple[int, str, str]:
+def call_script(
+    filepath: str,
+    args: Optional[List[str]] = None,
+    timeout: Optional[int] = 60 * 5,
+) -> Tuple[int, str, str]:
     if args is None:
         args = []
     args = [str(a) for a in args]
@@ -42,26 +44,31 @@ def call_script(filepath: str,
 
 def run_test(filepath):
     code, stdout, stderr = call_script(filepath)
-    assert not code
     print(f"{filepath} STDOUT: {stdout}")
     print(f"{filepath} STDERR: {stderr}")
+    assert not code
 
 
 @pytest.mark.parametrize(
     "step,file",
     [
         ("finetuning", "image_classification.py"),
+        # ("finetuning", "object_detection.py"),  # TODO: takes too long.
+        # ("finetuning", "summarization.py"),  # TODO: takes too long.
         ("finetuning", "tabular_classification.py"),
+        ("finetuning", "text_classification.py"),
+        # ("finetuning", "translation.py"),  # TODO: takes too long.
         ("predict", "classify_image.py"),
         ("predict", "classify_tabular.py"),
-        # "classify_text.py" TODO: takes too long
+        ("predict", "classify_text.py"),
+        ("predict", "image_embedder.py"),
+        ("predict", "summarize.py"),
+        # ("predict", "translate.py"),  # TODO: takes too long
     ]
 )
-def test_finetune_example(tmpdir, step, file):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / step / file))
+def test_example(tmpdir, step, file):
+    run_test(str(root / "flash_examples" / step / file))
 
 
 def test_generic_example(tmpdir):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / "generic_task.py"))
+    run_test(str(root / "flash_examples" / "generic_task.py"))

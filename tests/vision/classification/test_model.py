@@ -13,7 +13,6 @@
 # limitations under the License.
 import pytest
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.vision import ImageClassifier
@@ -51,7 +50,7 @@ def test_init_train(tmpdir, backbone):
 
 
 def test_non_existent_backbone():
-    with pytest.raises(MisconfigurationException):
+    with pytest.raises(ValueError):
         ImageClassifier(2, "i am never going to implement this lol")
 
 

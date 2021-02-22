@@ -70,17 +70,23 @@ class TabularData(DataModule):
 
     def __init__(
         self,
-        train_df,
-        categorical_input: List,
-        numerical_input: List,
+        train_df: DataFrame,
         target: str,
-        valid_df=None,
-        test_df=None,
-        batch_size=2,
+        categorical_input: Optional[List] = None,
+        numerical_input: Optional[List] = None,
+        valid_df: Optional[DataFrame] = None,
+        test_df: Optional[DataFrame] = None,
+        batch_size: int = 2,
         num_workers: Optional[int] = None,
     ):
         dfs = [train_df]
         self._test_df = None
+
+        if categorical_input is None and numerical_input is None:
+            raise RuntimeError('Both `categorical_input` and `numerical_input` are None!')
+
+        categorical_input = categorical_input if categorical_input is not None else []
+        numerical_input = numerical_input if numerical_input is not None else []
 
         if valid_df is not None:
             dfs.append(valid_df)
@@ -131,12 +137,12 @@ class TabularData(DataModule):
     @classmethod
     def from_df(
         cls,
-        train_df: pd.DataFrame,
+        train_df: DataFrame,
         target: str,
-        categorical_input: List,
-        numerical_input: List,
-        valid_df: pd.DataFrame = None,
-        test_df: pd.DataFrame = None,
+        categorical_input: Optional[List] = None,
+        numerical_input: Optional[List] = None,
+        valid_df: Optional[DataFrame] = None,
+        test_df: Optional[DataFrame] = None,
         batch_size: int = 8,
         num_workers: Optional[int] = None,
         val_size: float = None,
@@ -192,10 +198,10 @@ class TabularData(DataModule):
     @classmethod
     def from_csv(
         cls,
-        train_csv,
+        train_csv: str,
         target: str,
-        categorical_input: List,
-        numerical_input: List,
+        categorical_input: Optional[List] = None,
+        numerical_input: Optional[List] = None,
         valid_csv: Optional[str] = None,
         test_csv: Optional[str] = None,
         batch_size: int = 8,

@@ -8,7 +8,7 @@ Image Classification
 ********
 The task
 ********
-The task of identifying what is in an image is called `image classification <https://arxiv.org/abs/1912.12162>`_. Typically, Image Classification is used to identify images containing a single object. The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.  A class is a label that desecribes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc. For example, we can train the image classifier task on images of ants and it will learn to predict the probability that an image contains an ant.
+The task of identifying what is in an image is called image classification. Typically, Image Classification is used to identify images containing a single object. The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.  A class is a label that desecribes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc. For example, we can train the image classifier task on images of ants and it will learn to predict the probability that an image contains an ant.
 
 ------
 
@@ -29,10 +29,12 @@ Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the model from a checkpoint
-    model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
+    model = ImageClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/image_classification_model.pt"
+    )
 
     # 3a. Predict what's on a few images! ants or bees?
     predictions = model.predict([
@@ -92,18 +94,17 @@ Now all we need is three lines of code to build to train our task!
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the data
     datamodule = ImageClassificationData.from_folders(
-        backbone="resnet18",
         train_folder="data/hymenoptera_data/train/",
         valid_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
     )
 
     # 3. Build the model
-    model = ImageClassifier(num_classes=datamodule.num_classes)
+    model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
     # 4. Create the trainer. Run once on data
     trainer = flash.Trainer(max_epochs=1)
@@ -142,10 +143,22 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
 
 Available backbones:
 
+* resnet18 (default)
 * resnet34
 * resnet50
 * resnet101
 * resnet152
+* resnext50_32x4d
+* resnext101_32x8d
+* mobilenet_v2
+* vgg11
+* vgg13
+* vgg16
+* vgg19
+* densenet121
+* densenet169
+* densenet161
+* swav-imagenet
 
 ------
 
@@ -172,3 +185,5 @@ ImageClassificationData
 .. automethod:: flash.vision.ImageClassificationData.from_filepaths
 
 .. automethod:: flash.vision.ImageClassificationData.from_folders
+
+.. automethod:: flash.vision.ImageClassificationData.from_folder

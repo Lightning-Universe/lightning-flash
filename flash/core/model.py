@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
+import os
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
@@ -27,6 +29,7 @@ def predict_context(func: Callable) -> Callable:
     to put model in eval mode before running predict and reset to train after.
     """
 
+    @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
         self.eval()
         torch.set_grad_enabled(False)
@@ -124,7 +127,7 @@ class Task(pl.LightningModule):
 
         Args:
 
-            x: Input to predict. Can be raw data or processed data.
+            x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
 
             batch_idx: Batch index
 
@@ -140,6 +143,12 @@ class Task(pl.LightningModule):
             The post-processed model predictions
 
         """
+        # enable x to be a path to a folder
+        if isinstance(x, str):
+            files = os.listdir(x)
+            files = [os.path.join(x, y) for y in files]
+            x = files
+
         data_pipeline = data_pipeline or self.data_pipeline
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
         batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)

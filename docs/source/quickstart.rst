@@ -58,7 +58,7 @@ You can install flash using pip or conda:
 
 .. code-block:: bash
 
-    pip install pytorch-lightning-flash -U
+    pip install lightning-flash -U
 
 ------
 

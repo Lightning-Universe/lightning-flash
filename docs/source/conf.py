@@ -44,6 +44,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     # 'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
+    'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
     'sphinx.ext.imgmath',
@@ -138,6 +139,7 @@ PACKAGE_MAPPING = {
     'PyYAML': 'yaml',
     'rouge-score': 'rouge_score',
     'pytorch-lightning-bolts': 'pl_bolts',
+    'pytorch-tabnet': 'pytorch_tabnet',
 }
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:
