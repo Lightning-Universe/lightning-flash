@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from pytorch_lightning.metrics import Accuracy
@@ -42,17 +42,20 @@ class ImageClassifier(ClassificationTask):
         num_classes: int,
         backbone: str = "resnet18",
         pretrained: bool = True,
-        loss_fn: Callable = F.cross_entropy,
+        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-3,
+        multilabel: bool = False
     ):
         super().__init__(
+            num_classes=num_classes,
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            multilabel=multilabel,
         )
 
         self.save_hyperparameters()

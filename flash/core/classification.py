@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
+import pytorch_lightning as pl
 import torch
+from torch.nn.functional import binary_cross_entropy, cross_entropy
 
 from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
@@ -31,6 +33,43 @@ class ClassificationDataPipeline(TaskDataPipeline):
 
 
 class ClassificationTask(Task):
+
+    def __init__(
+        self,
+        num_classes: int,
+        model: Optional[torch.nn.Module] = None,
+        loss_fn: Optional[Callable] = None,
+        multilabel: bool = False,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
+        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+        learning_rate: float = 1e-3,
+    ):
+
+        super().__init__(
+            model=model, loss_fn=loss_fn, optimizer=optimizer, metrics=metrics, learning_rate=learning_rate
+        )
+
+        self.num_classes = num_classes
+        self.multilabel = multilabel
+
+        if isinstance(self.loss_fn, Mapping) and not self.loss_fn:
+            self.loss_fn = self.default_loss_fn
+
+    def step(self, batch: Sequence[torch.Tensor], batch_idx: int) -> torch.Tensor:
+        if self.multilabel:
+            x, y = batch
+            if isinstance(y, torch.Tensor):
+                y = y.float()
+
+            batch = (x, y)
+
+        return super().step(batch, batch_idx)
+
+    @property
+    def default_loss_fn(self) -> Callable:
+        if self.multilabel:
+            return binary_cross_entropy
+        return cross_entropy
 
     @staticmethod
     def default_pipeline() -> ClassificationDataPipeline:

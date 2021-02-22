@@ -51,6 +51,7 @@ class TextClassifier(ClassificationTask):
         os.environ["PYTHONWARNINGS"] = "ignore"
 
         super().__init__(
+            num_classes=num_classes,
             model=None,
             loss_fn=None,
             optimizer=optimizer,
