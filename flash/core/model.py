@@ -22,8 +22,7 @@ from torch import nn
 
 from flash.core.data import DataModule
 from flash.core.utils import get_callable_dict
-from flash.data.data_pipeline import DataPipeline
-from flash.data.postprocessing_pipeline import PostProcessingPipeline
+from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
 def predict_context(func: Callable) -> Callable:
@@ -79,7 +78,10 @@ class Task(pl.LightningModule):
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
+
         self._data_pipeline = None
+        self._preprocess = None
+        self._postprocess = None
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -87,7 +89,7 @@ class Task(pl.LightningModule):
         """
         x, y = batch
         y_hat = self.forward(x)
-        output = {"y_hat": self.data_pipeline.before_uncollate(y_hat)}
+        output = {"y_hat": self.data_pipeline.pre_uncollate(y_hat)}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
@@ -151,56 +153,18 @@ class Task(pl.LightningModule):
             The post-processed model predictions
 
         """
-        # enable x to be a path to a folder
-        if isinstance(x, str) and os.path.isdir(x):
-            files = os.listdir(x)
-            files = [os.path.join(x, y) for y in files]
-            x = files
-
         data_pipeline = data_pipeline or self.data_pipeline
-        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
-        predictions = self.forward(batch_x)
-        output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
-        return output
+        x = [x for x in data_pipeline._generate_auto_dataset(x)]
+        x = self.data_pipeline.worker_collate_fn(x)
+        #x = self.data_pipeline.device_collate_fn(x)
+        predictions = self.predict_step(x, batch_idx)
+        return data_pipeline.uncollate_fn(predictions)
+
+    def predict_step(self, batch, batch_idx):
+        return self(batch)
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
-
-    @property
-    def data_pipeline(self) -> DataPipeline:
-        # we need to save the pipeline in case this class
-        # is loaded from checkpoint and used to predict
-        return self._get_pipeline('data')
-
-    @data_pipeline.setter
-    def data_pipeline(self, data_pipeline: DataPipeline) -> None:
-        self._data_pipeline = data_pipeline
-
-    @property
-    def postprocessing_pipeline(self) -> PostProcessingPipeline:
-        return self._get_pipeline('postprocessing')
-
-    def _get_pipeline(self, pipeline_type: str):
-        pipeline_attr_name = f'{pipeline_type}_pipline'
-
-        if getattr(self, '_' + pipeline_attr_name) is not None:
-            return getattr(self, '_' + pipeline_attr_name)
-
-        if self.datamodule is not None and hasattr(self, pipeline_attr_name):
-            return getattr(self.datamodule, pipeline_attr_name)
-
-        if self.trainer is not None and hasattr(self.trainer, 'datamodule') and self.trainer.datamodule is not None:
-            if hasattr(self.trainer.datamodule,
-                       pipeline_attr_name) and getattr(self.trainer.datamodule, pipeline_attr_name is not None):
-                return getattr(self.trainer.datamodule, pipeline_attr_name is not None)
-
-        return None
-
-    @staticmethod
-    def default_data_pipeline() -> DataPipeline:
-        """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
-        return DataModule.default_data_pipeline()
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         self.data_pipeline = checkpoint["pipeline"]
@@ -211,110 +175,51 @@ class Task(pl.LightningModule):
     def configure_finetune_callback(self):
         return []
 
-    ### THE FOLLOWING IS A POC FOR DISTRIBUTED PREDICTION
-    def on_predict_start(self):
-        # TODO: Add hook to lightning Trainer
-        if self.data_pipeline is not None:
-            self.data_pipeline._attach_to_model(self)
-
-        if self.postprocessing_pipeline is not None:
-            self.postprocessing_pipeline._attach_to_model(self)
-
     def predict_step(self, batch, batch_idx):
-        # TODO: Move lightning predict loop from predict to predict_step
-        if isinstance(batch, (tuple, list)) and len(batch) == 2:
-            x, y = batch
-        else:
-            x, y = batch, None
+        return self(batch)
 
-        return self(x)
+    @property
+    def preprocess(self):
+        return self._preprocess
 
-    def new_predict(
-        self,
-        x: Any,
-        skip_collate: Optional[bool] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-        postprocessing_pipeline: Optional[PostProcessingPipeline] = None,
-        data_loader_kwargs: Optional[dict] = None,
-        **trainer_kwargs
-    ):
-        if data_pipeline is not None:
-            self.data_pipeline = data_pipeline
-        if postprocessing_pipeline is not None:
-            self.postprocessing_pipeline = postprocessing_pipeline
+    @preprocess.setter
+    def preprocess(self, preprocess: Preprocess) -> None:
+        data_pipeline = self.data_pipeline
+        self.data_pipeline = DataPipeline(preprocess, data_pipeline.postprocess)
 
-        trainer = self._create_trainer('predict', **trainer_kwargs)
+    @property
+    def postprocess(self):
+        return self._postprocess
 
-        if data_loader_kwargs is None:
-            data_loader_kwargs = {}
+    @postprocess.setter
+    def postprocess(self, postprocess: Postprocess) -> None:
+        data_pipeline = self.data_pipeline
+        self.data_pipeline = DataPipeline(data_pipeline.preprocess, postprocess)
 
-        if 'num_workers' not in data_loader_kwargs:
-            # leave one for main process
-            data_loader_kwargs['num_workers'] = os.cpu_count() - 1
+    @property
+    def data_pipeline(self) -> Optional[DataPipeline]:
+        # we need to save the pipeline in case this class
+        # is loaded from checkpoint and used to predict
+        return self._get_pipeline("data_pipeline")
 
-        auto_collate = None
-        if 'collate_fn' not in data_loader_kwargs:
-            auto_collate = not skip_collate
+    @data_pipeline.setter
+    def data_pipeline(self, data_pipeline: DataPipeline) -> None:
+        self._data_pipeline = data_pipeline
+        if isinstance(data_pipeline, DataPipeline):
+            self._data_pipeline._attach_to_model(self)
 
-        dl = self.data_pipeline._generate_loader(x, auto_collate=auto_collate, **data_loader_kwargs)
+    def _get_pipeline(self, pipeline_attr_name: str):
 
-        return trainer.predict(self, dl)
+        if getattr(self, '_' + pipeline_attr_name) is not None:
+            return getattr(self, '_' + pipeline_attr_name)
 
-    def _create_trainer(self, stage: str, **trainer_kwargs):
-        # TODO: Also use these for trainer creation in training?
-        # TODO: Have default trainer kwargs per task?
-        _trainer_kwargs = {}
-        # TODO: Adjust this to trainer running stage from pl
-        if stage == 'predict':
-            _trainer_kwargs.update(logger=None)
+        if self.datamodule is not None and hasattr(self, pipeline_attr_name):
+            return getattr(self.datamodule, pipeline_attr_name)
 
-        if not 'gpus' in trainer_kwargs and not 'tpu_cores' in trainer_kwargs:
-            _trainer_kwargs['gpus'], _trainer_kwargs['tpu_cores'] = self._parse_default_devices()
+        if self.trainer is not None and hasattr(self.trainer, 'datamodule') and self.trainer.datamodule is not None:
+            if hasattr(self.trainer.datamodule,
+                       pipeline_attr_name) and getattr(self.trainer.datamodule, pipeline_attr_name):
+                data_pipeline = getattr(self.trainer.datamodule, pipeline_attr_name)
+                return DataPipeline(data_pipeline.preprocess, self.postprocess)
 
-        _trainer_kwargs.update(trainer_kwargs)
-
-        if not hasattr(self, 'trainer') or self.trainer is None or self._last_trainer_kwargs != trainer_kwargs:
-            self._last_trainer_kwargs = _trainer_kwargs
-            self.trainer = None
-            return Trainer(**_trainer_kwargs)
-
-        else:
-            return self.trainer
-
-    def _parse_default_devices(self):
-        gpus = None,
-        tpu_cores = None
-
-        if torch.cuda.is_available():
-            gpus = torch.cuda.device_count()
-
-        # TODO: Add logic for automatted TPU device parsing
-
-        return gpus, tpu_cores
-
-    def serve(
-        self,
-        x,
-        skip_collate: Optional[bool] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-        postprocessing_pipeline: Optional[PostProcessingPipeline] = None,
-        data_loader_kwargs: Optional[dict] = None,
-        **trainer_kwargs
-    ):
-        """Serving for Production. Basically same as prediction, just other defaults (no workers, no distributed prediction)
-        """
-
-        if data_loader_kwargs is None:
-            data_loader_kwargs = {}
-        data_loader_kwargs['num_workers'] = 0
-
-        trainer_kwargs['num_gpus'] = [0] if torch.cuda.is_available() else 0
-        # TODO: tpu_cores
-        return self.new_predict(
-            x,
-            skip_collate=skip_collate,
-            data_pipeline=data_pipeline,
-            postprocessing_pipeline=postprocessing_pipeline,
-            data_loader_kwargs=data_loader_kwargs,
-            **trainer_kwargs
-        )
+        return None

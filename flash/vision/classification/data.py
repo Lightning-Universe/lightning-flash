@@ -26,6 +26,7 @@ from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIO
 from flash.core.classification import ClassificationDataPipeline
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
+from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
 def _pil_loader(path) -> Image:
@@ -218,7 +219,7 @@ _default_valid_transforms = T.Compose([
 _default_valid_transforms.transforms[0]._forward_hooks = {}
 
 
-class ImageClassificationDataPipeline(ClassificationDataPipeline):
+class ImageClassificationPreprocess(Preprocess):
 
     def __init__(
         self,
@@ -232,24 +233,34 @@ class ImageClassificationDataPipeline(ClassificationDataPipeline):
         self._use_valid_transform = use_valid_transform
         self._loader = loader
 
-    def before_collate(self, samples: Any) -> Any:
-        if _contains_any_tensor(samples):
-            return samples
+    def load_data(self, data: Any) -> Any:
+        if not isinstance(data, str) and not os.path.isdir(data):
+            return data
+        filenames = os.listdir(data)
 
-        if isinstance(samples, str):
-            samples = [samples]
-        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
-            outputs = []
-            for sample in samples:
-                try:
-                    output = self._loader(sample)
-                    transform = self._valid_transform if self._use_valid_transform else self._train_transform
-                    outputs.append(transform(output))
-                except UnidentifiedImageError:
-                    print(f'Skipping: could not read file {sample}')
+        if any(not has_file_allowed_extension(f, IMG_EXTENSIONS) for f in filenames):
+            raise MisconfigurationException(
+                "No images with allowed extensions {IMG_EXTENSIONS} where found in {folder}"
+            )
 
-            return outputs
-        raise MisconfigurationException("The samples should either be a tensor or a list of paths.")
+        return [os.path.join(data, f) for f in filenames]
+
+    def load_sample(self, sample: Any):
+        if isinstance(sample, str):
+            return self._loader(sample)
+        else:
+            raise MisconfigurationException("Currently, only single path to image is supported")
+
+    def pre_collate(self, sample: Any) -> Any:
+        # Todo: Handle tensors there.
+        try:
+            if isinstance(sample, tuple):
+                return sample
+            transform = self._valid_transform if self._use_valid_transform else self._train_transform
+            return transform(sample)
+        except:
+            import pdb
+            pdb.set_trace()
 
 
 class ImageClassificationData(DataModule):
@@ -334,9 +345,7 @@ class ImageClassificationData(DataModule):
             train_split = int((1.0 - valid_split) * full_length)
             valid_split = full_length - train_split
             train_ds, valid_ds = torch.utils.data.random_split(
-                train_ds,
-                [train_split, valid_split],
-                generator=torch.Generator().manual_seed(seed)
+                train_ds, [train_split, valid_split], generator=torch.Generator().manual_seed(seed)
             )
         else:
             valid_ds = (
@@ -426,13 +435,13 @@ class ImageClassificationData(DataModule):
         )
 
         datamodule.num_classes = len(train_ds.classes)
-        datamodule.data_pipeline = ImageClassificationDataPipeline(
+        datamodule.preprocess = ImageClassificationPreprocess(
             train_transform=train_transform, valid_transform=valid_transform, loader=loader
         )
         return datamodule
 
     @classmethod
-    def from_folder(
+    def from_predict_folder(
         cls,
         folder: Union[str, pathlib.Path],
         transform: Optional[Callable] = _default_valid_transforms,
@@ -476,7 +485,7 @@ class ImageClassificationData(DataModule):
                 "No images with allowed extensions {IMG_EXTENSIONS} where found in {folder}"
             )
 
-        test_ds = (
+        predict_ds = (
             FlashDatasetFolder(
                 folder,
                 transform=transform,
@@ -487,16 +496,10 @@ class ImageClassificationData(DataModule):
         )
 
         datamodule = cls(
-            test_ds=test_ds,
+            predict_ds=predict_ds,
             batch_size=batch_size,
             num_workers=num_workers,
         )
 
-        datamodule.data_pipeline = ImageClassificationDataPipeline(valid_transform=transform, loader=loader)
+        datamodule.preprocess = ImageClassificationPreprocess(valid_transform=transform, loader=loader)
         return datamodule
-
-    @staticmethod
-    def default_pipeline() -> ImageClassificationDataPipeline:
-        return ImageClassificationDataPipeline(
-            train_transform=_default_train_transforms, valid_transform=_default_valid_transforms, loader=_pil_loader
-        )

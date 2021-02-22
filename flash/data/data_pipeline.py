@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Union
 
@@ -8,8 +9,11 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
+from flash.data.auto_dataset import AutoDataset
+from flash.data.batch import Collater, default_uncollate, UnCollater
 
-class DataPipeline:
+
+class Preprocess:
 
     def load_data(self, data: Any) -> Any:
         """Loads entire data from Dataset"""
@@ -51,28 +55,169 @@ class DataPipeline:
         """
         return batch
 
-    def _is_overriden(self, method_name: str) -> bool:
+
+class Postprocess:
+
+    def __init__(self, save_path: Optional[str] = None):
+        self._saved_samples = 0
+        self._save_path = save_path
+
+    def pre_uncollate(self, batch: Any) -> Any:
+        """Transforms to apply to a whole batch before uncollation to single samples.
+        Can involve both CPU and Device transforms as this is not applied in separate workers.
+        """
+        return batch
+
+    def post_uncollate(self, sample: Any) -> Any:
+        """Transforms to apply to a single sample after splitting up the batch.
+        Can involve both CPU and Device transforms as this is not applied in separate workers.
+        """
+        return sample
+
+    def uncollate(self, batch: Any) -> Any:
+        """Uncollates a batch into single samples.
+        Tries to preserve the type whereever possible.
+        """
+        return default_uncollate(batch)
+
+    def save_data(self, data: Any, path: str) -> None:
+        """Saves all data together to a single path.
+        """
+        torch.save(data, path)
+
+    def save_sample(self, sample: Any, path: str) -> None:
+        """Saves each sample individually to a given path.
+        """
+        torch.save(sample, path)
+
+    # TODO: Are those needed ?
+    def format_sample_save_path(self, path: str) -> str:
+        path = os.path.join(path, f'sample_{self._saved_samples}.ptl')
+        self._saved_samples += 1
+        return path
+
+    def _save_data(self, data: Any) -> None:
+        self.save_data(data, self._save_path)
+
+    def _save_sample(self, sample: Any) -> None:
+        self.save_sample(sample, self.format_sample_save_path(self._save_path))
+
+
+class DataPipeline:
+
+    PREPROCESS_FUNCS = ("load_data", "load_sample", "pre_collate", "post_collate", "device_post_collate")
+    POSTPROCESS_FUNCS = ("pre_uncollate", "post_uncollate", "save_data", "save_sample")
+    LOADERS_PREFIX = ('train', 'test', 'val', 'predict')
+
+    def __init__(self, preprocess: Preprocess, postprocess: Postprocess):
+        self.preprocess = preprocess
+        self.postprocess = postprocess
+        self._worker_collate_fn = None
+        self._device_collate_fn = None
+        self._uncollate_fn = None
+
+    def load_data(self, data: Any) -> Any:
+        """Loads entire data from Dataset"""
+        return self.preprocess.load_data(data)
+
+    def load_sample(self, sample: Any) -> Any:
+        """Loads single sample from dataset"""
+        return self.preprocess.load_sample(sample)
+
+    def pre_collate(self, sample: Any) -> Any:
+        """Transforms to apply to the data before the collation (per-sample basis)"""
+        return self.preprocess.pre_collate(sample)
+
+    def post_collate(self, batch: Any) -> Any:
+        """Transforms to apply to a whole batch (if possible use this for efficiency)
+
+        .. note::
+            This option is mutually exclusive with :meth:`device_pre_collate`, since if both are specified, uncollation has to be applied.
+        """
+        return self.preprocess.post_collate(batch)
+
+    def device_pre_collate(self, sample: Any) -> Any:
+        """Transforms to apply to the data before the collation (per-sample basis).
+
+        .. note::
+            This option is mutually exclusive with :meth:`post_collate`, since if both are specified, uncollation has to be applied.
+
+        .. note::
+            This function won't be called within the dataloader workers, since to make that happen each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+        """
+        return self.preprocess.device_pre_collate(sample)
+
+    def device_post_collate(self, batch: Any) -> Any:
+        """
+        Transforms to apply to a whole batch (if possible use this for efficiency).
+
+        .. note::
+            This function won't be called within the dataloader workers, since to make that happen each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+        """
+        return self.preprocess.device_pre_collate(batch)
+
+    def pre_uncollate(self, batch: Any) -> Any:
+        """Transforms to apply to a whole batch before uncollation to single samples.
+        Can involve both CPU and Device transforms as this is not applied in separate workers.
+        """
+        return self.postprocess.pre_uncollate(batch)
+
+    def post_uncollate(self, sample: Any) -> Any:
+        """Transforms to apply to a single sample after splitting up the batch.
+        Can involve both CPU and Device transforms as this is not applied in separate workers.
+        """
+        return self.postprocess.post_uncollate(sample)
+
+    def uncollate(self, batch: Any) -> Any:
+        """Uncollates a batch into single samples.
+        Tries to preserve the type whereever possible.
+        """
+        return self.postprocess.uncollate(batch)
+
+    def save_data(self, data: Any, path: str) -> None:
+        """Saves all data together to a single path.
+        """
+        self.postprocess.save_data(data, path)
+
+    def save_sample(self, sample: Any, path: str) -> None:
+        """Saves each sample individually to a given path.
+        """
+        self.postprocess.save_sample(sample, path)
+
+    def _is_overriden(self, method_name: str, super_obj: Any) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
+        process_obj = self.preprocess if isinstance(self.preprocess, super_obj) else self.postprocess
 
-        super_obj = DataPipeline
-
-        if not hasattr(self, method_name) or not hasattr(super_obj, method_name):
+        if not hasattr(process_obj, method_name) or not hasattr(super_obj, method_name):
             return False
 
-        return getattr(self, method_name).__code__ is not getattr(super_obj, method_name)
+        return getattr(process_obj, method_name).__code__ != getattr(super_obj, method_name).__code__
 
     @staticmethod
     def _do_nothing_collate(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
+
+    @property
+    def worker_collate_fn(self):
+        if self._worker_collate_fn is not None:
+            return self._worker_collate_fn
+        return self.split_around_collate()[0]
+
+    @property
+    def device_collate_fn(self):
+        if self._device_collate_fn is not None:
+            return self._device_collate_fn
+        return self.split_around_collate()[1]
 
     def split_around_collate(self, collate_fn: Optional[Callable] = None) -> Tuple[Collater, Collater]:
 
         if collate_fn is None:
             collate_fn = default_collate
 
-        post_collate_overriden = self._is_overriden('post_collate')
-        device_pre_collate_overriden = self._is_overriden('device_pre_collate')
+        post_collate_overriden = self._is_overriden('post_collate', Preprocess)
+
+        device_pre_collate_overriden = self._is_overriden('device_pre_collate', Preprocess)
 
         if post_collate_overriden and device_pre_collate_overriden:
             raise MisconfigurationException(
@@ -80,21 +225,21 @@ class DataPipeline:
             )
 
         elif post_collate_overriden:
-            worker_collate = collate_fn
-            device_collate = self._do_nothing_collate
+            worker_collate_fn = collate_fn
+            device_collate_fn = self._do_nothing_collate
 
         elif device_pre_collate_overriden:
-            worker_collate = self._do_nothing_collate
-            device_collate = collate_fn
+            worker_collate_fn = self._do_nothing_collate
+            device_collate_fn = collate_fn
 
         else:
-            worker_collate = collate_fn
-            device_collate = self._do_nothing_collate
+            worker_collate_fn = collate_fn
+            device_collate_fn = self._do_nothing_collate
 
-        worker_callable = Collater(worker_collate, self.pre_collate, self.post_collate)
-        device_callable = Collater(device_collate, self.device_pre_collate, self.device_post_collate)
+        self._worker_collate_fn = Collater(worker_collate_fn, self.pre_collate, self.post_collate)
+        self._device_collate_fn = Collater(device_collate_fn, self.device_pre_collate, self.device_post_collate)
 
-        return worker_callable, device_callable
+        return self._worker_collate_fn, self._device_collate_fn
 
     @staticmethod
     def _model_transfer_to_device_wrapper(func: Callable, collater: Collater) -> Callable:
@@ -106,9 +251,19 @@ class DataPipeline:
 
         return new_func
 
-    def _attach_to_model(self, model: LightningModule, loader_stage: str = 'all') -> LightningModule:
+    @staticmethod
+    def _model_predict_wrapper(func: Callable, uncollater: UnCollater) -> Callable:
+
+        @wraps(func)
+        def new_func(*args, **kwargs):
+            predicted = func(*args, **kwargs)
+            return uncollater(predicted)
+
+        return new_func
+
+    def _attach_preprocess_to_model(self, model: 'Task', loader_stage: str = 'all') -> None:
         if loader_stage == 'all':
-            loader_stage = ['train', 'test', 'val', 'predict']
+            loader_stage = self.LOADERS_PREFIX
 
         elif isinstance(loader_stage, str):
             loader_stage = [loader_stage]
@@ -136,7 +291,7 @@ class DataPipeline:
                     if isinstance(loader, DataLoader):
                         dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                        dl_args['collate_fn'], device_collater = self.split_around_collate(
+                        dl_args['collate_fn'], device_collate_fnr = self.split_around_collate(
                             collate_fn=dl_args['collate_fn']
                         )
 
@@ -153,19 +308,52 @@ class DataPipeline:
                 setattr(model, loader_name, dataloader)
 
         model.transfer_batch_to_device = (
-            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collater)
+            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fnr)
         )
+
+    def _create_uncollater(self) -> UnCollater:
+        save_per_sample = None
+        save_fn = None
+
+        if self.postprocess._save_path is not None:
+            save_per_sample = self._is_overriden('save_sample', Postprocess)
+
+            if save_per_sample:
+                save_fn = self.postprocess._save_sample
+            else:
+                save_fn = self.postprocess._save_data
+
+        return UnCollater(
+            self.uncollate, self.pre_uncollate, self.post_uncollate, save_fn=save_fn, save_per_sample=save_per_sample
+        )
+
+    @property
+    def uncollate_fn(self):
+        if self._uncollate_fn is not None:
+            return self._uncollate_fn
+        else:
+            _create_uncollater = self._create_uncollater()
+            return _create_uncollater
+
+    def _attach_postprocess_to_model(self, model: 'Task') -> 'Task':
+        # TODO: move this to on_predict_end?
+        model.predict_step = self._model_predict_wrapper(model.predict_step, self.uncollate_fn)
         return model
 
-    def _generate_auto_dset(self, data: Union[Iterable, Any]) -> AutoDataset:
-        if isinstance(data, Iterable) and self.is_overriden('load_sample'):
-            load_per_sample = True
-            load_fn = self.load_sample
-        else:
-            load_per_sample = False
-            load_fn = self.load_data
+    def _attach_to_model(self, model: 'Task', loader_stage: str = 'all'):
+        model._preprocess = self.preprocess
+        model._postprocess = self.postprocess
+        self._attach_preprocess_to_model(model, loader_stage)
+        self._attach_postprocess_to_model(model)
 
-        return AutoDataset(data=data, load_fn=load_fn, load_per_sample=load_per_sample)
+    def _generate_auto_dataset(self, data: Union[Iterable, Any]) -> AutoDataset:
+        return AutoDataset(
+            data=data,
+            load_data=self.load_data,
+            load_sample=self.load_sample,
+            load_data_overriden=self._is_overriden("load_data", Preprocess),
+            load_sample_overriden=self._is_overriden("load_sample", Preprocess),
+        )
 
     def to_dataloader(
         self, data: Union[Iterable, Any], auto_collate: Optional[bool] = None, **loader_kwargs
@@ -178,47 +366,15 @@ class DataPipeline:
             if auto_collate is None:
                 auto_collate = True
 
-            if auto_collate:
-                loader_kwargs['collate_fn'] = default_collate
+            collate_fn = self.worker_collate_fn
+
+            if collate_fn is not None:
+                loader_kwargs['collate_fn'] = collate_fn
+
             else:
-                loader_kwargs['collate_fn'] = default_convert
+                if auto_collate:
+                    loader_kwargs['collate_fn'] = default_collate
+                else:
+                    loader_kwargs['collate_fn'] = default_convert
 
-        return DataLoader(self.generate_auto_dset(data), **loader_kwargs)
-
-
-class Collater:
-
-    def __init__(self, collate_fn: Callable, pre_collate: Callable, post_collate: Callable):
-        self.collate_fn = collate_fn
-        self.pre_collate = pre_collate
-        self.post_collate = post_collate
-
-    def __call__(self, samples: Sequence[Any]):
-        return self.post_collate(self.collate_fn(type(samples)([self.pre_collate(sample) for sample in samples])))
-
-    def __repr__(self) -> str:
-        repr_str = f'Collater:\n\t(pre_collate): {repr(self.pre_collate)}\n\t(collate_fn): {repr(self.collate_fn)}\n\t(post_collate): {repr(self.post_collate)}'
-        return repr_str
-
-
-class AutoDataset(torch.utils.data.Dataset):
-
-    def __init__(self, data: Union[Iterable, Any], load_fn: Callable, load_per_sample: bool) -> None:
-        super().__init__()
-
-        self.data = data
-        self.load_fn = load_fn
-
-        self._load_lazy = load_per_sample
-
-        if not self._load_lazy:
-            self.data = self.load_fn(data)
-
-    def __getitem__(self, index: int) -> Any:
-        sample = self.data[index]
-
-        if self._load_lazy:
-            sample = self.load_fn(sample)
-
-    def __len__(self) -> int:
-        return len(self.data)
+        return DataLoader(self._generate_auto_dataset(data), **loader_kwargs)

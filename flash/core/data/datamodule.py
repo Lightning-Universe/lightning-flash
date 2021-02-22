@@ -18,7 +18,7 @@ from typing import Any, Optional
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 
-from flash.core.data.datapipeline import DataPipeline
+from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
 class TaskDataPipeline(DataPipeline):
@@ -44,6 +44,7 @@ class DataModule(pl.LightningDataModule):
         train_ds: Optional[Dataset] = None,
         valid_ds: Optional[Dataset] = None,
         test_ds: Optional[Dataset] = None,
+        predict_ds: Optional[Dataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
     ):
@@ -51,6 +52,7 @@ class DataModule(pl.LightningDataModule):
         self._train_ds = train_ds
         self._valid_ds = valid_ds
         self._test_ds = test_ds
+        self._predict_ds = predict_ds
 
         if self._train_ds is not None:
             self.train_dataloader = self._train_dataloader
@@ -60,6 +62,9 @@ class DataModule(pl.LightningDataModule):
 
         if self._test_ds is not None:
             self.test_dataloader = self._test_dataloader
+
+        if self._predict_ds is not None:
+            self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
 
@@ -72,6 +77,8 @@ class DataModule(pl.LightningDataModule):
         self.num_workers = num_workers
 
         self._data_pipeline = None
+        self._preprocess = None
+        self._postprocess = None
 
     def _train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -80,7 +87,7 @@ class DataModule(pl.LightningDataModule):
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self.data_pipeline.collate_fn,
+            collate_fn=self.data_pipeline.worker_collate_fn,
             drop_last=True,
         )
 
@@ -90,7 +97,7 @@ class DataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self.data_pipeline.collate_fn,
+            collate_fn=self.data_pipeline.worker_collate_fn,
         )
 
     def _test_dataloader(self) -> DataLoader:
@@ -99,19 +106,44 @@ class DataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self.data_pipeline.collate_fn,
+            collate_fn=self.data_pipeline.worker_collate_fn,
         )
+
+    def _predict_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self._predict_ds,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            collate_fn=self.data_pipeline.worker_collate_fn,
+        )
+
+    @property
+    def preprocess(self):
+        return self._preprocess
+
+    @preprocess.setter
+    def preprocess(self, preprocess: Preprocess) -> None:
+        self._preprocess = preprocess
+
+    @property
+    def postprocess(self):
+        return self._postprocess
+
+    @postprocess.setter
+    def postprocess(self, postprocess: Postprocess) -> None:
+        self._postprocess = postprocess
 
     @property
     def data_pipeline(self) -> DataPipeline:
         if self._data_pipeline is None:
-            self._data_pipeline = self.default_pipeline()
+            preprocess = self._preprocess
+            postprocess = self._postprocess
+            if preprocess is None and postprocess is None:
+                self._data_pipeline = self.default_pipeline()
+            return DataPipeline(preprocess, postprocess)
         return self._data_pipeline
 
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline) -> None:
         self._data_pipeline = data_pipeline
-
-    @staticmethod
-    def default_pipeline() -> DataPipeline:
-        return TaskDataPipeline()

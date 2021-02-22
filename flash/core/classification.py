@@ -15,23 +15,27 @@ from typing import Any, Union
 
 import torch
 
-from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
+from flash.data.data_pipeline import Postprocess
 
 
-class ClassificationDataPipeline(TaskDataPipeline):
+class ClassificationDataPipeline:
+    pass
 
-    def before_uncollate(self, batch: Union[torch.Tensor, tuple]) -> torch.Tensor:
+
+class ClassificationPostprocess(Postprocess):
+
+    def pre_uncollate(self, batch: Union[torch.Tensor, tuple]) -> torch.Tensor:
         if isinstance(batch, tuple):
             batch = batch[0]
         return torch.softmax(batch, -1)
 
-    def after_uncollate(self, samples: Any) -> Any:
+    def post_uncollate(self, samples: Any) -> Any:
         return torch.argmax(samples, -1).tolist()
 
 
 class ClassificationTask(Task):
 
-    @staticmethod
-    def default_pipeline() -> ClassificationDataPipeline:
-        return ClassificationDataPipeline()
+    @property
+    def postprocess(self):
+        return ClassificationPostprocess()

@@ -19,7 +19,6 @@ from pandas.core.frame import DataFrame
 from sklearn.model_selection import train_test_split
 from torch import Tensor
 
-from flash.core.classification import ClassificationDataPipeline
 from flash.core.data import DataPipeline
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
@@ -33,7 +32,7 @@ from flash.tabular.classification.data.dataset import (
 )
 
 
-class TabularDataPipeline(ClassificationDataPipeline):
+class TabularDataPipeline(object):
 
     def __init__(
         self,
