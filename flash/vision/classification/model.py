@@ -19,8 +19,8 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
+from flash.data.data_pipeline import Postprocess
 from flash.vision.backbones import backbone_and_num_features
-from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
 
 
 class ImageClassifier(ClassificationTask):
@@ -68,7 +68,3 @@ class ImageClassifier(ClassificationTask):
     def forward(self, x) -> Any:
         x = self.backbone(x)
         return self.head(x)
-
-    @staticmethod
-    def default_pipeline() -> ImageClassificationDataPipeline:
-        return ImageClassificationData.default_pipeline()
