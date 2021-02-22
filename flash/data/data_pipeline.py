@@ -167,7 +167,7 @@ class DataPipeline:
 
         return AutoDataset(data=data, load_fn=load_fn, load_per_sample=load_per_sample)
 
-    def _generate_loader(
+    def to_dataloader(
         self, data: Union[Iterable, Any], auto_collate: Optional[bool] = None, **loader_kwargs
     ) -> DataLoader:
         if 'collate_fn' in loader_kwargs:
