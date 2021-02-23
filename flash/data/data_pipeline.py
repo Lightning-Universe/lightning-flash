@@ -10,7 +10,7 @@ from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
 from flash.data.auto_dataset import AutoDataset
-from flash.data.batch import Collater, default_uncollate, UnCollater
+from flash.data.batch import _PostProcessor, _PreProcessor, default_uncollate
 
 
 class Preprocess:
@@ -110,11 +110,11 @@ class DataPipeline:
     LOADERS_PREFIX = ('train', 'test', 'val', 'predict')
 
     def __init__(self, preprocess: Preprocess, postprocess: Postprocess):
-        self.preprocess = preprocess
-        self.postprocess = postprocess
-        self._worker_collate_fn = None
-        self._device_collate_fn = None
-        self._uncollate_fn = None
+        self._preprocess_pipeline = preprocess
+        self._postprocess_pipeline = postprocess
+        self._worker_preprocessor = None
+        self._device_preprocessor = None
+        self._postprocessor = None
 
     def load_data(self, data: Any) -> Any:
         """Loads entire data from Dataset"""
@@ -198,20 +198,44 @@ class DataPipeline:
     def _do_nothing_collate(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
 
-    @property
-    def worker_collate_fn(self):
-        if self._worker_collate_fn is not None:
-            return self._worker_collate_fn
-        return self.split_around_collate()[0]
+    @staticmethod
+    def _do_nothing_uncollate(batch: Any) -> Any:
+        return batch
 
     @property
-    def device_collate_fn(self):
-        if self._device_collate_fn is not None:
-            return self._device_collate_fn
-        return self.split_around_collate()[1]
+    def worker_preprocessor(self) -> _PreProcessor:
+        if self._worker_preprocessor is None:
+            self._worker_preprocessor = self._create_collate_preprocessors()[0]
+        return self._worker_preprocessor
 
-    def split_around_collate(self, collate_fn: Optional[Callable] = None) -> Tuple[Collater, Collater]:
+    @worker_preprocessor.setter
+    def worker_preprocessor(self, new_processor: _PreProcessor):
+        self._worker_preprocessor = new_processor
 
+    @property
+    def device_preprocessor(self) -> _PreProcessor:
+        if self._device_preprocessor is None:
+            self._device_preprocessor = self._create_collate_preprocessors()[1]
+        return self._device_preprocessor
+
+    @device_preprocessor.setter
+    def device_preprocessor(self, new_processor: _PreProcessor):
+
+        self._device_preprocessor = new_processor
+
+    @property
+    def postprocessor(self) -> _PostProcessor:
+        if self._postprocessor is None:
+            self._postprocessor = self._create_uncollate_postprocessors()
+
+        return self._postprocessor
+
+    @postprocessor.setter
+    def postprocessor(self, new_processor: _PostProcessor):
+        self._postprocessor = new_processor
+
+    def _create_collate_preprocessors(self,
+                                      collate_fn: Optional[Callable] = None) -> Tuple[_PreProcessor, _PreProcessor]:
         if collate_fn is None:
             collate_fn = default_collate
 
@@ -236,28 +260,28 @@ class DataPipeline:
             worker_collate_fn = collate_fn
             device_collate_fn = self._do_nothing_collate
 
-        self._worker_collate_fn = Collater(worker_collate_fn, self.pre_collate, self.post_collate)
-        self._device_collate_fn = Collater(device_collate_fn, self.device_pre_collate, self.device_post_collate)
-
-        return self._worker_collate_fn, self._device_collate_fn
+        worker_preprocessor = _PreProcessor(worker_collate_fn, self.pre_collate, self.post_collate)
+        device_preprocessor = _PreProcessor(device_collate_fn, self.device_pre_collate, self.device_post_collate)
+        return worker_preprocessor, device_preprocessor
 
     @staticmethod
-    def _model_transfer_to_device_wrapper(func: Callable, collater: Collater) -> Callable:
+    def _model_transfer_to_device_wrapper(func: Callable, preprocessor: _PreProcessor) -> Callable:
 
         @wraps(func)
         def new_func(*args, **kwargs):
             moved_to_device = func(*args, **kwargs)
-            return collater(moved_to_device)
+            return preprocessor(moved_to_device)
 
         return new_func
 
     @staticmethod
-    def _model_predict_wrapper(func: Callable, uncollater: UnCollater) -> Callable:
+    def _model_predict_step_wrapper(func: Callable, uncollater: _PostProcessor) -> Callable:
 
         @wraps(func)
         def new_func(*args, **kwargs):
             predicted = func(*args, **kwargs)
-            return uncollater(predicted)
+            predicted = uncollater(predicted)
+            return predicted
 
         return new_func
 
@@ -321,7 +345,7 @@ class DataPipeline:
             self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn)
         )
 
-    def _create_uncollater(self) -> UnCollater:
+    def _create_uncollate_postprocessors(self, uncollate_fn: Optional[Callable] = None) -> _PostProcessor:
         save_per_sample = None
         save_fn = None
 
@@ -333,17 +357,9 @@ class DataPipeline:
             else:
                 save_fn = self.postprocess._save_data
 
-        return UnCollater(
+        return _PostProcessor(
             self.uncollate, self.pre_uncollate, self.post_uncollate, save_fn=save_fn, save_per_sample=save_per_sample
         )
-
-    @property
-    def uncollate_fn(self):
-        if self._uncollate_fn is not None:
-            return self._uncollate_fn
-        else:
-            _create_uncollater = self._create_uncollater()
-            return _create_uncollater
 
     def _attach_postprocess_to_model(self, model: 'Task') -> 'Task':
         # TODO: move this to on_predict_end?
