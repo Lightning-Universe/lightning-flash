@@ -253,14 +253,10 @@ class ImageClassificationPreprocess(Preprocess):
 
     def pre_collate(self, sample: Any) -> Any:
         # Todo: Handle tensors there.
-        try:
-            if isinstance(sample, tuple):
-                return sample
-            transform = self._valid_transform if self._use_valid_transform else self._train_transform
-            return transform(sample)
-        except:
-            import pdb
-            pdb.set_trace()
+        if isinstance(sample, (tuple, torch.Tensor)):
+            return sample
+        transform = self._valid_transform if self._use_valid_transform else self._train_transform
+        return transform(sample)
 
 
 class ImageClassificationData(DataModule):

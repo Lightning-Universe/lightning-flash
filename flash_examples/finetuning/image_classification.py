@@ -46,9 +46,6 @@ print(predictions)
 """
 
 dataloaders = model.data_pipeline.to_dataloader("data/hymenoptera_data/predict/")
-import pdb
-
-pdb.set_trace()
 
 # 3b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, dataloaders=dataloaders)
