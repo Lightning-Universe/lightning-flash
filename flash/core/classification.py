@@ -81,8 +81,6 @@ class ClassificationTask(Task):
         output["y"] = y
         return output
 
-        return super().step(batch, batch_idx)
-
     @property
     def default_loss_fn(self) -> Callable:
         if self.multilabel:
