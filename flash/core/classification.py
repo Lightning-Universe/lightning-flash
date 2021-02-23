@@ -56,12 +56,31 @@ class ClassificationTask(Task):
             self.loss_fn = self.default_loss_fn
 
     def step(self, batch: Sequence[torch.Tensor], batch_idx: int) -> torch.Tensor:
+        def step(self, batch: Any, batch_idx: int) -> Any:
+        """
+        The training/validation/test step. Override for custom behavior.
+        """
+        x, y = batch
         if self.multilabel:
-            x, y = batch
-            if isinstance(y, torch.Tensor):
-                y = y.float()
-
-            batch = (x, y)
+            y = y.float()
+        y_hat = self.forward(x)
+        output = {"y_hat": self.data_pipeline.before_uncollate(y_hat)}
+        losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
+        logs = {}
+        for name, metric in self.metrics.items():
+            if isinstance(metric, pl.metrics.Metric):
+                metric(output["y_hat"], y.long())
+                logs[name] = metric  # log the metric itself if it is of type Metric
+            else:
+                logs[name] = metric(y_hat, y)
+        logs.update(losses)
+        if len(losses.values()) > 1:
+            logs["total_loss"] = sum(losses.values())
+            return logs["total_loss"], logs
+        output["loss"] = list(losses.values())[0]
+        output["logs"] = logs
+        output["y"] = y
+        return output
 
         return super().step(batch, batch_idx)
 
