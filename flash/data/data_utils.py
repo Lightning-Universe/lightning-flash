@@ -8,7 +8,8 @@ def labels_from_categorical_csv(
         index_col: str,
         feature_cols: List,
         return_dict: bool = True,
-        index_col_collate_fn: Any = None
+        index_col_collate_fn: Any = None,
+        representation="categorical"
 ) -> Union[Dict, List]:
     """
     Returns a dictionary with {index_col: label} for each entry in the csv.
@@ -31,7 +32,16 @@ def labels_from_categorical_csv(
 
     # everything else is binary
     feature_df = df[feature_cols]
-    labels = feature_df.to_numpy().argmax(1).tolist()
+        
+    labels = feature_df.to_numpy()
+    if representation == "categorical":
+        labels = labels.argmax(1)
+    elif representation == "onehot":
+        pass
+    else:
+        raise ValueError(
+                f"{representation} is not a supported representation." 
+                "Please choose from categorical | onehot")
 
     if return_dict:
         labels = {name: label for name, label in zip(names, labels)}
