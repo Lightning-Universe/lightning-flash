@@ -19,7 +19,7 @@ import torch
 from PIL import Image
 from torchvision import transforms as T
 
-from flash.data.data_utils import labels_from_categorical_csv
+from flash.data.data_utils import labels_from_csv
 from flash.vision import ImageClassificationData
 
 
@@ -74,7 +74,7 @@ def test_from_filepaths(tmpdir):
     assert labels.shape == (1, )
 
 
-def test_categorical_csv_labels(tmpdir):
+def test_csv_labels(tmpdir):
     train_dir = Path(tmpdir / "some_dataset")
     train_dir.mkdir()
 
@@ -114,11 +114,11 @@ def test_categorical_csv_labels(tmpdir):
     def index_col_collate_fn(x):
         return os.path.splitext(x)[0]
 
-    train_labels = labels_from_categorical_csv(
+    train_labels = labels_from_csv(
         train_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
-    valid_labels = labels_from_categorical_csv(
+    valid_labels = labels_from_csv(
         valid_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
-    test_labels = labels_from_categorical_csv(
+    test_labels = labels_from_csv(
         test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn)
 
     data = ImageClassificationData.from_filepaths(
