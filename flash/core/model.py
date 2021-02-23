@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import Trainer
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
 from flash.core.data import DataModule
@@ -158,7 +159,11 @@ class Task(pl.LightningModule):
         predictions = self.predict_step(x, 0)
         return data_pipeline.postprocessor(predictions)
 
-    def predict_step(self, batch, batch_idx):
+    def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
+        if isinstance(batch, tuple):
+            batch = batch[0]
+        import pdb
+        pdb.set_trace()
         return self(batch)
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
@@ -172,9 +177,6 @@ class Task(pl.LightningModule):
 
     def configure_finetune_callback(self):
         return []
-
-    def predict_step(self, batch, batch_idx):
-        return self(batch)
 
     @property
     def preprocess(self):
@@ -198,7 +200,10 @@ class Task(pl.LightningModule):
     def data_pipeline(self) -> Optional[DataPipeline]:
         # we need to save the pipeline in case this class
         # is loaded from checkpoint and used to predict
-        return self._get_pipeline("data_pipeline")
+        if self._data_pipeline is not None:
+            return self._data_pipeline
+        self.data_pipeline = self._get_pipeline("data_pipeline")
+        return self._data_pipeline
 
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: DataPipeline) -> None:
@@ -206,8 +211,9 @@ class Task(pl.LightningModule):
 
     def _set_pipeline(self, data_pipeline):
         self._data_pipeline = data_pipeline
-        if isinstance(data_pipeline, DataPipeline):
-            self._data_pipeline._attach_to_model(self)
+        if not isinstance(data_pipeline, DataPipeline):
+            raise MisconfigurationException(f"Excepted to receive a DataPipeline. Found {data_pipeline}")
+        self._data_pipeline._attach_to_model(self)
 
     def _get_pipeline(self, pipeline_attr_name: str):
         data_pipeline = None

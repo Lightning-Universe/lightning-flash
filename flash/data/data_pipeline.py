@@ -285,6 +285,16 @@ class DataPipeline:
 
         return new_func
 
+    def _get_dataloader(self, model: 'Task', loader_name: str):
+        dataloader = None
+        if hasattr(model, loader_name):
+            dataloader = getattr(model, loader_name)()
+
+        if model.trainer is not None and hasattr(model.trainer, 'datamodule') and model.trainer.datamodule is not None:
+            dataloader = getattr(model.trainer.datamodule, loader_name)()
+
+        return dataloader
+
     def _attach_preprocess_to_model(self, model: 'Task', loader_stage: str = 'all') -> None:
         if loader_stage == 'all':
             loader_stage = self.LOADERS_PREFIX
@@ -293,46 +303,46 @@ class DataPipeline:
             loader_stage = [loader_stage]
 
         for stage in loader_stage:
-            loader_name = f'{stage}_loader'
+            loader_name = f'{stage}_dataloader'
 
-            if hasattr(model, loader_name):
-                dataloader = getattr(model, loader_name)
+            dataloader = self._get_dataloader(model, loader_name)
 
-                if isinstance(dataloader, _PatchDataLoader):
-                    wrap_patch_loader = True
-                    dataloader = dataloader()
+            if dataloader is None:
+                continue
 
-                else:
-                    wrap_patch_loader = False
+            if isinstance(dataloader, _PatchDataLoader):
+                dataloader = dataloader()
 
-                if isinstance(dataloader, Sequence):
-                    was_seq = True
-                else:
-                    dataloader = [dataloader]
-                    was_seq = False
+            if isinstance(dataloader, Sequence):
+                was_seq = True
+            else:
+                dataloader = [dataloader]
+                was_seq = False
 
-                for idx, loader in enumerate(dataloader):
-                    if isinstance(loader, DataLoader):
-                        dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
+            for idx, loader in enumerate(dataloader):
+                if isinstance(loader, DataLoader):
+                    dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                        dl_args['collate_fn'], device_collate_fnr = self.split_around_collate(
-                            collate_fn=dl_args['collate_fn']
-                        )
+                    dl_args['collate_fn'], device_collate_fn = self.split_around_collate(
+                        collate_fn=dl_args['collate_fn']
+                    )
 
-                        loader = type(loader)(**dl_args)
+                    del dl_args["batch_sampler"]
 
-                    dataloader[idx] = loader
+                    loader = type(loader)(**dl_args)
 
-                if not was_seq:
-                    dataloader = dataloader[0]
+                dataloader[idx] = loader
 
-                if wrap_patch_loader:
-                    dataloader = _PatchDataLoader(dataloader)
+            if not was_seq:
+                dataloader = dataloader[0]
 
-                setattr(model, loader_name, dataloader)
+            if isinstance(dataloader, DataLoader):
+                dataloader = _PatchDataLoader(dataloader)
+
+            setattr(model, loader_name, dataloader)
 
         model.transfer_batch_to_device = (
-            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fnr)
+            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn)
         )
 
     def _create_uncollate_postprocessors(self, uncollate_fn: Optional[Callable] = None) -> _PostProcessor:
@@ -394,3 +404,6 @@ class DataPipeline:
                     loader_kwargs['collate_fn'] = default_convert
 
         return DataLoader(self._generate_auto_dataset(data), **loader_kwargs)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(preprocess={self.preprocess}, postprocess={self.postprocess})"
