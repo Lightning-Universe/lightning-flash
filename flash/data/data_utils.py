@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 import pandas as pd
 
 
-def labels_from_categorical_csv(
+def labels_from_csv(
         csv: str,
         index_col: str,
         feature_cols: List,
