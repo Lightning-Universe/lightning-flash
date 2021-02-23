@@ -139,4 +139,4 @@ titanic.csv
 data_folder
 *.pt
 *.zip
-data
+/data
