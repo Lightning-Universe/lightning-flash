@@ -56,7 +56,6 @@ class ClassificationTask(Task):
             self.loss_fn = self.default_loss_fn
 
     def step(self, batch: Sequence[torch.Tensor], batch_idx: int) -> torch.Tensor:
-        def step(self, batch: Any, batch_idx: int) -> Any:
         """
         The training/validation/test step. Override for custom behavior.
         """
