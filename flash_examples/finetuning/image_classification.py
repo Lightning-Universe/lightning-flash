@@ -35,7 +35,7 @@ trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
-"""
+
 # 3a. Predict what's on a few images! ants or bees?
 predictions = model.predict([
     "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
@@ -43,7 +43,6 @@ predictions = model.predict([
     "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
 ])
 print(predictions)
-"""
 
 dataloaders = model.data_pipeline.to_dataloader("data/hymenoptera_data/predict/")
 
