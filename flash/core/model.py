@@ -164,8 +164,6 @@ class Task(pl.LightningModule):
     def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
         if isinstance(batch, tuple):
             batch = batch[0]
-        import pdb
-        pdb.set_trace()
         return self(batch)
 
     def configure_optimizers(self) -> torch.optim.Optimizer:

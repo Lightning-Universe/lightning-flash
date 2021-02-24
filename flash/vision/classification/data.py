@@ -233,17 +233,28 @@ class ImageClassificationPreprocess(Preprocess):
         self._use_valid_transform = use_valid_transform
         self._loader = loader
 
-    def load_data(self, data: Any) -> Any:
-        if not isinstance(data, str) and not os.path.isdir(data):
-            return data
-        filenames = os.listdir(data)
+    def _get_files(self, samples):
+        files = []
+        if isinstance(samples, str):
+            samples = [samples]
 
-        if any(not has_file_allowed_extension(f, IMG_EXTENSIONS) for f in filenames):
-            raise MisconfigurationException(
-                "No images with allowed extensions {IMG_EXTENSIONS} where found in {folder}"
-            )
+        if isinstance(samples, list):
+            if all(os.path.isfile(s) for s in samples):
+                files = samples
 
-        return [os.path.join(data, f) for f in filenames]
+            elif all(os.path.isdir(s) for s in samples):
+                for s in samples:
+                    for f in os.listdir(s):
+                        files += [os.path.join(s, f)]
+        files = list(filter(lambda p: has_file_allowed_extension(p, IMG_EXTENSIONS), files))
+
+        return files
+
+    def load_data(self, samples: Any) -> Any:
+        if isinstance(samples, str) or isinstance(samples, list) and all(isinstance(s, str) for s in samples):
+            return self._get_files(samples)
+        else:
+            return samples
 
     def load_sample(self, sample: Any):
         if isinstance(sample, str):
@@ -252,9 +263,6 @@ class ImageClassificationPreprocess(Preprocess):
             raise MisconfigurationException("Currently, only single path to image is supported")
 
     def pre_collate(self, sample: Any) -> Any:
-        # Todo: Handle tensors there.
-        if isinstance(sample, (tuple, torch.Tensor)):
-            return sample
         transform = self._valid_transform if self._use_valid_transform else self._train_transform
         return transform(sample)
 
