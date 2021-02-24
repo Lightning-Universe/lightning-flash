@@ -128,9 +128,6 @@ class Task(pl.LightningModule):
     def predict(
         self,
         x: Any,
-        batch_idx: Optional[int] = None,
-        skip_collate_fn: bool = False,
-        dataloader_idx: Optional[int] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -156,10 +153,11 @@ class Task(pl.LightningModule):
         """
         data_pipeline = data_pipeline or self.data_pipeline
         x = [x for x in data_pipeline._generate_auto_dataset(x)]
-        x = self.data_pipeline.worker_collate_fn(x)
+        x = data_pipeline.worker_preprocessor(x)
+        x = data_pipeline.device_preprocessor(x)
         #x = self.data_pipeline.device_collate_fn(x)
-        predictions = self.predict_step(x, batch_idx)
-        return data_pipeline.uncollate_fn(predictions)
+        predictions = self.predict_step(x, 0)
+        return data_pipeline.postprocessor(predictions)
 
     def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
         if isinstance(batch, tuple):
@@ -207,23 +205,29 @@ class Task(pl.LightningModule):
 
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: DataPipeline) -> None:
+        self._set_pipeline(data_pipeline)
+
+    def _set_pipeline(self, data_pipeline):
+        self._data_pipeline = data_pipeline
         if not isinstance(data_pipeline, DataPipeline):
             raise MisconfigurationException(f"Excepted to receive a DataPipeline. Found {data_pipeline}")
-        self._data_pipeline = DataPipeline(data_pipeline.preprocess, self.postprocess)
         self._data_pipeline._attach_to_model(self)
 
     def _get_pipeline(self, pipeline_attr_name: str):
+        data_pipeline = None
 
         if getattr(self, '_' + pipeline_attr_name) is not None:
-            return getattr(self, '_' + pipeline_attr_name)
+            data_pipeline = getattr(self, '_' + pipeline_attr_name)
 
-        if self.datamodule is not None and hasattr(self, pipeline_attr_name):
-            return getattr(self.datamodule, pipeline_attr_name)
+        elif self.datamodule is not None and hasattr(self, pipeline_attr_name):
+            data_pipeline = getattr(self.datamodule, pipeline_attr_name)
 
-        if self.trainer is not None and hasattr(self.trainer, 'datamodule') and self.trainer.datamodule is not None:
+        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and self.trainer.datamodule is not None:
             if hasattr(self.trainer.datamodule,
                        pipeline_attr_name) and getattr(self.trainer.datamodule, pipeline_attr_name):
                 data_pipeline = getattr(self.trainer.datamodule, pipeline_attr_name)
-                return DataPipeline(data_pipeline.preprocess, self.postprocess)
 
-        return None
+        if data_pipeline is not None:
+            self._set_pipeline(data_pipeline)
+
+        return data_pipeline
