@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import Trainer
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
@@ -152,16 +153,19 @@ class Task(pl.LightningModule):
 
         """
         data_pipeline = data_pipeline or self.data_pipeline
-        x = [x for x in data_pipeline._generate_auto_dataset(x)]
+        x = [x for x in data_pipeline._generate_auto_dataset(x, RunningStage.PREDICTING)]
         x = data_pipeline.worker_preprocessor(x)
-        x = data_pipeline.device_preprocessor(x)
+        #x = data_pipeline.device_preprocessor(x)
         #x = self.data_pipeline.device_collate_fn(x)
         predictions = self.predict_step(x, 0)
-        return data_pipeline.postprocessor(predictions)
+        return predictions
 
     def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
         if isinstance(batch, tuple):
             batch = batch[0]
+        elif isinstance(batch, list):
+            # Todo: Understand why stack is needed
+            batch = torch.stack(batch)
         return self(batch)
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
@@ -183,7 +187,7 @@ class Task(pl.LightningModule):
     @preprocess.setter
     def preprocess(self, preprocess: Preprocess) -> None:
         data_pipeline = self.data_pipeline
-        self.data_pipeline = DataPipeline(preprocess, data_pipeline.postprocess)
+        self.data_pipeline = DataPipeline(preprocess, data_pipeline._postprocess_pipeline)
 
     @property
     def postprocess(self):
@@ -192,7 +196,7 @@ class Task(pl.LightningModule):
     @postprocess.setter
     def postprocess(self, postprocess: Postprocess) -> None:
         data_pipeline = self.data_pipeline
-        self.data_pipeline = DataPipeline(data_pipeline.preprocess, postprocess)
+        self.data_pipeline = DataPipeline(data_pipeline._preprocess_pipeline, postprocess)
 
     @property
     def data_pipeline(self) -> Optional[DataPipeline]:
@@ -218,11 +222,13 @@ class Task(pl.LightningModule):
 
         elif self.datamodule is not None and hasattr(self, pipeline_attr_name):
             data_pipeline = getattr(self.datamodule, pipeline_attr_name)
+            data_pipeline = DataPipeline(data_pipeline._preprocess_pipeline, self.postprocess)
 
         elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and self.trainer.datamodule is not None:
             if hasattr(self.trainer.datamodule,
                        pipeline_attr_name) and getattr(self.trainer.datamodule, pipeline_attr_name):
                 data_pipeline = getattr(self.trainer.datamodule, pipeline_attr_name)
+                data_pipeline = DataPipeline(data_pipeline._preprocess_pipeline, self.postprocess)
 
         if data_pipeline is not None:
             self._set_pipeline(data_pipeline)

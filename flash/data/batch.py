@@ -11,7 +11,10 @@ class _PreProcessor:
         self.post_collate = post_collate
 
     def __call__(self, samples: Sequence[Any]):
-        return self.post_collate(self.collate_fn(type(samples)([self.pre_collate(sample) for sample in samples])))
+        samples = [self.pre_collate(sample) for sample in samples]
+        samples = type(samples)(samples)
+        samples = self.post_collate(self.collate_fn(samples))
+        return samples
 
     def __repr__(self) -> str:
         repr_str = f'_PreProcessor:'
@@ -49,6 +52,8 @@ class _PostProcessor:
                     self.save_fn(pred)
             else:
                 self.save_fn(final_preds)
+        else:
+            return final_preds
 
     def __repr__(self) -> str:
         repr_str = f'_PostProcessor:'

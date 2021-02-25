@@ -13,11 +13,12 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Optional
+from typing import Any, Callable, Optional, Union
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 
+from flash.data.auto_dataset import AutoDataset
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
@@ -41,10 +42,10 @@ class DataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        train_ds: Optional[Dataset] = None,
-        valid_ds: Optional[Dataset] = None,
-        test_ds: Optional[Dataset] = None,
-        predict_ds: Optional[Dataset] = None,
+        train_ds: Optional[AutoDataset] = None,
+        valid_ds: Optional[AutoDataset] = None,
+        test_ds: Optional[AutoDataset] = None,
+        predict_ds: Optional[AutoDataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
     ):
@@ -80,42 +81,58 @@ class DataModule(pl.LightningDataModule):
         self._preprocess = None
         self._postprocess = None
 
+        self.setup()
+
+    def setup(self):
+        if self._train_ds is not None:
+            self._train_ds.setup("train")
+
+        if self._valid_ds is not None:
+            self._valid_ds.setup("validation")
+
+        if self._test_ds is not None:
+            self._test_ds.setup("test")
+
+        if self._predict_ds is not None:
+            self._predict_ds.setup("predict")
+
     def _train_dataloader(self) -> DataLoader:
         return DataLoader(
-            self._train_ds,
+            self._train_ds if isinstance(self._train_ds, Dataset) else self._train_ds(),
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self.data_pipeline.worker_collate_fn,
+            collate_fn=self.data_pipeline.worker_preprocessor,
             drop_last=True,
         )
 
     def _val_dataloader(self) -> DataLoader:
         return DataLoader(
-            self._valid_ds,
+            self._valid_ds if isinstance(self._valid_ds, Dataset) else self._valid_ds(),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self.data_pipeline.worker_collate_fn,
+            collate_fn=self.data_pipeline.worker_preprocessor,
         )
 
     def _test_dataloader(self) -> DataLoader:
         return DataLoader(
-            self._test_ds,
+            self._test_ds if isinstance(self._test_ds, Dataset) else self._test_ds(),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self.data_pipeline.worker_collate_fn,
+            collate_fn=self.data_pipeline.worker_preprocessor,
         )
 
     def _predict_dataloader(self) -> DataLoader:
+        predict_ds = self._predict_ds if isinstance(self._predict_ds, Dataset) else self._predict_ds()
         return DataLoader(
-            self._predict_ds,
-            batch_size=self.batch_size,
+            predict_ds,
+            batch_size=min(self.batch_size, len(predict_ds)),
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self.data_pipeline.worker_collate_fn,
+            collate_fn=self.data_pipeline.worker_preprocessor,
         )
 
     @property
