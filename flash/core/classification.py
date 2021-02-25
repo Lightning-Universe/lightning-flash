@@ -31,6 +31,15 @@ class ClassificationDataPipeline(TaskDataPipeline):
     def after_uncollate(self, samples: Any) -> Any:
         return torch.argmax(samples, -1).tolist()
 
+class MultiLabelClassificationDataPipeline(TaskDataPipeline):
+    
+    def before_uncollate(self, batch: Union[torch.Tensor, tuple]) -> torch.Tensor:
+        if isinstance(batch, tuple):
+            batch = batch[0]
+        return torch.sigmoid(batch, -1)
+    
+    def after_uncollate(self, samples: Any) -> Any:
+        return samples.tolist()
 
 class ClassificationTask(Task):
 
