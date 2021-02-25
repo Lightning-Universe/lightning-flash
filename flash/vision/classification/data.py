@@ -18,6 +18,7 @@ from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 import pandas as pd
 import torch
 from PIL import Image, UnidentifiedImageError
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torchvision import transforms as T
 from torchvision.datasets import VisionDataset
@@ -26,6 +27,7 @@ from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIO
 from flash.core.classification import ClassificationDataPipeline
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
+from flash.data.auto_dataset import AutoDataset
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
@@ -233,38 +235,63 @@ class ImageClassificationPreprocess(Preprocess):
         self._use_valid_transform = use_valid_transform
         self._loader = loader
 
-    def _get_files(self, samples):
+    @staticmethod
+    def _find_classes(dir):
+        """
+        Finds the class folders in a dataset.
+
+        Args:
+            dir (string): Root directory path.
+
+        Returns:
+            tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+
+        Ensures:
+            No class is a subdirectory of another.
+        """
+        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
+        classes.sort()
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        return classes, class_to_idx
+
+    def _get_predicting_files(self, samples):
         files = []
         if isinstance(samples, str):
             samples = [samples]
 
-        if isinstance(samples, list):
-            if all(os.path.isfile(s) for s in samples):
-                files = samples
+        if isinstance(samples, list) and all(os.path.isdir(s) for s in samples):
+            for s in samples:
+                for f in os.listdir(s):
+                    files += [os.path.join(s, f)]
 
-            elif all(os.path.isdir(s) for s in samples):
-                for s in samples:
-                    for f in os.listdir(s):
-                        files += [os.path.join(s, f)]
+        elif isinstance(samples, list) and all(os.path.isfile(s) for s in samples):
+            files = samples
+
         files = list(filter(lambda p: has_file_allowed_extension(p, IMG_EXTENSIONS), files))
 
         return files
 
-    def load_data(self, samples: Any) -> Any:
-        if isinstance(samples, str) or isinstance(samples, list) and all(isinstance(s, str) for s in samples):
-            return self._get_files(samples)
-        else:
-            return samples
+    def fit_load_data(self, samples: Any, dataset: AutoDataset = None) -> Any:
+        classes, class_to_idx = self._find_classes(samples)
+        dataset.num_classes = len(classes)
+        return make_dataset(samples, class_to_idx, IMG_EXTENSIONS, None)
 
-    def load_sample(self, sample: Any):
-        if isinstance(sample, str):
-            return self._loader(sample)
-        else:
-            raise MisconfigurationException("Currently, only single path to image is supported")
+    def predict_load_data(self, samples: Any, dataset: AutoDataset = None) -> Any:
+        return self._get_predicting_files(samples)
+
+    def fit_load_sample(self, sample: Any):
+        path, target = sample
+        return self._loader(path), target
+
+    def predict_load_sample(self, sample: Any):
+        return self._loader(sample)
 
     def pre_collate(self, sample: Any) -> Any:
         transform = self._valid_transform if self._use_valid_transform else self._train_transform
-        return transform(sample)
+        if not isinstance(sample, tuple):
+            return transform(sample)
+        sample, target = sample
+        return transform(sample), target
 
 
 class ImageClassificationData(DataModule):
@@ -419,16 +446,14 @@ class ImageClassificationData(DataModule):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        train_ds = FlashDatasetFolder(train_folder, transform=train_transform, loader=loader)
-        valid_ds = (
-            FlashDatasetFolder(valid_folder, transform=valid_transform, loader=loader)
-            if valid_folder is not None else None
+        preprocess = ImageClassificationPreprocess(
+            train_transform=train_transform, valid_transform=valid_transform, loader=loader
         )
+        data_pipeline = DataPipeline(preprocess, None)
 
-        test_ds = (
-            FlashDatasetFolder(test_folder, transform=valid_transform, loader=loader)
-            if test_folder is not None else None
-        )
+        train_ds = data_pipeline._generate_auto_dataset(train_folder)
+        valid_ds = data_pipeline._generate_auto_dataset(valid_folder)
+        test_ds = data_pipeline._generate_auto_dataset(test_folder)
 
         datamodule = cls(
             train_ds=train_ds,
@@ -438,16 +463,14 @@ class ImageClassificationData(DataModule):
             num_workers=num_workers,
         )
 
-        datamodule.num_classes = len(train_ds.classes)
-        datamodule.preprocess = ImageClassificationPreprocess(
-            train_transform=train_transform, valid_transform=valid_transform, loader=loader
-        )
+        datamodule.num_classes = train_ds.num_classes
+        datamodule._data_pipeline = data_pipeline
         return datamodule
 
     @classmethod
-    def from_predict_folder(
+    def from_folder(
         cls,
-        folder: Union[str, pathlib.Path],
+        predict_folder: Union[str, pathlib.Path],
         transform: Optional[Callable] = _default_valid_transforms,
         loader: Callable = _pil_loader,
         batch_size: int = 64,
@@ -457,15 +480,15 @@ class ImageClassificationData(DataModule):
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
 
-            folder/dog_xxx.png
-            folder/dog_xxy.png
-            folder/dog_xxz.png
-            folder/cat_123.png
-            folder/cat_nsdf3.png
-            folder/cat_asd932_.png
+            predict_folder/dog_xxx.png
+            predict_folder/dog_xxy.png
+            predict_folder/dog_xxz.png
+            predict_folder/cat_123.png
+            predict_folder/cat_nsdf3.png
+            predict_folder/cat_asd932_.png
 
         Args:
-            folder: Path to the data folder.
+            predict_folder: Path to the prediction folder.
             transform: Image transform to apply to the data.
             loader: A function to load an image given its path.
             batch_size: Batch size for data loading.
@@ -476,34 +499,24 @@ class ImageClassificationData(DataModule):
             ImageClassificationData: the constructed data module
 
         Examples:
-            >>> img_data = ImageClassificationData.from_folder("folder/") # doctest: +SKIP
+            >>> img_data = ImageClassificationData.from_folder("predict_folder/") # doctest: +SKIP
 
         """
-        if not os.path.isdir(folder):
+        if not os.path.isdir(predict_folder):
             raise MisconfigurationException("folder should be a directory")
 
-        filenames = os.listdir(folder)
-
-        if any(not has_file_allowed_extension(f, IMG_EXTENSIONS) for f in filenames):
+        if any(not has_file_allowed_extension(f, IMG_EXTENSIONS) for f in os.listdir(predict_folder)):
             raise MisconfigurationException(
                 "No images with allowed extensions {IMG_EXTENSIONS} where found in {folder}"
             )
 
-        predict_ds = (
-            FlashDatasetFolder(
-                folder,
-                transform=transform,
-                loader=loader,
-                with_targets=False,
-                img_paths=[os.path.join(folder, f) for f in filenames]
-            )
-        )
+        data_pipeline = DataPipeline(ImageClassificationPreprocess(valid_transform=transform, loader=loader), None)
 
         datamodule = cls(
-            predict_ds=predict_ds,
+            predict_ds=data_pipeline._generate_auto_dataset(predict_folder),
             batch_size=batch_size,
             num_workers=num_workers,
         )
+        datamodule.data_pipeline = data_pipeline
 
-        datamodule.preprocess = ImageClassificationPreprocess(valid_transform=transform, loader=loader)
         return datamodule

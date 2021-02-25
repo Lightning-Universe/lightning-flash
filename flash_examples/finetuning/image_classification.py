@@ -44,8 +44,8 @@ predictions = model.predict([
 ])
 print(predictions)
 
-dataloaders = model.data_pipeline.to_dataloader("data/hymenoptera_data/predict/")
+datamodule = ImageClassificationData.from_folder(predict_folder="data/hymenoptera_data/predict/", )
 
 # 3b. Or generate predictions with a whole folder!
-predictions = Trainer().predict(model, dataloaders=dataloaders)
+predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
