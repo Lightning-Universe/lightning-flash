@@ -68,7 +68,7 @@ To tailor this image embedder to your dataset, finetune first.
     )
 
     # 3. Build the model
-    embedder = ImageEmbedder(backbone="resnet18")
+    embedder = ImageEmbedder(backbone="resnet18", embedding_dim=128)
 
     # 4. Create the trainer. Run once on data
     trainer = flash.Trainer(max_epochs=1)
