@@ -24,8 +24,8 @@ from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 class TaskDataPipeline(DataPipeline):
 
-    def after_collate(self, batch: Any) -> Any:
-        return (batch["x"], batch["target"]) if isinstance(batch, dict) else batch
+    def post_collate(self, batch: Any) -> Any:
+        return (batch["x"], batch.get('target', batch.get('y'))) if isinstance(batch, dict) else batch
 
 
 class DataModule(pl.LightningDataModule):
@@ -39,6 +39,9 @@ class DataModule(pl.LightningDataModule):
         num_workers: The number of workers to use for parallelized loading.
             Defaults to None which equals the number of available CPU threads.
     """
+
+    preprocess_cls = Preprocess
+    postprocess_cls = Postprocess
 
     def __init__(
         self,
@@ -136,31 +139,13 @@ class DataModule(pl.LightningDataModule):
         )
 
     @property
-    def preprocess(self):
-        return self._preprocess
-
-    @preprocess.setter
-    def preprocess(self, preprocess: Preprocess) -> None:
-        self._preprocess = preprocess
+    def preprocess(self) -> Preprocess:
+        return self.preprocess_cls()
 
     @property
-    def postprocess(self):
-        return self._postprocess
-
-    @postprocess.setter
-    def postprocess(self, postprocess: Postprocess) -> None:
-        self._postprocess = postprocess
+    def postprocess(self) -> Postprocess:
+        return self.postprocess_cls()
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        if self._data_pipeline is None:
-            preprocess = self._preprocess
-            postprocess = self._postprocess
-            if preprocess is None and postprocess is None:
-                self._data_pipeline = self.default_pipeline()
-            return DataPipeline(preprocess, postprocess)
-        return self._data_pipeline
-
-    @data_pipeline.setter
-    def data_pipeline(self, data_pipeline) -> None:
-        self._data_pipeline = data_pipeline
+        return DataPipeline(self.preprocess, self.postprocess)

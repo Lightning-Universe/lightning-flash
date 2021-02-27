@@ -1,6 +1,6 @@
 import os
-from functools import wraps
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Union
+from functools import partial, wraps
+from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -12,87 +12,35 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor
 from flash.data.process import Postprocess, Preprocess
 
+if TYPE_CHECKING:
+    from flash.core.model import Task
+
 
 class DataPipeline:
 
-    PREPROCESS_FUNCS = ("load_data", "load_sample", "pre_collate", "post_collate", "device_post_collate")
+    PREPROCESS_FUNCS = (
+        "load_data", "load_sample", "pre_collate", "post_collate", "device_pre_collate", "device_post_collate"
+    )
     POSTPROCESS_FUNCS = ("pre_uncollate", "post_uncollate", "save_data", "save_sample")
-    LOADERS_PREFIX = ('train', 'test', 'val', 'predict')
+    LOADERS_PREFIX = {
+        RunningStage.TRAINING: 'train',
+        RunningStage.TESTING: 'test',
+        RunningStage.EVALUATING: 'val',
+        RunningStage.PREDICTING: 'predict'
+    }
 
-    def __init__(self, preprocess: Preprocess, postprocess: Postprocess):
+    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None):
+        if preprocess is None:
+            preprocess = Preprocess()
+
+        if postprocess is None:
+            postprocess = Postprocess()
+
         self._preprocess_pipeline = preprocess
         self._postprocess_pipeline = postprocess
         self._worker_preprocessor = None
         self._device_preprocessor = None
         self._postprocessor = None
-
-    def load_data(self, data: Any, dataset: AutoDataset = None) -> Any:
-        """Loads entire data from Dataset"""
-        return self._preprocess_pipeline.load_data(data, dataset=dataset)
-
-    def load_sample(self, sample: Any) -> Any:
-        """Loads single sample from dataset"""
-        return self._preprocess_pipeline.load_sample(sample)
-
-    def pre_collate(self, sample: Any) -> Any:
-        """Transforms to apply to the data before the collation (per-sample basis)"""
-        return self._preprocess_pipeline.pre_collate(sample)
-
-    def post_collate(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch (if possible use this for efficiency)
-
-        .. note::
-            This option is mutually exclusive with :meth:`device_pre_collate`, since if both are specified, uncollation has to be applied.
-        """
-        return self._preprocess_pipeline.post_collate(batch)
-
-    def device_pre_collate(self, sample: Any) -> Any:
-        """Transforms to apply to the data before the collation (per-sample basis).
-
-        .. note::
-            This option is mutually exclusive with :meth:`post_collate`, since if both are specified, uncollation has to be applied.
-
-        .. note::
-            This function won't be called within the dataloader workers, since to make that happen each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
-        """
-        return self._preprocess_pipeline.device_pre_collate(sample)
-
-    def device_post_collate(self, batch: Any) -> Any:
-        """
-        Transforms to apply to a whole batch (if possible use this for efficiency).
-
-        .. note::
-            This function won't be called within the dataloader workers, since to make that happen each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
-        """
-        return self._preprocess_pipeline.device_pre_collate(batch)
-
-    def pre_uncollate(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch before uncollation to single samples.
-        Can involve both CPU and Device transforms as this is not applied in separate workers.
-        """
-        return self._postprocess_pipeline.pre_uncollate(batch)
-
-    def post_uncollate(self, sample: Any) -> Any:
-        """Transforms to apply to a single sample after splitting up the batch.
-        Can involve both CPU and Device transforms as this is not applied in separate workers.
-        """
-        return self._postprocess_pipeline.post_uncollate(sample)
-
-    def uncollate(self, batch: Any) -> Any:
-        """Uncollates a batch into single samples.
-        Tries to preserve the type whereever possible.
-        """
-        return self._postprocess_pipeline.uncollate(batch)
-
-    def save_data(self, data: Any, path: str) -> None:
-        """Saves all data together to a single path.
-        """
-        self._postprocess_pipeline.save_data(data, path)
-
-    def save_sample(self, sample: Any, path: str) -> None:
-        """Saves each sample individually to a given path.
-        """
-        self._postprocess_pipeline.save_sample(sample, path)
 
     def _is_overriden(self, method_name: str, super_obj: Any) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
@@ -146,14 +94,40 @@ class DataPipeline:
     def postprocessor(self, new_processor: _PostProcessor):
         self._postprocessor = new_processor
 
+    def _resolve_function_hierarchy(self, function_name, stage: RunningStage, object_type: Optional[Type] = None):
+        if object_type is None:
+            object_type = Preprocess
+
+        prefixes = ['']
+
+        # TODO: Check if tuning uses training or validation data
+        if stage in (RunningStage.TRAINING, RunningStage.TUNING):
+            prefixes = ['train', 'fit'] + prefixes
+        elif stage == RunningStage.EVALUATING:
+            prefixes = ['validation', 'fit'] + prefixes
+        elif stage == RunningStage.TESTING:
+            prefixes = ['test'] + prefixes
+        elif stage == RunningStage.PREDICTING:
+            prefixes = ['predict'] + prefixes
+
+        for prefix in prefixes:
+            curr_func_name = f'{prefix}_{function_name}'
+            if self._is_overriden(curr_func_name, object_type):
+                return curr_func_name
+
+        return function_name
+
     def _create_collate_preprocessors(self,
+                                      stage: RunningStage,
                                       collate_fn: Optional[Callable] = None) -> Tuple[_PreProcessor, _PreProcessor]:
         if collate_fn is None:
             collate_fn = default_collate
 
-        post_collate_overriden = self._is_overriden('post_collate', Preprocess)
+        func_names = {k: self._resolve_function_hierarchy(k, stage, Preprocess) for k in self.PREPROCESS_FUNCS}
 
-        device_pre_collate_overriden = self._is_overriden('device_pre_collate', Preprocess)
+        post_collate_overriden = self._is_overriden(func_names['post_collate'], Preprocess)
+
+        device_pre_collate_overriden = self._is_overriden(func_names['device_pre_collate'], Preprocess)
 
         if post_collate_overriden and device_pre_collate_overriden:
             raise MisconfigurationException(
@@ -176,58 +150,99 @@ class DataPipeline:
             worker_collate_fn, _PreProcessor
         ) else worker_collate_fn
 
-        worker_preprocessor = _PreProcessor(worker_collate_fn, self.pre_collate, self.post_collate)
-        device_preprocessor = _PreProcessor(device_collate_fn, self.device_pre_collate, self.device_post_collate)
+        worker_preprocessor = _PreProcessor(
+            worker_collate_fn, getattr(self._preprocess_pipeline, func_names['pre_collate']),
+            getattr(self._preprocess_pipeline, func_names['post_collate'])
+        )
+        device_preprocessor = _PreProcessor(
+            device_collate_fn, getattr(self._preprocess_pipeline, func_names['device_pre_collate']),
+            getattr(self._preprocess_pipeline, func_names['device_post_collate'])
+        )
         return worker_preprocessor, device_preprocessor
 
     @staticmethod
-    def _model_transfer_to_device_wrapper(func: Callable, preprocessor: _PreProcessor) -> Callable:
+    def _model_transfer_to_device_wrapper(
+        func: Callable, preprocessor: _PreProcessor, model: 'Task', stage: RunningStage
+    ) -> Callable:
 
         @wraps(func)
         def new_func(*args, **kwargs):
             moved_to_device = func(*args, **kwargs)
-            return preprocessor(moved_to_device)
+            # TODO: This may not be the best solution since it's abusing python scopes.
+            # Search for a better working solution
+            if model.running_stage == stage:
+                moved_to_device = preprocessor(moved_to_device)
+            return moved_to_device
+
+        # Necessary to detach
+        new_func._original = func
+        new_func._processor = preprocessor
+        new_func._stage = stage
 
         return new_func
 
     @staticmethod
-    def _model_predict_step_wrapper(func: Callable, uncollater: _PostProcessor) -> Callable:
+    def _model_predict_step_wrapper(func: Callable, postprocessor: _PostProcessor) -> Callable:
 
         @wraps(func)
         def new_func(*args, **kwargs):
             predicted = func(*args, **kwargs)
-            predicted = uncollater(predicted)
+            predicted = postprocessor(predicted)
             return predicted
+
+        # necessary to detach
+        new_func._original = func
+        new_func._processor = postprocessor
 
         return new_func
 
-    def _get_dataloader(self, model: 'Task', loader_name: str):
-        dataloader = None
+    @staticmethod
+    def _get_dataloader(model: 'Task', loader_name: str) -> Tuple[DataLoader, str]:
+        dataloader, attr_name = None, None
         if hasattr(model, loader_name):
             dataloader = getattr(model, loader_name)()
+            attr_name = loader_name
 
         if model.trainer is not None and hasattr(model.trainer, 'datamodule') and model.trainer.datamodule is not None:
             dataloader = getattr(model.trainer.datamodule, loader_name)()
+            attr_name = f'trainer.datamodule.{loader_name}'
 
-        return dataloader
+        return dataloader, attr_name
 
-    def _attach_preprocess_to_model(self, model: 'Task', loader_stage: str = 'all') -> None:
-        if loader_stage == 'all':
-            loader_stage = self.LOADERS_PREFIX
+    @staticmethod
+    def _set_loader(model: 'Task', loader_name: str, new_loader: DataLoader):
+        *intermediates, final_name = loader_name.split('.')
+        curr_attr = model
 
-        elif isinstance(loader_stage, str):
-            loader_stage = [loader_stage]
+        # This relies on python calling all non-integral types by reference.
+        # It may fail for integral types since those will be called by value.
+        for intermediate in intermediates:
+            curr_attr = getattr(curr_attr, intermediate)
 
-        for stage in loader_stage:
-            loader_name = f'{stage}_dataloader'
+        setattr(curr_attr, final_name, new_loader)
 
-            dataloader = self._get_dataloader(model, loader_name)
+    def _attach_preprocess_to_model(
+        self, model: 'Task', stages: Optional[RunningStage] = None, device_transform_only: bool = False
+    ) -> None:
+        if stages is None:
+            stages = [RunningStage.TRAINING, RunningStage.EVALUATING, RunningStage.TESTING, RunningStage.PREDICTING]
+
+        elif isinstance(stages, RunningStage):
+            stages = [stages]
+
+        for stage in stages:
+            loader_name = f'{self.LOADERS_PREFIX[stage]}_dataloader'
+
+            dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
 
             if dataloader is None:
                 continue
 
             if isinstance(dataloader, _PatchDataLoader):
                 dataloader = dataloader()
+                was_patch = True
+            else:
+                was_patch = False
 
             if isinstance(dataloader, Sequence):
                 was_seq = True
@@ -236,6 +251,7 @@ class DataPipeline:
                 was_seq = False
 
             for idx, loader in enumerate(dataloader):
+                # TODO: See lightning for proper reinstantiation of loader
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
@@ -243,28 +259,32 @@ class DataPipeline:
                         collate_fn=dl_args['collate_fn']
                     )
 
-                    del dl_args["batch_sampler"]
-
-                    loader = type(loader)(**dl_args)
+                    # don't have to reinstantiate loader if just rewrapping devices (happens during detach)
+                    if device_transform_only:
+                        del dl_args["batch_sampler"]
+                        loader = type(loader)(**dl_args)
 
                 dataloader[idx] = loader
 
-            if not was_seq:
-                dataloader = dataloader[0]
+            # don't have to set attribute if rewrapping device part (happens during detach)
+            if device_transform_only:
+                if not was_seq:
+                    dataloader = dataloader[0]
 
-            if isinstance(dataloader, DataLoader):
-                dataloader = _PatchDataLoader(dataloader)
+                if was_patch:
+                    dataloader = _PatchDataLoader(dataloader)
 
-            setattr(model, loader_name, dataloader)
+                self._set_loader(model, whole_attr_name, dataloader)
 
         model.transfer_batch_to_device = (
-            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn)
+            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn, model, stage)
         )
 
     def _create_uncollate_postprocessors(self) -> _PostProcessor:
         save_per_sample = None
         save_fn = None
 
+        # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
         if self._postprocess_pipeline._save_path is not None:
             save_per_sample = self._is_overriden('save_sample', Postprocess)
 
@@ -278,20 +298,105 @@ class DataPipeline:
         )
 
     def _attach_postprocess_to_model(self, model: 'Task') -> 'Task':
-        # TODO: move this to on_predict_end?
-        if not hasattr(model, "_predict_step"):
-            model._predict_step = model.predict_step
         model.predict_step = self._model_predict_step_wrapper(
-            model._predict_step, self._create_uncollate_postprocessors()
+            model.predict_step, self._create_uncollate_postprocessors()
         )
         return model
 
     def _attach_to_model(self, model: 'Task', loader_stage: str = 'all'):
         model._preprocess = self._preprocess_pipeline
         self._attach_preprocess_to_model(model, loader_stage)
-        if self._postprocess_pipeline is not None:
-            model._postprocess = self._postprocess_pipeline
-            self._attach_postprocess_to_model(model)
+        model._postprocess = self._postprocess_pipeline
+        self._attach_postprocess_to_model(model)
+
+    def _detach_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
+        self._detach_preprocessing_from_model(model, stages)
+
+        if stages is None or stages == RunningStage.PREDICTING:
+            self._detach_postprocess_from_model(model)
+
+    @staticmethod
+    def _composed_collates(samples: Any, worker_collate: Callable, device_collate: Callable) -> Any:
+        return device_collate(worker_collate(samples))
+
+    def _detach_preprocessing_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
+        if stages is None:
+            stages = [RunningStage.TRAINING, RunningStage.EVALUATING, RunningStage.TESTING, RunningStage.PREDICTING]
+
+        elif isinstance(stages, RunningStage):
+            stages = [stages]
+
+        for stage in stages:
+
+            current_func = model.transfer_batch_to_device
+
+            stages_to_rewrap = []
+
+            # Traverse the decorators (multiple are possible) until decorator for specific stage was found.
+            # Rewrap all previously traversed stages afterwards
+            while True:
+                # indicates that it was wrapped
+                if hasattr(current_func, '_stage') and hasattr(current_func, '_original'):
+                    if current_func._stage == stage:
+                        model.transfer_batch_to_device = current_func._original
+                        break
+                    else:
+                        stages_to_rewrap.append(current_func._stage)
+                        current_func = current_func._original
+
+                else:
+                    raise RuntimeError(f'DataPipeline was not attached for stage {stage}')
+
+            for _stage in stages_to_rewrap:
+                self._attach_preprocess_to_model(model, _stage, device_transform_only=True)
+
+            device_collate = current_func._processor.collate_fn
+
+            loader_name = f'{self.LOADERS_PREFIX[stage]}_dataloader'
+
+            dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
+
+            if isinstance(dataloader, _PatchDataLoader):
+                dataloader = dataloader()
+                was_patch = True
+            else:
+                was_patch = False
+
+            if isinstance(dataloader, Sequence):
+                was_seq = True
+            else:
+                dataloader = [dataloader]
+                was_seq = False
+
+            for idx, loader in enumerate(dataloader):
+                if isinstance(loader, DataLoader):
+                    # TODO: See lightning for proper reinstantiation of loader
+                    worker_collate = dataloader.collate_fn
+                    dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
+
+                    dl_args['collate_fn'] = partial(
+                        self._composed_collates, worker_collate=worker_collate, device_collate=device_collate
+                    )
+                    del dl_args["batch_sampler"]
+                    loader = type(loader)(**dl_args)
+
+                dataloader[idx] = loader
+
+            if not was_seq:
+                dataloader = dataloader[0]
+
+            if was_patch:
+                dataloader = _PatchDataLoader(dataloader)
+
+            self._set_loader(model, whole_attr_name, dataloader)
+
+    @staticmethod
+    def _detach_postprocess_from_model(model: 'Task'):
+        if hasattr(model.predict_step, '_original'):
+            # don't delete the predict_step here since we don't know if any other pipeline is attached which may rely on this!
+            model.predict_step = model.predict_step._original
+        else:
+            raise RuntimeError('Postprocessing Pipeline was never attached to model. Cannot detach!')
 
     def _generate_callable_auto_dataset(self, data: Union[Iterable, Any]) -> Callable:
 
