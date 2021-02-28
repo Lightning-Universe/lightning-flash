@@ -24,7 +24,7 @@ from torchvision import transforms as T
 from torchvision.datasets import VisionDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
-from flash.core.classification import ClassificationDataPipeline
+from flash.core.classification import ClassificationPostprocess
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
@@ -307,6 +307,7 @@ class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
     preprocess_cls = ImageClassificationPreprocess
+    postprocess_cls = ClassificationPostprocess
 
     def __init__(
         self,

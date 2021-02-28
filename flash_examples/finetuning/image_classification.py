@@ -21,7 +21,7 @@ from flash.vision import ImageClassificationData, ImageClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Load the data
-datamodule = ImageClassificationData.from_folders(
+datamodule = ImageClassificationData(
     train_folder="data/hymenoptera_data/train/",
     valid_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
@@ -45,7 +45,7 @@ predictions = model.predict([
 
 print(predictions)
 
-datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
+datamodule = ImageClassificationData(predict_folder="data/hymenoptera_data/predict/")
 
 # 3b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)
