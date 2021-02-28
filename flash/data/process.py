@@ -1,12 +1,14 @@
-from typing import Any, Optional
-from flash.data.batch import default_uncollate
-import torch
 import os
+from typing import Any, Optional
+
+import torch
+
+from flash.data.batch import default_uncollate
 
 
 class Preprocess:
 
-    def load_data(self, data: Any) -> Any:
+    def load_data(self, data: Any, dataset: Optional[Any]) -> Any:
         """Loads entire data from Dataset"""
         return data
 
@@ -21,16 +23,19 @@ class Preprocess:
     def post_collate(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency)
         .. note::
-            This option is mutually exclusive with :meth:`device_pre_collate`, since if both are specified, uncollation has to be applied.
+            This option is mutually exclusive with :meth:`device_pre_collate`,
+            since if both are specified, uncollation has to be applied.
         """
         return batch
 
     def device_pre_collate(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
         .. note::
-            This option is mutually exclusive with :meth:`post_collate`, since if both are specified, uncollation has to be applied.
+            This option is mutually exclusive with :meth:`post_collate`,
+            since if both are specified, uncollation has to be applied.
         .. note::
-            This function won't be called within the dataloader workers, since to make that happen each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+            This function won't be called within the dataloader workers, since to make that happen
+            each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
         return sample
 
@@ -38,7 +43,8 @@ class Preprocess:
         """
         Transforms to apply to a whole batch (if possible use this for efficiency).
         .. note::
-            This function won't be called within the dataloader workers, since to make that happen each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+            This function won't be called within the dataloader workers, since to make that happen
+            each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
         return batch
 

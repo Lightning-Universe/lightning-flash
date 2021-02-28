@@ -19,9 +19,9 @@ from pandas.core.frame import DataFrame
 from sklearn.model_selection import train_test_split
 from torch import Tensor
 
-from flash.core.data import DataPipeline
-from flash.core.data.datamodule import DataModule
-from flash.core.data.utils import _contains_any_tensor
+from flash.data.data_module import DataModule
+from flash.data.data_pipeline import DataPipeline
+from flash.data.utils import _contains_any_tensor
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
     _dfs_to_samples,

@@ -23,9 +23,8 @@ from torch._six import container_abcs
 from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 
-from flash.core.data import TaskDataPipeline
-from flash.core.data.datamodule import DataModule
-from flash.core.data.utils import _contains_any_tensor
+from flash.data.data_module import DataModule, TaskDataPipeline
+from flash.data.utils import _contains_any_tensor
 from flash.vision.classification.data import _pil_loader
 
 _COCO_AVAILABLE = _module_available("pycocotools")

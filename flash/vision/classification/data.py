@@ -25,10 +25,10 @@ from torchvision.datasets import VisionDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
 from flash.core.classification import ClassificationDataPipeline
-from flash.core.data.datamodule import DataModule
-from flash.core.data.utils import _contains_any_tensor
 from flash.data.auto_dataset import AutoDataset
+from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
+from flash.data.utils import _contains_any_tensor
 
 
 def _pil_loader(path) -> Image:
@@ -271,31 +271,139 @@ class ImageClassificationPreprocess(Preprocess):
 
         return files
 
-    def fit_load_data(self, samples: Any, dataset: AutoDataset = None) -> Any:
+    def load_data(self, samples: Any, dataset: AutoDataset = None) -> Any:
         classes, class_to_idx = self._find_classes(samples)
         dataset.num_classes = len(classes)
         return make_dataset(samples, class_to_idx, IMG_EXTENSIONS, None)
 
-    def predict_load_data(self, samples: Any, dataset: AutoDataset = None) -> Any:
-        return self._get_predicting_files(samples)
-
-    def fit_load_sample(self, sample: Any):
+    def load_sample(self, sample: Any):
         path, target = sample
         return self._loader(path), target
+
+    def predict_load_data(self, samples: Any, dataset: AutoDataset = None) -> Any:
+        return self._get_predicting_files(samples)
 
     def predict_load_sample(self, sample: Any):
         return self._loader(sample)
 
-    def pre_collate(self, sample: Any) -> Any:
-        transform = self._valid_transform if self._use_valid_transform else self._train_transform
-        if not isinstance(sample, tuple):
-            return transform(sample)
+    def train_pre_collate(self, sample: Any) -> Any:
         sample, target = sample
-        return transform(sample), target
+        return self._train_transform(sample), target
+
+    def test_pre_collate(self, sample: Any) -> Any:
+        sample, target = sample
+        return self._valid_transform(sample), target
+
+    def validation_pre_collate(self, sample: Any) -> Any:
+        sample, target = sample
+        return self._valid_transform(sample), target
+
+    def predict_pre_collate(self, sample: Any) -> Any:
+        transform = self._valid_transform if self._use_valid_transform else self._train_transform
+        return transform(sample)
 
 
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
+
+    preprocess_cls = ImageClassificationPreprocess
+
+    def __init__(
+        self,
+        train_folder: Optional[Union[str, pathlib.Path]] = None,
+        train_transform: Optional[Callable] = _default_train_transforms,
+        valid_folder: Optional[Union[str, pathlib.Path]] = None,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
+        test_folder: Optional[Union[str, pathlib.Path]] = None,
+        predict_folder: Optional[Union[str, pathlib.Path]] = None,
+        loader: Callable = _pil_loader,
+        batch_size: int = 1,
+        num_workers: Optional[int] = None,
+    ):
+        self.train_transform = train_transform
+        self.valid_transform = valid_transform
+        self.loader = loader
+
+        train_ds = self.generate_auto_dataset(train_folder)
+        valid_ds = self.generate_auto_dataset(valid_folder)
+        test_ds = self.generate_auto_dataset(test_folder)
+        predict_ds = self.generate_auto_dataset(predict_folder)
+
+        super().__init__(
+            train_ds=train_ds,
+            valid_ds=valid_ds,
+            test_ds=test_ds,
+            predict_ds=predict_ds,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+
+    @property
+    def num_classes(self):
+        if self._train_ds is not None:
+            return self._train_ds.num_classes
+        return None
+
+    @property
+    def preprocess(self):
+        return self.preprocess_cls(
+            train_transform=self.train_transform, valid_transform=self.valid_transform, loader=self.loader
+        )
+
+    @classmethod
+    def from_folders(
+        cls,
+        train_folder: Optional[Union[str, pathlib.Path]] = None,
+        train_transform: Optional[Callable] = _default_train_transforms,
+        valid_folder: Optional[Union[str, pathlib.Path]] = None,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
+        test_folder: Optional[Union[str, pathlib.Path]] = None,
+        predict_folder: Union[str, pathlib.Path] = None,
+        loader: Callable = _pil_loader,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **kwargs
+    ):
+        """
+        Creates a ImageClassificationData object from folders of images arranged in this way: ::
+
+            train/dog/xxx.png
+            train/dog/xxy.png
+            train/dog/xxz.png
+            train/cat/123.png
+            train/cat/nsdf3.png
+            train/cat/asd932.png
+
+        Args:
+            train_folder: Path to training folder.
+            train_transform: Image transform to use for training set.
+            valid_folder: Path to validation folder.
+            valid_transform: Image transform to use for validation and test set.
+            test_folder: Path to test folder.
+            loader: A function to load an image given its path.
+            batch_size: Batch size for data loading.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to ``None`` which equals the number of available CPU threads.
+
+        Returns:
+            ImageClassificationData: the constructed data module
+
+        Examples:
+            >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
+
+        """
+        datamodule = cls(
+            train_folder=train_folder,
+            train_transform=train_transform,
+            valid_folder=valid_folder,
+            valid_transform=valid_transform,
+            test_folder=test_folder,
+            predict_folder=predict_folder,
+            loader=loader,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+        return datamodule
 
     @classmethod
     def from_filepaths(
@@ -404,119 +512,3 @@ class ImageClassificationData(DataModule):
             batch_size=batch_size,
             num_workers=num_workers,
         )
-
-    @classmethod
-    def from_folders(
-        cls,
-        train_folder: Optional[Union[str, pathlib.Path]],
-        train_transform: Optional[Callable] = _default_train_transforms,
-        valid_folder: Optional[Union[str, pathlib.Path]] = None,
-        valid_transform: Optional[Callable] = _default_valid_transforms,
-        test_folder: Optional[Union[str, pathlib.Path]] = None,
-        loader: Callable = _pil_loader,
-        batch_size: int = 4,
-        num_workers: Optional[int] = None,
-        **kwargs
-    ):
-        """
-        Creates a ImageClassificationData object from folders of images arranged in this way: ::
-
-            train/dog/xxx.png
-            train/dog/xxy.png
-            train/dog/xxz.png
-            train/cat/123.png
-            train/cat/nsdf3.png
-            train/cat/asd932.png
-
-        Args:
-            train_folder: Path to training folder.
-            train_transform: Image transform to use for training set.
-            valid_folder: Path to validation folder.
-            valid_transform: Image transform to use for validation and test set.
-            test_folder: Path to test folder.
-            loader: A function to load an image given its path.
-            batch_size: Batch size for data loading.
-            num_workers: The number of workers to use for parallelized loading.
-                Defaults to ``None`` which equals the number of available CPU threads.
-
-        Returns:
-            ImageClassificationData: the constructed data module
-
-        Examples:
-            >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
-
-        """
-        preprocess = ImageClassificationPreprocess(
-            train_transform=train_transform, valid_transform=valid_transform, loader=loader
-        )
-        data_pipeline = DataPipeline(preprocess, None)
-
-        train_ds = data_pipeline._generate_auto_dataset(train_folder)
-        valid_ds = data_pipeline._generate_auto_dataset(valid_folder)
-        test_ds = data_pipeline._generate_auto_dataset(test_folder)
-
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            batch_size=batch_size,
-            num_workers=num_workers,
-        )
-
-        datamodule.num_classes = train_ds.num_classes
-        datamodule._data_pipeline = data_pipeline
-        return datamodule
-
-    @classmethod
-    def from_folder(
-        cls,
-        predict_folder: Union[str, pathlib.Path],
-        transform: Optional[Callable] = _default_valid_transforms,
-        loader: Callable = _pil_loader,
-        batch_size: int = 64,
-        num_workers: Optional[int] = None,
-        **kwargs
-    ):
-        """
-        Creates a ImageClassificationData object from folders of images arranged in this way: ::
-
-            predict_folder/dog_xxx.png
-            predict_folder/dog_xxy.png
-            predict_folder/dog_xxz.png
-            predict_folder/cat_123.png
-            predict_folder/cat_nsdf3.png
-            predict_folder/cat_asd932_.png
-
-        Args:
-            predict_folder: Path to the prediction folder.
-            transform: Image transform to apply to the data.
-            loader: A function to load an image given its path.
-            batch_size: Batch size for data loading.
-            num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
-
-        Returns:
-            ImageClassificationData: the constructed data module
-
-        Examples:
-            >>> img_data = ImageClassificationData.from_folder("predict_folder/") # doctest: +SKIP
-
-        """
-        if not os.path.isdir(predict_folder):
-            raise MisconfigurationException("folder should be a directory")
-
-        if any(not has_file_allowed_extension(f, IMG_EXTENSIONS) for f in os.listdir(predict_folder)):
-            raise MisconfigurationException(
-                "No images with allowed extensions {IMG_EXTENSIONS} where found in {folder}"
-            )
-
-        data_pipeline = DataPipeline(ImageClassificationPreprocess(valid_transform=transform, loader=loader), None)
-
-        datamodule = cls(
-            predict_ds=data_pipeline._generate_auto_dataset(predict_folder),
-            batch_size=batch_size,
-            num_workers=num_workers,
-        )
-        datamodule.data_pipeline = data_pipeline
-
-        return datamodule

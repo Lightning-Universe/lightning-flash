@@ -20,7 +20,7 @@ from pandas.core.frame import DataFrame
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 
-from flash.core.data import download_data
+from flash.data.utils import download_data
 
 
 def _impute(dfs: List, num_cols: List) -> list:

@@ -18,7 +18,7 @@ from datasets import load_dataset
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 
-from flash.core.data import DataModule, TaskDataPipeline
+from flash.data.data_module import DataModule, TaskDataPipeline
 
 
 def prepare_dataset(

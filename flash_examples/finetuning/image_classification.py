@@ -13,8 +13,8 @@
 # limitations under the License.
 import flash
 from flash import Trainer
-from flash.core.data import download_data
 from flash.core.finetuning import FreezeUnfreeze
+from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
@@ -42,9 +42,10 @@ predictions = model.predict([
     "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
     "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
 ])
+
 print(predictions)
 
-datamodule = ImageClassificationData.from_folder(predict_folder="data/hymenoptera_data/predict/", )
+datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
 
 # 3b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)

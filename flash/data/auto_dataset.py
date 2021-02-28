@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 class AutoDataset(torch.utils.data.Dataset):
 
     FITTING_STAGES = ("train", "test", "validation")
-    STAGES = ("train", "test", "validation", "predict")
+    # Todo: Resolve this on Lightning side
+    STAGES = ("train", "test", "eval", "validation", "predict")
 
     def __init__(self, data: Any, data_pipeline: 'DataPipeline', running_stage: Optional[RunningStage]) -> None:
         super().__init__()
@@ -37,11 +38,12 @@ class AutoDataset(torch.utils.data.Dataset):
         assert stage.value in self.STAGES
         old_load_data = self.load_data.__code__ if self.load_data is not None else None
         self.load_data = getattr(
-            self.data_pipeline._preprocess_pipeline, self.data_pipeline._resolve_function_hierarchy('load_data'), stage
+            self.data_pipeline._preprocess_pipeline, self.data_pipeline._resolve_function_hierarchy('load_data', stage),
+            stage
         )
         self.load_sample = getattr(
-            self.data_pipeline._preprocess_pipeline, self.data_pipeline._resolve_function_hierarchy('load_sample'),
-            stage
+            self.data_pipeline._preprocess_pipeline,
+            self.data_pipeline._resolve_function_hierarchy('load_sample', stage), stage
         )
 
         # TODO: should we run this again if functions change?

@@ -38,21 +38,24 @@ class DataPipeline:
 
         self._preprocess_pipeline = preprocess
         self._postprocess_pipeline = postprocess
-        self._worker_preprocessor = None
-        self._device_preprocessor = None
         self._postprocessor = None
+        self._running_stage = None
 
-    def _is_overriden(self, method_name: str, super_obj: Any) -> bool:
-        """Cropped Version of https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
+    def _is_overriden(self, method_name: str, super_obj: Any, prefix: Optional[str] = None) -> bool:
+        """
+        Cropped Version of
+        https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
         process_obj = self._preprocess_pipeline if isinstance(
             self._preprocess_pipeline, super_obj
         ) else self._postprocess_pipeline
 
-        if not hasattr(process_obj, method_name) or not hasattr(super_obj, method_name):
+        current_method_name = method_name if prefix is None else f'{prefix}_{method_name}'
+
+        if not hasattr(process_obj, current_method_name):
             return False
 
-        return getattr(process_obj, method_name).__code__ != getattr(super_obj, method_name).__code__
+        return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
 
     @staticmethod
     def _do_nothing_collate(samples: Sequence[Any]) -> Sequence[Any]:
@@ -62,32 +65,16 @@ class DataPipeline:
     def _do_nothing_uncollate(batch: Any) -> Any:
         return batch
 
-    @property
-    def worker_preprocessor(self) -> _PreProcessor:
-        if self._worker_preprocessor is None:
-            self._worker_preprocessor = self._create_collate_preprocessors()[0]
-        return self._worker_preprocessor
+    def worker_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
+        return self._create_collate_preprocessors(running_stage)[0]
 
-    @worker_preprocessor.setter
-    def worker_preprocessor(self, new_processor: _PreProcessor):
-        self._worker_preprocessor = new_processor
-
-    @property
-    def device_preprocessor(self) -> _PreProcessor:
-        if self._device_preprocessor is None:
-            self._device_preprocessor = self._create_collate_preprocessors()[1]
-        return self._device_preprocessor
-
-    @device_preprocessor.setter
-    def device_preprocessor(self, new_processor: _PreProcessor):
-
-        self._device_preprocessor = new_processor
+    def device_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
+        return self._create_collate_preprocessors(running_stage)[1]
 
     @property
     def postprocessor(self) -> _PostProcessor:
         if self._postprocessor is None:
             self._postprocessor = self._create_uncollate_postprocessors()
-
         return self._postprocessor
 
     @postprocessor.setter
@@ -111,9 +98,8 @@ class DataPipeline:
             prefixes = ['predict'] + prefixes
 
         for prefix in prefixes:
-            curr_func_name = f'{prefix}_{function_name}'
-            if self._is_overriden(curr_func_name, object_type):
-                return curr_func_name
+            if self._is_overriden(function_name, object_type, prefix=prefix):
+                return f'{prefix}_{function_name}'
 
         return function_name
 
@@ -200,11 +186,11 @@ class DataPipeline:
     def _get_dataloader(model: 'Task', loader_name: str) -> Tuple[DataLoader, str]:
         dataloader, attr_name = None, None
         if hasattr(model, loader_name):
-            dataloader = getattr(model, loader_name)()
+            dataloader = getattr(model, loader_name)
             attr_name = loader_name
 
         if model.trainer is not None and hasattr(model.trainer, 'datamodule') and model.trainer.datamodule is not None:
-            dataloader = getattr(model.trainer.datamodule, loader_name)()
+            dataloader = getattr(model.trainer.datamodule, loader_name)
             attr_name = f'trainer.datamodule.{loader_name}'
 
         return dataloader, attr_name
@@ -220,6 +206,7 @@ class DataPipeline:
             curr_attr = getattr(curr_attr, intermediate)
 
         setattr(curr_attr, final_name, new_loader)
+        setattr(model, final_name, new_loader)
 
     def _attach_preprocess_to_model(
         self, model: 'Task', stages: Optional[RunningStage] = None, device_transform_only: bool = False
@@ -240,9 +227,8 @@ class DataPipeline:
 
             if isinstance(dataloader, _PatchDataLoader):
                 dataloader = dataloader()
-                was_patch = True
-            else:
-                was_patch = False
+            elif isinstance(dataloader, Callable):
+                dataloader = dataloader()
 
             if isinstance(dataloader, Sequence):
                 was_seq = True
@@ -256,22 +242,22 @@ class DataPipeline:
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
                     dl_args['collate_fn'], device_collate_fn = self._create_collate_preprocessors(
-                        collate_fn=dl_args['collate_fn']
+                        stage=stage, collate_fn=dl_args['collate_fn']
                     )
 
                     # don't have to reinstantiate loader if just rewrapping devices (happens during detach)
-                    if device_transform_only:
+                    if not device_transform_only:
                         del dl_args["batch_sampler"]
                         loader = type(loader)(**dl_args)
 
                 dataloader[idx] = loader
 
             # don't have to set attribute if rewrapping device part (happens during detach)
-            if device_transform_only:
+            if not device_transform_only:
                 if not was_seq:
                     dataloader = dataloader[0]
 
-                if was_patch:
+                if isinstance(dataloader, DataLoader):
                     dataloader = _PatchDataLoader(dataloader)
 
                 self._set_loader(model, whole_attr_name, dataloader)
@@ -289,12 +275,16 @@ class DataPipeline:
             save_per_sample = self._is_overriden('save_sample', Postprocess)
 
             if save_per_sample:
-                save_fn = self._postprocess_pipeline._save_sample
+                save_per_sample = self._postprocess_pipeline._save_sample
             else:
                 save_fn = self._postprocess_pipeline._save_data
 
         return _PostProcessor(
-            self.uncollate, self.pre_uncollate, self.post_uncollate, save_fn=save_fn, save_per_sample=save_per_sample
+            self._postprocess_pipeline.uncollate,
+            self._postprocess_pipeline.pre_uncollate,
+            self._postprocess_pipeline.post_uncollate,
+            save_fn=save_fn,
+            save_per_sample=save_per_sample
         )
 
     def _attach_postprocess_to_model(self, model: 'Task') -> 'Task':
@@ -303,11 +293,13 @@ class DataPipeline:
         )
         return model
 
-    def _attach_to_model(self, model: 'Task', loader_stage: str = 'all'):
+    def _attach_to_model(self, model: 'Task', stage: RunningStage = None):
         model._preprocess = self._preprocess_pipeline
-        self._attach_preprocess_to_model(model, loader_stage)
+        self._attach_preprocess_to_model(model, stage)
         model._postprocess = self._postprocess_pipeline
         self._attach_postprocess_to_model(model)
+        import pdb
+        pdb.set_trace()
 
     def _detach_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stages)
@@ -358,9 +350,8 @@ class DataPipeline:
 
             if isinstance(dataloader, _PatchDataLoader):
                 dataloader = dataloader()
-                was_patch = True
-            else:
-                was_patch = False
+            elif isinstance(dataloader, Callable):
+                dataloader = dataloader()
 
             if isinstance(dataloader, Sequence):
                 was_seq = True
@@ -385,7 +376,7 @@ class DataPipeline:
             if not was_seq:
                 dataloader = dataloader[0]
 
-            if was_patch:
+            if isinstance(dataloader, DataLoader):
                 dataloader = _PatchDataLoader(dataloader)
 
             self._set_loader(model, whole_attr_name, dataloader)
@@ -393,7 +384,8 @@ class DataPipeline:
     @staticmethod
     def _detach_postprocess_from_model(model: 'Task'):
         if hasattr(model.predict_step, '_original'):
-            # don't delete the predict_step here since we don't know if any other pipeline is attached which may rely on this!
+            # don't delete the predict_step here since we don't know
+            # if any other pipeline is attached which may rely on this!
             model.predict_step = model.predict_step._original
         else:
             raise RuntimeError('Postprocessing Pipeline was never attached to model. Cannot detach!')
@@ -433,4 +425,6 @@ class DataPipeline:
         return DataLoader(self._generate_auto_dataset(data), **loader_kwargs)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(preprocess={self._preprocess_pipeline}, postprocess={self._postprocess_pipeline})"
+        preprocess = self._preprocess_pipeline
+        postprocess = self._postprocess_pipeline
+        return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
