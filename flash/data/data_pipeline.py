@@ -189,7 +189,9 @@ class DataPipeline:
             dataloader = getattr(model, loader_name)
             attr_name = loader_name
 
-        if model.trainer is not None and hasattr(model.trainer, 'datamodule') and model.trainer.datamodule is not None:
+        elif model.trainer is not None and hasattr(
+            model.trainer, 'datamodule'
+        ) and model.trainer.datamodule is not None:
             dataloader = getattr(model.trainer.datamodule, loader_name)
             attr_name = f'trainer.datamodule.{loader_name}'
 
@@ -218,6 +220,11 @@ class DataPipeline:
             stages = [stages]
 
         for stage in stages:
+
+            if stage == RunningStage.PREDICTING:
+                print("here")
+                pass
+
             loader_name = f'{self.LOADERS_PREFIX[stage]}_dataloader'
 
             dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
@@ -229,6 +236,8 @@ class DataPipeline:
                 dataloader = dataloader()
             elif isinstance(dataloader, Callable):
                 dataloader = dataloader()
+                if dataloader is None:
+                    continue
 
             if isinstance(dataloader, Sequence):
                 was_seq = True
@@ -294,12 +303,11 @@ class DataPipeline:
         return model
 
     def _attach_to_model(self, model: 'Task', stage: RunningStage = None):
+        self._detach_from_model(model)
         model._preprocess = self._preprocess_pipeline
         self._attach_preprocess_to_model(model, stage)
         model._postprocess = self._postprocess_pipeline
         self._attach_postprocess_to_model(model)
-        import pdb
-        pdb.set_trace()
 
     def _detach_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stages)
@@ -326,10 +334,12 @@ class DataPipeline:
 
             # Traverse the decorators (multiple are possible) until decorator for specific stage was found.
             # Rewrap all previously traversed stages afterwards
+            was_attached = False
             while True:
                 # indicates that it was wrapped
                 if hasattr(current_func, '_stage') and hasattr(current_func, '_original'):
                     if current_func._stage == stage:
+                        was_attached = True
                         model.transfer_batch_to_device = current_func._original
                         break
                     else:
@@ -337,7 +347,10 @@ class DataPipeline:
                         current_func = current_func._original
 
                 else:
-                    raise RuntimeError(f'DataPipeline was not attached for stage {stage}')
+                    break
+
+            if not was_attached:
+                return
 
             for _stage in stages_to_rewrap:
                 self._attach_preprocess_to_model(model, _stage, device_transform_only=True)
@@ -388,7 +401,7 @@ class DataPipeline:
             # if any other pipeline is attached which may rely on this!
             model.predict_step = model.predict_step._original
         else:
-            raise RuntimeError('Postprocessing Pipeline was never attached to model. Cannot detach!')
+            pass
 
     def _generate_callable_auto_dataset(self, data: Union[Iterable, Any]) -> Callable:
 
