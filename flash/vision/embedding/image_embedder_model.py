@@ -21,8 +21,8 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core import Task
-from flash.core.data import TaskDataPipeline
-from flash.core.data.utils import _contains_any_tensor
+from flash.data.data_module import TaskDataPipeline
+from flash.data.utils import _contains_any_tensor
 from flash.vision.backbones import backbone_and_num_features
 from flash.vision.classification.data import _default_valid_transforms, _pil_loader
 

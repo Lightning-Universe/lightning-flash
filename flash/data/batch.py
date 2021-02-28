@@ -17,7 +17,7 @@ class _PreProcessor:
         return samples
 
     def __repr__(self) -> str:
-        repr_str = f'_PreProcessor:'
+        repr_str = '_PreProcessor:'
         repr_str += f'\n\t(pre_collate): {repr(self.pre_collate)}'
         repr_str += f'\n\t(collate_fn): {repr(self.collate_fn)}'
         repr_str += f'\n\t(post_collate): {repr(self.post_collate)}'
@@ -56,7 +56,7 @@ class _PostProcessor:
             return final_preds
 
     def __repr__(self) -> str:
-        repr_str = f'_PostProcessor:'
+        repr_str = '_PostProcessor:'
         repr_str += f'\n\t(pre_uncollate): {repr(self.pre_uncollate)}'
         repr_str += f'\n\t(uncollate_fn): {repr(self.uncollate_fn)}'
         repr_str += f'\n\t(post_uncollate): {repr(self.post_uncollate)}'

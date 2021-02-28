@@ -23,8 +23,8 @@ from transformers import AutoTokenizer, default_data_collator
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationDataPipeline
-from flash.core.data import DataModule
-from flash.core.data.utils import _contains_any_tensor
+from flash.data.data_module import DataModule
+from flash.data.utils import _contains_any_tensor
 
 
 def tokenize_text_lambda(tokenizer, input, max_length):

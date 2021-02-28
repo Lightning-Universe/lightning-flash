@@ -22,7 +22,6 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
-from flash.core.data import DataModule
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
@@ -91,7 +90,7 @@ class Task(pl.LightningModule):
         """
         x, y = batch
         y_hat = self.forward(x)
-        output = {"y_hat": self.data_pipeline.pre_uncollate(y_hat)}
+        output = {"y_hat": self.postprocess.pre_uncollate(y_hat)}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
@@ -152,11 +151,11 @@ class Task(pl.LightningModule):
             The post-processed model predictions
 
         """
+        running_stage = RunningStage.PREDICTING
         data_pipeline = data_pipeline or self.data_pipeline
-        x = [x for x in data_pipeline._generate_auto_dataset(x, RunningStage.PREDICTING)]
-        x = data_pipeline.worker_preprocessor(x)
-        #x = data_pipeline.device_preprocessor(x)
-        #x = self.data_pipeline.device_collate_fn(x)
+        x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
+        x = data_pipeline.worker_preprocessor(running_stage)(x)
+        x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)
         return predictions
 
@@ -197,6 +196,8 @@ class Task(pl.LightningModule):
     def postprocess(self, postprocess: Postprocess) -> None:
         data_pipeline = self.data_pipeline
         self.data_pipeline = DataPipeline(data_pipeline._preprocess_pipeline, postprocess)
+        self._preprocess = self.data_pipeline._preprocess_pipeline
+        self._postprocess = self.data_pipeline._postprocess_pipeline
 
     @property
     def data_pipeline(self) -> Optional[DataPipeline]:
