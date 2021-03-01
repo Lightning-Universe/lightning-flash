@@ -123,7 +123,7 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
     if model_name in MOBILENET_MODELS + VGG_MODELS:
         model = model(pretrained=pretrained)
         backbone = model.features
-        num_features = model.classifier[-1].in_features
+        num_features = 512 if model_name in VGG_MODELS else model.classifier[-1].in_features
         return backbone, num_features
 
     elif model_name in RESNET_MODELS:
