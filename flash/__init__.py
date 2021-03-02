@@ -47,8 +47,8 @@ if __LIGHTNING_FLASH_SETUP__:
     # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
 else:
 
-    from flash import tabular, text, vision
-    from flash.core import data, utils
+    from flash import data, tabular, text, vision
+    from flash.core import utils
     from flash.core.classification import ClassificationTask
     from flash.core.model import Task
     from flash.core.trainer import Trainer

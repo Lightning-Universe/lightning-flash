@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash import Trainer
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
