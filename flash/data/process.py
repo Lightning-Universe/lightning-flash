@@ -1,37 +1,43 @@
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 import torch
+from torch.utils.data._utils.collate import default_collate
 
 from flash.data.batch import default_uncollate
 
 
 class Preprocess:
 
-    def load_data(self, data: Any, dataset: Optional[Any]) -> Any:
+    @classmethod
+    def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
         """Loads entire data from Dataset"""
         return data
 
-    def load_sample(self, sample: Any) -> Any:
+    @classmethod
+    def load_sample(cls, sample: Any, dataset: Optional[Any] = None) -> Any:
         """Loads single sample from dataset"""
         return sample
 
-    def pre_collate(self, sample: Any) -> Any:
+    def per_sample_transform(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis)"""
         return sample
 
-    def post_collate(self, batch: Any) -> Any:
+    def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency)
         .. note::
-            This option is mutually exclusive with :meth:`device_pre_collate`,
+            This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.
         """
         return batch
 
-    def device_pre_collate(self, sample: Any) -> Any:
+    def collate(self, samples: Sequence) -> Any:
+        return default_collate(samples)
+
+    def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
         .. note::
-            This option is mutually exclusive with :meth:`post_collate`,
+            This option is mutually exclusive with :meth:`per_batch_transform`,
             since if both are specified, uncollation has to be applied.
         .. note::
             This function won't be called within the dataloader workers, since to make that happen
@@ -39,7 +45,7 @@ class Preprocess:
         """
         return sample
 
-    def device_post_collate(self, batch: Any) -> Any:
+    def per_batch_transform_on_device(self, batch: Any) -> Any:
         """
         Transforms to apply to a whole batch (if possible use this for efficiency).
         .. note::
@@ -55,13 +61,13 @@ class Postprocess:
         self._saved_samples = 0
         self._save_path = save_path
 
-    def pre_uncollate(self, batch: Any) -> Any:
+    def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch before uncollation to single samples.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return batch
 
-    def post_uncollate(self, sample: Any) -> Any:
+    def per_sample_transform(self, sample: Any) -> Any:
         """Transforms to apply to a single sample after splitting up the batch.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """

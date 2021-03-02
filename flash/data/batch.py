@@ -5,22 +5,22 @@ import torch
 
 class _PreProcessor:
 
-    def __init__(self, collate_fn: Callable, pre_collate: Callable, post_collate: Callable):
+    def __init__(self, collate_fn: Callable, per_sample_transform: Callable, per_batch_transform: Callable):
         self.collate_fn = collate_fn
-        self.pre_collate = pre_collate
-        self.post_collate = post_collate
+        self.per_sample_transform = per_sample_transform
+        self.per_batch_transform = per_batch_transform
 
     def __call__(self, samples: Sequence[Any]):
-        samples = [self.pre_collate(sample) for sample in samples]
+        samples = [self.per_sample_transform(sample) for sample in samples]
         samples = type(samples)(samples)
-        samples = self.post_collate(self.collate_fn(samples))
+        samples = self.per_batch_transform(self.collate_fn(samples))
         return samples
 
     def __repr__(self) -> str:
         repr_str = '_PreProcessor:'
-        repr_str += f'\n\t(pre_collate): {repr(self.pre_collate)}'
+        repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
         repr_str += f'\n\t(collate_fn): {repr(self.collate_fn)}'
-        repr_str += f'\n\t(post_collate): {repr(self.post_collate)}'
+        repr_str += f'\n\t(per_batch_transform): {repr(self.per_batch_transform)}'
         return repr_str
 
 
@@ -29,22 +29,21 @@ class _PostProcessor:
     def __init__(
         self,
         uncollate_fn: Callable,
-        pre_uncollate: Callable,
-        post_uncollate: Callable,
+        per_batch_transform: Callable,
+        per_sample_transform: Callable,
         save_fn: Optional[Callable] = None,
         save_per_sample: bool = False
     ):
         self.uncollate_fn = uncollate_fn
-        self.pre_uncollate = pre_uncollate
-        self.post_uncollate = post_uncollate
-
+        self.per_batch_transform = per_batch_transform
+        self.per_sample_transform = per_sample_transform
         self.save_fn = save_fn
         self.save_per_sample = save_per_sample
 
     def __call__(self, batch: Sequence[Any]):
-        uncollated = self.uncollate_fn(self.pre_uncollate(batch))
+        uncollated = self.uncollate_fn(self.per_batch_transform(batch))
 
-        final_preds = type(uncollated)([self.post_uncollate(sample) for sample in uncollated])
+        final_preds = type(uncollated)([self.per_sample_transform(sample) for sample in uncollated])
 
         if self.save_fn is not None:
             if self.save_per_sample:
@@ -57,9 +56,9 @@ class _PostProcessor:
 
     def __repr__(self) -> str:
         repr_str = '_PostProcessor:'
-        repr_str += f'\n\t(pre_uncollate): {repr(self.pre_uncollate)}'
+        repr_str += f'\n\t(per_batch_transform): {repr(self.per_batch_transform)}'
         repr_str += f'\n\t(uncollate_fn): {repr(self.uncollate_fn)}'
-        repr_str += f'\n\t(post_uncollate): {repr(self.post_uncollate)}'
+        repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
 
         return repr_str
 

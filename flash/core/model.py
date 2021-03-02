@@ -90,7 +90,7 @@ class Task(pl.LightningModule):
         """
         x, y = batch
         y_hat = self.forward(x)
-        output = {"y_hat": self.postprocess.pre_uncollate(y_hat)}
+        output = {"y_hat": self.postprocess.per_batch_transform(y_hat)}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
@@ -155,8 +155,10 @@ class Task(pl.LightningModule):
         data_pipeline = data_pipeline or self.data_pipeline
         x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
+        x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)
+        predictions = data_pipeline.postprocessor(predictions)
         return predictions
 
     def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
@@ -215,23 +217,54 @@ class Task(pl.LightningModule):
         self._data_pipeline = DataPipeline(data_pipeline.preprocess, self.postprocess)
         self._data_pipeline._attach_to_model(self)
 
-    def _get_pipeline(self, pipeline_attr_name: str):
-        data_pipeline = None
+        if self._preprocess is not None or self._postprocess is not None:
+            return DataPipeline(self._preprocess, self._postprocess)
 
-        if getattr(self, '_' + pipeline_attr_name) is not None:
-            data_pipeline = getattr(self, '_' + pipeline_attr_name)
+        if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
+            return self.datamodule.data_pipeline
 
-        elif self.datamodule is not None and hasattr(self, pipeline_attr_name):
-            data_pipeline = getattr(self.datamodule, pipeline_attr_name)
-            data_pipeline = DataPipeline(data_pipeline._preprocess_pipeline, self.postprocess)
+        if self.trainer is not None and hasattr(
+            self.trainer, 'datamodule'
+        ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+            return self.trainer.datamodule.data_pipeline
+        return self._data_pipeline
 
-        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and self.trainer.datamodule is not None:
-            if hasattr(self.trainer.datamodule,
-                       pipeline_attr_name) and getattr(self.trainer.datamodule, pipeline_attr_name):
-                data_pipeline = getattr(self.trainer.datamodule, pipeline_attr_name)
-                data_pipeline = DataPipeline(data_pipeline._preprocess_pipeline, self.postprocess)
+    @data_pipeline.setter
+    def data_pipeline(self, data_pipeline: DataPipeline) -> None:
+        self._data_pipeline = data_pipeline
+        if data_pipeline is not None and getattr(data_pipeline, '_preprocess_pipeline', None) is not None:
+            self._preprocess = data_pipeline._preprocess_pipeline
 
-        if data_pipeline is not None:
-            self._set_pipeline(data_pipeline)
+        if data_pipeline is not None and getattr(data_pipeline, '_postprocess_pipeline', None) is not None:
+            self._postprocess = data_pipeline._preprocess_pipeline
 
-        return data_pipeline
+    def on_fit_start(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._attach_to_model(self, [RunningStage.TRAINING, RunningStage.EVALUATING])
+        return super().on_fit_start()
+
+    def on_fit_end(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        return super().on_fit_end()
+
+    def on_test_start(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._attach_preprocess_to_model(self, RunningStage.TESTING)
+        return super().on_test_start()
+
+    def on_test_end(self):
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        return super().on_test_end()
+
+    def on_predict_start(self):
+        if self.data_pipeline is not None:
+            self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
+
+        return super().on_predict_start()
+
+    def on_predict_end(self):
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        return super().on_predict_end()

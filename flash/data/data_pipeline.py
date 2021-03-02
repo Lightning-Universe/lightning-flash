@@ -1,10 +1,13 @@
+import functools
 import os
+import weakref
 from functools import partial, wraps
 from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch._C import device
 from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
@@ -19,9 +22,10 @@ if TYPE_CHECKING:
 class DataPipeline:
 
     PREPROCESS_FUNCS = (
-        "load_data", "load_sample", "pre_collate", "post_collate", "device_pre_collate", "device_post_collate"
+        "load_data", "load_sample", "per_sample_transform", "per_batch_transform", "per_sample_transform_on_device",
+        "per_batch_transform_on_device", "collate"
     )
-    POSTPROCESS_FUNCS = ("pre_uncollate", "post_uncollate", "save_data", "save_sample")
+    POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
     LOADERS_PREFIX = {
         RunningStage.TRAINING: 'train',
         RunningStage.TESTING: 'test',
@@ -41,14 +45,11 @@ class DataPipeline:
         self._postprocessor = None
         self._running_stage = None
 
-    def _is_overriden(self, method_name: str, super_obj: Any, prefix: Optional[str] = None) -> bool:
+    def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
         """
         Cropped Version of
         https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
-        process_obj = self._preprocess_pipeline if isinstance(
-            self._preprocess_pipeline, super_obj
-        ) else self._postprocess_pipeline
 
         current_method_name = method_name if prefix is None else f'{prefix}_{method_name}'
 
@@ -81,7 +82,10 @@ class DataPipeline:
     def postprocessor(self, new_processor: _PostProcessor):
         self._postprocessor = new_processor
 
-    def _resolve_function_hierarchy(self, function_name, stage: RunningStage, object_type: Optional[Type] = None):
+    @classmethod
+    def _resolve_function_hierarchy(
+        cls, function_name, process_obj, stage: RunningStage, object_type: Optional[Type] = None
+    ):
         if object_type is None:
             object_type = Preprocess
 
@@ -98,7 +102,7 @@ class DataPipeline:
             prefixes = ['predict'] + prefixes
 
         for prefix in prefixes:
-            if self._is_overriden(function_name, object_type, prefix=prefix):
+            if cls._is_overriden(function_name, process_obj, object_type, prefix=prefix):
                 return f'{prefix}_{function_name}'
 
         return function_name
@@ -109,22 +113,32 @@ class DataPipeline:
         if collate_fn is None:
             collate_fn = default_collate
 
-        func_names = {k: self._resolve_function_hierarchy(k, stage, Preprocess) for k in self.PREPROCESS_FUNCS}
+        func_names = {
+            k: self._resolve_function_hierarchy(k, self._preprocess_pipeline, stage, Preprocess)
+            for k in self.PREPROCESS_FUNCS
+        }
 
-        post_collate_overriden = self._is_overriden(func_names['post_collate'], Preprocess)
+        if self._is_overriden(func_names["collate"], self._preprocess_pipeline, Preprocess):
+            collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
 
-        device_pre_collate_overriden = self._is_overriden(func_names['device_pre_collate'], Preprocess)
+        per_batch_transform_overriden = self._is_overriden(
+            func_names['per_batch_transform'], self._preprocess_pipeline, Preprocess
+        )
 
-        if post_collate_overriden and device_pre_collate_overriden:
+        per_sample_transform_on_device_overriden = self._is_overriden(
+            func_names['per_sample_transform_on_device'], self._preprocess_pipeline, Preprocess
+        )
+
+        if per_batch_transform_overriden and per_sample_transform_on_device_overriden:
             raise MisconfigurationException(
-                f'{self.__class__.__name__}: post_collate and gpu_pre_collate are mutual exclusive.'
+                f'{self.__class__.__name__}: per_batch_transform and gpu_per_sample_transform are mutual exclusive.'
             )
 
-        elif post_collate_overriden:
+        elif per_batch_transform_overriden:
             worker_collate_fn = collate_fn
             device_collate_fn = self._do_nothing_collate
 
-        elif device_pre_collate_overriden:
+        elif per_sample_transform_on_device_overriden:
             worker_collate_fn = self._do_nothing_collate
             device_collate_fn = collate_fn
 
@@ -137,12 +151,12 @@ class DataPipeline:
         ) else worker_collate_fn
 
         worker_preprocessor = _PreProcessor(
-            worker_collate_fn, getattr(self._preprocess_pipeline, func_names['pre_collate']),
-            getattr(self._preprocess_pipeline, func_names['post_collate'])
+            worker_collate_fn, getattr(self._preprocess_pipeline, func_names['per_sample_transform']),
+            getattr(self._preprocess_pipeline, func_names['per_batch_transform'])
         )
         device_preprocessor = _PreProcessor(
-            device_collate_fn, getattr(self._preprocess_pipeline, func_names['device_pre_collate']),
-            getattr(self._preprocess_pipeline, func_names['device_post_collate'])
+            device_collate_fn, getattr(self._preprocess_pipeline, func_names['per_sample_transform_on_device']),
+            getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device'])
         )
         return worker_preprocessor, device_preprocessor
 
@@ -151,36 +165,20 @@ class DataPipeline:
         func: Callable, preprocessor: _PreProcessor, model: 'Task', stage: RunningStage
     ) -> Callable:
 
-        @wraps(func)
-        def new_func(*args, **kwargs):
-            moved_to_device = func(*args, **kwargs)
-            # TODO: This may not be the best solution since it's abusing python scopes.
-            # Search for a better working solution
-            if model.running_stage == stage:
-                moved_to_device = preprocessor(moved_to_device)
-            return moved_to_device
+        if not isinstance(func, _StageOrchestrator):
+            func = _StageOrchestrator(func, model)
+        func.register_additional_stage(stage, preprocessor)
 
-        # Necessary to detach
-        new_func._original = func
-        new_func._processor = preprocessor
-        new_func._stage = stage
-
-        return new_func
+        return func
 
     @staticmethod
-    def _model_predict_step_wrapper(func: Callable, postprocessor: _PostProcessor) -> Callable:
+    def _model_predict_step_wrapper(func: Callable, postprocessor: _PostProcessor, model: 'Task') -> Callable:
 
-        @wraps(func)
-        def new_func(*args, **kwargs):
-            predicted = func(*args, **kwargs)
-            predicted = postprocessor(predicted)
-            return predicted
+        if not isinstance(func, _StageOrchestrator):
+            func = _StageOrchestrator(func, model)
+        func.register_additional_stage(RunningStage.PREDICTING, postprocessor)
 
-        # necessary to detach
-        new_func._original = func
-        new_func._processor = postprocessor
-
-        return new_func
+        return func
 
     @staticmethod
     def _get_dataloader(model: 'Task', loader_name: str) -> Tuple[DataLoader, str]:
@@ -192,7 +190,7 @@ class DataPipeline:
         elif model.trainer is not None and hasattr(
             model.trainer, 'datamodule'
         ) and model.trainer.datamodule is not None:
-            dataloader = getattr(model.trainer.datamodule, loader_name)
+            dataloader = getattr(model.trainer.datamodule, loader_name, None)
             attr_name = f'trainer.datamodule.{loader_name}'
 
         return dataloader, attr_name
@@ -222,7 +220,6 @@ class DataPipeline:
         for stage in stages:
 
             if stage == RunningStage.PREDICTING:
-                print("here")
                 pass
 
             loader_name = f'{self.LOADERS_PREFIX[stage]}_dataloader'
@@ -281,7 +278,7 @@ class DataPipeline:
 
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
         if self._postprocess_pipeline._save_path is not None:
-            save_per_sample = self._is_overriden('save_sample', Postprocess)
+            save_per_sample = self._is_overriden('save_sample', self._postprocess_pipeline, Postprocess)
 
             if save_per_sample:
                 save_per_sample = self._postprocess_pipeline._save_sample
@@ -290,24 +287,26 @@ class DataPipeline:
 
         return _PostProcessor(
             self._postprocess_pipeline.uncollate,
-            self._postprocess_pipeline.pre_uncollate,
-            self._postprocess_pipeline.post_uncollate,
+            self._postprocess_pipeline.per_batch_transform,
+            self._postprocess_pipeline.per_sample_transform,
             save_fn=save_fn,
             save_per_sample=save_per_sample
         )
 
     def _attach_postprocess_to_model(self, model: 'Task') -> 'Task':
         model.predict_step = self._model_predict_step_wrapper(
-            model.predict_step, self._create_uncollate_postprocessors()
+            model.predict_step, self._create_uncollate_postprocessors(), model
         )
         return model
 
-    def _attach_to_model(self, model: 'Task', stage: RunningStage = None):
-        self._detach_from_model(model)
+    def _attach_to_model(self, model: 'Task', stages: RunningStage = None):
+        # not necessary to detach. preprocessing and postprocessing for stage will be overwritten.
         model._preprocess = self._preprocess_pipeline
-        self._attach_preprocess_to_model(model, stage)
-        model._postprocess = self._postprocess_pipeline
-        self._attach_postprocess_to_model(model)
+        self._attach_preprocess_to_model(model, stages)
+
+        if stages is None or stages == RunningStage.PREDICTING:
+            model._postprocess = self._postprocess_pipeline
+            self._attach_postprocess_to_model(model)
 
     def _detach_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stages)
@@ -328,38 +327,23 @@ class DataPipeline:
 
         for stage in stages:
 
-            current_func = model.transfer_batch_to_device
+            device_collate = None
+            if isinstance(model.transfer_batch_to_device, _StageOrchestrator):
+                device_collate = model.transfer_batch_to_device.unregister_stage(stage)
 
-            stages_to_rewrap = []
+                # if no additional funmc available: remove wrapper
+                if model.transfer_batch_to_device.is_empty():
+                    model.transfer_batch_to_device = model.transfer_batch_to_device.func
 
-            # Traverse the decorators (multiple are possible) until decorator for specific stage was found.
-            # Rewrap all previously traversed stages afterwards
-            was_attached = False
-            while True:
-                # indicates that it was wrapped
-                if hasattr(current_func, '_stage') and hasattr(current_func, '_original'):
-                    if current_func._stage == stage:
-                        was_attached = True
-                        model.transfer_batch_to_device = current_func._original
-                        break
-                    else:
-                        stages_to_rewrap.append(current_func._stage)
-                        current_func = current_func._original
-
-                else:
-                    break
-
-            if not was_attached:
-                return
-
-            for _stage in stages_to_rewrap:
-                self._attach_preprocess_to_model(model, _stage, device_transform_only=True)
-
-            device_collate = current_func._processor.collate_fn
+            if device_collate is None:
+                device_collate = self._do_nothing_collate
 
             loader_name = f'{self.LOADERS_PREFIX[stage]}_dataloader'
 
             dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
+
+            if dataloader is None:
+                continue
 
             if isinstance(dataloader, _PatchDataLoader):
                 dataloader = dataloader()
@@ -375,7 +359,7 @@ class DataPipeline:
             for idx, loader in enumerate(dataloader):
                 if isinstance(loader, DataLoader):
                     # TODO: See lightning for proper reinstantiation of loader
-                    worker_collate = dataloader.collate_fn
+                    worker_collate = loader.collate_fn
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
                     dl_args['collate_fn'] = partial(
@@ -396,6 +380,7 @@ class DataPipeline:
 
     @staticmethod
     def _detach_postprocess_from_model(model: 'Task'):
+
         if hasattr(model.predict_step, '_original'):
             # don't delete the predict_step here since we don't know
             # if any other pipeline is attached which may rely on this!
@@ -441,3 +426,37 @@ class DataPipeline:
         preprocess = self._preprocess_pipeline
         postprocess = self._postprocess_pipeline
         return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
+
+
+class _StageOrchestrator:
+
+    def __init__(self, func_to_wrap: Callable, model: 'Task') -> None:
+        self.func = func_to_wrap
+
+        self._stage_mapping = {k: None for k in RunningStage}
+        self.model = weakref.proxy(model)
+
+        functools.update_wrapper(self, self.func)
+
+    def __call__(self, *args, **kwargs):
+        outputs = self.func(*args, **kwargs)
+
+        additional_func = self._stage_mapping.get(self.model.trainer._running_stage, None)
+
+        if additional_func is not None:
+            outputs = additional_func(outputs)
+
+        return outputs
+
+    def register_additional_stage(self, stage: RunningStage, stage_func: Optional[Callable] = None):
+        assert stage_func is None or callable(stage_func)
+
+        self._stage_mapping[stage] = stage_func
+
+    def unregister_stage(self, stage: RunningStage):
+        ret_val = self._stage_mapping.pop(stage)
+        self._stage_mapping[stage] = None
+        return ret_val
+
+    def is_empty(self):
+        return all([v is None for v in self._stage_mapping.values()]) or not self._stage_mapping

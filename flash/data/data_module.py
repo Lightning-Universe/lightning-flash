@@ -13,11 +13,14 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Optional
+from typing import Any, Callable, Optional, Union
 
 import pytorch_lightning as pl
+import torch
+from numpy import isin
 from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data import DataLoader, Dataset
+from torch.utils.data.dataset import Subset
 
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
@@ -25,7 +28,7 @@ from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 class TaskDataPipeline(DataPipeline):
 
-    def post_collate(self, batch: Any) -> Any:
+    def per_batch_transform(self, batch: Any) -> Any:
         return (batch["x"], batch.get('target', batch.get('y'))) if isinstance(batch, dict) else batch
 
 
@@ -85,20 +88,36 @@ class DataModule(pl.LightningDataModule):
         self._preprocess = None
         self._postprocess = None
 
-        self.setup()
+        # this may also trigger data preloading
+        self.set_running_stages()
 
-    def setup(self):
-        if self._train_ds is not None and isinstance(self._train_ds, AutoDataset):
-            self._train_ds._setup(RunningStage.TRAINING)
+    @staticmethod
+    def get_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, default: Optional[Any] = None) -> Any:
+        if isinstance(dataset, Subset):
+            return getattr(dataset.dataset, attr_name, default)
 
-        if self._valid_ds is not None and isinstance(self._valid_ds, AutoDataset):
-            self._valid_ds._setup(RunningStage.EVALUATING)
+        return getattr(dataset, attr_name, default)
 
-        if self._test_ds is not None and isinstance(self._test_ds, AutoDataset):
-            self._test_ds._setup(RunningStage.TESTING)
+    @staticmethod
+    def set_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, value: Any) -> None:
+        if isinstance(dataset, Subset):
+            setattr(dataset.dataset, attr_name, value)
 
-        if self._predict_ds is not None and isinstance(self._predict_ds, AutoDataset):
-            self._predict_ds._setup(RunningStage.PREDICTING)
+        else:
+            setattr(dataset, attr_name, value)
+
+    def set_running_stages(self):
+        if self._train_ds is not None:
+            self.set_dataset_attribute(self._train_ds, 'running_stage', RunningStage.TRAINING)
+
+        if self._valid_ds is not None:
+            self.set_dataset_attribute(self._valid_ds, 'running_stage', RunningStage.EVALUATING)
+
+        if self._test_ds is not None:
+            self.set_dataset_attribute(self._test_ds, 'running_stage', RunningStage.TESTING)
+
+        if self._predict_ds is not None:
+            self.set_dataset_attribute(self._predict_ds, 'running_stage', RunningStage.PREDICTING)
 
     def _train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -152,3 +171,74 @@ class DataModule(pl.LightningDataModule):
     @property
     def data_pipeline(self) -> DataPipeline:
         return DataPipeline(self.preprocess, self.postprocess)
+
+    @classmethod
+    def autogenerate_dataset(
+        cls,
+        data: Any,
+        running_stage: RunningStage,
+        whole_data_load_fn: Optional[Callable] = None,
+        per_sample_load_fn: Optional[Callable] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+    ) -> AutoDataset:
+
+        if whole_data_load_fn is None:
+            whole_data_load_fn = getattr(
+                cls.preprocess_cls,
+                DataPipeline._resolve_function_hierarchy('load_data', cls.preprocess_cls, running_stage, Preprocess)
+            )
+
+        if per_sample_load_fn is None:
+            per_sample_load_fn = getattr(
+                cls.preprocess_cls,
+                DataPipeline._resolve_function_hierarchy('load_sample', cls.preprocess_cls, running_stage, Preprocess)
+            )
+        return AutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
+
+    @staticmethod
+    def train_valid_test_split(
+        dataset: torch.utils.data.Dataset,
+        train_split: Optional[Union[float, int]] = None,
+        valid_split: Optional[Union[float, int]] = None,
+        test_split: Optional[Union[float, int]] = None,
+        seed: Optional[int] = 1234,
+    ):
+        if test_split is None:
+            _test_length = 0
+        elif isinstance(test_split, float):
+            _test_length = int(len(dataset) * test_split)
+        else:
+            _test_length = test_split
+
+        if valid_split is None:
+            _valid_split = 0
+        elif isinstance(valid_split, float):
+            _val_length = int(len(dataset) * valid_split)
+        else:
+            _val_length = valid_split
+
+        if train_split is None:
+            _train_length = len(dataset) - _val_length - _test_length
+
+        elif isinstance(train_split, float):
+            _train_length = int(len(dataset) * train_split)
+
+        else:
+            _train_length = train_split
+
+        if seed is not None:
+            generator = torch.Generator().manual_seed(seed)
+        else:
+            generator = None
+
+        train_ds, val_ds, test_ds = torch.utils.data.random_split(
+            dataset, [_train_length, _val_length, _test_length], generator
+        )
+
+        if valid_split is None:
+            val_ds = None
+
+        if test_split is None:
+            test_ds = None
+
+        return train_ds, val_ds, test_ds

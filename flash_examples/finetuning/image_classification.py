@@ -21,7 +21,7 @@ from flash.vision import ImageClassificationData, ImageClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Load the data
-datamodule = ImageClassificationData(
+datamodule = ImageClassificationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
     valid_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
