@@ -11,17 +11,17 @@
 # owners
 /.github/CODEOWNERS   @williamfalcon
 # main
-/README.md            @teddykoker
+/README.md            @edenlightning @tchaton
 # installation
-/setup.py             @borda @teddykoker
+/setup.py             @borda @tchaton
 
 # CI/CD
-/.github/workflows/   @borda @teddykoker
+/.github/workflows/   @borda @tchaton
 # configs in root
-/*.yml                @borda @teddykoker
+/*.yml                @borda @tchaton
 
 # Docs
-/docs/                          @edenlightning @teddykoker
-/.github/*.md                   @edenlightning @teddykoker
-/.github/ISSUE_TEMPLATE/*.md    @edenlightning @teddykoker
-/docs/source/conf.py            @borda @teddykoker
+/docs/                          @edenlightning @tchaton
+/.github/*.md                   @edenlightning @tchaton
+/.github/ISSUE_TEMPLATE/*.md    @edenlightning @tchaton
+/docs/source/conf.py            @borda @tchaton
