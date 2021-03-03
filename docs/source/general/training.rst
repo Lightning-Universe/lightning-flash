@@ -40,40 +40,40 @@ Flash tasks supports many advanced training functionalities out-of-the-box, such
 .. code-block:: python
 
     # train for 10 epochs
-    trainer.fit(max_epochs=10)
+    flash.Trainer(max_epochs=10)
 
 * Training on GPUs
 
 .. code-block:: python
 
     # train on 1 GPU
-    trainer.fit(gpus=1)
+    flash.Trainer(gpus=1)
     
 * Training on multiple GPUs
 
 .. code-block:: python
 
     # train on multiple GPUs
-    trainer.fit(gpus=4)
+    flash.Trainer(gpus=4)
 
 .. code-block:: python
 
     # train on gpu 1, 3, 5 (3 gpus total)
-    trainer.fit(gpus=[1, 3, 5])
+    flash.Trainer(gpus=[1, 3, 5])
     
 * Using mixed precision training
 
 .. code-block:: python
 
     # Multi GPU with mixed precision
-    trainer.fit(gpus=2, precision=16)
+    flash.Trainer(gpus=2, precision=16)
 
 * Training on TPUs
 
 .. code-block:: python
 
     # Train on TPUs
-    trainer.fit(tpu_cores=8)
+    flash.Trainer(tpu_cores=8)
 
 You can add to the flash Trainer any argument from the Lightning trainer! Learn more about the Lightning Trainer `here <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_.
 
