@@ -4,12 +4,13 @@ import pandas as pd
 
 
 
-def labels_from_categorical_csv(
+def labels_from_csv(
     csv: str,
     index_col: str,
     feature_cols: List,
     return_dict: bool = True,
-    index_col_collate_fn: Any = None
+    index_col_collate_fn: Any = None,
+    representation="categorical"
 ) -> Union[Dict, List]:
     """
     Returns a dictionary with {index_col: label} for each entry in the csv.
