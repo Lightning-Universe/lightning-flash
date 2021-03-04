@@ -17,6 +17,7 @@ import pytorch_lightning as pl
 import torch
 from torch.nn.functional import binary_cross_entropy, cross_entropy
 
+from flash.core.utils import bind_method
 from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
 
@@ -80,6 +81,23 @@ class ClassificationTask(Task):
         output["logs"] = logs
         output["y"] = y
         return output
+
+    @predict_context
+    def predict(
+        self,
+        x: Any,
+        batch_idx: Optional[int] = None,
+        skip_collate_fn: bool = False,
+        dataloader_idx: Optional[int] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+    ) -> Any:    
+        if self.multilabel:
+            bind_method(data_pipeline, lambda self, samples: samples.tolist())
+        super.predict(x,
+                      batch_idx,
+                      skip_collate_fn,
+                      dataloader_idx,
+                      data_pipeline)
 
     @property
     def default_loss_fn(self) -> Callable:
