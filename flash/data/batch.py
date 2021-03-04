@@ -54,7 +54,7 @@ class _PostProcessor:
         else:
             return final_preds
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         repr_str = '_PostProcessor:'
         repr_str += f'\n\t(per_batch_transform): {repr(self.per_batch_transform)}'
         repr_str += f'\n\t(uncollate_fn): {repr(self.uncollate_fn)}'
