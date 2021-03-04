@@ -92,12 +92,15 @@ class ClassificationTask(Task):
         data_pipeline: Optional[ClassificationDataPipeline] = None,
     ) -> Any:    
         if self.multilabel:
-            bind_method(data_pipeline, lambda self, samples: samples.tolist())
-        super.predict(x,
+            bind_method(self.data_pipeline, 
+                        lambda self, samples: samples.tolist(),
+                        'after_uncollate'
+            )
+        return super().predict(x,
                       batch_idx,
                       skip_collate_fn,
                       dataloader_idx,
-                      data_pipeline)
+                      self.data_pipeline)
 
     @property
     def default_loss_fn(self) -> Callable:
