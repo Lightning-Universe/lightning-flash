@@ -19,7 +19,7 @@ from torch.nn.functional import binary_cross_entropy, cross_entropy
 
 from flash.core.utils import bind_method
 from flash.core.data import TaskDataPipeline
-from flash.core.model import Task
+from flash.core.model import Task, predict_context
 
 
 class ClassificationDataPipeline(TaskDataPipeline):
@@ -89,7 +89,7 @@ class ClassificationTask(Task):
         batch_idx: Optional[int] = None,
         skip_collate_fn: bool = False,
         dataloader_idx: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None,
+        data_pipeline: Optional[ClassificationDataPipeline] = None,
     ) -> Any:    
         if self.multilabel:
             bind_method(data_pipeline, lambda self, samples: samples.tolist())
