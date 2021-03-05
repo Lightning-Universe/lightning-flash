@@ -109,17 +109,16 @@ class ObjectDetector(Task):
     ):
         if backbone is None:
             # Constructs a model with a ResNet-50-FPN backbone when no backbone is specified.
+            model = _models[model_name](
+                pretrained=pretrained,
+                pretrained_backbone=pretrained_backbone,
+                trainable_backbone_layers=trainable_backbone_layers,
+            )
             if model_name == "fasterrcnn":
-                model = _models[model_name](
-                    pretrained=pretrained,
-                    pretrained_backbone=pretrained_backbone,
-                    trainable_backbone_layers=trainable_backbone_layers,
-                )
                 in_features = model.roi_heads.box_predictor.cls_score.in_features
                 head = FastRCNNPredictor(in_features, num_classes)
                 model.roi_heads.box_predictor = head
             else:
-                model = _models[model_name](pretrained=pretrained, pretrained_backbone=pretrained_backbone)
                 model.head = RetinaNetHead(
                     in_channels=model.backbone.out_channels,
                     num_anchors=model.head.classification_head.num_anchors,

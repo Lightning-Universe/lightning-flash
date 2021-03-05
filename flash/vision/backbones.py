@@ -24,11 +24,16 @@ if _BOLTS_AVAILABLE:
 
 ROOT_S3_BUCKET = "https://pl-bolts-weights.s3.us-east-2.amazonaws.com"
 
-MOBILENET_MODELS = ["mobilenet_v2"]
+MOBILENET_MODELS = ["mobilenet_v2", "mobilenet_v3_small", "mobilenet_v3_large"]
 VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
-RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnext50_32x4d", "resnext101_32x8d"]
+RESNET_MODELS = [
+    "resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnext50_32x4d", "resnext101_32x8d",
+    "wide_resnet50_2", "wide_resnet101_2"
+]
 DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
-TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS
+MNASNET_MODELS = ["mnasnet0_5", "mnasnet0_75", "mnasnet1_0", "mnasnet1_3"]
+
+TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS + MNASNET_MODELS
 
 BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
@@ -123,7 +128,11 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
     if model_name in MOBILENET_MODELS + VGG_MODELS:
         model = model(pretrained=pretrained)
         backbone = model.features
-        num_features = 512 if model_name in VGG_MODELS else model.classifier[-1].in_features
+        if model_name in VGG_MODELS:
+            num_features = 512
+        else:
+            num_features = model.classifier[-1].in_features if model_name == MOBILENET_MODELS[0] else model.classifier[
+                -4].in_features
         return backbone, num_features
 
     elif model_name in RESNET_MODELS:
@@ -137,6 +146,12 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
         model = model(pretrained=pretrained)
         backbone = nn.Sequential(*model.features, nn.ReLU(inplace=True))
         num_features = model.classifier.in_features
+        return backbone, num_features
+
+    elif model_name in MNASNET_MODELS:
+        model = model(pretrained=pretrained)
+        backbone = model.layers
+        num_features = model.classifier[-1].in_features
         return backbone, num_features
 
     raise ValueError(f"{model_name} is not supported yet.")
