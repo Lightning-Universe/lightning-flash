@@ -42,7 +42,7 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
         chunk_size = 1024
         num_bars = int(file_size / chunk_size)
         if verbose:
-            logging.info(f'file size: {dict(file_size=file_size)} \n # bars: {dict(num_bars=num_bars)}')
+            logging.info(f'file size: {file_size}\n# bars: {num_bars}')
         with open(local_filename, 'wb') as fp:
             for chunk in tq(
                 r.iter_content(chunk_size=chunk_size),
