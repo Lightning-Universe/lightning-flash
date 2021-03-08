@@ -30,7 +30,8 @@ class AutoDataset(torch.utils.data.Dataset):
         if load_data is not None or load_sample is not None:
             if data_pipeline is not None:
                 rank_zero_warn(
-                    "datapipeline is specified but load_sample and/or load_data are also specified. Won't use datapipeline"
+                    "datapipeline is specified but load_sample and/or load_data are also specified. "
+                    "Won't use datapipeline"
                 )
         self.data = data
         self.data_pipeline = data_pipeline

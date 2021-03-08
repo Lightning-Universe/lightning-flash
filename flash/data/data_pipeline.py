@@ -29,7 +29,7 @@ class DataPipeline:
     LOADERS_PREFIX = {
         RunningStage.TRAINING: 'train',
         RunningStage.TESTING: 'test',
-        RunningStage.EVALUATING: 'val',
+        RunningStage.VALIDATING: 'val',
         RunningStage.PREDICTING: 'predict'
     }
 
@@ -94,7 +94,7 @@ class DataPipeline:
         # TODO: Check if tuning uses training or validation data
         if stage in (RunningStage.TRAINING, RunningStage.TUNING):
             prefixes = ['train', 'fit'] + prefixes
-        elif stage == RunningStage.EVALUATING:
+        elif stage == RunningStage.VALIDATING:
             prefixes = ['validation', 'fit'] + prefixes
         elif stage == RunningStage.TESTING:
             prefixes = ['test'] + prefixes
@@ -212,7 +212,7 @@ class DataPipeline:
         self, model: 'Task', stages: Optional[RunningStage] = None, device_transform_only: bool = False
     ) -> None:
         if stages is None:
-            stages = [RunningStage.TRAINING, RunningStage.EVALUATING, RunningStage.TESTING, RunningStage.PREDICTING]
+            stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 
         elif isinstance(stages, RunningStage):
             stages = [stages]
@@ -320,7 +320,7 @@ class DataPipeline:
 
     def _detach_preprocessing_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
         if stages is None:
-            stages = [RunningStage.TRAINING, RunningStage.EVALUATING, RunningStage.TESTING, RunningStage.PREDICTING]
+            stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 
         elif isinstance(stages, RunningStage):
             stages = [stages]

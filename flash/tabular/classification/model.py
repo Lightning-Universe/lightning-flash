@@ -15,11 +15,14 @@ from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
 from pytorch_lightning.metrics import Metric
-from pytorch_tabnet.tab_network import TabNet
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
+from flash.core.imports import _TABNET_AVAILABLE
 from flash.data.data_module import DataPipeline
+
+if _TABNET_AVAILABLE:
+    from pytorch_tabnet.tab_network import TabNet
 
 
 class TabularClassifier(ClassificationTask):

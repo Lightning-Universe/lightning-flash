@@ -7,7 +7,7 @@ from torch.utils.data._utils.collate import default_collate
 from flash.data.batch import default_uncollate
 
 
-class Preprocess:
+class Preprocess(torch.nn.Module):
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
@@ -55,9 +55,10 @@ class Preprocess:
         return batch
 
 
-class Postprocess:
+class Postprocess(torch.nn.Module):
 
     def __init__(self, save_path: Optional[str] = None):
+        super().__init__()
         self._saved_samples = 0
         self._save_path = save_path
 
