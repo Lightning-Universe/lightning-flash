@@ -80,9 +80,12 @@ class Task(pl.LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._data_pipeline = None
-        self._preprocess = None
-        self._postprocess = None
+        if not hasattr(self, "_data_pipeline"):
+            self._data_pipeline = None
+        if not hasattr(self, "_preprocess"):
+            self._preprocess = None
+        if not hasattr(self, "_postprocess"):
+            self._postprocess = None
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -188,7 +191,9 @@ class Task(pl.LightningModule):
     @preprocess.setter
     def preprocess(self, preprocess: Preprocess) -> None:
         data_pipeline = self.data_pipeline
-        self.data_pipeline = DataPipeline(preprocess, data_pipeline._postprocess_pipeline)
+        self.data_pipeline = DataPipeline(preprocess, data_pipeline._postprocess_pipeline or self._postprocess)
+        import pdb
+        pdb.set_trace()
 
     @property
     def postprocess(self):
@@ -236,17 +241,31 @@ class Task(pl.LightningModule):
             self._preprocess = data_pipeline._preprocess_pipeline
 
         if data_pipeline is not None and getattr(data_pipeline, '_postprocess_pipeline', None) is not None:
-            self._postprocess = data_pipeline._preprocess_pipeline
+            datapipeline_postprocess = getattr(data_pipeline, '_postprocess_pipeline', None)
+            if type(datapipeline_postprocess) != Postprocess:
+                self._postprocess = data_pipeline._postprocess_pipeline
 
-    def on_fit_start(self) -> None:
+    def on_train_start(self) -> None:
         if self.data_pipeline is not None:
-            self.data_pipeline._attach_to_model(self, [RunningStage.TRAINING, RunningStage.VALIDATING])
-        return super().on_fit_start()
+            self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
+        return super().on_train_start()
 
-    def on_fit_end(self) -> None:
+    def on_train_end(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
-        return super().on_fit_end()
+        return super().on_train_end()
+
+    def on_validation_start(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
+        import pdb
+        pdb.set_trace()
+        return super().on_validation_start()
+
+    def on_validation_end(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        return super().on_validation_end()
 
     def on_test_start(self) -> None:
         if self.data_pipeline is not None:

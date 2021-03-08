@@ -1,13 +1,60 @@
 import os
-from typing import Any, Optional, Sequence
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Union
 
 import torch
+from pytorch_lightning.utilities.apply_func import apply_to_collection
+from torch.nn import Module, ModuleDict, ModuleList
 from torch.utils.data._utils.collate import default_collate
 
 from flash.data.batch import default_uncollate
 
 
+class FuncModule(torch.nn.Module):
+
+    def __init__(self, func) -> None:
+        super().__init__()
+        self.func = func
+
+    def forward(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+
+def _convert_to_modules(transforms: Dict):
+
+    if transforms is None or isinstance(transforms, Module):
+        return transforms
+
+    elif isinstance(transforms, Mapping) and not isinstance(transforms, ModuleDict):
+        for k, v in transforms.items():
+            transforms[k] = v if isinstance(transforms, Module) else FuncModule(v)
+        return ModuleDict(transforms)
+
+    elif isinstance(transforms, Iterable) and not isinstance(transforms, ModuleList):
+        return ModuleList([v if isinstance(v, Module) else FuncModule(v) for v in transforms])
+
+    else:
+        return FuncModule(transforms)
+
+
+@dataclass(unsafe_hash=True)
 class Preprocess(torch.nn.Module):
+
+    train_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
+    valid_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
+    test_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
+    predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
+
+    def __post_init__(self):
+        super().__init__()
+
+        self.train_transform = _convert_to_modules(self.train_transform)
+        self.valid_transform = _convert_to_modules(self.valid_transform)
+        self.test_transform = _convert_to_modules(self.test_transform)
+        self.predict_transform = _convert_to_modules(self.predict_transform)
+
+        import pdb
+        pdb.set_trace()
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:

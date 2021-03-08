@@ -36,6 +36,4 @@ class ClassificationPostprocess(Postprocess):
 
 class ClassificationTask(Task):
 
-    @property
-    def postprocess(self):
-        return ClassificationPostprocess()
+    _postprocess = ClassificationPostprocess()
