@@ -93,7 +93,7 @@ class Task(pl.LightningModule):
         """
         x, y = batch
         y_hat = self.forward(x)
-        output = {"y_hat": self.postprocess.per_batch_transform(y_hat)}
+        output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
@@ -186,25 +186,21 @@ class Task(pl.LightningModule):
 
     @property
     def preprocess(self):
-        return self._preprocess
+        return self._preprocess or getattr(self.data_pipeline, '_preprocess_pipeline', None)
 
     @preprocess.setter
     def preprocess(self, preprocess: Preprocess) -> None:
-        data_pipeline = self.data_pipeline
-        self.data_pipeline = DataPipeline(preprocess, data_pipeline._postprocess_pipeline or self._postprocess)
-        import pdb
-        pdb.set_trace()
+        self._preprocess = preprocess
+        self.data_pipeline = DataPipeline(preprocess, self.postprocess)
 
     @property
     def postprocess(self):
-        return self._postprocess
+        return self._postprocess or getattr(self.data_pipeline, '_postprocess_pipeline', None)
 
     @postprocess.setter
     def postprocess(self, postprocess: Postprocess) -> None:
-        data_pipeline = self.data_pipeline
-        self.data_pipeline = DataPipeline(data_pipeline._preprocess_pipeline, postprocess)
-        self._preprocess = self.data_pipeline._preprocess_pipeline
-        self._postprocess = self.data_pipeline._postprocess_pipeline
+        self.data_pipeline = DataPipeline(self.preprocess, postprocess)
+        self._postprocess = postprocess
 
     @property
     def data_pipeline(self) -> Optional[DataPipeline]:
@@ -249,8 +245,6 @@ class Task(pl.LightningModule):
     def on_validation_start(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
-        import pdb
-        pdb.set_trace()
         return super().on_validation_start()
 
     def on_validation_end(self) -> None:
@@ -278,3 +272,19 @@ class Task(pl.LightningModule):
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         return super().on_predict_end()
+
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        # TODO: Is this the best way to do this? or should we also use some kind of hparams here?
+        # This may be an issue since here we create the same problems with pickle as in
+        # https://pytorch.org/docs/stable/notes/serialization.html
+
+        if self.data_pipeline is not None and not 'data_pipeline' in checkpoint:
+            checkpoint['data_pipeline'] = self.data_pipeline
+        return super().on_save_checkpoint(checkpoint)
+
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        ret_val = super().on_load_checkpoint(checkpoint)
+        if 'data_pipeline' in checkpoint:
+            self.data_pipeline = checkpoint['data_pipeline']
+
+        return ret_val

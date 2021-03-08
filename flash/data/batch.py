@@ -2,15 +2,18 @@ from typing import Any, Callable, Mapping, Optional, Sequence
 
 import torch
 
+from flash.data.utils import convert_to_modules
 
-class _PreProcessor:
+
+class _PreProcessor(torch.nn.Module):
 
     def __init__(self, collate_fn: Callable, per_sample_transform: Callable, per_batch_transform: Callable):
-        self.collate_fn = collate_fn
-        self.per_sample_transform = per_sample_transform
-        self.per_batch_transform = per_batch_transform
+        super().__init__()
+        self.collate_fn = convert_to_modules(collate_fn)
+        self.per_sample_transform = convert_to_modules(per_sample_transform)
+        self.per_batch_transform = convert_to_modules(per_batch_transform)
 
-    def __call__(self, samples: Sequence[Any]):
+    def forward(self, samples: Sequence[Any]):
         samples = [self.per_sample_transform(sample) for sample in samples]
         samples = type(samples)(samples)
         samples = self.per_batch_transform(self.collate_fn(samples))
@@ -24,7 +27,7 @@ class _PreProcessor:
         return repr_str
 
 
-class _PostProcessor:
+class _PostProcessor(torch.nn.Module):
 
     def __init__(
         self,
@@ -34,13 +37,14 @@ class _PostProcessor:
         save_fn: Optional[Callable] = None,
         save_per_sample: bool = False
     ):
-        self.uncollate_fn = uncollate_fn
-        self.per_batch_transform = per_batch_transform
-        self.per_sample_transform = per_sample_transform
-        self.save_fn = save_fn
-        self.save_per_sample = save_per_sample
+        super().__init__()
+        self.uncollate_fn = convert_to_modules(uncollate_fn)
+        self.per_batch_transform = convert_to_modules(per_batch_transform)
+        self.per_sample_transform = convert_to_modules(per_sample_transform)
+        self.save_fn = convert_to_modules(save_fn)
+        self.save_per_sample = convert_to_modules(save_per_sample)
 
-    def __call__(self, batch: Sequence[Any]):
+    def forward(self, batch: Sequence[Any]):
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
 
         final_preds = type(uncollated)([self.per_sample_transform(sample) for sample in uncollated])
