@@ -25,7 +25,7 @@ from torchvision import transforms as T
 
 from flash.data.data_module import DataModule, TaskDataPipeline
 from flash.data.utils import _contains_any_tensor
-from flash.vision.classification.data import _pil_loader
+from flash.vision.utils import pil_loader
 
 _COCO_AVAILABLE = _module_available("pycocotools")
 if _COCO_AVAILABLE:
@@ -131,7 +131,7 @@ _default_transform = T.ToTensor()
 
 class ObjectDetectionDataPipeline(TaskDataPipeline):
 
-    def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = _pil_loader):
+    def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = pil_loader):
         self._valid_transform = valid_transform
         self._loader = loader
 
