@@ -231,7 +231,7 @@ class Task(pl.LightningModule):
 
     def on_fit_start(self) -> None:
         if self.data_pipeline is not None:
-            self.data_pipeline._attach_to_model(self, [RunningStage.TRAINING, RunningStage.EVALUATING])
+            self.data_pipeline._attach_to_model(self, [RunningStage.TRAINING, RunningStage.VALIDATING])
         return super().on_fit_start()
 
     def on_fit_end(self) -> None:

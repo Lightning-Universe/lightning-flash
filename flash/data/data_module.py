@@ -37,7 +37,7 @@ class DataModule(pl.LightningDataModule):
 
     Args:
         train_ds: Dataset for training. Defaults to None.
-        valid_ds: Dataset for validating model performance during training. Defaults to None.
+        valid_ds: Dataset for VALIDATING model performance during training. Defaults to None.
         test_ds: Dataset to test model performance. Defaults to None.
         batch_size: the batch size to be used by the DataLoader. Defaults to 1.
         num_workers: The number of workers to use for parallelized loading.
@@ -111,7 +111,7 @@ class DataModule(pl.LightningDataModule):
             self.set_dataset_attribute(self._train_ds, 'running_stage', RunningStage.TRAINING)
 
         if self._valid_ds is not None:
-            self.set_dataset_attribute(self._valid_ds, 'running_stage', RunningStage.EVALUATING)
+            self.set_dataset_attribute(self._valid_ds, 'running_stage', RunningStage.VALIDATING)
 
         if self._test_ds is not None:
             self.set_dataset_attribute(self._test_ds, 'running_stage', RunningStage.TESTING)
@@ -211,7 +211,8 @@ class DataModule(pl.LightningDataModule):
             _test_length = test_split
 
         if valid_split is None:
-            _valid_split = 0
+            _val_length = 0
+
         elif isinstance(valid_split, float):
             _val_length = int(len(dataset) * valid_split)
         else:
