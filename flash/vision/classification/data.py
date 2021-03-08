@@ -14,7 +14,7 @@
 import os
 import pathlib
 from dataclasses import dataclass
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import torch
@@ -54,15 +54,7 @@ def _pil_loader(sample) -> Union[Image.Image, list]:
     return img
 
 
-@dataclass(unsafe_hash=True)
 class ImageClassificationPreprocess(Preprocess):
-
-    train_transform: Optional[Union[Callable, Module]]
-    valid_transform: Optional[Union[Callable, Module]]
-    use_valid_transform: bool = True
-
-    def __post_init__(self):
-        super().__init__()
 
     @staticmethod
     def _find_classes(dir):
@@ -130,53 +122,45 @@ class ImageClassificationPreprocess(Preprocess):
     def predict_load_data(cls, samples: Any, dataset: AutoDataset = None) -> Any:
         return cls._get_predicting_files(samples)
 
+    def _convert_tensor_to_pil(self, sample):
+        # some datasets provide their data as tensors.
+        # however, it would be better to convert those data once in load_data
+        if isinstance(sample, torch.Tensor):
+            sample = to_pil_image(sample)
+        return sample
+
+    def _apply_transform(
+        self, sample: Any, transform: Union[Callable, Dict[str, Callable]], func_name: str
+    ) -> torch.Tensor:
+        if transform is not None:
+            if isinstance(transform, Dict):
+                transform = transform[func_name]
+            sample = transform(sample)
+        return sample
+
     def train_per_sample_transform(self, sample: Any) -> Any:
         sample, target = sample
-        if isinstance(sample, torch.Tensor):
-            sample = to_pil_image(sample)
+        sample = self._convert_tensor_to_pil(sample)
+        return self._apply_transform(sample, self.train_transform, "per_sample_transform"), target
 
-        transform = self.train_transform
-
-        if transform is not None:
-            sample = transform(sample)
-        return sample, target
-
-    def test_per_sample_transform(self, sample: Any) -> Any:
+    def per_sample_transform(self, sample: Any) -> Any:
         sample, target = sample
-        if isinstance(sample, torch.Tensor):
-            sample = to_pil_image(sample)
-
-        transform = self.valid_transform
-
-        if transform is not None:
-            sample = transform(sample)
-        return sample, target
-
-    def validation_per_sample_transform(self, sample: Any) -> Any:
-        sample, target = sample
-        if isinstance(sample, torch.Tensor):
-            sample = to_pil_image(sample)
-
-        transform = self.valid_transform
-
-        if transform is not None:
-            sample = transform(sample)
-        return sample, target
+        sample = self._convert_tensor_to_pil(sample)
+        return self._apply_transform(sample, self.valid_transform, "per_sample_transform"), target
 
     def predict_per_sample_transform(self, sample: Any) -> Any:
-        if isinstance(sample, torch.Tensor):
-            sample = to_pil_image(sample)
-        transform = self.valid_transform if self.use_valid_transform else self.train_transform
+        sample = self._convert_tensor_to_pil(sample)
+        return self._apply_transform(sample, self.valid_transform, "per_sample_transform")
 
-        if transform is not None:
-            return transform(sample)
+    def train_per_batch_transform_on_device(self, batch: Tuple) -> Tuple:
+        batch, target = batch
+        return self._apply_transform(batch, self.train_transform, "per_batch_transform_on_device"), target
 
 
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
     preprocess_cls = ImageClassificationPreprocess
-    postprocess_cls = ClassificationPostprocess
 
     def __init__(
         self,
@@ -184,8 +168,10 @@ class ImageClassificationData(DataModule):
         valid_ds: Optional[torch.utils.data.Dataset] = None,
         test_ds: Optional[torch.utils.data.Dataset] = None,
         predict_ds: Optional[torch.utils.data.Dataset] = None,
-        train_transform: Optional[Union[Callable, str]] = 'default',
-        valid_transform: Optional[Union[Callable, str]] = 'default',
+        train_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        valid_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        test_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        predict_transform: Optional[Union[Callable, str, Dict]] = 'default',
         batch_size: int = 1,
         num_workers: Optional[int] = None,
         train_split: Optional[Union[float, int]] = None,
@@ -234,8 +220,16 @@ class ImageClassificationData(DataModule):
         if isinstance(valid_transform, str) and valid_transform == 'default':
             valid_transform = self.default_valid_transforms
 
+        if isinstance(test_transform, str) and test_transform == 'default':
+            test_transform = self.default_valid_transforms
+
+        if isinstance(predict_transform, str) and predict_transform == 'default':
+            predict_transform = self.default_valid_transforms
+
         self.train_transform = train_transform
         self.valid_transform = valid_transform
+        self.test_transform = test_transform
+        self.predict_transform = predict_transform
 
     @property
     def default_train_transforms(self):
@@ -275,6 +269,8 @@ class ImageClassificationData(DataModule):
         return self.preprocess_cls(
             train_transform=self.train_transform,
             valid_transform=self.valid_transform,
+            test_transform=self.test_transform,
+            predict_transform=self.predict_transform
         )
 
     @classmethod
@@ -301,8 +297,10 @@ class ImageClassificationData(DataModule):
         valid_folder: Optional[Union[str, pathlib.Path]] = None,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
         predict_folder: Union[str, pathlib.Path] = None,
-        train_transform: Optional[Union[Callable, str]] = 'default',
-        valid_transform: Optional[Union[Callable, str]] = 'default',
+        train_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        valid_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        test_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        predict_transform: Optional[Union[Callable, str, Dict]] = 'default',
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         data_pipeline: Optional[DataPipeline] = None,
@@ -356,6 +354,8 @@ class ImageClassificationData(DataModule):
             predict_ds=predict_ds,
             train_transform=train_transform,
             valid_transform=valid_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             **kwargs,
