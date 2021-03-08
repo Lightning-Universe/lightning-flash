@@ -13,11 +13,15 @@
 # limitations under the License.
 import os
 import pathlib
+from dataclasses import dataclass
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 import torch
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.nn import Module
+from torch.utils import data
 from torchvision import transforms as T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 from torchvision.transforms.functional import to_pil_image
@@ -29,17 +33,15 @@ from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
 
 
+@dataclass(unsafe_hash=True)
 class ImageClassificationPreprocess(Preprocess):
 
-    def __init__(
-        self,
-        train_transform: Optional[Callable] = None,
-        valid_transform: Optional[Callable] = None,
-        use_valid_transform: bool = True,
-    ):
-        self._train_transform = train_transform
-        self._valid_transform = valid_transform
-        self._use_valid_transform = use_valid_transform
+    train_transform: Optional[Union[Callable, Module]]
+    valid_transform: Optional[Union[Callable, Module]]
+    use_valid_transform: bool = True
+
+    def __post_init__(self):
+        super().__init__()
 
     @staticmethod
     def _find_classes(dir):
@@ -112,7 +114,7 @@ class ImageClassificationPreprocess(Preprocess):
         if isinstance(sample, torch.Tensor):
             sample = to_pil_image(sample)
 
-        transform = self._train_transform
+        transform = self.train_transform
 
         if transform is not None:
             sample = transform(sample)
@@ -123,7 +125,7 @@ class ImageClassificationPreprocess(Preprocess):
         if isinstance(sample, torch.Tensor):
             sample = to_pil_image(sample)
 
-        transform = self._valid_transform
+        transform = self.valid_transform
 
         if transform is not None:
             sample = transform(sample)
@@ -134,7 +136,7 @@ class ImageClassificationPreprocess(Preprocess):
         if isinstance(sample, torch.Tensor):
             sample = to_pil_image(sample)
 
-        transform = self._valid_transform
+        transform = self.valid_transform
 
         if transform is not None:
             sample = transform(sample)
@@ -143,7 +145,7 @@ class ImageClassificationPreprocess(Preprocess):
     def predict_per_sample_transform(self, sample: Any) -> Any:
         if isinstance(sample, torch.Tensor):
             sample = to_pil_image(sample)
-        transform = self._valid_transform if self._use_valid_transform else self._train_transform
+        transform = self.valid_transform if self.use_valid_transform else self.train_transform
 
         if transform is not None:
             return transform(sample)
@@ -269,7 +271,7 @@ class ImageClassificationData(DataModule):
         if data_pipeline is not None:
             return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
 
-        return cls.autogenerate_dataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline)
+        return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)
 
     @classmethod
     def from_folders(
@@ -317,7 +319,7 @@ class ImageClassificationData(DataModule):
             train_folder, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
         )
         valid_ds = cls._generate_dataset_if_possible(
-            valid_folder, running_stage=RunningStage.EVALUATING, data_pipeline=data_pipeline
+            valid_folder, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
         )
         test_ds = cls._generate_dataset_if_possible(
             test_folder, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
@@ -366,7 +368,8 @@ class ImageClassificationData(DataModule):
             test_filepaths: string or sequence of file paths for test dataset. Defaults to ``None``.
             test_labels: sequence of labels for test dataset. Defaults to ``None``.
             train_transform: transforms for training dataset. Defaults to ``default``, which loads imagenet transforms.
-            valid_transform: transforms for validation and testing dataset. Defaults to ``default``, which loads imagenet transforms.
+            valid_transform: transforms for validation and testing dataset.
+                Defaults to ``default``, which loads imagenet transforms.
             batch_size: the batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
@@ -426,7 +429,7 @@ class ImageClassificationData(DataModule):
 
         if valid_filepaths is not None and valid_labels is not None:
             valid_ds = cls._generate_dataset_if_possible(
-                zip(valid_filepaths, valid_labels), running_stage=RunningStage.EVALUATING
+                zip(valid_filepaths, valid_labels), running_stage=RunningStage.VALIDATING
             )
         else:
             valid_ds = None
