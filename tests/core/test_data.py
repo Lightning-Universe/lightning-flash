@@ -16,7 +16,7 @@ import platform
 import torch
 
 from flash import DataModule
-from flash.core.data import DataPipeline
+from flash.data.data_pipeline import DataPipeline
 
 # ======== Mock functions ========
 

@@ -16,42 +16,21 @@ import pathlib
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import pandas as pd
 import torch
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils import data
 from torchvision import transforms as T
-from torchvision.datasets import VisionDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 from torchvision.transforms.functional import to_pil_image
 
 from flash.core.classification import ClassificationPostprocess
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
-from flash.data.utils import _contains_any_tensor
-
-
-def _pil_loader(sample) -> Union[Image.Image, list]:
-    # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
-
-    if isinstance(sample, (tuple, list)):
-        path = sample[0]
-        sample = list(sample)
-    else:
-        path = sample
-
-    with open(path, "rb") as f, Image.open(f) as img:
-        img = img.convert("RGB")
-
-    if isinstance(sample, list):
-        sample[0] = img
-        return sample
-
-    return img
+from flash.data.data_pipeline import DataPipeline
+from flash.data.process import Preprocess
 
 
 class ImageClassificationPreprocess(Preprocess):

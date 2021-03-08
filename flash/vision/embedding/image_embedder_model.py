@@ -24,7 +24,7 @@ from flash.core import Task
 from flash.data.data_module import TaskDataPipeline
 from flash.data.utils import _contains_any_tensor
 from flash.vision.backbones import backbone_and_num_features
-from flash.vision.classification.data import _pil_loader
+from flash.vision.utils import pil_loader
 
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
@@ -44,7 +44,7 @@ class ImageEmbedderDataPipeline(TaskDataPipeline):
     def __init__(
         self,
         valid_transform: Optional[Callable] = 'default',
-        loader: Callable = _pil_loader,
+        loader: Callable = pil_loader,
     ):
         self._valid_transform = valid_transform
         self._loader = loader
