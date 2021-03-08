@@ -14,10 +14,11 @@
 
 import os.path
 import zipfile
-from typing import Any, Type
+from typing import Any, Callable, Dict, Iterable, Mapping, Type
 
 import requests
 import torch
+from pytorch_lightning.utilities.apply_func import apply_to_collection
 from tqdm.auto import tqdm as tq
 
 
@@ -88,3 +89,26 @@ def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
     elif isinstance(value, dict):
         return any(_contains_any_tensor(v, dtype=dtype) for v in value.values())
     return False
+
+
+class FuncModule(torch.nn.Module):
+
+    def __init__(self, func) -> None:
+        super().__init__()
+        self.func = func
+
+    def forward(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+
+def convert_to_modules(transforms: Dict):
+
+    if transforms is None or isinstance(transforms, torch.nn.Module):
+        return transforms
+
+    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=torch.nn.Module)
+    transforms = apply_to_collection(transforms, Mapping, torch.nn.ModuleDict, wrong_dtype=torch.nn.ModuleDict)
+    transforms = apply_to_collection(
+        transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
+    )
+    return transforms

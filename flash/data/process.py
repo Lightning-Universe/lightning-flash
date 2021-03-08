@@ -47,10 +47,18 @@ class Preprocess(torch.nn.Module):
         predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
     ):
         super().__init__()
+<<<<<<< HEAD
         self.train_transform = _convert_to_modules(train_transform)
         self.valid_transform = _convert_to_modules(valid_transform)
         self.test_transform = _convert_to_modules(test_transform)
         self.predict_transform = _convert_to_modules(predict_transform)
+=======
+
+        self.train_transform = convert_to_modules(self.train_transform)
+        self.valid_transform = convert_to_modules(self.valid_transform)
+        self.test_transform = convert_to_modules(self.test_transform)
+        self.predict_transform = convert_to_modules(self.predict_transform)
+>>>>>>> make everything nn.Module and check serialization
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
@@ -98,6 +106,7 @@ class Preprocess(torch.nn.Module):
         return batch
 
 
+@dataclass(unsafe_hash=True)
 class Postprocess(torch.nn.Module):
 
     def __init__(self, save_path: Optional[str] = None):
