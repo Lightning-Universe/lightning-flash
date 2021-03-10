@@ -1,17 +1,25 @@
 from typing import Any, Callable, Mapping, Optional, Sequence
 
 import torch
+from pytorch_lightning.trainer.states import RunningStage
 
 from flash.data.utils import convert_to_modules
 
 
 class _PreProcessor(torch.nn.Module):
 
-    def __init__(self, collate_fn: Callable, per_sample_transform: Callable, per_batch_transform: Callable):
+    def __init__(
+        self,
+        collate_fn: Callable,
+        per_sample_transform: Callable,
+        per_batch_transform: Callable,
+        stage: Optional[RunningStage] = None
+    ):
         super().__init__()
         self.collate_fn = convert_to_modules(collate_fn)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
         self.per_batch_transform = convert_to_modules(per_batch_transform)
+        self._stage = stage
 
     def forward(self, samples: Sequence[Any]):
         samples = [self.per_sample_transform(sample) for sample in samples]
@@ -25,6 +33,7 @@ class _PreProcessor(torch.nn.Module):
         repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
         repr_str += f'\n\t(collate_fn): {repr(self.collate_fn)}'
         repr_str += f'\n\t(per_batch_transform): {repr(self.per_batch_transform)}'
+        repr_str += f'\n\t(stage): {repr(self._stage)}'
         return repr_str
 
 

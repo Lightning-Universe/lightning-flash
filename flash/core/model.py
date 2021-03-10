@@ -252,7 +252,9 @@ class Task(pl.LightningModule):
 
     def on_test_start(self) -> None:
         if self.data_pipeline is not None:
-            self.data_pipeline._attach_preprocess_to_model(self, RunningStage.TESTING)
+            self.data_pipeline._detach_from_model(self)
+        if self.data_pipeline is not None:
+            self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
         return super().on_test_start()
 
     def on_test_end(self):
@@ -263,13 +265,17 @@ class Task(pl.LightningModule):
     def on_predict_start(self):
         if self.data_pipeline is not None:
             self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
-
         return super().on_predict_start()
 
     def on_predict_end(self):
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         return super().on_predict_end()
+
+    def on_fit_end(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        return super().on_fit_end()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # TODO: Is this the best way to do this? or should we also use some kind of hparams here?

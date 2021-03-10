@@ -45,6 +45,7 @@ class DataPipeline:
         self._postprocessor = None
         self._running_stage = None
 
+    @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
         """
         Cropped Version of
@@ -110,28 +111,31 @@ class DataPipeline:
     def _create_collate_preprocessors(self,
                                       stage: RunningStage,
                                       collate_fn: Optional[Callable] = None) -> Tuple[_PreProcessor, _PreProcessor]:
+        original_collate_fn = None
         if collate_fn is None:
             collate_fn = default_collate
+        else:
+            original_collate_fn = collate_fn
 
         func_names = {
             k: self._resolve_function_hierarchy(k, self._preprocess_pipeline, stage, Preprocess)
             for k in self.PREPROCESS_FUNCS
         }
 
-        if self._is_overriden(func_names["collate"], self._preprocess_pipeline, Preprocess):
+        if self._is_overriden("collate", self._preprocess_pipeline, Preprocess, prefix=stage.value):
             collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
 
         per_batch_transform_overriden = self._is_overriden(
-            func_names['per_batch_transform'], self._preprocess_pipeline, Preprocess
+            "per_batch_transform", self._preprocess_pipeline, Preprocess, prefix=stage.value
         )
 
         per_sample_transform_on_device_overriden = self._is_overriden(
-            func_names['per_sample_transform_on_device'], self._preprocess_pipeline, Preprocess
+            "per_sample_transform_on_device", self._preprocess_pipeline, Preprocess, prefix=stage.value
         )
 
         if per_batch_transform_overriden and per_sample_transform_on_device_overriden:
             raise MisconfigurationException(
-                f'{self.__class__.__name__}: per_batch_transform and gpu_per_sample_transform are mutual exclusive.'
+                f'{self.__class__.__name__}: per_batch_transform and gpu_per_sample_transform are mutual exclusive for stage {stage}'
             )
 
         elif per_batch_transform_overriden:
@@ -152,11 +156,12 @@ class DataPipeline:
 
         worker_preprocessor = _PreProcessor(
             worker_collate_fn, getattr(self._preprocess_pipeline, func_names['per_sample_transform']),
-            getattr(self._preprocess_pipeline, func_names['per_batch_transform'])
+            getattr(self._preprocess_pipeline, func_names['per_batch_transform']), stage
         )
+        worker_preprocessor._original_collate_fn = original_collate_fn
         device_preprocessor = _PreProcessor(
             device_collate_fn, getattr(self._preprocess_pipeline, func_names['per_sample_transform_on_device']),
-            getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device'])
+            getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device']), stage
         )
         return worker_preprocessor, device_preprocessor
 
@@ -268,9 +273,9 @@ class DataPipeline:
 
                 self._set_loader(model, whole_attr_name, dataloader)
 
-        model.transfer_batch_to_device = (
-            self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn, model, stage)
-        )
+            model.transfer_batch_to_device = (
+                self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn, model, stage)
+            )
 
     def _create_uncollate_postprocessors(self) -> _PostProcessor:
         save_per_sample = None
@@ -362,11 +367,10 @@ class DataPipeline:
                     worker_collate = loader.collate_fn
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                    dl_args['collate_fn'] = partial(
-                        self._composed_collates, worker_collate=worker_collate, device_collate=device_collate
-                    )
-                    del dl_args["batch_sampler"]
-                    loader = type(loader)(**dl_args)
+                    if isinstance(dl_args['collate_fn'], _PreProcessor):
+                        dl_args['collate_fn'] = dl_args['collate_fn']._original_collate_fn
+                        del dl_args["batch_sampler"]
+                        loader = type(loader)(**dl_args)
 
                 dataloader[idx] = loader
 
