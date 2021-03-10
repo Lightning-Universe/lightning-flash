@@ -69,7 +69,10 @@ class AutoDataset(torch.utils.data.Dataset):
         assert stage is None or stage.value in self.STAGES
         old_load_data = self.load_data.__code__ if self.load_data is not None else None
 
-        if self.running_stage is not None and self.data_pipeline is not None and self.load_data is None and self.load_sample is None and stage is not None:
+        if (
+            self.running_stage is not None and self.data_pipeline is not None and self.load_data is None
+            and self.load_sample is None and stage is not None
+        ):
             self.load_data = getattr(
                 self.data_pipeline._preprocess_pipeline,
                 self.data_pipeline._resolve_function_hierarchy(

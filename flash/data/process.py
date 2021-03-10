@@ -8,33 +8,7 @@ from torch.nn import Module, ModuleDict, ModuleList
 from torch.utils.data._utils.collate import default_collate
 
 from flash.data.batch import default_uncollate
-
-
-class FuncModule(torch.nn.Module):
-
-    def __init__(self, func) -> None:
-        super().__init__()
-        self.func = func
-
-    def forward(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
-
-
-def _convert_to_modules(transforms: Dict):
-
-    if transforms is None or isinstance(transforms, Module):
-        return transforms
-
-    elif isinstance(transforms, Mapping) and not isinstance(transforms, ModuleDict):
-        for k, v in transforms.items():
-            transforms[k] = v if isinstance(v, Module) else FuncModule(v)
-        return ModuleDict(transforms)
-
-    elif isinstance(transforms, Iterable) and not isinstance(transforms, ModuleList):
-        return ModuleList([v if isinstance(v, Module) else FuncModule(v) for v in transforms])
-
-    else:
-        return FuncModule(transforms)
+from flash.data.utils import convert_to_modules
 
 
 class Preprocess(torch.nn.Module):
@@ -47,10 +21,10 @@ class Preprocess(torch.nn.Module):
         predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
     ):
         super().__init__()
-        self.train_transform = _convert_to_modules(train_transform)
-        self.valid_transform = _convert_to_modules(valid_transform)
-        self.test_transform = _convert_to_modules(test_transform)
-        self.predict_transform = _convert_to_modules(predict_transform)
+        self.train_transform = convert_to_modules(train_transform)
+        self.valid_transform = convert_to_modules(valid_transform)
+        self.test_transform = convert_to_modules(test_transform)
+        self.predict_transform = convert_to_modules(predict_transform)
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
@@ -98,6 +72,7 @@ class Preprocess(torch.nn.Module):
         return batch
 
 
+@dataclass(unsafe_hash=True)
 class Postprocess(torch.nn.Module):
 
     def __init__(self, save_path: Optional[str] = None):

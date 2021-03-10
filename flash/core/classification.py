@@ -25,11 +25,6 @@ class ClassificationDataPipeline:
 
 class ClassificationPostprocess(Postprocess):
 
-    def per_batch_transform(self, batch: Union[torch.Tensor, tuple]) -> torch.Tensor:
-        if isinstance(batch, tuple):
-            batch = batch[0]
-        return torch.softmax(batch, -1)
-
     def per_sample_transform(self, samples: Any) -> Any:
         return torch.argmax(samples, -1).tolist()
 

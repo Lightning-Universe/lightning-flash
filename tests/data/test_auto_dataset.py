@@ -102,8 +102,8 @@ def test_autodataset_with_functions(
         _ = dset[idx]
 
     if with_dataset:
-        assert dset.load_sample_was_called == True
-        assert dset.load_data_was_called == True
+        assert dset.load_sample_was_called
+        assert dset.load_data_was_called
         assert functions.load_sample_with_dataset_count == len(dset)
         assert functions.load_data_with_dataset_count == 1
     else:
@@ -139,8 +139,8 @@ def test_preprocessing_data_pipeline_with_running_stage(with_dataset):
         _ = dataset[idx]
 
     if with_dataset:
-        assert dataset.train_load_sample_was_called == True
-        assert dataset.train_load_data_was_called == True
+        assert dataset.train_load_sample_was_called
+        assert dataset.train_load_data_was_called
         assert pipe._preprocess_pipeline.train_load_sample_with_dataset_count == len(dataset)
         assert pipe._preprocess_pipeline.train_load_data_with_dataset_count == 1
     else:
@@ -181,6 +181,6 @@ def test_preprocessing_data_pipeline_no_running_stage(with_dataset):
 
     if with_dataset:
         assert pipe._preprocess_pipeline.train_load_data_with_dataset_count == 1
-        assert dataset.train_load_data_was_called == True
+        assert dataset.train_load_data_was_called
     else:
         assert pipe._preprocess_pipeline.train_load_data_count == 1

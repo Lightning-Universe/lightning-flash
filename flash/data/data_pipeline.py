@@ -451,11 +451,13 @@ class _StageOrchestrator:
     def register_additional_stage(self, stage: RunningStage, stage_func: Optional[Callable] = None):
         assert stage_func is None or callable(stage_func)
 
-        self._stage_mapping[stage] = stage_func
+        self._stage_mapping[stage] = stage_func.to(self.model.device, self.model.dtype)
 
     def unregister_stage(self, stage: RunningStage):
         ret_val = self._stage_mapping.pop(stage)
         self._stage_mapping[stage] = None
+        if ret_val is not None:
+            ret_val = ret_val.cpu()
         return ret_val
 
     def is_empty(self):
