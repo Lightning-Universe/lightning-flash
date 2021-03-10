@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import Trainer
-from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.trainer.states import RunningStage, TrainerState
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
@@ -257,14 +257,16 @@ class Task(pl.LightningModule):
 
     def on_validation_start(self) -> None:
         if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        if self.data_pipeline is not None:
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
-        import pdb
-        pdb.set_trace()
         return super().on_validation_start()
 
     def on_validation_end(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
+        if self.trainer.state == TrainerState.FITTING:
+            self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
         return super().on_validation_end()
 
     def on_test_start(self) -> None:

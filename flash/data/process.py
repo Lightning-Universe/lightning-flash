@@ -27,7 +27,7 @@ def _convert_to_modules(transforms: Dict):
 
     elif isinstance(transforms, Mapping) and not isinstance(transforms, ModuleDict):
         for k, v in transforms.items():
-            transforms[k] = v if isinstance(transforms, Module) else FuncModule(v)
+            transforms[k] = v if isinstance(v, Module) else FuncModule(v)
         return ModuleDict(transforms)
 
     elif isinstance(transforms, Iterable) and not isinstance(transforms, ModuleList):
@@ -37,24 +37,20 @@ def _convert_to_modules(transforms: Dict):
         return FuncModule(transforms)
 
 
-@dataclass(unsafe_hash=True)
 class Preprocess(torch.nn.Module):
 
-    train_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
-    valid_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
-    test_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
-    predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None
-
-    def __post_init__(self):
+    def __init__(
+        self,
+        train_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
+        valid_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
+    ):
         super().__init__()
-
-        self.train_transform = _convert_to_modules(self.train_transform)
-        self.valid_transform = _convert_to_modules(self.valid_transform)
-        self.test_transform = _convert_to_modules(self.test_transform)
-        self.predict_transform = _convert_to_modules(self.predict_transform)
-
-        import pdb
-        pdb.set_trace()
+        self.train_transform = _convert_to_modules(train_transform)
+        self.valid_transform = _convert_to_modules(valid_transform)
+        self.test_transform = _convert_to_modules(test_transform)
+        self.predict_transform = _convert_to_modules(predict_transform)
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:

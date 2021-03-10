@@ -21,6 +21,7 @@ from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
+from torch.nn.modules import ModuleDict
 from torch.utils import data
 from torchvision import transforms as T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
@@ -34,6 +35,8 @@ from flash.data.process import Preprocess
 
 
 class ImageClassificationPreprocess(Preprocess):
+
+    _default_func_name = "per_sample_transform"
 
     @staticmethod
     def _find_classes(dir):
@@ -112,8 +115,14 @@ class ImageClassificationPreprocess(Preprocess):
         self, sample: Any, transform: Union[Callable, Dict[str, Callable]], func_name: str
     ) -> torch.Tensor:
         if transform is not None:
-            if isinstance(transform, Dict):
-                transform = transform[func_name]
+            if isinstance(transform, (Dict, ModuleDict)):
+                if func_name in transform:
+                    transform = transform[func_name]
+                else:
+                    return sample
+            else:
+                if func_name != self._default_func_name:
+                    return sample
             sample = transform(sample)
         return sample
 

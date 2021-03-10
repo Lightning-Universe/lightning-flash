@@ -13,7 +13,8 @@ class _PreProcessor:
     def __call__(self, samples: Sequence[Any]):
         samples = [self.per_sample_transform(sample) for sample in samples]
         samples = type(samples)(samples)
-        samples = self.per_batch_transform(self.collate_fn(samples))
+        samples = self.collate_fn(samples)
+        samples = self.per_batch_transform(samples)
         return samples
 
     def __repr__(self) -> str:
