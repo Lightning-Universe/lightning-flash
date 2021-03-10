@@ -1,0 +1,22 @@
+documentation:
+  - docs/**/*
+
+examples:
+  - flash_examples/**/*
+
+data:
+  - flash/data/**/*
+
+task:
+  - flash/tabular/**/*
+  - flash/text/**/*
+  - flash/vision/**/*
+
+tabular:
+  - flash/tabular/**/*
+
+text:
+  - flash/text/**/*
+
+vision:
+  - flash/vision/**/*

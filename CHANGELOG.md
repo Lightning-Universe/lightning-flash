@@ -22,22 +22,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 
-## [Unreleased] - 2021-02-15
+## [0.2.1] - 2021-3-06
 
 ### Added
 
 - Added `RetinaNet` & `backbones` to `ObjectDetector` Task ([#121](https://github.com/PyTorchLightning/lightning-flash/pull/121))
+- Added .csv image loading utils ([#116](https://github.com/PyTorchLightning/lightning-flash/pull/116), 
+    [#117](https://github.com/PyTorchLightning/lightning-flash/pull/117),
+    [#118](https://github.com/PyTorchLightning/lightning-flash/pull/118))
 
 ### Changed
 
-
+- Set inputs as optional ([#109](https://github.com/PyTorchLightning/lightning-flash/pull/109))
 
 ### Fixed
 
-
-
-### Removed
-
+- Set minimal requirements ([#62](https://github.com/PyTorchLightning/lightning-flash/pull/62))
+- Fixed VGG backbone `num_features` ([#154](https://github.com/PyTorchLightning/lightning-flash/pull/154))
 
 
 ## [0.2.0] - 2021-02-12
