@@ -9,7 +9,7 @@ The task
 ********
 
 Summarization is the task of summarizing text from a larger document/article into a short sentence/description. For example, taking a web article and describing the topic in a short sentence.
-This task is a subset of Sequence to Sequence tasks, which requires the model to generate a variable length sequence given an input sequence. In our case the article would be our input sequence, and the short description/sentence would be the output sequence from the model.
+This task is a subset of `Sequence to Sequence tasks <https://paperswithcode.com/method/seq2seq>`_, which requires the model to generate a variable length sequence given an input sequence. In our case the article would be our input sequence, and the short description/sentence would be the output sequence from the model.
 
 -----
 
@@ -17,17 +17,16 @@ This task is a subset of Sequence to Sequence tasks, which requires the model to
 Inference
 *********
 
-The :class:`~flash.text.SummarizationTask` is already pre-trained on [XSUM](https://arxiv.org/abs/1808.08745), a dataset of online British Broadcasting Corporation articles.
+The :class:`~flash.text.SummarizationTask` is already pre-trained on `XSUM <https://arxiv.org/abs/1808.08745>`_, a dataset of online British Broadcasting Corporation articles.
 
-Use the :class:`~flash.text.SummarizationTask` pretrained model for inference on any string sequence using :func:`~flash.text.SummarizationTask.predict`:
+Use the :class:`~flash.text.SummarizationTask` pretrained model for inference on any string sequence using :class:`~flash.text.SummarizationTask` `predict` method:
 
 .. code-block:: python
 
     # import our libraries
     from flash.text import SummarizationTask
 
-
-    # 2. Load the model from a checkpoint
+    # 1. Load the model from a checkpoint
     model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
 
     # 2. Perform inference from a sequence
@@ -55,14 +54,17 @@ Use the :class:`~flash.text.SummarizationTask` pretrained model for inference on
     ])
     print(predictions)
 
-Or on a given dataset:
+Or on a given dataset, use :class:`~flash.core.trainer.Trainer` `predict` method:
 
 .. code-block:: python
 
     # import our libraries
-    from pytorch_lightning import Trainer
+    from flash import Trainer
     from flash import download_data
     from flash.text import SummarizationData, SummarizationTask
+
+    # 1. Download data
+    download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
 
     # 2. Load the model from a checkpoint
     model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
@@ -143,19 +145,20 @@ To run the example:
 *********************
 Changing the backbone
 *********************
-By default, we use the `t5 <https://arxiv.org/abs/1910.10683>`_ model for summarization. You can change the model run by passing in the backbone parameter.
+By default, we use the `t5 <https://arxiv.org/abs/1910.10683>`_ model for summarization. You can change the model run by the task to any summarization model from `HuggingFace/transformers <https://huggingface.co/models?filter=summarization,pytorch>`_ by passing in a backbone parameter.
 
 .. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object! Since this is a Seq2Seq task, make sure you use a Seq2Seq model.
 
 .. code-block:: python
 
+    # use google/mt5-small, covering 101 languages
     datamodule = SummarizationData.from_files(
+        backbone="google/mt5-small",
         train_file="data/wmt_en_ro/train.csv",
         valid_file="data/wmt_en_ro/valid.csv",
         test_file="data/wmt_en_ro/test.csv",
         input="input",
         target="target",
-        backbone="google/mt5-small",
     )
 
     model = SummarizationTask(backbone="google/mt5-small")

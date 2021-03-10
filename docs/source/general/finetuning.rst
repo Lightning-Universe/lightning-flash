@@ -63,8 +63,8 @@ Here are the steps in code
         valid_folder="data/hymenoptera_data/val/"
     )
 
-    # 2. build the task
-    task = ImageClassifier(num_classes=2)
+    # 2. build the model
+    model = ImageClassifier(num_classes=2)
 
     # 3. Build the trainer and finetune! In this case, using the no_freeze strategy
     trainer = flash.Trainer()
@@ -258,7 +258,7 @@ For even more customization, create your own finetuning callback. Learn more abo
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
 
-        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = true)
+        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = True):
             # this will set self.attr_names as ["feature_extractor"]
             super().__init__("feature_extractor", train_bn)
             self._unfreeze_at_epoch = unfreeze_at_epoch

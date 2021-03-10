@@ -68,7 +68,7 @@ To tailor this image embedder to your dataset, finetune first.
     )
 
     # 3. Build the model
-    embedder = ImageEmbedder(backbone="resnet18")
+    embedder = ImageEmbedder(backbone="resnet18", embedding_dim=128)
 
     # 4. Create the trainer. Run once on data
     trainer = flash.Trainer(max_epochs=1)
@@ -88,10 +88,6 @@ To tailor this image embedder to your dataset, finetune first.
 Changing the backbone
 *********************
 By default, we use the encoder from `SwAV <https://arxiv.org/pdf/2006.09882.pdf>`_ pretrained on Imagenet via contrastive learning. You can change the model run by the task by passing in a different backbone.
-
-.. note::
-
-   When changing the backbone, make sure you pass in the same backbone to the Task!
 
 .. code-block:: python
 
