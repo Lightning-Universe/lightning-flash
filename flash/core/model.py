@@ -175,12 +175,6 @@ class Task(pl.LightningModule):
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
 
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        self.data_pipeline = checkpoint["pipeline"]
-
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        checkpoint["pipeline"] = self.data_pipeline
-
     def configure_finetune_callback(self):
         return []
 
@@ -208,15 +202,6 @@ class Task(pl.LightningModule):
         # is loaded from checkpoint and used to predict
         if self._data_pipeline is not None:
             return self._data_pipeline
-        self.data_pipeline = self._get_pipeline("data_pipeline")
-        return self._data_pipeline
-
-    @data_pipeline.setter
-    def data_pipeline(self, data_pipeline: DataPipeline) -> None:
-        if not isinstance(data_pipeline, DataPipeline):
-            raise MisconfigurationException(f"Excepted to receive a DataPipeline. Found {data_pipeline}")
-        self._data_pipeline = DataPipeline(data_pipeline.preprocess, self.postprocess)
-        self._data_pipeline._attach_to_model(self)
 
         if self._preprocess is not None or self._postprocess is not None:
             return DataPipeline(self._preprocess, self._postprocess)
@@ -291,7 +276,7 @@ class Task(pl.LightningModule):
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
 
-        if self.data_pipeline is not None and not 'data_pipeline' in checkpoint:
+        if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
             checkpoint['data_pipeline'] = self.data_pipeline
         return super().on_save_checkpoint(checkpoint)
 
