@@ -46,7 +46,7 @@ def _evaluate_iou(target, pred):
 class ObjectDetector(Task):
     """Object detection task
 
-    Ref: Lightning Bolts https://github.com/PyTorchLightning/pytorch-lightning-bolts
+    Ref: Lightning Bolts https://github.com/PyTorchLightning/lightning-bolts
 
     Args:
         num_classes: the number of classes for detection, including background

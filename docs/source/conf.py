@@ -138,7 +138,7 @@ PACKAGE_MAPPING = {
     'Pillow': 'PIL',
     'PyYAML': 'yaml',
     'rouge-score': 'rouge_score',
-    'pytorch-lightning-bolts': 'pl_bolts',
+    'lightning-bolts': 'pl_bolts',
     'pytorch-tabnet': 'pytorch_tabnet',
 }
 MOCK_PACKAGES = []
