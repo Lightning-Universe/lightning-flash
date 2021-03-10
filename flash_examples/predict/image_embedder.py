@@ -20,7 +20,7 @@ from flash.vision import ImageEmbedder
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Create an ImageEmbedder with swav trained on imagenet.
-# Check out SWAV: https://pytorch-lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#swav
+# Check out SWAV: https://lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#swav
 embedder = ImageEmbedder(backbone="swav-imagenet", embedding_dim=128)
 
 # 3. Generate an embedding from an image path.
