@@ -13,21 +13,16 @@
 # limitations under the License.
 import os
 import pathlib
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.nn import Module
 from torch.nn.modules import ModuleDict
-from torch.utils import data
 from torchvision import transforms as T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 from torchvision.transforms.functional import to_pil_image
 
-from flash.core.classification import ClassificationPostprocess
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline

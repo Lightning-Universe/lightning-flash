@@ -71,31 +71,12 @@ class TabularClassifier(ClassificationTask):
             learning_rate=learning_rate,
         )
 
-    def predict(
-        self,
-        x: Any,
-        batch_idx: Optional[int] = None,
-        skip_collate_fn: bool = False,
-        dataloader_idx: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-    ) -> Any:
-        # override parent predict because forward is called here with the whole batch
-        data_pipeline = data_pipeline or self.data_pipeline
-        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        predictions = self.forward(batch)
-        return data_pipeline.uncollate_fn(predictions)
-
     def forward(self, x_in):
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
-        return self.model(x)[0]
+        return F.softmax(self.model(x)[0], -1)
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
         return model
-
-    @staticmethod
-    def default_pipeline() -> DataPipeline:
-        # TabularDataPipeline depends on the data
-        return DataPipeline()

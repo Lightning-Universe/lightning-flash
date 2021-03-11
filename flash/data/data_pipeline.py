@@ -135,7 +135,8 @@ class DataPipeline:
 
         if per_batch_transform_overriden and per_sample_transform_on_device_overriden:
             raise MisconfigurationException(
-                f'{self.__class__.__name__}: per_batch_transform and gpu_per_sample_transform are mutual exclusive for stage {stage}'
+                f'{self.__class__.__name__}: `per_batch_transform` and `gpu_per_sample_transform` '
+                f'are mutual exclusive for stage {stage}'
             )
 
         elif per_batch_transform_overriden:
@@ -180,7 +181,9 @@ class DataPipeline:
     def _model_predict_step_wrapper(func: Callable, postprocessor: _PostProcessor, model: 'Task') -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
+            _original = func
             func = _StageOrchestrator(func, model)
+            func._original = _original
         func.register_additional_stage(RunningStage.PREDICTING, postprocessor)
 
         return func
@@ -306,11 +309,9 @@ class DataPipeline:
 
     def _attach_to_model(self, model: 'Task', stages: RunningStage = None):
         # not necessary to detach. preprocessing and postprocessing for stage will be overwritten.
-        model._preprocess = self._preprocess_pipeline
         self._attach_preprocess_to_model(model, stages)
 
         if stages is None or stages == RunningStage.PREDICTING:
-            model._postprocess = self._postprocess_pipeline
             self._attach_postprocess_to_model(model)
 
     def _detach_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
@@ -392,10 +393,12 @@ class DataPipeline:
         else:
             pass
 
-    def _generate_callable_auto_dataset(self, data: Union[Iterable, Any]) -> Callable:
+    def _generate_callable_auto_dataset(
+        self, data: Union[Iterable, Any], running_stage: RunningStage = None
+    ) -> Callable:
 
         def fn():
-            return self._generate_auto_dataset(data)
+            return self._generate_auto_dataset(data, running_stage=running_stage)
 
         return fn
 

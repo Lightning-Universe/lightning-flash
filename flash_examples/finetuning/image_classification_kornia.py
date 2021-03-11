@@ -11,9 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import kornia.augmentation as K
+import sys
+
 import torch.nn as nn
+from pytorch_lightning.utilities import rank_zero_info
 from torchvision import transforms as T
+
+from flash.core.imports import _KORNIA_AVAILABLE
+
+if not _KORNIA_AVAILABLE:
+    rank_zero_info("This script requires Kornia. Run ``pip install kornia``")
+    sys.exit(0)
+
+import kornia.augmentation as K
 
 import flash
 from flash import Trainer

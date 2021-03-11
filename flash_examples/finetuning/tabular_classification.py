@@ -14,7 +14,7 @@
 from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
 
 import flash
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data
@@ -22,11 +22,11 @@ download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 
 # 2. Load the data
 datamodule = TabularData.from_csv(
-    "./data/titanic/titanic.csv",
+    "Survived",
+    train_csv="./data/titanic/titanic.csv",
     test_csv="./data/titanic/test.csv",
     categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
     numerical_input=["Fare"],
-    target="Survived",
     val_size=0.25,
 )
 
