@@ -36,6 +36,7 @@ class SummarizationData(Seq2SeqData):
         backbone: str = "t5-small",
         valid_file: str = None,
         test_file: str = None,
+        predict_file: str = None,
         max_source_length: int = 512,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',

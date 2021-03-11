@@ -181,30 +181,6 @@ class TabularData(DataModule):
             batch_size=batch_size,
             num_workers=num_workers,
         )
-        """
-        if dfs[0][target].dtype == object:
-            # if the target is a category, not an int
-            self.target_codes = _generate_codes(dfs, [target])
-        else:
-            self.target_codes = None
-
-        self.codes = _generate_codes(dfs, categorical_input)
-
-        dfs = _pre_transform(
-            dfs, numerical_input, categorical_input, self.codes, self.mean, self.std, target, self.target_codes
-        )
-
-        # normalize
-        self.cat_cols = categorical_input
-        self.num_cols = numerical_input
-
-        self._num_classes = len(train_df[target].unique())
-
-        train_ds = PandasDataset(dfs[0], categorical_input, numerical_input, target)
-        valid_ds = PandasDataset(dfs[1], categorical_input, numerical_input, target) if valid_df is not None else None
-        test_ds = PandasDataset(dfs[-1], categorical_input, numerical_input, target) if test_df is not None else None
-        super().__init__(train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers)
-        """
 
     @property
     def codes(self):

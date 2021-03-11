@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Union
 
 import torch
+from pytorch_lightning.trainer.states import RunningStage, TrainerState
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch.nn import Module, ModuleDict, ModuleList
 from torch.utils.data._utils.collate import default_collate
@@ -11,7 +12,56 @@ from flash.data.batch import default_uncollate
 from flash.data.utils import convert_to_modules
 
 
-class Preprocess(torch.nn.Module):
+class Properties:
+
+    _running_stage = None
+
+    @property
+    def training(self) -> bool:
+        return self._running_stage == RunningStage.TRAINING
+
+    @training.setter
+    def training(self, val: bool) -> None:
+        if val:
+            self._running_stage = RunningStage.TRAINING
+        elif self.training:
+            self._running_stage = None
+
+    @property
+    def testing(self) -> bool:
+        return self._running_stage == RunningStage.TESTING
+
+    @testing.setter
+    def testing(self, val: bool) -> None:
+        if val:
+            self._running_stage = RunningStage.TESTING
+        elif self.testing:
+            self._running_stage = None
+
+    @property
+    def predicting(self) -> bool:
+        return self._running_stage == RunningStage.PREDICTING
+
+    @predicting.setter
+    def predicting(self, val: bool) -> None:
+        if val:
+            self._running_stage = RunningStage.PREDICTING
+        elif self.predicting:
+            self._running_stage = None
+
+    @property
+    def validating(self) -> bool:
+        return self._running_stage == RunningStage.VALIDATING
+
+    @validating.setter
+    def validating(self, val: bool) -> None:
+        if val:
+            self._running_stage = RunningStage.VALIDATING
+        elif self.validating:
+            self._running_stage = None
+
+
+class Preprocess(Properties, torch.nn.Module):
 
     def __init__(
         self,
@@ -36,8 +86,13 @@ class Preprocess(torch.nn.Module):
         """Loads single sample from dataset"""
         return sample
 
-    def per_sample_transform(self, sample: Any) -> Any:
-        """Transforms to apply to the data before the collation (per-sample basis)"""
+    def per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        return sample
+
+    def per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+        return sample
+
+    def per_sample_post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
         return sample
 
     def per_batch_transform(self, batch: Any) -> Any:
@@ -73,7 +128,7 @@ class Preprocess(torch.nn.Module):
 
 
 @dataclass(unsafe_hash=True)
-class Postprocess(torch.nn.Module):
+class Postprocess(Properties, torch.nn.Module):
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()

@@ -17,6 +17,7 @@ from typing import Any, Callable, Optional, Union
 import torch
 from datasets import load_dataset
 from datasets.utils.download_manager import GenerateMode
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator

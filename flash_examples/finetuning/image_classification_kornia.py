@@ -13,17 +13,9 @@
 # limitations under the License.
 import sys
 
+import torch
 import torch.nn as nn
 from pytorch_lightning.utilities import rank_zero_info
-from torchvision import transforms as T
-
-from flash.core.imports import _KORNIA_AVAILABLE
-
-if not _KORNIA_AVAILABLE:
-    rank_zero_info("This script requires Kornia. Run ``pip install kornia``")
-    sys.exit(0)
-
-import kornia.augmentation as K
 
 import flash
 from flash import Trainer
@@ -34,22 +26,11 @@ from flash.vision import ImageClassificationData, ImageClassifier
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
-train_transform = {
-    "per_sample_transform": T.Compose([
-        T.RandomResizedCrop(224),
-        T.RandomHorizontalFlip(),
-        T.ToTensor(),
-        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ]),
-    "per_batch_transform_on_device": nn.Sequential(K.RandomAffine(360), K.ColorJitter(0.2, 0.3, 0.2, 0.3))
-}
-
 # 2. Load the data
 datamodule = ImageClassificationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
     valid_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
-    train_transform=train_transform,
 )
 
 # 3. Build the model

@@ -89,20 +89,26 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
         def validation_load_sample(self, *_, **__):
             return 4
 
-        def predict_per_sample_transform(self, *_, **__):
+        def validation_per_sample_pre_tensor_transform(self, *_, **__):
             return 5
 
-        def test_collate(self, *_, **__):
-            return 6
-
-        def validation_per_sample_transform_on_device(self, *_, **__):
+        def predict_per_sample_to_tensor_transform(self, *_, **__):
             return 7
 
-        def train_per_batch_transform_on_device(self, *_, **__):
+        def train_per_sample_post_tensor_transform(self, *_, **__):
             return 8
 
+        def test_collate(self, *_, **__):
+            return 9
+
+        def validation_per_sample_transform_on_device(self, *_, **__):
+            return 10
+
+        def train_per_batch_transform_on_device(self, *_, **__):
+            return 11
+
         def test_per_batch_transform_on_device(self, *_, **__):
-            return 8
+            return 12
 
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess)
@@ -142,11 +148,23 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert test_func_names["load_sample"] == "load_sample"
     assert predict_func_names["load_sample"] == "predict_load_sample"
 
-    # per_sample_transform
-    assert train_func_names["per_sample_transform"] == "per_sample_transform"
-    assert validation_func_names["per_sample_transform"] == "per_sample_transform"
-    assert test_func_names["per_sample_transform"] == "per_sample_transform"
-    assert predict_func_names["per_sample_transform"] == "predict_per_sample_transform"
+    # per_sample_pre_tensor_transform
+    assert train_func_names["per_sample_pre_tensor_transform"] == "per_sample_pre_tensor_transform"
+    assert validation_func_names["per_sample_pre_tensor_transform"] == "validation_per_sample_pre_tensor_transform"
+    assert test_func_names["per_sample_pre_tensor_transform"] == "per_sample_pre_tensor_transform"
+    assert predict_func_names["per_sample_pre_tensor_transform"] == "per_sample_pre_tensor_transform"
+
+    # per_sample_to_tensor_transform
+    assert train_func_names["per_sample_to_tensor_transform"] == "per_sample_to_tensor_transform"
+    assert validation_func_names["per_sample_to_tensor_transform"] == "per_sample_to_tensor_transform"
+    assert test_func_names["per_sample_to_tensor_transform"] == "per_sample_to_tensor_transform"
+    assert predict_func_names["per_sample_to_tensor_transform"] == "predict_per_sample_to_tensor_transform"
+
+    # per_sample_post_tensor_transform
+    assert train_func_names["per_sample_post_tensor_transform"] == "train_per_sample_post_tensor_transform"
+    assert validation_func_names["per_sample_post_tensor_transform"] == "per_sample_post_tensor_transform"
+    assert test_func_names["per_sample_post_tensor_transform"] == "per_sample_post_tensor_transform"
+    assert predict_func_names["per_sample_post_tensor_transform"] == "per_sample_post_tensor_transform"
 
     # collate
     assert train_func_names["collate"] == "collate"
@@ -171,19 +189,31 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     test_worker_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TESTING)
     predict_worker_preprocessor = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
-    assert train_worker_preprocessor.per_sample_transform.func == preprocess.per_sample_transform
+    _chainer = train_worker_preprocessor.per_sample_transform
+    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
+    assert _chainer.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
+    assert _chainer.per_sample_post_tensor_transform.func == preprocess.train_per_sample_post_tensor_transform
     assert train_worker_preprocessor.collate_fn.func == default_collate
     assert train_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
-    assert validation_worker_preprocessor.per_sample_transform.func == preprocess.per_sample_transform
+    _chainer = validation_worker_preprocessor.per_sample_transform
+    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.validation_per_sample_pre_tensor_transform
+    assert _chainer.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
+    assert _chainer.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
     assert validation_worker_preprocessor.collate_fn.func == data_pipeline._do_nothing_collate
     assert validation_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
-    assert test_worker_preprocessor.per_sample_transform.func == preprocess.per_sample_transform
+    _chainer = test_worker_preprocessor.per_sample_transform
+    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
+    assert _chainer.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
+    assert _chainer.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
     assert test_worker_preprocessor.collate_fn.func == preprocess.test_collate
     assert test_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
-    assert predict_worker_preprocessor.per_sample_transform.func == preprocess.predict_per_sample_transform
+    _chainer = predict_worker_preprocessor.per_sample_transform
+    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
+    assert _chainer.per_sample_to_tensor_transform.func == preprocess.predict_per_sample_to_tensor_transform
+    assert _chainer.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
     assert predict_worker_preprocessor.collate_fn.func == default_collate
     assert predict_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
@@ -302,7 +332,11 @@ def test_attaching_datapipeline_to_model(tmpdir):
             self._saved_predict_step = self.predict_step
 
         def _compare_pre_processor(self, p1, p2):
-            assert p1.per_sample_transform.func == p2.per_sample_transform.func
+            p1_chainer = p1.per_sample_transform
+            p2_chainer = p2.per_sample_transform
+            assert p1_chainer.per_sample_pre_tensor_transform.func == p2_chainer.per_sample_pre_tensor_transform.func
+            assert p1_chainer.per_sample_to_tensor_transform.func == p2_chainer.per_sample_to_tensor_transform.func
+            assert p1_chainer.per_sample_post_tensor_transform.func == p2_chainer.per_sample_post_tensor_transform.func
             assert p1.collate_fn.func == p2.collate_fn.func
             assert p1.per_batch_transform.func == p2.per_batch_transform.func
 
@@ -316,7 +350,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
         def on_train_start(self) -> None:
             current_running_stage = RunningStage.TRAINING
             self.on_train_start_called = True
-            collate_fn = self.train_dataloader().collate_fn
+            collate_fn = self.train_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             super().on_train_start()
@@ -329,7 +363,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
         def on_validation_start(self) -> None:
             current_running_stage = RunningStage.VALIDATING
             self.on_validation_start_called = True
-            collate_fn = self.val_dataloader().collate_fn
+            collate_fn = self.val_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             super().on_validation_start()
@@ -342,7 +376,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
         def on_test_start(self) -> None:
             current_running_stage = RunningStage.TESTING
             self.on_test_start_called = True
-            collate_fn = self.test_dataloader().collate_fn
+            collate_fn = self.test_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             super().on_test_start()
@@ -355,7 +389,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
         def on_predict_start(self) -> None:
             current_running_stage = RunningStage.PREDICTING
             self.on_predict_start_called = True
-            collate_fn = self.predict_dataloader().collate_fn
+            collate_fn = self.predict_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             assert self.predict_step == self._saved_predict_step

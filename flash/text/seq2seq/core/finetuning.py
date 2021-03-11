@@ -28,7 +28,7 @@ class Seq2SeqFreezeEmbeddings(FlashBaseFinetuning):
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
         is_t5 = self.model_type in ["t5", "mt5"]
         model = pl_module.model if is_t5 else pl_module.model.model
-        self.freeze(module=model.shared, train_bn=self.train_bn)
+        self.freeze(modules=model.shared, train_bn=self.train_bn)
         for layer in (model.encoder, model.decoder):
             self.freeze(layer.embed_tokens)
             if not is_t5:

@@ -12,7 +12,7 @@ from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
 from flash.data.auto_dataset import AutoDataset
-from flash.data.batch import _PostProcessor, _PreProcessor
+from flash.data.batch import _Chainer, _PostProcessor, _PreProcessor
 from flash.data.process import Postprocess, Preprocess
 
 if TYPE_CHECKING:
@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 class DataPipeline:
 
     PREPROCESS_FUNCS = (
-        "load_data", "load_sample", "per_sample_transform", "per_batch_transform", "per_sample_transform_on_device",
+        "load_data", "load_sample", "per_sample_pre_tensor_transform", "per_sample_to_tensor_transform",
+        "per_sample_post_tensor_transform", "per_batch_transform", "per_sample_transform_on_device",
         "per_batch_transform_on_device", "collate"
     )
     POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
@@ -124,6 +125,8 @@ class DataPipeline:
 
         if self._is_overriden("collate", self._preprocess_pipeline, Preprocess, prefix=stage.value):
             collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
+        elif self._is_overriden("collate", self._preprocess_pipeline, Preprocess):
+            collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
 
         per_batch_transform_overriden = self._is_overriden(
             "per_batch_transform", self._preprocess_pipeline, Preprocess, prefix=stage.value
@@ -156,8 +159,12 @@ class DataPipeline:
         ) else worker_collate_fn
 
         worker_preprocessor = _PreProcessor(
-            worker_collate_fn, getattr(self._preprocess_pipeline, func_names['per_sample_transform']),
-            getattr(self._preprocess_pipeline, func_names['per_batch_transform']), stage
+            worker_collate_fn,
+            _Chainer(
+                getattr(self._preprocess_pipeline, func_names['per_sample_pre_tensor_transform']),
+                getattr(self._preprocess_pipeline, func_names['per_sample_to_tensor_transform']),
+                getattr(self._preprocess_pipeline, func_names['per_sample_post_tensor_transform'])
+            ), getattr(self._preprocess_pipeline, func_names['per_batch_transform']), stage
         )
         worker_preprocessor._original_collate_fn = original_collate_fn
         device_preprocessor = _PreProcessor(

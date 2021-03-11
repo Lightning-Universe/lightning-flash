@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash import download_data
 from flash.text import TranslationData, TranslationTask
@@ -31,7 +33,7 @@ datamodule = TranslationData.from_files(
 model = TranslationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, precision=16, gpus=1)
+trainer = flash.Trainer(max_epochs=1, precision=32, gpus=int(torch.cuda.is_available()))
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)

@@ -19,19 +19,28 @@ import torch
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from torch.nn.modules import ModuleDict
-from torchvision import transforms as T
+from torch.utils.data._utils.collate import default_collate
+from torchvision import transforms as torchvision_T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 from torchvision.transforms.functional import to_pil_image
 
+from flash.core.imports import _KORNIA_AVAILABLE
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
 
+if _KORNIA_AVAILABLE:
+    import kornia.augmentation as K
+    import kornia.geometry.transform as T
+    from torch import nn
+else:
+    from torchvision import transforms as T
+
 
 class ImageClassificationPreprocess(Preprocess):
 
-    _default_func_name = "per_sample_transform"
+    to_tensor = torchvision_T.ToTensor()
 
     @staticmethod
     def _find_classes(dir):
@@ -111,29 +120,51 @@ class ImageClassificationPreprocess(Preprocess):
     ) -> torch.Tensor:
         if transform is not None:
             if isinstance(transform, (Dict, ModuleDict)):
-                if func_name in transform:
-                    transform = transform[func_name]
+                if func_name not in transform:
+                    return sample
                 else:
-                    return sample
-            else:
-                if func_name != self._default_func_name:
-                    return sample
+                    transform = transform[func_name]
             sample = transform(sample)
         return sample
 
-    def train_per_sample_transform(self, sample: Any) -> Any:
-        sample, target = sample
-        sample = self._convert_tensor_to_pil(sample)
-        return self._apply_transform(sample, self.train_transform, "per_sample_transform"), target
+    def collate(self, samples: Sequence) -> Any:
+        _samples = []
+        for sample in samples:
+            if isinstance(sample, tuple):
+                sample = (sample[0].squeeze(0), ) + sample[1:]
+            else:
+                sample = sample.squeeze(0)
+            _samples.append(sample)
+        return default_collate(_samples)
 
-    def per_sample_transform(self, sample: Any) -> Any:
+    def per_sample_to_tensor_transform(self, sample) -> Any:
         sample, target = sample
-        sample = self._convert_tensor_to_pil(sample)
-        return self._apply_transform(sample, self.valid_transform, "per_sample_transform"), target
+        return self.to_tensor(sample), target
+
+    def predict_per_sample_to_tensor_transform(self, sample) -> Any:
+        return self.to_tensor(sample)
+
+    def common_per_sample_post_tensor_transform(self, sample: Any, transform) -> Any:
+        return self._apply_transform(sample, transform, "per_sample_post_tensor_transform")
+
+    def train_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+        sample, target = sample
+        return self.common_per_sample_post_tensor_transform(sample, self.train_transform), target
+
+    def validation_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+        sample, target = sample
+        return self.common_per_sample_post_tensor_transform(sample, self.valid_transform), target
+
+    def test_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+        sample, target = sample
+        return self.common_per_sample_post_tensor_transform(sample, self.test_transform), target
+
+    def predict_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+        return self.common_per_sample_post_tensor_transform(sample, self.predict_transform)
 
     def predict_per_sample_transform(self, sample: Any) -> Any:
         sample = self._convert_tensor_to_pil(sample)
-        return self._apply_transform(sample, self.valid_transform, "per_sample_transform")
+        return self._apply_transform(sample, self.valid_transform, "per_sample_post_tensor_transform")
 
     def train_per_batch_transform_on_device(self, batch: Tuple) -> Tuple:
         batch, target = batch
@@ -144,6 +175,7 @@ class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
     preprocess_cls = ImageClassificationPreprocess
+    image_size = (196, 196)
 
     def __init__(
         self,
@@ -216,21 +248,41 @@ class ImageClassificationData(DataModule):
 
     @property
     def default_train_transforms(self):
-        return T.Compose([
-            T.RandomResizedCrop(224),
-            T.RandomHorizontalFlip(),
-            T.ToTensor(),
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ])
+        if _KORNIA_AVAILABLE:
+            # Better approach as all transforms are applied on tensor directly
+            return {
+                "per_sample_post_tensor_transform": nn.Sequential(
+                    K.RandomResizedCrop(self.image_size), K.RandomHorizontalFlip()
+                ),
+                "per_batch_transform_on_device": nn.Sequential(
+                    K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+                    K.RandomAffine(360), K.ColorJitter(0.2, 0.3, 0.2, 0.3)
+                )
+            }
+        else:
+            return {
+                "per_sample_pre_tensor_transform": T.Compose([
+                    T.RandomResizedCrop(self.image_size),
+                    T.RandomHorizontalFlip()
+                ]),
+                "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            }
 
     @property
     def default_valid_transforms(self):
-        return T.Compose([
-            T.Resize(256),
-            T.CenterCrop(224),
-            T.ToTensor(),
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        ])
+        if _KORNIA_AVAILABLE:
+            # Better approach as all transforms are applied on tensor directly
+            return {
+                "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(self.image_size)),
+                "per_batch_transform_on_device": nn.Sequential(
+                    K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+                )
+            }
+        else:
+            return {
+                "per_sample_pre_tensor_transform": T.Compose([T.RandomResizedCrop(224)]),
+                "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            }
 
     @property
     def num_classes(self):
@@ -280,10 +332,10 @@ class ImageClassificationData(DataModule):
         valid_folder: Optional[Union[str, pathlib.Path]] = None,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
         predict_folder: Union[str, pathlib.Path] = None,
-        train_transform: Optional[Union[Callable, str, Dict]] = 'default',
-        valid_transform: Optional[Union[Callable, str, Dict]] = 'default',
-        test_transform: Optional[Union[Callable, str, Dict]] = 'default',
-        predict_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        valid_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         data_pipeline: Optional[DataPipeline] = None,

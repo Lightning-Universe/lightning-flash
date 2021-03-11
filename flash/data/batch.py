@@ -1,4 +1,4 @@
-from typing import Any, Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -6,12 +6,40 @@ from pytorch_lightning.trainer.states import RunningStage
 from flash.data.utils import convert_to_modules
 
 
+class _Chainer(torch.nn.Module):
+
+    def __init__(
+        self,
+        per_sample_pre_tensor_transform: Callable,
+        per_sample_to_tensor_transform: Callable,
+        per_sample_post_tensor_transform: Callable,
+    ):
+        super().__init__()
+
+        self.per_sample_pre_tensor_transform = convert_to_modules(per_sample_pre_tensor_transform)
+        self.per_sample_to_tensor_transform = convert_to_modules(per_sample_to_tensor_transform)
+        self.per_sample_post_tensor_transform = convert_to_modules(per_sample_post_tensor_transform)
+
+    def forward(self, sample: Any):
+        sample = self.per_sample_pre_tensor_transform(sample)
+        sample = self.per_sample_to_tensor_transform(sample)
+        sample = self.per_sample_post_tensor_transform(sample)
+        return sample
+
+    def __repr__(self) -> str:
+        repr_str = f'{self.__class__.__name__}:'
+        repr_str += f'\n\t(per_sample_pre_tensor_transform): {repr(self.per_sample_pre_tensor_transform)}'
+        repr_str += f'\n\t(per_sample_to_tensor_transform): {repr(self.per_sample_to_tensor_transform)}'
+        repr_str += f'\n\t(per_sample_post_tensor_transform): {repr(self.per_sample_post_tensor_transform)}'
+        return repr_str
+
+
 class _PreProcessor(torch.nn.Module):
 
     def __init__(
         self,
         collate_fn: Callable,
-        per_sample_transform: Callable,
+        per_sample_transform: Union[Callable, _Chainer],
         per_batch_transform: Callable,
         stage: Optional[RunningStage] = None
     ):

@@ -15,10 +15,13 @@ from functools import partial
 from typing import Any, Callable, Optional, Union
 
 from datasets import load_dataset
+from pytorch_lightning.trainer.states import RunningStage
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 
 from flash.data.data_module import DataModule, TaskDataPipeline
+from flash.data.data_pipeline import DataPipeline
+from flash.data.process import Preprocess
 
 
 def prepare_dataset(
@@ -133,14 +136,102 @@ class Seq2SeqDataPipeline(TaskDataPipeline):
         return pred_str
 
 
+class Seq2SeqPreprocess(Preprocess):
+
+    def __init__(
+        self,
+        tokenizer,
+        input: str,
+        filetype: str,
+        target: Optional[str] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = 'longest'
+    ):
+        super().__init__()
+
+        self.tokenizer = tokenizer
+        self.input = input
+        self.filetype = filetype
+        self.target = target
+        self.max_target_length = max_target_length
+        self.max_source_length = max_source_length
+        self.padding = padding
+        self._tokenize_fn = partial(
+            self._tokenize_fn,
+            tokenizer=self.tokenizer,
+            input=self.input,
+            target=self.target,
+            max_source_length=self.max_source_length,
+            max_target_length=self.max_target_length,
+            padding=self.padding
+        )
+
+    @staticmethod
+    def _tokenize_fn(
+        ex,
+        tokenizer,
+        input: str,
+        target: Optional[str],
+        max_source_length: int,
+        max_target_length: int,
+        padding: Union[str, bool],
+    ) -> Callable:
+        output = tokenizer.prepare_seq2seq_batch(
+            src_texts=ex[input],
+            tgt_texts=ex[target] if target else None,
+            max_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+        )
+        return output
+
+    def load_data(self, file: str, running_stage):
+        data_files = {}
+
+        if self.training:
+            data_files["train"] = file
+        if self.validating:
+            data_files["validation"] = file
+        if self.testing or self.predicting:
+            data_files["test"] = file
+
+        # load the dataset
+        dataset_dict = load_dataset(
+            self.filetype,
+            data_files=data_files,
+        )
+
+        # tokenize the dataset
+        dataset_dict = dataset_dict.map(
+            self._tokenize_fn,
+            batched=True,
+        )
+        columns = ["input_ids", "attention_mask"] if self.predicting else ["input_ids", "attention_mask", "labels"]
+        dataset_dict.set_format(columns=columns)
+
+        return dataset_dict[self._running_stage.value]
+
+    def collate(self, samples: Any) -> Tensor:
+        """Override to convert a set of samples to a batch"""
+        return default_data_collator(samples)
+
+
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
-    @staticmethod
-    def default_pipeline():
-        return Seq2SeqDataPipeline(
-            AutoTokenizer.from_pretrained("sshleifer/tiny-mbart", use_fast=True),
-            input="input",
+    preprocess_cls = Seq2SeqPreprocess
+
+    @property
+    def preprocess(self):
+        return self.preprocess_cls(
+            tokenizer=self.tokenizer,
+            input=self.input,
+            filetype=self.filetype,
+            target=self.target,
+            max_source_length=self.max_source_length,
+            max_target_length=self.max_target_length,
+            padding=self.padding,
         )
 
     @classmethod
@@ -153,6 +244,7 @@ class Seq2SeqData(DataModule):
         backbone: str = "sshleifer/tiny-mbart",
         valid_file: Optional[str] = None,
         test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',
@@ -182,36 +274,45 @@ class Seq2SeqData(DataModule):
         Examples::
 
             train_df = pd.read_csv("train_data.csv")
-            tab_data = TabularData.from_df(train_df, target="fraud",
+            tab_data = TabularData.from_df(train_df,
+                                           target="fraud",
                                            numerical_input=["account_value"],
                                            categorical_input=["account_type"])
 
         """
-        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-        pipeline = Seq2SeqDataPipeline(
-            tokenizer=tokenizer,
+        preprocess = cls.preprocess_cls(
+            tokenizer=AutoTokenizer.from_pretrained(backbone, use_fast=True),
             input=input,
+            filetype=filetype,
             target=target,
             max_source_length=max_source_length,
             max_target_length=max_target_length,
-            padding=padding
+            padding=padding,
         )
 
-        train_ds, valid_ds, test_ds = prepare_dataset(
-            train_file=train_file, valid_file=valid_file, test_file=test_file, filetype=filetype, pipeline=pipeline
+        cls._data_pipepline = DataPipeline(preprocess)
+
+        train_ds = cls._generate_dataset_if_possible(
+            train_file, running_stage=RunningStage.TRAINING, data_pipeline=cls._data_pipepline
+        )
+        valid_ds = cls._generate_dataset_if_possible(
+            valid_file, running_stage=RunningStage.VALIDATING, data_pipeline=cls._data_pipepline
+        )
+        test_ds = cls._generate_dataset_if_possible(
+            test_file, running_stage=RunningStage.TESTING, data_pipeline=cls._data_pipepline
+        )
+        predict_ds = cls._generate_dataset_if_possible(
+            predict_file, running_stage=RunningStage.PREDICTING, data_pipeline=cls._data_pipepline
         )
 
-        datamodule = cls(
+        return cls(
             train_ds=train_ds,
             valid_ds=valid_ds,
             test_ds=test_ds,
+            predict_ds=predict_ds,
             batch_size=batch_size,
             num_workers=num_workers,
         )
-
-        datamodule.data_pipeline = pipeline
-        return datamodule
 
     @classmethod
     def from_file(

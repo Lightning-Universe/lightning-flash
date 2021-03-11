@@ -90,7 +90,7 @@ class Seq2SeqTask(Task):
         return loss
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
-        generated_tokens = self.predict(batch, skip_collate_fn=True)
+        generated_tokens = self(batch)
         self.compute_metrics(generated_tokens, batch, prefix)
 
     def validation_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):

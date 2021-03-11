@@ -243,3 +243,20 @@ class DataModule(pl.LightningDataModule):
             test_ds = None
 
         return train_ds, val_ds, test_ds
+
+    @classmethod
+    def _generate_dataset_if_possible(
+        cls,
+        data: Optional[Any],
+        running_stage: RunningStage,
+        whole_data_load_fn: Optional[Callable] = None,
+        per_sample_load_fn: Optional[Callable] = None,
+        data_pipeline: Optional[DataPipeline] = None
+    ) -> Optional[AutoDataset]:
+        if data is None:
+            return None
+
+        if data_pipeline is not None:
+            return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
+
+        return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)
