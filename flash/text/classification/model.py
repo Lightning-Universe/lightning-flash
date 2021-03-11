@@ -16,7 +16,7 @@ import warnings
 from typing import Callable, Mapping, Sequence, Type, Union
 
 import torch
-from pytorch_lightning.metrics.classification import Accuracy
+from torchmetrics.classification import Accuracy
 from transformers import BertForSequenceClassification
 
 from flash.core.classification import ClassificationDataPipeline, ClassificationTask

@@ -2,6 +2,7 @@ pytorch-lightning==1.2.0rc0  # todo: we shall align with real 1.2
 torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
 Pillow>=7.2
+torchmetrics>=0.2
 torchvision>=0.8  # lower to 0.7 after PT 1.6
 transformers>=4.0
 pytorch-tabnet==3.1

@@ -14,9 +14,9 @@
 from typing import Any, Callable, Mapping, Sequence, Type, Union
 
 import torch
-from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
+from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
 from flash.vision.backbones import backbone_and_num_features
@@ -33,7 +33,7 @@ class ImageClassifier(ClassificationTask):
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation,
-            defaults to :class:`pytorch_lightning.metrics.Accuracy`.
+            defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
