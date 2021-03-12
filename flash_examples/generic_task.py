@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import urllib
 
 import pytorch_lightning as pl
 from torch import nn, optim
@@ -21,6 +22,10 @@ from torchvision import datasets, transforms
 from flash import ClassificationTask
 
 _PATH_ROOT = os.path.dirname(os.path.dirname(__file__))
+# TorchVision hotfix https://github.com/pytorch/vision/issues/1938
+opener = urllib.request.build_opener()
+opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+urllib.request.install_opener(opener)
 
 # 1. Load a basic backbone
 model = nn.Sequential(
