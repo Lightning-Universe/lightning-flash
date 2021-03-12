@@ -37,12 +37,12 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
 
     if not os.path.exists(local_filename):
         r = requests.get(url, stream=True)
-        file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
+        file_size = int(r.headers.get('Content-Length', 0))
         chunk = 1
         chunk_size = 1024
         num_bars = int(file_size / chunk_size)
         if verbose:
-            logging.info(f'file size: {dict(file_size=file_size)} \n # bars: {dict(num_bars=num_bars)}')
+            logging.info(f'file size: {file_size}\n# bars: {num_bars}')
         with open(local_filename, 'wb') as fp:
             for chunk in tq(
                 r.iter_content(chunk_size=chunk_size),
