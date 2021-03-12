@@ -47,7 +47,7 @@ Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Da
     import flash
     from flash import download_data
     from flash.tabular import TabularClassifier, TabularData
-    from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+    from torchmetrics.classification import Accuracy, Precision, Recall
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')

@@ -244,7 +244,7 @@ To illustrate, say we want to build a model to predict if a passenger survived o
 
 ```python
 # import our libraries
-from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+from torchmetrics.classification import Accuracy, Precision, Recall
 import flash
 from flash import download_data
 from flash.tabular import TabularClassifier, TabularData

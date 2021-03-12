@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import urllib
+
 import pytorch_lightning as pl
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
@@ -18,16 +21,23 @@ from torchvision import datasets, transforms
 
 from flash import ClassificationTask
 
+_PATH_ROOT = os.path.dirname(os.path.dirname(__file__))
+# TorchVision hotfix https://github.com/pytorch/vision/issues/1938
+opener = urllib.request.build_opener()
+opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+urllib.request.install_opener(opener)
+
 # 1. Load a basic backbone
 model = nn.Sequential(
     nn.Flatten(),
     nn.Linear(28 * 28, 128),
     nn.ReLU(),
     nn.Linear(128, 10),
+    nn.Softmax(),
 )
 
 # 2. Load a dataset
-dataset = datasets.MNIST('./data', download=True, transform=transforms.ToTensor())
+dataset = datasets.MNIST(os.path.join(_PATH_ROOT, 'data'), download=True, transform=transforms.ToTensor())
 
 # 3. Split the data randomly
 train, val, test = random_split(dataset, [50000, 5000, 5000])  # type: ignore

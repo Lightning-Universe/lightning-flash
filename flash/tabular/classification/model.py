@@ -14,9 +14,10 @@
 from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
-from pytorch_lightning.metrics import Metric
 from pytorch_tabnet.tab_network import TabNet
 from torch.nn import functional as F
+from torch.nn.functional import softmax
+from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
 from flash.core.data import DataPipeline
@@ -85,7 +86,7 @@ class TabularClassifier(ClassificationTask):
     def forward(self, x_in):
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
-        return self.model(x)[0]
+        return softmax(self.model(x)[0])
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
