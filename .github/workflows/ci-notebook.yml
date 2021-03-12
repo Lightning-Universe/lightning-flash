@@ -31,7 +31,7 @@ jobs:
     - name: Cache pip
       uses: actions/cache@v2
       with:
-        path: ${{ steps.pip-cache.outputs.dir }}
+        path: ${{ steps.pip-cache.outputs.folder }}
         key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-pip-

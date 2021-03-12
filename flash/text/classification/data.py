@@ -42,7 +42,6 @@ def prepare_dataset(
     valid_file,
     test_file,
     filetype,
-    backbone,
     input,
     max_length,
     target=None,
@@ -239,7 +238,7 @@ class TextClassificationData(DataModule):
         """Creates a TextClassificationData object from files.
 
         Args:
-            train_file: Path to training data.
+            predict_file: Path to prediction data.
             input: The field storing the text to be classified.
             filetype: .csv or .json
             backbone: tokenizer to use, can use any HuggingFace tokenizer.

@@ -104,8 +104,15 @@ class ObjectDetector(Task):
 
     @staticmethod
     def get_model(
-        model_name, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers,
-        anchor_generator, **kwargs
+        model_name,
+        num_classes,
+        backbone,
+        fpn,
+        pretrained,
+        pretrained_backbone,
+        trainable_backbone_layers,
+        anchor_generator,
+        **kwargs,
     ):
         if backbone is None:
             # Constructs a model with a ResNet-50-FPN backbone when no backbone is specified.

@@ -171,12 +171,12 @@ class TabularData(DataModule):
             text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence")
         """
         if valid_df is None and isinstance(val_size, float) and isinstance(test_size, float):
-            assert 0 < val_size and val_size < 1
-            assert 0 < test_size and test_size < 1
+            assert 0 < val_size < 1
+            assert 0 < test_size < 1
             train_df, valid_df = train_test_split(train_df, test_size=(val_size + test_size))
 
         if test_df is None and isinstance(test_size, float):
-            assert 0 < test_size and test_size < 1
+            assert 0 < test_size < 1
             valid_df, test_df = train_test_split(valid_df, test_size=test_size)
 
         datamodule = cls(

@@ -15,7 +15,6 @@ import os
 import pathlib
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
-import pandas as pd
 import torch
 from PIL import Image, UnidentifiedImageError
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -158,12 +157,13 @@ class FlashDatasetFolder(VisionDataset):
                 )
             self.samples = img_paths
 
-    def _find_classes(self, dir):
+    @staticmethod
+    def _find_classes(self, folder):
         """
         Finds the class folders in a dataset.
 
         Args:
-            dir (string): Root directory path.
+            folder (string): Root directory path.
 
         Returns:
             tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
@@ -171,7 +171,7 @@ class FlashDatasetFolder(VisionDataset):
         Ensures:
             No class is a subdirectory of another.
         """
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
+        classes = [d.name for d in os.scandir(folder) if d.is_dir()]
         classes.sort()
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
         return classes, class_to_idx
@@ -271,7 +271,7 @@ class ImageClassificationData(DataModule):
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: int = 1234,
-        **kwargs
+        **kwargs,
     ):
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
@@ -374,7 +374,7 @@ class ImageClassificationData(DataModule):
         loader: Callable = _pil_loader,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
@@ -437,7 +437,7 @@ class ImageClassificationData(DataModule):
         loader: Callable = _pil_loader,
         batch_size: int = 64,
         num_workers: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
