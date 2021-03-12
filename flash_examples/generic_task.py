@@ -24,6 +24,7 @@ model = nn.Sequential(
     nn.Linear(28 * 28, 128),
     nn.ReLU(),
     nn.Linear(128, 10),
+    nn.Softmax(),
 )
 
 # 2. Load a dataset
