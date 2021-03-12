@@ -228,6 +228,8 @@ class Task(pl.LightningModule):
 
     def on_train_start(self) -> None:
         if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        if self.data_pipeline is not None:
             self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
         return super().on_train_start()
 
@@ -236,7 +238,15 @@ class Task(pl.LightningModule):
             self.data_pipeline._detach_from_model(self)
         return super().on_train_end()
 
+    def on_sanity_check_start(self):
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        if self.data_pipeline is not None:
+            self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
+        return super().on_validation_start()
+
     def on_validation_start(self) -> None:
+        self.trainer.val_dataloaders = None
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         if self.data_pipeline is not None:

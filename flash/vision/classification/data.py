@@ -130,6 +130,7 @@ class ImageClassificationPreprocess(Preprocess):
 
     def collate(self, samples: Sequence) -> Any:
         _samples = []
+        # todo: Kornia transforms add batch dimension which need to be removed
         for sample in samples:
             if isinstance(sample, tuple):
                 sample = (sample[0].squeeze(0), ) + sample[1:]
@@ -275,11 +276,11 @@ class ImageClassificationData(DataModule):
             # Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(
-                    K.RandomResizedCrop(self.image_size), K.RandomHorizontalFlip()
+                    K.RandomResizedCrop(self.image_size), K.RandomHorizontalFlip(), K.RandomAffine(360),
+                    K.ColorJitter(0.2, 0.3, 0.2, 0.3)
                 ),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-                    K.RandomAffine(360), K.ColorJitter(0.2, 0.3, 0.2, 0.3)
                 )
             }
         else:

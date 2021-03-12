@@ -11,11 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from functools import partial
 from typing import Any, Callable, Optional, Union
 
-from datasets import load_dataset
+import datasets
+from datasets import DatasetDict, load_dataset
+from datasets.splits import NamedSplit
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 
@@ -186,31 +190,34 @@ class Seq2SeqPreprocess(Preprocess):
         )
         return output
 
-    def load_data(self, file: str, running_stage):
+    def load_data(self, file: str):
         data_files = {}
-
-        if self.training:
-            data_files["train"] = file
-        if self.validating:
-            data_files["validation"] = file
-        if self.testing or self.predicting:
-            data_files["test"] = file
-
-        # load the dataset
-        dataset_dict = load_dataset(
-            self.filetype,
-            data_files=data_files,
-        )
-
-        # tokenize the dataset
+        stage = self._running_stage.value
+        data_files[stage] = file
+        # dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        dataset_dict = DatasetDict({
+            stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+        })
         dataset_dict = dataset_dict.map(
             self._tokenize_fn,
             batched=True,
         )
         columns = ["input_ids", "attention_mask"] if self.predicting else ["input_ids", "attention_mask", "labels"]
         dataset_dict.set_format(columns=columns)
+        return dataset_dict[stage]
 
-        return dataset_dict[self._running_stage.value]
+    def predict_load_data(self, sample: Any):
+        if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
+            return self.load_data(sample)
+        else:
+            if isinstance(sample, str):
+                sample = [sample]
+
+            if isinstance(sample, list) and all(isinstance(s, str) for s in sample):
+                return [self._tokenize_fn(s) for s in sample]
+
+            else:
+                raise MisconfigurationException("Currently, we support only list of sentences")
 
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
@@ -221,6 +228,11 @@ class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
     preprocess_cls = Seq2SeqPreprocess
+    # this enables to transform level-class attributes into instance based attributes
+    # It will perform a deepcopy on cls(...) for those attributes.
+    __flash_special_attr__ = (
+        "tokenizer", "input", "filetype", "target", "max_source_length", "max_target_length", "padding"
+    )
 
     @property
     def preprocess(self):
@@ -280,36 +292,19 @@ class Seq2SeqData(DataModule):
                                            categorical_input=["account_type"])
 
         """
-        preprocess = cls.preprocess_cls(
-            tokenizer=AutoTokenizer.from_pretrained(backbone, use_fast=True),
-            input=input,
-            filetype=filetype,
-            target=target,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-        )
+        cls.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+        cls.input = input
+        cls.filetype = filetype
+        cls.target = target
+        cls.max_source_length = max_source_length
+        cls.max_target_length = max_target_length
+        cls.padding = padding
 
-        cls._data_pipepline = DataPipeline(preprocess)
-
-        train_ds = cls._generate_dataset_if_possible(
-            train_file, running_stage=RunningStage.TRAINING, data_pipeline=cls._data_pipepline
-        )
-        valid_ds = cls._generate_dataset_if_possible(
-            valid_file, running_stage=RunningStage.VALIDATING, data_pipeline=cls._data_pipepline
-        )
-        test_ds = cls._generate_dataset_if_possible(
-            test_file, running_stage=RunningStage.TESTING, data_pipeline=cls._data_pipepline
-        )
-        predict_ds = cls._generate_dataset_if_possible(
-            predict_file, running_stage=RunningStage.PREDICTING, data_pipeline=cls._data_pipepline
-        )
-
-        return cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            predict_ds=predict_ds,
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_file,
+            valid_load_data_input=valid_file,
+            test_load_data_input=test_file,
+            predict_load_data_input=predict_file,
             batch_size=batch_size,
             num_workers=num_workers,
         )

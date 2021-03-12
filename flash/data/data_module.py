@@ -260,3 +260,32 @@ class DataModule(pl.LightningDataModule):
             return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
 
         return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)
+
+    @classmethod
+    def from_load_data_inputs(
+        cls,
+        train_load_data_input: Optional[Any] = None,
+        valid_load_data_input: Optional[Any] = None,
+        test_load_data_input: Optional[Any] = None,
+        predict_load_data_input: Optional[Any] = None,
+        **kwargs,
+    ):
+
+        # trick to get data_pipeline from empty DataModule
+        data_pipeline = cls(**kwargs).data_pipeline
+        train_ds = cls._generate_dataset_if_possible(
+            train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
+        )
+        valid_ds = cls._generate_dataset_if_possible(
+            valid_load_data_input, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
+        )
+        test_ds = cls._generate_dataset_if_possible(
+            test_load_data_input, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
+        )
+        predict_ds = cls._generate_dataset_if_possible(
+            predict_load_data_input, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
+        )
+
+        datamodule = cls(train_ds=train_ds, valid_ds=valid_ds, test_ds=test_ds, predict_ds=predict_ds, **kwargs)
+
+        return datamodule

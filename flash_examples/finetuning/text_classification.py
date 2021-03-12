@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Download the data

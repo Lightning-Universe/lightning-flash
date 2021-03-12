@@ -21,13 +21,6 @@ from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqDataPipeline
 class TranslationData(Seq2SeqData):
     """Data module for Translation tasks."""
 
-    @staticmethod
-    def default_pipeline():
-        return Seq2SeqDataPipeline(
-            AutoTokenizer.from_pretrained("facebook/mbart-large-en-ro", use_fast=True),
-            input="input",
-        )
-
     @classmethod
     def from_files(
         cls,
