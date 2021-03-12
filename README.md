@@ -48,14 +48,14 @@
 
 ## Installation
 
-<details>
-  <summary>View install</summary>
-
 Pip / conda
 
 ```bash
 pip install lightning-flash -U
 ```
+
+<details>
+  <summary>Other installations</summary>
 
 Pip from source
 
