@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+import torch
 from pandas.core.frame import DataFrame
 from pytorch_lightning.trainer.states import RunningStage
 from sklearn.model_selection import train_test_split
@@ -126,52 +127,13 @@ class TabularData(DataModule):
 
     def __init__(
         self,
-        train_df: DataFrame,
-        target: str,
-        categorical_input: Optional[List] = None,
-        numerical_input: Optional[List] = None,
-        valid_df: Optional[DataFrame] = None,
-        test_df: Optional[DataFrame] = None,
-        predict_df: Optional[DataFrame] = None,
+        train_ds: Optional[torch.utils.data.Dataset] = None,
+        valid_ds: Optional[torch.utils.data.Dataset] = None,
+        test_ds: Optional[torch.utils.data.Dataset] = None,
+        predict_ds: Optional[torch.utils.data.Dataset] = None,
         batch_size: int = 2,
         num_workers: Optional[int] = None,
     ):
-        if categorical_input is None and numerical_input is None:
-            raise RuntimeError('Both `categorical_input` and `numerical_input` are None!')
-
-        categorical_input = categorical_input if categorical_input is not None else []
-        numerical_input = numerical_input if numerical_input is not None else []
-
-        self.cat_cols = categorical_input
-        self.num_cols = numerical_input
-        self.target = target
-
-        self._preprocess_state = None
-
-        if isinstance(train_df, DataFrame):
-            dfs = [train_df]
-            if valid_df is not None:
-                dfs += [valid_df]
-            if test_df is not None:
-                dfs += [test_df]
-            if predict_df is not None:
-                dfs += [predict_df]
-            self._preprocess_state = self.preprocess_cls._generate_state(
-                dfs, target, numerical_input, categorical_input
-            )
-
-        train_ds = self._generate_dataset_if_possible(
-            train_df, running_stage=RunningStage.TRAINING, data_pipeline=self.data_pipeline
-        )
-        valid_ds = self._generate_dataset_if_possible(
-            valid_df, running_stage=RunningStage.VALIDATING, data_pipeline=self.data_pipeline
-        )
-        test_ds = self._generate_dataset_if_possible(
-            test_df, running_stage=RunningStage.TESTING, data_pipeline=self.data_pipeline
-        )
-        predict_ds = self._generate_dataset_if_possible(
-            predict_df, running_stage=RunningStage.PREDICTING, data_pipeline=self.data_pipeline
-        )
 
         super().__init__(
             train_ds=train_ds,
@@ -339,13 +301,48 @@ class TabularData(DataModule):
             assert 0 < test_size and test_size < 1
             valid_df, test_df = train_test_split(valid_df, test_size=test_size)
 
+        if categorical_input is None and numerical_input is None:
+            raise RuntimeError('Both `categorical_input` and `numerical_input` are None!')
+
+        categorical_input = categorical_input if categorical_input is not None else []
+        numerical_input = numerical_input if numerical_input is not None else []
+
+        cls.cat_cols = categorical_input
+        cls.num_cols = numerical_input
+        cls.target = target
+
+        cls._preprocess_state = None
+
+        if isinstance(train_df, DataFrame):
+            dfs = [train_df]
+            if valid_df is not None:
+                dfs += [valid_df]
+            if test_df is not None:
+                dfs += [test_df]
+            if predict_df is not None:
+                dfs += [predict_df]
+            cls._preprocess_state = cls.preprocess_cls._generate_state(dfs, target, numerical_input, categorical_input)
+
+        # trick to get data_pipeline from empty DataModule
+        data_pipeline = cls().data_pipeline
+        train_ds = cls._generate_dataset_if_possible(
+            train_df, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
+        )
+        valid_ds = cls._generate_dataset_if_possible(
+            valid_df, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
+        )
+        test_ds = cls._generate_dataset_if_possible(
+            test_df, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
+        )
+        predict_ds = cls._generate_dataset_if_possible(
+            predict_df, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
+        )
+
         datamodule = cls(
-            train_df=train_df,
-            target=target,
-            categorical_input=categorical_input,
-            numerical_input=numerical_input,
-            valid_df=valid_df,
-            test_df=test_df,
+            train_ds=train_ds,
+            valid_ds=valid_ds,
+            test_ds=test_ds,
+            predict_ds=predict_ds,
             batch_size=batch_size,
             num_workers=num_workers,
         )

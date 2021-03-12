@@ -18,6 +18,8 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 import torch
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import nn
 from torch.nn.modules import ModuleDict
 from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as torchvision_T
@@ -33,7 +35,6 @@ from flash.data.process import Preprocess
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
     import kornia.geometry.transform as T
-    from torch import nn
 else:
     from torchvision import transforms as T
 
@@ -137,6 +138,24 @@ class ImageClassificationPreprocess(Preprocess):
             _samples.append(sample)
         return default_collate(_samples)
 
+    def common_per_sample_pre_tensor_transform(self, sample: Any, transform) -> Any:
+        return self._apply_transform(sample, transform, "per_sample_pre_tensor_transform")
+
+    def train_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        sample, target = sample
+        return self.common_per_sample_pre_tensor_transform(sample, self.train_transform), target
+
+    def validation_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        sample, target = sample
+        return self.common_per_sample_pre_tensor_transform(sample, self.valid_transform), target
+
+    def test_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        sample, target = sample
+        return self.common_per_sample_pre_tensor_transform(sample, self.test_transform), target
+
+    def predict_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        return self.common_per_sample_pre_tensor_transform(sample, self.predict_transform)
+
     def per_sample_to_tensor_transform(self, sample) -> Any:
         sample, target = sample
         return self.to_tensor(sample), target
@@ -162,10 +181,6 @@ class ImageClassificationPreprocess(Preprocess):
     def predict_per_sample_post_tensor_transform(self, sample: Any) -> Any:
         return self.common_per_sample_post_tensor_transform(sample, self.predict_transform)
 
-    def predict_per_sample_transform(self, sample: Any) -> Any:
-        sample = self._convert_tensor_to_pil(sample)
-        return self._apply_transform(sample, self.valid_transform, "per_sample_post_tensor_transform")
-
     def train_per_batch_transform_on_device(self, batch: Tuple) -> Tuple:
         batch, target = batch
         return self._apply_transform(batch, self.train_transform, "per_batch_transform_on_device"), target
@@ -183,10 +198,10 @@ class ImageClassificationData(DataModule):
         valid_ds: Optional[torch.utils.data.Dataset] = None,
         test_ds: Optional[torch.utils.data.Dataset] = None,
         predict_ds: Optional[torch.utils.data.Dataset] = None,
-        train_transform: Optional[Union[Callable, str, Dict]] = 'default',
-        valid_transform: Optional[Union[Callable, str, Dict]] = 'default',
-        test_transform: Optional[Union[Callable, str, Dict]] = 'default',
-        predict_transform: Optional[Union[Callable, str, Dict]] = 'default',
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        valid_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
         batch_size: int = 1,
         num_workers: Optional[int] = None,
         train_split: Optional[Union[float, int]] = None,
@@ -241,10 +256,18 @@ class ImageClassificationData(DataModule):
         if isinstance(predict_transform, str) and predict_transform == 'default':
             predict_transform = self.default_valid_transforms
 
-        self.train_transform = train_transform
-        self.valid_transform = valid_transform
-        self.test_transform = test_transform
-        self.predict_transform = predict_transform
+        self.train_transform = self._check_transforms(train_transform)
+        self.valid_transform = self._check_transforms(valid_transform)
+        self.test_transform = self._check_transforms(test_transform)
+        self.predict_transform = self._check_transforms(predict_transform)
+
+    @staticmethod
+    def _check_transforms(transform: dict) -> dict:
+        if not isinstance(transform, dict):
+            raise MisconfigurationException(
+                f"Transform should be a dict. Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
+            )
+        return transform
 
     @property
     def default_train_transforms(self):
@@ -261,10 +284,9 @@ class ImageClassificationData(DataModule):
             }
         else:
             return {
-                "per_sample_pre_tensor_transform": T.Compose([
-                    T.RandomResizedCrop(self.image_size),
-                    T.RandomHorizontalFlip()
-                ]),
+                "per_sample_pre_tensor_transform": nn.Sequential(
+                    T.RandomResizedCrop(self.image_size), T.RandomHorizontalFlip()
+                ),
                 "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
