@@ -158,7 +158,7 @@ class FlashDatasetFolder(VisionDataset):
             self.samples = img_paths
 
     @staticmethod
-    def _find_classes(self, folder):
+    def _find_classes(folder):
         """
         Finds the class folders in a dataset.
 
