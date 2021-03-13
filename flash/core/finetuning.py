@@ -93,13 +93,14 @@ class FreezeUnfreeze(FlashBaseFinetuning):
         optimizer: Optimizer,
         opt_idx: int,
     ) -> None:
-        if epoch == self.unfreeze_epoch:
-            modules = [getattr(pl_module, attr_name) for attr_name in self.attr_names]
-            self.unfreeze_and_add_param_group(
-                module=modules,
-                optimizer=optimizer,
-                train_bn=self.train_bn,
-            )
+        if epoch != self.unfreeze_epoch:
+            return
+        modules = [getattr(pl_module, attr_name) for attr_name in self.attr_names]
+        self.unfreeze_and_add_param_group(
+            module=modules,
+            optimizer=optimizer,
+            train_bn=self.train_bn,
+        )
 
 
 class UnfreezeMilestones(FlashBaseFinetuning):

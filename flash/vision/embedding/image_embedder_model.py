@@ -24,7 +24,7 @@ from flash.core import Task
 from flash.core.data import TaskDataPipeline
 from flash.core.data.utils import _contains_any_tensor
 from flash.vision.backbones import backbone_and_num_features
-from flash.vision.classification.data import _default_valid_transforms, _pil_loader
+from flash.vision.classification.data import _DEFAULT_VALID_TRANSFORMS, _pil_loader
 
 
 class ImageEmbedderDataPipeline(TaskDataPipeline):
@@ -43,7 +43,7 @@ class ImageEmbedderDataPipeline(TaskDataPipeline):
 
     def __init__(
         self,
-        valid_transform: Optional[Callable] = _default_valid_transforms,
+        valid_transform: Optional[Callable] = _DEFAULT_VALID_TRANSFORMS,
         loader: Callable = _pil_loader,
     ):
         self._valid_transform = valid_transform
