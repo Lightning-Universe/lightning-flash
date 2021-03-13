@@ -1,3 +1,4 @@
+from copy import deepcopy
 from inspect import signature
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
@@ -13,10 +14,9 @@ if TYPE_CHECKING:
 
 class AutoDataset(torch.utils.data.Dataset):
 
-    FITTING_STAGES = ("train", "test", "validation")
+    FITTING_STAGES = ("train", "val")
     # Todo: Resolve this on Lightning side
-    STAGES = ("train", "test", "eval", "validation", "predict")
-    _load_data_called = False
+    STAGES = ("train", "test", "eval", "val", "predict")
 
     def __init__(
         self,
@@ -34,14 +34,16 @@ class AutoDataset(torch.utils.data.Dataset):
                     "datapipeline is specified but load_sample and/or load_data are also specified. "
                     "Won't use datapipeline"
                 )
+        # initial states
+        self._load_data_called = False
+        self._running_stage = None
+
         self.data = data
         self.data_pipeline = data_pipeline
-        self._running_stage = None
         self.load_data = load_data
         self.load_sample = load_sample
-        self._preprocessed_data = data
 
-        # also triggers setup if run
+        # trigger the setup only if `running_stage` is provided
         self.running_stage = running_stage
 
     @property
@@ -49,10 +51,10 @@ class AutoDataset(torch.utils.data.Dataset):
         return self._running_stage
 
     @running_stage.setter
-    def running_stage(self, new_stage):
-        self._running_stage = new_stage
-
-        self._setup(self._running_stage)
+    def running_stage(self, running_stage):
+        if self._running_stage != running_stage:
+            self._running_stage = running_stage
+            self._setup(running_stage)
 
     def _call_load_data(self, data):
         if len(signature(self.load_data).parameters) > 1:
@@ -71,8 +73,8 @@ class AutoDataset(torch.utils.data.Dataset):
         old_load_data = self.load_data.__code__ if self.load_data is not None else None
 
         if (
-            self.running_stage is not None and self.data_pipeline is not None and self.load_data is None
-            and self.load_sample is None and stage is not None
+            self._running_stage is not None and self.data_pipeline is not None
+            and (self.load_data is None or self.load_sample is None) and stage is not None
         ):
             self.load_data = getattr(
                 self.data_pipeline._preprocess_pipeline,

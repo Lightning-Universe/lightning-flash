@@ -26,6 +26,11 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
+class MockLightningModule(pl.LightningModule):
+
+    pass
+
+
 class TaskDataPipeline(DataPipeline):
 
     def per_batch_transform(self, batch: Any) -> Any:
@@ -101,10 +106,8 @@ class DataModule(pl.LightningDataModule):
     @staticmethod
     def set_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, value: Any) -> None:
         if isinstance(dataset, Subset):
-            setattr(dataset.dataset, attr_name, value)
-
-        else:
-            setattr(dataset, attr_name, value)
+            dataset = dataset.dataset
+        setattr(dataset, attr_name, value)
 
     def set_running_stages(self):
         if self._train_ds is not None:
@@ -119,40 +122,51 @@ class DataModule(pl.LightningDataModule):
         if self._predict_ds is not None:
             self.set_dataset_attribute(self._predict_ds, 'running_stage', RunningStage.PREDICTING)
 
+    def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
+        if isinstance(dataset, AutoDataset):
+            return self.data_pipeline.worker_preprocessor(running_stage)
+
     def _train_dataloader(self) -> DataLoader:
+        train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         return DataLoader(
-            self._train_ds if isinstance(self._train_ds, Dataset) else self._train_ds(),
+            train_ds,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,
+            collate_fn=self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
         )
 
     def _val_dataloader(self) -> DataLoader:
+        valid_ds: Dataset = self._valid_ds() if isinstance(self._valid_ds, Callable) else self._valid_ds
         return DataLoader(
-            self._valid_ds if isinstance(self._valid_ds, Dataset) else self._valid_ds(),
+            valid_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
+            collate_fn=self._resolve_collate_fn(valid_ds, RunningStage.VALIDATING)
         )
 
     def _test_dataloader(self) -> DataLoader:
+        test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
         return DataLoader(
-            self._test_ds if isinstance(self._test_ds, Dataset) else self._test_ds(),
+            test_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
+            collate_fn=self._resolve_collate_fn(test_ds, RunningStage.TESTING)
         )
 
     def _predict_dataloader(self) -> DataLoader:
-        predict_ds = self._predict_ds if isinstance(self._predict_ds, Dataset) else self._predict_ds()
+        predict_ds = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
         return DataLoader(
             predict_ds,
             batch_size=min(self.batch_size,
                            len(predict_ds) if len(predict_ds) > 0 else 1),
             num_workers=self.num_workers,
             pin_memory=True,
+            collate_fn=self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
         )
 
     def generate_auto_dataset(self, *args, **kwargs):
@@ -285,7 +299,6 @@ class DataModule(pl.LightningDataModule):
         predict_ds = cls._generate_dataset_if_possible(
             predict_load_data_input, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
         )
-
         datamodule = cls(train_ds=train_ds, valid_ds=valid_ds, test_ds=test_ds, predict_ds=predict_ds, **kwargs)
 
         return datamodule
