@@ -200,13 +200,13 @@ class TextClassificationData(DataModule):
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
         train_ds, valid_ds, test_ds, label_to_class_mapping = prepare_dataset(
-            tokenizer,
-            train_file,
-            valid_file,
-            test_file,
-            filetype,
-            input,
-            max_length,
+            tokenizer=tokenizer,
+            train_file=train_file,
+            valid_file=valid_file,
+            test_file=test_file,
+            filetype=filetype,
+            input=input,
+            max_length=max_length,
             target=target,
             label_to_class_mapping=None
         )
@@ -252,14 +252,13 @@ class TextClassificationData(DataModule):
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
         _, _, predict_ds, _ = prepare_dataset(
-            tokenizer,
-            None,
-            None,
-            predict_file,
-            filetype,
-            backbone,
-            input,
-            max_length,
+            tokenizer=tokenizer,
+            train_file=None,
+            valid_file=None,
+            test_file=predict_file,
+            filetype=filetype,
+            input=input,
+            max_length=max_length,
             predict=True,
         )
 
