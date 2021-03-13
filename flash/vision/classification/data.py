@@ -18,7 +18,6 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 import torch
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn.modules import ModuleDict
 from torch.utils.data._utils.collate import default_collate
@@ -261,14 +260,6 @@ class ImageClassificationData(DataModule):
         self.valid_transform = self._check_transforms(valid_transform)
         self.test_transform = self._check_transforms(test_transform)
         self.predict_transform = self._check_transforms(predict_transform)
-
-    @staticmethod
-    def _check_transforms(transform: dict) -> dict:
-        if not isinstance(transform, dict):
-            raise MisconfigurationException(
-                f"Transform should be a dict. Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
-            )
-        return transform
 
     @property
     def default_train_transforms(self):
