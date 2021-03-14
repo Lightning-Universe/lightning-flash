@@ -3,6 +3,7 @@ from inspect import signature
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import torch
+from pytorch_lightning.core.decorators import parameter_validation
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.warning_utils import rank_zero_warn
 
@@ -16,6 +17,7 @@ class AutoDataset(torch.utils.data.Dataset):
 
     FITTING_STAGES = ("train", "val")
     STAGES = ("train", "test", "eval", "val", "predict")
+    DATASET_KEY = "dataset"
 
     def __init__(
         self,
@@ -56,13 +58,15 @@ class AutoDataset(torch.utils.data.Dataset):
             self._setup(running_stage)
 
     def _call_load_data(self, data):
-        if len(signature(self.load_data).parameters) > 1:
+        parameters = signature(self.load_data).parameters
+        if len(parameters) > 1 and self.DATASET_KEY in parameters:
             return self.load_data(data, self)
         else:
             return self.load_data(data)
 
     def _call_load_sample(self, sample):
-        if len(signature(self.load_sample).parameters) > 1:
+        parameters = signature(self.load_data).parameters
+        if len(parameters) > 1 and self.DATASET_KEY in parameters:
             return self.load_sample(sample, self)
         else:
             return self.load_sample(sample)

@@ -13,14 +13,14 @@
 # limitations under the License.
 from pytorch_lightning import Trainer
 
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 
 # 2. Load the model from a checkpoint
-model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
+model = SummarizationTask.load_from_checkpoint("summarization_model_xsum.pt")
 
 # 2a. Summarize an article!
 predictions = model.predict([
@@ -48,7 +48,7 @@ predictions = model.predict([
 print(predictions)
 
 # 2b. Or generate summaries from a sheet file!
-datamodule = SummarizationData.from_file(
+datamodule = SummarizationData.from_files(
     predict_file="data/xsum/predict.csv",
     input="input",
 )

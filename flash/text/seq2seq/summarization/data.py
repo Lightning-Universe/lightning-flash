@@ -46,7 +46,7 @@ class SummarizationData(Seq2SeqData):
     @classmethod
     def from_files(
         cls,
-        train_file: str,
+        train_file: Optional[str] = None,
         input: str = 'input',
         target: Optional[str] = None,
         filetype: str = "csv",

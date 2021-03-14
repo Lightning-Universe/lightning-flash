@@ -34,13 +34,13 @@ datamodule = TabularData.from_csv(
 model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
 # 4. Create the trainer. Run 10 times on data
-trainer = flash.Trainer(max_epochs=10)
+trainer = flash.Trainer(fast_dev_run=True)
 
 # 5. Train the model
 trainer.fit(model, datamodule=datamodule)
 
 # 6. Test model
-trainer.test()
+trainer.test(model)
 
 # 7. Save it!
 trainer.save_checkpoint("tabular_classification_model.pt")

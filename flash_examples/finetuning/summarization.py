@@ -14,7 +14,7 @@
 import torch
 
 import flash
-from flash import download_data
+from flash import download_data, Trainer
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
@@ -33,13 +33,10 @@ datamodule = SummarizationData.from_files(
 model = SummarizationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, precision=32, gpus=int(torch.cuda.is_available()), fast_dev_run=True)
+trainer = flash.Trainer(gpus=int(torch.cuda.is_available()), fast_dev_run=True)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)
 
-# 6. Test model
-trainer.test(model)
-
-# 7. Save it!
+# 6. Save it!
 trainer.save_checkpoint("summarization_model_xsum.pt")

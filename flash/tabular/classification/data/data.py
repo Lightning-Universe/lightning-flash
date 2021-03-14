@@ -107,9 +107,10 @@ class TabularPreprocess(Preprocess):
         target = df[self.target].to_numpy().astype(np.float32 if self.regression else np.int64)
         return [((c, n), t) for c, n, t in zip(cat_vars, num_vars, target)]
 
-    def predict_load_data(self, df: DataFrame, dataset: AutoDataset):
+    def predict_load_data(self, sample: Union[str, DataFrame], dataset: AutoDataset):
+        df = pd.read_csv(sample) if isinstance(sample, str) else sample
         _, cat_vars, num_vars = self.common_load_data(df, dataset)
-        return [((c, n), -1) for c, n in zip(cat_vars, num_vars)]
+        return [(c, n) for c, n in zip(cat_vars, num_vars)]
 
 
 class TabularData(DataModule):
