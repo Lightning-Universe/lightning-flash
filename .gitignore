@@ -140,3 +140,8 @@ data_folder
 *.pt
 *.zip
 /data
+
+# Flash examples & notebook Data
+/flash_*/data
+/flash_*/finetuning/data
+/flash_*/predict/data
