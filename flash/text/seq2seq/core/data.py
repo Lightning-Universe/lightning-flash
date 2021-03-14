@@ -235,7 +235,7 @@ class Seq2SeqData(DataModule):
     )
 
     @property
-    def preprocess(self):
+    def preprocess(self) -> Seq2SeqPreprocess:
         return self.preprocess_cls(
             tokenizer=self.tokenizer,
             input=self.input,
@@ -278,7 +278,8 @@ class Seq2SeqData(DataModule):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             Seq2SeqData: The constructed data module.
@@ -336,7 +337,8 @@ class Seq2SeqData(DataModule):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             Seq2SeqData: The constructed data module.

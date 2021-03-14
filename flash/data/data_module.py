@@ -46,7 +46,8 @@ class DataModule(pl.LightningDataModule):
         test_ds: Dataset to test model performance. Defaults to None.
         batch_size: the batch size to be used by the DataLoader. Defaults to 1.
         num_workers: The number of workers to use for parallelized loading.
-            Defaults to None which equals the number of available CPU threads.
+            Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
     """
 
     preprocess_cls = Preprocess

@@ -114,7 +114,7 @@ def test_autodataset_with_functions(
 def test_autodataset_warning():
     with pytest.warns(
         UserWarning,
-        match="datapipeline is specified but load_sample and/or load_data are also specified. Won't use datapipeline"
+        match="``datapipeline`` is specified but load_sample and/or load_data are also specified. Won't use datapipeline"
     ):
         AutoDataset(range(10), load_data=lambda x: x, load_sample=lambda x: x, data_pipeline=DataPipeline())
 

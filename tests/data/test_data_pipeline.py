@@ -464,7 +464,7 @@ class LamdaDummyDataset(torch.utils.data.Dataset):
         return 5
 
 
-class TestPreprocess(Preprocess):
+class TestPreprocessTransformations(Preprocess):
 
     def __init__(self):
         super().__init__()
@@ -542,7 +542,7 @@ class TestPreprocess(Preprocess):
         return LamdaDummyDataset(lambda: (["a", "b"]))
 
 
-class TestPreprocess2(TestPreprocess):
+class TestPreprocessTransformations2(TestPreprocessTransformations):
 
     def val_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
         self.val_per_sample_to_tensor_transform_called = True
@@ -575,7 +575,7 @@ def test_datapipeline_transformations(tmpdir):
 
     class CustomDataModule(DataModule):
 
-        preprocess_cls = TestPreprocess
+        preprocess_cls = TestPreprocessTransformations
 
     datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2)
 
@@ -588,7 +588,7 @@ def test_datapipeline_transformations(tmpdir):
     with pytest.raises(MisconfigurationException, match="When ``per_sample_to_tensor_transform``"):
         batch = next(iter(datamodule.val_dataloader()))
 
-    CustomDataModule.preprocess_cls = TestPreprocess2
+    CustomDataModule.preprocess_cls = TestPreprocessTransformations2
     datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2)
     batch = next(iter(datamodule.val_dataloader()))
     assert torch.equal(batch["a"], torch.tensor([0, 1]))

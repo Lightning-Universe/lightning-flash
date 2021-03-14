@@ -140,7 +140,7 @@ class TabularData(DataModule):
         return len(self.cat_cols) + len(self.num_cols)
 
     @property
-    def preprocess(self):
+    def preprocess(self) -> TabularPreprocess:
         mean = None
         std = None
         codes = None
@@ -203,7 +203,8 @@ class TabularData(DataModule):
             test_csv: test data csv file.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
             val_size: float between 0 and 1 to create a validation dataset from train dataset
             test_size: float between 0 and 1 to create a test dataset from train validation
 
@@ -264,7 +265,8 @@ class TabularData(DataModule):
             test_df: test data DataFrame
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
             val_size: float between 0 and 1 to create a validation dataset from train dataset
             test_size: float between 0 and 1 to create a test dataset from train validation
 

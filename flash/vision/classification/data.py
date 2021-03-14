@@ -266,7 +266,8 @@ class ImageClassificationData(DataModule):
     def _check_transforms(transform: dict) -> dict:
         if not isinstance(transform, dict):
             raise MisconfigurationException(
-                f"Transform should be a dict. Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
+                "Transform should be a dict. "
+                f"Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
             )
         return transform
 
@@ -323,7 +324,7 @@ class ImageClassificationData(DataModule):
         return num_classes
 
     @property
-    def preprocess(self):
+    def preprocess(self) -> ImageClassificationPreprocess:
         return self.preprocess_cls(
             train_transform=self.train_transform,
             valid_transform=self.valid_transform,

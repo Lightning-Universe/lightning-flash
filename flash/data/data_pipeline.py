@@ -398,8 +398,6 @@ class DataPipeline:
 
             for idx, loader in enumerate(dataloader):
                 if isinstance(loader, DataLoader):
-                    # TODO: See lightning for proper reinstantiation of loader
-                    worker_collate = loader.collate_fn
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
                     if isinstance(dl_args['collate_fn'], _PreProcessor):

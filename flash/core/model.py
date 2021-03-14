@@ -13,11 +13,12 @@
 # limitations under the License.
 import functools
 import os
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage, TrainerState
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
@@ -69,8 +70,6 @@ class Task(pl.LightningModule):
         learning_rate: float = 5e-5,
     ):
         super().__init__()
-        self._last_trainer_kwargs = {}
-
         if model is not None:
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
@@ -160,11 +159,12 @@ class Task(pl.LightningModule):
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
+        # batch_idx is always 0 when running with ``model.predict``.
         predictions = self.predict_step(x, 0)
         predictions = data_pipeline.postprocessor(predictions)
         return predictions
 
-    def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         if isinstance(batch, tuple):
             batch = batch[0]
         elif isinstance(batch, list):
@@ -175,12 +175,12 @@ class Task(pl.LightningModule):
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
 
-    def configure_finetune_callback(self):
+    def configure_finetune_callback(self) -> List[Callback]:
         return []
 
     @property
-    def preprocess(self):
-        return self._preprocess or getattr(self.data_pipeline, '_preprocess_pipeline', None)
+    def preprocess(self) -> Optional[Preprocess]:
+        return getattr(self.data_pipeline, '_preprocess_pipeline', None) or self._preprocess
 
     @preprocess.setter
     def preprocess(self, preprocess: Preprocess) -> None:
@@ -188,8 +188,8 @@ class Task(pl.LightningModule):
         self.data_pipeline = DataPipeline(preprocess, self.postprocess)
 
     @property
-    def postprocess(self):
-        return self._postprocess or getattr(self.data_pipeline, '_postprocess_pipeline', None)
+    def postprocess(self) -> Postprocess:
+        return getattr(self.data_pipeline, '_postprocess_pipeline', None) or self._postprocess
 
     @postprocess.setter
     def postprocess(self, postprocess: Postprocess) -> None:
@@ -213,6 +213,7 @@ class Task(pl.LightningModule):
             self.trainer, 'datamodule'
         ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
             return self.trainer.datamodule.data_pipeline
+
         return self._data_pipeline
 
     @data_pipeline.setter
@@ -222,7 +223,7 @@ class Task(pl.LightningModule):
             self._preprocess = data_pipeline._preprocess_pipeline
 
         if data_pipeline is not None and getattr(data_pipeline, '_postprocess_pipeline', None) is not None:
-            datapipeline_postprocess = getattr(data_pipeline, '_postprocess_pipeline', None)
+            datapipeline_postprocess = data_pipeline._postprocess_pipeline
             if type(datapipeline_postprocess) != Postprocess:
                 self._postprocess = data_pipeline._postprocess_pipeline
 

@@ -29,7 +29,8 @@ class _Chainer(torch.nn.Module):
         if self.assert_contains_tensor:
             if not _contains_any_tensor(sample):
                 raise MisconfigurationException(
-                    "When ``per_sample_to_tensor_transform`` is overriden, ``DataPipeline`` expects the outputs to be ``tensors``"
+                    "When ``per_sample_to_tensor_transform`` is overriden, "
+                    "``DataPipeline`` expects the outputs to be ``tensors``"
                 )
         sample = self.per_sample_post_tensor_transform(sample)
         return sample
