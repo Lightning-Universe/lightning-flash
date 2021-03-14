@@ -106,7 +106,7 @@ class ImageClassificationPreprocess(Preprocess):
         return img
 
     @classmethod
-    def predict_load_data(cls, samples: Any, dataset: AutoDataset = None) -> Any:
+    def predict_load_data(cls, samples: Any) -> Any:
         return cls._get_predicting_files(samples)
 
     def _convert_tensor_to_pil(self, sample):

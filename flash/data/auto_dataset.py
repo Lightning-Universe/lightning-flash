@@ -65,7 +65,7 @@ class AutoDataset(torch.utils.data.Dataset):
             return self.load_data(data)
 
     def _call_load_sample(self, sample):
-        parameters = signature(self.load_data).parameters
+        parameters = signature(self.load_sample).parameters
         if len(parameters) > 1 and self.DATASET_KEY in parameters:
             return self.load_sample(sample, self)
         else:
