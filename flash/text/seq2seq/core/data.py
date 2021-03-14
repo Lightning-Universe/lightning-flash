@@ -210,12 +210,8 @@ class Seq2SeqPreprocess(Preprocess):
         if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
             return self.load_data(sample)
         else:
-            if isinstance(sample, str):
-                sample = [sample]
-
-            if isinstance(sample, list) and all(isinstance(s, str) for s in sample):
-                return [self._tokenize_fn(s) for s in sample]
-
+            if isinstance(sample, (list, tuple)) and len(sample) > 0 and all(isinstance(s, str) for s in sample):
+                return [self._tokenize_fn({self._input: s, self._target: None}) for s in sample]
             else:
                 raise MisconfigurationException("Currently, we support only list of sentences")
 

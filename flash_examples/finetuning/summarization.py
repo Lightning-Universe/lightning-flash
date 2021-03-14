@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash import download_data
 from flash.text import SummarizationData, SummarizationTask
@@ -31,13 +33,13 @@ datamodule = SummarizationData.from_files(
 model = SummarizationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=1, precision=32, gpus=int(torch.cuda.is_available()), fast_dev_run=True)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)
 
 # 6. Test model
-trainer.test()
+trainer.test(model)
 
 # 7. Save it!
 trainer.save_checkpoint("summarization_model_xsum.pt")

@@ -11,20 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any, Optional, Union
+
 from transformers import AutoTokenizer
 
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqDataPipeline
+from flash.data.process import Postprocess
+from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPreprocess
+
+
+class SummarizationPostprocess(Postprocess):
+
+    def __init__(
+        self,
+        tokenizer: AutoTokenizer,
+    ):
+        super().__init__()
+        self.tokenizer = tokenizer
+
+    def uncollate(self, generated_tokens: Any) -> Any:
+        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+        pred_str = [str.strip(s) for s in pred_str]
+        return pred_str
 
 
 class SummarizationData(Seq2SeqData):
-    from typing import Optional, Union
 
-    @staticmethod
-    def default_pipeline():
-        return Seq2SeqDataPipeline(
-            AutoTokenizer.from_pretrained("t5-small", use_fast=True),
-            input="input",
-        )
+    preprocess_cls = Seq2SeqPreprocess
+    postprocess_cls = SummarizationPostprocess
+
+    @property
+    def postprocess(self) -> SummarizationPostprocess:
+        return self.postprocess_cls(tokenizer=self.tokenizer)
 
     @classmethod
     def from_files(
@@ -76,6 +93,7 @@ class SummarizationData(Seq2SeqData):
             train_file=train_file,
             valid_file=valid_file,
             test_file=test_file,
+            predict_file=predict_file,
             input=input,
             target=target,
             backbone=backbone,
