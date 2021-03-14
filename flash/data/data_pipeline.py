@@ -2,7 +2,7 @@ import functools
 import os
 import weakref
 from functools import partial, wraps
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -471,6 +471,15 @@ class DataPipeline:
 
 class _StageOrchestrator:
 
+    internal_mapping = {
+        RunningStage.TRAINING: RunningStage.TRAINING,
+        RunningStage.SANITY_CHECKING: RunningStage.VALIDATING,
+        RunningStage.VALIDATING: RunningStage.VALIDATING,
+        RunningStage.TESTING: RunningStage.TESTING,
+        RunningStage.PREDICTING: RunningStage.PREDICTING,
+        RunningStage.TUNING: RunningStage.TUNING
+    }
+
     def __init__(self, func_to_wrap: Callable, model: 'Task') -> None:
         self.func = func_to_wrap
 
@@ -482,7 +491,8 @@ class _StageOrchestrator:
     def __call__(self, *args, **kwargs):
         outputs = self.func(*args, **kwargs)
 
-        additional_func = self._stage_mapping.get(self.model.trainer._running_stage, None)
+        internal_running_state = self.internal_mapping[self.model.trainer._running_stage]
+        additional_func = self._stage_mapping.get(internal_running_state, None)
 
         if additional_func is not None:
             outputs = additional_func(outputs)

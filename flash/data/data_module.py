@@ -300,5 +300,6 @@ class DataModule(pl.LightningDataModule):
             predict_load_data_input, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
         )
         datamodule = cls(train_ds=train_ds, valid_ds=valid_ds, test_ds=test_ds, predict_ds=predict_ds, **kwargs)
-
+        datamodule._preprocess = data_pipeline._preprocess_pipeline
+        datamodule._postprocess = data_pipeline._postprocess_pipeline
         return datamodule

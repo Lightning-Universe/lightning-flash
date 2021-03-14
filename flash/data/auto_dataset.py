@@ -52,7 +52,7 @@ class AutoDataset(torch.utils.data.Dataset):
 
     @running_stage.setter
     def running_stage(self, running_stage):
-        if self._running_stage != running_stage:
+        if self._running_stage != running_stage or (self._running_stage is None):
             self._running_stage = running_stage
             self._setup(running_stage)
 
@@ -109,4 +109,9 @@ class AutoDataset(torch.utils.data.Dataset):
             return self._preprocessed_data[index]
 
     def __len__(self) -> int:
+        if self.load_sample is None and self.load_data is None:
+            raise RuntimeError(
+                "Names for LoadSample and LoadData could not be inferred."
+                " Consider setting the RunningStage"
+            )
         return len(self._preprocessed_data)

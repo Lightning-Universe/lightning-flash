@@ -5,6 +5,7 @@ import pytest
 import torch
 from pytorch_lightning import callbacks, Trainer
 from pytorch_lightning.callbacks import Callback
+from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.trainer.supporters import CombinedDataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -347,8 +348,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             self, stage_mapping: Dict, current_running_stage: RunningStage, cls=_PreProcessor
         ):
             assert isinstance(stage_mapping[current_running_stage], cls)
-            for stage in [s for s in self.stages if s != current_running_stage]:
-                assert stage_mapping[stage] is None
+            assert stage_mapping[current_running_stage] is not None
 
         def on_request_train_dataloader(self) -> None:
             current_running_stage = RunningStage.TRAINING
@@ -358,7 +358,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             super().on_request_train_dataloader()
             collate_fn = self.train_dataloader().collate_fn  # noqa F811
-            assert collate_fn._stage == current_running_stage
+            assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
@@ -371,7 +371,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             super().on_request_val_dataloader()
             collate_fn = self.val_dataloader().collate_fn  # noqa F811
-            assert collate_fn._stage == current_running_stage
+            assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
@@ -384,7 +384,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             super().on_request_test_dataloader()
             collate_fn = self.test_dataloader().collate_fn  # noqa F811
-            assert collate_fn._stage == current_running_stage
+            assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
@@ -398,7 +398,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert self.predict_step == self._saved_predict_step
             super().on_request_predict_dataloader()
             collate_fn = self.predict_dataloader().collate_fn  # noqa F811
-            assert collate_fn._stage == current_running_stage
+            assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             assert isinstance(self.predict_step, _StageOrchestrator)
@@ -452,76 +452,104 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
     assert model.predict_step == _original_predict_step
 
 
+class LamdaDummyDataset(torch.utils.data.Dataset):
+
+    def __init__(self, fx: Callable):
+        self.fx = fx
+
+    def __getitem__(self, index: int) -> Any:
+        return self.fx()
+
+    def __len__(self) -> int:
+        return 5
+
+
+class TestPreprocess(Preprocess):
+
+    def __init__(self):
+        super().__init__()
+
+        self.train_load_data_called = False
+        self.train_per_sample_pre_tensor_transform_called = False
+        self.train_collate_called = False
+        self.train_per_batch_transform_on_device_called = False
+        self.val_load_data_called = False
+        self.val_load_sample_called = False
+        self.val_per_sample_to_tensor_transform_called = False
+        self.val_collate_called = False
+        self.val_per_batch_transform_on_device_called = False
+        self.test_load_data_called = False
+        self.test_per_sample_to_tensor_transform_called = False
+        self.test_per_sample_post_tensor_transform_called = False
+        self.predict_load_data_called = False
+
+    def train_load_data(self, sample):
+        self.train_load_data_called = True
+        return LamdaDummyDataset(lambda: (0, 1, 2, 3))
+
+    def train_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        self.train_per_sample_pre_tensor_transform_called = True
+        return sample + (5, )
+
+    def train_collate(self, samples):
+        self.train_collate_called = True
+        return torch.tensor([list(s) for s in samples])
+
+    def train_per_batch_transform_on_device(self, batch: Any) -> Any:
+        self.train_per_batch_transform_on_device_called = True
+        assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
+
+    def val_load_data(self, sample, dataset):
+        self.val_load_data_called = True
+        assert isinstance(dataset, AutoDataset)
+        return list(range(5))
+
+    def val_load_sample(self, sample):
+        self.val_load_sample_called = True
+        return {"a": sample, "b": sample + 1}
+
+    def val_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+        self.val_per_sample_to_tensor_transform_called = True
+        return sample
+
+    def val_collate(self, samples):
+        self.val_collate_called = True
+        _count = samples[0]['a']
+        assert samples == [{'a': _count, 'b': _count + 1}, {'a': _count + 1, 'b': _count + 2}]
+        return {'a': torch.tensor([0, 1]), 'b': torch.tensor([1, 2])}
+
+    def val_per_batch_transform_on_device(self, batch: Any) -> Any:
+        self.val_per_batch_transform_on_device_called = True
+        batch = batch[0]
+        assert torch.equal(batch["a"], torch.tensor([0, 1]))
+        assert torch.equal(batch["b"], torch.tensor([1, 2]))
+        return [False]
+
+    def test_load_data(self, sample):
+        self.test_load_data_called = True
+        return LamdaDummyDataset(lambda: [torch.rand(1), torch.rand(1)])
+
+    def test_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+        self.test_per_sample_to_tensor_transform_called = True
+        return sample
+
+    def test_per_sample_post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
+        self.test_per_sample_post_tensor_transform_called = True
+        return sample
+
+    def predict_load_data(self, sample):
+        self.predict_load_data_called = True
+        return LamdaDummyDataset(lambda: (["a", "b"]))
+
+
+class TestPreprocess2(TestPreprocess):
+
+    def val_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+        self.val_per_sample_to_tensor_transform_called = True
+        return {"a": torch.tensor(sample["a"]), "b": torch.tensor(sample["b"])}
+
+
 def test_datapipeline_transformations(tmpdir):
-
-    class LamdaDummyDataset(torch.utils.data.Dataset):
-
-        def __init__(self, fx: Callable):
-            self.fx = fx
-
-        def __getitem__(self, index: int) -> Any:
-            return self.fx()
-
-        def __len__(self) -> int:
-            return 5
-
-    class TestPreprocess(Preprocess):
-
-        def train_load_data(self, sample):
-            return LamdaDummyDataset(lambda: (0, 1, 2, 3))
-
-        def train_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
-            return sample + (5, )
-
-        def train_collate(self, samples):
-            return torch.tensor([list(s) for s in samples])
-
-        def train_per_batch_transform_on_device(self, batch: Any) -> Any:
-            assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
-
-        def val_load_data(self, sample, dataset):
-            assert isinstance(dataset, AutoDataset)
-            return list(range(5))
-
-        def val_load_sample(self, sample):
-            return {"a": sample, "b": sample + 1}
-
-        def val_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
-            return sample
-
-        def val_per_sample_to_tensor_transform_2(self, sample: Any) -> torch.Tensor:
-            return {"a": torch.tensor(sample["a"]), "b": torch.tensor(sample["b"])}
-
-        def val_collate(self, samples):
-            assert samples == [{
-                'a': torch.tensor(0),
-                'b': torch.tensor(1)
-            }, {
-                'a': torch.tensor(1),
-                'b': torch.tensor(2)
-            }]
-            return samples
-
-        def val_per_batch_transform_on_device(self, batch: Any) -> Any:
-            import pdb
-            pdb.set_trace()
-            assert batch == [{'a': torch.tensor(0), 'b': torch.tensor(1)}, {'a': torch.tensor(1), 'b': torch.tensor(2)}]
-            return False
-
-        def test_load_data(self, sample):
-            return LamdaDummyDataset(lambda: [torch.rand(1), torch.rand(1)])
-
-        def test_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
-            import pdb
-            pdb.set_trace()
-            return sample
-
-        def test_per_sample_post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
-            import pdb
-            pdb.set_trace()
-
-        def predict_load_data(self, sample):
-            return LamdaDummyDataset(lambda: ["a", "b"])
 
     class CustomModel(Task):
 
@@ -535,12 +563,12 @@ def test_datapipeline_transformations(tmpdir):
             assert batch is False
 
         def test_step(self, batch, batch_idx):
-            import pdb
-            pdb.set_trace()
-            pass
+            assert len(batch) == 2
+            assert batch[0].shape == torch.Size([2, 1])
 
-        def predict_step(self, *_):
-            pass
+        def predict_step(self, batch, batch_idx, dataloader_idx):
+            assert batch == [('a', 'a'), ('b', 'b')]
+            return torch.tensor([0, 0, 0])
 
         def on_request_train_dataloader(self):
             super().on_request_train_dataloader()
@@ -559,13 +587,38 @@ def test_datapipeline_transformations(tmpdir):
     assert datamodule.val_dataloader().dataset[1] == {'a': 1, 'b': 2}
     with pytest.raises(MisconfigurationException, match="When ``per_sample_to_tensor_transform``"):
         batch = next(iter(datamodule.val_dataloader()))
-    val_dataloader = datamodule.val_dataloader()
-    new_per_sample_to_tensor_transform = datamodule.data_pipeline._preprocess_pipeline.val_per_sample_to_tensor_transform_2
-    val_dataloader.collate_fn.per_sample_transform.per_sample_to_tensor_transform.func = new_per_sample_to_tensor_transform
-    batch = next(iter(val_dataloader))
+
+    CustomDataModule.preprocess_cls = TestPreprocess2
+    datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2)
+    batch = next(iter(datamodule.val_dataloader()))
+    assert torch.equal(batch["a"], torch.tensor([0, 1]))
+    assert torch.equal(batch["b"], torch.tensor([1, 2]))
 
     model = CustomModel()
-    trainer = Trainer(fast_dev_run=True)
+    trainer = Trainer(
+        max_epochs=1,
+        limit_train_batches=2,
+        limit_val_batches=1,
+        limit_test_batches=2,
+        limit_predict_batches=2,
+        num_sanity_val_steps=1
+    )
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model)
-    #trainer.predict(model)
+    trainer.predict(model)
+
+    # todo (tchaton) resolve the lost reference.
+    preprocess = model._preprocess
+    # assert preprocess.train_load_data_called
+    # assert preprocess.train_per_sample_pre_tensor_transform_called
+    # assert preprocess.train_collate_called
+    assert preprocess.train_per_batch_transform_on_device_called
+    # assert preprocess.val_load_data_called
+    # assert preprocess.val_load_sample_called
+    # assert preprocess.val_per_sample_to_tensor_transform_called
+    # assert preprocess.val_collate_called
+    assert preprocess.val_per_batch_transform_on_device_called
+    # assert preprocess.test_load_data_called
+    # assert preprocess.test_per_sample_to_tensor_transform_called
+    # assert preprocess.test_per_sample_post_tensor_transform_called
+    # assert preprocess.predict_load_data_called

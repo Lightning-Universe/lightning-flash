@@ -228,21 +228,25 @@ class Task(pl.LightningModule):
 
     def on_request_train_dataloader(self):
         if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
             self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
         return super().on_request_train_dataloader()
 
     def on_request_val_dataloader(self):
         if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
         return super().on_request_val_dataloader()
 
     def on_request_test_dataloader(self, *_) -> None:
         if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
             self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
         return super().on_request_test_dataloader()
 
     def on_request_predict_dataloader(self) -> None:
         if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
             self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
         return super().on_request_predict_dataloader()
 
