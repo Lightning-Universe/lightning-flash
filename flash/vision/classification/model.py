@@ -27,6 +27,27 @@ from flash.vision.classification.data import ImageClassificationData, ImageClass
 class ImageClassifier(ClassificationTask):
     """Task that classifies images.
 
+    Use a built in backbone
+
+    Example::
+
+        from flash.vision import ImageClassifier
+
+        classifier = ImageClassifier(backbone='resnet18')
+
+    Or your own backbone (num_features is the number of features produced by your backbone)
+
+    Example::
+
+        from flash.vision import ImageClassifier
+        from torch import nn
+
+        # use any backbone
+        some_backbone = nn.Conv2D(...)
+        num_out_features = 1024
+        classifier = ImageClassifier(backbone=(some_backbone, num_out_features))
+
+
     Args:
         num_classes: Number of classes to classify.
         backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
