@@ -66,11 +66,13 @@ class DataPipeline:
         Cropped Version of
         https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
+        if prefix is None and not hasattr(super_obj, method_name):
+            raise MisconfigurationException(f"This function doesn't belong to the parent class {super_obj}")
 
         current_method_name = method_name if prefix is None else f'{prefix}_{method_name}'
 
         if not hasattr(process_obj, current_method_name):
-            return False
+            return False or DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
 
         has_different_code = getattr(process_obj,
                                      current_method_name).__code__ != getattr(super_obj, method_name).__code__
@@ -178,8 +180,6 @@ class DataPipeline:
         assert_contains_tensor = self._is_overriden_recursive(
             "per_sample_to_tensor_transform", self._preprocess_pipeline, Preprocess, prefix=stage.value
         )
-
-        print(stage, assert_contains_tensor)
 
         worker_preprocessor = _PreProcessor(
             worker_collate_fn,

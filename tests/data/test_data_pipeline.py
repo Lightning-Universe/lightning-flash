@@ -622,3 +622,24 @@ def test_datapipeline_transformations(tmpdir):
     # assert preprocess.test_per_sample_to_tensor_transform_called
     # assert preprocess.test_per_sample_post_tensor_transform_called
     # assert preprocess.predict_load_data_called
+
+
+def test_is_overriden_recursive(tmpdir):
+
+    class TestPreprocess(Preprocess):
+
+        def collate(self, *_):
+            pass
+
+        def val_collate(self, *_):
+            pass
+
+    preprocess = TestPreprocess()
+    assert DataPipeline._is_overriden_recursive("collate", preprocess, Preprocess, prefix="val")
+    assert DataPipeline._is_overriden_recursive("collate", preprocess, Preprocess, prefix="train")
+    assert not DataPipeline._is_overriden_recursive(
+        "per_batch_transform_on_device", preprocess, Preprocess, prefix="train"
+    )
+    assert not DataPipeline._is_overriden_recursive("per_batch_transform_on_device", preprocess, Preprocess)
+    with pytest.raises(MisconfigurationException, match="This function doesn't belong to the parent class"):
+        assert not DataPipeline._is_overriden_recursive("chocolate", preprocess, Preprocess)
