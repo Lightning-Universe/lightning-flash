@@ -16,11 +16,7 @@ from typing import Any, Union
 import torch
 
 from flash.core.model import Task
-from flash.data.data_pipeline import Postprocess
-
-
-class ClassificationDataPipeline:
-    pass
+from flash.data.process import Postprocess
 
 
 class ClassificationPostprocess(Postprocess):

@@ -19,6 +19,7 @@ import pytorch_lightning as pl
 import torch
 from numpy import isin
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
@@ -186,6 +187,14 @@ class DataModule(pl.LightningDataModule):
     @property
     def data_pipeline(self) -> DataPipeline:
         return DataPipeline(self.preprocess, self.postprocess)
+
+    @staticmethod
+    def _check_transforms(transform: dict) -> dict:
+        if not isinstance(transform, dict):
+            raise MisconfigurationException(
+                f"Transform should be a dict. Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
+            )
+        return transform
 
     @classmethod
     def autogenerate_dataset(
