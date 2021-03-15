@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from pytorch_lightning.metrics import Accuracy
@@ -19,7 +19,9 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
+from flash.data.data_pipeline import DataPipeline
 from flash.vision.backbones import backbone_and_num_features
+from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
 
 class ImageClassifier(ClassificationTask):
@@ -35,6 +37,12 @@ class ImageClassifier(ClassificationTask):
             defaults to :class:`pytorch_lightning.metrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
+
+    preprocess_cls = ImageClassificationPreprocess
+
+    @property
+    def preprocess(self):
+        return self.preprocess_cls(predict_transform=ImageClassificationData.default_valid_transforms())
 
     def __init__(
         self,
@@ -67,3 +75,6 @@ class ImageClassifier(ClassificationTask):
     def forward(self, x) -> Any:
         x = self.backbone(x)
         return torch.softmax(self.head(x), -1)
+
+    def predict(self, x: Any, data_pipeline: Optional[DataPipeline] = None) -> Any:
+        return super().predict(x, data_pipeline=data_pipeline)
