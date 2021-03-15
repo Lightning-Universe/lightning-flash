@@ -655,8 +655,8 @@ def test_dummy_example(tmpdir):
 
         def __init__(self, to_tensor_transform, train_per_sample_transform_on_device):
             super().__init__()
-            self._to_tensor = to_tensor_transform  # T.ToTensor()
-            self._train_per_sample_transform_on_device = train_per_sample_transform_on_device  # T.RandomHorizontalFlip()
+            self._to_tensor = to_tensor_transform
+            self._train_per_sample_transform_on_device = train_per_sample_transform_on_device
 
         def load_data(self, folder: str):
             # from folder -> return files paths

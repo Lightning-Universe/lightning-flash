@@ -16,53 +16,13 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 import torch
 from pytorch_lightning.metrics import Accuracy
 from pytorch_lightning.utilities.distributed import rank_zero_warn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 
 from flash.core import Task
-from flash.data.data_module import TaskDataPipeline
-from flash.data.utils import _contains_any_tensor
+from flash.data.data_pipeline import DataPipeline
 from flash.vision.backbones import backbone_and_num_features
-from flash.vision.utils import pil_loader
-
-
-class ImageEmbedderDataPipeline(TaskDataPipeline):
-    """
-    >>> from flash.vision.embedding import ImageEmbedderDataPipeline
-    >>> iedata = ImageEmbedderDataPipeline()
-    >>> iedata.before_collate(torch.tensor([1]))
-    tensor([1])
-    >>> import os, numpy, PIL
-    >>> img = PIL.Image.fromarray(numpy.random.randint(0, 255, (150, 200, 3)), 'RGB')
-    >>> img.save('sample-image.png')
-    >>> iedata.before_collate('sample-image.png')  # doctest: +ELLIPSIS
-    [tensor([[[...]]])]
-    >>> os.remove('sample-image.png')
-    """
-
-    def __init__(
-        self,
-        valid_transform: Optional[Callable] = 'default',
-        loader: Callable = pil_loader,
-    ):
-        self._valid_transform = valid_transform
-        self._loader = loader
-
-    def before_collate(self, samples: Any) -> Any:
-        if _contains_any_tensor(samples):
-            return samples
-
-        if isinstance(samples, str):
-            samples = [samples]
-
-        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
-            outputs = []
-            for sample in samples:
-                output = self._loader(sample)
-                outputs.append(self._valid_transform(output))
-            return outputs
-        raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
+from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
 
 class ImageEmbedder(Task):
@@ -86,6 +46,12 @@ class ImageEmbedder(Task):
         >>> embeddings = embedder(image)
 
     """
+
+    preprocess_cls = ImageClassificationPreprocess
+
+    @property
+    def preprocess(self):
+        return self.preprocess_cls(predict_transform=ImageClassificationData.default_valid_transforms())
 
     def __init__(
         self,
@@ -146,6 +112,5 @@ class ImageEmbedder(Task):
         x = self.head(x)
         return x
 
-    @staticmethod
-    def default_pipeline() -> ImageEmbedderDataPipeline:
-        return ImageEmbedderDataPipeline()
+    def predict(self, x: Any, data_pipeline: Optional[DataPipeline] = None) -> Any:
+        return super().predict(x, data_pipeline=data_pipeline)

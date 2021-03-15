@@ -13,7 +13,7 @@
 # limitations under the License.
 import torch
 
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.vision import ImageEmbedder
 
 # 1. Download the data
@@ -27,13 +27,13 @@ embedder = ImageEmbedder(backbone="swav-imagenet", embedding_dim=128)
 embeddings = embedder.predict(["data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg"])
 
 # 4. Print embeddings shape
-print(embeddings.shape)
+print(embeddings[0].shape)
 
 # 5. Create a tensor random image
-random_image = torch.randn(1, 3, 32, 32)
+random_image = torch.randn(1, 3, 244, 244)
 
 # 6. Generate an embedding from this random image.
 embeddings = embedder.predict(random_image)
 
 # 7. Print embeddings shape
-print(embeddings.shape)
+print(embeddings[0].shape)

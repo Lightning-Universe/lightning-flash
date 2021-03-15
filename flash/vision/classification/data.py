@@ -16,6 +16,7 @@ import pathlib
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import torch
+from numpy import isin
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -89,6 +90,8 @@ class ImageClassificationPreprocess(Preprocess):
     @staticmethod
     def load_sample(sample) -> Union[Image.Image, list]:
         # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+        if isinstance(sample, torch.Tensor):
+            return sample
 
         if isinstance(sample, (tuple, list)):
             path = sample[0]
@@ -107,6 +110,8 @@ class ImageClassificationPreprocess(Preprocess):
 
     @classmethod
     def predict_load_data(cls, samples: Any) -> Any:
+        if isinstance(samples, torch.Tensor):
+            return samples
         return cls._get_predicting_files(samples)
 
     def _convert_tensor_to_pil(self, sample):
@@ -155,6 +160,8 @@ class ImageClassificationPreprocess(Preprocess):
         return self.common_per_sample_pre_tensor_transform(sample, self.test_transform), target
 
     def predict_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        if isinstance(sample, torch.Tensor):
+            return sample
         return self.common_per_sample_pre_tensor_transform(sample, self.predict_transform)
 
     def per_sample_to_tensor_transform(self, sample) -> Any:
@@ -162,6 +169,8 @@ class ImageClassificationPreprocess(Preprocess):
         return self.to_tensor(sample), target
 
     def predict_per_sample_to_tensor_transform(self, sample) -> Any:
+        if isinstance(sample, torch.Tensor):
+            return sample
         return self.to_tensor(sample)
 
     def common_per_sample_post_tensor_transform(self, sample: Any, transform) -> Any:
@@ -246,16 +255,16 @@ class ImageClassificationData(DataModule):
             self.set_dataset_attribute(self._predict_ds, 'num_classes', self.num_classes)
 
         if isinstance(train_transform, str) and train_transform == 'default':
-            train_transform = self.default_train_transforms
+            train_transform = self.default_train_transforms()
 
         if isinstance(valid_transform, str) and valid_transform == 'default':
-            valid_transform = self.default_valid_transforms
+            valid_transform = self.default_valid_transforms()
 
         if isinstance(test_transform, str) and test_transform == 'default':
-            test_transform = self.default_valid_transforms
+            test_transform = self.default_valid_transforms()
 
         if isinstance(predict_transform, str) and predict_transform == 'default':
-            predict_transform = self.default_valid_transforms
+            predict_transform = self.default_valid_transforms()
 
         self.train_transform = self._check_transforms(train_transform)
         self.valid_transform = self._check_transforms(valid_transform)
@@ -271,13 +280,14 @@ class ImageClassificationData(DataModule):
             )
         return transform
 
-    @property
-    def default_train_transforms(self):
+    @staticmethod
+    def default_train_transforms():
+        image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
             # Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(
-                    K.RandomResizedCrop(self.image_size), K.RandomHorizontalFlip()
+                    K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()
                 ),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -286,24 +296,25 @@ class ImageClassificationData(DataModule):
         else:
             return {
                 "per_sample_pre_tensor_transform": nn.Sequential(
-                    T.RandomResizedCrop(self.image_size), T.RandomHorizontalFlip()
+                    T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()
                 ),
                 "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
-    @property
-    def default_valid_transforms(self):
+    @staticmethod
+    def default_valid_transforms():
+        image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
             # Better approach as all transforms are applied on tensor directly
             return {
-                "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(self.image_size)),
+                "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
             }
         else:
             return {
-                "per_sample_pre_tensor_transform": T.Compose([T.RandomResizedCrop(224)]),
+                "per_sample_pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
                 "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
