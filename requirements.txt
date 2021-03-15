@@ -2,6 +2,7 @@ pytorch-lightning>=1.2.0
 torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
 Pillow>=7.2
+torchmetrics>=0.2.0
 torchvision>=0.8  # lower to 0.7 after PT 1.6
 transformers>=4.0
 pytorch-tabnet==3.1
@@ -12,6 +13,6 @@ numpy  # comes with 3rd-party dependency
 tqdm  # comes with 3rd-party dependency
 rouge-score>=0.0.4
 sentencepiece>=0.1.95
-pytorch-lightning-bolts==0.3.0
+lightning-bolts==0.3.2rc1  # todo: we shall align with proper release
 filelock  # comes with 3rd-party dependency
 pycocotools>=2.0.2 ; python_version >= "3.7"
