@@ -105,7 +105,7 @@ class ImageClassificationPreprocess(Preprocess):
         return img
 
     @classmethod
-    def predict_load_data(cls, samples: Any, dataset: AutoDataset = None) -> Any:
+    def predict_load_data(cls, samples: Any) -> Any:
         return cls._get_predicting_files(samples)
 
     def _convert_tensor_to_pil(self, sample):
@@ -145,7 +145,7 @@ class ImageClassificationPreprocess(Preprocess):
         sample, target = sample
         return self.common_per_sample_pre_tensor_transform(sample, self.train_transform), target
 
-    def validation_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+    def val_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
         return self.common_per_sample_pre_tensor_transform(sample, self.valid_transform), target
 
@@ -170,7 +170,7 @@ class ImageClassificationPreprocess(Preprocess):
         sample, target = sample
         return self.common_per_sample_post_tensor_transform(sample, self.train_transform), target
 
-    def validation_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+    def val_per_sample_post_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
         return self.common_per_sample_post_tensor_transform(sample, self.valid_transform), target
 
@@ -267,8 +267,7 @@ class ImageClassificationData(DataModule):
             # Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(
-                    K.RandomResizedCrop(self.image_size), K.RandomHorizontalFlip(), K.RandomAffine(360),
-                    K.ColorJitter(0.2, 0.3, 0.2, 0.3)
+                    K.RandomResizedCrop(self.image_size), K.RandomHorizontalFlip()
                 ),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -314,7 +313,7 @@ class ImageClassificationData(DataModule):
         return num_classes
 
     @property
-    def preprocess(self):
+    def preprocess(self) -> ImageClassificationPreprocess:
         return self.preprocess_cls(
             train_transform=self.train_transform,
             valid_transform=self.valid_transform,
@@ -383,31 +382,17 @@ class ImageClassificationData(DataModule):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        train_ds = cls._generate_dataset_if_possible(
-            train_folder, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
-        )
-        valid_ds = cls._generate_dataset_if_possible(
-            valid_folder, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
-        )
-        test_ds = cls._generate_dataset_if_possible(
-            test_folder, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
-        )
-        predict_ds = cls._generate_dataset_if_possible(
-            predict_folder, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
-        )
-
-        return cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            predict_ds=predict_ds,
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_folder,
+            valid_load_data_input=valid_folder,
+            test_load_data_input=test_folder,
+            predict_load_data_input=predict_folder,
             train_transform=train_transform,
             valid_transform=valid_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             batch_size=batch_size,
             num_workers=num_workers,
-            **kwargs,
         )
 
     @classmethod

@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from functools import partial
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 import datasets
 from datasets import DatasetDict, load_dataset
@@ -190,32 +190,31 @@ class Seq2SeqPreprocess(Preprocess):
         )
         return output
 
-    def load_data(self, file: str):
+    def load_data(
+        self, file: str, use_full: bool = False, columns: List[str] = ["input_ids", "attention_mask", "labels"]
+    ):
         data_files = {}
         stage = self._running_stage.value
         data_files[stage] = file
-        # dataset_dict = load_dataset(self.filetype, data_files=data_files)
-        dataset_dict = DatasetDict({
-            stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-        })
+        if use_full:
+            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        else:
+            dataset_dict = DatasetDict({
+                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+            })
         dataset_dict = dataset_dict.map(
             self._tokenize_fn,
             batched=True,
         )
-        columns = ["input_ids", "attention_mask"] if self.predicting else ["input_ids", "attention_mask", "labels"]
         dataset_dict.set_format(columns=columns)
         return dataset_dict[stage]
 
     def predict_load_data(self, sample: Any):
         if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
-            return self.load_data(sample)
+            return self.load_data(sample, use_full=True, columns=["input_ids", "attention_mask"])
         else:
-            if isinstance(sample, str):
-                sample = [sample]
-
-            if isinstance(sample, list) and all(isinstance(s, str) for s in sample):
-                return [self._tokenize_fn(s) for s in sample]
-
+            if isinstance(sample, (list, tuple)) and len(sample) > 0 and all(isinstance(s, str) for s in sample):
+                return [self._tokenize_fn({self.input: s, self.target: None}) for s in sample]
             else:
                 raise MisconfigurationException("Currently, we support only list of sentences")
 
@@ -235,7 +234,7 @@ class Seq2SeqData(DataModule):
     )
 
     @property
-    def preprocess(self):
+    def preprocess(self) -> Seq2SeqPreprocess:
         return self.preprocess_cls(
             tokenizer=self.tokenizer,
             input=self.input,
@@ -249,7 +248,7 @@ class Seq2SeqData(DataModule):
     @classmethod
     def from_files(
         cls,
-        train_file: str,
+        train_file: Optional[str],
         input: str = 'input',
         target: Optional[str] = None,
         filetype: str = "csv",
@@ -278,7 +277,8 @@ class Seq2SeqData(DataModule):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             Seq2SeqData: The constructed data module.
@@ -336,7 +336,8 @@ class Seq2SeqData(DataModule):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             Seq2SeqData: The constructed data module.

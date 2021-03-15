@@ -2,7 +2,7 @@ import functools
 import os
 import weakref
 from functools import partial, wraps
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -61,6 +61,27 @@ class DataPipeline:
         return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
 
     @staticmethod
+    def _is_overriden_recursive(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
+        """
+        Cropped Version of
+        https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
+        """
+        if prefix is None and not hasattr(super_obj, method_name):
+            raise MisconfigurationException(f"This function doesn't belong to the parent class {super_obj}")
+
+        current_method_name = method_name if prefix is None else f'{prefix}_{method_name}'
+
+        if not hasattr(process_obj, current_method_name):
+            return False or DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
+
+        has_different_code = getattr(process_obj,
+                                     current_method_name).__code__ != getattr(super_obj, method_name).__code__
+        if prefix is None:
+            return has_different_code
+        else:
+            return has_different_code or DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
+
+    @staticmethod
     def _do_nothing_collate(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
 
@@ -97,7 +118,7 @@ class DataPipeline:
         if stage in (RunningStage.TRAINING, RunningStage.TUNING):
             prefixes = ['train', 'fit'] + prefixes
         elif stage == RunningStage.VALIDATING:
-            prefixes = ['validation', 'fit'] + prefixes
+            prefixes = ['val', 'fit'] + prefixes
         elif stage == RunningStage.TESTING:
             prefixes = ['test'] + prefixes
         elif stage == RunningStage.PREDICTING:
@@ -123,16 +144,14 @@ class DataPipeline:
             for k in self.PREPROCESS_FUNCS
         }
 
-        if self._is_overriden("collate", self._preprocess_pipeline, Preprocess, prefix=stage.value):
-            collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
-        elif self._is_overriden("collate", self._preprocess_pipeline, Preprocess):
+        if self._is_overriden_recursive("collate", self._preprocess_pipeline, Preprocess, prefix=stage.value):
             collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
 
-        per_batch_transform_overriden = self._is_overriden(
+        per_batch_transform_overriden = self._is_overriden_recursive(
             "per_batch_transform", self._preprocess_pipeline, Preprocess, prefix=stage.value
         )
 
-        per_sample_transform_on_device_overriden = self._is_overriden(
+        per_sample_transform_on_device_overriden = self._is_overriden_recursive(
             "per_sample_transform_on_device", self._preprocess_pipeline, Preprocess, prefix=stage.value
         )
 
@@ -158,18 +177,26 @@ class DataPipeline:
             worker_collate_fn, _PreProcessor
         ) else worker_collate_fn
 
+        assert_contains_tensor = self._is_overriden_recursive(
+            "per_sample_to_tensor_transform", self._preprocess_pipeline, Preprocess, prefix=stage.value
+        )
+
         worker_preprocessor = _PreProcessor(
             worker_collate_fn,
             _Chainer(
                 getattr(self._preprocess_pipeline, func_names['per_sample_pre_tensor_transform']),
                 getattr(self._preprocess_pipeline, func_names['per_sample_to_tensor_transform']),
-                getattr(self._preprocess_pipeline, func_names['per_sample_post_tensor_transform'])
+                getattr(self._preprocess_pipeline, func_names['per_sample_post_tensor_transform']),
+                assert_contains_tensor=assert_contains_tensor,
             ), getattr(self._preprocess_pipeline, func_names['per_batch_transform']), stage
         )
         worker_preprocessor._original_collate_fn = original_collate_fn
         device_preprocessor = _PreProcessor(
-            device_collate_fn, getattr(self._preprocess_pipeline, func_names['per_sample_transform_on_device']),
-            getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device']), stage
+            device_collate_fn,
+            getattr(self._preprocess_pipeline, func_names['per_sample_transform_on_device']),
+            getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device']),
+            stage,
+            apply_per_sample_transform=device_collate_fn != self._do_nothing_collate
         )
         return worker_preprocessor, device_preprocessor
 
@@ -371,8 +398,6 @@ class DataPipeline:
 
             for idx, loader in enumerate(dataloader):
                 if isinstance(loader, DataLoader):
-                    # TODO: See lightning for proper reinstantiation of loader
-                    worker_collate = loader.collate_fn
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
                     if isinstance(dl_args['collate_fn'], _PreProcessor):
@@ -444,6 +469,15 @@ class DataPipeline:
 
 class _StageOrchestrator:
 
+    internal_mapping = {
+        RunningStage.TRAINING: RunningStage.TRAINING,
+        RunningStage.SANITY_CHECKING: RunningStage.VALIDATING,
+        RunningStage.VALIDATING: RunningStage.VALIDATING,
+        RunningStage.TESTING: RunningStage.TESTING,
+        RunningStage.PREDICTING: RunningStage.PREDICTING,
+        RunningStage.TUNING: RunningStage.TUNING
+    }
+
     def __init__(self, func_to_wrap: Callable, model: 'Task') -> None:
         self.func = func_to_wrap
 
@@ -455,7 +489,8 @@ class _StageOrchestrator:
     def __call__(self, *args, **kwargs):
         outputs = self.func(*args, **kwargs)
 
-        additional_func = self._stage_mapping.get(self.model.trainer._running_stage, None)
+        internal_running_state = self.internal_mapping[self.model.trainer._running_stage]
+        additional_func = self._stage_mapping.get(internal_running_state, None)
 
         if additional_func is not None:
             outputs = additional_func(outputs)

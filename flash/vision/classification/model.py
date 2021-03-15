@@ -19,7 +19,6 @@ from torch import nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
-from flash.data.data_pipeline import Postprocess
 from flash.vision.backbones import backbone_and_num_features
 
 

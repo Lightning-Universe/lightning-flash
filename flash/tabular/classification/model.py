@@ -76,6 +76,9 @@ class TabularClassifier(ClassificationTask):
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
         return F.softmax(self.model(x)[0], -1)
 
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch)
+
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)

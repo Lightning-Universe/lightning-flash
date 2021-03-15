@@ -23,7 +23,9 @@ from torch._six import container_abcs
 from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 
+from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule, TaskDataPipeline
+from flash.data.process import Preprocess
 from flash.data.utils import _contains_any_tensor
 from flash.vision.utils import pil_loader
 
@@ -129,13 +131,17 @@ def _coco_remove_images_without_annotations(dataset):
 _default_transform = T.ToTensor()
 
 
-class ObjectDetectionDataPipeline(TaskDataPipeline):
+class ObjectDetectionPreprocess(Preprocess):
 
-    def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = pil_loader):
-        self._valid_transform = valid_transform
-        self._loader = loader
+    def load_data(self, metadata: Any, dataset: AutoDataset) -> CustomCOCODataset:
+        folder, ann_file, transform = metadata
+        ds = CustomCOCODataset(folder, ann_file, transform)
+        if self.training:
+            dataset.num_classes = ds.num_classes
+            ds = _coco_remove_images_without_annotations(ds)
+        return ds
 
-    def before_collate(self, samples: Any) -> Any:
+    def per_sample_post_tensor_transform(self, samples: Any) -> Any:
         if _contains_any_tensor(samples):
             return samples
 
@@ -161,6 +167,8 @@ class ObjectDetectionDataPipeline(TaskDataPipeline):
 
 class ObjectDetectionData(DataModule):
 
+    preprocess_cls = ObjectDetectionPreprocess
+
     @classmethod
     def from_coco(
         cls,
@@ -177,24 +185,18 @@ class ObjectDetectionData(DataModule):
         num_workers: Optional[int] = None,
         **kwargs
     ):
-        train_ds = CustomCOCODataset(train_folder, train_ann_file, train_transform)
-        num_classes = train_ds.num_classes
-        train_ds = _coco_remove_images_without_annotations(train_ds)
 
-        valid_ds = (
-            CustomCOCODataset(valid_folder, valid_ann_file, valid_transform) if valid_folder is not None else None
-        )
+        cls.train_transform = train_transform
+        cls.valid_transform = valid_transform
+        cls.test_transform = test_transform
 
-        test_ds = (CustomCOCODataset(test_folder, test_ann_file, test_transform) if test_folder is not None else None)
-
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
+        datamodule = cls.from_load_data_inputs(
+            train_load_data_input=(train_folder, train_ann_file, train_transform),
+            valid_load_data_input=(valid_folder, valid_ann_file, valid_transform) if valid_folder else None,
+            test_load_data_input=(test_folder, test_ann_file, test_transform) if test_folder else None,
             batch_size=batch_size,
             num_workers=num_workers,
+            **kwargs
         )
-
-        datamodule.num_classes = num_classes
-        datamodule.data_pipeline = ObjectDetectionDataPipeline()
+        datamodule.num_classes = datamodule._train_ds.num_classes
         return datamodule

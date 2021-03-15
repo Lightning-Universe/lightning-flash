@@ -61,32 +61,3 @@ def test_cpu_count_none():
         assert dm.num_workers == 0
     else:
         assert dm.num_workers > 0
-
-
-def test_pipeline():
-
-    class BoringPipeline(DataPipeline):
-        called = []
-
-        def before_collate(self, _):
-            self.called.append("before_collate")
-
-        def collate(self, _):
-            self.called.append("collate")
-
-        def after_collate(self, _):
-            self.called.append("after_collate")
-
-        def before_uncollate(self, _):
-            self.called.append("before_uncollate")
-
-        def uncollate(self, _):
-            self.called.append("uncollate")
-
-        def after_uncollate(self, _):
-            self.called.append("after_uncollate")
-
-    pipeline = BoringPipeline()
-    pipeline.collate_fn(None)
-    pipeline.uncollate_fn(torch.tensor(0))
-    assert pipeline.called == [f"{b}{a}collate" for a in ("", "un") for b in ("before_", "", "after_")]

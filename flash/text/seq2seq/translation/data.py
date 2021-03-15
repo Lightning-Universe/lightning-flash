@@ -52,7 +52,8 @@ class TranslationData(Seq2SeqData):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 8.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             TranslateData: The constructed data module.
@@ -107,7 +108,8 @@ class TranslationData(Seq2SeqData):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 8.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             Seq2SeqData: The constructed data module.

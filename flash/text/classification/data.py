@@ -234,6 +234,32 @@ class TextClassificationData(DataModule):
         batch_size: int = 16,
         num_workers: Optional[int] = None,
     ) -> 'TextClassificationData':
+        """Creates a TextClassificationData object from files.
+
+        Args:
+            train_file: Path to training data.
+            input: The field storing the text to be classified.
+            target: The field storing the class id of the associated text.
+            filetype: .csv or .json
+            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            valid_file: Path to validation data.
+            test_file: Path to test data.
+            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
+
+        Returns:
+            TextClassificationData: The constructed data module.
+
+        Examples::
+
+            train_df = pd.read_csv("train_data.csv")
+            tab_data = TabularData.from_df(train_df, target="fraud",
+                                           numerical_input=["account_value"],
+                                           categorical_input=["account_type"])
+
+        """
         cls.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         cls.input = input
         cls.filetype = filetype
@@ -263,6 +289,19 @@ class TextClassificationData(DataModule):
         batch_size: int = 16,
         num_workers: Optional[int] = None,
     ) -> 'TextClassificationData':
+        """Creates a TextClassificationData object from files.
+
+        Args:
+
+            train_file: Path to training data.
+            input: The field storing the text to be classified.
+            filetype: .csv or .json
+            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
+        """
         cls._preprocess_state = preprocess_state
 
         return cls.from_files(
