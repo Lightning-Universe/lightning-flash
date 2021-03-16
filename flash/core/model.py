@@ -180,7 +180,9 @@ class Task(pl.LightningModule):
 
     @property
     def preprocess(self) -> Optional[Preprocess]:
-        return getattr(self.data_pipeline, '_preprocess_pipeline', None) or self._preprocess
+        return (
+            self._data_pipeline is not None and getattr(self.data_pipeline, '_preprocess_pipeline', None)
+        ) or self._preprocess
 
     @preprocess.setter
     def preprocess(self, preprocess: Preprocess) -> None:
