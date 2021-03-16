@@ -180,9 +180,7 @@ class Task(pl.LightningModule):
 
     @property
     def preprocess(self) -> Optional[Preprocess]:
-        return (
-            self._data_pipeline is not None and getattr(self.data_pipeline, '_preprocess_pipeline', None)
-        ) or self._preprocess
+        return (getattr(self._data_pipeline, '_preprocess_pipeline', None)) or self._preprocess
 
     @preprocess.setter
     def preprocess(self, preprocess: Preprocess) -> None:
@@ -191,9 +189,7 @@ class Task(pl.LightningModule):
 
     @property
     def postprocess(self) -> Postprocess:
-        return (
-            self._data_pipeline is not None and getattr(self.data_pipeline, '_postprocess_pipeline', None)
-        ) or self._postprocess
+        return (getattr(self._data_pipeline, '_postprocess_pipeline', None)) or self._postprocess
 
     @postprocess.setter
     def postprocess(self, postprocess: Postprocess) -> None:
