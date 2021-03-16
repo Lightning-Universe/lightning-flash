@@ -54,15 +54,15 @@ def run_test(filepath):
     [
         ("finetuning", "image_classification.py"),
         # ("finetuning", "object_detection.py"),  # TODO: takes too long.
-        ("finetuning", "summarization.py"),  # TODO: takes too long.
+        # ("finetuning", "summarization.py"),  # TODO: takes too long.
         ("finetuning", "tabular_classification.py"),
-        # ("finetuning", "text_classification.py"), todo (tchaton) resolve
+        # ("finetuning", "text_classification.py"), # TODO: takes too long
         # ("finetuning", "translation.py"),  # TODO: takes too long.
-        ("predict", "classify_image.py"),
-        ("predict", "classify_tabular.py"),
-        # ("predict", "classify_text.py"),
+        ("predict", "image_classifiation.py"),
+        ("predict", "tabular_classification.py"),
+        ("predict", "text_classification.py"),
         ("predict", "image_embedder.py"),
-        ("predict", "summarize.py"),
+        ("predict", "summarization.py"),
         # ("predict", "translate.py"),  # TODO: takes too long
     ]
 )
