@@ -35,8 +35,6 @@ def test_from_filepaths(tmpdir):
     img_data = ImageClassificationData.from_filepaths(
         train_filepaths=["a", "b"],
         train_labels=[0, 1],
-        train_transform=lambda x: x,  # make sure transform works
-        loader=_dummy_image_loader,
         batch_size=1,
         num_workers=0,
     )
@@ -58,7 +56,6 @@ def test_from_filepaths(tmpdir):
         valid_transform=None,
         test_filepaths=["e", "f"],
         test_labels=[0, 1],
-        loader=_dummy_image_loader,
         batch_size=1,
         num_workers=0,
     )
@@ -179,9 +176,7 @@ def test_from_folders(tmpdir):
 
     img_data = ImageClassificationData.from_folders(
         train_dir,
-        train_transform=T.ToTensor(),
         valid_folder=train_dir,
-        valid_transform=T.ToTensor(),
         test_folder=train_dir,
         batch_size=1,
         num_workers=0,

@@ -32,6 +32,7 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
+from flash.data.utils import _contains_any_tensor
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -41,7 +42,6 @@ else:
 
 
 class ImageClassificationPreprocess(Preprocess):
-
     to_tensor = torchvision_T.ToTensor()
 
     @staticmethod
@@ -82,10 +82,29 @@ class ImageClassificationPreprocess(Preprocess):
         return files
 
     @classmethod
-    def load_data(cls, samples: Any, dataset: Optional[AutoDataset] = None) -> Any:
-        classes, class_to_idx = cls._find_classes(samples)
+    def _load_data_dir(cls, data: Any, dataset: Optional[AutoDataset] = None):
+        classes, class_to_idx = cls._find_classes(data)
         dataset.num_classes = len(classes)
-        return make_dataset(samples, class_to_idx, IMG_EXTENSIONS, None)
+        return make_dataset(data, class_to_idx, IMG_EXTENSIONS, None)
+
+    @classmethod
+    def _load_data_files_labels(cls, data: Any, dataset: Optional[AutoDataset] = None):
+        _classes = [tmp[1] for tmp in data]
+
+        _classes = torch.stack([
+            torch.tensor(int(_cls)) if not isinstance(_cls, torch.Tensor) else _cls.view(-1) for _cls in _classes
+        ]).unique()
+
+        dataset.num_classes = len(_classes)
+
+        return data
+
+    @classmethod
+    def load_data(cls, data: Any, dataset: Optional[AutoDataset] = None) -> Any:
+        if isinstance(data, (str, pathlib.Path)):
+            return cls._load_data_dir(data=data, dataset=dataset)
+
+        return cls._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
     def load_sample(sample) -> Union[Image.Image, list]:
@@ -115,7 +134,7 @@ class ImageClassificationPreprocess(Preprocess):
         return cls._get_predicting_files(samples)
 
     def _convert_tensor_to_pil(self, sample):
-        # some datasets provide their data as tensors.
+        #  some datasets provide their data as tensors.
         # however, it would be better to convert those data once in load_data
         if isinstance(sample, torch.Tensor):
             sample = to_pil_image(sample)
@@ -284,7 +303,7 @@ class ImageClassificationData(DataModule):
     def default_train_transforms():
         image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
-            # Better approach as all transforms are applied on tensor directly
+            #  Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(
                     K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()
@@ -305,7 +324,7 @@ class ImageClassificationData(DataModule):
     def default_valid_transforms():
         image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
-            # Better approach as all transforms are applied on tensor directly
+            #  Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
@@ -401,6 +420,8 @@ class ImageClassificationData(DataModule):
 
         Examples:
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
+
+
 
         """
         return cls.from_load_data_inputs(
@@ -498,21 +519,21 @@ class ImageClassificationData(DataModule):
 
         if train_filepaths is not None and train_labels is not None:
             train_ds = cls._generate_dataset_if_possible(
-                zip(train_filepaths, train_labels), running_stage=RunningStage.TRAINING
+                list(zip(train_filepaths, train_labels)), running_stage=RunningStage.TRAINING
             )
         else:
             train_ds = None
 
         if valid_filepaths is not None and valid_labels is not None:
             valid_ds = cls._generate_dataset_if_possible(
-                zip(valid_filepaths, valid_labels), running_stage=RunningStage.VALIDATING
+                list(zip(valid_filepaths, valid_labels)), running_stage=RunningStage.VALIDATING
             )
         else:
             valid_ds = None
 
         if test_filepaths is not None and test_labels is not None:
             test_ds = cls._generate_dataset_if_possible(
-                zip(test_filepaths, test_labels), running_stage=RunningStage.TESTING
+                list(zip(test_filepaths, test_labels)), running_stage=RunningStage.TESTING
             )
         else:
             test_ds = None
