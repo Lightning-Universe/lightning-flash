@@ -199,9 +199,8 @@ class Seq2SeqPreprocess(Preprocess):
         if use_full:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            dataset_dict = DatasetDict({
-                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-            })
+            dataset_dict = DatasetDict({stage: load_dataset(self.filetype, data_files=data_files, split=stage)})
+
         dataset_dict = dataset_dict.map(
             self._tokenize_fn,
             batched=True,
