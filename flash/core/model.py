@@ -205,8 +205,9 @@ class Task(pl.LightningModule):
         if self._data_pipeline is not None:
             return self._data_pipeline
 
-        elif self.preprocess is not None or self.postprocess is not None:
-            return DataPipeline(self.preprocess, self.postprocess)
+        elif self._preprocess is not None or self._postprocess is not None:
+            # use direct attributes here to avoid recursion with properties that also check the datapipeline property
+            return DataPipeline(self._preprocess, self._postprocess)
 
         elif self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
             return self.datamodule.data_pipeline
