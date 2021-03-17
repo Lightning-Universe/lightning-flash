@@ -14,10 +14,10 @@
 import os
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Mapping, Optional, Union
+from typing import Any, Callable, List, Mapping, Optional, Union
 
 import torch
-from datasets import DatasetDict, load_dataset
+from datasets import Dataset, DatasetDict, load_dataset
 from datasets.utils.download_manager import GenerateMode
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -65,13 +65,6 @@ class TextClassificationPreprocess(Preprocess):
             padding="max_length"
         )
 
-    def per_sample_pre_tensor_transform(self, sample: Any) -> Any:
-        if _contains_any_tensor(sample):
-            return sample
-        elif isinstance(sample, str):
-            return self._tokenize_fn({self._input: sample})
-        raise MisconfigurationException("samples can only be tensors or a list of sentences.")
-
     def per_batch_transform(self, batch: Any) -> Any:
         if "labels" not in batch:
             # todo: understand why an extra dimension has been added.
@@ -81,7 +74,9 @@ class TextClassificationPreprocess(Preprocess):
 
     @staticmethod
     def _tokenize_fn(ex, tokenizer=None, input: str = None, max_length: int = None, **kwargs) -> Callable:
-        return tokenizer(ex[input], max_length=max_length, **kwargs)
+        if isinstance(ex, dict):
+            ex = ex[input]
+        return tokenizer(ex, max_length=max_length, **kwargs)
 
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
@@ -93,47 +88,62 @@ class TextClassificationPreprocess(Preprocess):
         ex[self.target] = self.label_to_class_mapping[ex[self.target]]
         return ex
 
-    def load_data(self, file: str, dataset: AutoDataset):
+    def load_data(
+        self,
+        file: str,
+        dataset: AutoDataset,
+        columns: List[str] = ["input_ids", "attention_mask", "labels"],
+        use_full: bool = True
+    ):
         data_files = {}
 
         stage = dataset.running_stage.value
-        data_files[stage] = file
+        data_files[stage] = str(file)
 
-        dataset_dict = DatasetDict({stage: load_dataset(self.filetype, data_files=data_files, split=stage)})
+        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
+            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        else:
+            # used for debugging. Avoid processing the entire dataset   # noqa E265
+            dataset_dict = DatasetDict({
+                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+            })
 
         dataset_dict = dataset_dict.map(
             self._tokenize_fn,
             batched=True,
         )
 
-        if self.label_to_class_mapping is None:
-            # stage should always be train in that case. Not checking this, since this is implicitly done by our dataflow.
+        if self.label_to_class_mapping is None and self.training:
+            # stage should always be train in that case. Not checking this,
+            # since this is implicitly done by our dataflow.
             self.label_to_class_mapping = {
                 v: k
                 for k, v in enumerate(list(sorted(list(set(dataset_dict[stage][self.target])))))
             }
 
         # convert labels to ids
-        dataset_dict = dataset_dict.map(self._transform_label)
+        if not self.predicting:
+            dataset_dict = dataset_dict.map(self._transform_label)
+
         dataset_dict = dataset_dict.map(
             self._tokenize_fn,
             batched=True,
         )
 
-        if self.target != "labels":
+        if not self.predicting and self.target != "labels":
             dataset_dict.rename_column_(self.target, "labels")
-        dataset_dict.set_format("torch", columns=["input_ids", "labels"])
 
-        dataset.num_classes = len(self.label_to_class_mapping)
+        dataset_dict.set_format("torch", columns=columns)
+
+        if not self.predicting:
+            dataset.num_classes = len(self.label_to_class_mapping)
 
         return dataset_dict[stage]
 
     def predict_load_data(self, sample: Any, dataset: AutoDataset):
         if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
-            return self.load_data(sample, dataset)
+            return self.load_data(sample, dataset, columns=["input_ids", "attention_mask"])
         else:
-            dataset.num_classes = len(self.label_to_class_mapping)
-
             if isinstance(sample, str):
                 sample = [sample]
 
@@ -302,7 +312,8 @@ class TextClassificationData(DataModule):
                 Defaults to None which equals the number of available CPU threads,
             or 0 for Darwin platform.
         """
-        cls._preprocess_state = preprocess_state
+        if preprocess_state is not None:
+            cls._preprocess_state = preprocess_state
 
         return cls.from_files(
             None,

@@ -192,7 +192,8 @@ class DataModule(pl.LightningDataModule):
     def _check_transforms(transform: dict) -> dict:
         if not isinstance(transform, dict):
             raise MisconfigurationException(
-                f"Transform should be a dict. Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
+                "Transform should be a dict. Here are the available keys "
+                f"for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
             )
         return transform
 
@@ -294,8 +295,7 @@ class DataModule(pl.LightningDataModule):
         predict_load_data_input: Optional[Any] = None,
         **kwargs,
     ):
-
-        # trick to get data_pipeline from empty DataModule
+        # trick to get data_pipeline from empty DataModule      # noqa E265
         data_pipeline = cls(**kwargs).data_pipeline
         train_ds = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline

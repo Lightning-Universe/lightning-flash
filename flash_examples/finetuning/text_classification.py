@@ -32,13 +32,13 @@ datamodule = TextClassificationData.from_files(
 model = TextClassifier(num_classes=datamodule.num_classes)
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=1, fast_dev_run=True)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 6. Test model
-trainer.test()
+trainer.test(model)
 
 # 7. Save it!
 trainer.save_checkpoint("text_classification_model.pt")

@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
+from unittest import mock
 
 import pytest
 
@@ -49,6 +51,7 @@ def run_test(filepath):
     assert not code
 
 
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
     "folder,file",
     [
@@ -58,11 +61,11 @@ def run_test(filepath):
         ("finetuning", "tabular_classification.py"),
         # ("finetuning", "text_classification.py"), # TODO: takes too long
         # ("finetuning", "translation.py"),  # TODO: takes too long.
-        ("predict", "image_classifiation.py"),
+        ("predict", "image_classification.py"),
         ("predict", "tabular_classification.py"),
         ("predict", "text_classification.py"),
         ("predict", "image_embedder.py"),
-        ("predict", "summarization.py"),
+        ("predict", "summarization.py"),  # TODO: takes too long
         # ("predict", "translate.py"),  # TODO: takes too long
     ]
 )
@@ -70,5 +73,6 @@ def test_example(tmpdir, folder, file):
     run_test(str(root / "flash_examples" / folder / file))
 
 
+@pytest.mark.skipif(reason="MNIST is not downloading (borda)")
 def test_generic_example(tmpdir):
     run_test(str(root / "flash_examples" / "generic_task.py"))

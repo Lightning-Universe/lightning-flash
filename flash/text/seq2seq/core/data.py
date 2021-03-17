@@ -191,15 +191,22 @@ class Seq2SeqPreprocess(Preprocess):
         return output
 
     def load_data(
-        self, file: str, use_full: bool = False, columns: List[str] = ["input_ids", "attention_mask", "labels"]
+        self, file: str, use_full: bool = True, columns: List[str] = ["input_ids", "attention_mask", "labels"]
     ):
         data_files = {}
         stage = self._running_stage.value
-        data_files[stage] = file
-        if use_full:
+        data_files[stage] = str(file)
+
+        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            dataset_dict = DatasetDict({stage: load_dataset(self.filetype, data_files=data_files, split=stage)})
+            # used for debugging. Avoid processing the entire dataset   # noqa E265
+            try:
+                dataset_dict = DatasetDict({
+                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                })
+            except AssertionError:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
         dataset_dict = dataset_dict.map(
             self._tokenize_fn,

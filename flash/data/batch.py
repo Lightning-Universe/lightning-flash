@@ -45,6 +45,25 @@ class _Chainer(torch.nn.Module):
 
 
 class _PreProcessor(torch.nn.Module):
+    """
+        This class is used to encapsultate the following functions of a Preprocess Object:
+        Inside a worker:
+            per_sample_transform: Function to transform an individual sample
+                Inside a worker, it is actually make of 3 functions:
+                    * per_sample_pre_tensor_transform
+                    * per_sample_to_tensor_transform
+                    * per_sample_post_tensor_transform
+            collate: Function to merge sample into a batch
+            per_batch_transform: Function to transform an individual batch
+                * per_batch_transform
+
+        Inside main process:
+            per_sample_transform: Function to transform an individual sample
+                * per_sample_transform_on_device
+            collate: Function to merge sample into a batch
+            per_batch_transform: Function to transform an individual batch
+                * per_batch_transform_on_device
+    """
 
     def __init__(
         self,

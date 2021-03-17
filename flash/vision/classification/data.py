@@ -83,9 +83,22 @@ class ImageClassificationPreprocess(Preprocess):
 
     @classmethod
     def _load_data_dir(cls, data: Any, dataset: Optional[AutoDataset] = None):
-        classes, class_to_idx = cls._find_classes(data)
-        dataset.num_classes = len(classes)
-        return make_dataset(data, class_to_idx, IMG_EXTENSIONS, None)
+        if isinstance(data, list):
+            dataset.num_classes = len(data)
+            out = []
+            for p, label in data:
+                if os.path.isdir(p):
+                    for f in os.listdir(p):
+                        if has_file_allowed_extension(f, IMG_EXTENSIONS):
+                            out.append([os.path.join(p, f), label])
+                elif os.path.isfile(p) and has_file_allowed_extension(p, IMG_EXTENSIONS):
+                    out.append([p, label])
+            print(out)
+            return out
+        else:
+            classes, class_to_idx = cls._find_classes(data)
+            dataset.num_classes = len(classes)
+            return make_dataset(data, class_to_idx, IMG_EXTENSIONS, None)
 
     @classmethod
     def _load_data_files_labels(cls, data: Any, dataset: Optional[AutoDataset] = None):
@@ -101,9 +114,8 @@ class ImageClassificationPreprocess(Preprocess):
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[AutoDataset] = None) -> Any:
-        if isinstance(data, (str, pathlib.Path)):
+        if isinstance(data, (str, pathlib.Path, list)):
             return cls._load_data_dir(data=data, dataset=dataset)
-
         return cls._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
@@ -185,7 +197,7 @@ class ImageClassificationPreprocess(Preprocess):
 
     def per_sample_to_tensor_transform(self, sample) -> Any:
         sample, target = sample
-        return self.to_tensor(sample), target
+        return sample if isinstance(sample, torch.Tensor) else self.to_tensor(sample), target
 
     def predict_per_sample_to_tensor_transform(self, sample) -> Any:
         if isinstance(sample, torch.Tensor):
@@ -292,7 +304,7 @@ class ImageClassificationData(DataModule):
 
     @staticmethod
     def _check_transforms(transform: dict) -> dict:
-        if not isinstance(transform, dict):
+        if transform is not None and not isinstance(transform, dict):
             raise MisconfigurationException(
                 "Transform should be a dict. "
                 f"Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."

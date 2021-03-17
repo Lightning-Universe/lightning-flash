@@ -159,7 +159,7 @@ class Task(pl.LightningModule):
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
-        # batch_idx is always 0 when running with ``model.predict``.
+        # batch_idx is always 0 when running with ``model.predict``.    # noqa E265
         predictions = self.predict_step(x, 0)
         predictions = data_pipeline.postprocessor(predictions)
         return predictions
