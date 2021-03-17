@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Tuple
+from typing import Any, Optional, Tuple
 
 import torchvision
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
@@ -123,7 +123,7 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
     if model_name in MOBILENET_MODELS + VGG_MODELS:
         model = model(pretrained=pretrained)
         backbone = model.features
-        num_features = 512 if model_name in VGG_MODELS else model.classifier[-1].in_features
+        num_features = model.classifier[-1].in_features
         return backbone, num_features
 
     elif model_name in RESNET_MODELS:

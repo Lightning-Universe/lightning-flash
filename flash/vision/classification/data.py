@@ -15,6 +15,8 @@ import os
 import pathlib
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
+import numpy as np
+import pandas as pd
 import torch
 from PIL import Image, UnidentifiedImageError
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -73,7 +75,13 @@ class FilepathDataset(torch.utils.data.Dataset):
         filename = self.fnames[index]
         img = self.loader(filename)
         if self.transform is not None:
-            img = self.transform(img)
+            if str(type(self.transform)) == "<class 'albumentations.core.composition.Compose'>":
+                img = self.transform(image=np.array(img))["image"]
+                img = img.astype(np.float32)
+                img = img.transpose(2, 0, 1)
+                img = torch.tensor(img)
+            else:
+                img = self.transform(img)
         label = None
         if self.has_dict_labels:
             name = os.path.splitext(filename)[0]
@@ -157,13 +165,12 @@ class FlashDatasetFolder(VisionDataset):
                 )
             self.samples = img_paths
 
-    @staticmethod
-    def _find_classes(folder: str):
+    def _find_classes(self, dir):
         """
         Finds the class folders in a dataset.
 
         Args:
-            folder: Root directory path.
+            dir (string): Root directory path.
 
         Returns:
             tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
@@ -171,7 +178,7 @@ class FlashDatasetFolder(VisionDataset):
         Ensures:
             No class is a subdirectory of another.
         """
-        classes = [d.name for d in os.scandir(folder) if d.is_dir()]
+        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
         classes.sort()
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
         return classes, class_to_idx
@@ -192,21 +199,27 @@ class FlashDatasetFolder(VisionDataset):
             path = self.samples[index]
         sample = self.loader(path)
         if self.transform is not None:
-            sample = self.transform(sample)
+            if str(type(self.transform)) == "<class 'albumentations.core.composition.Compose'>":
+                sample = self.transform(image=np.array(sample))["image"]
+                sample = sample.astype(np.float32)
+                sample = sample.transpose(2, 0, 1)
+                sample = torch.tensor(sample)
+            else:
+                sample = self.transform(sample)
         return (sample, target) if self.with_targets else sample
 
     def __len__(self) -> int:
         return len(self.samples)
 
 
-_DEFAULT_TRAIN_TRANSFORMS = T.Compose([
+_default_train_transforms = T.Compose([
     T.RandomResizedCrop(224),
     T.RandomHorizontalFlip(),
     T.ToTensor(),
     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
 ])
 
-_DEFAULT_VALID_TRANSFORMS = T.Compose([
+_default_valid_transforms = T.Compose([
     T.Resize(256),
     T.CenterCrop(224),
     T.ToTensor(),
@@ -215,15 +228,15 @@ _DEFAULT_VALID_TRANSFORMS = T.Compose([
 
 # todo: torch.nn.modules.module.ModuleAttributeError: 'Resize' object has no attribute '_forward_hooks'
 # Find better fix and raised issue on torchvision.
-_DEFAULT_VALID_TRANSFORMS.transforms[0]._forward_hooks = {}
+_default_valid_transforms.transforms[0]._forward_hooks = {}
 
 
 class ImageClassificationDataPipeline(ClassificationDataPipeline):
 
     def __init__(
         self,
-        train_transform: Optional[Callable] = _DEFAULT_TRAIN_TRANSFORMS,
-        valid_transform: Optional[Callable] = _DEFAULT_VALID_TRANSFORMS,
+        train_transform: Optional[Callable] = _default_train_transforms,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
         use_valid_transform: bool = True,
         loader: Callable = _pil_loader
     ):
@@ -260,18 +273,18 @@ class ImageClassificationData(DataModule):
         cls,
         train_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         train_labels: Optional[Sequence] = None,
-        train_transform: Optional[Callable] = _DEFAULT_TRAIN_TRANSFORMS,
+        train_transform: Optional[Callable] = _default_train_transforms,
         valid_split: Union[None, float] = None,
         valid_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         valid_labels: Optional[Sequence] = None,
-        valid_transform: Optional[Callable] = _DEFAULT_VALID_TRANSFORMS,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
         test_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
         test_labels: Optional[Sequence] = None,
         loader: Callable = _pil_loader,
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: int = 1234,
-        **kwargs,
+        **kwargs
     ):
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
@@ -334,7 +347,9 @@ class ImageClassificationData(DataModule):
             train_split = int((1.0 - valid_split) * full_length)
             valid_split = full_length - train_split
             train_ds, valid_ds = torch.utils.data.random_split(
-                train_ds, [train_split, valid_split], generator=torch.Generator().manual_seed(seed)
+                train_ds,
+                [train_split, valid_split],
+                generator=torch.Generator().manual_seed(seed)
             )
         else:
             valid_ds = (
@@ -367,14 +382,14 @@ class ImageClassificationData(DataModule):
     def from_folders(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]],
-        train_transform: Optional[Callable] = _DEFAULT_TRAIN_TRANSFORMS,
+        train_transform: Optional[Callable] = _default_train_transforms,
         valid_folder: Optional[Union[str, pathlib.Path]] = None,
-        valid_transform: Optional[Callable] = _DEFAULT_VALID_TRANSFORMS,
+        valid_transform: Optional[Callable] = _default_valid_transforms,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
         loader: Callable = _pil_loader,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        **kwargs,
+        **kwargs
     ):
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
@@ -433,11 +448,11 @@ class ImageClassificationData(DataModule):
     def from_folder(
         cls,
         folder: Union[str, pathlib.Path],
-        transform: Optional[Callable] = _DEFAULT_VALID_TRANSFORMS,
+        transform: Optional[Callable] = _default_valid_transforms,
         loader: Callable = _pil_loader,
         batch_size: int = 64,
         num_workers: Optional[int] = None,
-        **kwargs,
+        **kwargs
     ):
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
@@ -496,5 +511,5 @@ class ImageClassificationData(DataModule):
     @staticmethod
     def default_pipeline() -> ImageClassificationDataPipeline:
         return ImageClassificationDataPipeline(
-            train_transform=_DEFAULT_TRAIN_TRANSFORMS, valid_transform=_DEFAULT_VALID_TRANSFORMS, loader=_pil_loader
+            train_transform=_default_train_transforms, valid_transform=_default_valid_transforms, loader=_pil_loader
         )

@@ -14,10 +14,9 @@
 from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
+from pytorch_lightning.metrics import Metric
 from pytorch_tabnet.tab_network import TabNet
 from torch.nn import functional as F
-from torch.nn.functional import softmax
-from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
 from flash.core.data import DataPipeline
@@ -43,10 +42,11 @@ class TabularClassifier(ClassificationTask):
         num_features: int,
         num_classes: int,
         embedding_sizes: List[Tuple] = None,
-        loss_fn: Callable = F.cross_entropy,
+        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: List[Metric] = None,
         learning_rate: float = 1e-3,
+        multilabel: bool = False,
         **tabnet_kwargs,
     ):
         self.save_hyperparameters()
@@ -62,11 +62,13 @@ class TabularClassifier(ClassificationTask):
         )
 
         super().__init__(
+            num_classes=num_classes,
             model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            multilabel=multilabel
         )
 
     def predict(
@@ -86,7 +88,7 @@ class TabularClassifier(ClassificationTask):
     def forward(self, x_in):
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
-        return softmax(self.model(x)[0])
+        return self.model(x)[0]
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
