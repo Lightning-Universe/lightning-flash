@@ -20,7 +20,7 @@ from collections import Counter
 from typing import List
 
 import torch
-from pytorch_lightning.metrics import Metric
+from torchmetrics import Metric
 
 
 def _count_ngram(ngram_input_list: List[str], n_gram: int) -> Counter:

@@ -14,10 +14,10 @@
 from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from pytorch_lightning.metrics import Accuracy
 from pytorch_lightning.utilities.distributed import rank_zero_warn
 from torch import nn
 from torch.nn import functional as F
+from torchmetrics import Accuracy
 
 from flash.core import Task
 from flash.data.data_pipeline import DataPipeline

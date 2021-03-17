@@ -146,7 +146,7 @@ class ImageClassificationPreprocess(Preprocess):
         return cls._get_predicting_files(samples)
 
     def _convert_tensor_to_pil(self, sample):
-        #  some datasets provide their data as tensors.
+        #  some datasets provide their data as tensors.
         # however, it would be better to convert those data once in load_data
         if isinstance(sample, torch.Tensor):
             sample = to_pil_image(sample)
@@ -166,7 +166,7 @@ class ImageClassificationPreprocess(Preprocess):
 
     def collate(self, samples: Sequence) -> Any:
         _samples = []
-        # todo: Kornia transforms add batch dimension which need to be removed
+        # todo: Kornia transforms add batch dimension which need to be removed
         for sample in samples:
             if isinstance(sample, tuple):
                 sample = (sample[0].squeeze(0), ) + sample[1:]
@@ -315,7 +315,7 @@ class ImageClassificationData(DataModule):
     def default_train_transforms():
         image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
-            #  Better approach as all transforms are applied on tensor directly
+            #  Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(
                     K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()
@@ -336,7 +336,7 @@ class ImageClassificationData(DataModule):
     def default_valid_transforms():
         image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
-            #  Better approach as all transforms are applied on tensor directly
+            #  Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
