@@ -25,11 +25,11 @@ from flash.vision import ImageClassificationData
 
 
 def _dummy_image_loader(_):
-    return torch.rand(3, 64, 64)
+    return torch.rand(3, 196, 196)
 
 
 def _rand_image():
-    return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+    return Image.fromarray(np.random.randint(0, 255, (196, 196, 3), dtype="uint8"))
 
 
 def test_from_filepaths(tmpdir):
@@ -53,7 +53,7 @@ def test_from_filepaths(tmpdir):
 
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 64, 64)
+    assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
 
     assert img_data.val_dataloader() is None
@@ -89,12 +89,12 @@ def test_from_filepaths(tmpdir):
 
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 64, 64)
+    assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
 
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 64, 64)
+    assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
 
 
@@ -187,7 +187,7 @@ def test_from_folders(tmpdir):
     )
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 64, 64)
+    assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
 
     assert img_data.val_dataloader() is None
