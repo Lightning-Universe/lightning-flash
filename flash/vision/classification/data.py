@@ -325,7 +325,7 @@ class ImageClassificationData(DataModule):
                 )
             }
         else:
-            from torchvision import transforms as T
+            from torchvision import transforms as T  # noqa F811
             return {
                 "per_sample_pre_tensor_transform": nn.Sequential(
                     T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()
@@ -345,7 +345,7 @@ class ImageClassificationData(DataModule):
                 )
             }
         else:
-            from torchvision import transforms as T
+            from torchvision import transforms as T  # noqa F811
             return {
                 "per_sample_pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
                 "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
