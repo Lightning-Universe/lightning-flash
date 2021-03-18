@@ -269,12 +269,12 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor(tmpdi
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess)
 
-    _ = data_pipeline.worker_preprocessor(RunningStage.TRAINING)
+    data_pipeline.worker_preprocessor(RunningStage.TRAINING)
     with pytest.raises(MisconfigurationException, match="are mutual exclusive"):
-        _ = data_pipeline.worker_preprocessor(RunningStage.VALIDATING)
+        data_pipeline.worker_preprocessor(RunningStage.VALIDATING)
     with pytest.raises(MisconfigurationException, match="are mutual exclusive"):
-        _ = data_pipeline.worker_preprocessor(RunningStage.TESTING)
-    _ = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
+        data_pipeline.worker_preprocessor(RunningStage.TESTING)
+    data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
 
 def test_detach_preprocessing_from_model(tmpdir):

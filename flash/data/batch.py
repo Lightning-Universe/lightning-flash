@@ -35,7 +35,7 @@ class _Chainer(torch.nn.Module):
         sample = self.per_sample_post_tensor_transform(sample)
         return sample
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         repr_str = f'{self.__class__.__name__}:'
         repr_str += f'\n\t\t(per_sample_pre_tensor_transform): {repr(self.per_sample_pre_tensor_transform)}'
         repr_str += f'\n\t\t(per_sample_to_tensor_transform): {repr(self.per_sample_to_tensor_transform)}'
@@ -88,7 +88,7 @@ class _PreProcessor(torch.nn.Module):
         samples = self.per_batch_transform(samples)
         return samples
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         repr_str = '_PreProcessor:'
         repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
         repr_str += f'\n\t(collate_fn): {repr(self.collate_fn)}'

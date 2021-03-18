@@ -275,12 +275,11 @@ class DataPipeline:
             if dataloader is None:
                 continue
 
-            if isinstance(dataloader, _PatchDataLoader):
+            if isinstance(dataloader, (_PatchDataLoader, Callable)):
                 dataloader = dataloader()
-            elif isinstance(dataloader, Callable):
-                dataloader = dataloader()
-                if dataloader is None:
-                    continue
+
+            if dataloader is None:
+                continue
 
             if isinstance(dataloader, Sequence):
                 was_seq = True
@@ -426,8 +425,6 @@ class DataPipeline:
             # don't delete the predict_step here since we don't know
             # if any other pipeline is attached which may rely on this!
             model.predict_step = model.predict_step._original
-        else:
-            pass
 
     def _generate_callable_auto_dataset(
         self, data: Union[Iterable, Any], running_stage: RunningStage = None
@@ -458,14 +455,11 @@ class DataPipeline:
                 loader_kwargs['collate_fn'] = collate_fn
 
             else:
-                if auto_collate:
-                    loader_kwargs['collate_fn'] = default_collate
-                else:
-                    loader_kwargs['collate_fn'] = default_convert
+                loader_kwargs['collate_fn'] = default_collate if auto_collate else default_convert
 
         return DataLoader(self._generate_auto_dataset(data), **loader_kwargs)
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         preprocess = self._preprocess_pipeline
         postprocess = self._postprocess_pipeline
         return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
