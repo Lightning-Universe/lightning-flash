@@ -1,5 +1,3 @@
-import random
-from functools import partial
 from typing import Any, Callable, Dict, Optional
 from unittest import mock
 
@@ -8,15 +6,11 @@ import pytest
 import torch
 import torchvision.transforms as T
 from PIL import Image
-from pytorch_lightning import callbacks, Trainer
-from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
+from pytorch_lightning import Trainer
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.trainer.supporters import CombinedDataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
-from torchvision.transforms.transforms import RandomHorizontalFlip, ToTensor
 
 from flash.core import Task
 from flash.data.auto_dataset import AutoDataset
@@ -24,7 +18,6 @@ from flash.data.batch import _PostProcessor, _PreProcessor
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import _StageOrchestrator, DataPipeline
 from flash.data.process import Postprocess, Preprocess
-from tests.vision.detection.test_model import collate_fn
 
 
 class DummyDataset(torch.utils.data.Dataset):
