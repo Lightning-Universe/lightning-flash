@@ -16,10 +16,11 @@ import warnings
 from typing import Callable, Mapping, Sequence, Type, Union
 
 import torch
-from pytorch_lightning.metrics.classification import Accuracy
+from torchmetrics import Accuracy
 from transformers import BertForSequenceClassification
+from transformers.modeling_outputs import SequenceClassifierOutput
 
-from flash.core.classification import ClassificationDataPipeline, ClassificationTask
+from flash.core.classification import ClassificationTask
 from flash.text.classification.data import TextClassificationData
 
 
@@ -73,10 +74,8 @@ class TextClassifier(ClassificationTask):
         loss, logits = out[:2]
         output["loss"] = loss
         output["y_hat"] = logits
-        probs = self.data_pipeline.before_uncollate(logits)
+        if isinstance(logits, SequenceClassifierOutput):
+            logits = logits.logits
+        probs = torch.softmax(logits, 1)
         output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
         return output
-
-    @staticmethod
-    def default_pipeline() -> ClassificationDataPipeline:
-        return TextClassificationData.default_pipeline()

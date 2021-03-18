@@ -111,9 +111,8 @@ class Trainer(pl.Trainer):
             if len(model_callback) == 1:
                 if strategy is not None:
                     rank_zero_warn(
-                        "The model contains a default finetune callback. "
-                        f"The provided {strategy} will be overriden. "
-                        "HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
+                        "The model contains a default finetune callback. The provided {strategy} will be overriden.\n"
+                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
                     )
                 callback = model_callback
             else:

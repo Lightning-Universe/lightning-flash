@@ -21,13 +21,6 @@ from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqDataPipeline
 class TranslationData(Seq2SeqData):
     """Data module for Translation tasks."""
 
-    @staticmethod
-    def default_pipeline():
-        return Seq2SeqDataPipeline(
-            AutoTokenizer.from_pretrained("facebook/mbart-large-en-ro", use_fast=True),
-            input="input",
-        )
-
     @classmethod
     def from_files(
         cls,
@@ -59,7 +52,8 @@ class TranslationData(Seq2SeqData):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 8.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             TranslateData: The constructed data module.
@@ -114,7 +108,8 @@ class TranslationData(Seq2SeqData):
             padding: Padding strategy for batches. Default is pad to maximum length.
             batch_size: the batchsize to use for parallel loading. Defaults to 8.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
 
         Returns:
             Seq2SeqData: The constructed data module.

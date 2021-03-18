@@ -107,15 +107,18 @@ class TabularPreprocess(Preprocess):
         target = df[self.target].to_numpy().astype(np.float32 if self.regression else np.int64)
         return [((c, n), t) for c, n, t in zip(cat_vars, num_vars, target)]
 
-    def predict_load_data(self, df: DataFrame, dataset: AutoDataset):
+    def predict_load_data(self, sample: Union[str, DataFrame], dataset: AutoDataset):
+        df = pd.read_csv(sample) if isinstance(sample, str) else sample
         _, cat_vars, num_vars = self.common_load_data(df, dataset)
-        return [((c, n), -1) for c, n in zip(cat_vars, num_vars)]
+        return [(c, n) for c, n in zip(cat_vars, num_vars)]
 
 
 class TabularData(DataModule):
     """Data module for tabular tasks"""
 
     preprocess_cls = TabularPreprocess
+    # this enables to transform level-class attributes into instance based attributes
+    __flash_special_attr__ = ("_preprocess_state", "cat_cols", "num_cols", "target")
 
     @property
     def preprocess_state(self):
@@ -124,25 +127,6 @@ class TabularData(DataModule):
     @preprocess_state.setter
     def preprocess_state(self, preprocess_state):
         self._preprocess_state = preprocess_state
-
-    def __init__(
-        self,
-        train_ds: Optional[torch.utils.data.Dataset] = None,
-        valid_ds: Optional[torch.utils.data.Dataset] = None,
-        test_ds: Optional[torch.utils.data.Dataset] = None,
-        predict_ds: Optional[torch.utils.data.Dataset] = None,
-        batch_size: int = 2,
-        num_workers: Optional[int] = None,
-    ):
-
-        super().__init__(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            predict_ds=predict_ds,
-            batch_size=batch_size,
-            num_workers=num_workers,
-        )
 
     @property
     def codes(self):
@@ -157,7 +141,7 @@ class TabularData(DataModule):
         return len(self.cat_cols) + len(self.num_cols)
 
     @property
-    def preprocess(self):
+    def preprocess(self) -> TabularPreprocess:
         mean = None
         std = None
         codes = None
@@ -207,7 +191,6 @@ class TabularData(DataModule):
         num_workers: Optional[int] = None,
         val_size: Optional[float] = None,
         test_size: Optional[float] = None,
-        data_pipeline: Optional[DataPipeline] = None,
         **pandas_kwargs,
     ):
         """Creates a TextClassificationData object from pandas DataFrames.
@@ -221,7 +204,8 @@ class TabularData(DataModule):
             test_csv: test data csv file.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
             val_size: float between 0 and 1 to create a validation dataset from train dataset
             test_size: float between 0 and 1 to create a test dataset from train validation
 
@@ -269,6 +253,7 @@ class TabularData(DataModule):
         num_workers: Optional[int] = None,
         val_size: float = None,
         test_size: float = None,
+        preprocess_state: Optional[TabularState] = None
     ):
         """Creates a TabularData object from pandas DataFrames.
 
@@ -281,7 +266,8 @@ class TabularData(DataModule):
             test_df: test data DataFrame
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+            or 0 for Darwin platform.
             val_size: float between 0 and 1 to create a validation dataset from train dataset
             test_size: float between 0 and 1 to create a test dataset from train validation
 
@@ -311,9 +297,9 @@ class TabularData(DataModule):
         cls.num_cols = numerical_input
         cls.target = target
 
-        cls._preprocess_state = None
+        cls._preprocess_state = preprocess_state
 
-        if isinstance(train_df, DataFrame):
+        if isinstance(train_df, DataFrame) and cls._preprocess_state is None:
             dfs = [train_df]
             if valid_df is not None:
                 dfs += [valid_df]
@@ -323,28 +309,11 @@ class TabularData(DataModule):
                 dfs += [predict_df]
             cls._preprocess_state = cls.preprocess_cls._generate_state(dfs, target, numerical_input, categorical_input)
 
-        # trick to get data_pipeline from empty DataModule
-        data_pipeline = cls().data_pipeline
-        train_ds = cls._generate_dataset_if_possible(
-            train_df, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
-        )
-        valid_ds = cls._generate_dataset_if_possible(
-            valid_df, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
-        )
-        test_ds = cls._generate_dataset_if_possible(
-            test_df, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
-        )
-        predict_ds = cls._generate_dataset_if_possible(
-            predict_df, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
-        )
-
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            predict_ds=predict_ds,
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_df,
+            valid_load_data_input=valid_df,
+            test_load_data_input=test_df,
+            predict_load_data_input=predict_df,
             batch_size=batch_size,
             num_workers=num_workers,
         )
-
-        return datamodule

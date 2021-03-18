@@ -16,6 +16,7 @@ import pathlib
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import torch
+from numpy import isin
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -31,6 +32,7 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
+from flash.data.utils import _contains_any_tensor
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -40,7 +42,6 @@ else:
 
 
 class ImageClassificationPreprocess(Preprocess):
-
     to_tensor = torchvision_T.ToTensor()
 
     @staticmethod
@@ -81,14 +82,47 @@ class ImageClassificationPreprocess(Preprocess):
         return files
 
     @classmethod
-    def load_data(cls, samples: Any, dataset: Optional[AutoDataset] = None) -> Any:
-        classes, class_to_idx = cls._find_classes(samples)
-        dataset.num_classes = len(classes)
-        return make_dataset(samples, class_to_idx, IMG_EXTENSIONS, None)
+    def _load_data_dir(cls, data: Any, dataset: Optional[AutoDataset] = None):
+        if isinstance(data, list):
+            dataset.num_classes = len(data)
+            out = []
+            for p, label in data:
+                if os.path.isdir(p):
+                    for f in os.listdir(p):
+                        if has_file_allowed_extension(f, IMG_EXTENSIONS):
+                            out.append([os.path.join(p, f), label])
+                elif os.path.isfile(p) and has_file_allowed_extension(p, IMG_EXTENSIONS):
+                    out.append([p, label])
+            print(out)
+            return out
+        else:
+            classes, class_to_idx = cls._find_classes(data)
+            dataset.num_classes = len(classes)
+            return make_dataset(data, class_to_idx, IMG_EXTENSIONS, None)
+
+    @classmethod
+    def _load_data_files_labels(cls, data: Any, dataset: Optional[AutoDataset] = None):
+        _classes = [tmp[1] for tmp in data]
+
+        _classes = torch.stack([
+            torch.tensor(int(_cls)) if not isinstance(_cls, torch.Tensor) else _cls.view(-1) for _cls in _classes
+        ]).unique()
+
+        dataset.num_classes = len(_classes)
+
+        return data
+
+    @classmethod
+    def load_data(cls, data: Any, dataset: Optional[AutoDataset] = None) -> Any:
+        if isinstance(data, (str, pathlib.Path, list)):
+            return cls._load_data_dir(data=data, dataset=dataset)
+        return cls._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
     def load_sample(sample) -> Union[Image.Image, list]:
         # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+        if isinstance(sample, torch.Tensor):
+            return sample
 
         if isinstance(sample, (tuple, list)):
             path = sample[0]
@@ -106,11 +140,13 @@ class ImageClassificationPreprocess(Preprocess):
         return img
 
     @classmethod
-    def predict_load_data(cls, samples: Any, dataset: AutoDataset = None) -> Any:
+    def predict_load_data(cls, samples: Any) -> Any:
+        if isinstance(samples, torch.Tensor):
+            return samples
         return cls._get_predicting_files(samples)
 
     def _convert_tensor_to_pil(self, sample):
-        # some datasets provide their data as tensors.
+        #  some datasets provide their data as tensors.
         # however, it would be better to convert those data once in load_data
         if isinstance(sample, torch.Tensor):
             sample = to_pil_image(sample)
@@ -130,6 +166,7 @@ class ImageClassificationPreprocess(Preprocess):
 
     def collate(self, samples: Sequence) -> Any:
         _samples = []
+        # todo: Kornia transforms add batch dimension which need to be removed
         for sample in samples:
             if isinstance(sample, tuple):
                 sample = (sample[0].squeeze(0), ) + sample[1:]
@@ -145,7 +182,7 @@ class ImageClassificationPreprocess(Preprocess):
         sample, target = sample
         return self.common_per_sample_pre_tensor_transform(sample, self.train_transform), target
 
-    def validation_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+    def val_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
         return self.common_per_sample_pre_tensor_transform(sample, self.valid_transform), target
 
@@ -154,13 +191,17 @@ class ImageClassificationPreprocess(Preprocess):
         return self.common_per_sample_pre_tensor_transform(sample, self.test_transform), target
 
     def predict_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+        if isinstance(sample, torch.Tensor):
+            return sample
         return self.common_per_sample_pre_tensor_transform(sample, self.predict_transform)
 
     def per_sample_to_tensor_transform(self, sample) -> Any:
         sample, target = sample
-        return self.to_tensor(sample), target
+        return sample if isinstance(sample, torch.Tensor) else self.to_tensor(sample), target
 
     def predict_per_sample_to_tensor_transform(self, sample) -> Any:
+        if isinstance(sample, torch.Tensor):
+            return sample
         return self.to_tensor(sample)
 
     def common_per_sample_post_tensor_transform(self, sample: Any, transform) -> Any:
@@ -170,7 +211,7 @@ class ImageClassificationPreprocess(Preprocess):
         sample, target = sample
         return self.common_per_sample_post_tensor_transform(sample, self.train_transform), target
 
-    def validation_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+    def val_per_sample_post_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
         return self.common_per_sample_post_tensor_transform(sample, self.valid_transform), target
 
@@ -245,16 +286,16 @@ class ImageClassificationData(DataModule):
             self.set_dataset_attribute(self._predict_ds, 'num_classes', self.num_classes)
 
         if isinstance(train_transform, str) and train_transform == 'default':
-            train_transform = self.default_train_transforms
+            train_transform = self.default_train_transforms()
 
         if isinstance(valid_transform, str) and valid_transform == 'default':
-            valid_transform = self.default_valid_transforms
+            valid_transform = self.default_valid_transforms()
 
         if isinstance(test_transform, str) and test_transform == 'default':
-            test_transform = self.default_valid_transforms
+            test_transform = self.default_valid_transforms()
 
         if isinstance(predict_transform, str) and predict_transform == 'default':
-            predict_transform = self.default_valid_transforms
+            predict_transform = self.default_valid_transforms()
 
         self.train_transform = self._check_transforms(train_transform)
         self.valid_transform = self._check_transforms(valid_transform)
@@ -263,46 +304,48 @@ class ImageClassificationData(DataModule):
 
     @staticmethod
     def _check_transforms(transform: dict) -> dict:
-        if not isinstance(transform, dict):
+        if transform is not None and not isinstance(transform, dict):
             raise MisconfigurationException(
-                f"Transform should be a dict. Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
+                "Transform should be a dict. "
+                f"Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
             )
         return transform
 
-    @property
-    def default_train_transforms(self):
+    @staticmethod
+    def default_train_transforms():
+        image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
-            # Better approach as all transforms are applied on tensor directly
+            #  Better approach as all transforms are applied on tensor directly
             return {
                 "per_sample_post_tensor_transform": nn.Sequential(
-                    K.RandomResizedCrop(self.image_size), K.RandomHorizontalFlip()
+                    K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()
                 ),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-                    K.RandomAffine(360), K.ColorJitter(0.2, 0.3, 0.2, 0.3)
                 )
             }
         else:
             return {
                 "per_sample_pre_tensor_transform": nn.Sequential(
-                    T.RandomResizedCrop(self.image_size), T.RandomHorizontalFlip()
+                    T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()
                 ),
                 "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
-    @property
-    def default_valid_transforms(self):
+    @staticmethod
+    def default_valid_transforms():
+        image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE:
-            # Better approach as all transforms are applied on tensor directly
+            #  Better approach as all transforms are applied on tensor directly
             return {
-                "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(self.image_size)),
+                "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
             }
         else:
             return {
-                "per_sample_pre_tensor_transform": T.Compose([T.RandomResizedCrop(224)]),
+                "per_sample_pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
                 "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
@@ -322,7 +365,7 @@ class ImageClassificationData(DataModule):
         return num_classes
 
     @property
-    def preprocess(self):
+    def preprocess(self) -> ImageClassificationPreprocess:
         return self.preprocess_cls(
             train_transform=self.train_transform,
             valid_transform=self.valid_transform,
@@ -390,32 +433,20 @@ class ImageClassificationData(DataModule):
         Examples:
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
-        """
-        train_ds = cls._generate_dataset_if_possible(
-            train_folder, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
-        )
-        valid_ds = cls._generate_dataset_if_possible(
-            valid_folder, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
-        )
-        test_ds = cls._generate_dataset_if_possible(
-            test_folder, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
-        )
-        predict_ds = cls._generate_dataset_if_possible(
-            predict_folder, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
-        )
 
-        return cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            predict_ds=predict_ds,
+
+        """
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_folder,
+            valid_load_data_input=valid_folder,
+            test_load_data_input=test_folder,
+            predict_load_data_input=predict_folder,
             train_transform=train_transform,
             valid_transform=valid_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             batch_size=batch_size,
             num_workers=num_workers,
-            **kwargs,
         )
 
     @classmethod
@@ -500,21 +531,21 @@ class ImageClassificationData(DataModule):
 
         if train_filepaths is not None and train_labels is not None:
             train_ds = cls._generate_dataset_if_possible(
-                zip(train_filepaths, train_labels), running_stage=RunningStage.TRAINING
+                list(zip(train_filepaths, train_labels)), running_stage=RunningStage.TRAINING
             )
         else:
             train_ds = None
 
         if valid_filepaths is not None and valid_labels is not None:
             valid_ds = cls._generate_dataset_if_possible(
-                zip(valid_filepaths, valid_labels), running_stage=RunningStage.VALIDATING
+                list(zip(valid_filepaths, valid_labels)), running_stage=RunningStage.VALIDATING
             )
         else:
             valid_ds = None
 
         if test_filepaths is not None and test_labels is not None:
             test_ds = cls._generate_dataset_if_possible(
-                zip(test_filepaths, test_labels), running_stage=RunningStage.TESTING
+                list(zip(test_filepaths, test_labels)), running_stage=RunningStage.TESTING
             )
         else:
             test_ds = None

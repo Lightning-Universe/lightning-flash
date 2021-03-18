@@ -18,12 +18,13 @@ import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms as T
+from torchvision.transforms import transforms
 
 from flash.data.data_utils import labels_from_categorical_csv
 from flash.vision import ImageClassificationData
 
 
-def _dummy_image_loader(filepath):
+def _dummy_image_loader(_):
     return torch.rand(3, 64, 64)
 
 
@@ -32,11 +33,20 @@ def _rand_image():
 
 
 def test_from_filepaths(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a" / "a_1.png")
+    _rand_image().save(tmpdir / "a" / "a_2.png")
+
+    _rand_image().save(tmpdir / "b" / "a_1.png")
+    _rand_image().save(tmpdir / "b" / "a_2.png")
+
     img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=["a", "b"],
+        train_filepaths=[tmpdir / "a", tmpdir / "b"],
+        train_transform=None,
         train_labels=[0, 1],
-        train_transform=lambda x: x,  # make sure transform works
-        loader=_dummy_image_loader,
         batch_size=1,
         num_workers=0,
     )
@@ -49,16 +59,30 @@ def test_from_filepaths(tmpdir):
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
 
+    (tmpdir / "c").mkdir()
+    (tmpdir / "d").mkdir()
+    _rand_image().save(tmpdir / "c" / "c_1.png")
+    _rand_image().save(tmpdir / "c" / "c_2.png")
+    _rand_image().save(tmpdir / "d" / "d_1.png")
+    _rand_image().save(tmpdir / "d" / "d_2.png")
+
+    (tmpdir / "e").mkdir()
+    (tmpdir / "f").mkdir()
+    _rand_image().save(tmpdir / "e" / "e_1.png")
+    _rand_image().save(tmpdir / "e" / "e_2.png")
+    _rand_image().save(tmpdir / "f" / "f_1.png")
+    _rand_image().save(tmpdir / "f" / "f_2.png")
+
     img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=["a", "b"],
+        train_filepaths=[tmpdir / "a", tmpdir / "b"],
         train_labels=[0, 1],
         train_transform=None,
-        valid_filepaths=["c", "d"],
+        valid_filepaths=[tmpdir / "c", tmpdir / "d"],
         valid_labels=[0, 1],
         valid_transform=None,
-        test_filepaths=["e", "f"],
+        test_transform=None,
+        test_filepaths=[tmpdir / "e", tmpdir / "f"],
         test_labels=[0, 1],
-        loader=_dummy_image_loader,
         batch_size=1,
         num_workers=0,
     )
@@ -123,15 +147,17 @@ def test_categorical_csv_labels(tmpdir):
     test_labels = labels_from_categorical_csv(
         test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
     )
-
     data = ImageClassificationData.from_filepaths(
         batch_size=2,
+        train_transform=None,
+        valid_transform=None,
+        test_transform=None,
         train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
-        train_labels=train_labels,
+        train_labels=train_labels.values(),
         valid_filepaths=os.path.join(tmpdir, 'some_dataset', 'valid'),
-        valid_labels=valid_labels,
+        valid_labels=valid_labels.values(),
         test_filepaths=os.path.join(tmpdir, 'some_dataset', 'test'),
-        test_labels=test_labels,
+        test_labels=test_labels.values(),
     )
 
     for (x, y) in data.train_dataloader():
@@ -142,16 +168,6 @@ def test_categorical_csv_labels(tmpdir):
 
     for (x, y) in data.test_dataloader():
         assert len(x) == 2
-
-    data = ImageClassificationData.from_filepaths(
-        batch_size=2,
-        train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
-        train_labels=train_labels,
-        valid_split=0.5
-    )
-
-    for (x, y) in data.val_dataloader():
-        assert len(x) == 1
 
 
 def test_from_folders(tmpdir):
@@ -179,9 +195,7 @@ def test_from_folders(tmpdir):
 
     img_data = ImageClassificationData.from_folders(
         train_dir,
-        train_transform=T.ToTensor(),
         valid_folder=train_dir,
-        valid_transform=T.ToTensor(),
         test_folder=train_dir,
         batch_size=1,
         num_workers=0,
@@ -189,10 +203,10 @@ def test_from_folders(tmpdir):
 
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 64, 64)
+    assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
 
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 64, 64)
+    assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )

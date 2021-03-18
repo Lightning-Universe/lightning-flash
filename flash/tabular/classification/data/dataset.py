@@ -122,6 +122,7 @@ def _dfs_to_samples(dfs, cat_cols, num_cols) -> list:
         cat_vars_list.append(cat_vars)
         cat_vars_list.append(num_vars_list)
 
+    # todo: assumes that dfs is not empty
     cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0))
     num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0))
     return [(c, n) for c, n in zip(cat_vars, num_vars)]
@@ -165,7 +166,7 @@ def titanic_data_download(path: str, predict_size: float = 0.1) -> None:
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", path_data)
 
     if set(os.listdir(path)) != {"predict.csv", "titanic.csv"}:
-        assert predict_size > 0 and predict_size < 1
+        assert 0 < predict_size < 1
         df = pd.read_csv(path_data)
         df_train, df_predict = train_test_split(df, test_size=predict_size)
         df_train.to_csv(path_data)

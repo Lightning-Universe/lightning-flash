@@ -2,8 +2,9 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.data.utils import convert_to_modules
+from flash.data.utils import _contains_any_tensor, convert_to_modules
 
 
 class _Chainer(torch.nn.Module):
@@ -13,55 +14,87 @@ class _Chainer(torch.nn.Module):
         per_sample_pre_tensor_transform: Callable,
         per_sample_to_tensor_transform: Callable,
         per_sample_post_tensor_transform: Callable,
+        assert_contains_tensor: bool = False
     ):
         super().__init__()
 
         self.per_sample_pre_tensor_transform = convert_to_modules(per_sample_pre_tensor_transform)
         self.per_sample_to_tensor_transform = convert_to_modules(per_sample_to_tensor_transform)
         self.per_sample_post_tensor_transform = convert_to_modules(per_sample_post_tensor_transform)
+        self.assert_contains_tensor = assert_contains_tensor
 
     def forward(self, sample: Any):
         sample = self.per_sample_pre_tensor_transform(sample)
         sample = self.per_sample_to_tensor_transform(sample)
+        if self.assert_contains_tensor:
+            if not _contains_any_tensor(sample):
+                raise MisconfigurationException(
+                    "When ``per_sample_to_tensor_transform`` is overriden, "
+                    "``DataPipeline`` expects the outputs to be ``tensors``"
+                )
         sample = self.per_sample_post_tensor_transform(sample)
         return sample
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         repr_str = f'{self.__class__.__name__}:'
-        repr_str += f'\n\t(per_sample_pre_tensor_transform): {repr(self.per_sample_pre_tensor_transform)}'
-        repr_str += f'\n\t(per_sample_to_tensor_transform): {repr(self.per_sample_to_tensor_transform)}'
-        repr_str += f'\n\t(per_sample_post_tensor_transform): {repr(self.per_sample_post_tensor_transform)}'
+        repr_str += f'\n\t\t(per_sample_pre_tensor_transform): {repr(self.per_sample_pre_tensor_transform)}'
+        repr_str += f'\n\t\t(per_sample_to_tensor_transform): {repr(self.per_sample_to_tensor_transform)}'
+        repr_str += f'\n\t\t(per_sample_post_tensor_transform): {repr(self.per_sample_post_tensor_transform)}'
+        repr_str += f'\n\t\t(assert_contains_tensor): {repr(self.assert_contains_tensor)}'
         return repr_str
 
 
 class _PreProcessor(torch.nn.Module):
+    """
+        This class is used to encapsultate the following functions of a Preprocess Object:
+        Inside a worker:
+            per_sample_transform: Function to transform an individual sample
+                Inside a worker, it is actually make of 3 functions:
+                    * per_sample_pre_tensor_transform
+                    * per_sample_to_tensor_transform
+                    * per_sample_post_tensor_transform
+            collate: Function to merge sample into a batch
+            per_batch_transform: Function to transform an individual batch
+                * per_batch_transform
+
+        Inside main process:
+            per_sample_transform: Function to transform an individual sample
+                * per_sample_transform_on_device
+            collate: Function to merge sample into a batch
+            per_batch_transform: Function to transform an individual batch
+                * per_batch_transform_on_device
+    """
 
     def __init__(
         self,
         collate_fn: Callable,
         per_sample_transform: Union[Callable, _Chainer],
         per_batch_transform: Callable,
-        stage: Optional[RunningStage] = None
+        stage: Optional[RunningStage] = None,
+        apply_per_sample_transform: bool = True,
     ):
         super().__init__()
         self.collate_fn = convert_to_modules(collate_fn)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
         self.per_batch_transform = convert_to_modules(per_batch_transform)
-        self._stage = stage
+        self.apply_per_sample_transform = apply_per_sample_transform
+        self.stage = stage
 
     def forward(self, samples: Sequence[Any]):
-        samples = [self.per_sample_transform(sample) for sample in samples]
-        samples = type(samples)(samples)
-        samples = self.collate_fn(samples)
+        if self.apply_per_sample_transform:
+            samples = [self.per_sample_transform(sample) for sample in samples]
+            samples = type(samples)(samples)
+            samples = self.collate_fn(samples)
         samples = self.per_batch_transform(samples)
         return samples
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         repr_str = '_PreProcessor:'
         repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
         repr_str += f'\n\t(collate_fn): {repr(self.collate_fn)}'
         repr_str += f'\n\t(per_batch_transform): {repr(self.per_batch_transform)}'
-        repr_str += f'\n\t(stage): {repr(self._stage)}'
+        repr_str += f'\n\t(apply_per_sample_transform): {repr(self.apply_per_sample_transform)}'
+        repr_str += f'\n\t(stage): {repr(self.stage)}'
         return repr_str
 
 

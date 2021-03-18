@@ -25,5 +25,4 @@ class ObjectDetectionFineTuning(FlashBaseFinetuning):
         self.train_bn = train_bn
 
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        model = pl_module.model
-        self.freeze(module=model.backbone, train_bn=self.train_bn)
+        self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)

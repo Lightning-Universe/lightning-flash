@@ -50,3 +50,6 @@ datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenopte
 # 3b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
+
+# 4. Saving checkpoint
+trainer.save_checkpoint("image_classification_model.pt")

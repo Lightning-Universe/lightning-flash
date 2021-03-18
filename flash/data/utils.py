@@ -37,7 +37,6 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
     local_filename = os.path.join(path, url.split('/')[-1])
     r = requests.get(url, stream=True)
     file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
-    chunk = 1
     chunk_size = 1024
     num_bars = int(file_size / chunk_size)
     if verbose:
@@ -100,7 +99,7 @@ class FuncModule(torch.nn.Module):
     def forward(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return f"{self.__class__.__name__}({str(self.func)})"
 
 

@@ -99,7 +99,7 @@ def test_autodataset_with_functions(
     assert len(dset) == 10
 
     for idx in range(len(dset)):
-        _ = dset[idx]
+        dset[idx]
 
     if with_dataset:
         assert dset.load_sample_was_called
@@ -113,8 +113,7 @@ def test_autodataset_with_functions(
 
 def test_autodataset_warning():
     with pytest.warns(
-        UserWarning,
-        match="datapipeline is specified but load_sample and/or load_data are also specified. Won't use datapipeline"
+        UserWarning, match="``datapipeline`` is specified but load_sample and/or load_data are also specified"
     ):
         AutoDataset(range(10), load_data=lambda x: x, load_sample=lambda x: x, data_pipeline=DataPipeline())
 
@@ -136,7 +135,7 @@ def test_preprocessing_data_pipeline_with_running_stage(with_dataset):
     assert len(dataset) == 10
 
     for idx in range(len(dataset)):
-        _ = dataset[idx]
+        dataset[idx]
 
     if with_dataset:
         assert dataset.train_load_sample_was_called
@@ -165,7 +164,7 @@ def test_preprocessing_data_pipeline_no_running_stage(with_dataset):
         match='Names for LoadSample and LoadData could not be inferred. Consider setting the RunningStage'
     ):
         for idx in range(len(dataset)):
-            _ = dataset[idx]
+            dataset[idx]
 
     # will be triggered when running stage is set
     if with_dataset:
