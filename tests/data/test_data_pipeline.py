@@ -400,7 +400,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             self.on_request_predict_dataloader_called = True
             collate_fn = self.predict_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
-            assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
+            assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             assert self.predict_step == self._saved_predict_step
             super().on_request_predict_dataloader()
             collate_fn = self.predict_dataloader().collate_fn  # noqa F811
