@@ -64,7 +64,7 @@ Use these utilities to download data.
 
 -----
 
-download_data
+download_file
 -------------
 
-.. autofunction:: flash.data.utils.download_data
+.. autofunction:: flash.data.utils.download_file
