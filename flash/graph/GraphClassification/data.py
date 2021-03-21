@@ -33,7 +33,7 @@ The structure we follow is DataSet -> DataLoader -> DataModule -> DataPipeline
 class BasicGraphDataset(Dataset):
 
     '''
-    Probably unnecessary having the following class.
+    #todo: Probably unnecessary having the following class.
     '''
 
     def __init__(self, root = None, processed_dir = 'processed', raw_dir = 'raw',  transform=None, pre_transform=None, pre_filter=None):
@@ -95,6 +95,10 @@ class FilepathDataset(torch.utils.data.Dataset):
             self.label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(self.fnames)))))}
 
     @property
+    def has_dict_labels(self) -> bool:
+        return isinstance(self.labels, dict)
+
+    @property
     def has_labels(self) -> bool:
         return self.labels is not None
 
@@ -105,6 +109,10 @@ class FilepathDataset(torch.utils.data.Dataset):
         filename = self.fnames[index]
         graph = self.loader(filename)
         label = None
+        if self.has_dict_labels:
+            name = os.path.splitext(filename)[0]
+            name = os.path.basename(name)
+            label = self.labels[name]
         if self.has_labels:
             label = self.label_to_class_mapping[filename]
         return graph, label
@@ -136,7 +144,7 @@ class FlashDatasetFolder(torch.utils.data.Dataset):
         with_targets: Whether to include targets
         graph_paths: List of graph paths to load. Only used when ``with_targets=False``
 
-     Attributes:
+    Attributes:
         classes (list): List of the class names sorted alphabetically.
         class_to_idx (dict): Dict with items (class_name, class_index).
         samples (list): List of (sample path, class_index) tuples
@@ -147,7 +155,7 @@ class FlashDatasetFolder(torch.utils.data.Dataset):
         self,
         root: str,
         loader: Callable,
-        extensions: Tuple[str] = Graph_EXTENSIONS,
+        extensions: Tuple[str] = Graph_EXTENSIONS, #todo: Graph_EXTENSIONS is not defined. In PyG the extension .pt is used
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         is_valid_file: Optional[Callable] = None,
@@ -175,7 +183,7 @@ class FlashDatasetFolder(torch.utils.data.Dataset):
         else:
             if not graph_paths:
                 raise MisconfigurationException(
-                    "`FlashDatasetFolder(with_target=False)` but no `img_paths` were provided"
+                    "`FlashDatasetFolder(with_target=False)` but no `graph_paths` were provided"
                 )
             self.samples = graph_paths
 
@@ -281,6 +289,16 @@ class GraphClassificationData(DataModule):
             >>> _data = GraphClassificationData.from_filepaths(["a.pt", "b.pt"], [0, 1]) # doctest: +SKIP
 
         """
+
+        # enable passing in a string which loads all files in that folder as a list
+        if isinstance(train_filepaths, str):
+            train_filepaths = [os.path.join(train_filepaths, x) for x in os.listdir(train_filepaths)]
+        if isinstance(valid_filepaths, str):
+            valid_filepaths = [os.path.join(valid_filepaths, x) for x in os.listdir(valid_filepaths)]
+        if isinstance(test_filepaths, str):
+            test_filepaths = [os.path.join(test_filepaths, x) for x in os.listdir(test_filepaths)]
+
+
         train_ds = FilepathDataset(
             filepaths=train_filepaths,
             labels=train_labels,
