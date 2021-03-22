@@ -258,7 +258,7 @@ class CustomPreprocess(Preprocess):
         pass
 
 
-def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor(tmpdir):
+def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
 
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess)
