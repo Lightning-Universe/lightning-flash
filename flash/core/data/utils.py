@@ -14,6 +14,7 @@
 import logging
 import os.path
 import zipfile
+import tarfile
 from typing import Any, Type
 
 import requests
@@ -54,10 +55,10 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
                 fp.write(chunk)  # type: ignore
 
     if '.zip' in local_filename:
-        if os.path.exists(local_filename):
-            with zipfile.ZipFile(local_filename, 'r') as zip_ref:
-                zip_ref.extractall(path)
-
+        extract_all(zipfile, local_filename, path)
+    elif '.tar.gz' in local_filename:
+        extract_all(tarfile, local_filename, path)
+    
 
 def download_data(url: str, path: str = "data/") -> None:
     """
@@ -87,3 +88,9 @@ def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
     elif isinstance(value, dict):
         return any(_contains_any_tensor(v, dtype=dtype) for v in value.values())
     return False
+
+
+def extract_all(module, local_filename, path):
+    if os.path.exists(local_filename):
+        with module.open(local_filename, 'r') as ref:
+            ref.extractall(path)
