@@ -13,12 +13,14 @@
 # limitations under the License.
 import os
 import platform
+from copy import deepcopy
 from typing import Any, Callable, Optional, Union
 
 import pytorch_lightning as pl
 import torch
-from numpy import isin
+from pytorch_lightning.core.datamodule import _DataModuleWrapper, track_data_hook_calls
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities import rank_zero_only
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
@@ -38,7 +40,44 @@ class TaskDataPipeline(DataPipeline):
         return (batch["x"], batch.get('target', batch.get('y'))) if isinstance(batch, dict) else batch
 
 
-class DataModule(pl.LightningDataModule):
+class _FlashDataModuleWrapper(_DataModuleWrapper):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__has_added_checks = False
+
+    def __call__(cls, *args, **kwargs):
+        """A wrapper for LightningDataModule that:
+
+        1. Runs user defined subclass's __init__
+        2. Assures prepare_data() runs on rank 0
+        3. Lets you check prepare_data and setup to see if they've been called
+        """
+        __flash_special_attr__ = getattr(cls, "__flash_special_attr__", None)
+        if __flash_special_attr__:
+            saved_attr = []
+            for special_attr_name in __flash_special_attr__:
+                attr = deepcopy(getattr(cls, special_attr_name, None))
+                saved_attr.append((special_attr_name, attr))
+
+        if not cls.__has_added_checks:
+            cls.__has_added_checks = True
+            # Track prepare_data calls and make sure it runs on rank zero
+            cls.prepare_data = track_data_hook_calls(rank_zero_only(cls.prepare_data))
+            # Track setup calls
+            cls.setup = track_data_hook_calls(cls.setup)
+
+        # Get instance of LightningDataModule by mocking its __init__ via __call__
+        obj = type.__call__(cls, *args, **kwargs)
+
+        if __flash_special_attr__:
+            for special_attr_name, attr in saved_attr:
+                setattr(obj, special_attr_name, attr)
+
+        return obj
+
+
+class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
     """Basic DataModule class for all Flash tasks
 
     Args:
