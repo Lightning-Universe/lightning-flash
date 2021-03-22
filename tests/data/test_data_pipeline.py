@@ -279,7 +279,7 @@ def test_detach_preprocessing_from_model(tmpdir):
 
     assert model.train_dataloader().collate_fn == default_collate
     assert model.transfer_batch_to_device.__self__ == model
-    model.on_request_train_dataloader()
+    model.on_train_dataloader()
     assert isinstance(model.train_dataloader().collate_fn, _PreProcessor)
     assert isinstance(model.transfer_batch_to_device, _StageOrchestrator)
     model.on_fit_end()
@@ -349,53 +349,53 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert isinstance(stage_mapping[current_running_stage], cls)
             assert stage_mapping[current_running_stage] is not None
 
-        def on_request_train_dataloader(self) -> None:
+        def on_train_dataloader(self) -> None:
             current_running_stage = RunningStage.TRAINING
-            self.on_request_train_dataloader_called = True
+            self.on_train_dataloader_called = True
             collate_fn = self.train_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
-            super().on_request_train_dataloader()
+            super().on_train_dataloader()
             collate_fn = self.train_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
 
-        def on_request_val_dataloader(self) -> None:
+        def on_val_dataloader(self) -> None:
             current_running_stage = RunningStage.VALIDATING
-            self.on_request_val_dataloader_called = True
+            self.on_val_dataloader_called = True
             collate_fn = self.val_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
-            super().on_request_val_dataloader()
+            super().on_val_dataloader()
             collate_fn = self.val_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
 
-        def on_request_test_dataloader(self) -> None:
+        def on_test_dataloader(self) -> None:
             current_running_stage = RunningStage.TESTING
-            self.on_request_test_dataloader_called = True
+            self.on_test_dataloader_called = True
             collate_fn = self.test_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
-            super().on_request_test_dataloader()
+            super().on_test_dataloader()
             collate_fn = self.test_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
 
-        def on_request_predict_dataloader(self) -> None:
+        def on_predict_dataloader(self) -> None:
             current_running_stage = RunningStage.PREDICTING
-            self.on_request_predict_dataloader_called = True
+            self.on_predict_dataloader_called = True
             collate_fn = self.predict_dataloader().collate_fn  # noqa F811
             assert collate_fn == default_collate
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             assert self.predict_step == self._saved_predict_step
-            super().on_request_predict_dataloader()
+            super().on_predict_dataloader()
             collate_fn = self.predict_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(collate_fn, self.data_pipeline.worker_preprocessor(current_running_stage))
@@ -423,10 +423,10 @@ def test_attaching_datapipeline_to_model(tmpdir):
     trainer.test(model)
     trainer.predict(model)
 
-    assert model.on_request_train_dataloader_called
-    assert model.on_request_val_dataloader_called
-    assert model.on_request_test_dataloader_called
-    assert model.on_request_predict_dataloader_called
+    assert model.on_train_dataloader_called
+    assert model.on_val_dataloader_called
+    assert model.on_test_dataloader_called
+    assert model.on_predict_dataloader_called
 
 
 def test_stage_orchestrator_state_attach_detach(tmpdir):

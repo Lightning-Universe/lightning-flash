@@ -9,6 +9,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.warning_utils import rank_zero_warn
 
 from flash.data.process import Preprocess
+from flash.data.utils import _STAGES_PREFIX
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipeline
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 class AutoDataset(torch.utils.data.Dataset):
 
     FITTING_STAGES = ("train", "val")
-    STAGES = ("train", "test", "eval", "val", "predict")
+    STAGES = ("train", "test", "val", "predict")
     DATASET_KEY = "dataset"
     """
         This class is used to encapsultate a Preprocess Object ``load_data`` and ``load_sample`` functions.
@@ -78,7 +79,7 @@ class AutoDataset(torch.utils.data.Dataset):
             return self.load_sample(sample)
 
     def _setup(self, stage: RunningStage):
-        assert stage is None or stage.value in self.STAGES
+        assert stage is None or _STAGES_PREFIX[stage] in self.STAGES
         previous_load_data = self.load_data.__code__ if self.load_data is not None else None
 
         if (

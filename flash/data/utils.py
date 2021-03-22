@@ -18,8 +18,16 @@ from typing import Any, Callable, Dict, Iterable, Mapping, Type
 
 import requests
 import torch
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from tqdm.auto import tqdm as tq
+
+_STAGES_PREFIX = {
+    RunningStage.TRAINING: 'train',
+    RunningStage.TESTING: 'test',
+    RunningStage.VALIDATING: 'val',
+    RunningStage.PREDICTING: 'predict'
+}
 
 
 # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603

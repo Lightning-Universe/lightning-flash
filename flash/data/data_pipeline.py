@@ -14,6 +14,7 @@ from torch.utils.data.dataloader import DataLoader
 from flash.data.auto_dataset import AutoDataset
 from flash.data.batch import _Chainer, _PostProcessor, _PreProcessor
 from flash.data.process import Postprocess, Preprocess
+from flash.data.utils import _STAGES_PREFIX
 
 if TYPE_CHECKING:
     from flash.core.model import Task
@@ -27,12 +28,6 @@ class DataPipeline:
         "per_batch_transform_on_device", "collate"
     )
     POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
-    STAGES_PREFIX = {
-        RunningStage.TRAINING: 'train',
-        RunningStage.TESTING: 'test',
-        RunningStage.VALIDATING: 'val',
-        RunningStage.PREDICTING: 'predict'
-    }
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None):
         if preprocess is None:
@@ -146,17 +141,15 @@ class DataPipeline:
             for k in self.PREPROCESS_FUNCS
         }
 
-        if self._is_overriden_recursive(
-            "collate", self._preprocess_pipeline, Preprocess, prefix=self.STAGES_PREFIX[stage]
-        ):
+        if self._is_overriden_recursive("collate", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]):
             collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
 
         per_batch_transform_overriden = self._is_overriden_recursive(
-            "per_batch_transform", self._preprocess_pipeline, Preprocess, prefix=self.STAGES_PREFIX[stage]
+            "per_batch_transform", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
         per_sample_transform_on_device_overriden = self._is_overriden_recursive(
-            "per_sample_transform_on_device", self._preprocess_pipeline, Preprocess, prefix=self.STAGES_PREFIX[stage]
+            "per_sample_transform_on_device", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
         if per_batch_transform_overriden and per_sample_transform_on_device_overriden:
@@ -182,7 +175,7 @@ class DataPipeline:
         ) else worker_collate_fn
 
         assert_contains_tensor = self._is_overriden_recursive(
-            "per_sample_to_tensor_transform", self._preprocess_pipeline, Preprocess, prefix=self.STAGES_PREFIX[stage]
+            "per_sample_to_tensor_transform", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
         worker_preprocessor = _PreProcessor(
@@ -268,7 +261,7 @@ class DataPipeline:
             if stage == RunningStage.PREDICTING:
                 pass
 
-            loader_name = f'{self.STAGES_PREFIX[stage]}_dataloader'
+            loader_name = f'{_STAGES_PREFIX[stage]}_dataloader'
 
             dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
 
@@ -381,7 +374,7 @@ class DataPipeline:
             if device_collate is None:
                 device_collate = self._do_nothing_collate
 
-            loader_name = f'{self.STAGES_PREFIX[stage]}_dataloader'
+            loader_name = f'{_STAGES_PREFIX[stage]}_dataloader'
 
             dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
 
