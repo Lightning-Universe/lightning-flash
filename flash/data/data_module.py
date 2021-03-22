@@ -47,7 +47,7 @@ class _FlashDataModuleWrapper(_DataModuleWrapper):
         self.__has_added_checks = False
 
     def __call__(cls, *args, **kwargs):
-        """A wrapper for LightningDataModule that:
+        """A wrapper for DataModule that:
 
         1. Runs user defined subclass's __init__
         2. Assures prepare_data() runs on rank 0
@@ -67,7 +67,7 @@ class _FlashDataModuleWrapper(_DataModuleWrapper):
             # Track setup calls
             cls.setup = track_data_hook_calls(cls.setup)
 
-        # Get instance of LightningDataModule by mocking its __init__ via __call__
+        # Get instance of DataModule by mocking its __init__ via __call__
         obj = type.__call__(cls, *args, **kwargs)
 
         if __flash_special_attr__:
@@ -84,6 +84,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         train_ds: Dataset for training. Defaults to None.
         valid_ds: Dataset for VALIDATING model performance during training. Defaults to None.
         test_ds: Dataset to test model performance. Defaults to None.
+        predict_ds: Dataset for predicting. Defaults to None.
         batch_size: the batch size to be used by the DataLoader. Defaults to 1.
         num_workers: The number of workers to use for parallelized loading.
             Defaults to None which equals the number of available CPU threads,
@@ -265,7 +266,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         train_split: Optional[Union[float, int]] = None,
         valid_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
-        seed: Optional[int] = 1234,
+        seed: int = 1234,
     ):
         if test_split is None:
             _test_length = 0

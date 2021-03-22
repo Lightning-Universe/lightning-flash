@@ -22,8 +22,8 @@ class AutoDataset(torch.utils.data.Dataset):
     DATASET_KEY = "dataset"
     """
         This class is used to encapsultate a Preprocess Object ``load_data`` and ``load_sample`` functions.
-        ``load_data`` will be called within the ``__init__`` function of the AutoDataset and ``load_sample``
-        within ``__getitem__`` function.
+        ``load_data`` will be called within the ``__init__`` function of the AutoDataset if ``running_stage``
+        is provided and ``load_sample`` within ``__getitem__`` function.
     """
 
     def __init__(
