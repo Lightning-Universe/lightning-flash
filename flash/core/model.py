@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 import os
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union, Tuple
 
 import pytorch_lightning as pl
 import torch
@@ -55,18 +55,20 @@ class Task(pl.LightningModule):
     """
 
     def __init__(
-        self,
-        model: Optional[nn.Module] = None,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
+            self,
+            model: Optional[nn.Module] = None,
+            loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
+            optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+            schedulers: Optional[torch.optim.Optimizer] = None,
+            metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+            learning_rate: float = 5e-5,
     ):
         super().__init__()
         if model is not None:
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer_cls = optimizer
+        self.schedulers = schedulers
         self.metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
@@ -115,12 +117,12 @@ class Task(pl.LightningModule):
 
     @predict_context
     def predict(
-        self,
-        x: Any,
-        batch_idx: Optional[int] = None,
-        skip_collate_fn: bool = False,
-        dataloader_idx: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None,
+            self,
+            x: Any,
+            batch_idx: Optional[int] = None,
+            skip_collate_fn: bool = False,
+            dataloader_idx: Optional[int] = None,
+            data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
         Predict function for raw data or processed data
@@ -156,8 +158,12 @@ class Task(pl.LightningModule):
         output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
         return output
 
-    def configure_optimizers(self) -> torch.optim.Optimizer:
-        return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
+    def configure_optimizers(self) -> Union[
+        Tuple[Tuple[torch.optim.Optimizer], torch.optim.Optimizer], Tuple[torch.optim.Optimizer]]:
+        optimizers = self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate),
+        if self.schedulers:
+            return optimizers, self.schedulers
+        return optimizers
 
     @property
     def data_pipeline(self) -> DataPipeline:
