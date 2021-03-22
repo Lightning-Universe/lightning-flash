@@ -92,7 +92,7 @@ class Seq2SeqDataPipeline(TaskDataPipeline):
             target=self._target,
             max_source_length=self._max_source_length,
             max_target_length=self._max_target_length,
-            padding=self._padding
+            padding=self._padding,
         )
 
     def before_collate(self, samples: Any) -> Any:
