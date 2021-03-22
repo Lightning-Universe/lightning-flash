@@ -52,17 +52,17 @@ def run_test(filepath):
 @pytest.mark.parametrize(
     "step,file",
     [
-        ("finetuning", "image_classification.py"),
+        # ("finetuning", "image_classification.py"),
         # ("finetuning", "object_detection.py"),  # TODO: takes too long.
         # ("finetuning", "summarization.py"),  # TODO: takes too long.
-        ("finetuning", "tabular_classification.py"),
-        ("finetuning", "text_classification.py"),
+        # ("finetuning", "tabular_classification.py"),
+        # ("finetuning", "text_classification.py"),
         # ("finetuning", "translation.py"),  # TODO: takes too long.
-        ("predict", "classify_image.py"),
-        ("predict", "classify_tabular.py"),
-        ("predict", "classify_text.py"),
-        ("predict", "image_embedder.py"),
-        ("predict", "summarize.py"),
+        # ("predict", "classify_image.py"),
+        # ("predict", "classify_tabular.py"),
+        # ("predict", "classify_text.py"),
+        # ("predict", "image_embedder.py"),
+        # ("predict", "summarize.py"),
         # ("predict", "translate.py"),  # TODO: takes too long
     ]
 )
