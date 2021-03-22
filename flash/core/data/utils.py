@@ -13,8 +13,8 @@
 # limitations under the License.
 import logging
 import os.path
-import zipfile
 import tarfile
+import zipfile
 from typing import Any, Type
 
 import requests
@@ -58,7 +58,7 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
         extract_all(zipfile, local_filename, path)
     elif '.tar.gz' in local_filename:
         extract_all(tarfile, local_filename, path)
-    
+
 
 def download_data(url: str, path: str = "data/") -> None:
     """
