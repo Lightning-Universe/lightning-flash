@@ -140,3 +140,4 @@ data_folder
 *.pt
 *.zip
 data
+flash_notebooks/*.py
