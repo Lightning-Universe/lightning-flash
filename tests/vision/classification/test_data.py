@@ -23,7 +23,7 @@ from flash.data.data_utils import labels_from_categorical_csv
 from flash.vision import ImageClassificationData
 
 
-def _dummy_image_loader(filepath):
+def _dummy_image_loader(_):
     return torch.rand(3, 64, 64)
 
 

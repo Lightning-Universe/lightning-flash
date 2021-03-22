@@ -42,7 +42,6 @@ def prepare_dataset(
     valid_file,
     test_file,
     filetype,
-    backbone,
     input,
     max_length,
     target=None,
@@ -165,10 +164,10 @@ class TextClassificationData(DataModule):
         train_file,
         input,
         target,
-        filetype="csv",
-        backbone="prajjwal1/bert-tiny",
-        valid_file=None,
-        test_file=None,
+        filetype: str = "csv",
+        backbone: str = "prajjwal1/bert-tiny",
+        valid_file: str = None,
+        test_file: str = None,
         max_length: int = 128,
         batch_size: int = 16,
         num_workers: Optional[int] = None,
@@ -201,14 +200,13 @@ class TextClassificationData(DataModule):
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
         train_ds, valid_ds, test_ds, label_to_class_mapping = prepare_dataset(
-            tokenizer,
-            train_file,
-            valid_file,
-            test_file,
-            filetype,
-            backbone,
-            input,
-            max_length,
+            tokenizer=tokenizer,
+            train_file=train_file,
+            valid_file=valid_file,
+            test_file=test_file,
+            filetype=filetype,
+            input=input,
+            max_length=max_length,
             target=target,
             label_to_class_mapping=None
         )
@@ -239,7 +237,7 @@ class TextClassificationData(DataModule):
         """Creates a TextClassificationData object from files.
 
         Args:
-            train_file: Path to training data.
+            predict_file: Path to prediction data.
             input: The field storing the text to be classified.
             filetype: .csv or .json
             backbone: tokenizer to use, can use any HuggingFace tokenizer.
@@ -254,14 +252,13 @@ class TextClassificationData(DataModule):
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
         _, _, predict_ds, _ = prepare_dataset(
-            tokenizer,
-            None,
-            None,
-            predict_file,
-            filetype,
-            backbone,
-            input,
-            max_length,
+            tokenizer=tokenizer,
+            train_file=None,
+            valid_file=None,
+            test_file=predict_file,
+            filetype=filetype,
+            input=input,
+            max_length=max_length,
             predict=True,
         )
 

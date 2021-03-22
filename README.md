@@ -48,14 +48,14 @@
 
 ## Installation
 
-<details>
-  <summary>View install</summary>
-
 Pip / conda
 
 ```bash
 pip install lightning-flash -U
 ```
+
+<details>
+  <summary>Other installations</summary>
 
 Pip from source
 
@@ -149,6 +149,7 @@ trainer.save_checkpoint("image_classification_model.pt")
 Then use the finetuned model
 
 ```python
+from flash.vision import ImageClassifier
 # load the finetuned model
 classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
 
@@ -169,9 +170,6 @@ Flash has an Image embedding task to encodes an image into a vector of image fea
   <summary>View example</summary>
 
 ```python
-# import our libraries
-import torch
-
 from flash.core.data import download_data
 from flash.vision import ImageEmbedder
 
@@ -244,7 +242,7 @@ To illustrate, say we want to build a model to predict if a passenger survived o
 
 ```python
 # import our libraries
-from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+from torchmetrics.classification import Accuracy, Precision, Recall
 import flash
 from flash import download_data
 from flash.tabular import TabularClassifier, TabularData
@@ -338,7 +336,6 @@ import flash
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms, datasets
-import pytorch_lightning as pl
 
 # model
 model = nn.Sequential(
@@ -367,6 +364,8 @@ are infinitely extensible and let you train across GPUs, TPUs etc without doing 
 ```python
 import torch
 import torch.nn.functional as F
+from torchmetrics import Accuracy
+from typing import Callable, Mapping, Sequence, Type, Union
 from flash.core.classification import ClassificationTask
 
 class LinearClassifier(ClassificationTask):

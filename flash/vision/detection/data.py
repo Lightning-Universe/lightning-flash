@@ -104,15 +104,15 @@ class CustomCOCODataset(torch.utils.data.Dataset):
 def _coco_remove_images_without_annotations(dataset):
     # Ref: https://github.com/pytorch/vision/blob/master/references/detection/coco_utils.py
 
-    def _has_only_empty_bbox(anno: List):
-        return all(any(o <= 1 for o in obj["bbox"][2:]) for obj in anno)
+    def _has_only_empty_bbox(annot: List):
+        return all(any(o <= 1 for o in obj["bbox"][2:]) for obj in annot)
 
-    def _has_valid_annotation(anno: List):
+    def _has_valid_annotation(annot: List):
         # if it's empty, there is no annotation
-        if not anno:
+        if not annot:
             return False
         # if all boxes have close to zero area, there is no annotation
-        if _has_only_empty_bbox(anno):
+        if _has_only_empty_bbox(annot):
             return False
         return True
 
