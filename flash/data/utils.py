@@ -33,7 +33,7 @@ _STAGES_PREFIX = {
 # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
 # __author__  = "github.com/ruxi"
 # __license__ = "MIT"
-def download_file(url: str, path: str, verbose: bool = False) -> None:
+def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     """
     Download file with progressbar
 
@@ -68,23 +68,6 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
                 zip_ref.extractall(path)
 
 
-def download_data(url: str, path: str = "data/") -> None:
-    """
-    Downloads data automatically from the given url to the path. Defaults to data/ for the path.
-    Automatically handles .csv, .zip
-
-    Example::
-
-        from flash import download_data
-
-    Args:
-        url: path
-        path: local
-
-    """
-    download_file(url, path)
-
-
 def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
     # TODO: we should refactor FlashDatasetFolder to better integrate
     # with DataPipeline. That way, we wouldn't need this check.
@@ -98,13 +81,13 @@ def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
     return False
 
 
-class FuncModule(torch.nn.Module):
+class LambdaModule(torch.nn.Module):
 
-    def __init__(self, func) -> None:
+    def __init__(self, func: Callable) -> None:
         super().__init__()
         self.func = func
 
-    def forward(self, *args, **kwargs):
+    def forward(self, *args, **kwargs) -> Any:
         return self.func(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -116,7 +99,7 @@ def convert_to_modules(transforms: Dict):
     if transforms is None or isinstance(transforms, torch.nn.Module):
         return transforms
 
-    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=torch.nn.Module)
+    transforms = apply_to_collection(transforms, Callable, LambdaModule, wrong_dtype=torch.nn.Module)
     transforms = apply_to_collection(transforms, Mapping, torch.nn.ModuleDict, wrong_dtype=torch.nn.ModuleDict)
     transforms = apply_to_collection(
         transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)

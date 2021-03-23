@@ -139,5 +139,7 @@ titanic.csv
 data_folder
 *.pt
 *.zip
-data
 flash_notebooks/*.py
+flash_notebooks/data
+MNIST*
+titanic

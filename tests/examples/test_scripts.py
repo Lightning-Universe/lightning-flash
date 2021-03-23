@@ -70,6 +70,5 @@ def test_example(tmpdir, step, file):
     run_test(str(root / "flash_examples" / step / file))
 
 
-@pytest.mark.skipif(reason="MNIST HTTP Error 503: Service Unavailable")
 def test_generic_example(tmpdir):
     run_test(str(root / "flash_examples" / "generic_task.py"))

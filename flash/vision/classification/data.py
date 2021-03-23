@@ -272,7 +272,7 @@ class ImageClassificationData(DataModule):
         num_workers: Optional[int] = None,
         seed: int = 1234,
         **kwargs,
-    ):
+    ) -> 'ImageClassificationData':
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
         Args:
@@ -375,7 +375,7 @@ class ImageClassificationData(DataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         **kwargs,
-    ):
+    ) -> 'ImageClassificationData':
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
 
@@ -438,7 +438,7 @@ class ImageClassificationData(DataModule):
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         **kwargs,
-    ):
+    ) -> 'ImageClassificationData':
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
 

@@ -23,7 +23,7 @@ from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
 from flash.data.auto_dataset import AutoDataset
-from flash.data.batch import _Chainer, _PostProcessor, _PreProcessor
+from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess
 from flash.data.utils import _STAGES_PREFIX
 
@@ -33,8 +33,8 @@ if TYPE_CHECKING:
 
 class DataPipeline:
     """
-    The DataPipeline handles the attachment logic between Preprocess, PostProcess and DataModule, LightningModule depending
-    on current RunningStage
+    The DataPipeline handles the attachment logic between Preprocess, PostProcess and DataModule,
+    LightningModule depending on current RunningStage
 
     The Preprocess hooks are used to generate several objects:
 
@@ -57,7 +57,7 @@ class DataPipeline:
 
         Objects description:
 
-        _Chainer:
+        _Sequential:
             __________________________________________________
             |                                                |
             |       per_sample_pre_tensor_transform          |
@@ -83,10 +83,11 @@ class DataPipeline:
 
             ``_PreProcessor`` in worker:
 
-                * per_sample_transform: _Chainer(
+                * per_sample_transform: _Sequential(
                     per_sample_pre_tensor_transform, per_sample_to_tensor_transform, per_sample_post_tensor_transform)
 
-                * collate: Set to ``do_nothing`` is ``per_sample_transform_on_device`` is implemented and not ``per_batch_transform``
+                * collate: Set to ``do_nothing`` is ``per_sample_transform_on_device`` is implemented
+                    and not ``per_batch_transform``
 
                 * per_batch_transform
 
@@ -94,7 +95,8 @@ class DataPipeline:
 
                 * per_sample_transform_on_device
 
-                * collate: Set to ``do_nothing`` is ``per_batch_transform`` is implemented and not ``per_sample_transform_on_device``
+                * collate: Set to ``do_nothing`` is ``per_batch_transform`` is implemented
+                    and not ``per_sample_transform_on_device``
 
                 * per_batch_transform_on_device
 
@@ -211,7 +213,7 @@ Move Data to main worker ---    |                                       |
     @classmethod
     def _resolve_function_hierarchy(
         cls, function_name, process_obj, stage: RunningStage, object_type: Optional[Type] = None
-    ):
+    ) -> str:
         if object_type is None:
             object_type = Preprocess
 
@@ -286,7 +288,7 @@ Move Data to main worker ---    |                                       |
 
         worker_preprocessor = _PreProcessor(
             worker_collate_fn,
-            _Chainer(
+            _Sequential(
                 getattr(self._preprocess_pipeline, func_names['per_sample_pre_tensor_transform']),
                 getattr(self._preprocess_pipeline, func_names['per_sample_to_tensor_transform']),
                 getattr(self._preprocess_pipeline, func_names['per_sample_post_tensor_transform']),
@@ -341,7 +343,10 @@ Move Data to main worker ---    |                                       |
         return dataloader, attr_name
 
     @staticmethod
-    def _set_loader(model: 'Task', loader_name: str, new_loader: DataLoader):
+    def _set_loader(model: 'Task', loader_name: str, new_loader: DataLoader) -> None:
+        """
+        This function is used to set the loader to model and/or datamodule
+        """
         *intermediates, final_name = loader_name.split('.')
         curr_attr = model
 

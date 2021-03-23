@@ -108,7 +108,7 @@ class Preprocess(Properties, torch.nn.Module):
         return sample
 
     def per_batch_transform(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch (if possible use this for efficiency)
+        """Transforms to apply to a whole batch (if possible use this for efficiency).
         .. note::
             This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.

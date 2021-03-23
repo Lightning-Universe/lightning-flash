@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from numbers import Number
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 import pytest
@@ -32,7 +33,7 @@ from flash.vision import ImageClassifier
 
 class DummyDataset(torch.utils.data.Dataset):
 
-    def __getitem__(self, index: int) -> Any:
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, Number]:
         return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
     def __len__(self) -> int:
@@ -41,7 +42,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 class PredictDummyDataset(DummyDataset):
 
-    def __getitem__(self, index: int) -> Any:
+    def __getitem__(self, index: int) -> torch.Tensor:
         return torch.rand(1, 28, 28)
 
 

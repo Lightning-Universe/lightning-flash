@@ -20,9 +20,9 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.data.utils import _contains_any_tensor, convert_to_modules
 
 
-class _Chainer(torch.nn.Module):
+class _Sequential(torch.nn.Module):
     """
-    This class is used to chain 3 functions together for the _Preprocessor `per_sample_transform`.
+    This class is used to chain 3 functions together for the _Preprocessor ``per_sample_transform`` function.
     """
 
     def __init__(
@@ -84,7 +84,7 @@ class _PreProcessor(torch.nn.Module):
     def __init__(
         self,
         collate_fn: Callable,
-        per_sample_transform: Union[Callable, _Chainer],
+        per_sample_transform: Union[Callable, _Sequential],
         per_batch_transform: Callable,
         stage: Optional[RunningStage] = None,
         apply_per_sample_transform: bool = True,
@@ -115,6 +115,16 @@ class _PreProcessor(torch.nn.Module):
 
 
 class _PostProcessor(torch.nn.Module):
+    """
+        This class is used to encapsultate the following functions of a PostProcess Object:
+        Inside main process:
+            per_batch_transform: Function to transform a batch
+            per_sample_transform: Function to transform an individual sample
+            uncollate_fn: Function to split a batch into samples
+            per_sample_transform: Function to transform an individual sample
+            save_fn: Function to save all data
+            save_per_sample: Function to save an individual sample
+    """
 
     def __init__(
         self,

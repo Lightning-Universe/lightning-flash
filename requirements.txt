@@ -1,4 +1,4 @@
-https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_predict_step.zip
+https://github.com/PyTorchLightning/pytorch-lightning/archive/master.zip
 PyYAML>=5.1
 Pillow>=7.2
 torchmetrics>=0.2.0
