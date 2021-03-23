@@ -1,8 +1,19 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import functools
-import os
 import weakref
-from functools import partial, wraps
-from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -21,6 +32,98 @@ if TYPE_CHECKING:
 
 
 class DataPipeline:
+    """
+    The DataPipeline handles the attachment logic between Preprocess, PostProcess and DataModule, LightningModule depending
+    on current RunningStage
+
+    The Preprocess hooks are used to generate several objects:
+
+    1. Generate an AutoDataset from ``load_data`` and ``load_sample``.
+
+        class AutoDataset
+
+            def __init__(...):
+
+                self.preprocessed_data: Iterable = Preprocess.load_data
+
+            def __getitem__(self, index):
+                return Preprocess.load_sample(self.preprocessed_data[index])
+
+    2. Generate an worker_collate_fn which is injected directly within user's DataLoader
+       and a device_collate_fn injected after LightningModule.transfer_batch_to_device
+
+        Objects description:
+
+        _Chainer:
+            __________________________________________________
+            |                                                |
+            |       per_sample_pre_tensor_transform          |
+            |                     |                          |
+            |       per_sample_to_tensor_transform           |
+            |                     |                          |
+            |       per_sample_post_tensor_transform         |
+            |                     |                          |
+            __________________________________________________
+
+        _PreProcessor:
+
+            The ``_PreProcessor`` performs ``per_sample_transform``, ``collate``, ``per_batch_transform`` as follow:
+
+            ``per_batch_transform`` and ``per_sample_transform_on_device`` are muttually exclusive
+
+            def forward(self, samples: Sequence[Any]):
+                    samples = [self.per_sample_transform(sample) for sample in samples]
+                    samples = type(samples)(samples)
+                    samples = self.collate_fn(samples)
+                samples = self.per_batch_transform(samples)
+                return samples
+
+            ``_PreProcessor`` in worker:
+
+                * per_sample_transform: _Chainer(
+                    per_sample_pre_tensor_transform, per_sample_to_tensor_transform, per_sample_post_tensor_transform)
+
+                * collate: Set to ``do_nothing`` is ``per_sample_transform_on_device`` is implemented and not ``per_batch_transform``
+
+                * per_batch_transform
+
+            ``_PreProcessor`` on device:
+
+                * per_sample_transform_on_device
+
+                * collate: Set to ``do_nothing`` is ``per_batch_transform`` is implemented and not ``per_sample_transform_on_device``
+
+                * per_batch_transform_on_device
+
+
+        General flow:
+                           load_sample
+                                |
+                    per_sample_pre_tensor_transform
+                                |
+                    per_sample_to_tensor_transform
+                                |
+                    per_sample_post_tensor_transform
+                                |
+                _________________________________________
+                |                                       |
+    per_sample_transform_on_device                  collate
+                |                                       |
+            collate                             per_batch_transform
+                |                                       |
+    per_batch_transform_on_device         per_batch_transform_on_device
+                |                                       |
+                _________________________________________
+                                |
+                        model.predict_step
+                                |
+                        per_batch_transform
+                                |
+                            uncollate
+                                |
+                        per_sample_transform
+
+    """
 
     PREPROCESS_FUNCS = (
         "load_data", "load_sample", "per_sample_pre_tensor_transform", "per_sample_to_tensor_transform",
