@@ -22,6 +22,8 @@ from torch import nn
 from flash.core.data import DataModule, DataPipeline
 from flash.core.utils import get_callable_dict
 
+SchedulerType = Union[Tuple[torch.optim.lr_scheduler._LRScheduler], torch.optim.lr_scheduler._LRScheduler]
+
 
 def predict_context(func: Callable) -> Callable:
     """
@@ -55,13 +57,13 @@ class Task(pl.LightningModule):
     """
 
     def __init__(
-        self,
-        model: Optional[nn.Module] = None,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        schedulers: Optional[torch.optim.Optimizer] = None,
-        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
+            self,
+            model: Optional[nn.Module] = None,
+            loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
+            optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+            schedulers: Optional[SchedulerType] = None,
+            metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+            learning_rate: float = 5e-5,
     ):
         super().__init__()
         if model is not None:
@@ -159,8 +161,8 @@ class Task(pl.LightningModule):
         return output
 
     def configure_optimizers(
-        self
-    ) -> Union[Tuple[Tuple[torch.optim.Optimizer], torch.optim.Optimizer], Tuple[torch.optim.Optimizer]]:
+            self
+    ) -> Union[Tuple[Tuple[torch.optim.Optimizer], SchedulerType], Tuple[torch.optim.Optimizer]]:
         optimizers = self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate),
         if self.schedulers:
             return optimizers, self.schedulers
