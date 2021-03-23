@@ -42,15 +42,18 @@ class DataPipeline:
 
         class AutoDataset
 
-            def __init__(...):
+            def __init__(..., data, ...):
 
-                self.preprocessed_data: Iterable = Preprocess.load_data
+                self.preprocessed_data: Iterable = Preprocess.load_data(data)
 
             def __getitem__(self, index):
                 return Preprocess.load_sample(self.preprocessed_data[index])
 
+            def __len__(self):
+                return len(self.preprocessed_data)
+
     2. Generate an worker_collate_fn which is injected directly within user's DataLoader
-       and a device_collate_fn injected after LightningModule.transfer_batch_to_device
+       and a device_collate_fn injected after LightningModule.transfer_batch_to_device hook.
 
         Objects description:
 
@@ -97,31 +100,31 @@ class DataPipeline:
 
 
         General flow:
-                           load_sample
-                                |
-                    per_sample_pre_tensor_transform
-                                |
-                    per_sample_to_tensor_transform
-                                |
-                    per_sample_post_tensor_transform
-                                |
-                _________________________________________
-                |                                       |
-    per_sample_transform_on_device                  collate
-                |                                       |
-            collate                             per_batch_transform
-                |                                       |
-    per_batch_transform_on_device         per_batch_transform_on_device
-                |                                       |
-                _________________________________________
-                                |
-                        model.predict_step
-                                |
-                        per_batch_transform
-                                |
-                            uncollate
-                                |
-                        per_sample_transform
+                                        load_sample
+                                                |
+                                    per_sample_pre_tensor_transform
+                                                |
+                                    per_sample_to_tensor_transform
+                                                |
+                                    per_sample_post_tensor_transform
+                                                |
+                                _________________________________________
+Move Data to main worker ---    |                                       |
+                    per_sample_transform_on_device                  collate
+                                |                                       |
+                            collate                             per_batch_transform
+                                |                                       |  --- Move Data to main worker
+                    per_batch_transform_on_device         per_batch_transform_on_device
+                                |                                       |
+                                _________________________________________
+                                                |
+                                        model.predict_step
+                                                |
+                                        per_batch_transform
+                                                |
+                                            uncollate
+                                                |
+                                        per_sample_transform
 
     """
 
