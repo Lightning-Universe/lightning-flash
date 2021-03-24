@@ -18,7 +18,6 @@ from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYP
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch._C import device
 from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
@@ -57,15 +56,13 @@ class DataPipeline:
         Objects description:
 
         _Sequential:
-            __________________________________________________
-            |                                                |
-            |       per_sample_pre_tensor_transform          |
-            |                     |                          |
-            |       per_sample_to_tensor_transform           |
-            |                     |                          |
-            |       per_sample_post_tensor_transform         |
-            |                     |                          |
-            __________________________________________________
+            ┌────────────────────────────────────┐
+            │  per_sample_pre_tensor_transform   │
+            │                |                   │
+            │  per_sample_to_tensor_transform    │
+            │                |                   │
+            │  per_sample_post_tensor_transform  │
+            └────────────────────────────────────┘
 
         _PreProcessor:
 

@@ -18,9 +18,8 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.core.datamodule import _DataModuleWrapper, track_data_hook_calls
+from pytorch_lightning.core.datamodule import _DataModuleWrapper
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities import rank_zero_only
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
@@ -30,6 +29,7 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
+# TODO: unused?
 class MockLightningModule(pl.LightningModule):
 
     pass
@@ -45,31 +45,20 @@ class _FlashDataModuleWrapper(_DataModuleWrapper):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__has_added_checks = False
 
-    def __call__(cls, *args, **kwargs):
-        """A wrapper for DataModule that:
+    def __call__(self, *args, **kwargs):
+        """A wrapper for ``DataModule`` that:
 
-        1. Runs user defined subclass's __init__
-        2. Assures prepare_data() runs on rank 0
-        3. Lets you check prepare_data and setup to see if they've been called
+        TODO: describe what is __flash_special_attr__ for
         """
-        __flash_special_attr__ = getattr(cls, "__flash_special_attr__", None)
+        __flash_special_attr__ = getattr(self, "__flash_special_attr__", None)
+        saved_attr = []
         if __flash_special_attr__:
-            saved_attr = []
             for special_attr_name in __flash_special_attr__:
-                attr = deepcopy(getattr(cls, special_attr_name, None))
+                attr = deepcopy(getattr(self, special_attr_name, None))
                 saved_attr.append((special_attr_name, attr))
 
-        if not cls.__has_added_checks:
-            cls.__has_added_checks = True
-            # Track prepare_data calls and make sure it runs on rank zero
-            cls.prepare_data = track_data_hook_calls(rank_zero_only(cls.prepare_data))
-            # Track setup calls
-            cls.setup = track_data_hook_calls(cls.setup)
-
-        # Get instance of DataModule by mocking its __init__ via __call__
-        obj = type.__call__(cls, *args, **kwargs)
+        obj = super().__call__(*args, **kwargs)
 
         if __flash_special_attr__:
             for special_attr_name, attr in saved_attr:
@@ -82,14 +71,14 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
     """Basic DataModule class for all Flash tasks.
 
     Args:
-        train_ds: Dataset for training. Defaults to None.
-        valid_ds: Dataset for validating model performance during training. Defaults to None.
-        test_ds: Dataset to test model performance. Defaults to None.
-        predict_ds: Dataset for predicting. Defaults to None.
-        batch_size: the batch size to be used by the DataLoader. Defaults to 1.
+        train_ds: Dataset for training.
+        valid_ds: Dataset for validating model performance during training.
+        test_ds: Dataset to test model performance.
+        predict_ds: Dataset for predicting.
+        batch_size: the batch size to be used by the DataLoader.
         num_workers: The number of workers to use for parallelized loading.
             Defaults to None which equals the number of available CPU threads,
-            or 0 for Mac platform.
+            or 0 for MacOS.
     """
 
     preprocess_cls = Preprocess
@@ -103,7 +92,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         predict_ds: Optional[AutoDataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
-    ):
+    ) -> None:
 
         super().__init__()
         self._train_ds = train_ds
@@ -127,10 +116,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
 
         # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            if platform.system() == "Darwin":
-                num_workers = 0
-            else:
-                num_workers = os.cpu_count()
+            num_workers = 0 if platform.system() == "Darwin" else os.cpu_count()
         self.num_workers = num_workers
 
         self._data_pipeline = None
@@ -249,8 +235,8 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         data_pipeline: Optional[DataPipeline] = None,
     ) -> AutoDataset:
         """
-        This function is used to generate an AutoDataset from a data_pipeline if provided
-        or from the provided ``load_data``, ``load_sample`` functions directly
+        This function is used to generate an ``AutoDataset`` from a ``DataPipeline`` if provided
+        or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly
         """
 
         if whole_data_load_fn is None:
@@ -272,7 +258,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         train_split: Optional[Union[float, int]] = None,
         valid_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
-        seed: int = 1234,
+        seed: Optional[int] = 1234,
     ) -> Tuple[Dataset, Optional[Dataset], Optional[Dataset]]:
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
@@ -352,15 +338,15 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         **kwargs,
     ) -> 'DataModule':
         """
-        This functions is an helper to generate a DataModule from a DataPipeline.
+        This functions is an helper to generate a ``DataModule`` from a ``DataPipeline``.
 
         Args:
-            cls: DataModule subclass
-            train_load_data_input: Data to be received by the ``train_load_data`` function from this Preprocess
-            valid_load_data_input: Data to be received by the ``val_load_data`` function from this Preprocess
-            test_load_data_input: Data to be received by the ``test_load_data`` function from this Preprocess
-            predict_load_data_input: Data to be received by the ``predict_load_data`` function from this Preprocess
-            kwargs: Any extra arguments to instantiate the provided DataModule
+            cls: ``DataModule`` subclass
+            train_load_data_input: Data to be received by the ``train_load_data`` function from this ``Preprocess``
+            valid_load_data_input: Data to be received by the ``val_load_data`` function from this ``Preprocess``
+            test_load_data_input: Data to be received by the ``test_load_data`` function from this ``Preprocess``
+            predict_load_data_input: Data to be received by the ``predict_load_data`` function from this ``Preprocess``
+            kwargs: Any extra arguments to instantiate the provided ``DataModule``
         """
         # trick to get data_pipeline from empty DataModule
         data_pipeline = cls(**kwargs).data_pipeline
