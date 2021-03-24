@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
 import os.path
+import tarfile
 import zipfile
 from typing import Any, Type
 
@@ -34,15 +35,15 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
     if not os.path.exists(path):
         os.makedirs(path)
     local_filename = os.path.join(path, url.split('/')[-1])
-    r = requests.get(url, stream=True)
-    file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
-    chunk_size = 1024
-    num_bars = int(file_size / chunk_size)
-    if verbose:
-        print(dict(file_size=file_size))
-        print(dict(num_bars=num_bars))
 
     if not os.path.exists(local_filename):
+        r = requests.get(url, stream=True)
+        file_size = int(r.headers.get('Content-Length', 0))
+        chunk = 1
+        chunk_size = 1024
+        num_bars = int(file_size / chunk_size)
+        if verbose:
+            logging.info(f'file size: {file_size}\n# bars: {num_bars}')
         with open(local_filename, 'wb') as fp:
             for chunk in tq(
                 r.iter_content(chunk_size=chunk_size),
@@ -57,6 +58,10 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
         if os.path.exists(local_filename):
             with zipfile.ZipFile(local_filename, 'r') as zip_ref:
                 zip_ref.extractall(path)
+    elif '.tar.gz' in local_filename:
+        if os.path.exists(local_filename):
+            with tarfile.open(local_filename, 'r') as tar_ref:
+                tar_ref.extractall(path)
 
 
 def download_data(url: str, path: str = "data/") -> None:
