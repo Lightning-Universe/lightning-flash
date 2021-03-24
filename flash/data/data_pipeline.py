@@ -33,27 +33,26 @@ if TYPE_CHECKING:
 
 class DataPipeline:
     """
-    DataPipeline handles the connnecting logic between ``Preprocess``, ``PostProcess``,
+    DataPipeline handles the connecting logic between ``Preprocess``, ``PostProcess``,
     ``DataModule``, and ``LightningModule`` depending on the current ``RunningStage``
 
-    The Preprocess hooks are used to generate several objects:
+    The ``Preprocess`` hooks are used to generate several objects:
 
-    1. Generate an AutoDataset from ``load_data`` and ``load_sample``.
+    1. Generate an ``AutoDataset`` from ``load_data`` and ``load_sample``.
 
-        class AutoDataset
+        Example::
+            class AutoDataset
+                def __init__(self, ..., data, ...):
+                    self.preprocessed_data: Iterable = Preprocess.load_data(data)
 
-            def __init__(..., data, ...):
+                def __getitem__(self, index):
+                    return Preprocess.load_sample(self.preprocessed_data[index])
 
-                self.preprocessed_data: Iterable = Preprocess.load_data(data)
+                def __len__(self):
+                    return len(self.preprocessed_data)
 
-            def __getitem__(self, index):
-                return Preprocess.load_sample(self.preprocessed_data[index])
-
-            def __len__(self):
-                return len(self.preprocessed_data)
-
-    2. Generate an worker_collate_fn which is injected directly within user's DataLoader
-       and a device_collate_fn injected after LightningModule.transfer_batch_to_device hook.
+    2. Create a ``worker_collate_fn`` which is injected directly into the ``DataLoader``
+       and a ``device_collate_fn`` injected after ``LightningModule.transfer_batch_to_device`` hook.
 
         Objects description:
 
@@ -72,7 +71,7 @@ class DataPipeline:
 
             The ``_PreProcessor`` performs ``per_sample_transform``, ``collate``, ``per_batch_transform`` as follow:
 
-            ``per_batch_transform`` and ``per_sample_transform_on_device`` are muttually exclusive
+            ``per_batch_transform`` and ``per_sample_transform_on_device`` are mutually exclusive
 
             def forward(self, samples: Sequence[Any]):
                     samples = [self.per_sample_transform(sample) for sample in samples]
@@ -102,42 +101,43 @@ class DataPipeline:
 
 
         General flow:
-                                        load_sample
-                                                |
-                                    per_sample_pre_tensor_transform
-                                                |
+                                             load_sample
+                                                 │
+                                   per_sample_pre_tensor_transform
+                                                 │
                                     per_sample_to_tensor_transform
-                                                |
-                                    per_sample_post_tensor_transform
-                                                |
-                                _________________________________________
-Move Data to main worker ---    |                                       |
-                    per_sample_transform_on_device                  collate
-                                |                                       |
-                            collate                             per_batch_transform
-                                |                                       |  --- Move Data to main worker
-                    per_batch_transform_on_device         per_batch_transform_on_device
-                                |                                       |
-                                _________________________________________
-                                                |
-                                        model.predict_step
-                                                |
-                                        per_batch_transform
-                                                |
-                                            uncollate
-                                                |
-                                        per_sample_transform
+                                                 │
+                                  per_sample_post_tensor_transform
+                                                 │
+                                ┌────────────────┴───────────────────┐
+  Move Data to main worker -->  │                                    │
+                    per_sample_transform_on_device                collate
+                                │                                    │
+                            collate                          per_batch_transform
+                                │                                    │ <-- Move Data to main worker
+                    per_batch_transform_on_device      per_batch_transform_on_device
+                                │                                    │
+                                └─────────────────┬──────────────────┘
+                                                  │
+                                          model.predict_step
+                                                  │
+                                          per_batch_transform
+                                                  │
+                                              uncollate
+                                                  │
+                                          per_sample_transform
 
     """
 
-    PREPROCESS_FUNCS = (
+    PREPROCESS_FUNCS = {
         "load_data", "load_sample", "per_sample_pre_tensor_transform", "per_sample_to_tensor_transform",
         "per_sample_post_tensor_transform", "per_batch_transform", "per_sample_transform_on_device",
         "per_batch_transform_on_device", "collate"
-    )
+    }
+    # TODO: unused?
     POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
 
-    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None):
+    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         if preprocess is None:
             preprocess = Preprocess()
 
