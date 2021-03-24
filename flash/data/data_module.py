@@ -273,43 +273,40 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         valid_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
         seed: int = 1234,
-    ) -> Tuple[Dataset]:
+    ) -> Tuple[Dataset, Optional[Dataset], Optional[Dataset]]:
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
         Args:
-            dataset: Dataset to be splitted
-            train_labels: sequence of labels for training dataset. Defaults to ``None``.
-            train_split: If Float, ratio of data to be contained within train dataset. If Int,
+            dataset: Dataset to be split
+            train_split: If Float, ratio of data to be contained within the train dataset. If Int,
                 number of samples to be contained within train dataset
-            validation_split: If Float, ratio of data to be contained within validation dataset. If Int,
-                number of samples to be contained within validation dataset
-            test_split: If Float, ratio of data to be contained within test dataset. If Int,
+            valid_split: If Float, ratio of data to be contained within the validation dataset. If Int,
+                number of samples to be contained within test dataset
+            test_split: If Float, ratio of data to be contained within the test dataset. If Int,
                 number of samples to be contained within test dataset
             seed: Used for the train/val splits when valid_split is not None
 
         """
+        n = len(dataset)
 
         if test_split is None:
             _test_length = 0
         elif isinstance(test_split, float):
-            _test_length = int(len(dataset) * test_split)
+            _test_length = int(n * test_split)
         else:
             _test_length = test_split
 
         if valid_split is None:
             _val_length = 0
-
         elif isinstance(valid_split, float):
-            _val_length = int(len(dataset) * valid_split)
+            _val_length = int(n * valid_split)
         else:
             _val_length = valid_split
 
         if train_split is None:
-            _train_length = len(dataset) - _val_length - _test_length
-
+            _train_length = n - _val_length - _test_length
         elif isinstance(train_split, float):
-            _train_length = int(len(dataset) * train_split)
-
+            _train_length = int(n * train_split)
         else:
             _train_length = train_split
 
@@ -321,10 +318,8 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         train_ds, val_ds, test_ds = torch.utils.data.random_split(
             dataset, [_train_length, _val_length, _test_length], generator
         )
-
         if valid_split is None:
             val_ds = None
-
         if test_split is None:
             test_ds = None
 
@@ -340,7 +335,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         data_pipeline: Optional[DataPipeline] = None
     ) -> Optional[AutoDataset]:
         if data is None:
-            return None
+            return
 
         if data_pipeline is not None:
             return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
@@ -367,7 +362,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
             predict_load_data_input: Data to be received by the ``predict_load_data`` function from this Preprocess
             kwargs: Any extra arguments to instantiate the provided DataModule
         """
-        # trick to get data_pipeline from empty DataModule      # noqa E265
+        # trick to get data_pipeline from empty DataModule
         data_pipeline = cls(**kwargs).data_pipeline
         train_ds = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline

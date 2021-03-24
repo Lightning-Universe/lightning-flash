@@ -33,8 +33,8 @@ if TYPE_CHECKING:
 
 class DataPipeline:
     """
-    The DataPipeline handles the attachment logic between Preprocess, PostProcess and DataModule,
-    LightningModule depending on current RunningStage
+    DataPipeline handles the connnecting logic between ``Preprocess``, ``PostProcess``,
+    ``DataModule``, and ``LightningModule`` depending on the current ``RunningStage``
 
     The Preprocess hooks are used to generate several objects:
 
