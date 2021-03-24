@@ -90,7 +90,8 @@ def test_classification_task_predict_folder_path(tmpdir):
     assert len(predictions) == 2
 
 
-def test_classificationtask_trainer_predict(tmpdir):
+@pytest.mark.skip("Requires DataPipeline update")  # TODO
+def test_classification_task_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
     ds = PredictDummyDataset()
