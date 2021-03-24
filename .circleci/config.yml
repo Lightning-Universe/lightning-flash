@@ -14,6 +14,8 @@ references:
         pyenv global 3.7.3
         python --version
         pip install -r requirements/docs.txt
+        python -m pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install -e .
         cd docs
         make clean
         make html --debug --jobs 2 SPHINXOPTS="-W"
