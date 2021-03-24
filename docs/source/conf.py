@@ -95,6 +95,8 @@ html_theme_path = [pt_lightning_sphinx_theme.get_html_theme_path()]
 # documentation.
 
 html_theme_options = {
+    'pytorch_project': 'https://pytorchlightning.ai',
+    'canonical_url': info.__docs_url__,
     "pytorch_project": flash.__homepage__,
     "canonical_url": flash.__homepage__,
     "collapse_navigation": False,
