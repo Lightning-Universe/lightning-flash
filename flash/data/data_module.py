@@ -35,12 +35,6 @@ class MockLightningModule(pl.LightningModule):
     pass
 
 
-class TaskDataPipeline(DataPipeline):
-
-    def per_batch_transform(self, batch: Any) -> Any:
-        return (batch["x"], batch.get('target', batch.get('y'))) if isinstance(batch, dict) else batch
-
-
 class DataModule(pl.LightningDataModule):
     """Basic DataModule class for all Flash tasks
 

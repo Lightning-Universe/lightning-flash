@@ -24,7 +24,7 @@ from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 
 from flash.data.auto_dataset import AutoDataset
-from flash.data.data_module import DataModule, TaskDataPipeline
+from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.data.utils import _contains_any_tensor
 from flash.vision.utils import pil_loader
