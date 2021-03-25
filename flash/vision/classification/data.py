@@ -64,7 +64,7 @@ class FilepathDataset(torch.utils.data.Dataset):
 
     @property
     def has_labels(self) -> bool:
-        return self.labels is not None
+        return self.labels
 
     def __len__(self) -> int:
         return len(self.fnames)
@@ -72,7 +72,7 @@ class FilepathDataset(torch.utils.data.Dataset):
     def __getitem__(self, index: int) -> Tuple[Any, Optional[int]]:
         filename = self.fnames[index]
         img = self.loader(filename)
-        if self.transform is not None:
+        if self.transform:
             img = self.transform(img)
         label = None
         if self.has_dict_labels:
@@ -142,7 +142,7 @@ class FlashDatasetFolder(VisionDataset):
 
             if len(samples) == 0:
                 msg = "Found 0 files in subfolders of: {}\n".format(self.root)
-                if extensions is not None:
+                if extensions:
                     msg += "Supported extensions are: {}".format(",".join(extensions))
                 raise RuntimeError(msg)
 
@@ -186,12 +186,12 @@ class FlashDatasetFolder(VisionDataset):
         """
         if self.with_targets:
             path, target = self.samples[index]
-            if self.target_transform is not None:
+            if self.target_transform:
                 target = self.target_transform(target)
         else:
             path = self.samples[index]
         sample = self.loader(path)
-        if self.transform is not None:
+        if self.transform:
             sample = self.transform(sample)
         return (sample, target) if self.with_targets else sample
 
@@ -272,7 +272,7 @@ class ImageClassificationData(DataModule):
         num_workers: Optional[int] = None,
         seed: int = 1234,
         **kwargs,
-    ):
+    ) -> 'ImageClassificationData':
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
         Args:
@@ -289,7 +289,7 @@ class ImageClassificationData(DataModule):
             batch_size: the batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
-            seed: Used for the train/val splits when valid_split is not None
+            seed: Used for the train/val splits when valid_split
 
         Returns:
             ImageClassificationData: The constructed data module.
@@ -343,7 +343,7 @@ class ImageClassificationData(DataModule):
                     labels=valid_labels,
                     loader=loader,
                     transform=valid_transform,
-                ) if valid_filepaths is not None else None
+                ) if valid_filepaths else None
             )
 
         test_ds = (
@@ -352,7 +352,7 @@ class ImageClassificationData(DataModule):
                 labels=test_labels,
                 loader=loader,
                 transform=valid_transform,
-            ) if test_filepaths is not None else None
+            ) if test_filepaths else None
         )
 
         return cls(
@@ -375,7 +375,7 @@ class ImageClassificationData(DataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         **kwargs,
-    ):
+    ) -> 'ImageClassificationData':
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
 
@@ -406,14 +406,10 @@ class ImageClassificationData(DataModule):
         """
         train_ds = FlashDatasetFolder(train_folder, transform=train_transform, loader=loader)
         valid_ds = (
-            FlashDatasetFolder(valid_folder, transform=valid_transform, loader=loader)
-            if valid_folder is not None else None
+            FlashDatasetFolder(valid_folder, transform=valid_transform, loader=loader) if valid_folder else None
         )
 
-        test_ds = (
-            FlashDatasetFolder(test_folder, transform=valid_transform, loader=loader)
-            if test_folder is not None else None
-        )
+        test_ds = (FlashDatasetFolder(test_folder, transform=valid_transform, loader=loader) if test_folder else None)
 
         datamodule = cls(
             train_ds=train_ds,
@@ -438,7 +434,7 @@ class ImageClassificationData(DataModule):
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         **kwargs,
-    ):
+    ) -> 'ImageClassificationData':
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
 

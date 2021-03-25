@@ -15,8 +15,9 @@ import functools
 import os
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
+import torchmetrics
+from pytorch_lightning import LightningModule
 from torch import nn
 
 from flash.core.data import DataModule, DataPipeline
@@ -43,7 +44,7 @@ def predict_context(func: Callable) -> Callable:
     return wrapper
 
 
-class Task(pl.LightningModule):
+class Task(LightningModule):
     """A general Task.
 
     Args:
@@ -59,7 +60,7 @@ class Task(pl.LightningModule):
         model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
     ):
         super().__init__()
@@ -83,7 +84,8 @@ class Task(pl.LightningModule):
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
-            if isinstance(metric, pl.metrics.Metric):
+            if isinstance(metric, torchmetrics.metric.Metric):
+                output["y_hat"] = self.data_pipeline.before_uncollate(output["y_hat"])
                 metric(output["y_hat"], y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
@@ -152,7 +154,7 @@ class Task(pl.LightningModule):
         data_pipeline = data_pipeline or self.data_pipeline
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
         batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
-        predictions = self.forward(batch_x)
+        predictions = self.predict_step(batch_x, 0)
         output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
         return output
 

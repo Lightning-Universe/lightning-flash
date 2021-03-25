@@ -31,11 +31,11 @@ def prepare_dataset(
 ):
     data_files = {}
 
-    if train_file is not None:
+    if train_file:
         data_files["train"] = train_file
-    if valid_file is not None:
+    if valid_file:
         data_files["validation"] = valid_file
-    if test_file is not None:
+    if test_file:
         data_files["test"] = test_file
 
     # load the dataset

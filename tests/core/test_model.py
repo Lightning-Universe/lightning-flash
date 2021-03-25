@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from numbers import Number
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 import pytest
@@ -32,11 +33,17 @@ from flash.vision import ImageClassifier
 
 class DummyDataset(torch.utils.data.Dataset):
 
-    def __getitem__(self, index: int) -> Any:
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, Number]:
         return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
     def __len__(self) -> int:
-        return 100
+        return 9
+
+
+class PredictDummyDataset(DummyDataset):
+
+    def __getitem__(self, index: int) -> torch.Tensor:
+        return torch.rand(1, 28, 28)
 
 
 # ================================
@@ -44,7 +51,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 @pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, F.nll_loss, metrics=metrics)
@@ -87,19 +94,14 @@ def test_classification_task_predict_folder_path(tmpdir):
 def test_classification_task_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
-    ds = DummyDataset()
+    ds = PredictDummyDataset()
     batch_size = 3
     predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size, collate_fn=task.data_pipeline.collate_fn)
     trainer = pl.Trainer(default_root_dir=tmpdir)
-    expected = list(range(10))
     predictions = trainer.predict(task, predict_dl)
-    predictions = predictions[0]  # TODO(tchaton): why do we need this?
-    for pred in predictions[:-1]:
-        # check batch sizes are correct
-        assert len(pred) == batch_size
-        assert all(c in expected for c in pred)
-    # check size of last batch (not full)
-    assert len(predictions[-1]) == len(ds) % batch_size
+    assert len(predictions) == 3
+    for pred in predictions:
+        assert pred.shape == (3, 10)
 
 
 def test_task_datapipeline_save(tmpdir):
@@ -128,7 +130,7 @@ def test_task_datapipeline_save(tmpdir):
     assert task.data_pipeline.test
 
 
-@pytest.mark.skipif(reason="Weights have changed")
+@pytest.mark.skipif(reason="Weights are using the new API")
 @pytest.mark.parametrize(
     ["cls", "filename"],
     [

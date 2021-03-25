@@ -32,11 +32,6 @@ _DEFAULT_BADGES = (
 
 
 def _load_requirements(path_dir: str, file_name: str = 'requirements.txt', comment_chars: str = '#@') -> List[str]:
-    """Load requirements from a file
-
-    >>> _load_requirements(_PROJECT_ROOT)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ['pytorch-lightning..., 'torch...'...]
-    """
     with open(os.path.join(path_dir, file_name), 'r') as file:
         lines = [ln.strip() for ln in file.readlines()]
     reqs = []

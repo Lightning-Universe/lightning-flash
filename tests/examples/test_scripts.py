@@ -55,7 +55,7 @@ def run_test(filepath):
         # ("finetuning", "image_classification.py"),
         # ("finetuning", "object_detection.py"),  # TODO: takes too long.
         # ("finetuning", "summarization.py"),  # TODO: takes too long.
-        # ("finetuning", "tabular_classification.py"),
+        ("finetuning", "tabular_classification.py"),
         # ("finetuning", "text_classification.py"),
         # ("finetuning", "translation.py"),  # TODO: takes too long.
         # ("predict", "classify_image.py"),

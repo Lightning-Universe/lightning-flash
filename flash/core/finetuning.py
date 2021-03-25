@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import List, Union
 
-import pytorch_lightning as pl
+from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
@@ -22,12 +22,12 @@ from torch.optim import Optimizer
 
 class NoFreeze(BaseFinetuning):
 
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+    def freeze_before_training(self, pl_module: LightningModule) -> None:
         pass
 
     def finetune_function(
         self,
-        pl_module: pl.LightningModule,
+        pl_module: LightningModule,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -54,17 +54,17 @@ class FlashBaseFinetuning(BaseFinetuning):
         self.attr_names = [attr_names] if isinstance(attr_names, str) else attr_names
         self.train_bn = train_bn
 
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+    def freeze_before_training(self, pl_module: LightningModule) -> None:
         self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
     def freeze_using_attr_names(self, pl_module, attr_names: List[str], train_bn: bool = True):
         for attr_name in attr_names:
             attr = getattr(pl_module, attr_name, None)
-            if attr is None or not isinstance(attr, nn.Module):
+            if not attr or not isinstance(attr, nn.Module):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(modules=attr, train_bn=train_bn)
 
-    def finetune_function(self, pl_module: pl.LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
+    def finetune_function(self, pl_module: LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
         pass
 
 
@@ -72,7 +72,7 @@ class Freeze(FlashBaseFinetuning):
 
     def finetune_function(
         self,
-        pl_module: pl.LightningModule,
+        pl_module: LightningModule,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -88,7 +88,7 @@ class FreezeUnfreeze(FlashBaseFinetuning):
 
     def finetune_function(
         self,
-        pl_module: pl.LightningModule,
+        pl_module: LightningModule,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -97,7 +97,7 @@ class FreezeUnfreeze(FlashBaseFinetuning):
             return
         modules = [getattr(pl_module, attr_name) for attr_name in self.attr_names]
         self.unfreeze_and_add_param_group(
-            module=modules,
+            modules=modules,
             optimizer=optimizer,
             train_bn=self.train_bn,
         )
@@ -119,7 +119,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
     def finetune_function(
         self,
-        pl_module: pl.LightningModule,
+        pl_module: LightningModule,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -128,7 +128,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         if epoch == self.unfreeze_milestones[0]:
             # unfreeze num_layers last layers
             self.unfreeze_and_add_param_group(
-                module=backbone_modules[-self.num_layers:],
+                modules=backbone_modules[-self.num_layers:],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
@@ -136,7 +136,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         elif epoch == self.unfreeze_milestones[1]:
             # unfreeze remaining layers
             self.unfreeze_and_add_param_group(
-                module=backbone_modules[:-self.num_layers],
+                modules=backbone_modules[:-self.num_layers],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
@@ -151,7 +151,7 @@ _DEFAULTS_FINETUNE_STRATEGIES = {
 
 
 def instantiate_default_finetuning_callbacks(strategy):
-    if strategy is None or strategy not in _DEFAULTS_FINETUNE_STRATEGIES:
+    if not strategy or strategy not in _DEFAULTS_FINETUNE_STRATEGIES:
         raise MisconfigurationException(
             f"a strategy should be provided. Use {list(_DEFAULTS_FINETUNE_STRATEGIES)} or provide a callback"
             " instance of `flash.core.finetuning.FlashBaseFinetuning`. Found {strategy} "
