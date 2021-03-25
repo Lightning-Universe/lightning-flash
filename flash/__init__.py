@@ -27,13 +27,13 @@ from flash.info import (  # noqa: F401
 _PACKAGE_ROOT = os.path.dirname(__file__)
 _PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
 
-from flash import tabular, text, vision
-from flash.core import data, utils
-from flash.core.classification import ClassificationTask
-from flash.core.data import DataModule
-from flash.core.data.utils import download_data
-from flash.core.model import Task
-from flash.core.trainer import Trainer
+from flash import tabular, text, vision  # noqa: E402
+from flash.core import data, utils  # noqa: E402
+from flash.core.classification import ClassificationTask  # noqa: E402
+from flash.core.data import DataModule  # noqa: E402
+from flash.core.data.utils import download_data  # noqa: E402
+from flash.core.model import Task  # noqa: E402
+from flash.core.trainer import Trainer  # noqa: E402
 
 __all__ = [
     "Task",

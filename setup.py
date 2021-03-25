@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-
 # Always prefer setuptools over distutils
 import sys
 
