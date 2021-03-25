@@ -10,7 +10,6 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import builtins
 import os
 import sys
 from importlib.util import spec_from_file_location, module_from_spec
@@ -27,7 +26,7 @@ try:
     from flash import info
 except (ImportError, ModuleNotFoundError):
     # alternative https://stackoverflow.com/a/67692/4521646
-    spec = spec_from_file_location("flash/info.py", os.path.join(_PATH_ROOT, "torchmetrics", "info.py"))
+    spec = spec_from_file_location("flash/info.py", os.path.join(_PATH_ROOT, "flash", "info.py"))
     info = module_from_spec(spec)
     spec.loader.exec_module(info)
 
