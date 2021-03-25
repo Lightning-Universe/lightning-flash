@@ -70,7 +70,7 @@ class AutoDataset(torch.utils.data.Dataset):
         return self._running_stage
 
     @running_stage.setter
-    def running_stage(self, running_stage):
+    def running_stage(self, running_stage: str):
         if self._running_stage != running_stage or (self._running_stage is None):
             self._running_stage = running_stage
             self._setup(running_stage)
