@@ -1,4 +1,4 @@
-https://github.com/PyTorchLightning/pytorch-lightning/archive/master.zip
+git+https://github.com/PyTorchLightning/pytorch-lightning.git
 torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
 Pillow>=7.2
