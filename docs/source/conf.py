@@ -25,7 +25,7 @@ SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
 
 try:
     from flash import info
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     # alternative https://stackoverflow.com/a/67692/4521646
     spec = spec_from_file_location("flash/info.py", os.path.join(_PATH_ROOT, "torchmetrics", "info.py"))
     info = module_from_spec(spec)
