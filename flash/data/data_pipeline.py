@@ -174,11 +174,11 @@ class DataPipeline:
         current_method_name = method_name if prefix is None else f'{prefix}_{method_name}'
 
         if not hasattr(process_obj, current_method_name):
-            return False or DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
+            return DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
 
         has_different_code = getattr(process_obj,
                                      current_method_name).__code__ != getattr(super_obj, method_name).__code__
-        if prefix is None:
+        if not prefix:
             return has_different_code
         else:
             return has_different_code or cls._is_overriden_recursive(method_name, process_obj, super_obj)
