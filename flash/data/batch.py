@@ -173,7 +173,7 @@ def default_uncollate(batch: Any):
     This function is used to uncollate a batch into samples.
 
     Examples:
-        >>> a, b = default_uncollate(torch.tensor(2, 1))
+        >>> a, b = default_uncollate(torch.rand((2,1)))
     """
 
     batch_type = type(batch)
