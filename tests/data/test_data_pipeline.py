@@ -93,40 +93,40 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     class CustomPreprocess(Preprocess):
 
         def load_data(self, *_, **__):
-            return 0
+            pass
 
         def test_load_data(self, *_, **__):
-            return 1
+            pass
 
         def predict_load_data(self, *_, **__):
-            return 2
+            pass
 
         def predict_load_sample(self, *_, **__):
-            return 3
+            pass
 
         def val_load_sample(self, *_, **__):
-            return 4
+            pass
 
-        def val_per_sample_pre_tensor_transform(self, *_, **__):
-            return 5
+        def val_pre_tensor_transform(self, *_, **__):
+            pass
 
-        def predict_per_sample_to_tensor_transform(self, *_, **__):
-            return 7
+        def predict_to_tensor_transform(self, *_, **__):
+            pass
 
-        def train_per_sample_post_tensor_transform(self, *_, **__):
-            return 8
+        def train_post_tensor_transform(self, *_, **__):
+            pass
 
         def test_collate(self, *_, **__):
-            return 9
+            pass
 
         def val_per_sample_transform_on_device(self, *_, **__):
-            return 10
+            pass
 
         def train_per_batch_transform_on_device(self, *_, **__):
-            return 11
+            pass
 
         def test_per_batch_transform_on_device(self, *_, **__):
-            return 12
+            pass
 
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess)
@@ -166,23 +166,23 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert test_func_names["load_sample"] == "load_sample"
     assert predict_func_names["load_sample"] == "predict_load_sample"
 
-    # per_sample_pre_tensor_transform
-    assert train_func_names["per_sample_pre_tensor_transform"] == "per_sample_pre_tensor_transform"
-    assert val_func_names["per_sample_pre_tensor_transform"] == "val_per_sample_pre_tensor_transform"
-    assert test_func_names["per_sample_pre_tensor_transform"] == "per_sample_pre_tensor_transform"
-    assert predict_func_names["per_sample_pre_tensor_transform"] == "per_sample_pre_tensor_transform"
+    # pre_tensor_transform
+    assert train_func_names["pre_tensor_transform"] == "pre_tensor_transform"
+    assert val_func_names["pre_tensor_transform"] == "val_pre_tensor_transform"
+    assert test_func_names["pre_tensor_transform"] == "pre_tensor_transform"
+    assert predict_func_names["pre_tensor_transform"] == "pre_tensor_transform"
 
-    # per_sample_to_tensor_transform
-    assert train_func_names["per_sample_to_tensor_transform"] == "per_sample_to_tensor_transform"
-    assert val_func_names["per_sample_to_tensor_transform"] == "per_sample_to_tensor_transform"
-    assert test_func_names["per_sample_to_tensor_transform"] == "per_sample_to_tensor_transform"
-    assert predict_func_names["per_sample_to_tensor_transform"] == "predict_per_sample_to_tensor_transform"
+    # to_tensor_transform
+    assert train_func_names["to_tensor_transform"] == "to_tensor_transform"
+    assert val_func_names["to_tensor_transform"] == "to_tensor_transform"
+    assert test_func_names["to_tensor_transform"] == "to_tensor_transform"
+    assert predict_func_names["to_tensor_transform"] == "predict_to_tensor_transform"
 
-    # per_sample_post_tensor_transform
-    assert train_func_names["per_sample_post_tensor_transform"] == "train_per_sample_post_tensor_transform"
-    assert val_func_names["per_sample_post_tensor_transform"] == "per_sample_post_tensor_transform"
-    assert test_func_names["per_sample_post_tensor_transform"] == "per_sample_post_tensor_transform"
-    assert predict_func_names["per_sample_post_tensor_transform"] == "per_sample_post_tensor_transform"
+    # post_tensor_transform
+    assert train_func_names["post_tensor_transform"] == "train_post_tensor_transform"
+    assert val_func_names["post_tensor_transform"] == "post_tensor_transform"
+    assert test_func_names["post_tensor_transform"] == "post_tensor_transform"
+    assert predict_func_names["post_tensor_transform"] == "post_tensor_transform"
 
     # collate
     assert train_func_names["collate"] == "collate"
@@ -208,30 +208,30 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     predict_worker_preprocessor = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
     _seq = train_worker_preprocessor.per_sample_transform
-    assert _seq.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
-    assert _seq.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
-    assert _seq.per_sample_post_tensor_transform.func == preprocess.train_per_sample_post_tensor_transform
+    assert _seq.pre_tensor_transform.func == preprocess.pre_tensor_transform
+    assert _seq.to_tensor_transform.func == preprocess.to_tensor_transform
+    assert _seq.post_tensor_transform.func == preprocess.train_post_tensor_transform
     assert train_worker_preprocessor.collate_fn.func == default_collate
     assert train_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
     _seq = val_worker_preprocessor.per_sample_transform
-    assert _seq.per_sample_pre_tensor_transform.func == preprocess.val_per_sample_pre_tensor_transform
-    assert _seq.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
-    assert _seq.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
-    assert val_worker_preprocessor.collate_fn.func == data_pipeline._do_nothing_collate
+    assert _seq.pre_tensor_transform.func == preprocess.val_pre_tensor_transform
+    assert _seq.to_tensor_transform.func == preprocess.to_tensor_transform
+    assert _seq.post_tensor_transform.func == preprocess.post_tensor_transform
+    assert val_worker_preprocessor.collate_fn.func == data_pipeline._identity
     assert val_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
     _seq = test_worker_preprocessor.per_sample_transform
-    assert _seq.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
-    assert _seq.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
-    assert _seq.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
+    assert _seq.pre_tensor_transform.func == preprocess.pre_tensor_transform
+    assert _seq.to_tensor_transform.func == preprocess.to_tensor_transform
+    assert _seq.post_tensor_transform.func == preprocess.post_tensor_transform
     assert test_worker_preprocessor.collate_fn.func == preprocess.test_collate
     assert test_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
     _seq = predict_worker_preprocessor.per_sample_transform
-    assert _seq.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
-    assert _seq.per_sample_to_tensor_transform.func == preprocess.predict_per_sample_to_tensor_transform
-    assert _seq.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
+    assert _seq.pre_tensor_transform.func == preprocess.pre_tensor_transform
+    assert _seq.to_tensor_transform.func == preprocess.predict_to_tensor_transform
+    assert _seq.post_tensor_transform.func == preprocess.post_tensor_transform
     assert predict_worker_preprocessor.collate_fn.func == default_collate
     assert predict_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
@@ -354,9 +354,9 @@ def test_attaching_datapipeline_to_model(tmpdir):
         def _compare_pre_processor(self, p1, p2):
             p1_seq = p1.per_sample_transform
             p2_seq = p2.per_sample_transform
-            assert p1_seq.per_sample_pre_tensor_transform.func == p2_seq.per_sample_pre_tensor_transform.func
-            assert p1_seq.per_sample_to_tensor_transform.func == p2_seq.per_sample_to_tensor_transform.func
-            assert p1_seq.per_sample_post_tensor_transform.func == p2_seq.per_sample_post_tensor_transform.func
+            assert p1_seq.pre_tensor_transform.func == p2_seq.pre_tensor_transform.func
+            assert p1_seq.to_tensor_transform.func == p2_seq.to_tensor_transform.func
+            assert p1_seq.post_tensor_transform.func == p2_seq.post_tensor_transform.func
             assert p1.collate_fn.func == p2.collate_fn.func
             assert p1.per_batch_transform.func == p2.per_batch_transform.func
 
@@ -364,7 +364,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             self, stage_mapping: Dict, current_running_stage: RunningStage, cls=_PreProcessor
         ):
             assert isinstance(stage_mapping[current_running_stage], cls)
-            assert stage_mapping[current_running_stage] is not None
+            assert stage_mapping[current_running_stage]
 
         def on_train_dataloader(self) -> None:
             current_running_stage = RunningStage.TRAINING
@@ -486,25 +486,25 @@ class TestPreprocessTransformations(Preprocess):
         super().__init__()
 
         self.train_load_data_called = False
-        self.train_per_sample_pre_tensor_transform_called = False
+        self.train_pre_tensor_transform_called = False
         self.train_collate_called = False
         self.train_per_batch_transform_on_device_called = False
         self.val_load_data_called = False
         self.val_load_sample_called = False
-        self.val_per_sample_to_tensor_transform_called = False
+        self.val_to_tensor_transform_called = False
         self.val_collate_called = False
         self.val_per_batch_transform_on_device_called = False
         self.test_load_data_called = False
-        self.test_per_sample_to_tensor_transform_called = False
-        self.test_per_sample_post_tensor_transform_called = False
+        self.test_to_tensor_transform_called = False
+        self.test_post_tensor_transform_called = False
         self.predict_load_data_called = False
 
     def train_load_data(self, sample) -> LamdaDummyDataset:
         self.train_load_data_called = True
         return LamdaDummyDataset(lambda: (0, 1, 2, 3))
 
-    def train_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
-        self.train_per_sample_pre_tensor_transform_called = True
+    def train_pre_tensor_transform(self, sample: Any) -> Any:
+        self.train_pre_tensor_transform_called = True
         return sample + (5, )
 
     def train_collate(self, samples) -> torch.Tensor:
@@ -524,8 +524,8 @@ class TestPreprocessTransformations(Preprocess):
         self.val_load_sample_called = True
         return {"a": sample, "b": sample + 1}
 
-    def val_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
-        self.val_per_sample_to_tensor_transform_called = True
+    def val_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+        self.val_to_tensor_transform_called = True
         return sample
 
     def val_collate(self, samples) -> Dict[str, torch.Tensor]:
@@ -545,12 +545,12 @@ class TestPreprocessTransformations(Preprocess):
         self.test_load_data_called = True
         return LamdaDummyDataset(lambda: [torch.rand(1), torch.rand(1)])
 
-    def test_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
-        self.test_per_sample_to_tensor_transform_called = True
+    def test_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+        self.test_to_tensor_transform_called = True
         return sample
 
-    def test_per_sample_post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
-        self.test_per_sample_post_tensor_transform_called = True
+    def test_post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
+        self.test_post_tensor_transform_called = True
         return sample
 
     def predict_load_data(self, sample) -> LamdaDummyDataset:
@@ -560,8 +560,8 @@ class TestPreprocessTransformations(Preprocess):
 
 class TestPreprocessTransformations2(TestPreprocessTransformations):
 
-    def val_per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
-        self.val_per_sample_to_tensor_transform_called = True
+    def val_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+        self.val_to_tensor_transform_called = True
         return {"a": torch.tensor(sample["a"]), "b": torch.tensor(sample["b"])}
 
 
@@ -599,7 +599,7 @@ def test_datapipeline_transformations(tmpdir):
 
     assert datamodule.val_dataloader().dataset[0] == {'a': 0, 'b': 1}
     assert datamodule.val_dataloader().dataset[1] == {'a': 1, 'b': 2}
-    with pytest.raises(MisconfigurationException, match="When ``per_sample_to_tensor_transform``"):
+    with pytest.raises(MisconfigurationException, match="When ``to_tensor_transform``"):
         batch = next(iter(datamodule.val_dataloader()))
 
     CustomDataModule.preprocess_cls = TestPreprocessTransformations2
@@ -624,17 +624,17 @@ def test_datapipeline_transformations(tmpdir):
     # todo (tchaton) resolve the lost reference.
     preprocess = model._preprocess
     # assert preprocess.train_load_data_called
-    # assert preprocess.train_per_sample_pre_tensor_transform_called
+    # assert preprocess.train_pre_tensor_transform_called
     # assert preprocess.train_collate_called
     assert preprocess.train_per_batch_transform_on_device_called
     # assert preprocess.val_load_data_called
     # assert preprocess.val_load_sample_called
-    # assert preprocess.val_per_sample_to_tensor_transform_called
+    # assert preprocess.val_to_tensor_transform_called
     # assert preprocess.val_collate_called
     assert preprocess.val_per_batch_transform_on_device_called
     # assert preprocess.test_load_data_called
-    # assert preprocess.test_per_sample_to_tensor_transform_called
-    # assert preprocess.test_per_sample_post_tensor_transform_called
+    # assert preprocess.test_to_tensor_transform_called
+    # assert preprocess.test_post_tensor_transform_called
     # assert preprocess.predict_load_data_called
 
 
@@ -679,7 +679,7 @@ def test_dummy_example(tmpdir):
             img8Bit = np.uint8(np.random.uniform(0, 1, (64, 64, 3)) * 255.0)
             return Image.fromarray(img8Bit)
 
-        def per_sample_to_tensor_transform(self, pil_image: Image.Image) -> torch.Tensor:
+        def to_tensor_transform(self, pil_image: Image.Image) -> torch.Tensor:
             # convert pil image into a tensor
             return self._to_tensor(pil_image)
 

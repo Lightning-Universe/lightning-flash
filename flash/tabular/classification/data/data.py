@@ -85,8 +85,8 @@ class TabularData(DataModule):
         if categorical_input is None and numerical_input is None:
             raise RuntimeError('Both `categorical_input` and `numerical_input` are None!')
 
-        categorical_input = categorical_input if categorical_input is not None else []
-        numerical_input = numerical_input if numerical_input is not None else []
+        categorical_input = categorical_input if categorical_input else []
+        numerical_input = numerical_input if numerical_input else []
 
         if valid_df is not None:
             dfs.append(valid_df)
@@ -233,8 +233,8 @@ class TabularData(DataModule):
             text_data = TabularData.from_files("train.csv", label_field="class", text_field="sentence")
         """
         train_df = pd.read_csv(train_csv, **pandas_kwargs)
-        valid_df = pd.read_csv(valid_csv, **pandas_kwargs) if valid_csv is not None else None
-        test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv is not None else None
+        valid_df = pd.read_csv(valid_csv, **pandas_kwargs) if valid_csv else None
+        test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv else None
         datamodule = cls.from_df(
             train_df, target, categorical_input, numerical_input, valid_df, test_df, batch_size, num_workers, val_size,
             test_size

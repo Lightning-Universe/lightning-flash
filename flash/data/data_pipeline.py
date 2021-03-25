@@ -56,13 +56,14 @@ class DataPipeline:
         Objects description:
 
         _Sequential:
-            ┌────────────────────────────────────┐
-            │  per_sample_pre_tensor_transform   │
-            │                |                   │
-            │  per_sample_to_tensor_transform    │
-            │                |                   │
-            │  per_sample_post_tensor_transform  │
-            └────────────────────────────────────┘
+
+            ┌─────────────────────────
+            │  pre_tensor_transform   │
+            │            |            |
+            │  to_tensor_transform    │
+            │            |            |
+            │  post_tensor_transform  │
+            └──────────────────────────
 
         _PreProcessor:
 
@@ -80,7 +81,7 @@ class DataPipeline:
             ``_PreProcessor`` in worker:
 
                 * per_sample_transform: _Sequential(
-                    per_sample_pre_tensor_transform, per_sample_to_tensor_transform, per_sample_post_tensor_transform)
+                    pre_tensor_transform, to_tensor_transform, post_tensor_transform)
 
                 * collate: Set to ``do_nothing`` is ``per_sample_transform_on_device`` is implemented
                     and not ``per_batch_transform``
@@ -98,20 +99,20 @@ class DataPipeline:
 
 
         General flow:
-                                             load_sample
+                                            load_sample
                                                  │
-                                   per_sample_pre_tensor_transform
+                                        pre_tensor_transform
                                                  │
-                                    per_sample_to_tensor_transform
+                                        to_tensor_transform
                                                  │
-                                  per_sample_post_tensor_transform
+                                       post_tensor_transform
                                                  │
                                 ┌────────────────┴───────────────────┐
-  Move Data to main worker -->  │                                    │
+(move Data to main worker) -->  │                                    │
                     per_sample_transform_on_device                collate
                                 │                                    │
                             collate                          per_batch_transform
-                                │                                    │ <-- Move Data to main worker
+                                │                                    │ <-- (move Data to main worker)
                     per_batch_transform_on_device      per_batch_transform_on_device
                                 │                                    │
                                 └─────────────────┬──────────────────┘
@@ -127,9 +128,8 @@ class DataPipeline:
     """
 
     PREPROCESS_FUNCS = {
-        "load_data", "load_sample", "per_sample_pre_tensor_transform", "per_sample_to_tensor_transform",
-        "per_sample_post_tensor_transform", "per_batch_transform", "per_sample_transform_on_device",
-        "per_batch_transform_on_device", "collate"
+        "load_data", "load_sample", "pre_tensor_transform", "to_tensor_transform", "post_tensor_transform",
+        "per_batch_transform", "per_sample_transform_on_device", "per_batch_transform_on_device", "collate"
     }
     # TODO: unused?
     POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
@@ -184,12 +184,8 @@ class DataPipeline:
             return has_different_code or cls._is_overriden_recursive(method_name, process_obj, super_obj)
 
     @staticmethod
-    def _do_nothing_collate(samples: Sequence[Any]) -> Sequence[Any]:
+    def _identity(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
-
-    @staticmethod
-    def _do_nothing_uncollate(batch: Any) -> Any:
-        return batch
 
     def worker_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
         return self._create_collate_preprocessors(running_stage)[0]
@@ -199,9 +195,7 @@ class DataPipeline:
 
     @property
     def postprocessor(self) -> _PostProcessor:
-        if self._postprocessor is None:
-            self._postprocessor = self._create_uncollate_postprocessors()
-        return self._postprocessor
+        return self._postprocessor | self._create_uncollate_postprocessors()
 
     @postprocessor.setter
     def postprocessor(self, new_processor: _PostProcessor):
@@ -232,14 +226,14 @@ class DataPipeline:
 
         return function_name
 
-    def _create_collate_preprocessors(self,
-                                      stage: RunningStage,
-                                      collate_fn: Optional[Callable] = None) -> Tuple[_PreProcessor, _PreProcessor]:
-        original_collate_fn = None
+    def _create_collate_preprocessors(
+        self,
+        stage: RunningStage,
+        collate_fn: Optional[Callable] = None,
+    ) -> Tuple[_PreProcessor, _PreProcessor]:
+        original_collate_fn = collate_fn
         if collate_fn is None:
             collate_fn = default_collate
-        else:
-            original_collate_fn = collate_fn
 
         func_names = {
             k: self._resolve_function_hierarchy(k, self._preprocess_pipeline, stage, Preprocess)
@@ -265,30 +259,30 @@ class DataPipeline:
 
         elif per_batch_transform_overriden:
             worker_collate_fn = collate_fn
-            device_collate_fn = self._do_nothing_collate
+            device_collate_fn = self._identity
 
         elif per_sample_transform_on_device_overriden:
-            worker_collate_fn = self._do_nothing_collate
+            worker_collate_fn = self._identity
             device_collate_fn = collate_fn
 
         else:
             worker_collate_fn = collate_fn
-            device_collate_fn = self._do_nothing_collate
+            device_collate_fn = self._identity
 
         worker_collate_fn = worker_collate_fn.collate_fn if isinstance(
             worker_collate_fn, _PreProcessor
         ) else worker_collate_fn
 
         assert_contains_tensor = self._is_overriden_recursive(
-            "per_sample_to_tensor_transform", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "to_tensor_transform", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
         worker_preprocessor = _PreProcessor(
             worker_collate_fn,
             _Sequential(
-                getattr(self._preprocess_pipeline, func_names['per_sample_pre_tensor_transform']),
-                getattr(self._preprocess_pipeline, func_names['per_sample_to_tensor_transform']),
-                getattr(self._preprocess_pipeline, func_names['per_sample_post_tensor_transform']),
+                getattr(self._preprocess_pipeline, func_names['pre_tensor_transform']),
+                getattr(self._preprocess_pipeline, func_names['to_tensor_transform']),
+                getattr(self._preprocess_pipeline, func_names['post_tensor_transform']),
                 assert_contains_tensor=assert_contains_tensor,
             ), getattr(self._preprocess_pipeline, func_names['per_batch_transform']), stage
         )
@@ -298,7 +292,7 @@ class DataPipeline:
             getattr(self._preprocess_pipeline, func_names['per_sample_transform_on_device']),
             getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device']),
             stage,
-            apply_per_sample_transform=device_collate_fn != self._do_nothing_collate
+            apply_per_sample_transform=device_collate_fn != self._identity
         )
         return worker_preprocessor, device_preprocessor
 
@@ -331,10 +325,8 @@ class DataPipeline:
             dataloader = getattr(model, loader_name)
             attr_name = loader_name
 
-        elif model.trainer is not None and hasattr(
-            model.trainer, 'datamodule'
-        ) and model.trainer.datamodule is not None:
-            dataloader = getattr(model.trainer.datamodule, loader_name, None)
+        elif model.trainer and hasattr(model.trainer, 'datamodule') and model.trainer.datamodule:
+            dataloader = getattr(model, f'trainer.datamodule.{loader_name}', None)
             attr_name = f'trainer.datamodule.{loader_name}'
 
         return dataloader, attr_name
@@ -358,7 +350,7 @@ class DataPipeline:
     def _attach_preprocess_to_model(
         self, model: 'Task', stages: Optional[RunningStage] = None, device_transform_only: bool = False
     ) -> None:
-        if stages is None:
+        if not stages:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 
         elif isinstance(stages, RunningStage):
@@ -423,7 +415,7 @@ class DataPipeline:
         save_fn = None
 
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
-        if self._postprocess_pipeline._save_path is not None:
+        if self._postprocess_pipeline._save_path:
             save_per_sample = self._is_overriden('save_sample', self._postprocess_pipeline, Postprocess)
 
             if save_per_sample:
@@ -449,13 +441,13 @@ class DataPipeline:
         # not necessary to detach. preprocessing and postprocessing for stage will be overwritten.
         self._attach_preprocess_to_model(model, stages)
 
-        if stages is None or stages == RunningStage.PREDICTING:
+        if not stages or stages == RunningStage.PREDICTING:
             self._attach_postprocess_to_model(model)
 
     def _detach_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stages)
 
-        if stages is None or stages == RunningStage.PREDICTING:
+        if not stages or stages == RunningStage.PREDICTING:
             self._detach_postprocess_from_model(model)
 
     @staticmethod
@@ -463,7 +455,7 @@ class DataPipeline:
         return device_collate(worker_collate(samples))
 
     def _detach_preprocessing_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
-        if stages is None:
+        if not stages:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 
         elif isinstance(stages, RunningStage):
@@ -480,7 +472,7 @@ class DataPipeline:
                     model.transfer_batch_to_device = model.transfer_batch_to_device.func
 
             if device_collate is None:
-                device_collate = self._do_nothing_collate
+                device_collate = self._identity
 
             loader_name = f'{_STAGES_PREFIX[stage]}_dataloader'
 
@@ -543,7 +535,7 @@ class DataPipeline:
         self, data: Union[Iterable, Any], auto_collate: Optional[bool] = None, **loader_kwargs
     ) -> DataLoader:
         if 'collate_fn' in loader_kwargs:
-            if auto_collate is not None:
+            if auto_collate:
                 raise MisconfigurationException('auto_collate and collate_fn are mutually exclusive')
 
         else:
@@ -552,7 +544,7 @@ class DataPipeline:
 
             collate_fn = self.worker_collate_fn
 
-            if collate_fn is not None:
+            if collate_fn:
                 loader_kwargs['collate_fn'] = collate_fn
 
             else:
@@ -591,7 +583,7 @@ class _StageOrchestrator:
         internal_running_state = self.internal_mapping[self.model.trainer._running_stage]
         additional_func = self._stage_mapping.get(internal_running_state, None)
 
-        if additional_func is not None:
+        if additional_func:
             outputs = additional_func(outputs)
 
         return outputs
@@ -604,7 +596,7 @@ class _StageOrchestrator:
     def unregister_stage(self, stage: RunningStage):
         ret_val = self._stage_mapping.pop(stage)
         self._stage_mapping[stage] = None
-        if ret_val is not None:
+        if ret_val:
             ret_val = ret_val.cpu()
         return ret_val
 

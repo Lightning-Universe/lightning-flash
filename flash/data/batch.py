@@ -23,42 +23,42 @@ from flash.data.utils import _contains_any_tensor, convert_to_modules
 class _Sequential(torch.nn.Module):
     """
     This class is used to chain 3 functions together for the _Preprocessor ``per_sample_transform`` function.
-    1. ``per_sample_pre_tensor_transform``
-    2. ``per_sample_to_tensor_transform``
-    3. ``per_sample_post_tensor_transform``
+    1. ``pre_tensor_transform``
+    2. ``to_tensor_transform``
+    3. ``post_tensor_transform``
     """
 
     def __init__(
         self,
-        per_sample_pre_tensor_transform: Callable,
-        per_sample_to_tensor_transform: Callable,
-        per_sample_post_tensor_transform: Callable,
+        pre_tensor_transform: Callable,
+        to_tensor_transform: Callable,
+        post_tensor_transform: Callable,
         assert_contains_tensor: bool = False
     ):
         super().__init__()
 
-        self.per_sample_pre_tensor_transform = convert_to_modules(per_sample_pre_tensor_transform)
-        self.per_sample_to_tensor_transform = convert_to_modules(per_sample_to_tensor_transform)
-        self.per_sample_post_tensor_transform = convert_to_modules(per_sample_post_tensor_transform)
+        self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
+        self.to_tensor_transform = convert_to_modules(to_tensor_transform)
+        self.post_tensor_transform = convert_to_modules(post_tensor_transform)
         self.assert_contains_tensor = assert_contains_tensor
 
     def forward(self, sample: Any):
-        sample = self.per_sample_pre_tensor_transform(sample)
-        sample = self.per_sample_to_tensor_transform(sample)
+        sample = self.pre_tensor_transform(sample)
+        sample = self.to_tensor_transform(sample)
         if self.assert_contains_tensor:
             if not _contains_any_tensor(sample):
                 raise MisconfigurationException(
-                    "When ``per_sample_to_tensor_transform`` is overriden, "
+                    "When ``to_tensor_transform`` is overriden, "
                     "``DataPipeline`` expects the outputs to be ``tensors``"
                 )
-        sample = self.per_sample_post_tensor_transform(sample)
+        sample = self.post_tensor_transform(sample)
         return sample
 
     def __str__(self) -> str:
         repr_str = f'{self.__class__.__name__}:'
-        repr_str += f'\n\t\t(per_sample_pre_tensor_transform): {repr(self.per_sample_pre_tensor_transform)}'
-        repr_str += f'\n\t\t(per_sample_to_tensor_transform): {repr(self.per_sample_to_tensor_transform)}'
-        repr_str += f'\n\t\t(per_sample_post_tensor_transform): {repr(self.per_sample_post_tensor_transform)}'
+        repr_str += f'\n\t\t(pre_tensor_transform): {repr(self.pre_tensor_transform)}'
+        repr_str += f'\n\t\t(to_tensor_transform): {repr(self.to_tensor_transform)}'
+        repr_str += f'\n\t\t(post_tensor_transform): {repr(self.post_tensor_transform)}'
         repr_str += f'\n\t\t(assert_contains_tensor): {repr(self.assert_contains_tensor)}'
         return repr_str
 
@@ -69,9 +69,9 @@ class _PreProcessor(torch.nn.Module):
         Inside a worker:
             per_sample_transform: Function to transform an individual sample
                 Inside a worker, it is actually make of 3 functions:
-                    * per_sample_pre_tensor_transform
-                    * per_sample_to_tensor_transform
-                    * per_sample_post_tensor_transform
+                    * pre_tensor_transform
+                    * to_tensor_transform
+                    * post_tensor_transform
             collate: Function to merge sample into a batch
             per_batch_transform: Function to transform an individual batch
                 * per_batch_transform
@@ -108,6 +108,7 @@ class _PreProcessor(torch.nn.Module):
         return samples
 
     def __str__(self) -> str:
+        # todo: define repr function which would take object and string attributes to be shown
         repr_str = '_PreProcessor:'
         repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
         repr_str += f'\n\t(collate_fn): {repr(self.collate_fn)}'
@@ -149,7 +150,7 @@ class _PostProcessor(torch.nn.Module):
 
         final_preds = type(uncollated)([self.per_sample_transform(sample) for sample in uncollated])
 
-        if self.save_fn is not None:
+        if self.save_fn:
             if self.save_per_sample:
                 for pred in final_preds:
                     self.save_fn(pred)
@@ -168,6 +169,12 @@ class _PostProcessor(torch.nn.Module):
 
 
 def default_uncollate(batch: Any):
+    """
+    This function is used to uncollate a batch into samples.
+
+    Examples:
+        >>> a, b = default_uncollate(torch.tensor(2, 1))
+    """
 
     batch_type = type(batch)
 

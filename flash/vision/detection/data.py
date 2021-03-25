@@ -92,7 +92,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         target["area"] = torch.as_tensor(areas, dtype=torch.float32)
         target["iscrowd"] = torch.as_tensor(iscrowd, dtype=torch.int64)
 
-        if self.transforms is not None:
+        if self.transforms:
             img = self.transforms(img)
 
         return img, target
@@ -182,11 +182,9 @@ class ObjectDetectionData(DataModule):
         num_classes = train_ds.num_classes
         train_ds = _coco_remove_images_without_annotations(train_ds)
 
-        valid_ds = (
-            CustomCOCODataset(valid_folder, valid_ann_file, valid_transform) if valid_folder is not None else None
-        )
+        valid_ds = (CustomCOCODataset(valid_folder, valid_ann_file, valid_transform) if valid_folder else None)
 
-        test_ds = (CustomCOCODataset(test_folder, test_ann_file, test_transform) if test_folder is not None else None)
+        test_ds = (CustomCOCODataset(test_folder, test_ann_file, test_transform) if test_folder else None)
 
         datamodule = cls(
             train_ds=train_ds,

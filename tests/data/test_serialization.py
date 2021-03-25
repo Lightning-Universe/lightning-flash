@@ -57,11 +57,11 @@ def test_serialization_data_pipeline(tmpdir):
     model.data_pipeline = DataPipeline(CustomPreprocess())
 
     trainer.fit(model, dummy_data)
-    assert model.data_pipeline is not None
+    assert model.data_pipeline
     assert isinstance(model.preprocess, CustomPreprocess)
     trainer.save_checkpoint(checkpoint_file)
     loaded_model = CustomModel.load_from_checkpoint(checkpoint_file)
-    assert loaded_model.data_pipeline is not None
+    assert loaded_model.data_pipeline
     assert isinstance(loaded_model.preprocess, CustomPreprocess)
     for file in os.listdir(tmpdir):
         if file.endswith('.ckpt'):
