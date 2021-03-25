@@ -128,21 +128,22 @@ class DataPipeline:
     """
 
     PREPROCESS_FUNCS = {
-        "load_data", "load_sample", "pre_tensor_transform", "to_tensor_transform", "post_tensor_transform",
-        "per_batch_transform", "per_sample_transform_on_device", "per_batch_transform_on_device", "collate"
+        "load_data",
+        "load_sample",
+        "pre_tensor_transform",
+        "to_tensor_transform",
+        "post_tensor_transform",
+        "per_batch_transform",
+        "per_sample_transform_on_device",
+        "per_batch_transform_on_device",
+        "collate",
     }
     # TODO: unused?
     POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
-        if preprocess is None:
-            preprocess = Preprocess()
-
-        if postprocess is None:
-            postprocess = Postprocess()
-
-        self._preprocess_pipeline = preprocess
-        self._postprocess_pipeline = postprocess
+        self._preprocess_pipeline = preprocess or Preprocess()
+        self._postprocess_pipeline = postprocess or Postprocess()
         self._postprocessor = None
         self._running_stage = None
 
@@ -176,8 +177,9 @@ class DataPipeline:
         if not hasattr(process_obj, current_method_name):
             return DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
 
-        has_different_code = getattr(process_obj,
-                                     current_method_name).__code__ != getattr(super_obj, method_name).__code__
+        current_code = getattr(process_obj, current_method_name).__code__
+        has_different_code = current_code != getattr(super_obj, method_name).__code__
+
         if not prefix:
             return has_different_code
         else:
