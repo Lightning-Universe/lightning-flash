@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union, Tuple
+from typing import Any, Callable, Mapping, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
