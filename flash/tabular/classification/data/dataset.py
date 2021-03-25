@@ -95,7 +95,7 @@ def _pre_transform(
     dfs = _impute(dfs, num_cols)
     dfs = _normalize(dfs, num_cols, mean=mean, std=std)
     dfs = _categorize(dfs, cat_cols, codes=codes)
-    if target_codes is not None and target is not None:
+    if target_codes and target:
         dfs = _categorize(dfs, [target], codes=target_codes)
     return dfs
 

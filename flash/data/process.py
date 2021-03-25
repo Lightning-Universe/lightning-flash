@@ -107,13 +107,13 @@ class Preprocess(Properties, torch.nn.Module):
         """Loads single sample from dataset"""
         return sample
 
-    def per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+    def pre_tensor_transform(self, sample: Any) -> Any:
         return sample
 
-    def per_sample_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+    def to_tensor_transform(self, sample: Any) -> torch.Tensor:
         return sample
 
-    def per_sample_post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
+    def post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
         return sample
 
     def per_batch_transform(self, batch: Any) -> Any:
@@ -169,9 +169,7 @@ class Postprocess(Properties, torch.nn.Module):
         return sample
 
     def uncollate(self, batch: Any) -> Any:
-        """Uncollates a batch into single samples.
-        Tries to preserve the type whereever possible.
-        """
+        """Uncollates a batch into single samples. Tries to preserve the type whereever possible."""
         return default_uncollate(batch)
 
     def save_data(self, data: Any, path: str) -> None:
@@ -180,8 +178,7 @@ class Postprocess(Properties, torch.nn.Module):
         torch.save(data, path)
 
     def save_sample(self, sample: Any, path: str) -> None:
-        """Saves each sample individually to a given path.
-        """
+        """Saves each sample individually to a given path."""
         torch.save(sample, path)
 
     # TODO: Are those needed ?

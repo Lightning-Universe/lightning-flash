@@ -25,7 +25,7 @@ datamodule = TextClassificationData.from_files(
     test_file="data/imdb/test.csv",
     input="review",
     target="sentiment",
-    batch_size=512
+    batch_size=16
 )
 
 # 3. Build the model

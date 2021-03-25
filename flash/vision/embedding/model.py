@@ -87,7 +87,7 @@ class ImageEmbedder(Task):
                 nn.Flatten(),
                 nn.Linear(num_features, embedding_dim),
             )
-            rank_zero_warn('embedding_dim is not None. Remember to finetune first!')
+            rank_zero_warn('embedding_dim. Remember to finetune first!')
 
     def apply_pool(self, x):
         if self.pooling_fn == torch.max:
@@ -106,7 +106,7 @@ class ImageEmbedder(Task):
         if isinstance(x, tuple):
             x = x[-1]
 
-        if x.dim() == 4 and self.embedding_dim is not None:
+        if x.dim() == 4 and self.embedding_dim:
             x = self.apply_pool(x)
 
         x = self.head(x)

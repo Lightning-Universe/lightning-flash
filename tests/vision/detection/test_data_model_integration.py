@@ -26,7 +26,7 @@ _COCO_AVAILABLE = _module_available("pycocotools")
 
 
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
-@pytest.mark.parametrize(["model", "backbone"], [("fasterrcnn", None)])
+@pytest.mark.parametrize(["model", "backbone"], [("fasterrcnn", "mobilenet_v2")])
 def test_detection(tmpdir, model, backbone):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
@@ -45,5 +45,4 @@ def test_detection(tmpdir, model, backbone):
     Image.new('RGB', (512, 512)).save(test_image_two)
 
     test_images = [test_image_one, test_image_two]
-
     model.predict(test_images)

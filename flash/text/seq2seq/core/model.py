@@ -26,7 +26,7 @@ from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 
 def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
-    pad_token_id = model_cfg.pad_token_id if model_cfg.pad_token_id is not None else model_cfg.eos_token_id
+    pad_token_id = model_cfg.pad_token_id if model_cfg.pad_token_id else model_cfg.eos_token_id
     if pad_token_id is None:
         raise ValueError(
             f"Make sure that either `config.pad_token_id` or `config.eos_token_id` "
@@ -112,7 +112,7 @@ class Seq2SeqTask(Task):
     def _initialize_model_specific_parameters(self):
         task_specific_params = self.model.config.task_specific_params
 
-        if task_specific_params is not None:
+        if task_specific_params:
             pars = task_specific_params.get(self.task, {})
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)

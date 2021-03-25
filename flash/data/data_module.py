@@ -29,12 +29,6 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
-# TODO: unused?
-class MockLightningModule(pl.LightningModule):
-
-    pass
-
-
 class DataModule(pl.LightningDataModule):
     """Basic DataModule class for all Flash tasks
 
@@ -53,29 +47,30 @@ class DataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        train_ds: Optional[AutoDataset] = None,
-        valid_ds: Optional[AutoDataset] = None,
-        test_ds: Optional[AutoDataset] = None,
-        predict_ds: Optional[AutoDataset] = None,
+        train_ds: Optional[Dataset] = None,
+        valid_ds: Optional[Dataset] = None,
+        test_ds: Optional[Dataset] = None,
+        predict_ds: Optional[Dataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
-    ):
+    ) -> None:
+
         super().__init__()
         self._train_ds = train_ds
         self._valid_ds = valid_ds
         self._test_ds = test_ds
         self._predict_ds = predict_ds
 
-        if self._train_ds is not None:
+        if self._train_ds:
             self.train_dataloader = self._train_dataloader
 
-        if self._valid_ds is not None:
+        if self._valid_ds:
             self.val_dataloader = self._val_dataloader
 
-        if self._test_ds is not None:
+        if self._test_ds:
             self.test_dataloader = self._test_dataloader
 
-        if self._predict_ds is not None:
+        if self._predict_ds:
             self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
@@ -105,16 +100,16 @@ class DataModule(pl.LightningDataModule):
         setattr(dataset, attr_name, value)
 
     def set_running_stages(self):
-        if self._train_ds is not None:
+        if self._train_ds:
             self.set_dataset_attribute(self._train_ds, 'running_stage', RunningStage.TRAINING)
 
-        if self._valid_ds is not None:
+        if self._valid_ds:
             self.set_dataset_attribute(self._valid_ds, 'running_stage', RunningStage.VALIDATING)
 
-        if self._test_ds is not None:
+        if self._test_ds:
             self.set_dataset_attribute(self._test_ds, 'running_stage', RunningStage.TESTING)
 
-        if self._predict_ds is not None:
+        if self._predict_ds:
             self.set_dataset_attribute(self._predict_ds, 'running_stage', RunningStage.PREDICTING)
 
     def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
@@ -154,7 +149,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     def _predict_dataloader(self) -> DataLoader:
-        predict_ds = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+        predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
         return DataLoader(
             predict_ds,
             batch_size=min(self.batch_size,
@@ -261,7 +256,7 @@ class DataModule(pl.LightningDataModule):
         else:
             _train_length = train_split
 
-        if seed is not None:
+        if seed:
             generator = torch.Generator().manual_seed(seed)
         else:
             generator = None
@@ -288,7 +283,7 @@ class DataModule(pl.LightningDataModule):
         if data is None:
             return
 
-        if data_pipeline is not None:
+        if data_pipeline:
             return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
 
         return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)

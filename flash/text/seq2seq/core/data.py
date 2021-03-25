@@ -17,8 +17,6 @@ from typing import Any, Callable, List, Optional, Type, Union
 
 import datasets
 from datasets import DatasetDict, load_dataset
-from datasets.splits import NamedSplit
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
@@ -87,7 +85,7 @@ class Seq2SeqPreprocess(Preprocess):
         if use_full and os.getenv("FLASH_TESTING", "0") == "0":
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            # used for debugging. Avoid processing the entire dataset   # noqa E265
+            # used for debugging. Avoid processing the entire dataset   # noqa E265
             try:
                 dataset_dict = DatasetDict({
                     stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
@@ -165,7 +163,6 @@ class Seq2SeqData(DataModule):
         preprocess_cls: Optional[Type[Preprocess]] = None,
     ):
         """Creates a Seq2SeqData object from files.
-
         Args:
             train_file: Path to training data.
             input: The field storing the source translation text.
@@ -181,18 +178,14 @@ class Seq2SeqData(DataModule):
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
             or 0 for Darwin platform.
-
         Returns:
             Seq2SeqData: The constructed data module.
-
         Examples::
-
             train_df = pd.read_csv("train_data.csv")
             tab_data = TabularData.from_df(train_df,
                                            target="fraud",
                                            num_cols=["account_value"],
                                            cat_cols=["account_type"])
-
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         preprocess = cls.instantiate_preprocess(
@@ -229,9 +222,9 @@ class Seq2SeqData(DataModule):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 32,
         num_workers: Optional[int] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
     ):
         """Creates a TextClassificationData object from files.
-
         Args:
             predict_file: Path to prediction input file.
             input: The field storing the source translation text.
@@ -245,33 +238,20 @@ class Seq2SeqData(DataModule):
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
             or 0 for Darwin platform.
-
         Returns:
             Seq2SeqData: The constructed data module.
-
         """
-        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-        pipeline = Seq2SeqDataPipeline(
-            tokenizer=tokenizer,
+        return cls.from_files(
+            train_file=None,
             input=input,
             target=target,
+            filetype=filetype,
+            backbone=backbone,
+            predict_file=predict_file,
             max_source_length=max_source_length,
             max_target_length=max_target_length,
-            padding=padding
-        )
-
-        train_ds, valid_ds, test_ds = prepare_dataset(
-            test_file=predict_file, filetype=filetype, pipeline=pipeline, predict=True
-        )
-
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
+            padding=padding,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess_cls=preprocess_cls,
         )
-
-        datamodule.data_pipeline = pipeline
-        return datamodule

@@ -48,13 +48,10 @@ class ImageClassificationPreprocess(Preprocess):
     def _find_classes(dir):
         """
         Finds the class folders in a dataset.
-
         Args:
             dir (string): Root directory path.
-
         Returns:
             tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
-
         Ensures:
             No class is a subdirectory of another.
         """
@@ -175,52 +172,52 @@ class ImageClassificationPreprocess(Preprocess):
             _samples.append(sample)
         return default_collate(_samples)
 
-    def common_per_sample_pre_tensor_transform(self, sample: Any, transform) -> Any:
-        return self._apply_transform(sample, transform, "per_sample_pre_tensor_transform")
+    def common_pre_tensor_transform(self, sample: Any, transform) -> Any:
+        return self._apply_transform(sample, transform, "pre_tensor_transform")
 
-    def train_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+    def train_pre_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
-        return self.common_per_sample_pre_tensor_transform(sample, self.train_transform), target
+        return self.common_pre_tensor_transform(sample, self.train_transform), target
 
-    def val_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+    def val_pre_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
-        return self.common_per_sample_pre_tensor_transform(sample, self.valid_transform), target
+        return self.common_pre_tensor_transform(sample, self.valid_transform), target
 
-    def test_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+    def test_pre_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
-        return self.common_per_sample_pre_tensor_transform(sample, self.test_transform), target
+        return self.common_pre_tensor_transform(sample, self.test_transform), target
 
-    def predict_per_sample_pre_tensor_transform(self, sample: Any) -> Any:
+    def predict_pre_tensor_transform(self, sample: Any) -> Any:
         if isinstance(sample, torch.Tensor):
             return sample
-        return self.common_per_sample_pre_tensor_transform(sample, self.predict_transform)
+        return self.common_pre_tensor_transform(sample, self.predict_transform)
 
-    def per_sample_to_tensor_transform(self, sample) -> Any:
+    def to_tensor_transform(self, sample) -> Any:
         sample, target = sample
         return sample if isinstance(sample, torch.Tensor) else self.to_tensor(sample), target
 
-    def predict_per_sample_to_tensor_transform(self, sample) -> Any:
+    def predict_to_tensor_transform(self, sample) -> Any:
         if isinstance(sample, torch.Tensor):
             return sample
         return self.to_tensor(sample)
 
-    def common_per_sample_post_tensor_transform(self, sample: Any, transform) -> Any:
-        return self._apply_transform(sample, transform, "per_sample_post_tensor_transform")
+    def common_post_tensor_transform(self, sample: Any, transform) -> Any:
+        return self._apply_transform(sample, transform, "post_tensor_transform")
 
-    def train_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+    def train_post_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
-        return self.common_per_sample_post_tensor_transform(sample, self.train_transform), target
+        return self.common_post_tensor_transform(sample, self.train_transform), target
 
-    def val_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+    def val_post_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
-        return self.common_per_sample_post_tensor_transform(sample, self.valid_transform), target
+        return self.common_post_tensor_transform(sample, self.valid_transform), target
 
-    def test_per_sample_post_tensor_transform(self, sample: Any) -> Any:
+    def test_post_tensor_transform(self, sample: Any) -> Any:
         sample, target = sample
-        return self.common_per_sample_post_tensor_transform(sample, self.test_transform), target
+        return self.common_post_tensor_transform(sample, self.test_transform), target
 
-    def predict_per_sample_post_tensor_transform(self, sample: Any) -> Any:
-        return self.common_per_sample_post_tensor_transform(sample, self.predict_transform)
+    def predict_post_tensor_transform(self, sample: Any) -> Any:
+        return self.common_post_tensor_transform(sample, self.predict_transform)
 
     def train_per_batch_transform_on_device(self, batch: Tuple) -> Tuple:
         batch, target = batch
@@ -298,9 +295,7 @@ class ImageClassificationData(DataModule):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
-                "per_sample_post_tensor_transform": nn.Sequential(
-                    K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()
-                ),
+                "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
@@ -308,10 +303,8 @@ class ImageClassificationData(DataModule):
         else:
             from torchvision import transforms as T  # noqa F811
             return {
-                "per_sample_pre_tensor_transform": nn.Sequential(
-                    T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()
-                ),
-                "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                "pre_tensor_transform": nn.Sequential(T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()),
+                "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
     @staticmethod
@@ -320,7 +313,7 @@ class ImageClassificationData(DataModule):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
-                "per_sample_post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
+                "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
@@ -328,8 +321,8 @@ class ImageClassificationData(DataModule):
         else:
             from torchvision import transforms as T  # noqa F811
             return {
-                "per_sample_pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
-                "per_sample_post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                "pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
+                "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
     @property

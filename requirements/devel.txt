@@ -1,5 +1,5 @@
 # install all mandatory dependencies
--r ../requirements.txt
+ -r ../requirements.txt
 
-# extended list of dependencies for development and run lint and tests
--r ./test.txt
+ # extended list of dependencies for development and run lint and tests
+ -r ./test.txt

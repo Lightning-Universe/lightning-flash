@@ -38,7 +38,7 @@ def test_init():
     DataModule(train_ds)
     DataModule(train_ds, val_ds)
     DataModule(train_ds, val_ds, test_ds)
-    assert DataModule().data_pipeline is not None
+    assert DataModule().data_pipeline
 
 
 def test_dataloaders():

@@ -95,7 +95,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         target["area"] = torch.as_tensor(areas, dtype=torch.float32)
         target["iscrowd"] = torch.as_tensor(iscrowd, dtype=torch.int64)
 
-        if self.transforms is not None:
+        if self.transforms:
             img = self.transforms(img)
 
         return img, target
@@ -148,7 +148,7 @@ class ObjectDetectionPreprocess(Preprocess):
     def predict_load_data(self, samples):
         return samples
 
-    def per_sample_pre_tensor_transform(self, samples: Any) -> Any:
+    def pre_tensor_transform(self, samples: Any) -> Any:
         if _contains_any_tensor(samples):
             return samples
 
@@ -162,7 +162,7 @@ class ObjectDetectionPreprocess(Preprocess):
             return outputs
         raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
 
-    def predict_per_sample_to_tensor_transform(self, sample) -> Any:
+    def predict_to_tensor_transform(self, sample) -> Any:
         return self.to_tensor(sample[0])
 
     def collate(self, samples: Any) -> Any:

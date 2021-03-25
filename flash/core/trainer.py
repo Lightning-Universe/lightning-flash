@@ -14,9 +14,8 @@
 import warnings
 from typing import List, Optional, Union
 
-import pytorch_lightning as pl
+from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
@@ -24,14 +23,14 @@ from torch.utils.data import DataLoader
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
 
 
-class Trainer(pl.Trainer):
+class Trainer(Trainer):
 
     def fit(
         self,
-        model: pl.LightningModule,
+        model: LightningModule,
         train_dataloader: Optional[DataLoader] = None,
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
-        datamodule: Optional[pl.LightningDataModule] = None,
+        datamodule: Optional[LightningDataModule] = None,
     ):
         r"""
         Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit()
@@ -57,7 +56,7 @@ class Trainer(pl.Trainer):
         model: LightningModule,
         train_dataloader: Optional[DataLoader] = None,
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
-        datamodule: Optional[pl.LightningDataModule] = None,
+        datamodule: Optional[LightningDataModule] = None,
         strategy: Optional[Union[str, BaseFinetuning]] = None,
     ):
         r"""

@@ -15,13 +15,11 @@ import functools
 import os
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
 import torchmetrics
-from pytorch_lightning import Trainer
+from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.trainer.states import RunningStage, TrainerState
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.trainer.states import RunningStage
 from torch import nn
 
 from flash.core.utils import get_callable_dict
@@ -51,7 +49,7 @@ def predict_context(func: Callable) -> Callable:
     return wrapper
 
 
-class Task(pl.LightningModule):
+class Task(LightningModule):
     """A general Task.
 
     Args:
@@ -67,7 +65,7 @@ class Task(pl.LightningModule):
         model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
     ):
         super().__init__()

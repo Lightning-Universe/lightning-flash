@@ -30,12 +30,13 @@ _STAGES_PREFIX = {
 }
 
 
-# Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
-# __author__  = "github.com/ruxi"
-# __license__ = "MIT"
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     """
     Download file with progressbar
+
+    # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
+    # __author__  = "github.com/ruxi"
+    # __license__ = "MIT"
 
     Usage:
         download_file('http://web4host.net/5MB.zip')
