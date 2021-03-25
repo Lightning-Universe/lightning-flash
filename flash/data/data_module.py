@@ -260,7 +260,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         test_split: Optional[Union[float, int]] = None,
         seed: Optional[int] = 1234,
     ) -> Tuple[Dataset, Optional[Dataset], Optional[Dataset]]:
-        """Creates a ImageClassificationData object from lists of image filepaths and labels
+        """Returns split Datasets based on train, valid & test split parameters
 
         Args:
             dataset: Dataset to be split.
