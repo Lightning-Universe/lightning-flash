@@ -64,8 +64,8 @@ class TranslationData(Seq2SeqData):
 
             train_df = pd.read_csv("train_data.csv")
             tab_data = TabularData.from_df(train_df, target="fraud",
-                                           numerical_input=["account_value"],
-                                           categorical_input=["account_type"])
+                                           num_cols=["account_value"],
+                                           cat_cols=["account_type"])
 
         """
         return super().from_files(

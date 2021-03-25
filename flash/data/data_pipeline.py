@@ -160,6 +160,11 @@ class DataPipeline:
 
         return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
 
+    @property
+    def preprocess_state(self):
+        if self._preprocess_pipeline is not None:
+            return self._preprocess_pipeline.state
+
     @classmethod
     def _is_overriden_recursive(
         cls, method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None

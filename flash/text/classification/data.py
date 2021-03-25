@@ -14,12 +14,9 @@
 import os
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, List, Mapping, Optional, Union
+from typing import Any, Callable, List, Mapping, Optional, Type
 
-import torch
-from datasets import Dataset, DatasetDict, load_dataset
-from datasets.utils.download_manager import GenerateMode
-from pytorch_lightning.trainer.states import RunningStage
+from datasets import DatasetDict, load_dataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
@@ -28,13 +25,11 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 from flash.core.classification import ClassificationPostprocess
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.data_pipeline import DataPipeline
-from flash.data.process import Preprocess
-from flash.data.utils import _contains_any_tensor
+from flash.data.process import Preprocess, PreprocessState
 
 
 @dataclass(unsafe_hash=True, frozen=True)
-class TextClfState:
+class TextClassificationState(PreprocessState):
     label_to_class_mapping: dict
 
 
@@ -45,9 +40,9 @@ class TextClassificationPreprocess(Preprocess):
         tokenizer: AutoTokenizer,
         input: str,
         max_length: int,
+        target: str,
+        label_to_class_mapping: dict,
         filetype: str = 'csv',
-        target: Optional[str] = None,
-        label_to_class_mapping: Optional[dict] = None
     ):
         super().__init__()
         self.tokenizer = tokenizer
@@ -56,6 +51,7 @@ class TextClassificationPreprocess(Preprocess):
         self.max_length = max_length
         self.label_to_class_mapping = label_to_class_mapping
         self.target = target
+
         self._tokenize_fn = partial(
             self._tokenize_fn,
             tokenizer=self.tokenizer,
@@ -64,6 +60,10 @@ class TextClassificationPreprocess(Preprocess):
             truncation=True,
             padding="max_length"
         )
+
+    @property
+    def state(self):
+        return TextClassificationState(self.label_to_class_mapping)
 
     def per_batch_transform(self, batch: Any) -> Any:
         if "labels" not in batch:
@@ -87,6 +87,14 @@ class TextClassificationPreprocess(Preprocess):
     def _transform_label(self, ex):
         ex[self.target] = self.label_to_class_mapping[ex[self.target]]
         return ex
+
+    @staticmethod
+    def generate_state(file: str, target: str, filetype: str) -> TextClassificationState:
+        data_files = {}
+        data_files['train'] = file
+        dataset_dict = load_dataset(filetype, data_files=data_files)
+        label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(dataset_dict['train'][target])))))}
+        return TextClassificationState(label_to_class_mapping)
 
     def load_data(
         self,
@@ -112,14 +120,6 @@ class TextClassificationPreprocess(Preprocess):
             self._tokenize_fn,
             batched=True,
         )
-
-        if self.label_to_class_mapping is None and self.training:
-            # stage should always be train in that case. Not checking this,
-            # since this is implicitly done by our dataflow.
-            self.label_to_class_mapping = {
-                v: k
-                for k, v in enumerate(list(sorted(list(set(dataset_dict[stage][self.target])))))
-            }
 
         # convert labels to ids
         if not self.predicting:
@@ -166,69 +166,56 @@ class TextClassificationData(DataModule):
     """Data Module for text classification tasks"""
     preprocess_cls = TextClassificationPreprocess
     postprocess_cls = TextClassificationPostProcess
-    _preprocess_state: Optional[TextClfState] = None
     target: Optional[str] = None
 
     @property
-    def preprocess_state(self) -> TextClfState:
-        if self._preprocess_state is None or (
-            self._label_to_class_mapping is not None
-            and self._preprocess_state.label_to_class_mapping != self._label_to_class_mapping
-        ):
-            return TextClfState(self._label_to_class_mapping)
-
-        return self._preprocess_state
-
-    @preprocess_state.setter
-    def preprocess_state(self, preprocess_state: TextClfState):
-        self._preprocess_state = preprocess_state
-
-    @property
-    def label_to_class_mapping(self) -> Optional[Mapping]:
-        mapping = self._label_to_class_mapping
-
-        if mapping is None:
-            if self._preprocess_state is not None:
-                mapping = self._preprocess_state.label_to_class_mapping
-            elif self.preprocess.label_to_class_mapping is not None:
-                mapping = self.preprocess.label_to_class_mapping
-
-        self._label_to_class_mapping = mapping
-
-        return mapping
-
-    @label_to_class_mapping.setter
-    def label_to_class_mapping(self, new_mapping: Mapping):
-        self._label_to_class_mapping = new_mapping
+    def preprocess_state(self) -> TextClassificationState:
+        return self._preprocess.state
 
     @property
     def num_classes(self):
-        if self._train_ds is not None and hasattr(self._train_ds, 'num_classes'):
-            return self._train_ds.num_classes
-        elif self._predict_ds is not None and hasattr(self._predict_ds, 'num_classes'):
-            return self._predict_ds.num_classes
-        return len(self.label_to_class_mapping)
+        return len(self.preprocess_state.label_to_class_mapping)
 
-    @property
-    def preprocess(self) -> TextClassificationPreprocess:
-        label_to_cls_mapping = self._label_to_class_mapping
+    @classmethod
+    def instantiate_preprocess(
+        cls,
+        train_file: Optional[str],
+        input: str,
+        target: str,
+        filetype: str,
+        backbone: str,
+        max_length: int,
+        label_to_class_mapping: Optional[dict] = None,
+        preprocess_state: Optional[TextClassificationState] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+    ):
+        if label_to_class_mapping is None:
+            preprocess_cls = preprocess_cls or cls.preprocess_cls
+            if train_file is not None:
+                preprocess_state = preprocess_cls.generate_state(train_file, target, filetype)
+            else:
+                if preprocess_state is None:
+                    raise MisconfigurationException(
+                        "Either ``preprocess_state`` or ``train_file`` needs to be provided"
+                    )
+            label_to_class_mapping = preprocess_state.label_to_class_mapping
 
-        if label_to_cls_mapping is None and self.preprocess_state is not None:
-            label_to_cls_mapping = self.preprocess_state.label_to_class_mapping
-        return self.preprocess_cls(
-            tokenizer=self.tokenizer,
-            input=self.input,
-            max_length=self.max_length,
-            target=self.target,
-            filetype=self.filetype,
-            label_to_class_mapping=label_to_cls_mapping,
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+
+        return preprocess_cls(
+            AutoTokenizer.from_pretrained(backbone, use_fast=True),
+            input,
+            max_length,
+            target,
+            label_to_class_mapping,
+            filetype,
         )
 
     @classmethod
     def from_files(
         cls,
         train_file: Optional[str],
-        input: str = 'input',
+        input: Optional[str] = 'input',
         target: Optional[str] = 'labels',
         filetype: str = "csv",
         backbone: str = "prajjwal1/bert-tiny",
@@ -239,6 +226,8 @@ class TextClassificationData(DataModule):
         label_to_class_mapping: Optional[dict] = None,
         batch_size: int = 16,
         num_workers: Optional[int] = None,
+        preprocess_state: Optional[TextClassificationState] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
     ) -> 'TextClassificationData':
         """Creates a TextClassificationData object from files.
 
@@ -262,16 +251,21 @@ class TextClassificationData(DataModule):
 
             train_df = pd.read_csv("train_data.csv")
             tab_data = TabularData.from_df(train_df, target="fraud",
-                                           numerical_input=["account_value"],
-                                           categorical_input=["account_type"])
+                                           num_cols=["account_value"],
+                                           cat_cols=["account_type"])
 
         """
-        cls.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        cls.input = input
-        cls.filetype = filetype
-        cls.target = target
-        cls.max_length = max_length
-        cls._label_to_class_mapping = label_to_class_mapping
+        preprocess = cls.instantiate_preprocess(
+            train_file,
+            input,
+            target,
+            filetype,
+            backbone,
+            max_length,
+            label_to_class_mapping,
+            preprocess_state,
+            preprocess_cls,
+        )
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,
@@ -279,7 +273,8 @@ class TextClassificationData(DataModule):
             test_load_data_input=test_file,
             predict_load_data_input=predict_file,
             batch_size=batch_size,
-            num_workers=num_workers
+            num_workers=num_workers,
+            preprocess=preprocess
         )
 
     @classmethod
@@ -290,7 +285,7 @@ class TextClassificationData(DataModule):
         backbone="bert-base-cased",
         filetype="csv",
         max_length: int = 128,
-        preprocess_state: Optional[TextClfState] = None,
+        preprocess_state: Optional[TextClassificationState] = None,
         label_to_class_mapping: Optional[dict] = None,
         batch_size: int = 16,
         num_workers: Optional[int] = None,
@@ -308,9 +303,6 @@ class TextClassificationData(DataModule):
                 Defaults to None which equals the number of available CPU threads,
             or 0 for Darwin platform.
         """
-        if preprocess_state is not None:
-            cls._preprocess_state = preprocess_state
-
         return cls.from_files(
             None,
             input=input,
@@ -324,4 +316,5 @@ class TextClassificationData(DataModule):
             label_to_class_mapping=label_to_class_mapping,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess_state=preprocess_state,
         )

@@ -73,6 +73,11 @@ class Properties:
             self._running_stage = None
 
 
+@dataclass(unsafe_hash=True, frozen=True)
+class PreprocessState:
+    pass
+
+
 class Preprocess(Properties, torch.nn.Module):
 
     def __init__(
@@ -87,6 +92,10 @@ class Preprocess(Properties, torch.nn.Module):
         self.valid_transform = convert_to_modules(valid_transform)
         self.test_transform = convert_to_modules(test_transform)
         self.predict_transform = convert_to_modules(predict_transform)
+
+    @classmethod
+    def from_state(cls, state: PreprocessState) -> 'Preprocess':
+        return cls(**vars(state))
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:

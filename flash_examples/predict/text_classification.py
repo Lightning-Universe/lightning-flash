@@ -36,6 +36,7 @@ print(predictions)
 datamodule = TextClassificationData.from_file(
     predict_file="data/imdb/predict.csv",
     input="review",
+    preprocess_state=model.data_pipeline.preprocess_state,
 )
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
