@@ -23,6 +23,9 @@ from flash.data.utils import _contains_any_tensor, convert_to_modules
 class _Sequential(torch.nn.Module):
     """
     This class is used to chain 3 functions together for the _Preprocessor ``per_sample_transform`` function.
+    1. ``per_sample_pre_tensor_transform``
+    2. ``per_sample_to_tensor_transform``
+    3. ``per_sample_post_tensor_transform``
     """
 
     def __init__(
