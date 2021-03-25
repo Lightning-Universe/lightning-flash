@@ -139,9 +139,11 @@ titanic.csv
 data_folder
 *.pt
 *.zip
-/data
-
-# Flash examples & notebook Data
-/flash_*/data
-/flash_*/finetuning/data
-/flash_*/predict/data
+flash_notebooks/*.py
+flash_notebooks/data
+MNIST*
+titanic
+hymenoptera_data
+imdb
+xsum
+coco128

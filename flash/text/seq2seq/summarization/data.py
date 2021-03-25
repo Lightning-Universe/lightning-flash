@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Optional, Union
+from typing import Any, Optional, Type, Union
 
 from transformers import AutoTokenizer
 
-from flash.data.process import Postprocess
+from flash.data.process import Postprocess, Preprocess
 from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPreprocess
 
 
@@ -39,9 +39,12 @@ class SummarizationData(Seq2SeqData):
     preprocess_cls = Seq2SeqPreprocess
     postprocess_cls = SummarizationPostprocess
 
-    @property
-    def postprocess(self) -> SummarizationPostprocess:
-        return self.postprocess_cls(tokenizer=self.tokenizer)
+    @classmethod
+    def instantiate_postprocess(
+        cls, tokenizer: AutoTokenizer, postprocess_cls: Optional[Type[Postprocess]] = None
+    ) -> Postprocess:
+        postprocess_cls = postprocess_cls or cls.postprocess_cls
+        return postprocess_cls(tokenizer)
 
     @classmethod
     def from_files(
@@ -59,6 +62,8 @@ class SummarizationData(Seq2SeqData):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 16,
         num_workers: Optional[int] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+        postprocess_cls: Optional[Type[Postprocess]] = None,
     ):
         """Creates a SummarizationData object from files.
 
@@ -89,20 +94,29 @@ class SummarizationData(Seq2SeqData):
                                            categorical_input=["account_type"])
 
         """
-        return super().from_files(
-            train_file=train_file,
-            valid_file=valid_file,
-            test_file=test_file,
-            predict_file=predict_file,
-            input=input,
-            target=target,
-            backbone=backbone,
-            filetype=filetype,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
+        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+        preprocess = cls.instantiate_preprocess(
+            tokenizer,
+            input,
+            filetype,
+            target,
+            max_source_length,
+            max_target_length,
+            padding,
+            preprocess_cls=preprocess_cls
+        )
+
+        postprocess = cls.instantiate_postprocess(tokenizer, postprocess_cls=postprocess_cls)
+
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_file,
+            valid_load_data_input=valid_file,
+            test_load_data_input=test_file,
+            predict_load_data_input=predict_file,
             batch_size=batch_size,
-            num_workers=num_workers
+            num_workers=num_workers,
+            preprocess=preprocess,
+            postprocess=postprocess,
         )
 
     @classmethod

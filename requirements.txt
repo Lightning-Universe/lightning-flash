@@ -1,3 +1,4 @@
+https://github.com/PyTorchLightning/pytorch-lightning/archive/master.zip
 torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
 Pillow>=7.2
@@ -12,7 +13,7 @@ numpy  # comes with 3rd-party dependency
 tqdm  # comes with 3rd-party dependency
 rouge-score>=0.0.4
 sentencepiece>=0.1.95
-lightning-bolts==0.3.2rc1  # todo: we shall align with proper release
+lightning-bolts==0.3.2  # todo: we shall align with proper release
 filelock  # comes with 3rd-party dependency
 pycocotools>=2.0.2 ; python_version >= "3.7"
 https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_predict_step.zip

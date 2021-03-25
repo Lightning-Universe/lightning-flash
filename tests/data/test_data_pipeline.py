@@ -1,4 +1,18 @@
-from typing import Any, Callable, Dict, Optional
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from unittest import mock
 
 import numpy as np
@@ -22,7 +36,7 @@ from flash.data.process import Postprocess, Preprocess
 
 class DummyDataset(torch.utils.data.Dataset):
 
-    def __getitem__(self, index: int) -> Any:
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         return torch.rand(1), torch.rand(1)
 
     def __len__(self) -> int:
@@ -192,31 +206,31 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     test_worker_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TESTING)
     predict_worker_preprocessor = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
-    _chainer = train_worker_preprocessor.per_sample_transform
-    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
-    assert _chainer.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
-    assert _chainer.per_sample_post_tensor_transform.func == preprocess.train_per_sample_post_tensor_transform
+    _seq = train_worker_preprocessor.per_sample_transform
+    assert _seq.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
+    assert _seq.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
+    assert _seq.per_sample_post_tensor_transform.func == preprocess.train_per_sample_post_tensor_transform
     assert train_worker_preprocessor.collate_fn.func == default_collate
     assert train_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
-    _chainer = val_worker_preprocessor.per_sample_transform
-    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.val_per_sample_pre_tensor_transform
-    assert _chainer.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
-    assert _chainer.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
+    _seq = val_worker_preprocessor.per_sample_transform
+    assert _seq.per_sample_pre_tensor_transform.func == preprocess.val_per_sample_pre_tensor_transform
+    assert _seq.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
+    assert _seq.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
     assert val_worker_preprocessor.collate_fn.func == data_pipeline._do_nothing_collate
     assert val_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
-    _chainer = test_worker_preprocessor.per_sample_transform
-    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
-    assert _chainer.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
-    assert _chainer.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
+    _seq = test_worker_preprocessor.per_sample_transform
+    assert _seq.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
+    assert _seq.per_sample_to_tensor_transform.func == preprocess.per_sample_to_tensor_transform
+    assert _seq.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
     assert test_worker_preprocessor.collate_fn.func == preprocess.test_collate
     assert test_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
-    _chainer = predict_worker_preprocessor.per_sample_transform
-    assert _chainer.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
-    assert _chainer.per_sample_to_tensor_transform.func == preprocess.predict_per_sample_to_tensor_transform
-    assert _chainer.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
+    _seq = predict_worker_preprocessor.per_sample_transform
+    assert _seq.per_sample_pre_tensor_transform.func == preprocess.per_sample_pre_tensor_transform
+    assert _seq.per_sample_to_tensor_transform.func == preprocess.predict_per_sample_to_tensor_transform
+    assert _seq.per_sample_post_tensor_transform.func == preprocess.per_sample_post_tensor_transform
     assert predict_worker_preprocessor.collate_fn.func == default_collate
     assert predict_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
@@ -257,7 +271,7 @@ class CustomPreprocess(Preprocess):
         pass
 
 
-def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor(tmpdir):
+def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
 
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess)
@@ -335,11 +349,11 @@ def test_attaching_datapipeline_to_model(tmpdir):
             self._saved_predict_step = self.predict_step
 
         def _compare_pre_processor(self, p1, p2):
-            p1_chainer = p1.per_sample_transform
-            p2_chainer = p2.per_sample_transform
-            assert p1_chainer.per_sample_pre_tensor_transform.func == p2_chainer.per_sample_pre_tensor_transform.func
-            assert p1_chainer.per_sample_to_tensor_transform.func == p2_chainer.per_sample_to_tensor_transform.func
-            assert p1_chainer.per_sample_post_tensor_transform.func == p2_chainer.per_sample_post_tensor_transform.func
+            p1_seq = p1.per_sample_transform
+            p2_seq = p2.per_sample_transform
+            assert p1_seq.per_sample_pre_tensor_transform.func == p2_seq.per_sample_pre_tensor_transform.func
+            assert p1_seq.per_sample_to_tensor_transform.func == p2_seq.per_sample_to_tensor_transform.func
+            assert p1_seq.per_sample_post_tensor_transform.func == p2_seq.per_sample_post_tensor_transform.func
             assert p1.collate_fn.func == p2.collate_fn.func
             assert p1.per_batch_transform.func == p2.per_batch_transform.func
 
@@ -482,7 +496,7 @@ class TestPreprocessTransformations(Preprocess):
         self.test_per_sample_post_tensor_transform_called = False
         self.predict_load_data_called = False
 
-    def train_load_data(self, sample):
+    def train_load_data(self, sample) -> LamdaDummyDataset:
         self.train_load_data_called = True
         return LamdaDummyDataset(lambda: (0, 1, 2, 3))
 
@@ -490,7 +504,7 @@ class TestPreprocessTransformations(Preprocess):
         self.train_per_sample_pre_tensor_transform_called = True
         return sample + (5, )
 
-    def train_collate(self, samples):
+    def train_collate(self, samples) -> torch.Tensor:
         self.train_collate_called = True
         return torch.tensor([list(s) for s in samples])
 
@@ -498,12 +512,12 @@ class TestPreprocessTransformations(Preprocess):
         self.train_per_batch_transform_on_device_called = True
         assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
-    def val_load_data(self, sample, dataset):
+    def val_load_data(self, sample, dataset) -> List[int]:
         self.val_load_data_called = True
         assert isinstance(dataset, AutoDataset)
         return list(range(5))
 
-    def val_load_sample(self, sample):
+    def val_load_sample(self, sample) -> Dict[str, torch.Tensor]:
         self.val_load_sample_called = True
         return {"a": sample, "b": sample + 1}
 
@@ -511,7 +525,7 @@ class TestPreprocessTransformations(Preprocess):
         self.val_per_sample_to_tensor_transform_called = True
         return sample
 
-    def val_collate(self, samples):
+    def val_collate(self, samples) -> Dict[str, torch.Tensor]:
         self.val_collate_called = True
         _count = samples[0]['a']
         assert samples == [{'a': _count, 'b': _count + 1}, {'a': _count + 1, 'b': _count + 2}]
@@ -524,7 +538,7 @@ class TestPreprocessTransformations(Preprocess):
         assert torch.equal(batch["b"], torch.tensor([1, 2]))
         return [False]
 
-    def test_load_data(self, sample):
+    def test_load_data(self, sample) -> LamdaDummyDataset:
         self.test_load_data_called = True
         return LamdaDummyDataset(lambda: [torch.rand(1), torch.rand(1)])
 
@@ -536,7 +550,7 @@ class TestPreprocessTransformations(Preprocess):
         self.test_per_sample_post_tensor_transform_called = True
         return sample
 
-    def predict_load_data(self, sample):
+    def predict_load_data(self, sample) -> LamdaDummyDataset:
         self.predict_load_data_called = True
         return LamdaDummyDataset(lambda: (["a", "b"]))
 

@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Union
+from typing import Optional, Type, Union
 
-from transformers import AutoTokenizer
-
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqDataPipeline
+from flash.data.process import Preprocess
+from flash.text.seq2seq.core.data import Seq2SeqData
 
 
 class TranslationData(Seq2SeqData):
@@ -31,11 +30,13 @@ class TranslationData(Seq2SeqData):
         backbone="facebook/mbart-large-en-ro",
         valid_file=None,
         test_file=None,
+        predict_file=None,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 8,
         num_workers: Optional[int] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None
     ):
         """Creates a TranslateData object from files.
 
@@ -47,6 +48,7 @@ class TranslationData(Seq2SeqData):
             backbone: tokenizer to use, can use any HuggingFace tokenizer.
             valid_file: Path to validation data.
             test_file: Path to test data.
+            predict_file: Path to predict data.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
@@ -70,6 +72,7 @@ class TranslationData(Seq2SeqData):
             train_file=train_file,
             valid_file=valid_file,
             test_file=test_file,
+            predict_file=predict_file,
             input=input,
             target=target,
             backbone=backbone,
@@ -78,7 +81,8 @@ class TranslationData(Seq2SeqData):
             max_target_length=max_target_length,
             padding=padding,
             batch_size=batch_size,
-            num_workers=num_workers
+            num_workers=num_workers,
+            preprocess_cls=preprocess_cls
         )
 
     @classmethod

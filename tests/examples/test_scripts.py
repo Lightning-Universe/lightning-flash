@@ -55,7 +55,7 @@ def run_test(filepath):
 @pytest.mark.parametrize(
     "folder,file",
     [
-        ("finetuning", "image_classification.py"),
+        # ("finetuning", "image_classification.py"),
         # ("finetuning", "object_detection.py"),  # TODO: takes too long.
         # ("finetuning", "summarization.py"),  # TODO: takes too long.
         ("finetuning", "tabular_classification.py"),
@@ -73,6 +73,5 @@ def test_example(tmpdir, folder, file):
     run_test(str(root / "flash_examples" / folder / file))
 
 
-@pytest.mark.skipif(reason="MNIST is not downloading (borda)")
 def test_generic_example(tmpdir):
     run_test(str(root / "flash_examples" / "generic_task.py"))

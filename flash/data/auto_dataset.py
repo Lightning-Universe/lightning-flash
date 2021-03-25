@@ -1,10 +1,21 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from contextlib import contextmanager
-from copy import deepcopy
 from inspect import signature
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import torch
-from pytorch_lightning.core.decorators import parameter_validation
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.warning_utils import rank_zero_warn
 
@@ -21,9 +32,9 @@ class AutoDataset(torch.utils.data.Dataset):
     STAGES = ("train", "test", "val", "predict")
     DATASET_KEY = "dataset"
     """
-        This class is used to encapsultate a Preprocess Object ``load_data`` and ``load_sample`` functions.
-        ``load_data`` will be called within the ``__init__`` function of the AutoDataset and ``load_sample``
-        within ``__getitem__`` function.
+        This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions.
+        ``load_data`` will be called within the ``__init__`` function of the AutoDataset if ``running_stage``
+        is provided and ``load_sample`` within ``__getitem__`` function.
     """
 
     def __init__(

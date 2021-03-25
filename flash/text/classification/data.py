@@ -169,10 +169,6 @@ class TextClassificationData(DataModule):
     _preprocess_state: Optional[TextClfState] = None
     target: Optional[str] = None
 
-    __flash_special_attr__ = (
-        "tokenizer", "input", "filetype", "target", "max_length", "_label_to_class_mapping", '_preprocess_state'
-    )
-
     @property
     def preprocess_state(self) -> TextClfState:
         if self._preprocess_state is None or (

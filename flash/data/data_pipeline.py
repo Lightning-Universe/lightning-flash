@@ -1,18 +1,28 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import functools
-import os
 import weakref
-from functools import partial, wraps
-from typing import Any, Callable, Iterable, Mapping, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch._C import device
 from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
 from flash.data.auto_dataset import AutoDataset
-from flash.data.batch import _Chainer, _PostProcessor, _PreProcessor
+from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess
 from flash.data.utils import _STAGES_PREFIX
 
@@ -21,15 +31,110 @@ if TYPE_CHECKING:
 
 
 class DataPipeline:
+    """
+    DataPipeline handles the connecting logic between ``Preprocess``, ``PostProcess``,
+    ``DataModule``, and ``LightningModule`` depending on the current ``RunningStage``
 
-    PREPROCESS_FUNCS = (
+    The ``Preprocess`` hooks are used to generate several objects:
+
+    1. Generate an ``AutoDataset`` from ``load_data`` and ``load_sample``.
+
+        Example::
+            class AutoDataset
+                def __init__(self, ..., data, ...):
+                    self.preprocessed_data: Iterable = Preprocess.load_data(data)
+
+                def __getitem__(self, index):
+                    return Preprocess.load_sample(self.preprocessed_data[index])
+
+                def __len__(self):
+                    return len(self.preprocessed_data)
+
+    2. Create a ``worker_collate_fn`` which is injected directly into the ``DataLoader``
+       and a ``device_collate_fn`` injected after ``LightningModule.transfer_batch_to_device`` hook.
+
+        Objects description:
+
+        _Sequential:
+            ┌────────────────────────────────────┐
+            │  per_sample_pre_tensor_transform   │
+            │                |                   │
+            │  per_sample_to_tensor_transform    │
+            │                |                   │
+            │  per_sample_post_tensor_transform  │
+            └────────────────────────────────────┘
+
+        _PreProcessor:
+
+            The ``_PreProcessor`` performs ``per_sample_transform``, ``collate``, ``per_batch_transform`` as follow:
+
+            ``per_batch_transform`` and ``per_sample_transform_on_device`` are mutually exclusive
+
+            def forward(self, samples: Sequence[Any]):
+                    samples = [self.per_sample_transform(sample) for sample in samples]
+                    samples = type(samples)(samples)
+                    samples = self.collate_fn(samples)
+                samples = self.per_batch_transform(samples)
+                return samples
+
+            ``_PreProcessor`` in worker:
+
+                * per_sample_transform: _Sequential(
+                    per_sample_pre_tensor_transform, per_sample_to_tensor_transform, per_sample_post_tensor_transform)
+
+                * collate: Set to ``do_nothing`` is ``per_sample_transform_on_device`` is implemented
+                    and not ``per_batch_transform``
+
+                * per_batch_transform
+
+            ``_PreProcessor`` on device:
+
+                * per_sample_transform_on_device
+
+                * collate: Set to ``do_nothing`` is ``per_batch_transform`` is implemented
+                    and not ``per_sample_transform_on_device``
+
+                * per_batch_transform_on_device
+
+
+        General flow:
+                                             load_sample
+                                                 │
+                                   per_sample_pre_tensor_transform
+                                                 │
+                                    per_sample_to_tensor_transform
+                                                 │
+                                  per_sample_post_tensor_transform
+                                                 │
+                                ┌────────────────┴───────────────────┐
+  Move Data to main worker -->  │                                    │
+                    per_sample_transform_on_device                collate
+                                │                                    │
+                            collate                          per_batch_transform
+                                │                                    │ <-- Move Data to main worker
+                    per_batch_transform_on_device      per_batch_transform_on_device
+                                │                                    │
+                                └─────────────────┬──────────────────┘
+                                                  │
+                                          model.predict_step
+                                                  │
+                                          per_batch_transform
+                                                  │
+                                              uncollate
+                                                  │
+                                          per_sample_transform
+
+    """
+
+    PREPROCESS_FUNCS = {
         "load_data", "load_sample", "per_sample_pre_tensor_transform", "per_sample_to_tensor_transform",
         "per_sample_post_tensor_transform", "per_batch_transform", "per_sample_transform_on_device",
         "per_batch_transform_on_device", "collate"
-    )
+    }
+    # TODO: unused?
     POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
 
-    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None):
+    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         if preprocess is None:
             preprocess = Preprocess()
 
@@ -63,6 +168,7 @@ class DataPipeline:
         Cropped Version of
         https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
+        assert isinstance(process_obj, super_obj)
         if prefix is None and not hasattr(super_obj, method_name):
             raise MisconfigurationException(f"This function doesn't belong to the parent class {super_obj}")
 
@@ -105,7 +211,7 @@ class DataPipeline:
     @classmethod
     def _resolve_function_hierarchy(
         cls, function_name, process_obj, stage: RunningStage, object_type: Optional[Type] = None
-    ):
+    ) -> str:
         if object_type is None:
             object_type = Preprocess
 
@@ -180,7 +286,7 @@ class DataPipeline:
 
         worker_preprocessor = _PreProcessor(
             worker_collate_fn,
-            _Chainer(
+            _Sequential(
                 getattr(self._preprocess_pipeline, func_names['per_sample_pre_tensor_transform']),
                 getattr(self._preprocess_pipeline, func_names['per_sample_to_tensor_transform']),
                 getattr(self._preprocess_pipeline, func_names['per_sample_post_tensor_transform']),
@@ -235,7 +341,10 @@ class DataPipeline:
         return dataloader, attr_name
 
     @staticmethod
-    def _set_loader(model: 'Task', loader_name: str, new_loader: DataLoader):
+    def _set_loader(model: 'Task', loader_name: str, new_loader: DataLoader) -> None:
+        """
+        This function is used to set the loader to model and/or datamodule
+        """
         *intermediates, final_name = loader_name.split('.')
         curr_attr = model
 

@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type,
 
 import pytorch_lightning as pl
 import torch
+import torchmetrics
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage, TrainerState
@@ -96,7 +97,7 @@ class Task(pl.LightningModule):
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
-            if isinstance(metric, pl.metrics.Metric):
+            if isinstance(metric, torchmetrics.metric.Metric):
                 metric(output["y_hat"], y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:

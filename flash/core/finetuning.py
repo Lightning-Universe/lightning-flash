@@ -97,7 +97,7 @@ class FreezeUnfreeze(FlashBaseFinetuning):
             return
         modules = [getattr(pl_module, attr_name) for attr_name in self.attr_names]
         self.unfreeze_and_add_param_group(
-            module=modules,
+            modules=modules,
             optimizer=optimizer,
             train_bn=self.train_bn,
         )
@@ -128,7 +128,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         if epoch == self.unfreeze_milestones[0]:
             # unfreeze num_layers last layers
             self.unfreeze_and_add_param_group(
-                module=backbone_modules[-self.num_layers:],
+                modules=backbone_modules[-self.num_layers:],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
@@ -136,7 +136,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         elif epoch == self.unfreeze_milestones[1]:
             # unfreeze remaining layers
             self.unfreeze_and_add_param_group(
-                module=backbone_modules[:-self.num_layers],
+                modules=backbone_modules[:-self.num_layers],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )

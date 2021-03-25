@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from functools import partial
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Type, Union
 
 import datasets
 from datasets import DatasetDict, load_dataset
@@ -233,22 +233,30 @@ class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
     preprocess_cls = Seq2SeqPreprocess
-    # this enables to transform level-class attributes into instance based attributes
-    # It will perform a deepcopy on cls(...) for those attributes.
-    __flash_special_attr__ = (
-        "tokenizer", "input", "filetype", "target", "max_source_length", "max_target_length", "padding"
-    )
 
-    @property
-    def preprocess(self) -> Seq2SeqPreprocess:
-        return self.preprocess_cls(
-            tokenizer=self.tokenizer,
-            input=self.input,
-            filetype=self.filetype,
-            target=self.target,
-            max_source_length=self.max_source_length,
-            max_target_length=self.max_target_length,
-            padding=self.padding,
+    @classmethod
+    def instantiate_preprocess(
+        cls,
+        tokenizer: AutoTokenizer,
+        input: str,
+        filetype: str,
+        target: str,
+        max_source_length: int,
+        max_target_length: int,
+        padding: int,
+        preprocess_cls: Optional[Type[Preprocess]] = None
+    ) -> Preprocess:
+
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+
+        return preprocess_cls(
+            tokenizer=tokenizer,
+            input=input,
+            filetype=filetype,
+            target=target,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
         )
 
     @classmethod
@@ -267,6 +275,7 @@ class Seq2SeqData(DataModule):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 32,
         num_workers: Optional[int] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
     ):
         """Creates a Seq2SeqData object from files.
 
@@ -298,13 +307,17 @@ class Seq2SeqData(DataModule):
                                            categorical_input=["account_type"])
 
         """
-        cls.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        cls.input = input
-        cls.filetype = filetype
-        cls.target = target
-        cls.max_source_length = max_source_length
-        cls.max_target_length = max_target_length
-        cls.padding = padding
+        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+        preprocess = cls.instantiate_preprocess(
+            tokenizer,
+            input,
+            filetype,
+            target,
+            max_source_length,
+            max_target_length,
+            padding,
+            preprocess_cls=preprocess_cls
+        )
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,
@@ -313,6 +326,7 @@ class Seq2SeqData(DataModule):
             predict_load_data_input=predict_file,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess=preprocess
         )
 
     @classmethod

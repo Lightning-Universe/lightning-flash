@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
-import torch
 from pandas.core.frame import DataFrame
-from pytorch_lightning.trainer.states import RunningStage
 from sklearn.model_selection import train_test_split
 
 from flash.data.auto_dataset import AutoDataset
@@ -117,8 +115,6 @@ class TabularData(DataModule):
     """Data module for tabular tasks"""
 
     preprocess_cls = TabularPreprocess
-    # this enables to transform level-class attributes into instance based attributes
-    __flash_special_attr__ = ("_preprocess_state", "cat_cols", "num_cols", "target")
 
     @property
     def preprocess_state(self):
@@ -139,6 +135,23 @@ class TabularData(DataModule):
     @property
     def num_features(self) -> int:
         return len(self.cat_cols) + len(self.num_cols)
+
+    """
+    @classmethod
+    def instantiate_preprocess(
+        cls,
+        mean: DataFrame,
+        std: DataFrame,
+        codes: Dict,
+        target_codes: Optional[Dict],
+        num_classes: int,
+        categorical_input: List[str],
+        numerical_input: List[str],
+        preprocess_cls: Optional[Type[Preprocess]] = None
+    ) -> Preprocess:
+
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+    """
 
     @property
     def preprocess(self) -> TabularPreprocess:
@@ -161,23 +174,6 @@ class TabularData(DataModule):
         )
 
     @classmethod
-    def _generate_dataset_if_possible(
-        cls,
-        data: Optional[Any],
-        running_stage: RunningStage,
-        whole_data_load_fn: Optional[Callable] = None,
-        per_sample_load_fn: Optional[Callable] = None,
-        data_pipeline: Optional[DataPipeline] = None
-    ) -> Optional[AutoDataset]:
-        if data is None:
-            return None
-
-        if data_pipeline is not None:
-            return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
-
-        return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)
-
-    @classmethod
     def from_csv(
         cls,
         target: str,
@@ -191,6 +187,8 @@ class TabularData(DataModule):
         num_workers: Optional[int] = None,
         val_size: Optional[float] = None,
         test_size: Optional[float] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+        preprocess_state: Optional[TabularState] = None,
         **pandas_kwargs,
     ):
         """Creates a TextClassificationData object from pandas DataFrames.
@@ -208,6 +206,8 @@ class TabularData(DataModule):
             or 0 for Darwin platform.
             val_size: float between 0 and 1 to create a validation dataset from train dataset
             test_size: float between 0 and 1 to create a test dataset from train validation
+            preprocess_cls: Preprocess class to be used within this DataModule DataPipeline
+            preprocess_state: Used to store the train statistics
 
         Returns:
             TabularData: The constructed data module.
@@ -221,11 +221,21 @@ class TabularData(DataModule):
         test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv is not None else None
         predict_df = pd.read_csv(predict_csv, **pandas_kwargs) if predict_csv is not None else None
 
-        datamodule = cls.from_df(
-            train_df, target, categorical_input, numerical_input, valid_df, test_df, predict_df, batch_size,
-            num_workers, val_size, test_size
+        return cls.from_df(
+            train_df,
+            target,
+            categorical_input,
+            numerical_input,
+            valid_df,
+            test_df,
+            predict_df,
+            batch_size,
+            num_workers,
+            val_size,
+            test_size,
+            preprocess_state=preprocess_state,
+            preprocess_cls=preprocess_cls,
         )
-        return datamodule
 
     @property
     def emb_sizes(self) -> list:
@@ -253,7 +263,8 @@ class TabularData(DataModule):
         num_workers: Optional[int] = None,
         val_size: float = None,
         test_size: float = None,
-        preprocess_state: Optional[TabularState] = None
+        preprocess_state: Optional[TabularState] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
     ):
         """Creates a TabularData object from pandas DataFrames.
 

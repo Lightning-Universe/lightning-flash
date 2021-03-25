@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import pathlib
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from numpy import isin
@@ -239,17 +239,15 @@ class ImageClassificationData(DataModule):
         valid_ds: Optional[torch.utils.data.Dataset] = None,
         test_ds: Optional[torch.utils.data.Dataset] = None,
         predict_ds: Optional[torch.utils.data.Dataset] = None,
-        train_transform: Optional[Union[str, Dict]] = 'default',
-        valid_transform: Optional[Union[str, Dict]] = 'default',
-        test_transform: Optional[Union[str, Dict]] = 'default',
-        predict_transform: Optional[Union[str, Dict]] = 'default',
         batch_size: int = 1,
         num_workers: Optional[int] = None,
+        seed: int = 1234,
         train_split: Optional[Union[float, int]] = None,
         valid_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
-        seed: Optional[int] = 1234,
-    ):
+        **kwargs,
+    ) -> 'ImageClassificationData':
+        """Creates a ImageClassificationData object from lists of image filepaths and labels"""
 
         if train_ds is not None and train_split is not None or valid_split is not None or test_split is not None:
             train_ds, _valid_ds, _test_ds = self.train_valid_test_split(
@@ -285,26 +283,9 @@ class ImageClassificationData(DataModule):
         if self._predict_ds is not None:
             self.set_dataset_attribute(self._predict_ds, 'num_classes', self.num_classes)
 
-        if isinstance(train_transform, str) and train_transform == 'default':
-            train_transform = self.default_train_transforms()
-
-        if isinstance(valid_transform, str) and valid_transform == 'default':
-            valid_transform = self.default_valid_transforms()
-
-        if isinstance(test_transform, str) and test_transform == 'default':
-            test_transform = self.default_valid_transforms()
-
-        if isinstance(predict_transform, str) and predict_transform == 'default':
-            predict_transform = self.default_valid_transforms()
-
-        self.train_transform = self._check_transforms(train_transform)
-        self.valid_transform = self._check_transforms(valid_transform)
-        self.test_transform = self._check_transforms(test_transform)
-        self.predict_transform = self._check_transforms(predict_transform)
-
     @staticmethod
-    def _check_transforms(transform: dict) -> dict:
-        if transform is not None and not isinstance(transform, dict):
+    def _check_transforms(transform: Dict[str, Union[nn.Module, Callable]]) -> Dict[str, Union[nn.Module, Callable]]:
+        if transform is not None and not isinstance(transform, Dict):
             raise MisconfigurationException(
                 "Transform should be a dict. "
                 f"Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
@@ -366,31 +347,48 @@ class ImageClassificationData(DataModule):
 
         return num_classes
 
-    @property
-    def preprocess(self) -> ImageClassificationPreprocess:
-        return self.preprocess_cls(
-            train_transform=self.train_transform,
-            valid_transform=self.valid_transform,
-            test_transform=self.test_transform,
-            predict_transform=self.predict_transform
+    @classmethod
+    def instantiate_preprocess(
+        cls,
+        train_transform: Dict[str, Union[nn.Module, Callable]],
+        valid_transform: Dict[str, Union[nn.Module, Callable]],
+        test_transform: Dict[str, Union[nn.Module, Callable]],
+        predict_transform: Dict[str, Union[nn.Module, Callable]],
+        preprocess_cls: Type[Preprocess] = None
+    ) -> Preprocess:
+
+        train_transform, valid_transform, test_transform, predict_transform = cls._resolve_transforms(
+            train_transform, valid_transform, test_transform, predict_transform
         )
 
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+        return preprocess_cls(train_transform, valid_transform, test_transform, predict_transform)
+
     @classmethod
-    def _generate_dataset_if_possible(
+    def _resolve_transforms(
         cls,
-        data: Optional[Any],
-        running_stage: RunningStage,
-        whole_data_load_fn: Optional[Callable] = None,
-        per_sample_load_fn: Optional[Callable] = None,
-        data_pipeline: Optional[DataPipeline] = None
-    ) -> Optional[AutoDataset]:
-        if data is None:
-            return None
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        valid_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+    ):
 
-        if data_pipeline is not None:
-            return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
+        if isinstance(train_transform, str) and train_transform == 'default':
+            train_transform = cls.default_train_transforms()
 
-        return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)
+        if isinstance(valid_transform, str) and valid_transform == 'default':
+            valid_transform = cls.default_valid_transforms()
+
+        if isinstance(test_transform, str) and test_transform == 'default':
+            test_transform = cls.default_valid_transforms()
+
+        if isinstance(predict_transform, str) and predict_transform == 'default':
+            predict_transform = cls.default_valid_transforms()
+
+        return (
+            cls._check_transforms(train_transform), cls._check_transforms(valid_transform),
+            cls._check_transforms(test_transform), cls._check_transforms(predict_transform)
+        )
 
     @classmethod
     def from_folders(
@@ -405,9 +403,9 @@ class ImageClassificationData(DataModule):
         predict_transform: Optional[Union[str, Dict]] = 'default',
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-        **kwargs
-    ):
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+        **kwargs,
+    ) -> 'DataModule':
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
 
@@ -435,20 +433,24 @@ class ImageClassificationData(DataModule):
         Examples:
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
-
-
         """
+        preprocess = cls.instantiate_preprocess(
+            train_transform,
+            valid_transform,
+            test_transform,
+            predict_transform,
+            preprocess_cls=preprocess_cls,
+        )
+
         return cls.from_load_data_inputs(
             train_load_data_input=train_folder,
             valid_load_data_input=valid_folder,
             test_load_data_input=test_folder,
             predict_load_data_input=predict_folder,
-            train_transform=train_transform,
-            valid_transform=valid_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess=preprocess,
+            **kwargs,
         )
 
     @classmethod
@@ -465,10 +467,18 @@ class ImageClassificationData(DataModule):
         valid_transform: Optional[Callable] = 'default',
         batch_size: int = 64,
         num_workers: Optional[int] = None,
-        seed: int = 1234,
-        **kwargs
-    ):
-        """Creates a ImageClassificationData object from lists of image filepaths and labels
+        seed: Optional[int] = 42,
+        **kwargs,
+    ) -> 'ImageClassificationData':
+        """
+        Creates a ImageClassificationData object from folders of images arranged in this way: ::
+
+            folder/dog_xxx.png
+            folder/dog_xxy.png
+            folder/dog_xxz.png
+            folder/cat_123.png
+            folder/cat_nsdf3.png
+            folder/cat_asd932_.png
 
         Args:
             train_filepaths: string or sequence of file paths for training dataset. Defaults to ``None``.

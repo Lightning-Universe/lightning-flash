@@ -14,14 +14,14 @@
 import os
 import platform
 from copy import deepcopy
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.core.datamodule import _DataModuleWrapper, track_data_hook_calls
+from pytorch_lightning.core.datamodule import _DataModuleWrapper
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities import rank_zero_only
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
@@ -29,6 +29,7 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
+# TODO: unused?
 class MockLightningModule(pl.LightningModule):
 
     pass
@@ -40,44 +41,7 @@ class TaskDataPipeline(DataPipeline):
         return (batch["x"], batch.get('target', batch.get('y'))) if isinstance(batch, dict) else batch
 
 
-class _FlashDataModuleWrapper(_DataModuleWrapper):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__has_added_checks = False
-
-    def __call__(cls, *args, **kwargs):
-        """A wrapper for LightningDataModule that:
-
-        1. Runs user defined subclass's __init__
-        2. Assures prepare_data() runs on rank 0
-        3. Lets you check prepare_data and setup to see if they've been called
-        """
-        __flash_special_attr__ = getattr(cls, "__flash_special_attr__", None)
-        if __flash_special_attr__:
-            saved_attr = []
-            for special_attr_name in __flash_special_attr__:
-                attr = deepcopy(getattr(cls, special_attr_name, None))
-                saved_attr.append((special_attr_name, attr))
-
-        if not cls.__has_added_checks:
-            cls.__has_added_checks = True
-            # Track prepare_data calls and make sure it runs on rank zero
-            cls.prepare_data = track_data_hook_calls(rank_zero_only(cls.prepare_data))
-            # Track setup calls
-            cls.setup = track_data_hook_calls(cls.setup)
-
-        # Get instance of LightningDataModule by mocking its __init__ via __call__
-        obj = type.__call__(cls, *args, **kwargs)
-
-        if __flash_special_attr__:
-            for special_attr_name, attr in saved_attr:
-                setattr(obj, special_attr_name, attr)
-
-        return obj
-
-
-class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
+class DataModule(pl.LightningDataModule):
     """Basic DataModule class for all Flash tasks
 
     Args:
@@ -124,13 +88,9 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
 
         # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            if platform.system() == "Darwin":
-                num_workers = 0
-            else:
-                num_workers = os.cpu_count()
+            num_workers = 0 if platform.system() == "Darwin" else os.cpu_count()
         self.num_workers = num_workers
 
-        self._data_pipeline = None
         self._preprocess = None
         self._postprocess = None
 
@@ -217,18 +177,18 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
 
     @property
     def preprocess(self) -> Preprocess:
-        return self.preprocess_cls()
+        return self._preprocess or self.preprocess_cls()
 
     @property
     def postprocess(self) -> Postprocess:
-        return self.postprocess_cls()
+        return self._postprocess or self.postprocess_cls()
 
     @property
     def data_pipeline(self) -> DataPipeline:
         return DataPipeline(self.preprocess, self.postprocess)
 
     @staticmethod
-    def _check_transforms(transform: dict) -> dict:
+    def _check_transforms(transform: Dict[str, Union[Module, Callable]]) -> Dict[str, Union[Module, Callable]]:
         if not isinstance(transform, dict):
             raise MisconfigurationException(
                 "Transform should be a dict. Here are the available keys "
@@ -245,6 +205,10 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         per_sample_load_fn: Optional[Callable] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> AutoDataset:
+        """
+        This function is used to generate an ``AutoDataset`` from a ``DataPipeline`` if provided
+        or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly
+        """
 
         if whole_data_load_fn is None:
             whole_data_load_fn = getattr(
@@ -266,28 +230,40 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         valid_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
         seed: Optional[int] = 1234,
-    ):
+    ) -> Tuple[Dataset, Optional[Dataset], Optional[Dataset]]:
+        """Creates a ImageClassificationData object from lists of image filepaths and labels
+
+        Args:
+            dataset: Dataset to be split.
+            train_split: If Float, ratio of data to be contained within the train dataset. If Int,
+                number of samples to be contained within train dataset.
+            valid_split: If Float, ratio of data to be contained within the validation dataset. If Int,
+                number of samples to be contained within test dataset.
+            test_split: If Float, ratio of data to be contained within the test dataset. If Int,
+                number of samples to be contained within test dataset.
+            seed: Used for the train/val splits when valid_split is not None.
+
+        """
+        n = len(dataset)
+
         if test_split is None:
             _test_length = 0
         elif isinstance(test_split, float):
-            _test_length = int(len(dataset) * test_split)
+            _test_length = int(n * test_split)
         else:
             _test_length = test_split
 
         if valid_split is None:
             _val_length = 0
-
         elif isinstance(valid_split, float):
-            _val_length = int(len(dataset) * valid_split)
+            _val_length = int(n * valid_split)
         else:
             _val_length = valid_split
 
         if train_split is None:
-            _train_length = len(dataset) - _val_length - _test_length
-
+            _train_length = n - _val_length - _test_length
         elif isinstance(train_split, float):
-            _train_length = int(len(dataset) * train_split)
-
+            _train_length = int(n * train_split)
         else:
             _train_length = train_split
 
@@ -299,10 +275,8 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         train_ds, val_ds, test_ds = torch.utils.data.random_split(
             dataset, [_train_length, _val_length, _test_length], generator
         )
-
         if valid_split is None:
             val_ds = None
-
         if test_split is None:
             test_ds = None
 
@@ -318,7 +292,7 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         data_pipeline: Optional[DataPipeline] = None
     ) -> Optional[AutoDataset]:
         if data is None:
-            return None
+            return
 
         if data_pipeline is not None:
             return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
@@ -332,10 +306,28 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         valid_load_data_input: Optional[Any] = None,
         test_load_data_input: Optional[Any] = None,
         predict_load_data_input: Optional[Any] = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Preprocess] = None,
         **kwargs,
-    ):
-        # trick to get data_pipeline from empty DataModule      # noqa E265
-        data_pipeline = cls(**kwargs).data_pipeline
+    ) -> 'DataModule':
+        """
+        This functions is an helper to generate a ``DataModule`` from a ``DataPipeline``.
+
+        Args:
+            cls: ``DataModule`` subclass
+            train_load_data_input: Data to be received by the ``train_load_data`` function from this ``Preprocess``
+            valid_load_data_input: Data to be received by the ``val_load_data`` function from this ``Preprocess``
+            test_load_data_input: Data to be received by the ``test_load_data`` function from this ``Preprocess``
+            predict_load_data_input: Data to be received by the ``predict_load_data`` function from this ``Preprocess``
+            kwargs: Any extra arguments to instantiate the provided ``DataModule``
+        """
+        # trick to get data_pipeline from empty DataModule
+        if preprocess is not None or postprocess:
+            data_pipeline = DataPipeline(
+                preprocess or cls(**kwargs).preprocess, postprocess or cls(**kwargs).postprocess
+            )
+        else:
+            data_pipeline = cls(**kwargs).data_pipeline
         train_ds = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
         )

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
 from PIL import Image
@@ -179,6 +179,17 @@ class ObjectDetectionData(DataModule):
     preprocess_cls = ObjectDetectionPreprocess
 
     @classmethod
+    def instantiate_preprocess(
+        cls,
+        train_transform: Optional[Callable],
+        valid_transform: Optional[Callable],
+        preprocess_cls: Type[Preprocess] = None
+    ) -> Preprocess:
+
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+        return preprocess_cls(train_transform, valid_transform)
+
+    @classmethod
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
@@ -192,12 +203,11 @@ class ObjectDetectionData(DataModule):
         test_transform: Optional[Callable] = _default_transform,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        preprocess_cls: Type[Preprocess] = None,
         **kwargs
     ):
 
-        cls.train_transform = train_transform
-        cls.valid_transform = valid_transform
-        cls.test_transform = test_transform
+        preprocess = cls.instantiate_preprocess(train_transform, valid_transform, preprocess_cls=preprocess_cls)
 
         datamodule = cls.from_load_data_inputs(
             train_load_data_input=(train_folder, train_ann_file, train_transform),
@@ -205,6 +215,7 @@ class ObjectDetectionData(DataModule):
             test_load_data_input=(test_folder, test_ann_file, test_transform) if test_folder else None,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess=preprocess,
             **kwargs
         )
         datamodule.num_classes = datamodule._train_ds.num_classes
