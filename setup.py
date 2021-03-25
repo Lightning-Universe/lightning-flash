@@ -19,7 +19,7 @@ except ImportError:
 
 _PATH_ROOT = os.path.dirname(__file__)
 
-long_description = setup_tools._load_readme_description(_PATH_ROOT)
+long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=info.__homepage__, ver=info.__version__)
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
@@ -36,7 +36,7 @@ setup(
     download_url="https://github.com/PyTorchLightning/lightning-flash",
     license=info.__license__,
     packages=find_packages(exclude=["tests", "docs"]),
-    long_description=setup_tools._load_readme_description(_PATH_ROOT),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
     zip_safe=False,
