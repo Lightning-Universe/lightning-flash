@@ -16,5 +16,4 @@ sentencepiece>=0.1.95
 lightning-bolts==0.3.2  # todo: we shall align with proper release
 filelock  # comes with 3rd-party dependency
 pycocotools>=2.0.2 ; python_version >= "3.7"
-https://github.com/PyTorchLightning/pytorch-lightning/archive/flash_predict_step.zip
 kornia>=0.5.0
