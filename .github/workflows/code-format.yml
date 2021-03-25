@@ -21,7 +21,7 @@ jobs:
           pip list
         shell: bash
       - name: PEP8
-        run: flake8
+        run: flake8 .
 
   #format-check-yapf:
   #  runs-on: ubuntu-20.04
