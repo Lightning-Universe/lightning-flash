@@ -86,10 +86,10 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
 
     def __init__(
         self,
-        train_ds: Optional[AutoDataset] = None,
-        valid_ds: Optional[AutoDataset] = None,
-        test_ds: Optional[AutoDataset] = None,
-        predict_ds: Optional[AutoDataset] = None,
+        train_ds: Optional[Dataset] = None,
+        valid_ds: Optional[Dataset] = None,
+        test_ds: Optional[Dataset] = None,
+        predict_ds: Optional[Dataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
     ) -> None:
@@ -263,14 +263,14 @@ class DataModule(pl.LightningDataModule, metaclass=_FlashDataModuleWrapper):
         """Creates a ImageClassificationData object from lists of image filepaths and labels
 
         Args:
-            dataset: Dataset to be split
+            dataset: Dataset to be split.
             train_split: If Float, ratio of data to be contained within the train dataset. If Int,
-                number of samples to be contained within train dataset
+                number of samples to be contained within train dataset.
             valid_split: If Float, ratio of data to be contained within the validation dataset. If Int,
-                number of samples to be contained within test dataset
+                number of samples to be contained within test dataset.
             test_split: If Float, ratio of data to be contained within the test dataset. If Int,
-                number of samples to be contained within test dataset
-            seed: Used for the train/val splits when valid_split is not None
+                number of samples to be contained within test dataset.
+            seed: Used for the train/val splits when valid_split is not None.
 
         """
         n = len(dataset)
