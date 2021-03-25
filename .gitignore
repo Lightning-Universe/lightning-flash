@@ -143,3 +143,7 @@ flash_notebooks/*.py
 flash_notebooks/data
 MNIST*
 titanic
+coco128
+hymenoptera_data
+xsum
+imdb

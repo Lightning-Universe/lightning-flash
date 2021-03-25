@@ -62,6 +62,7 @@ jobs:
         pip --version
         # python -m pip install --upgrade --user pip
         python -m pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install -e .
         pip list
       shell: bash
 
