@@ -365,13 +365,13 @@ class DataPipeline:
 
             dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
 
-            if dataloader is None:
+            if not dataloader:
                 continue
 
             if isinstance(dataloader, (_PatchDataLoader, Callable)):
                 dataloader = dataloader()
 
-            if dataloader is None:
+            if not dataloader:
                 continue
 
             if isinstance(dataloader, Sequence):
@@ -478,7 +478,7 @@ class DataPipeline:
 
             dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
 
-            if dataloader is None:
+            if not dataloader:
                 continue
 
             if isinstance(dataloader, _PatchDataLoader):
@@ -560,6 +560,7 @@ class DataPipeline:
 
 class _StageOrchestrator:
 
+    # This is used to map ``SANITY_CHECKING`` to ``VALIDATING``
     internal_mapping = {
         RunningStage.TRAINING: RunningStage.TRAINING,
         RunningStage.SANITY_CHECKING: RunningStage.VALIDATING,
