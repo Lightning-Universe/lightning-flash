@@ -157,7 +157,7 @@ class Postprocess(Properties, torch.nn.Module):
         self._save_path = save_path
 
     def per_batch_transform(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch before uncollation to single samples.
+        """Transforms to apply on a whole batch before uncollation to individual samples.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return batch
