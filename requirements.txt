@@ -1,3 +1,4 @@
+torchmetrics
 pytorch_lightning  # placeholder
 git+https://github.com/PyTorchLightning/pytorch-lightning.git
 lightning-bolts==0.3.2  # todo: we shall align with proper release
