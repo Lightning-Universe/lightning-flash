@@ -61,7 +61,7 @@ class Task(pl.LightningModule):
             model: Optional[nn.Module] = None,
             loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
             optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-            schedulers: Optional[SchedulerType] = None,
+            schedulers: Optional[Any] = None,
             metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
             learning_rate: float = 5e-5,
     ):
@@ -162,7 +162,7 @@ class Task(pl.LightningModule):
 
     def configure_optimizers(
             self
-    ) -> Union[Tuple[Tuple[torch.optim.Optimizer], SchedulerType], Tuple[torch.optim.Optimizer]]:
+    ) -> Union[Tuple[Tuple[torch.optim.Optimizer], Any], Tuple[torch.optim.Optimizer]]:
         optimizers = self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate),
         if self.schedulers:
             return optimizers, self.schedulers
