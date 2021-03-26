@@ -36,7 +36,7 @@ model = nn.Sequential(
 )
 
 # 3. Load a dataset
-dataset = datasets.MNIST(os.path.join(_PATH_ROOT, 'data'), download=True, transform=transforms.ToTensor())
+dataset = datasets.MNIST(os.path.join(_PATH_ROOT, 'data'), download=False, transform=transforms.ToTensor())
 
 # 4. Split the data randomly
 train, val, test = random_split(dataset, [50000, 5000, 5000])  # type: ignore
