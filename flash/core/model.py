@@ -55,7 +55,7 @@ class Task(LightningModule):
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training
-        optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
+        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`
     """
@@ -137,14 +137,6 @@ class Task(LightningModule):
         Args:
 
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
-
-            batch_idx: Batch index
-
-            dataloader_idx: Dataloader index
-
-            skip_collate_fn: Whether to skip the collate step.
-                this is required when passing data already processed
-                for the model, for example, data from a dataloader
 
             data_pipeline: Use this to override the current data pipeline
 
