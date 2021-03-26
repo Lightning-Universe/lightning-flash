@@ -242,7 +242,7 @@ class TextClassificationData(DataModule):
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
+                or 0 for Darwin platform.
 
         Returns:
             TextClassificationData: The constructed data module.
@@ -301,7 +301,7 @@ class TextClassificationData(DataModule):
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
+                or 0 for Darwin platform.
         """
         return cls.from_files(
             None,

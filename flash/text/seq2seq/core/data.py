@@ -13,9 +13,10 @@
 # limitations under the License.
 import os
 from functools import partial
-from typing import Any, Callable, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import datasets
+import torch
 from datasets import DatasetDict, load_dataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
@@ -76,8 +77,11 @@ class Seq2SeqPreprocess(Preprocess):
         return output
 
     def load_data(
-        self, file: str, use_full: bool = True, columns: List[str] = ["input_ids", "attention_mask", "labels"]
-    ):
+        self,
+        file: str,
+        use_full: bool = True,
+        columns: List[str] = ["input_ids", "attention_mask", "labels"]
+    ) -> 'datasets.Dataset':
         data_files = {}
         stage = self._running_stage.value
         data_files[stage] = str(file)
@@ -100,7 +104,7 @@ class Seq2SeqPreprocess(Preprocess):
         dataset_dict.set_format(columns=columns)
         return dataset_dict[stage]
 
-    def predict_load_data(self, sample: Any):
+    def predict_load_data(self, sample: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
         if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
             return self.load_data(sample, use_full=True, columns=["input_ids", "attention_mask"])
         else:
@@ -167,14 +171,14 @@ class Seq2SeqData(DataModule):
             train_file: Path to training data.
             input: The field storing the source translation text.
             target: The field storing the target translation text.
-            filetype: .csv or .json
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            filetype: Csv or Json File
+            backbone: Tokenizer to use, can use any HuggingFace tokenizer.
             valid_file: Path to validation data.
             test_file: Path to test data.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 32.
+            batch_size: The batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
             or 0 for Darwin platform.
@@ -229,15 +233,15 @@ class Seq2SeqData(DataModule):
             predict_file: Path to prediction input file.
             input: The field storing the source translation text.
             target: The field storing the target translation text.
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
-            filetype: csv or json.
+            backbone: Tokenizer to use, can use any HuggingFace tokenizer.
+            filetype: Csv or json.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 32.
+            batch_size: The batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
+                or 0 for Darwin platform.
         Returns:
             Seq2SeqData: The constructed data module.
         """

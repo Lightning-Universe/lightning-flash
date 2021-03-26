@@ -1,9 +1,9 @@
-from typing import Union
+from typing import List, Tuple, Union
 
 from PIL import Image
 
 
-def pil_loader(sample) -> Union[Image.Image, list]:
+def pil_loader(sample: Union[List, Tuple, str]) -> Union[Image.Image, list]:
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
 
     if isinstance(sample, (tuple, list)):

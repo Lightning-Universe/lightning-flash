@@ -410,12 +410,15 @@ class ImageClassificationData(DataModule):
             train/cat/asd932.png
 
         Args:
-            train_folder: Path to training folder.
-            valid_folder: Path to validation folder.
-            test_folder: Path to test folder.
-            predict: Path to predict folder.
+            train_folder: Path to training folder. Default: None.
+            valid_folder: Path to validation folder. Default: None.
+            test_folder: Path to test folder. Default: None.
+            predict_folder: Path to predict folder. Default: None.
             valid_transform: Image transform to use for validation and test set.
             train_transform: Image transform to use for training set.
+            valid_transform: Image transform to use for validation set.
+            test_transform: Image transform to use for test set.
+            predict_transform: Image transform to use for predict set.
             batch_size: Batch size for data loading.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
@@ -474,20 +477,20 @@ class ImageClassificationData(DataModule):
             folder/cat_asd932_.png
 
         Args:
-            train_filepaths: string or sequence of file paths for training dataset. Defaults to ``None``.
-            train_labels: sequence of labels for training dataset. Defaults to ``None``.
-            valid_split: if not None, generates val split from train dataloader using this value.
-            valid_filepaths: string or sequence of file paths for validation dataset. Defaults to ``None``.
-            valid_labels: sequence of labels for validation dataset. Defaults to ``None``.
-            test_filepaths: string or sequence of file paths for test dataset. Defaults to ``None``.
-            test_labels: sequence of labels for test dataset. Defaults to ``None``.
-            train_transform: transforms for training dataset. Defaults to ``default``, which loads imagenet transforms.
-            valid_transform: transforms for validation and testing dataset.
+            train_filepaths: String or sequence of file paths for training dataset. Defaults to ``None``.
+            train_labels: Sequence of labels for training dataset. Defaults to ``None``.
+            valid_split: If not None, generates val split from train dataloader using this value.
+            valid_filepaths: String or sequence of file paths for validation dataset. Defaults to ``None``.
+            valid_labels: Sequence of labels for validation dataset. Defaults to ``None``.
+            test_filepaths: String or sequence of file paths for test dataset. Defaults to ``None``.
+            test_labels: Sequence of labels for test dataset. Defaults to ``None``.
+            train_transform: Transforms for training dataset. Defaults to ``default``, which loads imagenet transforms.
+            valid_transform: Transforms for validation and testing dataset.
                 Defaults to ``default``, which loads imagenet transforms.
-            batch_size: the batchsize to use for parallel loading. Defaults to ``64``.
+            batch_size: The batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
-            seed: Used for the train/val splits when valid_split is not None
+            seed: Used for the train/val splits when valid_split is not None.
 
         Returns:
             ImageClassificationData: The constructed data module.

@@ -34,10 +34,10 @@ class DataModule(pl.LightningDataModule):
 
     Args:
         train_ds: Dataset for training. Defaults to None.
-        valid_ds: Dataset for VALIDATING model performance during training. Defaults to None.
+        valid_ds: Dataset for validating model performance during training. Defaults to None.
         test_ds: Dataset to test model performance. Defaults to None.
-        batch_size: the batch size to be used by the DataLoader. Defaults to 1.
-        num_workers: The number of workers to use for parallelized loading.
+        batch_size: The batch size to be used by the DataLoader. Defaults to 1.
+        num_workers: The number of workers to use for parallelized loading. Defaults to None.
             Defaults to None which equals the number of available CPU threads,
             or 0 for Darwin platform.
     """

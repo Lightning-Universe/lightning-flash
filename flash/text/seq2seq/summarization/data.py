@@ -78,10 +78,10 @@ class SummarizationData(Seq2SeqData):
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 16.
+            batch_size: The batchsize to use for parallel loading. Defaults to 16.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
+                or 0 for Darwin platform.
 
         Returns:
             SummarizationData: The constructed data module.
@@ -144,10 +144,10 @@ class SummarizationData(Seq2SeqData):
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 16.
+            batch_size: The batchsize to use for parallel loading. Defaults to 16.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
+                or 0 for Darwin platform.
 
         Returns:
             SummarizationData: The constructed data module.

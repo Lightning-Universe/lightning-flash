@@ -17,8 +17,6 @@ from pathlib import Path
 import numpy as np
 import torch
 from PIL import Image
-from torchvision import transforms as T
-from torchvision.transforms import transforms
 
 from flash.data.data_utils import labels_from_categorical_csv
 from flash.vision import ImageClassificationData

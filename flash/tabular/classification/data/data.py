@@ -215,20 +215,20 @@ class TabularData(DataModule):
         """Creates a TextClassificationData object from pandas DataFrames.
 
         Args:
-            train_csv: train data csv file.
+            train_csv: Train data csv file.
             target: The column containing the class id.
             cat_cols: The list of categorical columns.
             num_cols: The list of numerical columns.
-            valid_csv: validation data csv file.
-            test_csv: test data csv file.
-            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            valid_csv: Validation data csv file.
+            test_csv: Test data csv file.
+            batch_size: The batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
-            val_size: float between 0 and 1 to create a validation dataset from train dataset
-            test_size: float between 0 and 1 to create a test dataset from train validation
-            preprocess_cls: Preprocess class to be used within this DataModule DataPipeline
-            preprocess_state: Used to store the train statistics
+                or 0 for Darwin platform.
+            val_size: Float between 0 and 1 to create a validation dataset from train dataset.
+            test_size: Float between 0 and 1 to create a test dataset from train validation.
+            preprocess_cls: Preprocess class to be used within this DataModule DataPipeline.
+            preprocess_state: Used to store the train statistics.
 
         Returns:
             TabularData: The constructed data module.
@@ -319,18 +319,18 @@ class TabularData(DataModule):
         """Creates a TabularData object from pandas DataFrames.
 
         Args:
-            train_df: train data DataFrame
+            train_df: Train data DataFrame.
             target: The column containing the class id.
             cat_cols: The list of categorical columns.
             num_cols: The list of numerical columns.
-            valid_df: validation data DataFrame
-            test_df: test data DataFrame
-            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            valid_df: Validation data DataFrame.
+            test_df: Test data DataFrame.
+            batch_size: The batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
-            val_size: float between 0 and 1 to create a validation dataset from train dataset
-            test_size: float between 0 and 1 to create a test dataset from train validation
+                or 0 for Darwin platform.
+            val_size: Float between 0 and 1 to create a validation dataset from train dataset.
+            test_size: Float between 0 and 1 to create a test dataset from train validation.
 
         Returns:
             TabularData: The constructed data module.
