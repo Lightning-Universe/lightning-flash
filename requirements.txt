@@ -1,3 +1,5 @@
+pytorch_lightning  # placeholder
+git+https://github.com/PyTorchLightning/pytorch-lightning.git
 lightning-bolts==0.3.2  # todo: we shall align with proper release
 torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
@@ -15,5 +17,3 @@ sentencepiece>=0.1.95
 filelock  # comes with 3rd-party dependency
 pycocotools>=2.0.2 ; python_version >= "3.7"
 kornia>=0.5.0
-pytorch_lightning  # placeholder
-git+https://github.com/PyTorchLightning/pytorch-lightning.git
