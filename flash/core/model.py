@@ -56,12 +56,12 @@ class Task(LightningModule):
     """
 
     def __init__(
-        self,
-        model: Optional[nn.Module] = None,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
+            self,
+            model: Optional[nn.Module] = None,
+            loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
+            optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+            metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+            learning_rate: float = 5e-5,
     ):
         super().__init__()
         if model is not None:
@@ -117,12 +117,13 @@ class Task(LightningModule):
 
     @predict_context
     def predict(
-        self,
-        x: Any,
-        batch_idx: Optional[int] = None,
-        skip_collate_fn: bool = False,
-        dataloader_idx: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None,
+            self,
+            x: Any,
+            batch_idx: Optional[int] = None,
+            skip_collate_fn: bool = False,
+            skip_uncollate_fn: bool = False,
+            dataloader_idx: Optional[int] = None,
+            data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
         Predict function for raw data or processed data
@@ -138,6 +139,8 @@ class Task(LightningModule):
             skip_collate_fn: Whether to skip the collate step.
                 this is required when passing data already processed
                 for the model, for example, data from a dataloader
+
+            skip_uncollate_fn: Whether to skip the uncollate step.
 
             data_pipeline: Use this to override the current data pipeline
 
