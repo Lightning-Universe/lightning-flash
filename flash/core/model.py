@@ -158,7 +158,7 @@ class Task(LightningModule):
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
         batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
         predictions = self.predict_step(batch_x, 0)
-        output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+        output = predictions if skip_uncollate_fn else data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
         return output
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
