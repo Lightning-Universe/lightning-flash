@@ -1,7 +1,7 @@
 torchmetrics
-pytorch_lightning  # placeholder
-git+https://github.com/PyTorchLightning/pytorch-lightning.git
 lightning-bolts==0.3.2  # todo: we shall align with proper release
+pytorch_lightning
+git+https://github.com/PyTorchLightning/pytorch-lightning.git
 torch>=1.7  # TODO: regenerate weights with lewer PT version
 PyYAML>=5.1
 Pillow>=7.2
