@@ -58,8 +58,8 @@ jobs:
 
     - name: Run Notebooks
       run: |
-        # jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
+        jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
         jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb
 
-        # ipython flash_notebooks/image_classification.py
+        ipython flash_notebooks/image_classification.py
         ipython flash_notebooks/tabular_classification.py
