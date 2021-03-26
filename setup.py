@@ -6,10 +6,11 @@ import sys
 
 from setuptools import find_packages, setup
 
+# temporary solution until next PyTorch Lightning release
 try:
     import pytorch_lightning
     assert pytorch_lightning.__version__ == "1.3.0dev"
-except ModuleNotFoundError:
+except ImportError:
     subprocess.Popen(["pip", "install", "git+https://github.com/PyTorchLightning/pytorch-lightning.git"])
 
 try:
