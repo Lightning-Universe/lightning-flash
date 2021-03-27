@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 import os
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union, List
 
 import torch
 import torchmetrics
@@ -130,7 +130,7 @@ class Task(LightningModule):
             dataloader_idx: Optional[int] = None,
             data_pipeline: Optional[DataPipeline] = None,
             return_type: str = None,
-            labels: Optional = None,
+            labels: Optional[List[str]] = None,
     ) -> Any:
         """
         Predict function for raw data or processed data
@@ -146,8 +146,6 @@ class Task(LightningModule):
             skip_collate_fn: Whether to skip the collate step.
                 this is required when passing data already processed
                 for the model, for example, data from a dataloader
-
-            skip_uncollate_fn: Whether to skip the uncollate step.
 
             data_pipeline: Use this to override the current data pipeline
 
@@ -168,15 +166,12 @@ class Task(LightningModule):
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
         batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
         predictions = self.predict_step(batch_x, 0)
+
         if return_type == self.RAW_PROB:
             return predictions
-
-        output = predictions if skip_uncollate_fn else data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
-
+        output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
         if return_type == self.CLASS_NAME:
-            # TODO
-            pass
-
+            output = [labels[idx] for idx in output]
         return output
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
