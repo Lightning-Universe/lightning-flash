@@ -17,11 +17,10 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchmetrics
-from pytorch_lightning import LightningModule
-from torch import nn
-
 from flash.core.data import DataModule, DataPipeline
 from flash.core.utils import get_callable_dict
+from pytorch_lightning import LightningModule
+from torch import nn
 
 
 def predict_context(func: Callable) -> Callable:
@@ -54,6 +53,10 @@ class Task(LightningModule):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`
     """
+    # TODO: use ENUM
+    RAW_PROB = 'raw_prob'
+    CLASS_NAME = 'class_name'
+    ARG_MAX = 'argmax'
 
     def __init__(
             self,
@@ -62,6 +65,7 @@ class Task(LightningModule):
             optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
             metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
             learning_rate: float = 5e-5,
+            return_type: str = None,
     ):
         super().__init__()
         if model is not None:
@@ -73,6 +77,7 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
         self._data_pipeline = None
+        self.return_type = return_type
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -124,6 +129,8 @@ class Task(LightningModule):
             skip_uncollate_fn: bool = False,
             dataloader_idx: Optional[int] = None,
             data_pipeline: Optional[DataPipeline] = None,
+            return_type: str = None,
+            labels: Optional = None,
     ) -> Any:
         """
         Predict function for raw data or processed data
@@ -154,11 +161,22 @@ class Task(LightningModule):
             files = [os.path.join(x, y) for y in files]
             x = files
 
+        if return_type == self.CLASS_NAME and self.labels is None:
+            raise UserWarning('Misconfiguration, return type is class name but labels is not provided!')
+
         data_pipeline = data_pipeline or self.data_pipeline
         batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
         batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
         predictions = self.predict_step(batch_x, 0)
+        if return_type == self.RAW_PROB:
+            return predictions
+
         output = predictions if skip_uncollate_fn else data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
+
+        if return_type == self.CLASS_NAME:
+            # TODO
+            pass
+
         return output
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
