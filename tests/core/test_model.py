@@ -28,13 +28,14 @@ from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier
 from flash.vision import ImageClassifier
 
+
 # ======== Mock functions ========
 
 
 class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, Number]:
-        return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
+        return torch.rand(1, 28, 28), torch.randint(10, size=(1,)).item()
 
     def __len__(self) -> int:
         return 9
@@ -76,6 +77,13 @@ def test_classificationtask_task_predict():
     pred1 = task.predict([x0, x1])
     assert all(c in expected for c in pred1)
     assert pred0[0] == pred1[0]
+
+    pred2 = task.predict([x0], return_type=ClassificationTask.RAW_PROB)
+    assert isinstance(pred2[0], torch.Tensor)
+
+    class_names = ['c1'] * len(expected)
+    pred3 = task.predict([x0], return_type=ClassificationTask.CLASS_NAME, labels=class_names)
+    assert all(c in class_names for c in pred3)
 
 
 def test_classification_task_predict_folder_path(tmpdir):
