@@ -158,7 +158,7 @@ class Task(LightningModule):
             files = [os.path.join(x, y) for y in files]
             x = files
 
-        if return_type == self.CLASS_NAME and self.labels is None:
+        if return_type == self.CLASS_NAME and labels is None:
             raise UserWarning('Misconfiguration, return type is class name but labels is not provided!')
 
         data_pipeline = data_pipeline or self.data_pipeline
