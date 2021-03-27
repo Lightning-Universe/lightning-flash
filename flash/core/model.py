@@ -126,7 +126,6 @@ class Task(LightningModule):
             x: Any,
             batch_idx: Optional[int] = None,
             skip_collate_fn: bool = False,
-            skip_uncollate_fn: bool = False,
             dataloader_idx: Optional[int] = None,
             data_pipeline: Optional[DataPipeline] = None,
             return_type: str = None,
