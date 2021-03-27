@@ -65,7 +65,6 @@ class Task(LightningModule):
             optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
             metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
             learning_rate: float = 5e-5,
-            return_type: str = None,
     ):
         super().__init__()
         if model is not None:
@@ -77,7 +76,6 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
         self._data_pipeline = None
-        self.return_type = return_type
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
