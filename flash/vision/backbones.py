@@ -15,14 +15,13 @@ from typing import Tuple
 
 import torchvision
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
+from pytorch_lightning.utilities import _module_available
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-try:
+if _module_available('timm'):
     import timm
-except ImportError:
-    print('timm is not installed!')
 
 if _BOLTS_AVAILABLE:
     from pl_bolts.models.self_supervised import SimCLR, SwAV
