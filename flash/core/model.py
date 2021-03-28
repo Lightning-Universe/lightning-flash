@@ -201,9 +201,9 @@ class Task(LightningModule):
         elif self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
             return self.datamodule.data_pipeline
 
-        elif self.trainer is not None and hasattr(
-            self.trainer, 'datamodule'
-        ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
+            self.trainer.datamodule, 'data_pipeline', None
+        ) is not None:
             return self.trainer.datamodule.data_pipeline
 
         return self._data_pipeline
