@@ -23,6 +23,7 @@ from PIL import Image
 from pytorch_lightning import Trainer
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
@@ -36,7 +37,7 @@ from flash.data.process import Postprocess, Preprocess
 
 class DummyDataset(torch.utils.data.Dataset):
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
         return torch.rand(1), torch.rand(1)
 
     def __len__(self) -> int:
@@ -507,49 +508,49 @@ class TestPreprocessTransformations(Preprocess):
         self.train_pre_tensor_transform_called = True
         return sample + (5, )
 
-    def train_collate(self, samples) -> torch.Tensor:
+    def train_collate(self, samples) -> Tensor:
         self.train_collate_called = True
-        return torch.tensor([list(s) for s in samples])
+        return tensor([list(s) for s in samples])
 
     def train_per_batch_transform_on_device(self, batch: Any) -> Any:
         self.train_per_batch_transform_on_device_called = True
-        assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
+        assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
     def val_load_data(self, sample, dataset) -> List[int]:
         self.val_load_data_called = True
         assert isinstance(dataset, AutoDataset)
         return list(range(5))
 
-    def val_load_sample(self, sample) -> Dict[str, torch.Tensor]:
+    def val_load_sample(self, sample) -> Dict[str, Tensor]:
         self.val_load_sample_called = True
         return {"a": sample, "b": sample + 1}
 
-    def val_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+    def val_to_tensor_transform(self, sample: Any) -> Tensor:
         self.val_to_tensor_transform_called = True
         return sample
 
-    def val_collate(self, samples) -> Dict[str, torch.Tensor]:
+    def val_collate(self, samples) -> Dict[str, Tensor]:
         self.val_collate_called = True
         _count = samples[0]['a']
         assert samples == [{'a': _count, 'b': _count + 1}, {'a': _count + 1, 'b': _count + 2}]
-        return {'a': torch.tensor([0, 1]), 'b': torch.tensor([1, 2])}
+        return {'a': tensor([0, 1]), 'b': tensor([1, 2])}
 
     def val_per_batch_transform_on_device(self, batch: Any) -> Any:
         self.val_per_batch_transform_on_device_called = True
         batch = batch[0]
-        assert torch.equal(batch["a"], torch.tensor([0, 1]))
-        assert torch.equal(batch["b"], torch.tensor([1, 2]))
+        assert torch.equal(batch["a"], tensor([0, 1]))
+        assert torch.equal(batch["b"], tensor([1, 2]))
         return [False]
 
     def test_load_data(self, sample) -> LamdaDummyDataset:
         self.test_load_data_called = True
         return LamdaDummyDataset(lambda: [torch.rand(1), torch.rand(1)])
 
-    def test_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+    def test_to_tensor_transform(self, sample: Any) -> Tensor:
         self.test_to_tensor_transform_called = True
         return sample
 
-    def test_post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
+    def test_post_tensor_transform(self, sample: Tensor) -> Tensor:
         self.test_post_tensor_transform_called = True
         return sample
 
@@ -560,9 +561,9 @@ class TestPreprocessTransformations(Preprocess):
 
 class TestPreprocessTransformations2(TestPreprocessTransformations):
 
-    def val_to_tensor_transform(self, sample: Any) -> torch.Tensor:
+    def val_to_tensor_transform(self, sample: Any) -> Tensor:
         self.val_to_tensor_transform_called = True
-        return {"a": torch.tensor(sample["a"]), "b": torch.tensor(sample["b"])}
+        return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
 
 
 @pytest.mark.skipif(reason="Still using DataPipeline Old API")
@@ -585,7 +586,7 @@ def test_datapipeline_transformations(tmpdir):
 
         def predict_step(self, batch, batch_idx, dataloader_idx):
             assert batch == [('a', 'a'), ('b', 'b')]
-            return torch.tensor([0, 0, 0])
+            return tensor([0, 0, 0])
 
     class CustomDataModule(DataModule):
 
@@ -595,7 +596,7 @@ def test_datapipeline_transformations(tmpdir):
 
     assert datamodule.train_dataloader().dataset[0] == (0, 1, 2, 3)
     batch = next(iter(datamodule.train_dataloader()))
-    assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
+    assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
     assert datamodule.val_dataloader().dataset[0] == {'a': 0, 'b': 1}
     assert datamodule.val_dataloader().dataset[1] == {'a': 1, 'b': 2}
@@ -605,8 +606,8 @@ def test_datapipeline_transformations(tmpdir):
     CustomDataModule.preprocess_cls = TestPreprocessTransformations2
     datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2)
     batch = next(iter(datamodule.val_dataloader()))
-    assert torch.equal(batch["a"], torch.tensor([0, 1]))
-    assert torch.equal(batch["b"], torch.tensor([1, 2]))
+    assert torch.equal(batch["a"], tensor([0, 1]))
+    assert torch.equal(batch["b"], tensor([1, 2]))
 
     model = CustomModel()
     trainer = Trainer(
@@ -679,7 +680,7 @@ def test_dummy_example(tmpdir):
             img8Bit = np.uint8(np.random.uniform(0, 1, (64, 64, 3)) * 255.0)
             return Image.fromarray(img8Bit)
 
-        def to_tensor_transform(self, pil_image: Image.Image) -> torch.Tensor:
+        def to_tensor_transform(self, pil_image: Image.Image) -> Tensor:
             # convert pil image into a tensor
             return self._to_tensor(pil_image)
 
