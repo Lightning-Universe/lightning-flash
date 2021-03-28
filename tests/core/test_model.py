@@ -28,14 +28,13 @@ from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier
 from flash.vision import ImageClassifier
 
-
 # ======== Mock functions ========
 
 
 class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, Number]:
-        return torch.rand(1, 28, 28), torch.randint(10, size=(1,)).item()
+        return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
     def __len__(self) -> int:
         return 9

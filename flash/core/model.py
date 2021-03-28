@@ -13,14 +13,15 @@
 # limitations under the License.
 import functools
 import os
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union, List
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchmetrics
-from flash.core.data import DataModule, DataPipeline
-from flash.core.utils import get_callable_dict
 from pytorch_lightning import LightningModule
 from torch import nn
+
+from flash.core.data import DataModule, DataPipeline
+from flash.core.utils import get_callable_dict
 
 
 def predict_context(func: Callable) -> Callable:
@@ -59,12 +60,12 @@ class Task(LightningModule):
     ARG_MAX = 'argmax'
 
     def __init__(
-            self,
-            model: Optional[nn.Module] = None,
-            loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-            optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-            metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-            learning_rate: float = 5e-5,
+        self,
+        model: Optional[nn.Module] = None,
+        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        learning_rate: float = 5e-5,
     ):
         super().__init__()
         if model is not None:
@@ -120,14 +121,14 @@ class Task(LightningModule):
 
     @predict_context
     def predict(
-            self,
-            x: Any,
-            batch_idx: Optional[int] = None,
-            skip_collate_fn: bool = False,
-            dataloader_idx: Optional[int] = None,
-            data_pipeline: Optional[DataPipeline] = None,
-            return_type: str = None,
-            labels: Optional[List[str]] = None,
+        self,
+        x: Any,
+        batch_idx: Optional[int] = None,
+        skip_collate_fn: bool = False,
+        dataloader_idx: Optional[int] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+        return_type: str = None,
+        labels: Optional[List[str]] = None,
     ) -> Any:
         """
         Predict function for raw data or processed data
