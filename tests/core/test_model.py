@@ -20,7 +20,7 @@ import pytest
 import pytorch_lightning as pl
 import torch
 from PIL import Image
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 
 from flash import ClassificationTask
@@ -33,7 +33,7 @@ from flash.vision import ImageClassifier
 
 class DummyDataset(torch.utils.data.Dataset):
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, Number]:
+    def __getitem__(self, index: int) -> Tuple[Tensor, Number]:
         return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
     def __len__(self) -> int:
@@ -42,7 +42,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 class PredictDummyDataset(DummyDataset):
 
-    def __getitem__(self, index: int) -> torch.Tensor:
+    def __getitem__(self, index: int) -> Tensor:
         return torch.rand(1, 28, 28)
 
 

@@ -16,6 +16,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Union
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import Tensor
 
 from flash.data.utils import _contains_any_tensor, convert_to_modules
 
@@ -178,7 +179,7 @@ def default_uncollate(batch: Any):
 
     batch_type = type(batch)
 
-    if isinstance(batch, torch.Tensor):
+    if isinstance(batch, Tensor):
         return list(torch.unbind(batch, 0))
 
     elif isinstance(batch, Mapping):

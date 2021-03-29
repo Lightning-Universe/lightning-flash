@@ -14,6 +14,7 @@
 from typing import Any, Union
 
 import torch
+from torch import Tensor
 
 from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
@@ -21,7 +22,7 @@ from flash.core.model import Task
 
 class ClassificationDataPipeline(TaskDataPipeline):
 
-    def before_uncollate(self, batch: Union[torch.Tensor, tuple]) -> torch.Tensor:
+    def before_uncollate(self, batch: Union[Tensor, tuple]) -> Tensor:
         if isinstance(batch, tuple):
             batch = batch[0]
         return torch.softmax(batch, -1)
