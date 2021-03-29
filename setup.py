@@ -10,7 +10,7 @@ from setuptools import find_packages, setup
 try:
     import pytorch_lightning
     assert pytorch_lightning.__version__ == "1.3.0dev"
-except ImportError:
+except (ImportError, AssertionError):
     subprocess.Popen(["pip", "install", "git+https://github.com/PyTorchLightning/pytorch-lightning.git"])
 
 try:

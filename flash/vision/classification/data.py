@@ -27,12 +27,12 @@ from torchvision import transforms as torchvision_T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 from torchvision.transforms.functional import to_pil_image
 
-from flash.core.imports import _KORNIA_AVAILABLE
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
 from flash.data.utils import _contains_any_tensor
+from flash.utils.imports import _KORNIA_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -232,10 +232,10 @@ class ImageClassificationData(DataModule):
 
     def __init__(
         self,
-        train_ds: Optional[torch.utils.data.Dataset] = None,
-        valid_ds: Optional[torch.utils.data.Dataset] = None,
-        test_ds: Optional[torch.utils.data.Dataset] = None,
-        predict_ds: Optional[torch.utils.data.Dataset] = None,
+        train_dataset: Optional[torch.utils.data.Dataset] = None,
+        valid_dataset: Optional[torch.utils.data.Dataset] = None,
+        test_dataset: Optional[torch.utils.data.Dataset] = None,
+        predict_dataset: Optional[torch.utils.data.Dataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
         seed: int = 1234,
@@ -246,22 +246,16 @@ class ImageClassificationData(DataModule):
     ) -> 'ImageClassificationData':
         """Creates a ImageClassificationData object from lists of image filepaths and labels"""
 
-        if train_ds is not None and train_split is not None or valid_split is not None or test_split is not None:
-            train_ds, _valid_ds, _test_ds = self.train_valid_test_split(
-                train_ds, train_split, valid_split, test_split, seed
+        if train_dataset is not None and train_split is not None or valid_split is not None or test_split is not None:
+            train_dataset, valid_dataset, test_dataset = self.train_valid_test_split(
+                train_dataset, train_split, valid_split, test_split, seed
             )
 
-            if _valid_ds is not None:
-                valid_ds = _valid_ds
-
-            if _test_ds is not None:
-                test_ds = _test_ds
-
         super().__init__(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            predict_ds=predict_ds,
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+            test_dataset=test_dataset,
+            predict_dataset=predict_dataset,
             batch_size=batch_size,
             num_workers=num_workers,
         )
@@ -538,36 +532,38 @@ class ImageClassificationData(DataModule):
                 predict_filepaths = [predict_filepaths]
 
         if train_filepaths is not None and train_labels is not None:
-            train_ds = cls._generate_dataset_if_possible(
+            train_dataset = cls._generate_dataset_if_possible(
                 list(zip(train_filepaths, train_labels)), running_stage=RunningStage.TRAINING
             )
         else:
-            train_ds = None
+            train_dataset = None
 
         if valid_filepaths is not None and valid_labels is not None:
-            valid_ds = cls._generate_dataset_if_possible(
+            valid_dataset = cls._generate_dataset_if_possible(
                 list(zip(valid_filepaths, valid_labels)), running_stage=RunningStage.VALIDATING
             )
         else:
-            valid_ds = None
+            valid_dataset = None
 
         if test_filepaths is not None and test_labels is not None:
-            test_ds = cls._generate_dataset_if_possible(
+            test_dataset = cls._generate_dataset_if_possible(
                 list(zip(test_filepaths, test_labels)), running_stage=RunningStage.TESTING
             )
         else:
-            test_ds = None
+            test_dataset = None
 
         if predict_filepaths is not None:
-            predict_ds = cls._generate_dataset_if_possible(predict_filepaths, running_stage=RunningStage.PREDICTING)
+            predict_dataset = cls._generate_dataset_if_possible(
+                predict_filepaths, running_stage=RunningStage.PREDICTING
+            )
         else:
-            predict_ds = None
+            predict_dataset = None
 
         return cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
-            predict_ds=predict_ds,
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+            test_dataset=test_dataset,
+            predict_dataset=predict_dataset,
             train_transform=train_transform,
             valid_transform=valid_transform,
             batch_size=batch_size,

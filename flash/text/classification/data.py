@@ -14,7 +14,7 @@
 import os
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, List, Mapping, Optional, Type
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
 
 from datasets import DatasetDict, load_dataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -30,7 +30,7 @@ from flash.data.process import Preprocess, PreprocessState
 
 @dataclass(unsafe_hash=True, frozen=True)
 class TextClassificationState(PreprocessState):
-    label_to_class_mapping: dict
+    label_to_class_mapping: Dict[str, int]
 
 
 class TextClassificationPreprocess(Preprocess):
@@ -41,9 +41,25 @@ class TextClassificationPreprocess(Preprocess):
         input: str,
         max_length: int,
         target: str,
-        label_to_class_mapping: dict,
-        filetype: str = 'csv',
+        filetype: str,
+        label_to_class_mapping: Dict[str, int],
     ):
+        """
+        This class contains the preprocessing logic for text classification
+
+        Args:
+            tokenizer: Hugging Face Tokenizer.
+            input: The field storing the text to be classified.
+            max_length:  Maximum number of tokens within a single sentence.
+            target: The field storing the class id of the associated text.
+            filetype: .csv or .json format type.
+            label_to_class_mapping: Dictionnary mapping target labels to class indexes.
+
+        Returns:
+            TextClassificationPreprocess: The constructed preprocess objects.
+
+        """
+
         super().__init__()
         self.tokenizer = tokenizer
         self.input = input
@@ -73,7 +89,14 @@ class TextClassificationPreprocess(Preprocess):
         return batch
 
     @staticmethod
-    def _tokenize_fn(ex, tokenizer=None, input: str = None, max_length: int = None, **kwargs) -> Callable:
+    def _tokenize_fn(
+        ex: Union[Dict[str, str], str],
+        tokenizer=None,
+        input: str = None,
+        max_length: int = None,
+        **kwargs
+    ) -> Callable:
+        """This function is used to tokenize sentences using the provided tokenizer."""
         if isinstance(ex, dict):
             ex = ex[input]
         return tokenizer(ex, max_length=max_length, **kwargs)
@@ -84,7 +107,7 @@ class TextClassificationPreprocess(Preprocess):
             samples = [samples]
         return default_data_collator(samples)
 
-    def _transform_label(self, ex):
+    def _transform_label(self, ex: Dict[str, str]):
         ex[self.target] = self.label_to_class_mapping[ex[self.target]]
         return ex
 
@@ -98,20 +121,20 @@ class TextClassificationPreprocess(Preprocess):
 
     def load_data(
         self,
-        file: str,
+        filepath: str,
         dataset: AutoDataset,
-        columns: List[str] = ["input_ids", "attention_mask", "labels"],
+        columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
         use_full: bool = True
     ):
         data_files = {}
 
         stage = dataset.running_stage.value
-        data_files[stage] = str(file)
+        data_files[stage] = str(filepath)
 
         if use_full and os.getenv("FLASH_TESTING", "0") == "0":
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            # used for debugging. Avoid processing the entire dataset   # noqa E265
+            # used for debugging. Avoid processing the entire dataset   # noqa E265
             dataset_dict = DatasetDict({
                 stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
             })
@@ -207,8 +230,8 @@ class TextClassificationData(DataModule):
             input,
             max_length,
             target,
-            label_to_class_mapping,
             filetype,
+            label_to_class_mapping,
         )
 
     @classmethod
@@ -301,7 +324,7 @@ class TextClassificationData(DataModule):
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-                or 0 for Darwin platform.
+            or 0 for Darwin platform.
         """
         return cls.from_files(
             None,

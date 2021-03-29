@@ -87,9 +87,9 @@ def test_tabular_data(tmpdir):
     test_df = TEST_DF_2.copy()
     dm = TabularData.from_df(
         train_df,
-        cat_cols=["category"],
-        num_cols=["scalar_b", "scalar_b"],
-        target="label",
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
@@ -112,9 +112,9 @@ def test_categorical_target(tmpdir):
 
     dm = TabularData.from_df(
         train_df,
-        cat_cols=["category"],
-        num_cols=["scalar_b", "scalar_b"],
-        target="label",
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
@@ -133,9 +133,9 @@ def test_from_df(tmpdir):
     test_df = TEST_DF_2.copy()
     dm = TabularData.from_df(
         train_df,
-        cat_cols=["category"],
-        num_cols=["scalar_b", "scalar_b"],
-        target="label",
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
@@ -157,9 +157,9 @@ def test_from_csv(tmpdir):
 
     dm = TabularData.from_csv(
         train_csv=train_csv,
-        cat_cols=["category"],
-        num_cols=["scalar_b", "scalar_b"],
-        target="label",
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_csv=valid_csv,
         test_csv=test_csv,
         num_workers=0,
@@ -175,4 +175,6 @@ def test_from_csv(tmpdir):
 def test_empty_inputs():
     train_df = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
-        TabularData.from_df(train_df, cat_cols=None, num_cols=None, target="label", num_workers=0, batch_size=1)
+        TabularData.from_df(
+            train_df, numerical_cols=None, categorical_cols=None, target_col="label", num_workers=0, batch_size=1
+        )

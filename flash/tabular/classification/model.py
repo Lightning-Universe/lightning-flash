@@ -19,7 +19,7 @@ from torch.nn.functional import softmax
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
-from flash.core.imports import _TABNET_AVAILABLE
+from flash.utils.imports import _TABNET_AVAILABLE
 
 if _TABNET_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet

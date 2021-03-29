@@ -75,6 +75,9 @@ class Properties:
 
 @dataclass(unsafe_hash=True, frozen=True)
 class PreprocessState:
+    """
+    Base class for all preprocess states
+    """
     pass
 
 

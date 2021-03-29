@@ -57,10 +57,10 @@ class CustomDataModule(DataModule):
 
     def __init__(self):
         super().__init__(
-            train_ds=DummyDataset(),
-            valid_ds=DummyDataset(),
-            test_ds=DummyDataset(),
-            predict_ds=DummyDataset(),
+            train_dataset=DummyDataset(),
+            valid_dataset=DummyDataset(),
+            test_dataset=DummyDataset(),
+            predict_dataset=DummyDataset(),
         )
 
 

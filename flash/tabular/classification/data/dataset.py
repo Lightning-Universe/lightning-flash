@@ -84,8 +84,8 @@ def _categorize(dfs: List, cat_cols: List, codes: Dict = None) -> list:
 
 def _pre_transform(
     dfs: List,
-    num_cols: List,
-    cat_cols: List,
+    num_cols: List[str],
+    cat_cols: List[str],
     codes: Dict,
     mean: DataFrame,
     std: DataFrame,
@@ -100,32 +100,32 @@ def _pre_transform(
     return dfs
 
 
-def _to_cat_vars_numpy(df, cat_cols) -> list:
+def _to_cat_vars_numpy(df, cat_cols: List[str]) -> list:
     if isinstance(df, list) and len(df) == 1:
         df = df[0]
     return [c.to_numpy().astype(np.int64) for n, c in df[cat_cols].items()]
 
 
-def _to_num_cols_numpy(df, num_cols) -> list:
+def _to_num_vars_numpy(df, num_cols: List[str]) -> list:
     if isinstance(df, list) and len(df) == 1:
         df = df[0]
     return [c.to_numpy().astype(np.float32) for n, c in df[num_cols].items()]
 
 
-def _dfs_to_samples(dfs, cat_cols, num_cols) -> list:
+def _dfs_to_samples(dfs, cat_cols: List[str], num_cols: List[str]) -> list:
     num_samples = sum([len(df) for df in dfs])
     cat_vars_list = []
     num_vars_list = []
     for df in dfs:
         cat_vars = _to_cat_vars_numpy(df, cat_cols)
-        num_vars = _to_num_cols_numpy(df, num_cols)
+        num_vars = _to_num_vars_numpy(df, num_cols)
         cat_vars_list.append(cat_vars)
         cat_vars_list.append(num_vars_list)
 
     # todo: assumes that dfs is not empty
     cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0))
     num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0))
-    return [(c, n) for c, n in zip(cat_vars, num_vars)]
+    return list(zip(cat_vars, num_vars))
 
 
 class PandasDataset(Dataset):
@@ -133,19 +133,19 @@ class PandasDataset(Dataset):
     def __init__(
         self,
         df: DataFrame,
-        cat_cols: List,
-        num_cols: List,
+        cat_cols: List[str],
+        num_cols: List[str],
         target_col: str,
-        regression: bool = False,
+        is_regression: bool = False,
         predict: bool = False
     ):
         self._num_samples = len(df)
         self.predict = predict
         cat_vars = _to_cat_vars_numpy(df, cat_cols)
-        num_vars = _to_num_cols_numpy(df, num_cols)
+        num_vars = _to_num_vars_numpy(df, num_cols)
 
         if not predict:
-            self.target = df[target_col].to_numpy().astype(np.float32 if regression else np.int64)
+            self.target = df[target_col].to_numpy().astype(np.float32 if is_regression else np.int64)
 
         self.cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((len(self), 0))
         self.num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((len(self), 0))

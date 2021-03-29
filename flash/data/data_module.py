@@ -31,9 +31,10 @@ class DataModule(pl.LightningDataModule):
     """Basic DataModule class for all Flash tasks
 
     Args:
-        train_ds: Dataset for training. Defaults to None.
-        valid_ds: Dataset for validating model performance during training. Defaults to None.
-        test_ds: Dataset to test model performance. Defaults to None.
+        train_dataset: Dataset for training. Defaults to None.
+        valid_dataset: Dataset for validating model performance during training. Defaults to None.
+        test_dataset: Dataset to test model performance. Defaults to None.
+        predict_dataset: Dataset to predict model performance. Defaults to None.
         num_workers: The number of workers to use for parallelized loading. Defaults to None.
         predict_ds: Dataset for predicting. Defaults to None.
         batch_size: The batch size to be used by the DataLoader. Defaults to 1.
@@ -47,19 +48,19 @@ class DataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        train_ds: Optional[Dataset] = None,
-        valid_ds: Optional[Dataset] = None,
-        test_ds: Optional[Dataset] = None,
-        predict_ds: Optional[Dataset] = None,
+        train_dataset: Optional[Dataset] = None,
+        valid_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
     ) -> None:
 
         super().__init__()
-        self._train_ds = train_ds
-        self._valid_ds = valid_ds
-        self._test_ds = test_ds
-        self._predict_ds = predict_ds
+        self._train_ds = train_dataset
+        self._valid_ds = valid_dataset
+        self._test_ds = test_dataset
+        self._predict_ds = predict_dataset
 
         if self._train_ds:
             self.train_dataloader = self._train_dataloader
@@ -311,25 +312,32 @@ class DataModule(pl.LightningDataModule):
             kwargs: Any extra arguments to instantiate the provided ``DataModule``
         """
         # trick to get data_pipeline from empty DataModule
-        if preprocess is not None or postprocess is not None:
+        if preprocess or postprocess:
             data_pipeline = DataPipeline(
-                preprocess or cls(**kwargs).preprocess, postprocess or cls(**kwargs).postprocess
+                preprocess or cls(**kwargs).preprocess,
+                postprocess or cls(**kwargs).postprocess,
             )
         else:
             data_pipeline = cls(**kwargs).data_pipeline
-        train_ds = cls._generate_dataset_if_possible(
+        train_dataset = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
         )
-        valid_ds = cls._generate_dataset_if_possible(
+        valid_dataset = cls._generate_dataset_if_possible(
             valid_load_data_input, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
         )
-        test_ds = cls._generate_dataset_if_possible(
+        test_dataset = cls._generate_dataset_if_possible(
             test_load_data_input, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
         )
-        predict_ds = cls._generate_dataset_if_possible(
+        predict_dataset = cls._generate_dataset_if_possible(
             predict_load_data_input, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
         )
-        datamodule = cls(train_ds=train_ds, valid_ds=valid_ds, test_ds=test_ds, predict_ds=predict_ds, **kwargs)
+        datamodule = cls(
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+            test_dataset=test_dataset,
+            predict_dataset=predict_dataset,
+            **kwargs
+        )
         datamodule._preprocess = data_pipeline._preprocess_pipeline
         datamodule._postprocess = data_pipeline._postprocess_pipeline
         return datamodule

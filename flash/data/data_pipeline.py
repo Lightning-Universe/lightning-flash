@@ -163,7 +163,7 @@ class DataPipeline:
 
     @property
     def preprocess_state(self):
-        if self._preprocess_pipeline is not None:
+        if self._preprocess_pipeline:
             return self._preprocess_pipeline.state
 
     @classmethod

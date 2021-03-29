@@ -201,9 +201,9 @@ class Task(LightningModule):
         elif self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
             return self.datamodule.data_pipeline
 
-        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
-            self.trainer.datamodule, 'data_pipeline', None
-        ) is not None:
+        elif self.trainer is not None and hasattr(
+            self.trainer, 'datamodule'
+        ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
             return self.trainer.datamodule.data_pipeline
 
         return self._data_pipeline
@@ -219,13 +219,13 @@ class Task(LightningModule):
             if type(datapipeline_postprocess) != Postprocess:
                 self._postprocess = data_pipeline._postprocess_pipeline
 
-    def on_train_dataloader(self):
+    def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
             self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
         return super().on_train_dataloader()
 
-    def on_val_dataloader(self):
+    def on_val_dataloader(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)

@@ -83,6 +83,10 @@ def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
 
 
 class FuncModule(torch.nn.Module):
+    """
+    This class is used to wrap a callable within a nn.Module and
+    apply the wrapped function in `__call__`
+    """
 
     def __init__(self, func: Callable) -> None:
         super().__init__()
