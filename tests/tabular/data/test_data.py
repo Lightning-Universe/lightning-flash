@@ -83,14 +83,14 @@ def test_emb_sizes():
 
 def test_tabular_data(tmpdir):
     train_df = TEST_DF_1.copy()
-    valid_df = TEST_DF_2.copy()
+    val_df = TEST_DF_2.copy()
     test_df = TEST_DF_2.copy()
     dm = TabularData.from_df(
         train_df,
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        valid_df=valid_df,
+        val_df=val_df,
         test_df=test_df,
         num_workers=0,
         batch_size=1,
@@ -104,9 +104,9 @@ def test_tabular_data(tmpdir):
 
 def test_categorical_target(tmpdir):
     train_df = TEST_DF_1.copy()
-    valid_df = TEST_DF_2.copy()
+    val_df = TEST_DF_2.copy()
     test_df = TEST_DF_2.copy()
-    for df in [train_df, valid_df, test_df]:
+    for df in [train_df, val_df, test_df]:
         # change int label to string
         df["label"] = df["label"].astype(str)
 
@@ -115,7 +115,7 @@ def test_categorical_target(tmpdir):
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        valid_df=valid_df,
+        val_df=val_df,
         test_df=test_df,
         num_workers=0,
         batch_size=1,
@@ -129,14 +129,14 @@ def test_categorical_target(tmpdir):
 
 def test_from_df(tmpdir):
     train_df = TEST_DF_1.copy()
-    valid_df = TEST_DF_2.copy()
+    val_df = TEST_DF_2.copy()
     test_df = TEST_DF_2.copy()
     dm = TabularData.from_df(
         train_df,
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        valid_df=valid_df,
+        val_df=val_df,
         test_df=test_df,
         num_workers=0,
         batch_size=1
@@ -150,9 +150,9 @@ def test_from_df(tmpdir):
 
 def test_from_csv(tmpdir):
     train_csv = Path(tmpdir) / "train.csv"
-    valid_csv = test_csv = Path(tmpdir) / "valid.csv"
+    val_csv = test_csv = Path(tmpdir) / "valid.csv"
     TEST_DF_1.to_csv(train_csv)
-    TEST_DF_2.to_csv(valid_csv)
+    TEST_DF_2.to_csv(val_csv)
     TEST_DF_2.to_csv(test_csv)
 
     dm = TabularData.from_csv(
@@ -160,7 +160,7 @@ def test_from_csv(tmpdir):
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        valid_csv=valid_csv,
+        val_csv=val_csv,
         test_csv=test_csv,
         num_workers=0,
         batch_size=1

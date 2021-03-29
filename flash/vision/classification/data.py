@@ -177,7 +177,7 @@ class ImageClassificationPreprocess(Preprocess):
 
     def val_pre_tensor_transform(self, sample: Any) -> Any:
         source, target = sample
-        return self.common_pre_tensor_transform(source, self.valid_transform), target
+        return self.common_pre_tensor_transform(source, self.val_transform), target
 
     def test_pre_tensor_transform(self, sample: Any) -> Any:
         source, target = sample
@@ -206,7 +206,7 @@ class ImageClassificationPreprocess(Preprocess):
 
     def val_post_tensor_transform(self, sample: Any) -> Any:
         source, target = sample
-        return self.common_post_tensor_transform(source, self.valid_transform), target
+        return self.common_post_tensor_transform(source, self.val_transform), target
 
     def test_post_tensor_transform(self, sample: Any) -> Any:
         source, target = sample
@@ -229,27 +229,27 @@ class ImageClassificationData(DataModule):
     def __init__(
         self,
         train_dataset: Optional[Dataset] = None,
-        valid_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
         seed: int = 1234,
         train_split: Optional[Union[float, int]] = None,
-        valid_split: Optional[Union[float, int]] = None,
+        val_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
         **kwargs,
     ) -> 'ImageClassificationData':
         """Creates a ImageClassificationData object from lists of image filepaths and labels"""
 
-        if train_dataset is not None and train_split is not None or valid_split is not None or test_split is not None:
-            train_dataset, valid_dataset, test_dataset = self.train_valid_test_split(
-                train_dataset, train_split, valid_split, test_split, seed
+        if train_dataset is not None and train_split is not None or val_split is not None or test_split is not None:
+            train_dataset, val_dataset, test_dataset = self.train_val_test_split(
+                train_dataset, train_split, val_split, test_split, seed
             )
 
         super().__init__(
             train_dataset=train_dataset,
-            valid_dataset=valid_dataset,
+            val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
             batch_size=batch_size,
@@ -261,8 +261,8 @@ class ImageClassificationData(DataModule):
         if self._train_ds:
             self.set_dataset_attribute(self._train_ds, 'num_classes', self.num_classes)
 
-        if self._valid_ds:
-            self.set_dataset_attribute(self._valid_ds, 'num_classes', self.num_classes)
+        if self._val_ds:
+            self.set_dataset_attribute(self._val_ds, 'num_classes', self.num_classes)
 
         if self._test_ds:
             self.set_dataset_attribute(self._test_ds, 'num_classes', self.num_classes)
@@ -298,7 +298,7 @@ class ImageClassificationData(DataModule):
             }
 
     @staticmethod
-    def default_valid_transforms():
+    def default_val_transforms():
         image_size = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
@@ -334,7 +334,7 @@ class ImageClassificationData(DataModule):
     def instantiate_preprocess(
         cls,
         train_transform: Dict[str, Union[nn.Module, Callable]],
-        valid_transform: Dict[str, Union[nn.Module, Callable]],
+        val_transform: Dict[str, Union[nn.Module, Callable]],
         test_transform: Dict[str, Union[nn.Module, Callable]],
         predict_transform: Dict[str, Union[nn.Module, Callable]],
         preprocess_cls: Type[Preprocess] = None
@@ -344,7 +344,7 @@ class ImageClassificationData(DataModule):
 
         Args:
             train_transform: Train transforms for images.
-            valid_transform: Validation transforms for images.
+            val_transform: Validation transforms for images.
             test_transform: Test transforms for images.
             predict_transform: Predict transforms for images.
             preprocess_cls: User provided preprocess_cls.
@@ -362,18 +362,18 @@ class ImageClassificationData(DataModule):
             }
 
         """
-        train_transform, valid_transform, test_transform, predict_transform = cls._resolve_transforms(
-            train_transform, valid_transform, test_transform, predict_transform
+        train_transform, val_transform, test_transform, predict_transform = cls._resolve_transforms(
+            train_transform, val_transform, test_transform, predict_transform
         )
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
-        return preprocess_cls(train_transform, valid_transform, test_transform, predict_transform)
+        return preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
 
     @classmethod
     def _resolve_transforms(
         cls,
         train_transform: Optional[Union[str, Dict]] = 'default',
-        valid_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
         predict_transform: Optional[Union[str, Dict]] = 'default',
     ):
@@ -381,17 +381,17 @@ class ImageClassificationData(DataModule):
         if not train_transform or train_transform == 'default':
             train_transform = cls.default_train_transforms()
 
-        if not valid_transform or valid_transform == 'default':
-            valid_transform = cls.default_valid_transforms()
+        if not val_transform or val_transform == 'default':
+            val_transform = cls.default_val_transforms()
 
         if not test_transform or test_transform == 'default':
-            test_transform = cls.default_valid_transforms()
+            test_transform = cls.default_val_transforms()
 
         if not predict_transform or predict_transform == 'default':
-            predict_transform = cls.default_valid_transforms()
+            predict_transform = cls.default_val_transforms()
 
         return (
-            cls._check_transforms(train_transform), cls._check_transforms(valid_transform),
+            cls._check_transforms(train_transform), cls._check_transforms(val_transform),
             cls._check_transforms(test_transform), cls._check_transforms(predict_transform)
         )
 
@@ -399,11 +399,11 @@ class ImageClassificationData(DataModule):
     def from_folders(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]] = None,
-        valid_folder: Optional[Union[str, pathlib.Path]] = None,
+        val_folder: Optional[Union[str, pathlib.Path]] = None,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
         predict_folder: Union[str, pathlib.Path] = None,
         train_transform: Optional[Union[str, Dict]] = 'default',
-        valid_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
         predict_transform: Optional[Union[str, Dict]] = 'default',
         batch_size: int = 4,
@@ -423,12 +423,12 @@ class ImageClassificationData(DataModule):
 
         Args:
             train_folder: Path to training folder. Default: None.
-            valid_folder: Path to validation folder. Default: None.
+            val_folder: Path to validation folder. Default: None.
             test_folder: Path to test folder. Default: None.
             predict_folder: Path to predict folder. Default: None.
-            valid_transform: Image transform to use for validation and test set.
+            val_transform: Image transform to use for validation and test set.
             train_transform: Image transform to use for training set.
-            valid_transform: Image transform to use for validation set.
+            val_transform: Image transform to use for validation set.
             test_transform: Image transform to use for test set.
             predict_transform: Image transform to use for predict set.
             batch_size: Batch size for data loading.
@@ -444,7 +444,7 @@ class ImageClassificationData(DataModule):
         """
         preprocess = cls.instantiate_preprocess(
             train_transform,
-            valid_transform,
+            val_transform,
             test_transform,
             predict_transform,
             preprocess_cls=preprocess_cls,
@@ -452,7 +452,7 @@ class ImageClassificationData(DataModule):
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_folder,
-            valid_load_data_input=valid_folder,
+            val_load_data_input=val_folder,
             test_load_data_input=test_folder,
             predict_load_data_input=predict_folder,
             batch_size=batch_size,
@@ -466,13 +466,13 @@ class ImageClassificationData(DataModule):
         cls,
         train_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         train_labels: Optional[Sequence] = None,
-        valid_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
-        valid_labels: Optional[Sequence] = None,
+        val_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
+        val_labels: Optional[Sequence] = None,
         test_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         test_labels: Optional[Sequence] = None,
         predict_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         train_transform: Optional[Callable] = 'default',
-        valid_transform: Optional[Callable] = 'default',
+        val_transform: Optional[Callable] = 'default',
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: Optional[int] = 42,
@@ -491,17 +491,17 @@ class ImageClassificationData(DataModule):
         Args:
             train_filepaths: String or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: Sequence of labels for training dataset. Defaults to ``None``.
-            valid_filepaths: String or sequence of file paths for validation dataset. Defaults to ``None``.
-            valid_labels: Sequence of labels for validation dataset. Defaults to ``None``.
+            val_filepaths: String or sequence of file paths for validation dataset. Defaults to ``None``.
+            val_labels: Sequence of labels for validation dataset. Defaults to ``None``.
             test_filepaths: String or sequence of file paths for test dataset. Defaults to ``None``.
             test_labels: Sequence of labels for test dataset. Defaults to ``None``.
             train_transform: Transforms for training dataset. Defaults to ``default``, which loads imagenet transforms.
-            valid_transform: Transforms for validation and testing dataset.
+            val_transform: Transforms for validation and testing dataset.
                 Defaults to ``default``, which loads imagenet transforms.
             batch_size: The batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
-            seed: Used for the train/val splits when valid_split is not None.
+            seed: Used for the train/val splits.
 
         Returns:
             ImageClassificationData: The constructed data module.
@@ -512,15 +512,15 @@ class ImageClassificationData(DataModule):
         Example when labels are in .csv file::
 
             train_labels = labels_from_categorical_csv('path/to/train.csv', 'my_id')
-            valid_labels = labels_from_categorical_csv(path/to/valid.csv', 'my_id')
+            val_labels = labels_from_categorical_csv(path/to/val.csv', 'my_id')
             test_labels = labels_from_categorical_csv(path/to/tests.csv', 'my_id')
 
             data = ImageClassificationData.from_filepaths(
                 batch_size=2,
                 train_filepaths='path/to/train',
                 train_labels=train_labels,
-                valid_filepaths='path/to/valid',
-                valid_labels=valid_labels,
+                val_filepaths='path/to/val',
+                val_labels=val_labels,
                 test_filepaths='path/to/test',
                 test_labels=test_labels,
             )
@@ -532,11 +532,11 @@ class ImageClassificationData(DataModule):
                 train_filepaths = [os.path.join(train_filepaths, x) for x in os.listdir(train_filepaths)]
             else:
                 train_filepaths = [train_filepaths]
-        if isinstance(valid_filepaths, str):
-            if os.path.isdir(valid_filepaths):
-                valid_filepaths = [os.path.join(valid_filepaths, x) for x in os.listdir(valid_filepaths)]
+        if isinstance(val_filepaths, str):
+            if os.path.isdir(val_filepaths):
+                val_filepaths = [os.path.join(val_filepaths, x) for x in os.listdir(val_filepaths)]
             else:
-                valid_filepaths = [valid_filepaths]
+                val_filepaths = [val_filepaths]
         if isinstance(test_filepaths, str):
             if os.path.isdir(test_filepaths):
                 test_filepaths = [os.path.join(test_filepaths, x) for x in os.listdir(test_filepaths)]
@@ -555,12 +555,12 @@ class ImageClassificationData(DataModule):
         else:
             train_dataset = None
 
-        if valid_filepaths is not None and valid_labels is not None:
-            valid_dataset = cls._generate_dataset_if_possible(
-                list(zip(valid_filepaths, valid_labels)), running_stage=RunningStage.VALIDATING
+        if val_filepaths is not None and val_labels is not None:
+            val_dataset = cls._generate_dataset_if_possible(
+                list(zip(val_filepaths, val_labels)), running_stage=RunningStage.VALIDATING
             )
         else:
-            valid_dataset = None
+            val_dataset = None
 
         if test_filepaths is not None and test_labels is not None:
             test_dataset = cls._generate_dataset_if_possible(
@@ -578,11 +578,11 @@ class ImageClassificationData(DataModule):
 
         return cls(
             train_dataset=train_dataset,
-            valid_dataset=valid_dataset,
+            val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
             train_transform=train_transform,
-            valid_transform=valid_transform,
+            val_transform=val_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             seed=seed,

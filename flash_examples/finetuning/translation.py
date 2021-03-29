@@ -23,7 +23,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 # 2. Load the data
 datamodule = TranslationData.from_files(
     train_file="data/wmt_en_ro/train.csv",
-    valid_file="data/wmt_en_ro/valid.csv",
+    val_file="data/wmt_en_ro/valid.csv",
     test_file="data/wmt_en_ro/test.csv",
     input="input",
     target="target",

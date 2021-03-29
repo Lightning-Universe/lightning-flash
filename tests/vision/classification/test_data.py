@@ -75,9 +75,9 @@ def test_from_filepaths(tmpdir):
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
         train_labels=[0, 1],
         train_transform=None,
-        valid_filepaths=[tmpdir / "c", tmpdir / "d"],
-        valid_labels=[0, 1],
-        valid_transform=None,
+        val_filepaths=[tmpdir / "c", tmpdir / "d"],
+        val_labels=[0, 1],
+        val_transform=None,
         test_transform=None,
         test_filepaths=[tmpdir / "e", tmpdir / "f"],
         test_labels=[0, 1],
@@ -105,8 +105,8 @@ def test_categorical_csv_labels(tmpdir):
     _rand_image().save(train_dir / "train" / "train_2.png")
 
     (train_dir / "valid").mkdir()
-    _rand_image().save(train_dir / "valid" / "valid_1.png")
-    _rand_image().save(train_dir / "valid" / "valid_2.png")
+    _rand_image().save(train_dir / "valid" / "val_1.png")
+    _rand_image().save(train_dir / "valid" / "val_2.png")
 
     (train_dir / "test").mkdir()
     _rand_image().save(train_dir / "test" / "test_1.png")
@@ -119,11 +119,9 @@ def test_categorical_csv_labels(tmpdir):
     )
     text_file.close()
 
-    valid_csv = os.path.join(tmpdir, 'some_dataset', 'valid.csv')
-    text_file = open(valid_csv, 'w')
-    text_file.write(
-        'my_id,label_a,label_b,label_c\n"valid_1.png", 0, 1, 0\n"valid_2.png", 0, 0, 1\n"valid_3.png", 1, 0, 0\n'
-    )
+    val_csv = os.path.join(tmpdir, 'some_dataset', 'valid.csv')
+    text_file = open(val_csv, 'w')
+    text_file.write('my_id,label_a,label_b,label_c\n"val_1.png", 0, 1, 0\n"val_2.png", 0, 0, 1\n"val_3.png", 1, 0, 0\n')
     text_file.close()
 
     test_csv = os.path.join(tmpdir, 'some_dataset', 'test.csv')
@@ -139,8 +137,8 @@ def test_categorical_csv_labels(tmpdir):
     train_labels = labels_from_categorical_csv(
         train_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
     )
-    valid_labels = labels_from_categorical_csv(
-        valid_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
+    val_labels = labels_from_categorical_csv(
+        val_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
     )
     test_labels = labels_from_categorical_csv(
         test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
@@ -148,12 +146,12 @@ def test_categorical_csv_labels(tmpdir):
     data = ImageClassificationData.from_filepaths(
         batch_size=2,
         train_transform=None,
-        valid_transform=None,
+        val_transform=None,
         test_transform=None,
         train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
         train_labels=train_labels.values(),
-        valid_filepaths=os.path.join(tmpdir, 'some_dataset', 'valid'),
-        valid_labels=valid_labels.values(),
+        val_filepaths=os.path.join(tmpdir, 'some_dataset', 'valid'),
+        val_labels=val_labels.values(),
         test_filepaths=os.path.join(tmpdir, 'some_dataset', 'test'),
         test_labels=test_labels.values(),
     )
@@ -193,7 +191,7 @@ def test_from_folders(tmpdir):
 
     img_data = ImageClassificationData.from_folders(
         train_dir,
-        valid_folder=train_dir,
+        val_folder=train_dir,
         test_folder=train_dir,
         batch_size=1,
         num_workers=0,

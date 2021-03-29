@@ -32,7 +32,7 @@ class DataModule(pl.LightningDataModule):
 
     Args:
         train_dataset: Dataset for training. Defaults to None.
-        valid_dataset: Dataset for validating model performance during training. Defaults to None.
+        val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset to predict model performance. Defaults to None.
         num_workers: The number of workers to use for parallelized loading. Defaults to None.
@@ -49,7 +49,7 @@ class DataModule(pl.LightningDataModule):
     def __init__(
         self,
         train_dataset: Optional[Dataset] = None,
-        valid_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
         batch_size: int = 1,
@@ -58,14 +58,14 @@ class DataModule(pl.LightningDataModule):
 
         super().__init__()
         self._train_ds = train_dataset
-        self._valid_ds = valid_dataset
+        self._val_ds = val_dataset
         self._test_ds = test_dataset
         self._predict_ds = predict_dataset
 
         if self._train_ds:
             self.train_dataloader = self._train_dataloader
 
-        if self._valid_ds:
+        if self._val_ds:
             self.val_dataloader = self._val_dataloader
 
         if self._test_ds:
@@ -104,8 +104,8 @@ class DataModule(pl.LightningDataModule):
         if self._train_ds:
             self.set_dataset_attribute(self._train_ds, 'running_stage', RunningStage.TRAINING)
 
-        if self._valid_ds:
-            self.set_dataset_attribute(self._valid_ds, 'running_stage', RunningStage.VALIDATING)
+        if self._val_ds:
+            self.set_dataset_attribute(self._val_ds, 'running_stage', RunningStage.VALIDATING)
 
         if self._test_ds:
             self.set_dataset_attribute(self._test_ds, 'running_stage', RunningStage.TESTING)
@@ -130,13 +130,13 @@ class DataModule(pl.LightningDataModule):
         )
 
     def _val_dataloader(self) -> DataLoader:
-        valid_ds: Dataset = self._valid_ds() if isinstance(self._valid_ds, Callable) else self._valid_ds
+        val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
         return DataLoader(
-            valid_ds,
+            val_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
-            collate_fn=self._resolve_collate_fn(valid_ds, RunningStage.VALIDATING)
+            collate_fn=self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
         )
 
     def _test_dataloader(self) -> DataLoader:
@@ -214,10 +214,10 @@ class DataModule(pl.LightningDataModule):
         return AutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
 
     @staticmethod
-    def train_valid_test_split(
+    def train_val_test_split(
         dataset: torch.utils.data.Dataset,
         train_split: Optional[Union[float, int]] = None,
-        valid_split: Optional[Union[float, int]] = None,
+        val_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
         seed: Optional[int] = 1234,
     ) -> Tuple[Dataset, Optional[Dataset], Optional[Dataset]]:
@@ -227,11 +227,11 @@ class DataModule(pl.LightningDataModule):
             dataset: Dataset to be split.
             train_split: If Float, ratio of data to be contained within the train dataset. If Int,
                 number of samples to be contained within train dataset.
-            valid_split: If Float, ratio of data to be contained within the validation dataset. If Int,
+            val_split: If Float, ratio of data to be contained within the validation dataset. If Int,
                 number of samples to be contained within test dataset.
             test_split: If Float, ratio of data to be contained within the test dataset. If Int,
                 number of samples to be contained within test dataset.
-            seed: Used for the train/val splits when valid_split is not None.
+            seed: Used for the train/val splits when val_split is not None.
 
         """
         n = len(dataset)
@@ -243,12 +243,12 @@ class DataModule(pl.LightningDataModule):
         else:
             _test_length = test_split
 
-        if valid_split is None:
+        if val_split is None:
             _val_length = 0
-        elif isinstance(valid_split, float):
-            _val_length = int(n * valid_split)
+        elif isinstance(val_split, float):
+            _val_length = int(n * val_split)
         else:
-            _val_length = valid_split
+            _val_length = val_split
 
         if train_split is None:
             _train_length = n - _val_length - _test_length
@@ -265,7 +265,7 @@ class DataModule(pl.LightningDataModule):
         train_ds, val_ds, test_ds = torch.utils.data.random_split(
             dataset, [_train_length, _val_length, _test_length], generator
         )
-        if valid_split is None:
+        if val_split is None:
             val_ds = None
         if test_split is None:
             test_ds = None
@@ -293,7 +293,7 @@ class DataModule(pl.LightningDataModule):
     def from_load_data_inputs(
         cls,
         train_load_data_input: Optional[Any] = None,
-        valid_load_data_input: Optional[Any] = None,
+        val_load_data_input: Optional[Any] = None,
         test_load_data_input: Optional[Any] = None,
         predict_load_data_input: Optional[Any] = None,
         preprocess: Optional[Preprocess] = None,
@@ -306,7 +306,7 @@ class DataModule(pl.LightningDataModule):
         Args:
             cls: ``DataModule`` subclass
             train_load_data_input: Data to be received by the ``train_load_data`` function from this ``Preprocess``
-            valid_load_data_input: Data to be received by the ``val_load_data`` function from this ``Preprocess``
+            val_load_data_input: Data to be received by the ``val_load_data`` function from this ``Preprocess``
             test_load_data_input: Data to be received by the ``test_load_data`` function from this ``Preprocess``
             predict_load_data_input: Data to be received by the ``predict_load_data`` function from this ``Preprocess``
             kwargs: Any extra arguments to instantiate the provided ``DataModule``
@@ -322,8 +322,8 @@ class DataModule(pl.LightningDataModule):
         train_dataset = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
         )
-        valid_dataset = cls._generate_dataset_if_possible(
-            valid_load_data_input, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
+        val_dataset = cls._generate_dataset_if_possible(
+            val_load_data_input, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
         )
         test_dataset = cls._generate_dataset_if_possible(
             test_load_data_input, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
@@ -333,7 +333,7 @@ class DataModule(pl.LightningDataModule):
         )
         datamodule = cls(
             train_dataset=train_dataset,
-            valid_dataset=valid_dataset,
+            val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
             **kwargs

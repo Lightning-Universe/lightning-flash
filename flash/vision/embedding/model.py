@@ -49,7 +49,7 @@ class ImageEmbedder(Task):
 
     @property
     def preprocess(self):
-        return ImageClassificationPreprocess(predict_transform=ImageClassificationData.default_valid_transforms())
+        return ImageClassificationPreprocess(predict_transform=ImageClassificationData.default_val_transforms())
 
     def __init__(
         self,

@@ -54,7 +54,7 @@ class SummarizationData(Seq2SeqData):
         target: Optional[str] = None,
         filetype: str = "csv",
         backbone: str = "t5-small",
-        valid_file: str = None,
+        val_file: str = None,
         test_file: str = None,
         predict_file: str = None,
         max_source_length: int = 512,
@@ -73,7 +73,7 @@ class SummarizationData(Seq2SeqData):
             target: The field storing the target translation text.
             filetype: .csv or .json
             backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
-            valid_file: Path to validation data.
+            val_file: Path to validation data.
             test_file: Path to test data.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
@@ -110,7 +110,7 @@ class SummarizationData(Seq2SeqData):
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,
-            valid_load_data_input=valid_file,
+            val_load_data_input=val_file,
             test_load_data_input=test_file,
             predict_load_data_input=predict_file,
             batch_size=batch_size,
