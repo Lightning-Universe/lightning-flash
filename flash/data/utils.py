@@ -20,6 +20,7 @@ import requests
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
+from torch import Tensor
 from tqdm.auto import tqdm as tq
 
 _STAGES_PREFIX = {
@@ -69,7 +70,7 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
                 zip_ref.extractall(path)
 
 
-def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
+def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
     # TODO: we should refactor FlashDatasetFolder to better integrate
     # with DataPipeline. That way, we wouldn't need this check.
     # This is because we are running transforms in both places.

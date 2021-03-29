@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
+from torch import Tensor
 from torch.nn import Module
 from torch.utils.data._utils.collate import default_collate
 
@@ -101,10 +102,10 @@ class Preprocess(Properties, torch.nn.Module):
     def pre_tensor_transform(self, sample: Any) -> Any:
         return sample
 
-    def to_tensor_transform(self, sample: Any) -> torch.Tensor:
+    def to_tensor_transform(self, sample: Any) -> Tensor:
         return sample
 
-    def post_tensor_transform(self, sample: torch.Tensor) -> torch.Tensor:
+    def post_tensor_transform(self, sample: Tensor) -> Tensor:
         return sample
 
     def per_batch_transform(self, batch: Any) -> Any:

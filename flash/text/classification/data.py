@@ -140,8 +140,7 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
                 batch["input_ids"] = batch["input_ids"].squeeze(0)
         return batch
 
-    def before_uncollate(self, batch: Union[torch.Tensor, tuple,
-                                            SequenceClassifierOutput]) -> Union[tuple, torch.Tensor]:
+    def before_uncollate(self, batch: Union[Tensor, tuple, SequenceClassifierOutput]) -> Union[tuple, Tensor]:
         if isinstance(batch, SequenceClassifierOutput):
             batch = batch.logits
         return super().before_uncollate(batch)
