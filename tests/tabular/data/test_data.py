@@ -85,11 +85,11 @@ def test_tabular_data(tmpdir):
     train_df = TEST_DF_1.copy()
     valid_df = TEST_DF_2.copy()
     test_df = TEST_DF_2.copy()
-    dm = TabularData(
+    dm = TabularData.from_df(
         train_df,
-        categorical_input=["category"],
-        numerical_input=["scalar_b", "scalar_b"],
-        target="label",
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
@@ -110,11 +110,11 @@ def test_categorical_target(tmpdir):
         # change int label to string
         df["label"] = df["label"].astype(str)
 
-    dm = TabularData(
+    dm = TabularData.from_df(
         train_df,
-        categorical_input=["category"],
-        numerical_input=["scalar_b", "scalar_b"],
-        target="label",
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
@@ -133,9 +133,9 @@ def test_from_df(tmpdir):
     test_df = TEST_DF_2.copy()
     dm = TabularData.from_df(
         train_df,
-        categorical_input=["category"],
-        numerical_input=["scalar_b", "scalar_b"],
-        target="label",
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_df=valid_df,
         test_df=test_df,
         num_workers=0,
@@ -156,10 +156,10 @@ def test_from_csv(tmpdir):
     TEST_DF_2.to_csv(test_csv)
 
     dm = TabularData.from_csv(
-        train_csv,
-        categorical_input=["category"],
-        numerical_input=["scalar_b", "scalar_b"],
-        target="label",
+        train_csv=train_csv,
+        categorical_cols=["category"],
+        numerical_cols=["scalar_b", "scalar_b"],
+        target_col="label",
         valid_csv=valid_csv,
         test_csv=test_csv,
         num_workers=0,
@@ -176,5 +176,5 @@ def test_empty_inputs():
     train_df = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
         TabularData.from_df(
-            train_df, categorical_input=None, numerical_input=None, target="label", num_workers=0, batch_size=1
+            train_df, numerical_cols=None, categorical_cols=None, target_col="label", num_workers=0, batch_size=1
         )

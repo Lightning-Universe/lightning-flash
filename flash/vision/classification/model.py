@@ -16,12 +16,11 @@ from typing import Any, Callable, Mapping, Sequence, Tuple, Type, Union
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.nn.functional import softmax
 from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
 from flash.vision.backbones import backbone_and_num_features
-from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
+from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
 
 class ImageClassifier(ClassificationTask):
@@ -59,6 +58,10 @@ class ImageClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
+    @property
+    def preprocess(self):
+        return ImageClassificationPreprocess(predict_transform=ImageClassificationData.default_valid_transforms())
+
     def __init__(
         self,
         num_classes: int,
@@ -92,8 +95,4 @@ class ImageClassifier(ClassificationTask):
 
     def forward(self, x) -> Any:
         x = self.backbone(x)
-        return softmax(self.head(x))
-
-    @staticmethod
-    def default_pipeline() -> ImageClassificationDataPipeline:
-        return ImageClassificationData.default_pipeline()
+        return torch.softmax(self.head(x), -1)

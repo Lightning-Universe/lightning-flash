@@ -67,33 +67,6 @@ for the prediction of diabetes disease progression. We can create this
 ``DataModule`` below, wrapping the scikit-learn `Diabetes
 dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
 
-.. testcode::
-
-    class DiabetesPipeline(flash.core.data.TaskDataPipeline):
-        def after_uncollate(self, samples):
-            return [f"disease progression: {float(s):.2f}" for s in samples]
-
-    class DiabetesData(flash.DataModule):
-        def __init__(self, batch_size=64, num_workers=0):
-            x, y = datasets.load_diabetes(return_X_y=True)
-            x = torch.from_numpy(x).float()
-            y = torch.from_numpy(y).float().unsqueeze(1)
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
-
-            train_ds = TensorDataset(x_train, y_train)
-            test_ds = TensorDataset(x_test, y_test)
-
-            super().__init__(
-                train_ds=train_ds,
-                test_ds=test_ds,
-                batch_size=batch_size,
-                num_workers=num_workers
-            )
-            self.num_inputs = x.shape[1]
-
-        @staticmethod
-        def default_pipeline():
-            return DiabetesPipeline()
 
 You’ll notice we added a ``DataPipeline``, which will be used when we
 call ``.predict()`` on our model. In this case we want to nicely format

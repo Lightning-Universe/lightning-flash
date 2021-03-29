@@ -45,7 +45,7 @@ Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on
     print(predictions)
 
     # 3b. Or generate predictions with a whole folder!
-    datamodule = ImageClassificationData.from_folder(folder="data/hymenoptera_data/predict/")
+    datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
     predictions = Trainer().predict(model, datamodule=datamodule)
     print(predictions)
 
@@ -185,5 +185,3 @@ ImageClassificationData
 .. automethod:: flash.vision.ImageClassificationData.from_filepaths
 
 .. automethod:: flash.vision.ImageClassificationData.from_folders
-
-.. automethod:: flash.vision.ImageClassificationData.from_folder

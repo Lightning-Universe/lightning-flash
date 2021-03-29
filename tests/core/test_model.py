@@ -26,7 +26,7 @@ from torch.nn import functional as F
 from flash import ClassificationTask
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier
-from flash.vision import ImageClassifier
+from flash.vision import ImageClassificationData, ImageClassifier
 
 # ======== Mock functions ========
 
@@ -51,7 +51,7 @@ class PredictDummyDataset(DummyDataset):
 
 @pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, F.nll_loss, metrics=metrics)
@@ -63,7 +63,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
 
 
 def test_classificationtask_task_predict():
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     task = ClassificationTask(model)
     ds = DummyDataset()
     expected = list(range(10))
@@ -82,35 +82,40 @@ def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
+    def _rand_image():
+        return Image.fromarray(np.random.randint(0, 255, (256, 256, 3), dtype="uint8"))
+
     _rand_image().save(train_dir / "1.png")
     _rand_image().save(train_dir / "2.png")
 
+    datamodule = ImageClassificationData.from_folders(predict_folder=train_dir)
+
     task = ImageClassifier(num_classes=10)
-    predictions = task.predict(str(train_dir))
+    predictions = task.predict(str(train_dir), data_pipeline=datamodule.data_pipeline)
     assert len(predictions) == 2
 
 
-@pytest.mark.skip("Requires DataPipeline update")  # TODO
 def test_classification_task_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
     ds = PredictDummyDataset()
     batch_size = 3
-    predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size, collate_fn=task.data_pipeline.collate_fn)
+    predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size)
     trainer = pl.Trainer(default_root_dir=tmpdir)
     predictions = trainer.predict(task, predict_dl)
-    assert len(predictions) == 3
-    for pred in predictions:
-        assert pred.shape == (3, 10)
+    assert len(predictions) == len(ds) // batch_size
+    for batch_pred in predictions:
+        assert len(batch_pred) == batch_size
+        assert all(y < 10 for y in batch_pred)
 
 
 def test_task_datapipeline_save(tmpdir):
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, F.nll_loss)
 
     # to check later
-    task.data_pipeline.test = True
+    task.postprocess.test = True
 
     # generate a checkpoint
     trainer = pl.Trainer(
@@ -127,15 +132,14 @@ def test_task_datapipeline_save(tmpdir):
 
     # load from file
     task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task.data_pipeline.test
+    assert task.postprocess.test
 
 
-@pytest.mark.skipif(reason="Weights are using the new API")
 @pytest.mark.parametrize(
     ["cls", "filename"],
     [
         (ImageClassifier, "image_classification_model.pt"),
-        (TabularClassifier, "tabnet_classification_model.pt"),
+        (TabularClassifier, "tabular_classification_model.pt"),
         (TextClassifier, "text_classification_model.pt"),
         (SummarizationTask, "summarization_model_xsum.pt"),
         # (TranslationTask, "translation_model_en_ro.pt"), todo: reduce model size or create CI friendly file size
@@ -146,7 +150,3 @@ def test_model_download(tmpdir, cls, filename):
     with tmpdir.as_cwd():
         task = cls.load_from_checkpoint(url + filename)
         assert isinstance(task, cls)
-
-
-def _rand_image():
-    return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))

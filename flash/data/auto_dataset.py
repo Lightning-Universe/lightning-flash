@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.warning_utils import rank_zero_warn
 from torch.utils.data import Dataset
 
 from flash.data.process import Preprocess
-from flash.data.utils import _STAGES_PREFIX
+from flash.data.utils import _STAGES_PREFIX, _STAGES_PREFIX_VALUES
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipeline
@@ -28,8 +28,6 @@ if TYPE_CHECKING:
 
 class AutoDataset(Dataset):
 
-    FITTING_STAGES = ("train", "val")
-    STAGES = ("train", "test", "val", "predict")
     DATASET_KEY = "dataset"
     """
         This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions.
@@ -89,11 +87,11 @@ class AutoDataset(Dataset):
         else:
             return self.load_sample(sample)
 
-    def _setup(self, stage: RunningStage) -> None:
-        assert not stage or _STAGES_PREFIX[stage] in self.STAGES
+    def _setup(self, stage: Optional[RunningStage]) -> None:
+        assert not stage or _STAGES_PREFIX[stage] in _STAGES_PREFIX_VALUES
         previous_load_data = self.load_data.__code__ if self.load_data else None
 
-        if (self._running_stage and self.data_pipeline and (not self.load_data or not self.load_sample) and stage):
+        if self._running_stage and self.data_pipeline and (not self.load_data or not self.load_sample) and stage:
             self.load_data = getattr(
                 self.data_pipeline._preprocess_pipeline,
                 self.data_pipeline._resolve_function_hierarchy(
@@ -128,18 +126,12 @@ class AutoDataset(Dataset):
 
     def __getitem__(self, index: int) -> Any:
         if not self.load_sample and not self.load_data:
-            raise RuntimeError(
-                "Names for LoadSample and LoadData could not be inferred."
-                " Consider setting the RunningStage"
-            )
+            raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
         if self.load_sample:
             return self._call_load_sample(self._preprocessed_data[index])
         return self._preprocessed_data[index]
 
     def __len__(self) -> int:
         if not self.load_sample and not self.load_data:
-            raise RuntimeError(
-                "Names for LoadSample and LoadData could not be inferred."
-                " Consider setting the RunningStage"
-            )
+            raise RuntimeError("`__len__` for `load_sample` and `load_data` could not be inferred.")
         return len(self._preprocessed_data)

@@ -254,8 +254,8 @@ download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 datamodule = TabularData.from_csv(
   "./data/titanic/titanic.csv",
   test_csv="./data/titanic/test.csv",
-  categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-  numerical_input=["Fare"],
+  cat_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+  num_cols=["Fare"],
   target="Survived",
   val_size=0.25,
 )

@@ -90,8 +90,8 @@ class Seq2SeqTask(Task):
         self.log("train_loss", loss)
         return loss
 
-    def common_step(self, prefix: str, batch: Any) -> Tensor:
-        generated_tokens = self.predict(batch, skip_collate_fn=True)
+    def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
+        generated_tokens = self(batch)
         self.compute_metrics(generated_tokens, batch, prefix)
 
     def validation_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):
@@ -108,7 +108,7 @@ class Seq2SeqTask(Task):
         """
         Override to define AutoConfig task specific parameters stored within the model.
         """
-        pass
+        return
 
     def _initialize_model_specific_parameters(self):
         task_specific_params = self.model.config.task_specific_params
@@ -120,7 +120,7 @@ class Seq2SeqTask(Task):
 
     @property
     def tokenizer(self) -> PreTrainedTokenizerBase:
-        return self.data_pipeline.tokenizer
+        return self.data_pipeline._preprocess_pipeline.tokenizer
 
     def tokenize_labels(self, labels: Tensor) -> List[str]:
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)

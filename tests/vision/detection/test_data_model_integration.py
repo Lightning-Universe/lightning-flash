@@ -18,11 +18,10 @@ from PIL import Image
 from pytorch_lightning.utilities import _module_available
 
 import flash
+from flash.utils.imports import _COCO_AVAILABLE
 from flash.vision import ObjectDetector
 from flash.vision.detection import ObjectDetectionData
 from tests.vision.detection.test_data import _create_synth_coco_dataset
-
-_COCO_AVAILABLE = _module_available("pycocotools")
 
 
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
@@ -41,9 +40,8 @@ def test_detection(tmpdir, model, backbone):
     test_image_one = os.fspath(tmpdir / "test_one.png")
     test_image_two = os.fspath(tmpdir / "test_two.png")
 
-    Image.new('RGB', (1920, 1080)).save(test_image_one)
-    Image.new('RGB', (1920, 1080)).save(test_image_two)
+    Image.new('RGB', (512, 512)).save(test_image_one)
+    Image.new('RGB', (512, 512)).save(test_image_two)
 
     test_images = [test_image_one, test_image_two]
-
     model.predict(test_images)

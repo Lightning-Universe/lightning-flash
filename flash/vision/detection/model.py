@@ -24,7 +24,6 @@ from torchvision.ops import box_iou
 
 from flash.core import Task
 from flash.vision.backbones import backbone_and_num_features
-from flash.vision.detection.data import ObjectDetectionDataPipeline
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 
 _models = {
@@ -188,10 +187,6 @@ class ObjectDetector(Task):
         avg_iou = torch.stack([o["test_iou"] for o in outs]).mean()
         logs = {"test_iou": avg_iou}
         return {"avg_test_iou": avg_iou, "log": logs}
-
-    @staticmethod
-    def default_pipeline() -> ObjectDetectionDataPipeline:
-        return ObjectDetectionDataPipeline()
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]

@@ -28,12 +28,11 @@ _PACKAGE_ROOT = os.path.dirname(__file__)
 _PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
 
 from flash import tabular, text, vision  # noqa: E402
-from flash.core import data, utils  # noqa: E402
 from flash.core.classification import ClassificationTask  # noqa: E402
-from flash.core.data import DataModule  # noqa: E402
-from flash.core.data.utils import download_data  # noqa: E402
 from flash.core.model import Task  # noqa: E402
 from flash.core.trainer import Trainer  # noqa: E402
+from flash.data.data_module import DataModule  # noqa: E402
+from flash.data.utils import download_data  # noqa: E402
 
 __all__ = [
     "Task",
@@ -42,7 +41,5 @@ __all__ = [
     "vision",
     "text",
     "tabular",
-    "data",
-    "utils",
     "download_data",
 ]

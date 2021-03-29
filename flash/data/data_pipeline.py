@@ -57,13 +57,13 @@ class DataPipeline:
 
         _Sequential:
 
-            ┌─────────────────────────
+            ┌─────────────────────────┐
             │  pre_tensor_transform   │
-            │            |            |
+            │            |            │
             │  to_tensor_transform    │
-            │            |            |
+            │            |            │
             │  post_tensor_transform  │
-            └──────────────────────────
+            └─────────────────────────┘
 
         _PreProcessor:
 
@@ -138,8 +138,6 @@ class DataPipeline:
         "per_batch_transform_on_device",
         "collate",
     }
-    # TODO: unused?
-    POSTPROCESS_FUNCS = ("per_batch_transform", "per_sample_transform", "save_data", "save_sample")
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
@@ -161,6 +159,11 @@ class DataPipeline:
 
         return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
 
+    @property
+    def preprocess_state(self):
+        if self._preprocess_pipeline:
+            return self._preprocess_pipeline.state
+
     @classmethod
     def _is_overriden_recursive(
         cls, method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None
@@ -169,6 +172,7 @@ class DataPipeline:
         Cropped Version of
         https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
+        assert isinstance(process_obj, super_obj)
         if prefix is None and not hasattr(super_obj, method_name):
             raise MisconfigurationException(f"This function doesn't belong to the parent class {super_obj}")
 
@@ -197,7 +201,7 @@ class DataPipeline:
 
     @property
     def postprocessor(self) -> _PostProcessor:
-        return self._postprocessor | self._create_uncollate_postprocessors()
+        return self._postprocessor or self._create_uncollate_postprocessors()
 
     @postprocessor.setter
     def postprocessor(self, new_processor: _PostProcessor):
@@ -211,16 +215,14 @@ class DataPipeline:
             object_type = Preprocess
 
         prefixes = ['']
-
-        # TODO: Check if tuning uses training or validation data
         if stage in (RunningStage.TRAINING, RunningStage.TUNING):
-            prefixes = ['train', 'fit'] + prefixes
+            prefixes += ['train', 'fit']
         elif stage == RunningStage.VALIDATING:
-            prefixes = ['val', 'fit'] + prefixes
+            prefixes += ['val', 'fit']
         elif stage == RunningStage.TESTING:
-            prefixes = ['test'] + prefixes
+            prefixes += ['test']
         elif stage == RunningStage.PREDICTING:
-            prefixes = ['predict'] + prefixes
+            prefixes += ['predict']
 
         for prefix in prefixes:
             if cls._is_overriden(function_name, process_obj, object_type, prefix=prefix):
@@ -350,13 +352,13 @@ class DataPipeline:
         setattr(model, final_name, new_loader)
 
     def _attach_preprocess_to_model(
-        self, model: 'Task', stages: Optional[RunningStage] = None, device_transform_only: bool = False
+        self, model: 'Task', stage: Optional[RunningStage] = None, device_transform_only: bool = False
     ) -> None:
-        if not stages:
+        if not stage:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 
-        elif isinstance(stages, RunningStage):
-            stages = [stages]
+        elif isinstance(stage, RunningStage):
+            stages = [stage]
 
         for stage in stages:
 
@@ -439,29 +441,24 @@ class DataPipeline:
         )
         return model
 
-    def _attach_to_model(self, model: 'Task', stages: RunningStage = None):
+    def _attach_to_model(self, model: 'Task', stage: RunningStage = None):
         # not necessary to detach. preprocessing and postprocessing for stage will be overwritten.
-        self._attach_preprocess_to_model(model, stages)
+        self._attach_preprocess_to_model(model, stage)
 
-        if not stages or stages == RunningStage.PREDICTING:
+        if not stage or stage == RunningStage.PREDICTING:
             self._attach_postprocess_to_model(model)
 
-    def _detach_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
-        self._detach_preprocessing_from_model(model, stages)
+    def _detach_from_model(self, model: 'Task', stage: Optional[RunningStage] = None):
+        self._detach_preprocessing_from_model(model, stage)
 
-        if not stages or stages == RunningStage.PREDICTING:
+        if not stage or stage == RunningStage.PREDICTING:
             self._detach_postprocess_from_model(model)
 
-    @staticmethod
-    def _composed_collates(samples: Any, worker_collate: Callable, device_collate: Callable) -> Any:
-        return device_collate(worker_collate(samples))
-
-    def _detach_preprocessing_from_model(self, model: 'Task', stages: Optional[RunningStage] = None):
-        if not stages:
+    def _detach_preprocessing_from_model(self, model: 'Task', stage: Optional[RunningStage] = None):
+        if not stage:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
-
-        elif isinstance(stages, RunningStage):
-            stages = [stages]
+        elif isinstance(stage, RunningStage):
+            stages = [stage]
 
         for stage in stages:
 
@@ -473,7 +470,7 @@ class DataPipeline:
                 if model.transfer_batch_to_device.is_empty():
                     model.transfer_batch_to_device = model.transfer_batch_to_device.func
 
-            if device_collate is None:
+            if not device_collate:
                 device_collate = self._identity
 
             loader_name = f'{_STAGES_PREFIX[stage]}_dataloader'

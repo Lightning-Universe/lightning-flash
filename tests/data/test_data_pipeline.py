@@ -58,14 +58,13 @@ class CustomDataModule(DataModule):
 
     def __init__(self):
         super().__init__(
-            train_ds=DummyDataset(),
-            valid_ds=DummyDataset(),
-            test_ds=DummyDataset(),
-            predict_ds=DummyDataset(),
+            train_dataset=DummyDataset(),
+            valid_dataset=DummyDataset(),
+            test_dataset=DummyDataset(),
+            predict_dataset=DummyDataset(),
         )
 
 
-@pytest.mark.skipif(reason="Still using DataPipeline Old API")
 @pytest.mark.parametrize("use_preprocess", [False, True])
 @pytest.mark.parametrize("use_postprocess", [False, True])
 def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmpdir):
@@ -85,7 +84,7 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 
     model = CustomModel(Postprocess())
     model.data_pipeline = data_pipeline
-    assert isinstance(model._preprocess, Preprocess)
+    assert isinstance(model._preprocess, SubPreprocess if use_preprocess else Preprocess)
     assert isinstance(model._postprocess, SubPostprocess if use_postprocess else Postprocess)
 
 
@@ -286,7 +285,6 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
     data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
 
-@pytest.mark.skipif(reason="Still using DataPipeline Old API")
 def test_detach_preprocessing_from_model(tmpdir):
 
     preprocess = CustomPreprocess()
@@ -334,7 +332,6 @@ class TestPreprocess(Preprocess):
         pass
 
 
-@pytest.mark.skipif(reason="Still using DataPipeline Old API")
 def test_attaching_datapipeline_to_model(tmpdir):
 
     preprocess = TestPreprocess()
@@ -660,7 +657,6 @@ def test_is_overriden_recursive(tmpdir):
         assert not DataPipeline._is_overriden_recursive("chocolate", preprocess, Preprocess)
 
 
-@pytest.mark.skipif(reason="Still using DataPipeline Old API")
 @mock.patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
 

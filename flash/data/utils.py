@@ -29,6 +29,7 @@ _STAGES_PREFIX = {
     RunningStage.VALIDATING: 'val',
     RunningStage.PREDICTING: 'predict'
 }
+_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
@@ -83,7 +84,11 @@ def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
     return False
 
 
-class LambdaModule(torch.nn.Module):
+class FuncModule(torch.nn.Module):
+    """
+    This class is used to wrap a callable within a nn.Module and
+    apply the wrapped function in `__call__`
+    """
 
     def __init__(self, func: Callable) -> None:
         super().__init__()
@@ -101,7 +106,7 @@ def convert_to_modules(transforms: Dict):
     if transforms is None or isinstance(transforms, torch.nn.Module):
         return transforms
 
-    transforms = apply_to_collection(transforms, Callable, LambdaModule, wrong_dtype=torch.nn.Module)
+    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=torch.nn.Module)
     transforms = apply_to_collection(transforms, Mapping, torch.nn.ModuleDict, wrong_dtype=torch.nn.ModuleDict)
     transforms = apply_to_collection(
         transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
