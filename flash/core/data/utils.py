@@ -40,7 +40,6 @@ def download_file(url: str, path: str, verbose: bool = False) -> None:
     if not os.path.exists(local_filename):
         r = requests.get(url, stream=True)
         file_size = int(r.headers.get('Content-Length', 0))
-        chunk = 1
         chunk_size = 1024
         num_bars = int(file_size / chunk_size)
         if verbose:

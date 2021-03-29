@@ -84,7 +84,7 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 
     model = CustomModel(Postprocess())
     model.data_pipeline = data_pipeline
-    assert isinstance(model._preprocess, Preprocess)  # WHY NO IF HERE?
+    assert isinstance(model._preprocess, SubPreprocess if use_preprocess else Preprocess)
     assert isinstance(model._postprocess, SubPostprocess if use_postprocess else Postprocess)
 
 

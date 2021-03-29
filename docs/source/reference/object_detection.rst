@@ -41,14 +41,14 @@ Use the :class:`~flash.vision.ObjectDetector` pretrained model for inference on 
 
 .. code-block:: python
 
-	from flash.vision import ObjectDetector
+    from flash.vision import ObjectDetector
 
-	# 1. Load the model
-	detector = ObjectDetector()
+    # 1. Load the model
+    detector = ObjectDetector()
 
-	# 2. Perform inference on an image file
-	predictions = detector.predict("path/to/image.png")
-	print(predictions)
+    # 2. Perform inference on an image file
+    predictions = detector.predict("path/to/image.png")
+    print(predictions)
 
 Or on a random image tensor
 

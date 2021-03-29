@@ -113,8 +113,7 @@ class TextClassificationPreprocess(Preprocess):
 
     @staticmethod
     def generate_state(file: str, target: str, filetype: str) -> TextClassificationState:
-        data_files = {}
-        data_files['train'] = file
+        data_files = {'train': file}
         dataset_dict = load_dataset(filetype, data_files=data_files)
         label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(dataset_dict['train'][target])))))}
         return TextClassificationState(label_to_class_mapping)
@@ -313,7 +312,7 @@ class TextClassificationData(DataModule):
 
         Args:
 
-            train_file: Path to training data.
+            predict_file: Path to training data.
             input: The field storing the text to be classified.
             filetype: .csv or .json
             backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.

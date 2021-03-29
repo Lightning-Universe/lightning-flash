@@ -47,11 +47,9 @@ class ImageEmbedder(Task):
 
     """
 
-    preprocess_cls = ImageClassificationPreprocess
-
     @property
     def preprocess(self):
-        return self.preprocess_cls(predict_transform=ImageClassificationData.default_valid_transforms())
+        return ImageClassificationPreprocess(predict_transform=ImageClassificationData.default_valid_transforms())
 
     def __init__(
         self,
@@ -111,6 +109,3 @@ class ImageEmbedder(Task):
 
         x = self.head(x)
         return x
-
-    def predict(self, x: Any, data_pipeline: Optional[DataPipeline] = None) -> Any:
-        return super().predict(x, data_pipeline=data_pipeline)

@@ -29,7 +29,7 @@ datamodule = ObjectDetectionData.from_coco(
 # 3. Build the model
 model = ObjectDetector(num_classes=datamodule.num_classes)
 
-# 4. Create the trainer. Run twice on data
+# 4. Create the trainer
 trainer = flash.Trainer(max_epochs=3)
 
 # 5. Finetune the model
