@@ -454,10 +454,6 @@ class DataPipeline:
         if not stage or stage == RunningStage.PREDICTING:
             self._detach_postprocess_from_model(model)
 
-    @staticmethod
-    def _composed_collates(samples: Any, worker_collate: Callable, device_collate: Callable) -> Any:
-        return device_collate(worker_collate(samples))
-
     def _detach_preprocessing_from_model(self, model: 'Task', stage: Optional[RunningStage] = None):
         if not stage:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
@@ -474,7 +470,7 @@ class DataPipeline:
                 if model.transfer_batch_to_device.is_empty():
                     model.transfer_batch_to_device = model.transfer_batch_to_device.func
 
-            if device_collate is None:
+            if not device_collate:
                 device_collate = self._identity
 
             loader_name = f'{_STAGES_PREFIX[stage]}_dataloader'
