@@ -72,7 +72,7 @@ class SummarizationData(Seq2SeqData):
             input: The field storing the source translation text.
             target: The field storing the target translation text.
             filetype: .csv or .json
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
             valid_file: Path to validation data.
             test_file: Path to test data.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
@@ -139,7 +139,7 @@ class SummarizationData(Seq2SeqData):
             predict_file: Path to prediction input file.
             input: The field storing the source translation text.
             target: The field storing the target translation text.
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
             filetype: csv or json.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.

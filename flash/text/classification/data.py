@@ -131,6 +131,7 @@ class TextClassificationPreprocess(Preprocess):
         stage = dataset.running_stage.value
         data_files[stage] = str(filepath)
 
+        # FLASH_TESTING is set in the CI to run faster.
         if use_full and os.getenv("FLASH_TESTING", "0") == "0":
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
@@ -139,20 +140,15 @@ class TextClassificationPreprocess(Preprocess):
                 stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
             })
 
-        dataset_dict = dataset_dict.map(
-            self._tokenize_fn,
-            batched=True,
-        )
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
 
         # convert labels to ids
         if not self.predicting:
             dataset_dict = dataset_dict.map(self._transform_label)
 
-        dataset_dict = dataset_dict.map(
-            self._tokenize_fn,
-            batched=True,
-        )
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
 
+        # Hugging Face models expect target to be named ``labels``.
         if not self.predicting and self.target != "labels":
             dataset_dict.rename_column_(self.target, "labels")
 
@@ -196,7 +192,7 @@ class TextClassificationData(DataModule):
         return self._preprocess.state
 
     @property
-    def num_classes(self):
+    def num_classes(self) -> int:
         return len(self.preprocess_state.label_to_class_mapping)
 
     @classmethod
@@ -259,7 +255,7 @@ class TextClassificationData(DataModule):
             input: The field storing the text to be classified.
             target: The field storing the class id of the associated text.
             filetype: .csv or .json
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
             valid_file: Path to validation data.
             test_file: Path to test data.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
@@ -320,11 +316,11 @@ class TextClassificationData(DataModule):
             train_file: Path to training data.
             input: The field storing the text to be classified.
             filetype: .csv or .json
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
+                or 0 for Darwin platform.
         """
         return cls.from_files(
             None,

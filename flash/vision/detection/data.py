@@ -27,9 +27,9 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.data.utils import _contains_any_tensor
+from flash.utils.imports import _COCO_AVAILABLE
 from flash.vision.utils import pil_loader
 
-_COCO_AVAILABLE = _module_available("pycocotools")
 if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
 
@@ -53,7 +53,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         self.loader = loader
 
     @property
-    def num_classes(self):
+    def num_classes(self) -> int:
         categories = self.coco.loadCats(self.coco.getCatIds())
         if not categories:
             raise ValueError("No Categories found")
@@ -138,6 +138,7 @@ class ObjectDetectionPreprocess(Preprocess):
     to_tensor = T.ToTensor()
 
     def load_data(self, metadata: Any, dataset: AutoDataset) -> CustomCOCODataset:
+        # Extract folder, coco annotation file and the transform to be applied on the images
         folder, ann_file, transform = metadata
         ds = CustomCOCODataset(folder, ann_file, transform)
         if self.training:

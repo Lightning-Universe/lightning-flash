@@ -86,6 +86,7 @@ class Seq2SeqPreprocess(Preprocess):
         stage = self._running_stage.value
         data_files[stage] = str(file)
 
+        # FLASH_TESTING is set in the CI to run faster.
         if use_full and os.getenv("FLASH_TESTING", "0") == "0":
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
@@ -97,10 +98,7 @@ class Seq2SeqPreprocess(Preprocess):
             except AssertionError:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
-        dataset_dict = dataset_dict.map(
-            self._tokenize_fn,
-            batched=True,
-        )
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
         dataset_dict.set_format(columns=columns)
         return dataset_dict[stage]
 
@@ -135,6 +133,20 @@ class Seq2SeqData(DataModule):
         padding: int,
         preprocess_cls: Optional[Type[Preprocess]] = None
     ) -> Preprocess:
+        """
+        This function is used to instantiate the  ``Seq2SeqPreprocess`` preprocess.
+
+        Args:
+            tokenizer: Path to training data.
+            input: The field storing the source translation text.
+            filetype: ``csv`` or ``json`` File
+            target: The field storing the target translation text.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
+            max_source_length: Maximum length of the source text. Any text longer will be truncated.
+            max_target_length: Maximum length of the target text. Any text longer will be truncated.
+            padding: Padding strategy for batches. Default is pad to maximum length.
+            preprocess_cls: Preprocess cls
+        """
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
 
@@ -171,8 +183,8 @@ class Seq2SeqData(DataModule):
             train_file: Path to training data.
             input: The field storing the source translation text.
             target: The field storing the target translation text.
-            filetype: Csv or Json File
-            backbone: Tokenizer to use, can use any HuggingFace tokenizer.
+            filetype: ``csv`` or ``json`` File
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
             valid_file: Path to validation data.
             test_file: Path to test data.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
@@ -181,7 +193,7 @@ class Seq2SeqData(DataModule):
             batch_size: The batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to None which equals the number of available CPU threads,
-            or 0 for Darwin platform.
+                or 0 for Darwin platform.
         Returns:
             Seq2SeqData: The constructed data module.
         Examples::
@@ -233,7 +245,7 @@ class Seq2SeqData(DataModule):
             predict_file: Path to prediction input file.
             input: The field storing the source translation text.
             target: The field storing the target translation text.
-            backbone: Tokenizer to use, can use any HuggingFace tokenizer.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
             filetype: Csv or json.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
