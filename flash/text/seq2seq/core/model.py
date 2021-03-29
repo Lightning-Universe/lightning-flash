@@ -18,6 +18,7 @@ from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities import rank_zero_info
+from torch import Tensor
 from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
 
 from flash.core import Task
@@ -83,7 +84,7 @@ class Seq2SeqTask(Task):
             )
         return generated_tokens
 
-    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: Any, batch_idx: int) -> Tensor:
         outputs = self.model(**batch)
         loss = outputs[0]
         self.log("train_loss", loss)
@@ -121,7 +122,7 @@ class Seq2SeqTask(Task):
     def tokenizer(self) -> PreTrainedTokenizerBase:
         return self.data_pipeline._preprocess_pipeline.tokenizer
 
-    def tokenize_labels(self, labels: torch.Tensor) -> List[str]:
+    def tokenize_labels(self, labels: Tensor) -> List[str]:
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
         return [str.strip(s) for s in label_str]
 

@@ -18,7 +18,7 @@ import torch
 from PIL import Image
 from pytorch_lightning.utilities import _module_available
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import Tensor
+from torch import Tensor, tensor
 from torch._six import container_abcs
 from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
@@ -91,7 +91,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         target = {}
         target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
         target["labels"] = torch.as_tensor(labels, dtype=torch.int64)
-        target["image_id"] = torch.tensor([img_idx])
+        target["image_id"] = tensor([img_idx])
         target["area"] = torch.as_tensor(areas, dtype=torch.float32)
         target["iscrowd"] = torch.as_tensor(iscrowd, dtype=torch.int64)
 

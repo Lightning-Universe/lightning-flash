@@ -11,33 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
 import os.path
+import tarfile
 import zipfile
-from typing import Any, Callable, Dict, Iterable, Mapping, Type
+from typing import Any, Type
 
 import requests
 import torch
-from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
 from tqdm.auto import tqdm as tq
 
-_STAGES_PREFIX = {
-    RunningStage.TRAINING: 'train',
-    RunningStage.TESTING: 'test',
-    RunningStage.VALIDATING: 'val',
-    RunningStage.PREDICTING: 'predict'
-}
 
-
-def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
+# Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
+# __author__  = "github.com/ruxi"
+# __license__ = "MIT"
+def download_file(url: str, path: str, verbose: bool = False) -> None:
     """
     Download file with progressbar
-
-    # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
-    # __author__  = "github.com/ruxi"
-    # __license__ = "MIT"
 
     Usage:
         download_file('http://web4host.net/5MB.zip')
@@ -45,15 +36,15 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     if not os.path.exists(path):
         os.makedirs(path)
     local_filename = os.path.join(path, url.split('/')[-1])
-    r = requests.get(url, stream=True)
-    file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
-    chunk_size = 1024
-    num_bars = int(file_size / chunk_size)
-    if verbose:
-        print(dict(file_size=file_size))
-        print(dict(num_bars=num_bars))
 
     if not os.path.exists(local_filename):
+        r = requests.get(url, stream=True)
+        file_size = int(r.headers.get('Content-Length', 0))
+        chunk = 1
+        chunk_size = 1024
+        num_bars = int(file_size / chunk_size)
+        if verbose:
+            logging.info(f'file size: {file_size}\n# bars: {num_bars}')
         with open(local_filename, 'wb') as fp:
             for chunk in tq(
                 r.iter_content(chunk_size=chunk_size),
@@ -68,6 +59,27 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         if os.path.exists(local_filename):
             with zipfile.ZipFile(local_filename, 'r') as zip_ref:
                 zip_ref.extractall(path)
+    elif '.tar.gz' in local_filename:
+        if os.path.exists(local_filename):
+            with tarfile.open(local_filename, 'r') as tar_ref:
+                tar_ref.extractall(path)
+
+
+def download_data(url: str, path: str = "data/") -> None:
+    """
+    Downloads data automatically from the given url to the path. Defaults to data/ for the path.
+    Automatically handles .csv, .zip
+
+    Example::
+
+        from flash import download_data
+
+    Args:
+        url: path
+        path: local
+
+    """
+    download_file(url, path)
 
 
 def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
@@ -81,33 +93,3 @@ def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
     elif isinstance(value, dict):
         return any(_contains_any_tensor(v, dtype=dtype) for v in value.values())
     return False
-
-
-class FuncModule(torch.nn.Module):
-    """
-    This class is used to wrap a callable within a nn.Module and
-    apply the wrapped function in `__call__`
-    """
-
-    def __init__(self, func: Callable) -> None:
-        super().__init__()
-        self.func = func
-
-    def forward(self, *args, **kwargs) -> Any:
-        return self.func(*args, **kwargs)
-
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}({str(self.func)})"
-
-
-def convert_to_modules(transforms: Dict):
-
-    if transforms is None or isinstance(transforms, torch.nn.Module):
-        return transforms
-
-    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=torch.nn.Module)
-    transforms = apply_to_collection(transforms, Mapping, torch.nn.ModuleDict, wrong_dtype=torch.nn.ModuleDict)
-    transforms = apply_to_collection(
-        transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
-    )
-    return transforms

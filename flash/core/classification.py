@@ -14,6 +14,7 @@
 from typing import Any, Union
 
 import torch
+from torch import Tensor
 
 from flash.core.model import Task
 from flash.data.process import Postprocess

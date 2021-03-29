@@ -14,9 +14,9 @@
 from typing import Dict, List, Tuple
 
 import numpy as np
-import torch
 from rouge_score import rouge_scorer, scoring
 from rouge_score.scoring import AggregateScore, Score
+from torch import tensor
 from torchmetrics import Metric
 
 from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_sentence
@@ -71,7 +71,7 @@ class RougeMetric(Metric):
                 tgt = add_newline_to_end_of_each_sentence(tgt)
             results = self.scorer.score(pred, tgt)
             for key, score in results.items():
-                score = torch.tensor([score.precision, score.recall, score.fmeasure])
+                score = tensor([score.precision, score.recall, score.fmeasure])
                 getattr(self, key).append(score)
 
     def compute(self) -> Dict[str, float]:

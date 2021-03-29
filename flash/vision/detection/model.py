@@ -15,7 +15,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchvision
-from torch import nn
+from torch import nn, tensor
 from torch.optim import Optimizer
 from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
 from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead
@@ -38,7 +38,7 @@ def _evaluate_iou(target, pred):
     """
     if pred["boxes"].shape[0] == 0:
         # no box detected, 0 IOU
-        return torch.tensor(0.0, device=pred["boxes"].device)
+        return tensor(0.0, device=pred["boxes"].device)
     return box_iou(target["boxes"], pred["boxes"]).diag().mean()
 
 
