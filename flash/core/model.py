@@ -78,25 +78,22 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        if not hasattr(self, "_data_pipeline"):
-            self._data_pipeline = None
-        if not hasattr(self, "_preprocess"):
-            self._preprocess = None
-        if not hasattr(self, "_postprocess"):
-            self._postprocess = None
+        self._data_pipeline = None
+        self._preprocess = None
+        self._postprocess = None
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
         The training/validation/test step. Override for custom behavior.
         """
         x, y = batch
-        y_hat = self.forward(x)
+        y_hat = self(x)
         output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
-                metric(output["y_hat"], y)
+                metric(y_hat, y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)
@@ -135,14 +132,12 @@ class Task(LightningModule):
         Predict function for raw data or processed data
 
         Args:
-
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
 
             data_pipeline: Use this to override the current data pipeline
 
         Returns:
             The post-processed model predictions
-
         """
         running_stage = RunningStage.PREDICTING
         data_pipeline = data_pipeline or self.data_pipeline
@@ -150,8 +145,7 @@ class Task(LightningModule):
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
-        # batch_idx is always 0 when running with ``model.predict``.    # noqa E265
-        predictions = self.predict_step(x, 0)
+        predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(predictions)
         return predictions
 
@@ -171,7 +165,7 @@ class Task(LightningModule):
 
     @property
     def preprocess(self) -> Optional[Preprocess]:
-        return (getattr(self._data_pipeline, '_preprocess_pipeline', None)) or self._preprocess
+        return getattr(self._data_pipeline, '_preprocess_pipeline', None) or self._preprocess
 
     @preprocess.setter
     def preprocess(self, preprocess: Preprocess) -> None:
@@ -180,7 +174,7 @@ class Task(LightningModule):
 
     @property
     def postprocess(self) -> Postprocess:
-        return (getattr(self._data_pipeline, '_postprocess_pipeline', None)) or self._postprocess
+        return getattr(self._data_pipeline, '_postprocess_pipeline', None) or self._postprocess
 
     @postprocess.setter
     def postprocess(self, postprocess: Postprocess) -> None:
@@ -189,13 +183,11 @@ class Task(LightningModule):
 
     @property
     def data_pipeline(self) -> Optional[DataPipeline]:
-        # we need to save the pipeline in case this class
-        # is loaded from checkpoint and used to predict
         if self._data_pipeline is not None:
             return self._data_pipeline
 
         elif self.preprocess is not None or self.postprocess is not None:
-            # use direct attributes here to avoid recursion with properties that also check the datapipeline property
+            # use direct attributes here to avoid recursion with properties that also check the data_pipeline property
             return DataPipeline(self.preprocess, self.postprocess)
 
         elif self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
@@ -209,49 +201,48 @@ class Task(LightningModule):
         return self._data_pipeline
 
     @data_pipeline.setter
-    def data_pipeline(self, data_pipeline: DataPipeline) -> None:
+    def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
         self._data_pipeline = data_pipeline
         if data_pipeline is not None and getattr(data_pipeline, '_preprocess_pipeline', None) is not None:
             self._preprocess = data_pipeline._preprocess_pipeline
 
         if data_pipeline is not None and getattr(data_pipeline, '_postprocess_pipeline', None) is not None:
-            datapipeline_postprocess = data_pipeline._postprocess_pipeline
-            if type(datapipeline_postprocess) != Postprocess:
+            if type(data_pipeline._postprocess_pipeline) != Postprocess:
                 self._postprocess = data_pipeline._postprocess_pipeline
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
             self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
-        return super().on_train_dataloader()
+        super().on_train_dataloader()
 
     def on_val_dataloader(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
-        return super().on_val_dataloader()
+        super().on_val_dataloader()
 
     def on_test_dataloader(self, *_) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
             self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
-        return super().on_test_dataloader()
+        super().on_test_dataloader()
 
     def on_predict_dataloader(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
             self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
-        return super().on_predict_dataloader()
+        super().on_predict_dataloader()
 
     def on_predict_end(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
-        return super().on_predict_end()
+        super().on_predict_end()
 
     def on_fit_end(self) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
-        return super().on_fit_end()
+        super().on_fit_end()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # TODO: Is this the best way to do this? or should we also use some kind of hparams here?
@@ -260,11 +251,9 @@ class Task(LightningModule):
 
         if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
             checkpoint['data_pipeline'] = self.data_pipeline
-        return super().on_save_checkpoint(checkpoint)
+        super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        ret_val = super().on_load_checkpoint(checkpoint)
+        super().on_load_checkpoint(checkpoint)
         if 'data_pipeline' in checkpoint:
             self.data_pipeline = checkpoint['data_pipeline']
-
-        return ret_val

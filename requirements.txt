@@ -1,11 +1,10 @@
-torchmetrics>=0.2.0
-lightning-bolts==0.3.2  # todo: we shall align with proper release
-pytorch_lightning
-git+https://github.com/PyTorchLightning/pytorch-lightning.git
-torch>=1.7  # TODO: regenerate weights with lewer PT version
+torch>=1.7  # TODO: regenerate weights with lower PT version
+torchmetrics
+torchvision>=0.8  # TODO: lower to 0.7 after PT 1.6
+pytorch_lightning @ git+https://github.com/PyTorchLightning/pytorch-lightning.git
+lightning-bolts==0.3.2  # TODO: align with proper release
 PyYAML>=5.1
 Pillow>=7.2
-torchvision>=0.8  # lower to 0.7 after PT 1.6
 transformers>=4.0
 pytorch-tabnet==3.1
 datasets>=1.2, <1.3

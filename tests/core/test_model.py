@@ -82,6 +82,9 @@ def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
+    def _rand_image():
+        return Image.fromarray(np.random.randint(0, 255, (256, 256, 3), dtype="uint8"))
+
     _rand_image().save(train_dir / "1.png")
     _rand_image().save(train_dir / "2.png")
 
@@ -92,7 +95,6 @@ def test_classification_task_predict_folder_path(tmpdir):
     assert len(predictions) == 2
 
 
-@pytest.mark.skip("Requires DataPipeline update")  # TODO
 def test_classification_task_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
@@ -101,9 +103,10 @@ def test_classification_task_trainer_predict(tmpdir):
     predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size)
     trainer = pl.Trainer(default_root_dir=tmpdir)
     predictions = trainer.predict(task, predict_dl)
-    assert len(predictions) == 3
-    for pred in predictions:
-        assert pred.shape == (3, 10)
+    assert len(predictions) == len(ds) // batch_size
+    for batch_pred in predictions:
+        assert len(batch_pred) == batch_size
+        assert all(y < 10 for y in batch_pred)
 
 
 def test_task_datapipeline_save(tmpdir):
@@ -147,7 +150,3 @@ def test_model_download(tmpdir, cls, filename):
     with tmpdir.as_cwd():
         task = cls.load_from_checkpoint(url + filename)
         assert isinstance(task, cls)
-
-
-def _rand_image():
-    return Image.fromarray(np.random.randint(0, 255, (256, 256, 3), dtype="uint8"))
