@@ -29,6 +29,7 @@ _STAGES_PREFIX = {
     RunningStage.VALIDATING: 'val',
     RunningStage.PREDICTING: 'predict'
 }
+_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:

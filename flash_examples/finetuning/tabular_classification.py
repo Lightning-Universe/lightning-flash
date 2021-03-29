@@ -33,7 +33,7 @@ datamodule = TabularData.from_csv(
 # 3. Build the model
 model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
 
-# 4. Create the trainer. Run 10 times on data
+# 4. Create the trainer
 trainer = flash.Trainer(fast_dev_run=True)
 
 # 5. Train the model

@@ -29,7 +29,7 @@ datamodule = ImageClassificationData.from_folders(
 # 3. Build the model
 model = ImageClassifier(num_classes=datamodule.num_classes)
 
-# 4. Create the trainer. Run twice on data
+# 4. Create the trainer.
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 
 # 5. Train the model
@@ -50,5 +50,5 @@ datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenopte
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
 
-# 4. Saving checkpoint
+# 4. Save it!
 trainer.save_checkpoint("image_classification_model.pt")

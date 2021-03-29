@@ -31,8 +31,8 @@ datamodule = TextClassificationData.from_files(
 # 3. Build the model
 model = TextClassifier(num_classes=datamodule.num_classes)
 
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, fast_dev_run=True)
+# 4. Create the trainer
+trainer = flash.Trainer(fast_dev_run=True)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")

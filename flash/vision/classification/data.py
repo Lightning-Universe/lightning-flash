@@ -16,7 +16,6 @@ import pathlib
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 import torch
-from numpy import isin
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -32,7 +31,6 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
-from flash.data.utils import _contains_any_tensor
 from flash.utils.imports import _KORNIA_AVAILABLE
 
 if _KORNIA_AVAILABLE:
@@ -466,13 +464,13 @@ class ImageClassificationData(DataModule):
     @classmethod
     def from_filepaths(
         cls,
-        train_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
+        train_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         train_labels: Optional[Sequence] = None,
-        valid_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
+        valid_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         valid_labels: Optional[Sequence] = None,
-        test_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
+        test_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         test_labels: Optional[Sequence] = None,
-        predict_filepaths: Union[str, Optional[Sequence[Union[str, pathlib.Path]]]] = None,
+        predict_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         train_transform: Optional[Callable] = 'default',
         valid_transform: Optional[Callable] = 'default',
         batch_size: int = 64,
@@ -493,7 +491,6 @@ class ImageClassificationData(DataModule):
         Args:
             train_filepaths: String or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: Sequence of labels for training dataset. Defaults to ``None``.
-            valid_split: If not None, generates val split from train dataloader using this value.
             valid_filepaths: String or sequence of file paths for validation dataset. Defaults to ``None``.
             valid_labels: Sequence of labels for validation dataset. Defaults to ``None``.
             test_filepaths: String or sequence of file paths for test dataset. Defaults to ``None``.

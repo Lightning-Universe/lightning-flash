@@ -108,7 +108,7 @@ class Seq2SeqTask(Task):
         """
         Override to define AutoConfig task specific parameters stored within the model.
         """
-        pass
+        return
 
     def _initialize_model_specific_parameters(self):
         task_specific_params = self.model.config.task_specific_params

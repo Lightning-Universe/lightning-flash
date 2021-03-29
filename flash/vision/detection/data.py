@@ -16,7 +16,6 @@ from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
 from PIL import Image
-from pytorch_lightning.utilities import _module_available
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch._six import container_abcs
@@ -88,12 +87,13 @@ class CustomCOCODataset(torch.utils.data.Dataset):
                 areas.append(obj["area"])
                 iscrowd.append(obj["iscrowd"])
 
-        target = {}
-        target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
-        target["labels"] = torch.as_tensor(labels, dtype=torch.int64)
-        target["image_id"] = tensor([img_idx])
-        target["area"] = torch.as_tensor(areas, dtype=torch.float32)
-        target["iscrowd"] = torch.as_tensor(iscrowd, dtype=torch.int64)
+        target = dict(
+            boxes=torch.as_tensor(boxes, dtype=torch.float32),
+            labels=torch.as_tensor(labels, dtype=torch.int64),
+            image_id=tensor([img_idx]),
+            area=torch.as_tensor(areas, dtype=torch.float32),
+            iscrowd=torch.as_tensor(iscrowd, dtype=torch.int64)
+        )
 
         if self.transforms:
             img = self.transforms(img)

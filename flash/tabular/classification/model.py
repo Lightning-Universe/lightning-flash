@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Optional, Tuple, Type
+from typing import Any, Callable, List, Tuple, Type
 
 import torch
 from torch.nn import functional as F
-from torch.nn.functional import softmax
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
@@ -71,7 +70,7 @@ class TabularClassifier(ClassificationTask):
             learning_rate=learning_rate,
         )
 
-    def forward(self, x_in):
+    def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
         return F.softmax(self.model(x)[0], -1)
