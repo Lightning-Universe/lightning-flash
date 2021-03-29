@@ -19,6 +19,7 @@ from typing import Any, Type
 
 import requests
 import torch
+from torch import Tensor
 from tqdm.auto import tqdm as tq
 
 
@@ -81,7 +82,7 @@ def download_data(url: str, path: str = "data/") -> None:
     download_file(url, path)
 
 
-def _contains_any_tensor(value: Any, dtype: Type = torch.Tensor) -> bool:
+def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
     # TODO: we should refactor FlashDatasetFolder to better integrate
     # with DataPipeline. That way, we wouldn't need this check.
     # This is because we are running transforms in both places.
