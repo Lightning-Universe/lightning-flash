@@ -77,11 +77,11 @@ def test_classificationtask_task_predict():
     assert all(c in expected for c in pred1)
     assert pred0[0] == pred1[0]
 
-    pred2 = task.predict([x0], return_type=ClassificationTask.RAW_PROB)
+    pred2 = task.predict([x0], return_type=ClassificationTask.Return.RAW_PROB)
     assert isinstance(pred2[0], torch.Tensor)
 
     class_names = ['c1'] * len(expected)
-    pred3 = task.predict([x0], return_type=ClassificationTask.CLASS_NAME, labels=class_names)
+    pred3 = task.predict([x0], return_type=ClassificationTask.Return.CLASS_NAME, labels=class_names)
     assert all(c in class_names for c in pred3)
 
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import os
+from enum import Enum
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
@@ -54,10 +55,11 @@ class Task(LightningModule):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`
     """
-    # TODO: use ENUM
-    RAW_PROB = 'raw_prob'
-    CLASS_NAME = 'class_name'
-    ARG_MAX = 'argmax'
+
+    class Return(Enum):
+        RAW_PROB = 'raw_prob'
+        CLASS_NAME = 'class_name'
+        ARG_MAX = 'argmax'
 
     def __init__(
         self,
@@ -146,6 +148,8 @@ class Task(LightningModule):
                 for the model, for example, data from a dataloader
 
             data_pipeline: Use this to override the current data pipeline
+            return_type: Whether to return raw probability, argmax or class names
+            labels: List of class name to return
 
         Returns:
             The post-processed model predictions
@@ -157,7 +161,7 @@ class Task(LightningModule):
             files = [os.path.join(x, y) for y in files]
             x = files
 
-        if return_type == self.CLASS_NAME and labels is None:
+        if return_type == self.Return.CLASS_NAME and labels is None:
             raise UserWarning('Misconfiguration, return type is class name but labels is not provided!')
 
         data_pipeline = data_pipeline or self.data_pipeline
@@ -165,10 +169,10 @@ class Task(LightningModule):
         batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
         predictions = self.predict_step(batch_x, 0)
 
-        if return_type == self.RAW_PROB:
+        if return_type == self.Return.RAW_PROB:
             return predictions
         output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
-        if return_type == self.CLASS_NAME:
+        if return_type == self.Return.CLASS_NAME:
             output = [labels[idx] for idx in output]
         return output
 
