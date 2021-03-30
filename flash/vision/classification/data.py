@@ -471,11 +471,14 @@ class ImageClassificationData(DataModule):
         test_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         test_labels: Optional[Sequence] = None,
         predict_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
-        train_transform: Optional[Callable] = 'default',
-        val_transform: Optional[Callable] = 'default',
+        train_transform: Union[str, Dict] = 'default',
+        val_transform: Union[str, Dict] = 'default',
+        test_transform: Union[str, Dict] = 'default',
+        predict_transform: Union[str, Dict] = 'default',
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: Optional[int] = 42,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
         **kwargs,
     ) -> 'ImageClassificationData':
         """
@@ -532,59 +535,34 @@ class ImageClassificationData(DataModule):
                 train_filepaths = [os.path.join(train_filepaths, x) for x in os.listdir(train_filepaths)]
             else:
                 train_filepaths = [train_filepaths]
+
         if isinstance(val_filepaths, str):
             if os.path.isdir(val_filepaths):
                 val_filepaths = [os.path.join(val_filepaths, x) for x in os.listdir(val_filepaths)]
             else:
                 val_filepaths = [val_filepaths]
+
         if isinstance(test_filepaths, str):
             if os.path.isdir(test_filepaths):
                 test_filepaths = [os.path.join(test_filepaths, x) for x in os.listdir(test_filepaths)]
             else:
                 test_filepaths = [test_filepaths]
-        if isinstance(predict_filepaths, str):
-            if os.path.isdir(predict_filepaths):
-                predict_filepaths = [os.path.join(predict_filepaths, x) for x in os.listdir(predict_filepaths)]
-            else:
-                predict_filepaths = [predict_filepaths]
 
-        if train_filepaths is not None and train_labels is not None:
-            train_dataset = cls._generate_dataset_if_possible(
-                list(zip(train_filepaths, train_labels)), running_stage=RunningStage.TRAINING
-            )
-        else:
-            train_dataset = None
+        preprocess = cls.instantiate_preprocess(
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
+            preprocess_cls=preprocess_cls,
+        )
 
-        if val_filepaths is not None and val_labels is not None:
-            val_dataset = cls._generate_dataset_if_possible(
-                list(zip(val_filepaths, val_labels)), running_stage=RunningStage.VALIDATING
-            )
-        else:
-            val_dataset = None
-
-        if test_filepaths is not None and test_labels is not None:
-            test_dataset = cls._generate_dataset_if_possible(
-                list(zip(test_filepaths, test_labels)), running_stage=RunningStage.TESTING
-            )
-        else:
-            test_dataset = None
-
-        if predict_filepaths is not None:
-            predict_dataset = cls._generate_dataset_if_possible(
-                predict_filepaths, running_stage=RunningStage.PREDICTING
-            )
-        else:
-            predict_dataset = None
-
-        return cls(
-            train_dataset=train_dataset,
-            val_dataset=val_dataset,
-            test_dataset=test_dataset,
-            predict_dataset=predict_dataset,
-            train_transform=train_transform,
-            val_transform=val_transform,
+        return cls.from_load_data_inputs(
+            train_load_data_input=list(zip(train_filepaths, train_labels)) if train_filepaths else None,
+            val_load_data_input=list(zip(val_filepaths, val_labels)) if val_filepaths else None,
+            test_load_data_input=list(zip(test_filepaths, test_labels)) if test_filepaths else None,
+            predict_load_data_input=predict_filepaths,
             batch_size=batch_size,
             num_workers=num_workers,
-            seed=seed,
+            preprocess=preprocess,
             **kwargs
         )
