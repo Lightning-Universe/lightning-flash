@@ -237,7 +237,7 @@ class TextClassificationData(DataModule):
         target: Optional[str] = 'labels',
         filetype: str = "csv",
         backbone: str = "prajjwal1/bert-tiny",
-        valid_file: Optional[str] = None,
+        val_file: Optional[str] = None,
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
         max_length: int = 128,
@@ -255,7 +255,7 @@ class TextClassificationData(DataModule):
             target: The field storing the class id of the associated text.
             filetype: .csv or .json
             backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
-            valid_file: Path to validation data.
+            val_file: Path to validation data.
             test_file: Path to test data.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
@@ -287,7 +287,7 @@ class TextClassificationData(DataModule):
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,
-            valid_load_data_input=valid_file,
+            val_load_data_input=val_file,
             test_load_data_input=test_file,
             predict_load_data_input=predict_file,
             batch_size=batch_size,
@@ -327,7 +327,7 @@ class TextClassificationData(DataModule):
             target=None,
             filetype=filetype,
             backbone=backbone,
-            valid_file=None,
+            val_file=None,
             test_file=None,
             predict_file=predict_file,
             max_length=max_length,

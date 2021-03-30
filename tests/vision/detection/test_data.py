@@ -96,8 +96,8 @@ def test_image_detector_data_from_coco(tmpdir):
     datamodule = ObjectDetectionData.from_coco(
         train_folder=train_folder,
         train_ann_file=coco_ann_path,
-        valid_folder=train_folder,
-        valid_ann_file=coco_ann_path,
+        val_folder=train_folder,
+        val_ann_file=coco_ann_path,
         test_folder=train_folder,
         test_ann_file=coco_ann_path,
         batch_size=1,

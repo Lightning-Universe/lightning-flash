@@ -23,7 +23,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 # 2. Load the data
 datamodule = SummarizationData.from_files(
     train_file="data/xsum/train.csv",
-    valid_file="data/xsum/valid.csv",
+    val_file="data/xsum/valid.csv",
     test_file="data/xsum/test.csv",
     input="input",
     target="target"

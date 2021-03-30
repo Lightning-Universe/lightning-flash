@@ -183,12 +183,12 @@ class ObjectDetectionData(DataModule):
     def instantiate_preprocess(
         cls,
         train_transform: Optional[Callable],
-        valid_transform: Optional[Callable],
+        val_transform: Optional[Callable],
         preprocess_cls: Type[Preprocess] = None
     ) -> Preprocess:
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
-        return preprocess_cls(train_transform, valid_transform)
+        return preprocess_cls(train_transform, val_transform)
 
     @classmethod
     def from_coco(
@@ -196,9 +196,9 @@ class ObjectDetectionData(DataModule):
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
         train_transform: Optional[Callable] = _default_transform,
-        valid_folder: Optional[str] = None,
-        valid_ann_file: Optional[str] = None,
-        valid_transform: Optional[Callable] = _default_transform,
+        val_folder: Optional[str] = None,
+        val_ann_file: Optional[str] = None,
+        val_transform: Optional[Callable] = _default_transform,
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         test_transform: Optional[Callable] = _default_transform,
@@ -208,11 +208,11 @@ class ObjectDetectionData(DataModule):
         **kwargs
     ):
 
-        preprocess = cls.instantiate_preprocess(train_transform, valid_transform, preprocess_cls=preprocess_cls)
+        preprocess = cls.instantiate_preprocess(train_transform, val_transform, preprocess_cls=preprocess_cls)
 
         datamodule = cls.from_load_data_inputs(
             train_load_data_input=(train_folder, train_ann_file, train_transform),
-            valid_load_data_input=(valid_folder, valid_ann_file, valid_transform) if valid_folder else None,
+            val_load_data_input=(val_folder, val_ann_file, val_transform) if val_folder else None,
             test_load_data_input=(test_folder, test_ann_file, test_transform) if test_folder else None,
             batch_size=batch_size,
             num_workers=num_workers,

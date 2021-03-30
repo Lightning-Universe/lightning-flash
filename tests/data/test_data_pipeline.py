@@ -59,7 +59,7 @@ class CustomDataModule(DataModule):
     def __init__(self):
         super().__init__(
             train_dataset=DummyDataset(),
-            valid_dataset=DummyDataset(),
+            val_dataset=DummyDataset(),
             test_dataset=DummyDataset(),
             predict_dataset=DummyDataset(),
         )
@@ -720,7 +720,7 @@ def test_dummy_example(tmpdir):
             # call ``from_load_data_inputs``
             return cls.from_load_data_inputs(
                 train_load_data_input=train_folder,
-                valid_load_data_input=val_folder,
+                val_load_data_input=val_folder,
                 test_load_data_input=test_folder,
                 predict_load_data_input=predict_folder,
                 batch_size=batch_size

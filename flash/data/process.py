@@ -87,13 +87,13 @@ class Preprocess(Properties, torch.nn.Module):
     def __init__(
         self,
         train_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
-        valid_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
     ):
         super().__init__()
         self.train_transform = convert_to_modules(train_transform)
-        self.valid_transform = convert_to_modules(valid_transform)
+        self.val_transform = convert_to_modules(val_transform)
         self.test_transform = convert_to_modules(test_transform)
         self.predict_transform = convert_to_modules(predict_transform)
 

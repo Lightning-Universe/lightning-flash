@@ -28,7 +28,7 @@ class TranslationData(Seq2SeqData):
         target: Optional[str] = None,
         filetype="csv",
         backbone="facebook/mbart-large-en-ro",
-        valid_file=None,
+        val_file=None,
         test_file=None,
         predict_file=None,
         max_source_length: int = 128,
@@ -46,7 +46,7 @@ class TranslationData(Seq2SeqData):
             target: The field storing the target translation text.
             filetype: .csv or .json
             backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
-            valid_file: Path to validation data.
+            val_file: Path to validation data.
             test_file: Path to test data.
             predict_file: Path to predict data.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
@@ -70,7 +70,7 @@ class TranslationData(Seq2SeqData):
         """
         return super().from_files(
             train_file=train_file,
-            valid_file=valid_file,
+            val_file=val_file,
             test_file=test_file,
             predict_file=predict_file,
             input=input,

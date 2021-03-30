@@ -83,7 +83,7 @@ class TabularPreprocess(Preprocess):
     @staticmethod
     def generate_state(
         train_df: DataFrame,
-        valid_df: Optional[DataFrame],
+        val_df: Optional[DataFrame],
         test_df: Optional[DataFrame],
         predict_df: Optional[DataFrame],
         target_col: str,
@@ -100,8 +100,8 @@ class TabularPreprocess(Preprocess):
 
         dfs = [train_df]
 
-        if valid_df is not None:
-            dfs += [valid_df]
+        if val_df is not None:
+            dfs += [val_df]
 
         if test_df is not None:
             dfs += [test_df]
@@ -197,7 +197,7 @@ class TabularData(DataModule):
         train_csv: Optional[str] = None,
         categorical_cols: Optional[List] = None,
         numerical_cols: Optional[List] = None,
-        valid_csv: Optional[str] = None,
+        val_csv: Optional[str] = None,
         test_csv: Optional[str] = None,
         predict_csv: Optional[str] = None,
         batch_size: int = 8,
@@ -215,7 +215,7 @@ class TabularData(DataModule):
             target_col: The column containing the class id.
             categorical_cols: The list of categorical columns.
             numerical_cols: The list of numerical columns.
-            valid_csv: Validation data csv file.
+            val_csv: Validation data csv file.
             test_csv: Test data csv file.
             batch_size: The batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
@@ -234,7 +234,7 @@ class TabularData(DataModule):
             text_data = TabularData.from_files("train.csv", label_field="class", text_field="sentence")
         """
         train_df = pd.read_csv(train_csv, **pandas_kwargs)
-        valid_df = pd.read_csv(valid_csv, **pandas_kwargs) if valid_csv else None
+        val_df = pd.read_csv(val_csv, **pandas_kwargs) if val_csv else None
         test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv else None
         predict_df = pd.read_csv(predict_csv, **pandas_kwargs) if predict_csv else None
 
@@ -243,7 +243,7 @@ class TabularData(DataModule):
             target_col,
             categorical_cols,
             numerical_cols,
-            valid_df,
+            val_df,
             test_df,
             predict_df,
             batch_size,
@@ -268,21 +268,21 @@ class TabularData(DataModule):
     @staticmethod
     def _split_dataframe(
         train_df: DataFrame,
-        valid_df: Optional[DataFrame] = None,
+        val_df: Optional[DataFrame] = None,
         test_df: Optional[DataFrame] = None,
         val_size: float = None,
         test_size: float = None,
     ):
-        if valid_df is None and isinstance(val_size, float) and isinstance(test_size, float):
+        if val_df is None and isinstance(val_size, float) and isinstance(test_size, float):
             assert 0 < val_size < 1
             assert 0 < test_size < 1
-            train_df, valid_df = train_test_split(train_df, test_size=(val_size + test_size))
+            train_df, val_df = train_test_split(train_df, test_size=(val_size + test_size))
 
         if test_df is None and isinstance(test_size, float):
             assert 0 < test_size < 1
-            valid_df, test_df = train_test_split(valid_df, test_size=test_size)
+            val_df, test_df = train_test_split(val_df, test_size=test_size)
 
-        return train_df, valid_df, test_df
+        return train_df, val_df, test_df
 
     @staticmethod
     def _sanetize_cols(cat_cols: Optional[List], num_cols: Optional[List]):
@@ -298,7 +298,7 @@ class TabularData(DataModule):
         target_col: str,
         categorical_cols: Optional[List] = None,
         numerical_cols: Optional[List] = None,
-        valid_df: Optional[DataFrame] = None,
+        val_df: Optional[DataFrame] = None,
         test_df: Optional[DataFrame] = None,
         predict_df: Optional[DataFrame] = None,
         batch_size: int = 8,
@@ -316,7 +316,7 @@ class TabularData(DataModule):
             target_col: The column containing the class id.
             categorical_cols: The list of categorical columns.
             numerical_cols: The list of numerical columns.
-            valid_df: Validation data DataFrame.
+            val_df: Validation data DataFrame.
             test_df: Test data DataFrame.
             batch_size: The batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
@@ -334,13 +334,13 @@ class TabularData(DataModule):
         """
         categorical_cols, numerical_cols = cls._sanetize_cols(categorical_cols, numerical_cols)
 
-        train_df, valid_df, test_df = cls._split_dataframe(train_df, valid_df, test_df, val_size, test_size)
+        train_df, val_df, test_df = cls._split_dataframe(train_df, val_df, test_df, val_size, test_size)
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
 
         preprocess_state = preprocess_cls.generate_state(
             train_df,
-            valid_df,
+            val_df,
             test_df,
             predict_df,
             target_col,
@@ -353,7 +353,7 @@ class TabularData(DataModule):
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_df,
-            valid_load_data_input=valid_df,
+            val_load_data_input=val_df,
             test_load_data_input=test_df,
             predict_load_data_input=predict_df,
             batch_size=batch_size,
