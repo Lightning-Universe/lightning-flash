@@ -27,7 +27,8 @@ def _dummy_image_loader(_):
 
 
 def _rand_image():
-    return Image.fromarray(np.random.randint(0, 255, (196, 196, 3), dtype="uint8"))
+    _size = np.random.choice([196, 244])
+    return Image.fromarray(np.random.randint(0, 255, (_size, _size, 3), dtype="uint8"))
 
 
 def test_from_filepaths(tmpdir):
@@ -45,14 +46,13 @@ def test_from_filepaths(tmpdir):
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
         train_transform=None,
         train_labels=[0, 1],
-        batch_size=1,
+        batch_size=2,
         num_workers=0,
     )
-
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
 
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
