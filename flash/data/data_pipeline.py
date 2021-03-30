@@ -108,11 +108,11 @@ class DataPipeline:
                                        post_tensor_transform
                                                  │
                                 ┌────────────────┴───────────────────┐
-(move Data to main worker) -->  │                                    │
+(move list to main worker) --> │                                    │
                     per_sample_transform_on_device                collate
                                 │                                    │
                             collate                          per_batch_transform
-                                │                                    │ <-- (move Data to main worker)
+                                │                                    │ <-- (move batch to main worker)
                     per_batch_transform_on_device      per_batch_transform_on_device
                                 │                                    │
                                 └─────────────────┬──────────────────┘
