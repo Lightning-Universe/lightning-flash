@@ -18,15 +18,11 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 import torch
 import torchvision
 from PIL import Image
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
-from torch.nn.modules import ModuleDict
 from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
-from torchvision import transforms
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
-from torchvision.transforms.functional import to_pil_image
 
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
@@ -158,11 +154,9 @@ class ImageClassificationPreprocess(Preprocess):
         if isinstance(sample, (list, tuple)):
             source, target = sample
             return self.current_transform(source), target
-        elif isinstance(sample, torch.Tensor):
-            return sample
         return self.current_transform(sample)
 
-    def per_tensor_transform(self, sample: Any) -> Any:
+    def pre_tensor_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
     def to_tensor_transform(self, sample: Any) -> Any:
@@ -175,6 +169,8 @@ class ImageClassificationPreprocess(Preprocess):
             elif isinstance(sample, torch.Tensor):
                 return sample
             return self.to_tensor(sample)
+        if isinstance(sample, torch.Tensor):
+            return sample
         return self.common_step(sample)
 
     def post_tensor_transform(self, sample: Any) -> Any:
@@ -537,5 +533,6 @@ class ImageClassificationData(DataModule):
             batch_size=batch_size,
             num_workers=num_workers,
             preprocess=preprocess,
+            seed=seed,
             **kwargs
         )

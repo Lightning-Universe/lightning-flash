@@ -259,7 +259,7 @@ class DataPipeline:
             "per_sample_transform_on_device", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
-        skip_mutual_check = preprocess.skip_mutual_check
+        skip_mutual_check = getattr(preprocess, "skip_mutual_check", False)
 
         if (not skip_mutual_check and per_batch_transform_overriden and per_sample_transform_on_device_overriden):
             raise MisconfigurationException(
