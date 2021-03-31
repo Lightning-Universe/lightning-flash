@@ -18,7 +18,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
-from flash.data.utils import _contains_any_tensor, convert_to_modules, set_current_fn, set_current_stage
+from flash.data.utils import _contains_any_tensor, convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
 
 if TYPE_CHECKING:
     from flash.data.process import Preprocess
@@ -49,12 +49,17 @@ class _Sequential(torch.nn.Module):
         self.stage = stage
         self.assert_contains_tensor = assert_contains_tensor
 
+        self._current_stage_context = CurrentRunningStageContext(stage, preprocess, reset=False)
+        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", preprocess)
+        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", preprocess)
+        self._post_tensor_transform_context = CurrentFuncContext("post_tensor_transform", preprocess)
+
     def forward(self, sample: Any):
-        with set_current_stage(self.preprocess, self.stage):
-            with set_current_fn(self.preprocess, "pre_tensor_transform"):
+        with self._current_stage_context:
+            with self._pre_tensor_transform_context:
                 sample = self.pre_tensor_transform(sample)
 
-            with set_current_fn(self.preprocess, "to_tensor_transform"):
+            with self._to_tensor_transform_context:
                 sample = self.to_tensor_transform(sample)
 
             if self.assert_contains_tensor:
@@ -64,7 +69,7 @@ class _Sequential(torch.nn.Module):
                         "``DataPipeline`` expects the outputs to be ``tensors``"
                     )
 
-            with set_current_fn(self.preprocess, "post_tensor_transform"):
+            with self._post_tensor_transform_context:
                 sample = self.post_tensor_transform(sample)
 
             return sample
@@ -105,7 +110,7 @@ class _PreProcessor(torch.nn.Module):
         collate_fn: Callable,
         per_sample_transform: Union[Callable, _Sequential],
         per_batch_transform: Callable,
-        stage: Optional[RunningStage] = None,
+        stage: RunningStage,
         apply_per_sample_transform: bool = True,
         on_device: bool = False
     ):
@@ -118,18 +123,24 @@ class _PreProcessor(torch.nn.Module):
         self.stage = stage
         self.on_device = on_device
 
+        extension = f"{'on_device' if self.on_device else ''}"
+        self._current_stage_context = CurrentRunningStageContext(stage, preprocess)
+        self._per_sample_transform_context = CurrentFuncContext(f"per_sample_transform_{extension}", preprocess)
+        self._collate_context = CurrentFuncContext("collate", preprocess)
+        self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform_{extension}", preprocess)
+
     def forward(self, samples: Sequence[Any]):
-        with set_current_stage(self.preprocess, self.stage):
+        with self._current_stage_context:
 
             if self.apply_per_sample_transform:
-                with set_current_fn(self.preprocess, f"per_sample_transform_{'on_device' if self.on_device else ''}"):
+                with self._per_sample_transform_context:
                     samples = [self.per_sample_transform(sample) for sample in samples]
                 samples = type(samples)(samples)
 
-                with set_current_fn(self.preprocess, "collate"):
+                with self._collate_context:
                     samples = self.collate_fn(samples)
 
-            with set_current_fn(self.preprocess, f"per_batch_transform_{'on_device' if self.on_device else ''}"):
+            with self._per_batch_transform_context:
                 samples = self.per_batch_transform(samples)
             return samples
 

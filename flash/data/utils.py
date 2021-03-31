@@ -14,7 +14,7 @@
 
 import os.path
 import zipfile
-from contextlib import contextmanager
+from contextlib import ContextDecorator, contextmanager
 from typing import Any, Callable, Dict, Iterable, Mapping, Type
 
 import requests
@@ -33,40 +33,60 @@ _STAGES_PREFIX = {
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
 
-# todo (tchaton) convert to class
-@contextmanager
-def set_current_stage(obj: Any, stage: RunningStage) -> None:
-    if obj is not None:
-        if getattr(obj, "_running_stage", None) == stage:
-            yield
-        else:
-            obj.running_stage = stage
-            yield
-            obj.running_stage = None
-    else:
-        yield
+class CurrentRunningStageContext:
+
+    def __init__(self, running_stage: RunningStage, obj: Any, reset: bool = True):
+        self._running_stage = running_stage
+        self._obj = obj
+        self._reset = reset
+
+    def __enter__(self):
+        if self._obj is not None:
+            if getattr(self._obj, "running_stage", None) != self._running_stage:
+                self._obj.running_stage = self._running_stage
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self._obj is not None and self._reset:
+            self._obj.running_stage = None
 
 
-@contextmanager
-def set_current_fn(obj: Any, current_fn: str) -> None:
-    if obj is not None:
-        obj.current_fn = current_fn
-        yield
-        obj.current_fn = None
-    else:
-        yield
+class CurrentFuncContext:
+
+    def __init__(self, current_fn: str, obj: Any):
+        self._current_fn = current_fn
+        self._obj = obj
+
+    def __enter__(self):
+        if self._obj is not None:
+            if getattr(self._obj, "current_fn", None) != self._current_fn:
+                self._obj.current_fn = self._current_fn
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self._obj is not None:
+            self._obj.current_fn = None
 
 
-@contextmanager
-def set_current_stage_and_fn(obj: Any, stage: RunningStage, current_fn: str) -> None:
-    if obj is not None:
-        obj.running_stage = stage
-        obj.current_fn = current_fn
-        yield
-        obj.running_stage = None
-        obj.current_fn = None
-    else:
-        yield
+class CurrentRunningStageFuncContext:
+
+    def __init__(self, running_stage: RunningStage, current_fn: str, obj: Any):
+        self._running_stage = running_stage
+        self._current_fn = current_fn
+        self._obj = obj
+
+    def __enter__(self):
+        if self._obj is not None:
+            if getattr(self._obj, "running_stage", None) != self._running_stage:
+                self._obj.running_stage = self._running_stage
+            if getattr(self._obj, "current_fn", None) != self._current_fn:
+                self._obj.current_fn = self._current_fn
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self._obj is not None:
+            self._obj.running_stage = None
+            self._obj.current_fn = None
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:

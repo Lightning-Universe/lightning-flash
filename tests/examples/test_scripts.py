@@ -53,7 +53,7 @@ def run_test(filepath):
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
-    "folder,file",
+    "folder, file",
     [
         # ("finetuning", "image_classification.py"),
         # ("finetuning", "object_detection.py"),  # TODO: takes too long.

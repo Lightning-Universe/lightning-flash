@@ -27,11 +27,11 @@ from flash.data.utils import convert_to_modules
 
 class Properties:
 
-    _running_stage: RunningStage = None
-    _current_fn: str = None
+    _running_stage: Optional[RunningStage] = None
+    _current_fn: Optional[str] = None
 
     @property
-    def current_fn(self) -> str:
+    def current_fn(self) -> Optional[str]:
         return self._current_fn
 
     @current_fn.setter
@@ -39,7 +39,7 @@ class Properties:
         self._current_fn = current_fn
 
     @property
-    def running_stage(self) -> RunningStage:
+    def running_stage(self) -> Optional[RunningStage]:
         return self._running_stage
 
     @running_stage.setter

@@ -169,6 +169,8 @@ class ImageClassificationPreprocess(Preprocess):
         if self.current_transform == self._identify:
             if isinstance(sample, (list, tuple)):
                 source, target = sample
+                if isinstance(source, torch.Tensor):
+                    return source, target
                 return self.to_tensor(source), target
             elif isinstance(sample, torch.Tensor):
                 return sample
