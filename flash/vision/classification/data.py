@@ -16,6 +16,7 @@ import pathlib
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 import torch
+import torchvision
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -23,7 +24,7 @@ from torch import nn
 from torch.nn.modules import ModuleDict
 from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
-from torchvision import transforms as torchvision_T
+from torchvision import transforms
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 from torchvision.transforms.functional import to_pil_image
 
@@ -41,6 +42,11 @@ else:
 
 
 class ImageClassificationPreprocess(Preprocess):
+
+    # this assignement is used to skip the assert that `per_batch_transform` and `per_sample_transform_on_device`
+    # are mutually exclusive on the DataPipeline internals
+    _skip_mutual_check = True
+    to_tensor = torchvision.transforms.ToTensor()
 
     @staticmethod
     def _find_classes(dir: str) -> Tuple:
@@ -152,7 +158,7 @@ class ImageClassificationPreprocess(Preprocess):
         if isinstance(sample, (list, tuple)):
             source, target = sample
             return self.current_transform(source), target
-        if isinstance(sample, torch.Tensor):
+        elif isinstance(sample, torch.Tensor):
             return sample
         return self.current_transform(sample)
 
@@ -160,12 +166,22 @@ class ImageClassificationPreprocess(Preprocess):
         return self.common_step(sample)
 
     def to_tensor_transform(self, sample: Any) -> Any:
+        if self.current_transform == self._identify:
+            if isinstance(sample, (list, tuple)):
+                source, target = sample
+                return self.to_tensor(source), target
+            elif isinstance(sample, torch.Tensor):
+                return sample
+            return self.to_tensor(sample)
         return self.common_step(sample)
 
     def post_tensor_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
     def per_batch_transform(self, sample: Any) -> Any:
+        return self.common_step(sample)
+
+    def per_sample_transform_on_device(self, sample: Any) -> Any:
         return self.common_step(sample)
 
     def per_batch_transform_on_device(self, sample: Any) -> Any:
@@ -229,6 +245,11 @@ class ImageClassificationData(DataModule):
                 "Transform should be a dict. "
                 f"Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
             )
+        if "per_batch_transform" in transform and "per_sample_transform_on_device" in transform:
+            raise MisconfigurationException(
+                f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
+                f'are mutual exclusive.'
+            )
         return transform
 
     @staticmethod
@@ -237,7 +258,7 @@ class ImageClassificationData(DataModule):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
-                "to_tensor_transform": torchvision_T.ToTensor(),
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -247,7 +268,7 @@ class ImageClassificationData(DataModule):
             from torchvision import transforms as T  # noqa F811
             return {
                 "pre_tensor_transform": nn.Sequential(T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()),
-                "to_tensor_transform": torchvision_T.ToTensor(),
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
@@ -257,7 +278,7 @@ class ImageClassificationData(DataModule):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
-                "to_tensor_transform": torchvision_T.ToTensor(),
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -267,7 +288,7 @@ class ImageClassificationData(DataModule):
             from torchvision import transforms as T  # noqa F811
             return {
                 "pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
-                "to_tensor_transform": torchvision_T.ToTensor(),
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
@@ -323,7 +344,9 @@ class ImageClassificationData(DataModule):
         )
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
-        return preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
+        preprocess = preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
+        # todo (tchaton) add check on mutually exclusive transforms
+        return preprocess
 
     @classmethod
     def _resolve_transforms(

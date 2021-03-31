@@ -33,6 +33,7 @@ _STAGES_PREFIX = {
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
 
+# todo (tchaton) convert to class
 @contextmanager
 def set_current_stage(obj: Any, stage: RunningStage) -> None:
     if obj is not None:

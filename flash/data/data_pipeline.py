@@ -18,6 +18,7 @@ from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYP
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities import imports
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
@@ -240,23 +241,27 @@ class DataPipeline:
         if collate_fn is None:
             collate_fn = default_collate
 
+        preprocess = self._preprocess_pipeline
+
         func_names = {
-            k: self._resolve_function_hierarchy(k, self._preprocess_pipeline, stage, Preprocess)
+            k: self._resolve_function_hierarchy(k, preprocess, stage, Preprocess)
             for k in self.PREPROCESS_FUNCS
         }
 
-        if self._is_overriden_recursive("collate", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]):
-            collate_fn = getattr(self._preprocess_pipeline, func_names["collate"])
+        if self._is_overriden_recursive("collate", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]):
+            collate_fn = getattr(preprocess, func_names["collate"])
 
         per_batch_transform_overriden = self._is_overriden_recursive(
-            "per_batch_transform", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "per_batch_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
         per_sample_transform_on_device_overriden = self._is_overriden_recursive(
-            "per_sample_transform_on_device", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "per_sample_transform_on_device", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
-        if per_batch_transform_overriden and per_sample_transform_on_device_overriden:
+        skip_mutual_check = preprocess.skip_mutual_check
+
+        if (not skip_mutual_check and per_batch_transform_overriden and per_sample_transform_on_device_overriden):
             raise MisconfigurationException(
                 f'{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` '
                 f'are mutual exclusive for stage {stage}'
@@ -279,26 +284,26 @@ class DataPipeline:
         ) else worker_collate_fn
 
         assert_contains_tensor = self._is_overriden_recursive(
-            "to_tensor_transform", self._preprocess_pipeline, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "to_tensor_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
         worker_preprocessor = _PreProcessor(
-            self._preprocess_pipeline, worker_collate_fn,
+            preprocess, worker_collate_fn,
             _Sequential(
-                self._preprocess_pipeline,
-                getattr(self._preprocess_pipeline, func_names['pre_tensor_transform']),
-                getattr(self._preprocess_pipeline, func_names['to_tensor_transform']),
-                getattr(self._preprocess_pipeline, func_names['post_tensor_transform']),
+                preprocess,
+                getattr(preprocess, func_names['pre_tensor_transform']),
+                getattr(preprocess, func_names['to_tensor_transform']),
+                getattr(preprocess, func_names['post_tensor_transform']),
                 stage,
                 assert_contains_tensor=assert_contains_tensor,
-            ), getattr(self._preprocess_pipeline, func_names['per_batch_transform']), stage
+            ), getattr(preprocess, func_names['per_batch_transform']), stage
         )
         worker_preprocessor._original_collate_fn = original_collate_fn
         device_preprocessor = _PreProcessor(
-            self._preprocess_pipeline,
+            preprocess,
             device_collate_fn,
-            getattr(self._preprocess_pipeline, func_names['per_sample_transform_on_device']),
-            getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device']),
+            getattr(preprocess, func_names['per_sample_transform_on_device']),
+            getattr(preprocess, func_names['per_batch_transform_on_device']),
             stage,
             apply_per_sample_transform=device_collate_fn != self._identity,
             on_device=True,

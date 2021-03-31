@@ -114,6 +114,17 @@ class Preprocess(Properties, torch.nn.Module):
         self.test_transform = convert_to_modules(test_transform)
         self.predict_transform = convert_to_modules(predict_transform)
 
+        if not hasattr(self, "_skip_mutual_check"):
+            self._skip_mutual_check = False
+
+    @property
+    def skip_mutual_check(self) -> bool:
+        return self._skip_mutual_check
+
+    @skip_mutual_check.setter
+    def skip_mutual_check(self, skip_mutual_check: bool) -> None:
+        self._skip_mutual_check = skip_mutual_check
+
     def _identify(self, x):
         return x
 

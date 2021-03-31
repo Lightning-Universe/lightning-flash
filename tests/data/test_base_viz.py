@@ -44,14 +44,10 @@ def _rand_image():
 
 class ImageClassificationDataViz(ImageClassificationData):
 
-    def configure_vis(self):
-        if not hasattr(self, "viz"):
-            return BaseViz(self)
-        return self.viz
-
     def show_train_batch(self):
-        self.viz = self.configure_vis()
+        self.viz.enabled = True
         _ = next(iter(self.train_dataloader()))
+        self.viz.enabled = False
 
 
 def test_base_viz(tmpdir):
@@ -67,7 +63,6 @@ def test_base_viz(tmpdir):
 
     img_data = ImageClassificationDataViz.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_transform=None,
         train_labels=[0, 1],
         batch_size=1,
         num_workers=0,
