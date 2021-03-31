@@ -459,9 +459,7 @@ class ImageClassificationData(DataModule):
         **kwargs,
     ) -> 'ImageClassificationData':
         """
-        Creates a ImageClassificationData object from folders of images arranged in this way:
-
-        Examples::
+        Creates a ImageClassificationData object from folders of images arranged in this way: ::
 
             folder/dog_xxx.png
             folder/dog_xxy.png
@@ -471,7 +469,6 @@ class ImageClassificationData(DataModule):
             folder/cat_asd932_.png
 
         Args:
-
             train_filepaths: String or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: Sequence of labels for training dataset. Defaults to ``None``.
             val_filepaths: String or sequence of file paths for validation dataset. Defaults to ``None``.
@@ -488,7 +485,6 @@ class ImageClassificationData(DataModule):
             seed: Used for the train/val splits.
 
         Returns:
-
             ImageClassificationData: The constructed data module.
         """
         # enable passing in a string which loads all files in that folder as a list
