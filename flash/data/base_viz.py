@@ -48,6 +48,7 @@ class BaseViz(Callback):
             fn = getattr(preprocess, fn_name)
             setattr(preprocess, fn_name, self._wrap_fn(fn, running_stage))
 
+        # hack until solved
         self._datamodule._train_ds.load_sample = preprocess.load_sample
 
     def _wrap_preprocess(self):

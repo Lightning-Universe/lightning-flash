@@ -41,7 +41,6 @@ else:
 
 
 class ImageClassificationPreprocess(Preprocess):
-    to_tensor = torchvision_T.ToTensor()
 
     @staticmethod
     def _find_classes(dir: str) -> Tuple:
@@ -112,7 +111,7 @@ class ImageClassificationPreprocess(Preprocess):
         return cls._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
-    def load_sample(sample) -> Union[Image.Image, list]:
+    def load_sample(sample) -> Union[Image.Image]:
         # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
         if isinstance(sample, torch.Tensor):
             return sample
@@ -138,25 +137,6 @@ class ImageClassificationPreprocess(Preprocess):
             return samples
         return cls._get_predicting_files(samples)
 
-    def _convert_tensor_to_pil(self, sample):
-        #  some datasets provide their data as tensors.
-        # however, it would be better to convert those data once in load_data
-        if isinstance(sample, torch.Tensor):
-            sample = to_pil_image(sample)
-        return sample
-
-    def _apply_transform(
-        self, sample: Any, transform: Union[Callable, Dict[str, Callable]], func_name: str
-    ) -> torch.Tensor:
-        if transform is not None:
-            if isinstance(transform, (Dict, ModuleDict)):
-                if func_name not in transform:
-                    return sample
-                else:
-                    transform = transform[func_name]
-            sample = transform(sample)
-        return sample
-
     def collate(self, samples: Sequence) -> Any:
         _samples = []
         # todo: Kornia transforms add batch dimension which need to be removed
@@ -168,56 +148,28 @@ class ImageClassificationPreprocess(Preprocess):
             _samples.append(sample)
         return default_collate(_samples)
 
-    def common_pre_tensor_transform(self, sample: Any, transform) -> Any:
-        return self._apply_transform(sample, transform, "pre_tensor_transform")
-
-    def train_pre_tensor_transform(self, sample: Any) -> Any:
-        source, target = sample
-        return self.common_pre_tensor_transform(source, self.train_transform), target
-
-    def val_pre_tensor_transform(self, sample: Any) -> Any:
-        source, target = sample
-        return self.common_pre_tensor_transform(source, self.val_transform), target
-
-    def test_pre_tensor_transform(self, sample: Any) -> Any:
-        source, target = sample
-        return self.common_pre_tensor_transform(source, self.test_transform), target
-
-    def predict_pre_tensor_transform(self, sample: Any) -> Any:
+    def common_step(self, sample: Any) -> Any:
+        if isinstance(sample, (list, tuple)):
+            source, target = sample
+            return self.current_transform(source), target
         if isinstance(sample, torch.Tensor):
             return sample
-        return self.common_pre_tensor_transform(sample, self.predict_transform)
+        return self.current_transform(sample)
 
-    def to_tensor_transform(self, sample) -> Any:
-        source, target = sample
-        return source if isinstance(source, torch.Tensor) else self.to_tensor(source), target
+    def per_tensor_transform(self, sample: Any) -> Any:
+        return self.common_step(sample)
 
-    def predict_to_tensor_transform(self, sample) -> Any:
-        if isinstance(sample, torch.Tensor):
-            return sample
-        return self.to_tensor(sample)
+    def to_tensor_transform(self, sample: Any) -> Any:
+        return self.common_step(sample)
 
-    def common_post_tensor_transform(self, sample: Any, transform) -> Any:
-        return self._apply_transform(sample, transform, "post_tensor_transform")
+    def post_tensor_transform(self, sample: Any) -> Any:
+        return self.common_step(sample)
 
-    def train_post_tensor_transform(self, sample: Any) -> Any:
-        source, target = sample
-        return self.common_post_tensor_transform(source, self.train_transform), target
+    def per_batch_transform(self, sample: Any) -> Any:
+        return self.common_step(sample)
 
-    def val_post_tensor_transform(self, sample: Any) -> Any:
-        source, target = sample
-        return self.common_post_tensor_transform(source, self.val_transform), target
-
-    def test_post_tensor_transform(self, sample: Any) -> Any:
-        source, target = sample
-        return self.common_post_tensor_transform(source, self.test_transform), target
-
-    def predict_post_tensor_transform(self, sample: Any) -> Any:
-        return self.common_post_tensor_transform(sample, self.predict_transform)
-
-    def train_per_batch_transform_on_device(self, batch: Tuple) -> Tuple:
-        batch, target = batch
-        return self._apply_transform(batch, self.train_transform, "per_batch_transform_on_device"), target
+    def per_batch_transform_on_device(self, sample: Any) -> Any:
+        return self.common_step(sample)
 
 
 class ImageClassificationData(DataModule):
@@ -285,6 +237,7 @@ class ImageClassificationData(DataModule):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
+                "to_tensor_transform": torchvision_T.ToTensor(),
                 "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -294,6 +247,7 @@ class ImageClassificationData(DataModule):
             from torchvision import transforms as T  # noqa F811
             return {
                 "pre_tensor_transform": nn.Sequential(T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()),
+                "to_tensor_transform": torchvision_T.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
@@ -303,6 +257,7 @@ class ImageClassificationData(DataModule):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
+                "to_tensor_transform": torchvision_T.ToTensor(),
                 "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -312,6 +267,7 @@ class ImageClassificationData(DataModule):
             from torchvision import transforms as T  # noqa F811
             return {
                 "pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
+                "to_tensor_transform": torchvision_T.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
@@ -471,23 +427,24 @@ class ImageClassificationData(DataModule):
         test_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
         test_labels: Optional[Sequence] = None,
         predict_filepaths: Optional[Union[str, pathlib.Path, Sequence[Union[str, pathlib.Path]]]] = None,
-        train_transform: Optional[Callable] = 'default',
-        val_transform: Optional[Callable] = 'default',
+        train_transform: Union[str, Dict] = 'default',
+        val_transform: Union[str, Dict] = 'default',
+        test_transform: Union[str, Dict] = 'default',
+        predict_transform: Union[str, Dict] = 'default',
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: Optional[int] = 42,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
         **kwargs,
     ) -> 'ImageClassificationData':
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
-
             folder/dog_xxx.png
             folder/dog_xxy.png
             folder/dog_xxz.png
             folder/cat_123.png
             folder/cat_nsdf3.png
             folder/cat_asd932_.png
-
         Args:
             train_filepaths: String or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: Sequence of labels for training dataset. Defaults to ``None``.
@@ -502,19 +459,14 @@ class ImageClassificationData(DataModule):
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
             seed: Used for the train/val splits.
-
         Returns:
             ImageClassificationData: The constructed data module.
-
         Examples:
             >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
-
         Example when labels are in .csv file::
-
             train_labels = labels_from_categorical_csv('path/to/train.csv', 'my_id')
             val_labels = labels_from_categorical_csv(path/to/val.csv', 'my_id')
             test_labels = labels_from_categorical_csv(path/to/tests.csv', 'my_id')
-
             data = ImageClassificationData.from_filepaths(
                 batch_size=2,
                 train_filepaths='path/to/train',
@@ -524,7 +476,6 @@ class ImageClassificationData(DataModule):
                 test_filepaths='path/to/test',
                 test_labels=test_labels,
             )
-
         """
         # enable passing in a string which loads all files in that folder as a list
         if isinstance(train_filepaths, str):
@@ -532,59 +483,34 @@ class ImageClassificationData(DataModule):
                 train_filepaths = [os.path.join(train_filepaths, x) for x in os.listdir(train_filepaths)]
             else:
                 train_filepaths = [train_filepaths]
+
         if isinstance(val_filepaths, str):
             if os.path.isdir(val_filepaths):
                 val_filepaths = [os.path.join(val_filepaths, x) for x in os.listdir(val_filepaths)]
             else:
                 val_filepaths = [val_filepaths]
+
         if isinstance(test_filepaths, str):
             if os.path.isdir(test_filepaths):
                 test_filepaths = [os.path.join(test_filepaths, x) for x in os.listdir(test_filepaths)]
             else:
                 test_filepaths = [test_filepaths]
-        if isinstance(predict_filepaths, str):
-            if os.path.isdir(predict_filepaths):
-                predict_filepaths = [os.path.join(predict_filepaths, x) for x in os.listdir(predict_filepaths)]
-            else:
-                predict_filepaths = [predict_filepaths]
 
-        if train_filepaths is not None and train_labels is not None:
-            train_dataset = cls._generate_dataset_if_possible(
-                list(zip(train_filepaths, train_labels)), running_stage=RunningStage.TRAINING
-            )
-        else:
-            train_dataset = None
+        preprocess = cls.instantiate_preprocess(
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
+            preprocess_cls=preprocess_cls,
+        )
 
-        if val_filepaths is not None and val_labels is not None:
-            val_dataset = cls._generate_dataset_if_possible(
-                list(zip(val_filepaths, val_labels)), running_stage=RunningStage.VALIDATING
-            )
-        else:
-            val_dataset = None
-
-        if test_filepaths is not None and test_labels is not None:
-            test_dataset = cls._generate_dataset_if_possible(
-                list(zip(test_filepaths, test_labels)), running_stage=RunningStage.TESTING
-            )
-        else:
-            test_dataset = None
-
-        if predict_filepaths is not None:
-            predict_dataset = cls._generate_dataset_if_possible(
-                predict_filepaths, running_stage=RunningStage.PREDICTING
-            )
-        else:
-            predict_dataset = None
-
-        return cls(
-            train_dataset=train_dataset,
-            val_dataset=val_dataset,
-            test_dataset=test_dataset,
-            predict_dataset=predict_dataset,
-            train_transform=train_transform,
-            val_transform=val_transform,
+        return cls.from_load_data_inputs(
+            train_load_data_input=list(zip(train_filepaths, train_labels)) if train_filepaths else None,
+            val_load_data_input=list(zip(val_filepaths, val_labels)) if val_filepaths else None,
+            test_load_data_input=list(zip(test_filepaths, test_labels)) if test_filepaths else None,
+            predict_load_data_input=predict_filepaths,
             batch_size=batch_size,
             num_workers=num_workers,
-            seed=seed,
+            preprocess=preprocess,
             **kwargs
         )

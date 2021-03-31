@@ -14,6 +14,7 @@
 
 import os.path
 import zipfile
+from contextlib import contextmanager
 from typing import Any, Callable, Dict, Iterable, Mapping, Type
 
 import requests
@@ -30,6 +31,41 @@ _STAGES_PREFIX = {
     RunningStage.PREDICTING: 'predict'
 }
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
+
+
+@contextmanager
+def set_current_stage(obj: Any, stage: RunningStage) -> None:
+    if obj is not None:
+        if getattr(obj, "_running_stage", None) == stage:
+            yield
+        else:
+            obj.running_stage = stage
+            yield
+            obj.running_stage = None
+    else:
+        yield
+
+
+@contextmanager
+def set_current_fn(obj: Any, current_fn: str) -> None:
+    if obj is not None:
+        obj.current_fn = current_fn
+        yield
+        obj.current_fn = None
+    else:
+        yield
+
+
+@contextmanager
+def set_current_stage_and_fn(obj: Any, stage: RunningStage, current_fn: str) -> None:
+    if obj is not None:
+        obj.running_stage = stage
+        obj.current_fn = current_fn
+        yield
+        obj.running_stage = None
+        obj.current_fn = None
+    else:
+        yield
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:

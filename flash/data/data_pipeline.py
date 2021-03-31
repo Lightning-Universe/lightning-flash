@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+import inspect
 import weakref
 from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
@@ -181,7 +182,7 @@ class DataPipeline:
         if not hasattr(process_obj, current_method_name):
             return DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
 
-        current_code = getattr(process_obj, current_method_name).__code__
+        current_code = inspect.unwrap(getattr(process_obj, current_method_name)).__code__
         has_different_code = current_code != getattr(super_obj, method_name).__code__
 
         if not prefix:
@@ -257,7 +258,7 @@ class DataPipeline:
 
         if per_batch_transform_overriden and per_sample_transform_on_device_overriden:
             raise MisconfigurationException(
-                f'{self.__class__.__name__}: `per_batch_transform` and `gpu_per_sample_transform` '
+                f'{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` '
                 f'are mutual exclusive for stage {stage}'
             )
 
@@ -282,21 +283,25 @@ class DataPipeline:
         )
 
         worker_preprocessor = _PreProcessor(
-            worker_collate_fn,
+            self._preprocess_pipeline, worker_collate_fn,
             _Sequential(
+                self._preprocess_pipeline,
                 getattr(self._preprocess_pipeline, func_names['pre_tensor_transform']),
                 getattr(self._preprocess_pipeline, func_names['to_tensor_transform']),
                 getattr(self._preprocess_pipeline, func_names['post_tensor_transform']),
+                stage,
                 assert_contains_tensor=assert_contains_tensor,
             ), getattr(self._preprocess_pipeline, func_names['per_batch_transform']), stage
         )
         worker_preprocessor._original_collate_fn = original_collate_fn
         device_preprocessor = _PreProcessor(
+            self._preprocess_pipeline,
             device_collate_fn,
             getattr(self._preprocess_pipeline, func_names['per_sample_transform_on_device']),
             getattr(self._preprocess_pipeline, func_names['per_batch_transform_on_device']),
             stage,
-            apply_per_sample_transform=device_collate_fn != self._identity
+            apply_per_sample_transform=device_collate_fn != self._identity,
+            on_device=True,
         )
         return worker_preprocessor, device_preprocessor
 

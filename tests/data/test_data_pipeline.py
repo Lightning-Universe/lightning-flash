@@ -498,41 +498,59 @@ class TestPreprocessTransformations(Preprocess):
         self.predict_load_data_called = False
 
     def train_load_data(self, sample) -> LamdaDummyDataset:
+        assert self.training
+        assert self.current_fn == "load_data"
         self.train_load_data_called = True
         return LamdaDummyDataset(lambda: (0, 1, 2, 3))
 
     def train_pre_tensor_transform(self, sample: Any) -> Any:
+        assert self.training
+        assert self.current_fn == "pre_tensor_transform"
         self.train_pre_tensor_transform_called = True
         return sample + (5, )
 
     def train_collate(self, samples) -> Tensor:
+        assert self.training
+        assert self.current_fn == "collate"
         self.train_collate_called = True
         return tensor([list(s) for s in samples])
 
     def train_per_batch_transform_on_device(self, batch: Any) -> Any:
+        assert self.training
+        assert self.current_fn == "per_batch_transform_on_device"
         self.train_per_batch_transform_on_device_called = True
         assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
     def val_load_data(self, sample, dataset) -> List[int]:
+        assert self.validating
+        assert self.current_fn == "load_data"
         self.val_load_data_called = True
         assert isinstance(dataset, AutoDataset)
         return list(range(5))
 
     def val_load_sample(self, sample) -> Dict[str, Tensor]:
+        assert self.validating
+        assert self.current_fn == "load_sample"
         self.val_load_sample_called = True
         return {"a": sample, "b": sample + 1}
 
     def val_to_tensor_transform(self, sample: Any) -> Tensor:
+        assert self.validating
+        assert self.current_fn == "to_tensor_transform"
         self.val_to_tensor_transform_called = True
         return sample
 
     def val_collate(self, samples) -> Dict[str, Tensor]:
+        assert self.validating
+        assert self.current_fn == "collate"
         self.val_collate_called = True
         _count = samples[0]['a']
         assert samples == [{'a': _count, 'b': _count + 1}, {'a': _count + 1, 'b': _count + 2}]
         return {'a': tensor([0, 1]), 'b': tensor([1, 2])}
 
     def val_per_batch_transform_on_device(self, batch: Any) -> Any:
+        assert self.validating
+        assert self.current_fn == "per_batch_transform_on_device"
         self.val_per_batch_transform_on_device_called = True
         batch = batch[0]
         assert torch.equal(batch["a"], tensor([0, 1]))
@@ -540,18 +558,26 @@ class TestPreprocessTransformations(Preprocess):
         return [False]
 
     def test_load_data(self, sample) -> LamdaDummyDataset:
+        assert self.testing
+        assert self.current_fn == "load_data"
         self.test_load_data_called = True
         return LamdaDummyDataset(lambda: [torch.rand(1), torch.rand(1)])
 
     def test_to_tensor_transform(self, sample: Any) -> Tensor:
+        assert self.testing
+        assert self.current_fn == "to_tensor_transform"
         self.test_to_tensor_transform_called = True
         return sample
 
     def test_post_tensor_transform(self, sample: Tensor) -> Tensor:
+        assert self.testing
+        assert self.current_fn == "post_tensor_transform"
         self.test_post_tensor_transform_called = True
         return sample
 
     def predict_load_data(self, sample) -> LamdaDummyDataset:
+        assert self.predicting
+        assert self.current_fn == "load_data"
         self.predict_load_data_called = True
         return LamdaDummyDataset(lambda: (["a", "b"]))
 
@@ -563,7 +589,6 @@ class TestPreprocessTransformations2(TestPreprocessTransformations):
         return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
 
 
-@pytest.mark.skipif(reason="Still using DataPipeline Old API")
 def test_datapipeline_transformations(tmpdir):
 
     class CustomModel(Task):
@@ -619,21 +644,20 @@ def test_datapipeline_transformations(tmpdir):
     trainer.test(model)
     trainer.predict(model)
 
-    # todo (tchaton) resolve the lost reference.
     preprocess = model._preprocess
-    # assert preprocess.train_load_data_called
-    # assert preprocess.train_pre_tensor_transform_called
-    # assert preprocess.train_collate_called
+    assert preprocess.train_load_data_called
+    assert preprocess.train_pre_tensor_transform_called
+    assert preprocess.train_collate_called
     assert preprocess.train_per_batch_transform_on_device_called
-    # assert preprocess.val_load_data_called
-    # assert preprocess.val_load_sample_called
-    # assert preprocess.val_to_tensor_transform_called
-    # assert preprocess.val_collate_called
+    assert preprocess.val_load_data_called
+    assert preprocess.val_load_sample_called
+    assert preprocess.val_to_tensor_transform_called
+    assert preprocess.val_collate_called
     assert preprocess.val_per_batch_transform_on_device_called
-    # assert preprocess.test_load_data_called
-    # assert preprocess.test_to_tensor_transform_called
-    # assert preprocess.test_post_tensor_transform_called
-    # assert preprocess.predict_load_data_called
+    assert preprocess.test_load_data_called
+    assert preprocess.test_to_tensor_transform_called
+    assert preprocess.test_post_tensor_transform_called
+    assert preprocess.predict_load_data_called
 
 
 def test_is_overriden_recursive(tmpdir):

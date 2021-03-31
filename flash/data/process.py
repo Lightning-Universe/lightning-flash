@@ -27,7 +27,24 @@ from flash.data.utils import convert_to_modules
 
 class Properties:
 
-    _running_stage = None
+    _running_stage: RunningStage = None
+    _current_fn: str = None
+
+    @property
+    def current_fn(self) -> str:
+        return self._current_fn
+
+    @current_fn.setter
+    def current_fn(self, current_fn: str):
+        self._current_fn = current_fn
+
+    @property
+    def running_stage(self) -> RunningStage:
+        return self._running_stage
+
+    @running_stage.setter
+    def running_stage(self, running_stage: RunningStage):
+        self._running_stage = running_stage
 
     @property
     def training(self) -> bool:
@@ -96,6 +113,27 @@ class Preprocess(Properties, torch.nn.Module):
         self.val_transform = convert_to_modules(val_transform)
         self.test_transform = convert_to_modules(test_transform)
         self.predict_transform = convert_to_modules(predict_transform)
+
+    def _identify(self, x):
+        return x
+
+    def _get_transform(self, transform: Dict[str, Callable]):
+        if self.current_fn in transform:
+            return transform[self.current_fn]
+        return self._identify
+
+    @property
+    def current_transform(self):
+        if self.training and self.train_transform:
+            return self._get_transform(self.train_transform)
+        elif self.validating and self.val_transform:
+            return self._get_transform(self.val_transform)
+        elif self.testing and self.test_transform:
+            return self._get_transform(self.test_transform)
+        elif self.predicting and self.predict_transform:
+            return self._get_transform(self.predict_transform)
+        else:
+            return self._identify
 
     @classmethod
     def from_state(cls, state: PreprocessState) -> 'Preprocess':

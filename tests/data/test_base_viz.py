@@ -75,3 +75,6 @@ def test_base_viz(tmpdir):
 
     img_data.show_train_batch()
     assert img_data.viz.batches["train"]["load_sample"] is not None
+    assert img_data.viz.batches["train"]["to_tensor_transform"] is not None
+    assert img_data.viz.batches["train"]["collate"] is not None
+    assert img_data.viz.batches["train"]["per_batch_transform"] is not None

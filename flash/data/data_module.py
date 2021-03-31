@@ -87,6 +87,9 @@ class DataModule(pl.LightningDataModule):
         # this may also trigger data preloading
         self.set_running_stages()
 
+    def configure_vis(self):
+        return self
+
     @staticmethod
     def get_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, default: Optional[Any] = None) -> Any:
         if isinstance(dataset, Subset):
@@ -340,4 +343,5 @@ class DataModule(pl.LightningDataModule):
         )
         datamodule._preprocess = data_pipeline._preprocess_pipeline
         datamodule._postprocess = data_pipeline._postprocess_pipeline
+        datamodule.configure_vis()
         return datamodule
