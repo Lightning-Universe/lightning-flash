@@ -459,7 +459,9 @@ class ImageClassificationData(DataModule):
         **kwargs,
     ) -> 'ImageClassificationData':
         """
-        Creates a ImageClassificationData object from folders of images arranged in this way: ::
+        Creates a ImageClassificationData object from folders of images arranged in this way:
+
+        Examples::
 
             folder/dog_xxx.png
             folder/dog_xxy.png
