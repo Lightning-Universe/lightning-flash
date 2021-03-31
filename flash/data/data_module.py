@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
 from flash.data.auto_dataset import AutoDataset
+from flash.data.base_viz import BaseViz
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 
@@ -83,9 +84,22 @@ class DataModule(pl.LightningDataModule):
 
         self._preprocess = None
         self._postprocess = None
+        self._viz = None
 
         # this may also trigger data preloading
         self.set_running_stages()
+
+    @property
+    def viz(self) -> BaseViz:
+        return self._viz or DataModule.configure_vis()
+
+    @viz.setter
+    def viz(self, viz: BaseViz) -> None:
+        self._viz = viz
+
+    @classmethod
+    def configure_vis(cls) -> BaseViz:
+        return BaseViz()
 
     @staticmethod
     def get_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, default: Optional[Any] = None) -> Any:
@@ -320,6 +334,9 @@ class DataModule(pl.LightningDataModule):
         else:
             data_pipeline = cls(**kwargs).data_pipeline
 
+        viz_callback = cls.configure_vis()
+        viz_callback.attach_to_preprocess(data_pipeline._preprocess_pipeline)
+
         train_dataset = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
         )
@@ -341,4 +358,5 @@ class DataModule(pl.LightningDataModule):
         )
         datamodule._preprocess = data_pipeline._preprocess_pipeline
         datamodule._postprocess = data_pipeline._postprocess_pipeline
+        viz_callback.attach_to_datamodule(datamodule)
         return datamodule
