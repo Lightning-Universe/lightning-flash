@@ -460,43 +460,34 @@ class ImageClassificationData(DataModule):
     ) -> 'ImageClassificationData':
         """
         Creates a ImageClassificationData object from folders of images arranged in this way: ::
+
             folder/dog_xxx.png
             folder/dog_xxy.png
             folder/dog_xxz.png
             folder/cat_123.png
             folder/cat_nsdf3.png
             folder/cat_asd932_.png
+
         Args:
+
             train_filepaths: String or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: Sequence of labels for training dataset. Defaults to ``None``.
             val_filepaths: String or sequence of file paths for validation dataset. Defaults to ``None``.
             val_labels: Sequence of labels for validation dataset. Defaults to ``None``.
             test_filepaths: String or sequence of file paths for test dataset. Defaults to ``None``.
             test_labels: Sequence of labels for test dataset. Defaults to ``None``.
-            train_transform: Transforms for training dataset. Defaults to ``default``, which loads imagenet transforms.
+            train_transform: Transforms for training dataset. Defaults to ``default``,
+                which loads imagenet transforms.
             val_transform: Transforms for validation and testing dataset.
                 Defaults to ``default``, which loads imagenet transforms.
             batch_size: The batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
             seed: Used for the train/val splits.
+
         Returns:
+
             ImageClassificationData: The constructed data module.
-        Examples:
-            >>> img_data = ImageClassificationData.from_filepaths(["a.png", "b.png"], [0, 1]) # doctest: +SKIP
-        Example when labels are in .csv file::
-            train_labels = labels_from_categorical_csv('path/to/train.csv', 'my_id')
-            val_labels = labels_from_categorical_csv(path/to/val.csv', 'my_id')
-            test_labels = labels_from_categorical_csv(path/to/tests.csv', 'my_id')
-            data = ImageClassificationData.from_filepaths(
-                batch_size=2,
-                train_filepaths='path/to/train',
-                train_labels=train_labels,
-                val_filepaths='path/to/val',
-                val_labels=val_labels,
-                test_filepaths='path/to/test',
-                test_labels=test_labels,
-            )
         """
         # enable passing in a string which loads all files in that folder as a list
         if isinstance(train_filepaths, str):
