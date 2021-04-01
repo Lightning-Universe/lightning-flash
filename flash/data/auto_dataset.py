@@ -102,16 +102,12 @@ class AutoDataset(Dataset):
 
         if self._running_stage and self.data_pipeline and (not self.load_data or not self.load_sample) and stage:
             self.load_data = getattr(
-                self.data_pipeline.preprocess_pipeline,
-                self.data_pipeline._resolve_function_hierarchy(
-                    'load_data', self.data_pipeline.preprocess_pipeline, stage, Preprocess
-                )
+                self.preprocess,
+                self.data_pipeline._resolve_function_hierarchy('load_data', self.preprocess, stage, Preprocess)
             )
             self.load_sample = getattr(
-                self.data_pipeline.preprocess_pipeline,
-                self.data_pipeline._resolve_function_hierarchy(
-                    'load_sample', self.data_pipeline.preprocess_pipeline, stage, Preprocess
-                )
+                self.preprocess,
+                self.data_pipeline._resolve_function_hierarchy('load_sample', self.preprocess, stage, Preprocess)
             )
         if self.load_data and (previous_load_data != self.load_data.__code__ or not self._load_data_called):
             if previous_load_data:
