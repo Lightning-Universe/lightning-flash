@@ -349,7 +349,7 @@ class TabularData(DataModule):
             is_regression,
             preprocess_state=preprocess_state
         )
-        preprocess = preprocess_cls.from_state(preprocess_state)
+        preprocess: Preprocess = preprocess_cls.from_state(preprocess_state)
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_df,

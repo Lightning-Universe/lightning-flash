@@ -54,7 +54,7 @@ class _Sequential(torch.nn.Module):
         self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", preprocess)
         self._post_tensor_transform_context = CurrentFuncContext("post_tensor_transform", preprocess)
 
-    def forward(self, sample: Any):
+    def forward(self, sample: Any) -> Any:
         with self._current_stage_context:
             with self._pre_tensor_transform_context:
                 sample = self.pre_tensor_transform(sample)
@@ -129,7 +129,7 @@ class _PreProcessor(torch.nn.Module):
         self._collate_context = CurrentFuncContext("collate", preprocess)
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform_{extension}", preprocess)
 
-    def forward(self, samples: Sequence[Any]):
+    def forward(self, samples: Sequence[Any]) -> Any:
         with self._current_stage_context:
 
             if self.apply_per_sample_transform:

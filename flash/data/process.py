@@ -125,16 +125,16 @@ class Preprocess(Properties, torch.nn.Module):
     def skip_mutual_check(self, skip_mutual_check: bool) -> None:
         self._skip_mutual_check = skip_mutual_check
 
-    def _identify(self, x):
+    def _identify(self, x: Any) -> Any:
         return x
 
-    def _get_transform(self, transform: Dict[str, Callable]):
+    def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
         if self.current_fn in transform:
             return transform[self.current_fn]
         return self._identify
 
     @property
-    def current_transform(self):
+    def current_transform(self) -> Callable:
         if self.training and self.train_transform:
             return self._get_transform(self.train_transform)
         elif self.validating and self.val_transform:

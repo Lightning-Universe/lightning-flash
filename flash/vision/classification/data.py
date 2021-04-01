@@ -342,8 +342,7 @@ class ImageClassificationData(DataModule):
         )
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
-        preprocess = preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
-        # todo (tchaton) add check on mutually exclusive transforms
+        preprocess: Preprocess = preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
         return preprocess
 
     @classmethod

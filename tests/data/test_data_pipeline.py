@@ -130,25 +130,25 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
 
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess)
-    train_func_names = {
+    train_func_names: Dict[str, str] = {
         k: data_pipeline._resolve_function_hierarchy(
             k, data_pipeline._preprocess_pipeline, RunningStage.TRAINING, Preprocess
         )
         for k in data_pipeline.PREPROCESS_FUNCS
     }
-    val_func_names = {
+    val_func_names: Dict[str, str] = {
         k: data_pipeline._resolve_function_hierarchy(
             k, data_pipeline._preprocess_pipeline, RunningStage.VALIDATING, Preprocess
         )
         for k in data_pipeline.PREPROCESS_FUNCS
     }
-    test_func_names = {
+    test_func_names: Dict[str, str] = {
         k: data_pipeline._resolve_function_hierarchy(
             k, data_pipeline._preprocess_pipeline, RunningStage.TESTING, Preprocess
         )
         for k in data_pipeline.PREPROCESS_FUNCS
     }
-    predict_func_names = {
+    predict_func_names: Dict[str, str] = {
         k: data_pipeline._resolve_function_hierarchy(
             k, data_pipeline._preprocess_pipeline, RunningStage.PREDICTING, Preprocess
         )

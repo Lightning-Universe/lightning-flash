@@ -14,7 +14,7 @@
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -101,31 +101,31 @@ class DataPipeline:
 
 
         General flow:
-                                            load_sample
-                                                 │
-                                        pre_tensor_transform
-                                                 │
-                                        to_tensor_transform
-                                                 │
-                                       post_tensor_transform
-                                                 │
-                                ┌────────────────┴───────────────────┐
-(move list to main worker) --> │                                    │
-                    per_sample_transform_on_device                collate
-                                │                                    │
-                            collate                          per_batch_transform
-                                │                                    │ <-- (move batch to main worker)
-                    per_batch_transform_on_device      per_batch_transform_on_device
-                                │                                    │
-                                └─────────────────┬──────────────────┘
-                                                  │
-                                          model.predict_step
-                                                  │
-                                          per_batch_transform
-                                                  │
-                                              uncollate
-                                                  │
-                                          per_sample_transform
+                                                          load_sample
+                                                               │
+                                                      pre_tensor_transform
+                                                               │
+                                                      to_tensor_transform
+                                                               │
+                                                     post_tensor_transform
+                                                               │
+                                              ┌────────────────┴───────────────────┐
+(move samples's sequence to main worker) -->  │                                    │
+                                  per_sample_transform_on_device                collate
+                                              │                                    │
+                                            collate                          per_batch_transform
+                                              │                                    │ <-- (move batch to main worker)
+                                    per_batch_transform_on_device      per_batch_transform_on_device
+                                              │                                    │
+                                              └─────────────────┬──────────────────┘
+                                                                │
+                                                        model.predict_step
+                                                                │
+                                                        per_batch_transform
+                                                                │
+                                                            uncollate
+                                                                │
+                                                        per_sample_transform
 
     """
 
@@ -241,25 +241,25 @@ class DataPipeline:
         if collate_fn is None:
             collate_fn = default_collate
 
-        preprocess = self._preprocess_pipeline
+        preprocess: Preprocess = self._preprocess_pipeline
 
-        func_names = {
+        func_names: Dict[str, str] = {
             k: self._resolve_function_hierarchy(k, preprocess, stage, Preprocess)
             for k in self.PREPROCESS_FUNCS
         }
 
         if self._is_overriden_recursive("collate", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]):
-            collate_fn = getattr(preprocess, func_names["collate"])
+            collate_fn: Callable = getattr(preprocess, func_names["collate"])
 
-        per_batch_transform_overriden = self._is_overriden_recursive(
+        per_batch_transform_overriden: bool = self._is_overriden_recursive(
             "per_batch_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
-        per_sample_transform_on_device_overriden = self._is_overriden_recursive(
+        per_sample_transform_on_device_overriden: bool = self._is_overriden_recursive(
             "per_sample_transform_on_device", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
-        skip_mutual_check = getattr(preprocess, "skip_mutual_check", False)
+        skip_mutual_check: bool = getattr(preprocess, "skip_mutual_check", False)
 
         if (not skip_mutual_check and per_batch_transform_overriden and per_sample_transform_on_device_overriden):
             raise MisconfigurationException(
@@ -562,7 +562,7 @@ class DataPipeline:
         return DataLoader(self._generate_auto_dataset(data), **loader_kwargs)
 
     def __str__(self) -> str:
-        preprocess = self._preprocess_pipeline
+        preprocess: Preprocess = self._preprocess_pipeline
         postprocess = self._postprocess_pipeline
         return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
 
