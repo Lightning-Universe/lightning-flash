@@ -176,6 +176,7 @@ class ImageClassificationPreprocess(Preprocess):
     def post_tensor_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
+    # todo bug (tchaton) where to place the collate. Need an indication.
     def per_batch_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 

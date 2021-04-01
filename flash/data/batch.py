@@ -123,11 +123,11 @@ class _PreProcessor(torch.nn.Module):
         self.stage = stage
         self.on_device = on_device
 
-        extension = f"{'on_device' if self.on_device else ''}"
+        extension = f"{'_on_device' if self.on_device else ''}"
         self._current_stage_context = CurrentRunningStageContext(stage, preprocess)
-        self._per_sample_transform_context = CurrentFuncContext(f"per_sample_transform_{extension}", preprocess)
+        self._per_sample_transform_context = CurrentFuncContext(f"per_sample_transform{extension}", preprocess)
         self._collate_context = CurrentFuncContext("collate", preprocess)
-        self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform_{extension}", preprocess)
+        self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
     def forward(self, samples: Sequence[Any]) -> Any:
         with self._current_stage_context:
