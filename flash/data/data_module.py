@@ -26,6 +26,7 @@ from torch.utils.data.dataset import Subset
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseViz
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
+from flash.data.utils import _STAGES_PREFIX
 
 
 class DataModule(pl.LightningDataModule):
@@ -100,6 +101,55 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def configure_vis(cls) -> BaseViz:
         return BaseViz()
+
+    def show_batch(self):
+        # viz needs to be enabled, so it doesn't store profile transforms during training
+        with self.viz.enable():
+            _ = next(iter(self.train_dataloader()))
+            _ = next(iter(self.val_dataloader()))
+            _ = next(iter(self.test_dataloader()))
+            _ = next(iter(self.predict_dataloader()))
+
+    def visualize(self, batch: Dict[str, Any], stage: RunningStage) -> None:
+        """
+        This function is a hook for users to override with their visualization on a batch.
+        """
+        pass
+
+    def _show_batch(self, stage: RunningStage, reset: bool = True) -> None:
+        """
+        This function is used to handle transforms profiling for batch visualization.
+        """
+        iter_name = f"_{stage}_iter"
+
+        def _reset_iterator():
+            dataloader_fn = getattr(self, f"{stage}_dataloader")
+            setattr(self, iter_name, iter(dataloader_fn()))
+
+        if not hasattr(self, iter_name):
+            _reset_iterator()
+        iter_dataloader = getattr(self, iter_name)
+        with self.viz.enable():
+            try:
+                _ = next(iter_dataloader)
+            except StopIteration:
+                _reset_iterator()
+                _ = next(iter_dataloader)
+            self.visualize(self.viz.batches[stage], stage)
+            if reset:
+                self.viz.batches[stage] = {}
+
+    def show_train_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.TRAINING], reset=reset)
+
+    def show_val_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.VALIDATING], reset=reset)
+
+    def show_test_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.TESTING], reset=reset)
+
+    def show_predict_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.PREDICTING], reset=reset)
 
     @staticmethod
     def get_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, default: Optional[Any] = None) -> Any:

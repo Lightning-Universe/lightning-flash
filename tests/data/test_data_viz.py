@@ -29,17 +29,6 @@ def _rand_image():
     return Image.fromarray(np.random.randint(0, 255, (196, 196, 3), dtype="uint8"))
 
 
-class ImageClassificationDataViz(ImageClassificationData):
-
-    def show_batch(self):
-        # viz needs to be enabled, so it doesn't store profile transforms during training
-        with self.viz.enable():
-            _ = next(iter(self.train_dataloader()))
-            _ = next(iter(self.val_dataloader()))
-            _ = next(iter(self.test_dataloader()))
-            _ = next(iter(self.predict_dataloader()))
-
-
 def test_base_viz(tmpdir):
     seed_everything(42)
     tmpdir = Path(tmpdir)
@@ -52,7 +41,7 @@ def test_base_viz(tmpdir):
     _rand_image().save(tmpdir / "b" / "a_1.png")
     _rand_image().save(tmpdir / "b" / "a_2.png")
 
-    img_data = ImageClassificationDataViz.from_filepaths(
+    img_data = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
         train_labels=[0, 1],
         val_filepaths=[tmpdir / "a", tmpdir / "b"],
@@ -64,8 +53,9 @@ def test_base_viz(tmpdir):
         num_workers=0,
     )
 
-    img_data.show_batch()
     for stage in _STAGES_PREFIX.values():
+
+        getattr(img_data, f"show_{stage}_batch")(reset=False)
         is_predict = stage == "predict"
 
         def extract_data(data):

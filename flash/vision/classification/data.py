@@ -221,6 +221,7 @@ class ImageClassificationData(DataModule):
             predict_dataset=predict_dataset,
             batch_size=batch_size,
             num_workers=num_workers,
+            **kwargs,
         )
 
         self._num_classes = None
