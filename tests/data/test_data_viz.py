@@ -17,6 +17,10 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+import torch
+import kornia as K
+import torchvision.transforms as T
+
 from flash.vision import ImageClassificationData
 
 
@@ -48,6 +52,53 @@ def test_base_viz(tmpdir):
         train_labels=[0, 1],
         batch_size=1,
         num_workers=0,
+    )
+
+    img_data.show_train_batch()
+    assert img_data.viz.batches["train"]["load_sample"] is not None
+    assert img_data.viz.batches["train"]["to_tensor_transform"] is not None
+    assert img_data.viz.batches["train"]["collate"] is not None
+    assert img_data.viz.batches["train"]["per_batch_transform"] is not None
+
+
+def test_base_viz_kornia(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a" / "a_1.png")
+    _rand_image().save(tmpdir / "a" / "a_2.png")
+
+    _rand_image().save(tmpdir / "b" / "a_1.png")
+    _rand_image().save(tmpdir / "b" / "a_2.png")
+
+    # Define the augmentations pipeline
+    train_transforms = {
+        # can we just call this `preprocess` ?
+        # this is needed all the time in train, valid, etc
+        "pre_tensor_transform": T.Compose([
+            T.RandomResizedCrop(224),
+            T.ToTensor()
+        ]),
+        "post_tensor_transform": nn.Sequential(
+            # Kornia RandomResizeCrop has a bug - I'll debug with Jian.
+            # K.augmentation.RandomResizedCrop((224, 224), align_corners=True),
+            K.augmentation.Normalize(
+                torch.tensor([0.485, 0.456, 0.406]),
+                torch.tensor([0.229, 0.224, 0.225])),
+        ),
+        "per_batch_transform_on_device": nn.Sequential(
+            K.augmentation.RandomAffine(360., p=0.5),
+            K.augmentation.ColorJitter(0.2, 0.3, 0.2, 0.3, p=0.5)
+        )
+    }
+    img_data = ImageClassificationDataViz.from_filepaths(
+        train_filepaths=[tmpdir / "a", tmpdir / "b"],
+        train_labels=[0, 1],
+        batch_size=1,
+        num_workers=0,
+        train_transform=train_transforms,
+        valt_transform=train_transforms,
     )
 
     img_data.show_train_batch()
