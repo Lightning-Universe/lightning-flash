@@ -617,7 +617,7 @@ def test_datapipeline_transformations(tmpdir):
 
         preprocess_cls = TestPreprocessTransformations
 
-    datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2)
+    datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2, num_workers=0)
 
     assert datamodule.train_dataloader().dataset[0] == (0, 1, 2, 3)
     batch = next(iter(datamodule.train_dataloader()))
