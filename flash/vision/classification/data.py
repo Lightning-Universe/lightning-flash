@@ -529,3 +529,50 @@ class ImageClassificationData(DataModule):
             seed=seed,
             **kwargs
         )
+
+class ImageClassificationDataViz(ImageClassificationData):
+
+    def show_train_batch(self):
+        self.viz.enabled = True
+        # fetch batch and cache data
+        _ = next(iter(self.train_dataloader()))
+        self.viz.enabled = False
+
+        from typing import List
+        import kornia as K
+        import torchvision as tv
+        from PIL import Image
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        # plot row data
+        rows: int = 4 # chenge later
+        data_raw: List[Image] = self.viz.batches['train']['load_sample']
+        for num, x_data in enumerate(data_raw):
+            img, label = x_data
+            plt.subplot(rows, rows, num + 1)
+            plt.title(label)
+            plt.axis('off')
+            plt.imshow(np.array(img))
+        plt.title('load_sample')
+        plt.show(block=False)
+
+        mean = torch.tensor([0.485, 0.456, 0.406])
+        std = torch.tensor([0.229, 0.224, 0.225])
+
+        # plot pre-process and after augmentations
+        data1, labels1 = self.viz.batches['train']['collate'][0]  # this is before random transforms
+        data2, labels2 = self.viz.batches['train']['per_batch_transform'][0]  # this should be after random transforms
+
+        data1 = K.enhance.denormalize(data1, mean, std)
+        data2 = K.enhance.denormalize(data2, mean, std)
+
+        # cast and prepare data for viualisation
+        data1_vis = K.tensor_to_image(tv.utils.make_grid(data1))
+        data2_vis = K.tensor_to_image(tv.utils.make_grid(data2))
+
+        # plot using matplotlib
+        fig, (ax1, ax2) = plt.subplots(2)
+        ax1.imshow(data1_vis)
+        ax2.imshow(data2_vis)
+        plt.show()
