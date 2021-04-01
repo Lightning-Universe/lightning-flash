@@ -6,14 +6,16 @@ from pytorch_lightning.trainer.states import RunningStage
 
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
+from flash.data.utils import _STAGES_PREFIX
 
 
 class BaseViz(Callback):
 
     def __init__(self, enabled: bool = False):
-        self.batches = {"train": {}, "val": {}, "test": {}, "predict": {}}
+        self.batches = {k: {} for k in _STAGES_PREFIX.values()}
         self.enabled = enabled
         self._datamodule = None
+        self._preprocess = None
 
     def attach_to_preprocess(self, preprocess: Preprocess) -> None:
         self._wrap_functions_per_stage(RunningStage.TRAINING, preprocess)
@@ -25,14 +27,13 @@ class BaseViz(Callback):
     def _wrap_fn(
         self,
         fn: Callable,
-        running_stage: RunningStage,
     ) -> Callable:
 
         @functools.wraps(fn)
         def wrapper(*args) -> Any:
             data = fn(*args)
             if self.enabled:
-                batches = self.batches[running_stage.value]
+                batches = self.batches[_STAGES_PREFIX[self._preprocess.running_stage]]
                 if fn.__name__ not in batches:
                     batches[fn.__name__] = []
                 batches[fn.__name__].append(data)
@@ -41,10 +42,11 @@ class BaseViz(Callback):
         return wrapper
 
     def _wrap_functions_per_stage(self, running_stage: RunningStage, preprocess: Preprocess):
+        self._preprocess = preprocess
         fn_names = {
             k: DataPipeline._resolve_function_hierarchy(k, preprocess, running_stage, Preprocess)
             for k in DataPipeline.PREPROCESS_FUNCS
         }
         for fn_name in fn_names:
             fn = getattr(preprocess, fn_name)
-            setattr(preprocess, fn_name, self._wrap_fn(fn, running_stage))
+            setattr(preprocess, fn_name, self._wrap_fn(fn))
