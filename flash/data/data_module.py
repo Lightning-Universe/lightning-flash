@@ -54,7 +54,7 @@ class DataModule(pl.LightningDataModule):
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
         batch_size: int = 1,
-        num_workers: Optional[int] = None,
+        num_workers: Optional[int] = 0,
     ) -> None:
 
         super().__init__()
