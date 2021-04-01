@@ -607,7 +607,10 @@ def test_datapipeline_transformations(tmpdir):
             assert batch[0].shape == torch.Size([2, 1])
 
         def predict_step(self, batch, batch_idx, dataloader_idx):
-            assert batch == [('a', 'a'), ('b', 'b')]
+            assert batch[0][0] == 'a'
+            assert batch[0][1] == 'a'
+            assert batch[1][0] == 'b'
+            assert batch[1][1] == 'b'
             return tensor([0, 0, 0])
 
     class CustomDataModule(DataModule):
