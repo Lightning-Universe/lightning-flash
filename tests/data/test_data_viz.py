@@ -14,12 +14,12 @@
 
 from pathlib import Path
 
-import numpy as np
-from PIL import Image
-
-import torch
 import kornia as K
+import numpy as np
+import torch
 import torchvision.transforms as T
+from PIL import Image
+from torch import nn
 
 from flash.vision import ImageClassificationData
 
@@ -76,20 +76,14 @@ def test_base_viz_kornia(tmpdir):
     train_transforms = {
         # can we just call this `preprocess` ?
         # this is needed all the time in train, valid, etc
-        "pre_tensor_transform": T.Compose([
-            T.RandomResizedCrop(224),
-            T.ToTensor()
-        ]),
+        "pre_tensor_transform": T.Compose([T.RandomResizedCrop(224), T.ToTensor()]),
         "post_tensor_transform": nn.Sequential(
             # Kornia RandomResizeCrop has a bug - I'll debug with Jian.
             # K.augmentation.RandomResizedCrop((224, 224), align_corners=True),
-            K.augmentation.Normalize(
-                torch.tensor([0.485, 0.456, 0.406]),
-                torch.tensor([0.229, 0.224, 0.225])),
+            K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
         ),
         "per_batch_transform_on_device": nn.Sequential(
-            K.augmentation.RandomAffine(360., p=0.5),
-            K.augmentation.ColorJitter(0.2, 0.3, 0.2, 0.3, p=0.5)
+            K.augmentation.RandomAffine(360., p=0.5), K.augmentation.ColorJitter(0.2, 0.3, 0.2, 0.3, p=0.5)
         )
     }
     img_data = ImageClassificationDataViz.from_filepaths(
@@ -102,6 +96,8 @@ def test_base_viz_kornia(tmpdir):
     )
 
     img_data.show_train_batch()
+    import pdb
+    pdb.set_trace()
     assert img_data.viz.batches["train"]["load_sample"] is not None
     assert img_data.viz.batches["train"]["to_tensor_transform"] is not None
     assert img_data.viz.batches["train"]["collate"] is not None

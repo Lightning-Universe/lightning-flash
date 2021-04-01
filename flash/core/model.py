@@ -245,7 +245,8 @@ class Task(LightningModule):
             self.data_pipeline._detach_from_model(self)
         super().on_fit_end()
 
-    def _sanetize_funcs(self, obj: Any) -> Any:
+    @staticmethod
+    def _sanetize_funcs(obj: Any) -> Any:
         if hasattr(obj, "__dict__"):
             for k, v in obj.__dict__.items():
                 if isinstance(v, Callable):

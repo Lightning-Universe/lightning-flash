@@ -71,14 +71,14 @@ class AutoDataset(Dataset):
     def running_stage(self, running_stage: RunningStage) -> None:
         if self._running_stage != running_stage or (not self._running_stage):
             self._running_stage = running_stage
-            self._load_data_context = CurrentRunningStageFuncContext(self._running_stage, "load_data", self._preprocess)
+            self._load_data_context = CurrentRunningStageFuncContext(self._running_stage, "load_data", self.preprocess)
             self._load_sample_context = CurrentRunningStageFuncContext(
-                self._running_stage, "load_sample", self._preprocess
+                self._running_stage, "load_sample", self.preprocess
             )
             self._setup(running_stage)
 
     @property
-    def _preprocess(self):
+    def preprocess(self) -> Optional[Preprocess]:
         if self.data_pipeline is not None:
             return self.data_pipeline._preprocess_pipeline
 
@@ -102,16 +102,12 @@ class AutoDataset(Dataset):
 
         if self._running_stage and self.data_pipeline and (not self.load_data or not self.load_sample) and stage:
             self.load_data = getattr(
-                self.data_pipeline._preprocess_pipeline,
-                self.data_pipeline._resolve_function_hierarchy(
-                    'load_data', self.data_pipeline._preprocess_pipeline, stage, Preprocess
-                )
+                self.preprocess,
+                self.data_pipeline._resolve_function_hierarchy('load_data', self.preprocess, stage, Preprocess)
             )
             self.load_sample = getattr(
-                self.data_pipeline._preprocess_pipeline,
-                self.data_pipeline._resolve_function_hierarchy(
-                    'load_sample', self.data_pipeline._preprocess_pipeline, stage, Preprocess
-                )
+                self.preprocess,
+                self.data_pipeline._resolve_function_hierarchy('load_sample', self.preprocess, stage, Preprocess)
             )
         if self.load_data and (previous_load_data != self.load_data.__code__ or not self._load_data_called):
             if previous_load_data:
@@ -120,7 +116,7 @@ class AutoDataset(Dataset):
                     "This is not expected! Preloading Data again to ensure compatibility. This may take some time."
                 )
             with self._load_data_context:
-                self._preprocessed_data = self._call_load_data(self.data)
+                self.preprocessed_data = self._call_load_data(self.data)
             self._load_data_called = True
 
     def __getitem__(self, index: int) -> Any:
@@ -128,10 +124,10 @@ class AutoDataset(Dataset):
             raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
         if self.load_sample:
             with self._load_sample_context:
-                return self._call_load_sample(self._preprocessed_data[index])
-        return self._preprocessed_data[index]
+                return self._call_load_sample(self.preprocessed_data[index])
+        return self.preprocessed_data[index]
 
     def __len__(self) -> int:
         if not self.load_sample and not self.load_data:
             raise RuntimeError("`__len__` for `load_sample` and `load_data` could not be inferred.")
-        return len(self._preprocessed_data)
+        return len(self.preprocessed_data)

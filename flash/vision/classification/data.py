@@ -342,8 +342,7 @@ class ImageClassificationData(DataModule):
         )
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
-        preprocess = preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
-        # todo (tchaton) add check on mutually exclusive transforms
+        preprocess: Preprocess = preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
         return preprocess
 
     @classmethod
@@ -459,9 +458,7 @@ class ImageClassificationData(DataModule):
         **kwargs,
     ) -> 'ImageClassificationData':
         """
-        Creates a ImageClassificationData object from folders of images arranged in this way:
-
-        Examples::
+        Creates a ImageClassificationData object from folders of images arranged in this way: ::
 
             folder/dog_xxx.png
             folder/dog_xxy.png
@@ -530,6 +527,7 @@ class ImageClassificationData(DataModule):
             **kwargs
         )
 
+
 class ImageClassificationDataViz(ImageClassificationData):
 
     def show_train_batch(self):
@@ -539,14 +537,15 @@ class ImageClassificationDataViz(ImageClassificationData):
         self.viz.enabled = False
 
         from typing import List
+
         import kornia as K
+        import matplotlib.pyplot as plt
+        import numpy as np
         import torchvision as tv
         from PIL import Image
-        import numpy as np
-        import matplotlib.pyplot as plt
 
         # plot row data
-        rows: int = 4 # chenge later
+        rows: int = 4  # chenge later
         data_raw: List[Image] = self.viz.batches['train']['load_sample']
         for num, x_data in enumerate(data_raw):
             img, label = x_data
