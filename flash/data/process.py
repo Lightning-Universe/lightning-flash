@@ -27,7 +27,24 @@ from flash.data.utils import convert_to_modules
 
 class Properties:
 
-    _running_stage = None
+    _running_stage: Optional[RunningStage] = None
+    _current_fn: Optional[str] = None
+
+    @property
+    def current_fn(self) -> Optional[str]:
+        return self._current_fn
+
+    @current_fn.setter
+    def current_fn(self, current_fn: str):
+        self._current_fn = current_fn
+
+    @property
+    def running_stage(self) -> Optional[RunningStage]:
+        return self._running_stage
+
+    @running_stage.setter
+    def running_stage(self, running_stage: RunningStage):
+        self._running_stage = running_stage
 
     @property
     def training(self) -> bool:
@@ -96,6 +113,38 @@ class Preprocess(Properties, torch.nn.Module):
         self.val_transform = convert_to_modules(val_transform)
         self.test_transform = convert_to_modules(test_transform)
         self.predict_transform = convert_to_modules(predict_transform)
+
+        if not hasattr(self, "_skip_mutual_check"):
+            self._skip_mutual_check = False
+
+    @property
+    def skip_mutual_check(self) -> bool:
+        return self._skip_mutual_check
+
+    @skip_mutual_check.setter
+    def skip_mutual_check(self, skip_mutual_check: bool) -> None:
+        self._skip_mutual_check = skip_mutual_check
+
+    def _identify(self, x: Any) -> Any:
+        return x
+
+    def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
+        if self.current_fn in transform:
+            return transform[self.current_fn]
+        return self._identify
+
+    @property
+    def current_transform(self) -> Callable:
+        if self.training and self.train_transform:
+            return self._get_transform(self.train_transform)
+        elif self.validating and self.val_transform:
+            return self._get_transform(self.val_transform)
+        elif self.testing and self.test_transform:
+            return self._get_transform(self.test_transform)
+        elif self.predicting and self.predict_transform:
+            return self._get_transform(self.predict_transform)
+        else:
+            return self._identify
 
     @classmethod
     def from_state(cls, state: PreprocessState) -> 'Preprocess':

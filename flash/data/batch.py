@@ -11,14 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, TYPE_CHECKING, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
-from flash.data.utils import _contains_any_tensor, convert_to_modules
+from flash.data.utils import _contains_any_tensor, convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
+
+if TYPE_CHECKING:
+    from flash.data.process import Preprocess
 
 
 class _Sequential(torch.nn.Module):
@@ -31,29 +34,45 @@ class _Sequential(torch.nn.Module):
 
     def __init__(
         self,
+        preprocess: 'Preprocess',
         pre_tensor_transform: Callable,
         to_tensor_transform: Callable,
         post_tensor_transform: Callable,
-        assert_contains_tensor: bool = False
+        stage: RunningStage,
+        assert_contains_tensor: bool = False,
     ):
         super().__init__()
-
+        self.preprocess = preprocess
         self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
         self.to_tensor_transform = convert_to_modules(to_tensor_transform)
         self.post_tensor_transform = convert_to_modules(post_tensor_transform)
+        self.stage = stage
         self.assert_contains_tensor = assert_contains_tensor
 
-    def forward(self, sample: Any):
-        sample = self.pre_tensor_transform(sample)
-        sample = self.to_tensor_transform(sample)
-        if self.assert_contains_tensor:
-            if not _contains_any_tensor(sample):
-                raise MisconfigurationException(
-                    "When ``to_tensor_transform`` is overriden, "
-                    "``DataPipeline`` expects the outputs to be ``tensors``"
-                )
-        sample = self.post_tensor_transform(sample)
-        return sample
+        self._current_stage_context = CurrentRunningStageContext(stage, preprocess, reset=False)
+        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", preprocess)
+        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", preprocess)
+        self._post_tensor_transform_context = CurrentFuncContext("post_tensor_transform", preprocess)
+
+    def forward(self, sample: Any) -> Any:
+        with self._current_stage_context:
+            with self._pre_tensor_transform_context:
+                sample = self.pre_tensor_transform(sample)
+
+            with self._to_tensor_transform_context:
+                sample = self.to_tensor_transform(sample)
+
+            if self.assert_contains_tensor:
+                if not _contains_any_tensor(sample):
+                    raise MisconfigurationException(
+                        "When ``to_tensor_transform`` is overriden, "
+                        "``DataPipeline`` expects the outputs to be ``tensors``"
+                    )
+
+            with self._post_tensor_transform_context:
+                sample = self.post_tensor_transform(sample)
+
+            return sample
 
     def __str__(self) -> str:
         repr_str = f'{self.__class__.__name__}:'
@@ -87,26 +106,43 @@ class _PreProcessor(torch.nn.Module):
 
     def __init__(
         self,
+        preprocess: 'Preprocess',
         collate_fn: Callable,
         per_sample_transform: Union[Callable, _Sequential],
         per_batch_transform: Callable,
-        stage: Optional[RunningStage] = None,
+        stage: RunningStage,
         apply_per_sample_transform: bool = True,
+        on_device: bool = False
     ):
         super().__init__()
+        self.preprocess = preprocess
         self.collate_fn = convert_to_modules(collate_fn)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
         self.per_batch_transform = convert_to_modules(per_batch_transform)
         self.apply_per_sample_transform = apply_per_sample_transform
         self.stage = stage
+        self.on_device = on_device
 
-    def forward(self, samples: Sequence[Any]):
-        if self.apply_per_sample_transform:
-            samples = [self.per_sample_transform(sample) for sample in samples]
-            samples = type(samples)(samples)
-            samples = self.collate_fn(samples)
-        samples = self.per_batch_transform(samples)
-        return samples
+        extension = f"{'on_device' if self.on_device else ''}"
+        self._current_stage_context = CurrentRunningStageContext(stage, preprocess)
+        self._per_sample_transform_context = CurrentFuncContext(f"per_sample_transform_{extension}", preprocess)
+        self._collate_context = CurrentFuncContext("collate", preprocess)
+        self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform_{extension}", preprocess)
+
+    def forward(self, samples: Sequence[Any]) -> Any:
+        with self._current_stage_context:
+
+            if self.apply_per_sample_transform:
+                with self._per_sample_transform_context:
+                    samples = [self.per_sample_transform(sample) for sample in samples]
+                samples = type(samples)(samples)
+
+                with self._collate_context:
+                    samples = self.collate_fn(samples)
+
+            with self._per_batch_transform_context:
+                samples = self.per_batch_transform(samples)
+            return samples
 
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown

@@ -319,6 +319,7 @@ class DataModule(pl.LightningDataModule):
             )
         else:
             data_pipeline = cls(**kwargs).data_pipeline
+
         train_dataset = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
         )
