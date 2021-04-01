@@ -1,4 +1,5 @@
 import functools
+from contextlib import contextmanager
 from typing import Any, Callable
 
 from pytorch_lightning.callbacks import Callback
@@ -10,12 +11,22 @@ from flash.data.utils import _STAGES_PREFIX
 
 
 class BaseViz(Callback):
+    """
+    This class is used to profile ``Preprocess`` hook outputs and visualize the data transformations.
+    It is disabled by default.
+    """
 
     def __init__(self, enabled: bool = False):
         self.batches = {k: {} for k in _STAGES_PREFIX.values()}
         self.enabled = enabled
         self._datamodule = None
         self._preprocess = None
+
+    @contextmanager
+    def enable(self):
+        self.enabled = True
+        yield
+        self.enabled = False
 
     def attach_to_preprocess(self, preprocess: Preprocess) -> None:
         self._wrap_functions_per_stage(RunningStage.TRAINING, preprocess)

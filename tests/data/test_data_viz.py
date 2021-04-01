@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import torchvision.transforms as T
 from PIL import Image
-from torch import nn
+from pytorch_lightning import seed_everything
 
 from flash.data.utils import _STAGES_PREFIX
 from flash.vision import ImageClassificationData
@@ -32,15 +32,16 @@ def _rand_image():
 class ImageClassificationDataViz(ImageClassificationData):
 
     def show_batch(self):
-        self.viz.enabled = True
-        _ = next(iter(self.train_dataloader()))
-        _ = next(iter(self.val_dataloader()))
-        _ = next(iter(self.test_dataloader()))
-        _ = next(iter(self.predict_dataloader()))
-        self.viz.enabled = False
+        # viz needs to be enabled, so it doesn't store profile transforms during training
+        with self.viz.enable():
+            _ = next(iter(self.train_dataloader()))
+            _ = next(iter(self.val_dataloader()))
+            _ = next(iter(self.test_dataloader()))
+            _ = next(iter(self.predict_dataloader()))
 
 
 def test_base_viz(tmpdir):
+    seed_everything(42)
     tmpdir = Path(tmpdir)
 
     (tmpdir / "a").mkdir()
@@ -59,54 +60,32 @@ def test_base_viz(tmpdir):
         test_filepaths=[tmpdir / "a", tmpdir / "b"],
         test_labels=[0, 1],
         predict_filepaths=[tmpdir / "a", tmpdir / "b"],
-        batch_size=1,
+        batch_size=2,
         num_workers=0,
     )
 
     img_data.show_batch()
     for stage in _STAGES_PREFIX.values():
-        assert img_data.viz.batches[stage]["load_sample"] is not None
-        assert img_data.viz.batches[stage]["to_tensor_transform"] is not None
-        assert img_data.viz.batches[stage]["collate"] is not None
-        assert img_data.viz.batches[stage]["per_batch_transform"] is not None
+        is_predict = stage == "predict"
 
+        def extract_data(data):
+            if not is_predict:
+                return data[0][0]
+            return data[0]
 
-def test_base_viz_kornia(tmpdir):
-    tmpdir = Path(tmpdir)
+        assert isinstance(extract_data(img_data.viz.batches[stage]["load_sample"]), Image.Image)
+        if not is_predict:
+            assert isinstance(img_data.viz.batches[stage]["load_sample"][0][1], int)
 
-    (tmpdir / "a").mkdir()
-    (tmpdir / "b").mkdir()
-    _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
+        assert isinstance(extract_data(img_data.viz.batches[stage]["to_tensor_transform"]), torch.Tensor)
+        if not is_predict:
+            assert isinstance(img_data.viz.batches[stage]["to_tensor_transform"][0][1], int)
 
-    _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
+        assert extract_data(img_data.viz.batches[stage]["collate"]).shape == torch.Size([2, 3, 196, 196])
+        if not is_predict:
+            assert img_data.viz.batches[stage]["collate"][0][1].shape == torch.Size([2])
 
-    # Define the augmentations pipeline
-    train_transforms = {
-        # can we just call this `preprocess` ?
-        # this is needed all the time in train, valid, etc
-        "pre_tensor_transform": T.Compose([T.RandomResizedCrop(224), T.ToTensor()]),
-        "post_tensor_transform": nn.Sequential(
-            # Kornia RandomResizeCrop has a bug - I'll debug with Jian.
-            # K.augmentation.RandomResizedCrop((224, 224), align_corners=True),
-            K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-        ),
-        "per_batch_transform": nn.Sequential(
-            K.augmentation.RandomAffine(360., p=0.5), K.augmentation.ColorJitter(0.2, 0.3, 0.2, 0.3, p=0.5)
-        )
-    }
-    img_data = ImageClassificationDataViz.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_labels=[0, 1],
-        batch_size=1,
-        num_workers=0,
-        train_transform=train_transforms,
-        valt_transform=train_transforms,
-    )
-
-    img_data.show_train_batch()
-    assert img_data.viz.batches["train"]["load_sample"] is not None
-    assert img_data.viz.batches["train"]["to_tensor_transform"] is not None
-    assert img_data.viz.batches["train"]["collate"] is not None
-    assert img_data.viz.batches["train"]["per_batch_transform"] is not None
+        generated = extract_data(img_data.viz.batches[stage]["per_batch_transform"]).shape
+        assert generated == torch.Size([2, 3, 196, 196])
+        if not is_predict:
+            assert img_data.viz.batches[stage]["per_batch_transform"][0][1].shape == torch.Size([2])
