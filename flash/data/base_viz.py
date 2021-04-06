@@ -14,6 +14,9 @@ class BaseViz(FlashCallback):
     """
     This class is used to profile ``Preprocess`` hook outputs and visualize the data transformations.
     It is disabled by default.
+
+    batches: Dict = {"train": {"to_tensor_transform": [], ...}, ...}
+
     """
 
     def __init__(self, enabled: bool = False):
