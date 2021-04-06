@@ -56,10 +56,10 @@ jobs:
         # Look to see if there is a cache hit for the corresponding requirements file
         key: flash-datasets_predict
 
-    #- name: Run Notebooks
-    #  run: |
-    #    jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
-    #    jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb
-    #
-    #    ipython flash_notebooks/image_classification.py
-    #    ipython flash_notebooks/tabular_classification.py
+    - name: Run Notebooks
+      run: |
+        # jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
+        jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb
+
+        # ipython flash_notebooks/image_classification.py
+        ipython flash_notebooks/tabular_classification.py

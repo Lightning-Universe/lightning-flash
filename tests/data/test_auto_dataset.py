@@ -173,10 +173,7 @@ def test_preprocessing_data_pipeline_no_running_stage(with_dataset):
 
     dataset = pipe._generate_auto_dataset(range(10), running_stage=None)
 
-    with pytest.raises(
-        RuntimeError,
-        match='Names for LoadSample and LoadData could not be inferred. Consider setting the RunningStage'
-    ):
+    with pytest.raises(RuntimeError, match='`__len__` for `load_sample`'):
         for idx in range(len(dataset)):
             dataset[idx]
 

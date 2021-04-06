@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Optional, Tuple, Type
+from typing import Any, Callable, List, Tuple, Type
 
 import torch
-from pytorch_tabnet.tab_network import TabNet
 from torch.nn import functional as F
-from torch.nn.functional import softmax
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
-from flash.core.data import DataPipeline
+from flash.utils.imports import _TABNET_AVAILABLE
+
+if _TABNET_AVAILABLE:
+    from pytorch_tabnet.tab_network import TabNet
 
 
 class TabularClassifier(ClassificationTask):
@@ -69,31 +70,15 @@ class TabularClassifier(ClassificationTask):
             learning_rate=learning_rate,
         )
 
-    def predict(
-        self,
-        x: Any,
-        batch_idx: Optional[int] = None,
-        skip_collate_fn: bool = False,
-        dataloader_idx: Optional[int] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-    ) -> Any:
-        # override parent predict because forward is called here with the whole batch
-        data_pipeline = data_pipeline or self.data_pipeline
-        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        predictions = self.forward(batch)
-        return data_pipeline.uncollate_fn(predictions)
-
-    def forward(self, x_in):
+    def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
-        return softmax(self.model(x)[0])
+        return F.softmax(self.model(x)[0], -1)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch)
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
         return model
-
-    @staticmethod
-    def default_pipeline() -> DataPipeline:
-        # TabularDataPipeline depends on the data
-        return DataPipeline()

@@ -38,7 +38,6 @@ class CustomPreprocess(Preprocess):
         return data
 
 
-@pytest.mark.skipif(reason="Still using DataPipeline Old API")
 def test_serialization_data_pipeline(tmpdir):
     model = CustomModel()
 

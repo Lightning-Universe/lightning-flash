@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.vision import ObjectDetectionData, ObjectDetector
 
 # 1. Download the data
@@ -29,7 +29,7 @@ datamodule = ObjectDetectionData.from_coco(
 # 3. Build the model
 model = ObjectDetector(num_classes=datamodule.num_classes)
 
-# 4. Create the trainer. Run twice on data
+# 4. Create the trainer
 trainer = flash.Trainer(max_epochs=3)
 
 # 5. Finetune the model

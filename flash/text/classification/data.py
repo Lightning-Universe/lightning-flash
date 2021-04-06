@@ -11,121 +11,95 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
 
-import torch
-from datasets import load_dataset
-from datasets.utils.download_manager import GenerateMode
+from datasets import DatasetDict, load_dataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 from transformers.modeling_outputs import SequenceClassifierOutput
 
-from flash.core.classification import ClassificationDataPipeline
-from flash.core.data import DataModule
-from flash.core.data.utils import _contains_any_tensor
+from flash.core.classification import ClassificationPostprocess
+from flash.data.auto_dataset import AutoDataset
+from flash.data.data_module import DataModule
+from flash.data.process import Preprocess, PreprocessState
 
 
-def tokenize_text_lambda(tokenizer, input, max_length):
-    return lambda ex: tokenizer(
-        ex[input],
-        max_length=max_length,
-        truncation=True,
-        padding="max_length",
-    )
+@dataclass(unsafe_hash=True, frozen=True)
+class TextClassificationState(PreprocessState):
+    label_to_class_mapping: Dict[str, int]
 
 
-def prepare_dataset(
-    tokenizer,
-    train_file,
-    valid_file,
-    test_file,
-    filetype,
-    input,
-    max_length,
-    target=None,
-    label_to_class_mapping=None,
-    predict=False,
-):
-    data_files = {}
+class TextClassificationPreprocess(Preprocess):
 
-    if train_file:
-        data_files["train"] = train_file
-    if valid_file:
-        data_files["validation"] = valid_file
-    if test_file:
-        data_files["test"] = test_file
+    def __init__(
+        self,
+        tokenizer: AutoTokenizer,
+        input: str,
+        max_length: int,
+        target: str,
+        filetype: str,
+        label_to_class_mapping: Dict[str, int],
+    ):
+        """
+        This class contains the preprocessing logic for text classification
 
-    dataset_dict = load_dataset(filetype, data_files=data_files, download_mode=GenerateMode.FORCE_REDOWNLOAD)
+        Args:
+            tokenizer: Hugging Face Tokenizer.
+            input: The field storing the text to be classified.
+            max_length:  Maximum number of tokens within a single sentence.
+            target: The field storing the class id of the associated text.
+            filetype: .csv or .json format type.
+            label_to_class_mapping: Dictionnary mapping target labels to class indexes.
 
-    if not predict:
-        if label_to_class_mapping is None:
-            label_to_class_mapping = {
-                v: k
-                for k, v in enumerate(list(sorted(list(set(dataset_dict["train"][target])))))
-            }
+        Returns:
+            TextClassificationPreprocess: The constructed preprocess objects.
 
-        def transform_label(ex):
-            ex[target] = label_to_class_mapping[ex[target]]
-            return ex
+        """
 
-            # convert labels to ids
+        super().__init__()
+        self.tokenizer = tokenizer
+        self.input = input
+        self.filetype = filetype
+        self.max_length = max_length
+        self.label_to_class_mapping = label_to_class_mapping
+        self.target = target
 
-        dataset_dict = dataset_dict.map(transform_label)
-
-    # tokenize text field
-    dataset_dict = dataset_dict.map(
-        tokenize_text_lambda(tokenizer, input, max_length),
-        batched=True,
-    )
-
-    if target != "labels" and not predict:
-        dataset_dict.rename_column_(target, "labels")
-    dataset_dict.set_format("torch", columns=["input_ids"] if predict else ["input_ids", "labels"])
-
-    train_ds = None
-    valid_ds = None
-    test_ds = None
-
-    if "train" in dataset_dict:
-        train_ds = dataset_dict["train"]
-
-    if "validation" in dataset_dict:
-        valid_ds = dataset_dict["validation"]
-
-    if "test" in dataset_dict:
-        test_ds = dataset_dict["test"]
-
-    return train_ds, valid_ds, test_ds, label_to_class_mapping
-
-
-class TextClassificationDataPipeline(ClassificationDataPipeline):
-
-    def __init__(self, tokenizer, input: str, max_length: int):
-        self._tokenizer = tokenizer
-        self._input = input
-        self._max_length = max_length
         self._tokenize_fn = partial(
-            self._tokenize_fn, tokenizer=self._tokenizer, input=self._input, max_length=self._max_length
+            self._tokenize_fn,
+            tokenizer=self.tokenizer,
+            input=self.input,
+            max_length=self.max_length,
+            truncation=True,
+            padding="max_length"
         )
+
+    @property
+    def state(self):
+        return TextClassificationState(self.label_to_class_mapping)
+
+    def per_batch_transform(self, batch: Any) -> Any:
+        if "labels" not in batch:
+            # todo: understand why an extra dimension has been added.
+            if batch["input_ids"].dim() == 3:
+                batch["input_ids"] = batch["input_ids"].squeeze(0)
+        return batch
 
     @staticmethod
-    def _tokenize_fn(ex, tokenizer=None, input: str = None, max_length: int = None) -> Callable:
-        return tokenizer(
-            ex[input],
-            max_length=max_length,
-            truncation=True,
-            padding="max_length",
-        )
-
-    def before_collate(self, samples: Any) -> Any:
-        """Override to apply transformations to samples"""
-        if _contains_any_tensor(samples):
-            return samples
-        elif isinstance(samples, (list, tuple)) and len(samples) > 0 and all(isinstance(s, str) for s in samples):
-            return [self._tokenize_fn({self._input: s}) for s in samples]
-        raise MisconfigurationException("samples can only be tensors or a list of sentences.")
+    def _tokenize_fn(
+        ex: Union[Dict[str, str], str],
+        tokenizer=None,
+        input: str = None,
+        max_length: int = None,
+        **kwargs
+    ) -> Callable:
+        """This function is used to tokenize sentences using the provided tokenizer."""
+        if isinstance(ex, dict):
+            ex = ex[input]
+        return tokenizer(ex, max_length=max_length, **kwargs)
 
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
@@ -133,44 +107,146 @@ class TextClassificationDataPipeline(ClassificationDataPipeline):
             samples = [samples]
         return default_data_collator(samples)
 
-    def after_collate(self, batch: Tensor) -> Tensor:
-        if "labels" not in batch:
-            # todo: understand why an extra dimension has been added.
-            if batch["input_ids"].dim() == 3:
-                batch["input_ids"] = batch["input_ids"].squeeze(0)
-        return batch
+    def _transform_label(self, ex: Dict[str, str]):
+        ex[self.target] = self.label_to_class_mapping[ex[self.target]]
+        return ex
 
-    def before_uncollate(self, batch: Union[Tensor, tuple, SequenceClassifierOutput]) -> Union[tuple, Tensor]:
+    @staticmethod
+    def generate_state(file: str, target: str, filetype: str) -> TextClassificationState:
+        data_files = {'train': file}
+        dataset_dict = load_dataset(filetype, data_files=data_files)
+        label_to_class_mapping = {v: k for k, v in enumerate(list(sorted(list(set(dataset_dict['train'][target])))))}
+        return TextClassificationState(label_to_class_mapping)
+
+    def load_data(
+        self,
+        filepath: str,
+        dataset: AutoDataset,
+        columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
+        use_full: bool = True
+    ):
+        data_files = {}
+
+        stage = dataset.running_stage.value
+        data_files[stage] = str(filepath)
+
+        # FLASH_TESTING is set in the CI to run faster.
+        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
+            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        else:
+            # used for debugging. Avoid processing the entire dataset   # noqa E265
+            dataset_dict = DatasetDict({
+                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+            })
+
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
+
+        # convert labels to ids
+        if not self.predicting:
+            dataset_dict = dataset_dict.map(self._transform_label)
+
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
+
+        # Hugging Face models expect target to be named ``labels``.
+        if not self.predicting and self.target != "labels":
+            dataset_dict.rename_column_(self.target, "labels")
+
+        dataset_dict.set_format("torch", columns=columns)
+
+        if not self.predicting:
+            dataset.num_classes = len(self.label_to_class_mapping)
+
+        return dataset_dict[stage]
+
+    def predict_load_data(self, sample: Any, dataset: AutoDataset):
+        if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
+            return self.load_data(sample, dataset, columns=["input_ids", "attention_mask"])
+        else:
+            if isinstance(sample, str):
+                sample = [sample]
+
+            if isinstance(sample, list) and all(isinstance(s, str) for s in sample):
+                return [self._tokenize_fn(s) for s in sample]
+
+            else:
+                raise MisconfigurationException("Currently, we support only list of sentences")
+
+
+class TextClassificationPostProcess(ClassificationPostprocess):
+
+    def per_batch_transform(self, batch: Any) -> Any:
         if isinstance(batch, SequenceClassifierOutput):
             batch = batch.logits
-        return super().before_uncollate(batch)
+        return super().per_batch_transform(batch)
 
 
 class TextClassificationData(DataModule):
-    """Data module for text classification tasks."""
+    """Data Module for text classification tasks"""
+    preprocess_cls = TextClassificationPreprocess
+    postprocess_cls = TextClassificationPostProcess
+    target: Optional[str] = None
 
-    @staticmethod
-    def default_pipeline():
-        return TextClassificationDataPipeline(
-            AutoTokenizer.from_pretrained("prajjwal1/bert-tiny", use_fast=True),
-            "sentiment",  # Todo: find a way to get the target column name or impose target
-            128,
+    @property
+    def preprocess_state(self) -> TextClassificationState:
+        return self._preprocess.state
+
+    @property
+    def num_classes(self) -> int:
+        return len(self.preprocess_state.label_to_class_mapping)
+
+    @classmethod
+    def instantiate_preprocess(
+        cls,
+        train_file: Optional[str],
+        input: str,
+        target: str,
+        filetype: str,
+        backbone: str,
+        max_length: int,
+        label_to_class_mapping: Optional[dict] = None,
+        preprocess_state: Optional[TextClassificationState] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+    ):
+        if label_to_class_mapping is None:
+            preprocess_cls = preprocess_cls or cls.preprocess_cls
+            if train_file is not None:
+                preprocess_state = preprocess_cls.generate_state(train_file, target, filetype)
+            else:
+                if preprocess_state is None:
+                    raise MisconfigurationException(
+                        "Either ``preprocess_state`` or ``train_file`` needs to be provided"
+                    )
+            label_to_class_mapping = preprocess_state.label_to_class_mapping
+
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+
+        return preprocess_cls(
+            AutoTokenizer.from_pretrained(backbone, use_fast=True),
+            input,
+            max_length,
+            target,
+            filetype,
+            label_to_class_mapping,
         )
 
     @classmethod
     def from_files(
         cls,
-        train_file,
-        input,
-        target,
+        train_file: Optional[str],
+        input: Optional[str] = 'input',
+        target: Optional[str] = 'labels',
         filetype: str = "csv",
         backbone: str = "prajjwal1/bert-tiny",
-        valid_file: str = None,
-        test_file: str = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
         max_length: int = 128,
+        label_to_class_mapping: Optional[dict] = None,
         batch_size: int = 16,
         num_workers: Optional[int] = None,
-    ):
+        preprocess_state: Optional[TextClassificationState] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+    ) -> 'TextClassificationData':
         """Creates a TextClassificationData object from files.
 
         Args:
@@ -178,12 +254,13 @@ class TextClassificationData(DataModule):
             input: The field storing the text to be classified.
             target: The field storing the class id of the associated text.
             filetype: .csv or .json
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
-            valid_file: Path to validation data.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
+            val_file: Path to validation data.
             test_file: Path to test data.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
+                Defaults to None which equals the number of available CPU threads,
+                or 0 for Darwin platform.
 
         Returns:
             TextClassificationData: The constructed data module.
@@ -192,35 +269,31 @@ class TextClassificationData(DataModule):
 
             train_df = pd.read_csv("train_data.csv")
             tab_data = TabularData.from_df(train_df, target="fraud",
-                                           numerical_input=["account_value"],
-                                           categorical_input=["account_type"])
+                                           num_cols=["account_value"],
+                                           cat_cols=["account_type"])
 
         """
-        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-        train_ds, valid_ds, test_ds, label_to_class_mapping = prepare_dataset(
-            tokenizer=tokenizer,
-            train_file=train_file,
-            valid_file=valid_file,
-            test_file=test_file,
-            filetype=filetype,
-            input=input,
-            max_length=max_length,
-            target=target,
-            label_to_class_mapping=None
+        preprocess = cls.instantiate_preprocess(
+            train_file,
+            input,
+            target,
+            filetype,
+            backbone,
+            max_length,
+            label_to_class_mapping,
+            preprocess_state,
+            preprocess_cls,
         )
 
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_file,
+            val_load_data_input=val_file,
+            test_load_data_input=test_file,
+            predict_load_data_input=predict_file,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess=preprocess
         )
-
-        datamodule.num_classes = len(label_to_class_mapping)
-        datamodule.data_pipeline = TextClassificationDataPipeline(tokenizer, input=input, max_length=max_length)
-        return datamodule
 
     @classmethod
     def from_file(
@@ -230,44 +303,36 @@ class TextClassificationData(DataModule):
         backbone="bert-base-cased",
         filetype="csv",
         max_length: int = 128,
+        preprocess_state: Optional[TextClassificationState] = None,
+        label_to_class_mapping: Optional[dict] = None,
         batch_size: int = 16,
         num_workers: Optional[int] = None,
-    ):
+    ) -> 'TextClassificationData':
         """Creates a TextClassificationData object from files.
 
         Args:
-            predict_file: Path to prediction data.
+
+            predict_file: Path to training data.
             input: The field storing the text to be classified.
             filetype: .csv or .json
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
             batch_size: the batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
-
-        Returns:
-            TextClassificationData: The constructed data module.
-
+                Defaults to None which equals the number of available CPU threads,
+                or 0 for Darwin platform.
         """
-        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-        _, _, predict_ds, _ = prepare_dataset(
-            tokenizer=tokenizer,
-            train_file=None,
-            valid_file=None,
-            test_file=predict_file,
-            filetype=filetype,
+        return cls.from_files(
+            None,
             input=input,
+            target=None,
+            filetype=filetype,
+            backbone=backbone,
+            val_file=None,
+            test_file=None,
+            predict_file=predict_file,
             max_length=max_length,
-            predict=True,
-        )
-
-        datamodule = cls(
-            train_ds=None,
-            valid_ds=None,
-            test_ds=predict_ds,
+            label_to_class_mapping=label_to_class_mapping,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess_state=preprocess_state,
         )
-
-        datamodule.data_pipeline = TextClassificationDataPipeline(tokenizer, input=input, max_length=max_length)
-        return datamodule

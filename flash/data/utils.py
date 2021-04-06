@@ -14,6 +14,7 @@
 
 import os.path
 import zipfile
+from contextlib import ContextDecorator, contextmanager
 from typing import Any, Callable, Dict, Iterable, Mapping, Type
 
 import requests
@@ -29,6 +30,63 @@ _STAGES_PREFIX = {
     RunningStage.VALIDATING: 'val',
     RunningStage.PREDICTING: 'predict'
 }
+_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
+
+
+class CurrentRunningStageContext:
+
+    def __init__(self, running_stage: RunningStage, obj: Any, reset: bool = True):
+        self._running_stage = running_stage
+        self._obj = obj
+        self._reset = reset
+
+    def __enter__(self):
+        if self._obj is not None:
+            if getattr(self._obj, "running_stage", None) != self._running_stage:
+                self._obj.running_stage = self._running_stage
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self._obj is not None and self._reset:
+            self._obj.running_stage = None
+
+
+class CurrentFuncContext:
+
+    def __init__(self, current_fn: str, obj: Any):
+        self._current_fn = current_fn
+        self._obj = obj
+
+    def __enter__(self):
+        if self._obj is not None:
+            if getattr(self._obj, "current_fn", None) != self._current_fn:
+                self._obj.current_fn = self._current_fn
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self._obj is not None:
+            self._obj.current_fn = None
+
+
+class CurrentRunningStageFuncContext:
+
+    def __init__(self, running_stage: RunningStage, current_fn: str, obj: Any):
+        self._running_stage = running_stage
+        self._current_fn = current_fn
+        self._obj = obj
+
+    def __enter__(self):
+        if self._obj is not None:
+            if getattr(self._obj, "running_stage", None) != self._running_stage:
+                self._obj.running_stage = self._running_stage
+            if getattr(self._obj, "current_fn", None) != self._current_fn:
+                self._obj.current_fn = self._current_fn
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self._obj is not None:
+            self._obj.running_stage = None
+            self._obj.current_fn = None
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
@@ -83,7 +141,11 @@ def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
     return False
 
 
-class LambdaModule(torch.nn.Module):
+class FuncModule(torch.nn.Module):
+    """
+    This class is used to wrap a callable within a nn.Module and
+    apply the wrapped function in `__call__`
+    """
 
     def __init__(self, func: Callable) -> None:
         super().__init__()
@@ -101,7 +163,7 @@ def convert_to_modules(transforms: Dict):
     if transforms is None or isinstance(transforms, torch.nn.Module):
         return transforms
 
-    transforms = apply_to_collection(transforms, Callable, LambdaModule, wrong_dtype=torch.nn.Module)
+    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=torch.nn.Module)
     transforms = apply_to_collection(transforms, Mapping, torch.nn.ModuleDict, wrong_dtype=torch.nn.ModuleDict)
     transforms = apply_to_collection(
         transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)

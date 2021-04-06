@@ -11,28 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Union
+from typing import Any
 
 import torch
-from torch import Tensor
 
-from flash.core.data import TaskDataPipeline
 from flash.core.model import Task
+from flash.data.process import Postprocess
 
 
-class ClassificationDataPipeline(TaskDataPipeline):
+class ClassificationPostprocess(Postprocess):
 
-    def before_uncollate(self, batch: Union[Tensor, tuple]) -> Tensor:
-        if isinstance(batch, tuple):
-            batch = batch[0]
-        return torch.softmax(batch, -1)
-
-    def after_uncollate(self, samples: Any) -> Any:
+    def per_sample_transform(self, samples: Any) -> Any:
         return torch.argmax(samples, -1).tolist()
 
 
 class ClassificationTask(Task):
 
-    @staticmethod
-    def default_pipeline() -> ClassificationDataPipeline:
-        return ClassificationDataPipeline()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._postprocess = ClassificationPostprocess()

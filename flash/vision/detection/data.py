@@ -12,23 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
 from PIL import Image
-from pytorch_lightning.utilities import _module_available
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch._six import container_abcs
 from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 
-from flash.core.data import TaskDataPipeline
-from flash.core.data.datamodule import DataModule
-from flash.core.data.utils import _contains_any_tensor
-from flash.vision.classification.data import _pil_loader
+from flash.data.auto_dataset import AutoDataset
+from flash.data.data_module import DataModule
+from flash.data.process import Preprocess
+from flash.data.utils import _contains_any_tensor
+from flash.utils.imports import _COCO_AVAILABLE
+from flash.vision.utils import pil_loader
 
-_COCO_AVAILABLE = _module_available("pycocotools")
 if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
 
@@ -40,6 +40,7 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         root: str,
         ann_file: str,
         transforms: Optional[Callable] = None,
+        loader: Optional[Callable] = pil_loader,
     ):
         if not _COCO_AVAILABLE:
             raise ImportError("Kindly install the COCO API `pycocotools` to use the Dataset")
@@ -48,9 +49,10 @@ class CustomCOCODataset(torch.utils.data.Dataset):
         self.transforms = transforms
         self.coco = COCO(ann_file)
         self.ids = list(sorted(self.coco.imgs.keys()))
+        self.loader = loader
 
     @property
-    def num_classes(self):
+    def num_classes(self) -> int:
         categories = self.coco.loadCats(self.coco.getCatIds())
         if not categories:
             raise ValueError("No Categories found")
@@ -85,12 +87,13 @@ class CustomCOCODataset(torch.utils.data.Dataset):
                 areas.append(obj["area"])
                 iscrowd.append(obj["iscrowd"])
 
-        target = {}
-        target["boxes"] = torch.as_tensor(boxes, dtype=torch.float32)
-        target["labels"] = torch.as_tensor(labels, dtype=torch.int64)
-        target["image_id"] = tensor([img_idx])
-        target["area"] = torch.as_tensor(areas, dtype=torch.float32)
-        target["iscrowd"] = torch.as_tensor(iscrowd, dtype=torch.int64)
+        target = dict(
+            boxes=torch.as_tensor(boxes, dtype=torch.float32),
+            labels=torch.as_tensor(labels, dtype=torch.int64),
+            image_id=tensor([img_idx]),
+            area=torch.as_tensor(areas, dtype=torch.float32),
+            iscrowd=torch.as_tensor(iscrowd, dtype=torch.int64)
+        )
 
         if self.transforms:
             img = self.transforms(img)
@@ -130,13 +133,23 @@ def _coco_remove_images_without_annotations(dataset):
 _default_transform = T.ToTensor()
 
 
-class ObjectDetectionDataPipeline(TaskDataPipeline):
+class ObjectDetectionPreprocess(Preprocess):
 
-    def __init__(self, valid_transform: Optional[Callable] = _default_transform, loader: Callable = _pil_loader):
-        self._valid_transform = valid_transform
-        self._loader = loader
+    to_tensor = T.ToTensor()
 
-    def before_collate(self, samples: Any) -> Any:
+    def load_data(self, metadata: Any, dataset: AutoDataset) -> CustomCOCODataset:
+        # Extract folder, coco annotation file and the transform to be applied on the images
+        folder, ann_file, transform = metadata
+        ds = CustomCOCODataset(folder, ann_file, transform)
+        if self.training:
+            dataset.num_classes = ds.num_classes
+            ds = _coco_remove_images_without_annotations(ds)
+        return ds
+
+    def predict_load_data(self, samples):
+        return samples
+
+    def pre_tensor_transform(self, samples: Any) -> Any:
         if _contains_any_tensor(samples):
             return samples
 
@@ -146,10 +159,12 @@ class ObjectDetectionDataPipeline(TaskDataPipeline):
         if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
             outputs = []
             for sample in samples:
-                output = self._loader(sample)
-                outputs.append(self._valid_transform(output))
+                outputs.append(pil_loader(sample))
             return outputs
         raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
+
+    def predict_to_tensor_transform(self, sample) -> Any:
+        return self.to_tensor(sample[0])
 
     def collate(self, samples: Any) -> Any:
         if not isinstance(samples, Tensor):
@@ -162,38 +177,47 @@ class ObjectDetectionDataPipeline(TaskDataPipeline):
 
 class ObjectDetectionData(DataModule):
 
+    preprocess_cls = ObjectDetectionPreprocess
+
+    @classmethod
+    def instantiate_preprocess(
+        cls,
+        train_transform: Optional[Callable],
+        val_transform: Optional[Callable],
+        preprocess_cls: Type[Preprocess] = None
+    ) -> Preprocess:
+
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+        return preprocess_cls(train_transform, val_transform)
+
     @classmethod
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
         train_transform: Optional[Callable] = _default_transform,
-        valid_folder: Optional[str] = None,
-        valid_ann_file: Optional[str] = None,
-        valid_transform: Optional[Callable] = _default_transform,
+        val_folder: Optional[str] = None,
+        val_ann_file: Optional[str] = None,
+        val_transform: Optional[Callable] = _default_transform,
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         test_transform: Optional[Callable] = _default_transform,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        preprocess_cls: Type[Preprocess] = None,
         **kwargs
     ):
-        train_ds = CustomCOCODataset(train_folder, train_ann_file, train_transform)
-        num_classes = train_ds.num_classes
-        train_ds = _coco_remove_images_without_annotations(train_ds)
 
-        valid_ds = (CustomCOCODataset(valid_folder, valid_ann_file, valid_transform) if valid_folder else None)
+        preprocess = cls.instantiate_preprocess(train_transform, val_transform, preprocess_cls=preprocess_cls)
 
-        test_ds = (CustomCOCODataset(test_folder, test_ann_file, test_transform) if test_folder else None)
-
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
+        datamodule = cls.from_load_data_inputs(
+            train_load_data_input=(train_folder, train_ann_file, train_transform),
+            val_load_data_input=(val_folder, val_ann_file, val_transform) if val_folder else None,
+            test_load_data_input=(test_folder, test_ann_file, test_transform) if test_folder else None,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess=preprocess,
+            **kwargs
         )
-
-        datamodule.num_classes = num_classes
-        datamodule.data_pipeline = ObjectDetectionDataPipeline()
+        datamodule.num_classes = datamodule._train_ds.num_classes
         return datamodule

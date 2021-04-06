@@ -6,9 +6,8 @@ import pytest
 from PIL import Image
 from pytorch_lightning.utilities import _module_available
 
+from flash.utils.imports import _COCO_AVAILABLE
 from flash.vision.detection.data import ObjectDetectionData
-
-_COCO_AVAILABLE = _module_available("pycocotools")
 
 
 def _create_dummy_coco_json(dummy_json_path):
@@ -97,8 +96,8 @@ def test_image_detector_data_from_coco(tmpdir):
     datamodule = ObjectDetectionData.from_coco(
         train_folder=train_folder,
         train_ann_file=coco_ann_path,
-        valid_folder=train_folder,
-        valid_ann_file=coco_ann_path,
+        val_folder=train_folder,
+        val_ann_file=coco_ann_path,
         test_folder=train_folder,
         test_ann_file=coco_ann_path,
         batch_size=1,

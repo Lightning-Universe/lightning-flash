@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
-from flash import download_data
+from flash import download_data, Trainer
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
@@ -21,7 +23,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 # 2. Load the data
 datamodule = SummarizationData.from_files(
     train_file="data/xsum/train.csv",
-    valid_file="data/xsum/valid.csv",
+    val_file="data/xsum/valid.csv",
     test_file="data/xsum/test.csv",
     input="input",
     target="target"
@@ -31,13 +33,10 @@ datamodule = SummarizationData.from_files(
 model = SummarizationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
+trainer = flash.Trainer(gpus=int(torch.cuda.is_available()), fast_dev_run=True)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)
 
-# 6. Test model
-trainer.test()
-
-# 7. Save it!
+# 6. Save it!
 trainer.save_checkpoint("summarization_model_xsum.pt")

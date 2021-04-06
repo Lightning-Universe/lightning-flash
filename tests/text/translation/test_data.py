@@ -62,7 +62,7 @@ def test_from_files(tmpdir):
     dm = TranslationData.from_files(
         backbone=TEST_BACKBONE,
         train_file=csv_path,
-        valid_file=csv_path,
+        val_file=csv_path,
         test_file=csv_path,
         input="input",
         target="target",
