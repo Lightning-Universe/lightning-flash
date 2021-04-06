@@ -44,17 +44,6 @@ class DummyDataset(torch.utils.data.Dataset):
         return 5
 
 
-class CustomDataModule(DataModule):
-
-    def __init__(self):
-        super().__init__(
-            train_dataset=DummyDataset(),
-            val_dataset=DummyDataset(),
-            test_dataset=DummyDataset(),
-            predict_dataset=DummyDataset(),
-        )
-
-
 @pytest.mark.parametrize("use_preprocess", [False, True])
 @pytest.mark.parametrize("use_postprocess", [False, True])
 def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmpdir):
