@@ -37,3 +37,8 @@ def test_registry(tmpdir):
 
     with pytest.raises(MisconfigurationException, match="``register_function`` should be used with a function"):
         backbones.register_function(nn.Linear(1, 1), name="cho")
+
+    backbones.register_function(my_model, name="cho", override=True)
+
+    with pytest.raises(MisconfigurationException, match="Name cho is already present within"):
+        backbones.register_function(my_model, name="cho", override=False)

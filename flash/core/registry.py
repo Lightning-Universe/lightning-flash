@@ -61,21 +61,28 @@ class FlashRegistry(Dict):
         else:
             raise MisconfigurationException(f"Key: {key} is not in {self.__repr__()}")
 
-    def _register_function(self, fn: Callable, name: Optional[str] = None):
+    def _register_function(self, fn: Callable, name: Optional[str] = None, override: bool = False):
         if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
             raise MisconfigurationException("``register_function`` should be used with a function")
 
         name = name or fn.__name__
 
-        self._registered_functions[name] = fn
+        if override:
+            self._registered_functions[name] = fn
+        else:
+            if name in self._registered_functions:
+                raise MisconfigurationException(f"Name {name} is already present within {self}")
+            self._registered_functions[name] = fn
 
-    def register_function(self, fn: Optional[Callable] = None, name: Optional[str] = None) -> Callable:
+    def register_function(
+        self, fn: Optional[Callable] = None, name: Optional[str] = None, override: bool = False
+    ) -> Callable:
         """Register a callable
         """
         if fn is not None:
             if self._verbose:
                 print(f"Registering: {fn} {name}")
-            self._register_function(fn=fn, name=name)
+            self._register_function(fn=fn, name=name, override=override)
             return fn
 
         # raise the error ahead of time
@@ -83,7 +90,7 @@ class FlashRegistry(Dict):
             raise TypeError(f'name must be a str, but got {type(name)}')
 
         def _register(cls):
-            self._register_function(fn=cls, name=name)
+            self._register_function(fn=cls, name=name, override=override)
             return cls
 
         return _register
