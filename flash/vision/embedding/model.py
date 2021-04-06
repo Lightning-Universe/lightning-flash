@@ -75,8 +75,6 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        import pdb
-        pdb.set_trace()
         self.backbone, num_features = BACKBONES_REGISTRY[backbone](pretrained=pretrained)
 
         if embedding_dim is None:
