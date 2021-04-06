@@ -152,9 +152,9 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
 
 def timm_backbone_and_num_features(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
     """
-    >>> timm_backbone_and_num_features('resnet18')  # doctest: +ELLIPSIS
+    >>> timm_backbone_and_num_features('resnet18')
     (ResNet(...), 512)
-    >>> timm_backbone_and_num_features('mobilenetv3_large_100')  # doctest: +ELLIPSIS
+    >>> timm_backbone_and_num_features('mobilenetv3_large_100')
     (MobileNetV3(...), 1280)
     """
 
