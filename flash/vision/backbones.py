@@ -15,12 +15,13 @@ from typing import Tuple
 
 import torchvision
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
-from pytorch_lightning.utilities import _module_available
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-if _module_available('timm'):
+from flash.utils.imports import _TIMM_AVAILABLE
+
+if _TIMM_AVAILABLE:
     import timm
 
 if _BOLTS_AVAILABLE:
@@ -74,7 +75,7 @@ def backbone_and_num_features(
     if model_name in TORCHVISION_MODELS:
         return torchvision_backbone_and_num_features(model_name, pretrained)
 
-    if model_name in timm.list_models():
+    if _TIMM_AVAILABLE and model_name in timm.list_models():
         return timm_backbone_and_num_features(model_name, pretrained)
 
     raise ValueError(f"{model_name} is not supported yet.")
@@ -158,10 +159,10 @@ def timm_backbone_and_num_features(model_name: str, pretrained: bool = True) -> 
     """
 
     if model_name in timm.list_models():
-        backbone = timm.create_model(model_name, pretrained=pretrained, num_classes=0,
-                                     global_pool='')
+        backbone = timm.create_model(model_name, pretrained=pretrained, num_classes=0, global_pool='')
         num_features = backbone.num_features
         return backbone, num_features
 
     raise ValueError(
-        f"{model_name} is not supported in timm yet. https://rwightman.github.io/pytorch-image-models/models/")
+        f"{model_name} is not supported in timm yet. https://rwightman.github.io/pytorch-image-models/models/"
+    )
