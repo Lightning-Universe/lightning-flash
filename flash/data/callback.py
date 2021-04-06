@@ -61,7 +61,7 @@ class ControlFlow(FlashCallback):
         self.run_for_all_callbacks(batch, running_stage, method_name="on_collate")
 
     def on_per_sample_transform_on_device(self, samples: Sequence, running_stage: RunningStage) -> None:
-        self.run_for_all_callbacks(samples, running_stage, method_name="per_sample_transform_on_device")
+        self.run_for_all_callbacks(samples, running_stage, method_name="on_per_sample_transform_on_device")
 
     def on_per_batch_transform_on_device(self, batch: Any, running_stage: RunningStage) -> None:
-        self.run_for_all_callbacks(batch, running_stage, method_name="per_batch_transform_on_device")
+        self.run_for_all_callbacks(batch, running_stage, method_name="on_per_batch_transform_on_device")

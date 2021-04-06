@@ -143,7 +143,8 @@ class _PreProcessor(torch.nn.Module):
                     _samples = []
                     for sample in samples:
                         sample = self.per_sample_transform(sample)
-                        self.callback.on_pre_tensor_transform(sample, self.stage)
+                        if self.on_device:
+                            self.callback.on_per_sample_transform_on_device(sample, self.stage)
                         _samples.append(sample)
 
                 samples = type(_samples)(_samples)
@@ -154,7 +155,10 @@ class _PreProcessor(torch.nn.Module):
 
             with self._per_batch_transform_context:
                 samples = self.per_batch_transform(samples)
-                self.callback.on_per_batch_transform(samples, self.stage)
+                if self.on_device:
+                    self.callback.on_per_batch_transform_on_device(samples, self.stage)
+                else:
+                    self.callback.on_per_batch_transform(samples, self.stage)
             return samples
 
     def __str__(self) -> str:
