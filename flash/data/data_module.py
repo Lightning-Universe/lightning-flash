@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Iterable, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -24,7 +24,9 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
 from flash.data.auto_dataset import AutoDataset
+from flash.data.base_viz import BaseViz
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
+from flash.data.utils import _STAGES_PREFIX
 
 
 class DataModule(pl.LightningDataModule):
@@ -53,7 +55,7 @@ class DataModule(pl.LightningDataModule):
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
         batch_size: int = 1,
-        num_workers: Optional[int] = None,
+        num_workers: Optional[int] = 0,
     ) -> None:
 
         super().__init__()
@@ -83,9 +85,66 @@ class DataModule(pl.LightningDataModule):
 
         self._preprocess = None
         self._postprocess = None
+        self._viz = None
 
         # this may also trigger data preloading
         self.set_running_stages()
+
+    @property
+    def viz(self) -> BaseViz:
+        return self._viz or DataModule.configure_vis()
+
+    @viz.setter
+    def viz(self, viz: BaseViz) -> None:
+        self._viz = viz
+
+    @staticmethod
+    def configure_vis(*args, **kwargs) -> BaseViz:
+        return BaseViz()
+
+    def show(self, batch: Dict[str, Any], stage: RunningStage) -> None:
+        """
+        This function is a hook for users to override with their visualization on a batch.
+        """
+        self.viz.show(batch, stage)
+
+    def _show_batch(self, stage: RunningStage, reset: bool = True) -> None:
+        """
+        This function is used to handle transforms profiling for batch visualization.
+        """
+        iter_name = f"_{stage}_iter"
+
+        def _reset_iterator() -> Iterable[Any]:
+            dataloader_fn = getattr(self, f"{stage}_dataloader")
+            iterator = iter(dataloader_fn())
+            setattr(self, iter_name, iterator)
+            return iterator
+
+        if not hasattr(self, iter_name):
+            _reset_iterator()
+
+        iter_dataloader = getattr(self, iter_name)
+        with self.viz.enable():
+            try:
+                _ = next(iter_dataloader)
+            except StopIteration:
+                iter_dataloader = _reset_iterator()
+                _ = next(iter_dataloader)
+            self.show(self.viz.batches[stage], stage)
+            if reset:
+                self.viz.batches[stage] = {}
+
+    def show_train_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.TRAINING], reset=reset)
+
+    def show_val_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.VALIDATING], reset=reset)
+
+    def show_test_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.TESTING], reset=reset)
+
+    def show_predict_batch(self, reset: bool = True) -> None:
+        self._show_batch(_STAGES_PREFIX[RunningStage.PREDICTING], reset=reset)
 
     @staticmethod
     def get_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, default: Optional[Any] = None) -> Any:
@@ -320,6 +379,9 @@ class DataModule(pl.LightningDataModule):
         else:
             data_pipeline = cls(**kwargs).data_pipeline
 
+        viz_callback = cls.configure_vis()
+        viz_callback.attach_to_preprocess(data_pipeline._preprocess_pipeline)
+
         train_dataset = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
         )
@@ -341,4 +403,5 @@ class DataModule(pl.LightningDataModule):
         )
         datamodule._preprocess = data_pipeline._preprocess_pipeline
         datamodule._postprocess = data_pipeline._postprocess_pipeline
+        viz_callback.attach_to_datamodule(datamodule)
         return datamodule

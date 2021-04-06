@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from unittest import mock
 
@@ -44,30 +43,18 @@ class DummyDataset(torch.utils.data.Dataset):
         return 5
 
 
-class CustomModel(Task):
-
-    def __init__(self, postprocess: Optional[Postprocess] = None):
-        super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-        self._postprocess = postprocess
-
-    def train_dataloader(self) -> Any:
-        return DataLoader(DummyDataset())
-
-
-class CustomDataModule(DataModule):
-
-    def __init__(self):
-        super().__init__(
-            train_dataset=DummyDataset(),
-            val_dataset=DummyDataset(),
-            test_dataset=DummyDataset(),
-            predict_dataset=DummyDataset(),
-        )
-
-
 @pytest.mark.parametrize("use_preprocess", [False, True])
 @pytest.mark.parametrize("use_postprocess", [False, True])
 def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmpdir):
+
+    class CustomModel(Task):
+
+        def __init__(self, postprocess: Optional[Postprocess] = None):
+            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+            self._postprocess = postprocess
+
+        def train_dataloader(self) -> Any:
+            return DataLoader(DummyDataset())
 
     class SubPreprocess(Preprocess):
         pass
@@ -82,7 +69,7 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
     assert isinstance(data_pipeline._preprocess_pipeline, SubPreprocess if use_preprocess else Preprocess)
     assert isinstance(data_pipeline._postprocess_pipeline, SubPostprocess if use_postprocess else Postprocess)
 
-    model = CustomModel(Postprocess())
+    model = CustomModel(postprocess=Postprocess())
     model.data_pipeline = data_pipeline
     assert isinstance(model._preprocess, SubPreprocess if use_preprocess else Preprocess)
     assert isinstance(model._postprocess, SubPostprocess if use_postprocess else Postprocess)
@@ -287,6 +274,15 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
 
 def test_detach_preprocessing_from_model(tmpdir):
 
+    class CustomModel(Task):
+
+        def __init__(self, postprocess: Optional[Postprocess] = None):
+            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+            self._postprocess = postprocess
+
+        def train_dataloader(self) -> Any:
+            return DataLoader(DummyDataset())
+
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess)
     model = CustomModel()
@@ -334,8 +330,36 @@ class TestPreprocess(Preprocess):
 
 def test_attaching_datapipeline_to_model(tmpdir):
 
-    preprocess = TestPreprocess()
+    preprocess = Preprocess()
     data_pipeline = DataPipeline(preprocess)
+
+    class CustomModel(Task):
+
+        _postprocess = Postprocess()
+
+        def __init__(self):
+            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+
+        def training_step(self, batch: Any, batch_idx: int) -> Any:
+            pass
+
+        def validation_step(self, batch: Any, batch_idx: int) -> Any:
+            pass
+
+        def test_step(self, batch: Any, batch_idx: int) -> Any:
+            pass
+
+        def train_dataloader(self) -> Any:
+            return DataLoader(DummyDataset())
+
+        def val_dataloader(self) -> Any:
+            return DataLoader(DummyDataset())
+
+        def test_dataloader(self) -> Any:
+            return DataLoader(DummyDataset())
+
+        def predict_dataloader(self) -> Any:
+            return DataLoader(DummyDataset())
 
     class TestModel(CustomModel):
 
@@ -430,11 +454,10 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert not isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             assert self.predict_step == self._saved_predict_step
 
-    datamodule = CustomDataModule()
-    datamodule._data_pipeline = data_pipeline
     model = TestModel()
+    model.data_pipeline = data_pipeline
     trainer = Trainer(fast_dev_run=True)
-    trainer.fit(model, datamodule=datamodule)
+    trainer.fit(model)
     trainer.test(model)
     trainer.predict(model)
 
@@ -497,11 +520,20 @@ class TestPreprocessTransformations(Preprocess):
         self.test_post_tensor_transform_called = False
         self.predict_load_data_called = False
 
+    @staticmethod
+    def fn_train_load_data() -> Tuple:
+        return (
+            0,
+            1,
+            2,
+            3,
+        )
+
     def train_load_data(self, sample) -> LamdaDummyDataset:
         assert self.training
         assert self.current_fn == "load_data"
         self.train_load_data_called = True
-        return LamdaDummyDataset(lambda: (0, 1, 2, 3))
+        return LamdaDummyDataset(self.fn_train_load_data)
 
     def train_pre_tensor_transform(self, sample: Any) -> Any:
         assert self.training
@@ -557,11 +589,15 @@ class TestPreprocessTransformations(Preprocess):
         assert torch.equal(batch["b"], tensor([1, 2]))
         return [False]
 
+    @staticmethod
+    def fn_test_load_data() -> List[torch.Tensor]:
+        return [torch.rand(1), torch.rand(1)]
+
     def test_load_data(self, sample) -> LamdaDummyDataset:
         assert self.testing
         assert self.current_fn == "load_data"
         self.test_load_data_called = True
-        return LamdaDummyDataset(lambda: [torch.rand(1), torch.rand(1)])
+        return LamdaDummyDataset(self.fn_test_load_data)
 
     def test_to_tensor_transform(self, sample: Any) -> Tensor:
         assert self.testing
@@ -575,11 +611,15 @@ class TestPreprocessTransformations(Preprocess):
         self.test_post_tensor_transform_called = True
         return sample
 
+    @staticmethod
+    def fn_predict_load_data() -> List[str]:
+        return (["a", "b"])
+
     def predict_load_data(self, sample) -> LamdaDummyDataset:
         assert self.predicting
         assert self.current_fn == "load_data"
         self.predict_load_data_called = True
-        return LamdaDummyDataset(lambda: (["a", "b"]))
+        return LamdaDummyDataset(self.fn_predict_load_data)
 
 
 class TestPreprocessTransformations2(TestPreprocessTransformations):
@@ -589,33 +629,35 @@ class TestPreprocessTransformations2(TestPreprocessTransformations):
         return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
 
 
+class CustomModel(Task):
+
+    def __init__(self):
+        super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+
+    def training_step(self, batch, batch_idx):
+        assert batch is None
+
+    def validation_step(self, batch, batch_idx):
+        assert batch is False
+
+    def test_step(self, batch, batch_idx):
+        assert len(batch) == 2
+        assert batch[0].shape == torch.Size([2, 1])
+
+    def predict_step(self, batch, batch_idx, dataloader_idx):
+        assert batch[0][0] == 'a'
+        assert batch[0][1] == 'a'
+        assert batch[1][0] == 'b'
+        assert batch[1][1] == 'b'
+        return tensor([0, 0, 0])
+
+
+class CustomDataModule(DataModule):
+
+    preprocess_cls = TestPreprocessTransformations
+
+
 def test_datapipeline_transformations(tmpdir):
-
-    class CustomModel(Task):
-
-        def __init__(self):
-            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-
-        def training_step(self, batch, batch_idx):
-            assert batch is None
-
-        def validation_step(self, batch, batch_idx):
-            assert batch is False
-
-        def test_step(self, batch, batch_idx):
-            assert len(batch) == 2
-            assert batch[0].shape == torch.Size([2, 1])
-
-        def predict_step(self, batch, batch_idx, dataloader_idx):
-            assert batch[0][0] == 'a'
-            assert batch[0][1] == 'a'
-            assert batch[1][0] == 'b'
-            assert batch[1][1] == 'b'
-            return tensor([0, 0, 0])
-
-    class CustomDataModule(DataModule):
-
-        preprocess_cls = TestPreprocessTransformations
 
     datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2, num_workers=0)
 

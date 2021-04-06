@@ -11,18 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import List
 
 import pytest
 from pytorch_lightning.trainer.states import RunningStage
 
 from flash.data.auto_dataset import AutoDataset
+from flash.data.callback import FlashCallback
 from flash.data.data_pipeline import DataPipeline
-from flash.data.process import Postprocess, Preprocess
+from flash.data.process import Preprocess
 
 
 class _AutoDatasetTestPreprocess(Preprocess):
 
     def __init__(self, with_dset: bool):
+        self._callbacks: List[FlashCallback] = []
         self.load_data_count = 0
         self.load_sample_count = 0
         self.load_sample_with_dataset_count = 0

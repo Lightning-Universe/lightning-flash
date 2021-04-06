@@ -26,7 +26,7 @@ from torch.utils.data.dataloader import DataLoader
 from flash.data.auto_dataset import AutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess
-from flash.data.utils import _STAGES_PREFIX
+from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
     from flash.core.model import Task
@@ -129,17 +129,7 @@ class DataPipeline:
 
     """
 
-    PREPROCESS_FUNCS = {
-        "load_data",
-        "load_sample",
-        "pre_tensor_transform",
-        "to_tensor_transform",
-        "post_tensor_transform",
-        "per_batch_transform",
-        "per_sample_transform_on_device",
-        "per_batch_transform_on_device",
-        "collate",
-    }
+    PREPROCESS_FUNCS = _PREPROCESS_FUNCS
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()

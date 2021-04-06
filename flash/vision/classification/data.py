@@ -176,6 +176,9 @@ class ImageClassificationPreprocess(Preprocess):
     def post_tensor_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
+    # todo: (tchaton) `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive
+    # `skip_mutual_check` is used to skip the checks as the information are provided from the transforms directly
+    # Need to properly set the `collate` depending on user provided transforms
     def per_batch_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
@@ -220,6 +223,7 @@ class ImageClassificationData(DataModule):
             predict_dataset=predict_dataset,
             batch_size=batch_size,
             num_workers=num_workers,
+            **kwargs,
         )
 
         self._num_classes = None
@@ -468,6 +472,7 @@ class ImageClassificationData(DataModule):
             folder/cat_asd932_.png
 
         Args:
+
             train_filepaths: String or sequence of file paths for training dataset. Defaults to ``None``.
             train_labels: Sequence of labels for training dataset. Defaults to ``None``.
             val_filepaths: String or sequence of file paths for validation dataset. Defaults to ``None``.
@@ -484,6 +489,7 @@ class ImageClassificationData(DataModule):
             seed: Used for the train/val splits.
 
         Returns:
+
             ImageClassificationData: The constructed data module.
         """
         # enable passing in a string which loads all files in that folder as a list
