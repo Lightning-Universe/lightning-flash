@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Iterable, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -98,23 +98,15 @@ class DataModule(pl.LightningDataModule):
     def viz(self, viz: BaseViz) -> None:
         self._viz = viz
 
-    @classmethod
-    def configure_vis(cls) -> BaseViz:
+    @staticmethod
+    def configure_vis(*args, **kwargs) -> BaseViz:
         return BaseViz()
 
-    def show_batch(self):
-        # viz needs to be enabled, so it doesn't store profile transforms during training
-        with self.viz.enable():
-            _ = next(iter(self.train_dataloader()))
-            _ = next(iter(self.val_dataloader()))
-            _ = next(iter(self.test_dataloader()))
-            _ = next(iter(self.predict_dataloader()))
-
-    def visualize(self, batch: Dict[str, Any], stage: RunningStage) -> None:
+    def show(self, batch: Dict[str, Any], stage: RunningStage) -> None:
         """
         This function is a hook for users to override with their visualization on a batch.
         """
-        pass
+        self.viz.show(batch, stage)
 
     def _show_batch(self, stage: RunningStage, reset: bool = True) -> None:
         """
@@ -122,20 +114,23 @@ class DataModule(pl.LightningDataModule):
         """
         iter_name = f"_{stage}_iter"
 
-        def _reset_iterator():
+        def _reset_iterator() -> Iterable[Any]:
             dataloader_fn = getattr(self, f"{stage}_dataloader")
-            setattr(self, iter_name, iter(dataloader_fn()))
+            iterator = iter(dataloader_fn())
+            setattr(self, iter_name, iterator)
+            return iterator
 
         if not hasattr(self, iter_name):
             _reset_iterator()
+
         iter_dataloader = getattr(self, iter_name)
         with self.viz.enable():
             try:
                 _ = next(iter_dataloader)
             except StopIteration:
-                _reset_iterator()
+                iter_dataloader = _reset_iterator()
                 _ = next(iter_dataloader)
-            self.visualize(self.viz.batches[stage], stage)
+            self.show(self.viz.batches[stage], stage)
             if reset:
                 self.viz.batches[stage] = {}
 

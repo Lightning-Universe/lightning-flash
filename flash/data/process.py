@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -22,6 +22,7 @@ from torch.nn import Module
 from torch.utils.data._utils.collate import default_collate
 
 from flash.data.batch import default_uncollate
+from flash.data.callback import FlashCallback
 from flash.data.utils import convert_to_modules
 
 
@@ -117,6 +118,8 @@ class Preprocess(Properties, torch.nn.Module):
         if not hasattr(self, "_skip_mutual_check"):
             self._skip_mutual_check = False
 
+        self._callbacks = []
+
     @property
     def skip_mutual_check(self) -> bool:
         return self._skip_mutual_check
@@ -149,6 +152,16 @@ class Preprocess(Properties, torch.nn.Module):
     @classmethod
     def from_state(cls, state: PreprocessState) -> 'Preprocess':
         return cls(**vars(state))
+
+    @property
+    def callbacks(self):
+        if not hasattr(self, "_callbacks"):
+            self._callbacks = []
+        return self._callbacks
+
+    @callbacks.setter
+    def callbacks(self, callbacks: List['FlashCallback']):
+        self._callbacks.extend(callbacks)
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
@@ -201,7 +214,6 @@ class Preprocess(Properties, torch.nn.Module):
         return batch
 
 
-@dataclass(unsafe_hash=True)
 class Postprocess(Properties, torch.nn.Module):
 
     def __init__(self, save_path: Optional[str] = None):

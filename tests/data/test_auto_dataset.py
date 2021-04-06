@@ -23,6 +23,7 @@ from flash.data.process import Postprocess, Preprocess
 class _AutoDatasetTestPreprocess(Preprocess):
 
     def __init__(self, with_dset: bool):
+        self._callbacks = []
         self.load_data_count = 0
         self.load_sample_count = 0
         self.load_sample_with_dataset_count = 0

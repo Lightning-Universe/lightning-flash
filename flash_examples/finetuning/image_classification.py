@@ -26,6 +26,7 @@ datamodule = ImageClassificationData.from_folders(
     val_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
 )
+
 # 3. Build the model
 model = ImageClassifier(num_classes=datamodule.num_classes)
 

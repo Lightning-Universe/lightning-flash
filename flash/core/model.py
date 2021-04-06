@@ -245,22 +245,14 @@ class Task(LightningModule):
             self.data_pipeline._detach_from_model(self)
         super().on_fit_end()
 
-    @staticmethod
-    def _sanetize_funcs(obj: Any) -> Any:
-        if hasattr(obj, "__dict__"):
-            for k, v in obj.__dict__.items():
-                if isinstance(v, Callable):
-                    obj.__dict__[k] = inspect.unwrap(v)
-        return obj
-
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # TODO: Is this the best way to do this? or should we also use some kind of hparams here?
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
         if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
-            self._preprocess = self._sanetize_funcs(self._preprocess)
+            # todo (tchaton): TypeError: cannot pickle '_io.TextIOWrapper' object with BaseViz Callback
+            self.data_pipeline._preprocess_pipeline._callbacks = []
             checkpoint['data_pipeline'] = self.data_pipeline
-            # todo (tchaton) re-wrap visualization
         super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:

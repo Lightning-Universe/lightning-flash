@@ -32,6 +32,18 @@ _STAGES_PREFIX = {
 }
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
+_PREPROCESS_FUNCS = {
+    "load_data",
+    "load_sample",
+    "pre_tensor_transform",
+    "to_tensor_transform",
+    "post_tensor_transform",
+    "per_batch_transform",
+    "per_sample_transform_on_device",
+    "per_batch_transform_on_device",
+    "collate",
+}
+
 
 class CurrentRunningStageContext:
 

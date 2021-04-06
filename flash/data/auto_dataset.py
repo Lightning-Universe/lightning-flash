@@ -19,6 +19,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.warning_utils import rank_zero_warn
 from torch.utils.data import Dataset
 
+from flash.data.callback import ControlFlow
 from flash.data.process import Preprocess
 from flash.data.utils import _STAGES_PREFIX, _STAGES_PREFIX_VALUES, CurrentRunningStageFuncContext
 
@@ -82,6 +83,12 @@ class AutoDataset(Dataset):
         if self.data_pipeline is not None:
             return self.data_pipeline._preprocess_pipeline
 
+    @property
+    def control_flow_callback(self) -> Optional[ControlFlow]:
+        preprocess = self.preprocess
+        if preprocess is not None:
+            return ControlFlow(preprocess.callbacks)
+
     def _call_load_data(self, data: Any) -> Iterable:
         parameters = signature(self.load_data).parameters
         if len(parameters) > 1 and self.DATASET_KEY in parameters:
@@ -124,7 +131,10 @@ class AutoDataset(Dataset):
             raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
         if self.load_sample:
             with self._load_sample_context:
-                return self._call_load_sample(self.preprocessed_data[index])
+                data = self._call_load_sample(self.preprocessed_data[index])
+                if self.control_flow_callback:
+                    self.control_flow_callback.on_load_sample(data, self.running_stage)
+                return data
         return self.preprocessed_data[index]
 
     def __len__(self) -> int:
