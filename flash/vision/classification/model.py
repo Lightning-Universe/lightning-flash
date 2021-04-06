@@ -58,15 +58,11 @@ class ImageClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
-    @property
-    def preprocess(self):
-        return ImageClassificationPreprocess(predict_transform=ImageClassificationData.default_val_transforms())
-
     def __init__(
         self,
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
-        backbone_kwargs: Optional[Dict] = None,
+        backbone_kwargs: Dict = {},
         head: Optional[Union[Callable, nn.Module]] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
@@ -87,7 +83,7 @@ class ImageClassifier(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, num_features = backbone
         else:
-            self.backbone, num_features = BACKBONES_REGISTRY.get("backbone")(pretrained=pretrained, **backbone_kwargs)
+            self.backbone, num_features = BACKBONES_REGISTRY.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         head = head(num_features, num_classes) if isinstance(head, Callable) else head
         self.head = head or nn.Sequential(

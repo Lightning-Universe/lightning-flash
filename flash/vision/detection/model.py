@@ -23,7 +23,7 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import box_iou
 
 from flash.core import Task
-from flash.vision.backbones import backbone_and_num_features
+from flash.vision.backbones import BACKBONES_REGISTRY
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 
 _models = {
@@ -133,9 +133,9 @@ class ObjectDetector(Task):
                     **kwargs
                 )
         else:
-            backbone_model, num_features = backbone_and_num_features(
-                backbone,
-                fpn,
+            _backbone = f"{backbone}-fpn"
+            backbone = _backbone if _backbone in BACKBONES_REGISTRY else backbone
+            backbone_model, num_features = BACKBONES_REGISTRY[backbone](
                 pretrained_backbone,
                 trainable_backbone_layers,
                 **kwargs,
