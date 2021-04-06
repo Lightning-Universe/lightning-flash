@@ -118,7 +118,7 @@ class Preprocess(Properties, torch.nn.Module):
         if not hasattr(self, "_skip_mutual_check"):
             self._skip_mutual_check = False
 
-        self._callbacks = []
+        self._callbacks: List[FlashCallback] = []
 
     @property
     def skip_mutual_check(self) -> bool:
@@ -154,14 +154,15 @@ class Preprocess(Properties, torch.nn.Module):
         return cls(**vars(state))
 
     @property
-    def callbacks(self):
+    def callbacks(self) -> List['FlashCallback']:
         if not hasattr(self, "_callbacks"):
-            self._callbacks = []
+            self._callbacks: List[FlashCallback] = []
         return self._callbacks
 
     @callbacks.setter
     def callbacks(self, callbacks: List['FlashCallback']):
-        self._callbacks.extend(callbacks)
+        _callbacks = [c for c in callbacks if c not in self._callbacks]
+        self._callbacks.extend(_callbacks)
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:

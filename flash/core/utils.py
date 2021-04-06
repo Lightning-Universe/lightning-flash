@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Sequence, Union
+from typing import Any, Callable, Dict, Mapping, Sequence, Type, Union
 
 
 def get_callable_name(fn_or_class: Union[Callable, object]) -> str:
@@ -27,13 +27,13 @@ def get_callable_dict(fn: Union[Callable, Mapping, Sequence]) -> Union[Dict, Map
         return {get_callable_name(fn): fn}
 
 
-def _is_overriden(method_name: str, process_obj, super_obj: Any) -> bool:
+def _is_overriden(method_name: str, instance: object, parent: Type[object]) -> bool:
     """
     Cropped Version of
     https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
     """
 
-    if not hasattr(process_obj, method_name):
+    if not hasattr(instance, method_name):
         return False
 
-    return getattr(process_obj, method_name).__code__ != getattr(super_obj, method_name).__code__
+    return getattr(instance, method_name).__code__ != getattr(parent, method_name).__code__

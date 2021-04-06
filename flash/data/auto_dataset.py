@@ -131,7 +131,7 @@ class AutoDataset(Dataset):
             raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
         if self.load_sample:
             with self._load_sample_context:
-                data = self._call_load_sample(self.preprocessed_data[index])
+                data: Any = self._call_load_sample(self.preprocessed_data[index])
                 if self.control_flow_callback:
                     self.control_flow_callback.on_load_sample(data, self.running_stage)
                 return data

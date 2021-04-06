@@ -8,28 +8,28 @@ from torch import Tensor
 class FlashCallback(Callback):
 
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once a sample has been loaded."""
+        """Called once a sample has been loaded using ``load_sample``."""
 
     def on_pre_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once an object has been transformed."""
+        """Called once ``pre_tensor_transform`` have been applied to a sample."""
 
     def on_to_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once an object has been transformed to a tensor."""
+        """Called once ``to_tensor_transform`` have been applied to a sample."""
 
     def on_post_tensor_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
-        """Called after `post_tensor_transform` """
+        """Called once ``post_tensor_transform`` have been applied to a sample."""
 
     def on_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
-        """Called after `per_batch_transform` """
+        """Called once ``per_batch_transform`` have been applied to a batch."""
 
     def on_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
-        """Called after `collate` """
+        """Called once ``collate`` have been applied to a sequence of samples."""
 
-    def on_per_sample_transform_on_device(self, samples: Sequence, running_stage: RunningStage) -> None:
-        """Called after `per_sample_transform_on_device` """
+    def on_per_sample_transform_on_device(self, sample: Any, running_stage: RunningStage) -> None:
+        """Called once ``per_sample_transform_on_device`` have been applied to a sample."""
 
     def on_per_batch_transform_on_device(self, batch: Any, running_stage: RunningStage) -> None:
-        """Called after `per_batch_transform_on_device` """
+        """Called once ``per_batch_transform_on_device`` have been applied to a sample."""
 
 
 class ControlFlow(FlashCallback):
@@ -60,8 +60,8 @@ class ControlFlow(FlashCallback):
     def on_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
         self.run_for_all_callbacks(batch, running_stage, method_name="on_collate")
 
-    def on_per_sample_transform_on_device(self, samples: Sequence, running_stage: RunningStage) -> None:
-        self.run_for_all_callbacks(samples, running_stage, method_name="on_per_sample_transform_on_device")
+    def on_per_sample_transform_on_device(self, sample: Any, running_stage: RunningStage) -> None:
+        self.run_for_all_callbacks(sample, running_stage, method_name="on_per_sample_transform_on_device")
 
     def on_per_batch_transform_on_device(self, batch: Any, running_stage: RunningStage) -> None:
         self.run_for_all_callbacks(batch, running_stage, method_name="on_per_batch_transform_on_device")

@@ -246,12 +246,9 @@ class Task(LightningModule):
         super().on_fit_end()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        # TODO: Is this the best way to do this? or should we also use some kind of hparams here?
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
         if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
-            # todo (tchaton): TypeError: cannot pickle '_io.TextIOWrapper' object with BaseViz Callback
-            self.data_pipeline._preprocess_pipeline._callbacks = []
             checkpoint['data_pipeline'] = self.data_pipeline
         super().on_save_checkpoint(checkpoint)
 

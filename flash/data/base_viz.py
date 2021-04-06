@@ -22,7 +22,6 @@ class BaseViz(FlashCallback):
     def __init__(self, enabled: bool = False):
         self.batches = {k: {} for k in _STAGES_PREFIX.values()}
         self.enabled = enabled
-        self._datamodule = None
         self._preprocess = None
 
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
@@ -72,7 +71,6 @@ class BaseViz(FlashCallback):
         self.enabled = False
 
     def attach_to_datamodule(self, datamodule) -> None:
-        self._datamodule = datamodule
         datamodule.viz = self
 
     def attach_to_preprocess(self, preprocess: Preprocess) -> None:

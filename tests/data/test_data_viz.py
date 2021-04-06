@@ -96,8 +96,6 @@ def test_base_viz(tmpdir):
         num_workers=0,
     )
 
-    dm.show_val_batch()
-
     for stage in _STAGES_PREFIX.values():
 
         for _ in range(10):
