@@ -178,9 +178,7 @@ def test_from_folders(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
 
-    img_data = ImageClassificationData.from_folders(
-        train_dir, train_transform=None, loader=_dummy_image_loader, batch_size=1
-    )
+    img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 196, 196)

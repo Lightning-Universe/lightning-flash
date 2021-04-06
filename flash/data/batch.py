@@ -18,6 +18,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
+from flash.data.callback import ControlFlow
 from flash.data.utils import _contains_any_tensor, convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ class _Sequential(torch.nn.Module):
     ):
         super().__init__()
         self.preprocess = preprocess
+        self.callback = ControlFlow(self.preprocess.callbacks)
         self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
         self.to_tensor_transform = convert_to_modules(to_tensor_transform)
         self.post_tensor_transform = convert_to_modules(post_tensor_transform)
@@ -58,9 +60,11 @@ class _Sequential(torch.nn.Module):
         with self._current_stage_context:
             with self._pre_tensor_transform_context:
                 sample = self.pre_tensor_transform(sample)
+                self.callback.on_pre_tensor_transform(sample, self.stage)
 
             with self._to_tensor_transform_context:
                 sample = self.to_tensor_transform(sample)
+                self.callback.on_to_tensor_transform(sample, self.stage)
 
             if self.assert_contains_tensor:
                 if not _contains_any_tensor(sample):
@@ -71,6 +75,7 @@ class _Sequential(torch.nn.Module):
 
             with self._post_tensor_transform_context:
                 sample = self.post_tensor_transform(sample)
+                self.callback.on_post_tensor_transform(sample, self.stage)
 
             return sample
 
@@ -112,10 +117,11 @@ class _PreProcessor(torch.nn.Module):
         per_batch_transform: Callable,
         stage: RunningStage,
         apply_per_sample_transform: bool = True,
-        on_device: bool = False
+        on_device: bool = False,
     ):
         super().__init__()
         self.preprocess = preprocess
+        self.callback = ControlFlow(self.preprocess.callbacks)
         self.collate_fn = convert_to_modules(collate_fn)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
         self.per_batch_transform = convert_to_modules(per_batch_transform)
@@ -123,25 +129,36 @@ class _PreProcessor(torch.nn.Module):
         self.stage = stage
         self.on_device = on_device
 
-        extension = f"{'on_device' if self.on_device else ''}"
+        extension = f"{'_on_device' if self.on_device else ''}"
         self._current_stage_context = CurrentRunningStageContext(stage, preprocess)
-        self._per_sample_transform_context = CurrentFuncContext(f"per_sample_transform_{extension}", preprocess)
+        self._per_sample_transform_context = CurrentFuncContext(f"per_sample_transform{extension}", preprocess)
         self._collate_context = CurrentFuncContext("collate", preprocess)
-        self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform_{extension}", preprocess)
+        self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
     def forward(self, samples: Sequence[Any]) -> Any:
         with self._current_stage_context:
 
             if self.apply_per_sample_transform:
                 with self._per_sample_transform_context:
-                    samples = [self.per_sample_transform(sample) for sample in samples]
-                samples = type(samples)(samples)
+                    _samples = []
+                    for sample in samples:
+                        sample = self.per_sample_transform(sample)
+                        if self.on_device:
+                            self.callback.on_per_sample_transform_on_device(sample, self.stage)
+                        _samples.append(sample)
+
+                samples = type(_samples)(_samples)
 
                 with self._collate_context:
                     samples = self.collate_fn(samples)
+                    self.callback.on_collate(samples, self.stage)
 
             with self._per_batch_transform_context:
                 samples = self.per_batch_transform(samples)
+                if self.on_device:
+                    self.callback.on_per_batch_transform_on_device(samples, self.stage)
+                else:
+                    self.callback.on_per_batch_transform(samples, self.stage)
             return samples
 
     def __str__(self) -> str:
