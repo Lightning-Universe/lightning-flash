@@ -27,7 +27,7 @@ from flash.data.process import Preprocess
 
 
 @mock.patch("torch.save")  # need to mock torch.save or we get pickle error
-def test_flash_callback(tmpdir):
+def test_flash_callback(_, tmpdir):
     """Test the callback hook system for fit."""
 
     callback_mock = MagicMock()
