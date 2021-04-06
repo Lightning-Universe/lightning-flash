@@ -151,12 +151,6 @@ def torchvision_backbone_and_num_features(model_name: str, pretrained: bool = Tr
 
 
 def timm_backbone_and_num_features(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-    """
-    >>> timm_backbone_and_num_features('resnet18')
-    (ResNet(...), 512)
-    >>> timm_backbone_and_num_features('mobilenetv3_large_100')
-    (MobileNetV3(...), 1280)
-    """
 
     if model_name in timm.list_models():
         backbone = timm.create_model(model_name, pretrained=pretrained, num_classes=0, global_pool='')
