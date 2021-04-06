@@ -1,0 +1,69 @@
+from collections import defaultdict
+from types import FunctionType
+from typing import Callable, Dict, Mapping, Optional, Union
+
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.nn import Module
+
+
+class FlashRegistry(Dict):
+
+    def __init__(self, registry_name: str):
+        self._registry_name = registry_name
+        self._registered_functions: Mapping[str, Callable] = defaultdict()
+
+    def __len__(self):
+        return len(self._registered_functions)
+
+    def __contains__(self, key):
+        return self._registered_functions.get(key, None)
+
+    def __repr__(self):
+        format_str = self.__class__.__name__ + \
+                     f'(name={self._registry_name}, ' \
+                     f'registered_items={dict(**self._registered_functions)})'
+        return format_str
+
+    @property
+    def name(self):
+        return self._registry_name
+
+    @property
+    def registered_funcs(self):
+        return self._registered_functions
+
+    def __getitem__(self, key: str) -> Optional[Callable]:
+        return self.get(key)
+
+    def get(self, key: str) -> Optional[Callable]:
+        if key in self._registered_functions:
+            fn = self._registered_functions[key]
+            return fn
+
+    def _register_function(self, fn: Callable, name: Optional[str] = None):
+        if not isinstance(fn, FunctionType):
+            raise MisconfigurationException("``register_function`` should be used with a function")
+
+        name = name or fn.__name__
+
+        self._registered_functions[name] = fn
+
+    def register_function(self, fn: Optional[Callable] = None, name: Optional[str] = None) -> Callable:
+        """Register a callable
+        """
+        if fn is not None:
+            self._register_function(fn=fn, name=name)
+            return fn
+
+        # raise the error ahead of time
+        if not (name is None or isinstance(name, str)):
+            raise TypeError(f'name must be a str, but got {type(name)}')
+
+        def _register(cls):
+            self._register_function(fn=cls, name=name)
+            return cls
+
+        return _register
+
+
+BACKBONES_REGISTRY = FlashRegistry("backbones")

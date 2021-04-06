@@ -19,6 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
+from flash.core.registry import BACKBONES_REGISTRY
 from flash.utils.imports import _TIMM_AVAILABLE
 
 if _TIMM_AVAILABLE:
@@ -160,3 +161,16 @@ def timm_backbone_and_num_features(model_name: str, pretrained: bool = True) -> 
     raise ValueError(
         f"{model_name} is not supported in timm yet. https://rwightman.github.io/pytorch-image-models/models/"
     )
+
+
+if _TIMM_AVAILABLE:
+    for model_name in timm.list_models():
+
+        def fn(pretrained: bool = True, num_classes: int = 0, global_pool: str = ''):
+            backbone = timm.create_model(
+                model_name, pretrained=pretrained, num_classes=num_classes, global_pool=global_pool
+            )
+            num_features = backbone.num_features
+            return backbone, num_features
+
+        BACKBONES_REGISTRY.register_function(fn=fn, name=model_name)

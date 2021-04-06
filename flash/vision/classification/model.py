@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
@@ -19,7 +19,7 @@ from torch.nn import functional as F
 from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
-from flash.vision.backbones import backbone_and_num_features
+from flash.vision.backbones import BACKBONES_REGISTRY
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
 
@@ -66,6 +66,8 @@ class ImageClassifier(ClassificationTask):
         self,
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
+        backbone_kwargs: Optional[Dict] = None,
+        head: Optional[Union[Callable, nn.Module]] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
@@ -85,9 +87,10 @@ class ImageClassifier(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, num_features = backbone
         else:
-            self.backbone, num_features = backbone_and_num_features(backbone, pretrained=pretrained)
+            self.backbone, num_features = BACKBONES_REGISTRY.get("backbone")(pretrained=pretrained, **backbone_kwargs)
 
-        self.head = nn.Sequential(
+        head = head(num_features, num_classes) if isinstance(head, Callable) else head
+        self.head = head or nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
             nn.Linear(num_features, num_classes),
