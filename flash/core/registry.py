@@ -59,7 +59,7 @@ class FlashRegistry:
         key: str,
         with_metadata: bool = False,
         strict: bool = True,
-        **metadata: Dict[str, Any],
+        **metadata,
     ) -> Union[callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[callable]]:
         """
         This function is used to gather matches from the registry:
@@ -88,7 +88,11 @@ class FlashRegistry:
         self.functions = [f for f in self.functions if f["name"] != key]
 
     def _register_function(
-        self, fn: callable, name: Optional[str] = None, override: bool = False, metadata: Dict[str, Any] = None
+        self,
+        fn: callable,
+        name: Optional[str] = None,
+        override: bool = False,
+        metadata: Optional[Dict[str, Any]] = None
     ):
         if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
             raise MisconfigurationException(f"You can only register a function, found: {fn}")
@@ -113,7 +117,10 @@ class FlashRegistry:
 
     def _find_matching_index(self, item: _REGISTERED_FUNCTION) -> Optional[int]:
         for idx, fn in enumerate(self.functions):
-            if fn["fn"] == item["fn"] and fn["name"] == item["name"] and fn["metadata"] == item["metadata"]:
+            if (
+                fn["fn"] == item["fn"] and fn["name"] == item["name"]
+                and item["metadata"].items() <= fn["metadata"].items()
+            ):
                 return idx
 
     def __call__(
@@ -121,9 +128,9 @@ class FlashRegistry:
         fn: Optional[callable] = None,
         name: Optional[str] = None,
         override: bool = False,
-        **metadata: Dict[str, Any]
+        **metadata
     ) -> callable:
-        """Register a callable"""
+        """Register a function"""
         if fn is not None:
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)
             return fn
@@ -139,4 +146,4 @@ class FlashRegistry:
         return _register
 
     def available_keys(self) -> List[str]:
-        return sorted([v["name"] for v in self.functions])
+        return sorted(v["name"] for v in self.functions)

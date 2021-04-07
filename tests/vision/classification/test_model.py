@@ -51,7 +51,7 @@ def test_init_train(tmpdir, backbone):
 
 
 def test_non_existent_backbone():
-    with pytest.raises(MisconfigurationException):
+    with pytest.raises(KeyError):
         ImageClassifier(2, "i am never going to implement this lol")
 
 

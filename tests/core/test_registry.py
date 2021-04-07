@@ -19,8 +19,26 @@ from torch import nn
 from flash.core.registry import FlashRegistry
 
 
-def test_registry(tmpdir):
+def test_registry_raises():
+    backbones = FlashRegistry("backbones")
 
+    @backbones()
+    def my_model(nc_input=5, nc_output=6):
+        return nn.Linear(nc_input, nc_output), nc_input, nc_output
+
+    with pytest.raises(MisconfigurationException, match="You can only register a function, found: Linear"):
+        backbones(nn.Linear(1, 1), name="cho")
+
+    backbones(my_model, name="cho", override=True)
+    with pytest.raises(MisconfigurationException, match="Function with name: cho and metadata: {}"):
+        backbones(my_model, name="cho", override=False)
+
+    backbones.remove("cho")
+    with pytest.raises(KeyError, match="Key: cho is not in FlashRegistry"):
+        backbones.get("cho")
+
+
+def test_registry():
     backbones = FlashRegistry("backbones")
 
     @backbones()
@@ -30,26 +48,15 @@ def test_registry(tmpdir):
     mlp, nc_input, nc_output = backbones.get("my_model")(nc_output=7)
     assert nc_input == 5
     assert nc_output == 7
-    assert mlp.weight.shape == torch.Size([7, 5])
+    assert mlp.weight.shape == (7, 5)
 
     backbones(my_model, name="cho")
     assert backbones.get("cho")
-
-    with pytest.raises(MisconfigurationException, match="You can only register a function, found: Linear"):
-        backbones(nn.Linear(1, 1), name="cho")
-
-    backbones(my_model, name="cho", override=True)
-
-    with pytest.raises(MisconfigurationException, match="Function with name: cho and metadata: {}"):
-        backbones(my_model, name="cho", override=False)
-
     backbones.remove("cho")
-    with pytest.raises(KeyError, match="Key: cho is not in FlashRegistry"):
-        backbones.get("cho")
 
     backbones(my_model, name="cho", namespace="timm")
-    function = backbones.get("cho", with_metadata=True)
-    assert function["metadata"]["namespace"] == "timm"
+    function = backbones.get("cho", with_metadata=True, strict=False)
+    assert function["metadata"] == {"namespace": "timm"}
 
     backbones(my_model, name="cho", namespace="timm", type="resnet")
     backbones(my_model, name="cho", namespace="torchvision", type="resnet")
@@ -62,5 +69,4 @@ def test_registry(tmpdir):
 
     functions = backbones.get("cho", with_metadata=True, namespace="timm", strict=False)
     assert len(functions) == 4
-
     assert backbones.available_keys() == ['cho', 'cho', 'cho', 'cho', 'cho', 'my_model']
