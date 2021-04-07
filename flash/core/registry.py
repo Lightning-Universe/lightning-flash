@@ -44,7 +44,7 @@ class FlashRegistry(Dict):
         return format_str
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._registry_name
 
     @property
