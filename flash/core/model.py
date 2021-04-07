@@ -259,9 +259,11 @@ class Task(LightningModule):
         if 'data_pipeline' in checkpoint:
             self.data_pipeline = checkpoint['data_pipeline']
 
-    def available_models(self):
-        if self.register is not None:
-            return None
+    @classmethod
+    def available_models(cls) -> List[str]:
+        if cls.register is not None:
+            return cls.register.available_keys()
+        return []
 
     @classmethod
     def register_function(

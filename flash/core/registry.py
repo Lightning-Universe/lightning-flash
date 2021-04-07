@@ -181,6 +181,9 @@ class FlashRegistry(Dict):
                 _matches.append({hash: registered_function})
         return _matches
 
+    def available_keys(self) -> List[str]:
+        return sorted([v["name"] for v in self._registered_functions.values()])
+
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")

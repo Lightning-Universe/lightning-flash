@@ -62,3 +62,5 @@ def test_registry(tmpdir):
 
     registered_functions = backbones.get("cho", with_metadata=True, namespace="timm", strict=False)
     assert len(registered_functions) == 4
+
+    assert backbones.available_keys() == ['cho', 'cho', 'cho', 'cho', 'cho', 'my_model']

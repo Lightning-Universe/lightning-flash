@@ -31,6 +31,7 @@ datamodule = ImageClassificationData.from_folders(
 )
 
 
+# 3. a Register a custom backbone
 @ImageClassifier.register_function(name="username/resnet18")
 def fn_resnet(pretrained: bool = True):
     model = getattr(torchvision.models, "resnet18", None)(pretrained)
@@ -40,16 +41,19 @@ def fn_resnet(pretrained: bool = True):
     return backbone, num_features
 
 
-# 3. Build the model
+# 3.b List available backbones
+print(ImageClassifier.available_models())
+
+# 4. Build the model
 model = ImageClassifier(backbone="username/resnet18", num_classes=datamodule.num_classes)
 
-# 4. Create the trainer.
+# 5. Create the trainer.
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 
-# 5. Train the model
+# 6. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
 
-# 3a. Predict what's on a few images! ants or bees?
+# 7a. Predict what's on a few images! ants or bees?
 predictions = model.predict([
     "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
     "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
@@ -60,9 +64,9 @@ print(predictions)
 
 datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
 
-# 3b. Or generate predictions with a whole folder!
+# 7b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
 
-# 4. Save it!
+# 8. Save it!
 trainer.save_checkpoint("image_classification_model.pt")
