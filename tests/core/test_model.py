@@ -155,3 +155,8 @@ def test_model_download(tmpdir, cls, filename):
 def test_available_backbones():
     backbones = ImageClassifier.available_backbones()
     assert "resnet152" in backbones
+
+    class Foo(ImageClassifier):
+        backbones = None
+
+    assert Foo.available_backbones() == []
