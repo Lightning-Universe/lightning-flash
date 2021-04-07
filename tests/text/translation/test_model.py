@@ -30,7 +30,7 @@ class DummyDataset(torch.utils.data.Dataset):
             "labels": torch.randint(1000, size=(128, )),
         }
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 100
 
 

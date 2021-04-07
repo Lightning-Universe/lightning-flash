@@ -23,6 +23,7 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
 from torch import nn
 
+from flash.core.registry import FlashRegistry
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
@@ -60,8 +61,6 @@ class Task(LightningModule):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`
     """
-
-    register = None
 
     def __init__(
         self,
@@ -260,18 +259,23 @@ class Task(LightningModule):
             self.data_pipeline = checkpoint['data_pipeline']
 
     @classmethod
-    def available_models(cls) -> List[str]:
-        if cls.register is not None:
-            return cls.register.available_keys()
+    def available_backbones(cls, ) -> List:
+        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+        return cls._available_models(registry=registry)
+
+    @staticmethod
+    def _available_models(registry: Optional[FlashRegistry] = None) -> List[str]:
+        if registry is not None:
+            return registry.available_keys()
         return []
 
-    @classmethod
-    def register_function(
-        cls,
+    @staticmethod
+    def _register_function(
+        registry: Optional[FlashRegistry] = None,
         fn: Optional[Callable] = None,
         name: Optional[str] = None,
         override: bool = False,
         **metadata
     ) -> Optional[Callable]:
-        if cls.register is not None:
-            return cls.register.register_function(fn=fn, name=name, override=override, **metadata)
+        if registry is not None:
+            return registry(fn=fn, name=name, override=override, **metadata)

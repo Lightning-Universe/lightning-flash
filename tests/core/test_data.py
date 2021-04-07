@@ -25,7 +25,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 10
 
 

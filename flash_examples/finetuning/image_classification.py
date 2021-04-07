@@ -31,18 +31,19 @@ datamodule = ImageClassificationData.from_folders(
 )
 
 
-# 3. a Register a custom backbone
-@ImageClassifier.register_function(name="username/resnet18")
+# 3.a Optional: Register a custom backbone
+# This is useful to create new backbone and make them accessible from `ImageClassifier`
+@ImageClassifier.backbones(name="username/resnet18")
 def fn_resnet(pretrained: bool = True):
-    model = getattr(torchvision.models, "resnet18", None)(pretrained)
+    model = torchvision.models.resnet18(pretrained)
     backbone = nn.Sequential(*list(model.children())[:-2])
     num_features = model.fc.in_features
     # backbones need to return the num_features to build the head
     return backbone, num_features
 
 
-# 3.b List available backbones
-print(ImageClassifier.available_models())
+# 3.b Optional: List available backbones
+print(ImageClassifier.available_backbones())
 
 # 4. Build the model
 model = ImageClassifier(backbone="username/resnet18", num_classes=datamodule.num_classes)

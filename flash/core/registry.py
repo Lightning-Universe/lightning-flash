@@ -19,26 +19,26 @@ class FlashRegistry(Dict):
         def my_model(nc_input=5, nc_output=6):
             return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
-        mlp, nc_input, nc_output = backbones.get("my_model")(nc_output=7)
+        mlp, nc_input, nc_output = backbones("my_model")(nc_output=7)
 
         backbones.register_function(my_model, name="cho")
-        assert backbones.get("cho")
+        assert backbones("cho")
 
     """
 
-    def __init__(self, registry_name: str, verbose: bool = False):
+    def __init__(self, registry_name: str, verbose: bool = False) -> None:
         self._registry_name = registry_name
         self._registered_functions: Mapping[str, Dict[str, Any]] = defaultdict()
-        self._registered_functions_mapping: Dict[str, str] = {}
+        self._registered_functions_names_mapping: Dict[str, str] = {}
         self._verbose = verbose
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._registered_functions)
 
-    def __contains__(self, key):
-        return self._registered_functions.get(key, None)
+    def __contains__(self, key) -> bool:
+        return key in self._registered_functions
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         format_str = self.__class__.__name__ + \
             f'(name={self._registry_name}, ' \
             f'registered_items={dict(**self._registered_functions)})'
@@ -52,9 +52,6 @@ class FlashRegistry(Dict):
     def registered_funcs(self) -> Dict[str, Any]:
         return self._registered_functions
 
-    def __getitem__(self, key: str) -> Callable:
-        return self.get(key)
-
     def validate_matches(self, key: str, matches: Dict, with_metadata: bool, key_in: bool = False):
         if len(matches) == 1:
             registered_function = self._registered_functions[list(matches.keys())[0]]
@@ -67,14 +64,6 @@ class FlashRegistry(Dict):
                     f"Found {len(matches)} matches within {matches}. Add more metadata to filter them out."
                 )
             raise MisconfigurationException(f"Key: {key} is not in {self.__repr__()}")
-
-    def __call__(self,
-                 key: str,
-                 with_metadata: bool = False,
-                 strict: bool = True,
-                 **metadata) -> Union[Callable, Dict[str, Any], List[Dict[str, Any]], List[Callable]]:
-
-        return self.get(key, with_metadata=with_metadata, strict=strict, **metadata)
 
     def get(self,
             key: str,
@@ -91,7 +80,7 @@ class FlashRegistry(Dict):
             metadata: All filtering metadata used for the registry.
 
         """
-        matches = {_hash: name for _hash, name in self._registered_functions_mapping.items() if key == name}
+        matches = {_hash: name for _hash, name in self._registered_functions_names_mapping.items() if key == name}
         key_in = False
         if len(matches) > 1:
             key_in = True
@@ -113,9 +102,9 @@ class FlashRegistry(Dict):
         return self.validate_matches(key, matches, with_metadata, key_in=key_in)
 
     def remove(self, key: str) -> None:
-        matches = {hash for hash, _key in self._registered_functions_mapping.items() if key == _key}
+        matches = {hash for hash, _key in self._registered_functions_names_mapping.items() if key == _key}
         for hash in matches:
-            del self._registered_functions_mapping[hash]
+            del self._registered_functions_names_mapping[hash]
             del self._registered_functions[hash]
 
     def _register_function(
@@ -128,29 +117,30 @@ class FlashRegistry(Dict):
 
         registered_function = {"fn": fn, "name": name, "metadata": metadata}
 
+        # convert to hash
         hash_algo = hashlib.sha256()
-        hash_algo.update(str(name + str(metadata)).encode('utf-8'))
+        _hashkey = str(name + str(metadata)).encode('utf-8')
+        hash_algo.update(_hashkey)
         hash = hash_algo.hexdigest()
 
         if override:
             self._registered_functions[hash] = registered_function
         else:
-            if hash in self._registered_functions_mapping:
+            if hash in self._registered_functions_names_mapping:
                 raise MisconfigurationException(
                     f"Function with name: {name} and metadata: {metadata} is already present within {self}"
                 )
             self._registered_functions[hash] = registered_function
-            self._registered_functions_mapping.update({hash: name})
+            self._registered_functions_names_mapping.update({hash: name})
 
-    def register_function(
+    def __call__(
         self,
         fn: Optional[Callable] = None,
         name: Optional[str] = None,
         override: bool = False,
         **metadata
     ) -> Callable:
-        """Register a callable
-        """
+        """Register a callable"""
         if fn is not None:
             if self._verbose:
                 print(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")

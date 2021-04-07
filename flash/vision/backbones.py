@@ -14,8 +14,8 @@
 from functools import partial
 from typing import Tuple
 
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning import LightningModule
+from pytorch_lightning.utilities import _BOLTS_AVAILABLE
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
@@ -41,19 +41,20 @@ TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MO
 BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
 
-@IMAGE_CLASSIFIER_BACKBONES.register_function(name="simclr-imagenet", namespace="vision", package="bolts")
+@IMAGE_CLASSIFIER_BACKBONES(name="simclr-imagenet", namespace="vision", package="bolts")
 def load_simclr_imagenet(
     path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt", **__
 ):
-    simclr = SimCLR.load_from_checkpoint(path_or_url, strict=False)
+    simclr: LightningModule = SimCLR.load_from_checkpoint(path_or_url, strict=False)
     # remove the last two layers & turn it into a Sequential model
     backbone = nn.Sequential(*list(simclr.encoder.children())[:-2])
     return backbone, 2048
 
 
-@IMAGE_CLASSIFIER_BACKBONES.register_function(name="swav-imagenet", namespace="vision", package="bolts")
-def load_swav_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar", **__):
-    swav = SwAV.load_from_checkpoint(path_or_url, strict=True)
+@IMAGE_CLASSIFIER_BACKBONES(name="swav-imagenet", namespace="vision", package="bolts")
+def load_swav_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar",
+                       **__) -> Tuple[nn.Module, int]:
+    swav: LightningModule = SwAV.load_from_checkpoint(path_or_url, strict=True)
     # remove the last two layers & turn it into a Sequential model
     backbone = nn.Sequential(*list(swav.model.children())[:-2])
     return backbone, 2048
@@ -64,14 +65,14 @@ if _TORCHVISION_AVAILABLE:
     for model_name in MOBILENET_MODELS + VGG_MODELS:
 
         def _fn_mobilenet_vgg(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-            model = getattr(torchvision.models, model_name, None)(pretrained)
+            model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
             backbone = model.features
             num_features = 512 if model_name in VGG_MODELS else model.classifier[-1].in_features
             return backbone, num_features
 
         _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
 
-        IMAGE_CLASSIFIER_BACKBONES.register_function(
+        IMAGE_CLASSIFIER_BACKBONES(
             fn=partial(_fn_mobilenet_vgg, model_name),
             name=model_name,
             namespace="vision",
@@ -82,12 +83,12 @@ if _TORCHVISION_AVAILABLE:
     for model_name in RESNET_MODELS:
 
         def _fn_resnet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-            model = getattr(torchvision.models, model_name, None)(pretrained)
+            model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
             backbone = nn.Sequential(*list(model.children())[:-2])
             num_features = model.fc.in_features
             return backbone, num_features
 
-        IMAGE_CLASSIFIER_BACKBONES.register_function(
+        IMAGE_CLASSIFIER_BACKBONES(
             fn=partial(_fn_resnet, model_name),
             name=model_name,
             namespace="vision",
@@ -104,19 +105,19 @@ if _TORCHVISION_AVAILABLE:
             )
             return backbone, 256
 
-        OBJ_DETECTION_BACKBONES.register_function(
+        OBJ_DETECTION_BACKBONES(
             fn=partial(_fn_resnet_fpn, model_name), name=model_name, package="torchvision", type="resnet-fpn"
         )
 
     for model_name in DENSENET_MODELS:
 
         def _fn_densenet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-            model = getattr(torchvision.models, model_name, None)(pretrained)
+            model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
             backbone = nn.Sequential(*model.features, nn.ReLU(inplace=True))
             num_features = model.classifier.in_features
             return backbone, num_features
 
-        IMAGE_CLASSIFIER_BACKBONES.register_function(
+        IMAGE_CLASSIFIER_BACKBONES(
             fn=partial(_fn_densenet, model_name),
             name=model_name,
             namespace="vision",
@@ -126,6 +127,9 @@ if _TORCHVISION_AVAILABLE:
 
 if _TIMM_AVAILABLE:
     for model_name in timm.list_models():
+
+        if model_name in TORCHVISION_MODELS:
+            continue
 
         def _fn_timm(model_name: str,
                      pretrained: bool = True,
@@ -137,6 +141,6 @@ if _TIMM_AVAILABLE:
             num_features = backbone.num_features
             return backbone, num_features
 
-        IMAGE_CLASSIFIER_BACKBONES.register_function(
+        IMAGE_CLASSIFIER_BACKBONES(
             fn=partial(_fn_timm, model_name), name=model_name, namespace="vision", package="timm"
         )

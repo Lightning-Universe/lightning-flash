@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchvision
@@ -23,6 +23,7 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import box_iou
 
 from flash.core import Task
+from flash.core.registry import FlashRegistry
 from flash.vision.backbones import OBJ_DETECTION_BACKBONES
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 
@@ -66,7 +67,7 @@ class ObjectDetector(Task):
 
     """
 
-    register = OBJ_DETECTION_BACKBONES
+    backbones: FlashRegistry = OBJ_DETECTION_BACKBONES
 
     def __init__(
         self,
@@ -135,7 +136,7 @@ class ObjectDetector(Task):
                     **kwargs
                 )
         else:
-            backbone_model, num_features = ObjectDetector.register.get(backbone)(
+            backbone_model, num_features = ObjectDetector.backbones.get(backbone)(
                 pretrained_backbone,
                 trainable_backbone_layers,
                 **kwargs,

@@ -20,6 +20,7 @@ from torch.nn import functional as F
 from torchmetrics import Accuracy
 
 from flash.core import Task
+from flash.core.registry import FlashRegistry
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
@@ -45,6 +46,8 @@ class ImageEmbedder(Task):
         >>> embeddings = embedder(image)
 
     """
+
+    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
 
     @property
     def preprocess(self):
@@ -75,7 +78,7 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone, num_features = IMAGE_CLASSIFIER_BACKBONES[backbone](pretrained=pretrained)
+        self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained)
 
         if embedding_dim is None:
             self.head = nn.Identity()

@@ -23,7 +23,7 @@ def test_registry(tmpdir):
 
     backbones = FlashRegistry("backbones")
 
-    @backbones.register_function()
+    @backbones()
     def my_model(nc_input=5, nc_output=6):
         return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
@@ -32,29 +32,29 @@ def test_registry(tmpdir):
     assert nc_output == 7
     assert mlp.weight.shape == torch.Size([7, 5])
 
-    backbones.register_function(my_model, name="cho")
+    backbones(my_model, name="cho")
     assert backbones.get("cho")
 
     with pytest.raises(MisconfigurationException, match="``register_function`` should be used with a function"):
-        backbones.register_function(nn.Linear(1, 1), name="cho")
+        backbones(nn.Linear(1, 1), name="cho")
 
-    backbones.register_function(my_model, name="cho", override=True)
+    backbones(my_model, name="cho", override=True)
 
     with pytest.raises(MisconfigurationException, match="Function with name: cho and metadata: {}"):
-        backbones.register_function(my_model, name="cho", override=False)
+        backbones(my_model, name="cho", override=False)
 
     backbones.remove("cho")
     with pytest.raises(MisconfigurationException, match="Key: cho is not in FlashRegistry"):
         backbones.get("cho")
 
-    backbones.register_function(my_model, name="cho", namespace="timm")
+    backbones(my_model, name="cho", namespace="timm")
     registered_function = backbones.get("cho", with_metadata=True)
     assert registered_function["metadata"]["namespace"] == "timm"
 
-    backbones.register_function(my_model, name="cho", namespace="timm", type="resnet")
-    backbones.register_function(my_model, name="cho", namespace="torchvision", type="resnet")
-    backbones.register_function(my_model, name="cho", namespace="timm", type="densenet")
-    backbones.register_function(my_model, name="cho", namespace="timm", type="alexnet")
+    backbones(my_model, name="cho", namespace="timm", type="resnet")
+    backbones(my_model, name="cho", namespace="torchvision", type="resnet")
+    backbones(my_model, name="cho", namespace="timm", type="densenet")
+    backbones(my_model, name="cho", namespace="timm", type="alexnet")
 
     registered_function = backbones.get("cho", with_metadata=True, type="resnet", namespace="timm")
     assert registered_function["name"] == "cho"
