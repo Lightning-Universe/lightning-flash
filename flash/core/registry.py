@@ -96,7 +96,9 @@ class FlashRegistry:
     def _filter_matches_on_metadata(self, matches, with_metadata: bool = False, **metadata) -> List[Dict[str, Any]]:
         _matches = []
         for item in matches:
-            if all(self._extract_metadata(item["metadata"], k) == v for k, v in metadata["metadata"].items()):
+            if all(
+                self._extract_value_from_metadata(item["metadata"], k) == v for k, v in metadata["metadata"].items()
+            ):
                 _matches.append(item)
         return _matches
 
@@ -130,15 +132,15 @@ class FlashRegistry:
             self._registered_functions.append(item)
 
     @staticmethod
-    def _extract_metadata(metadata: Dict, key: str) -> Optional[Any]:
+    def _extract_value_from_metadata(metadata: Dict, key: str) -> Optional[Any]:
         if key in metadata:
             return metadata[key]
 
     def _find_matching_index(self, item: Dict[str, Any]) -> Optional[int]:
         for idx, _item in enumerate(self._registered_functions):
             if (
-                _item["fn"] == item["fn"] and _item["name"] == item["name"]
-                and all(self._extract_metadata(_item["metadata"], k) == v for k, v in item["metadata"].items())
+                _item["fn"] == item["fn"] and _item["name"] == item["name"] and
+                all(self._extract_value_from_metadata(_item["metadata"], k) == v for k, v in item["metadata"].items())
             ):
                 return idx
 
