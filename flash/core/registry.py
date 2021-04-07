@@ -68,6 +68,14 @@ class FlashRegistry(Dict):
                 )
             raise MisconfigurationException(f"Key: {key} is not in {self.__repr__()}")
 
+    def __call__(self,
+                 key: str,
+                 with_metadata: bool = False,
+                 strict: bool = True,
+                 **metadata) -> Union[Callable, Dict[str, Any], List[Dict[str, Any]], List[Callable]]:
+
+        return self.get(key, with_metadata=with_metadata, strict=strict, **metadata)
+
     def get(self,
             key: str,
             with_metadata: bool = False,

@@ -133,9 +133,7 @@ class ObjectDetector(Task):
                     **kwargs
                 )
         else:
-            _backbone = f"{backbone}-fpn"
-            backbone = _backbone if _backbone in BACKBONES_REGISTRY else backbone
-            backbone_model, num_features = BACKBONES_REGISTRY[backbone](
+            backbone_model, num_features = BACKBONES_REGISTRY.get(backbone, type="resnet-fpn")(
                 pretrained_backbone,
                 trainable_backbone_layers,
                 **kwargs,

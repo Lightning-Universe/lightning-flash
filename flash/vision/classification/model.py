@@ -83,7 +83,9 @@ class ImageClassifier(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, num_features = backbone
         else:
-            self.backbone, num_features = BACKBONES_REGISTRY.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+            metadata = {"type": "resnet"} if "resnet" in backbone else {}
+            self.backbone, num_features = BACKBONES_REGISTRY.get(backbone,
+                                                                 **metadata)(pretrained=pretrained, **backbone_kwargs)
 
         head = head(num_features, num_classes) if isinstance(head, Callable) else head
         self.head = head or nn.Sequential(

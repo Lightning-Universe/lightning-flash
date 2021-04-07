@@ -9,7 +9,8 @@ from flash.vision.backbones import BACKBONES_REGISTRY
                                                                  ("simclr-imagenet", 2048), ("vgg16", 512)])
 def test_backbone_and_num_features(backbone, expected_num_features):
 
-    backbone_model, num_features = BACKBONES_REGISTRY[backbone](pretrained=False)
+    metadata = {"type": "resnet"} if "resnet" in backbone else {}
+    backbone_model, num_features = BACKBONES_REGISTRY.get(backbone, **metadata)(pretrained=False)
 
     assert backbone_model
     assert num_features == expected_num_features
@@ -39,7 +40,8 @@ def test_bolts_backbone_and_num_features(backbone, expected_num_features):
 @pytest.mark.parametrize(["backbone", "expected_num_features"], [("resnet34", 512), ("mobilenet_v2", 1280)])
 def test_torchvision_backbone_and_num_features(backbone, expected_num_features):
 
-    backbone_model, num_features = BACKBONES_REGISTRY[backbone](pretrained=False)
+    metadata = {"type": "resnet"} if "resnet" in backbone else {}
+    backbone_model, num_features = BACKBONES_REGISTRY(backbone, **metadata)(pretrained=False)
 
     assert backbone_model
     assert num_features == expected_num_features
