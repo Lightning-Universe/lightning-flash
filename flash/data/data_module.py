@@ -102,6 +102,13 @@ class DataModule(pl.LightningDataModule):
     def configure_vis(*args, **kwargs) -> BaseViz:
         return BaseViz()
 
+    def _reset_iterator(self, stage: RunningStage) -> Iterable[Any]:
+        iter_name = f"_{stage}_iter"
+        dataloader_fn = getattr(self, f"{stage}_dataloader")
+        iterator = iter(dataloader_fn())
+        setattr(self, iter_name, iterator)
+        return iterator
+
     def show(self, batch: Dict[str, Any], stage: RunningStage) -> None:
         """
         This function is a hook for users to override with their visualization on a batch.
@@ -114,21 +121,15 @@ class DataModule(pl.LightningDataModule):
         """
         iter_name = f"_{stage}_iter"
 
-        def _reset_iterator() -> Iterable[Any]:
-            dataloader_fn = getattr(self, f"{stage}_dataloader")
-            iterator = iter(dataloader_fn())
-            setattr(self, iter_name, iterator)
-            return iterator
-
         if not hasattr(self, iter_name):
-            _reset_iterator()
+            self._reset_iterator(stage)
 
         iter_dataloader = getattr(self, iter_name)
         with self.viz.enable():
             try:
                 _ = next(iter_dataloader)
             except StopIteration:
-                iter_dataloader = _reset_iterator()
+                iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
             self.show(self.viz.batches[stage], stage)
             if reset:

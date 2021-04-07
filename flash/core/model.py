@@ -23,6 +23,7 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
 from torch import nn
 
+from flash.core.registry import FlashRegistry
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
@@ -256,3 +257,10 @@ class Task(LightningModule):
         super().on_load_checkpoint(checkpoint)
         if 'data_pipeline' in checkpoint:
             self.data_pipeline = checkpoint['data_pipeline']
+
+    @classmethod
+    def available_backbones(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+        if registry is None:
+            return []
+        return registry.available_keys()

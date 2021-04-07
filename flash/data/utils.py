@@ -14,7 +14,6 @@
 
 import os.path
 import zipfile
-from contextlib import ContextDecorator, contextmanager
 from typing import Any, Callable, Dict, Iterable, Mapping, Type
 
 import requests

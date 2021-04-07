@@ -32,7 +32,7 @@ class DummyDetectionDataset(Dataset):
         self.num_classes = num_classes
         self.length = length
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.length
 
     def _random_bbox(self):

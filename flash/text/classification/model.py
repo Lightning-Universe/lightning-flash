@@ -21,7 +21,6 @@ from transformers import BertForSequenceClassification
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationTask
-from flash.text.classification.data import TextClassificationData
 
 
 class TextClassifier(ClassificationTask):

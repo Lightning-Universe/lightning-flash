@@ -150,3 +150,13 @@ def test_model_download(tmpdir, cls, filename):
     with tmpdir.as_cwd():
         task = cls.load_from_checkpoint(url + filename)
         assert isinstance(task, cls)
+
+
+def test_available_backbones():
+    backbones = ImageClassifier.available_backbones()
+    assert "resnet152" in backbones
+
+    class Foo(ImageClassifier):
+        backbones = None
+
+    assert Foo.available_backbones() == []
