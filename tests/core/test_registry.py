@@ -40,5 +40,25 @@ def test_registry(tmpdir):
 
     backbones.register_function(my_model, name="cho", override=True)
 
-    with pytest.raises(MisconfigurationException, match="Name cho is already present within"):
+    with pytest.raises(MisconfigurationException, match="Function with name: cho and metadata: {}"):
         backbones.register_function(my_model, name="cho", override=False)
+
+    backbones.remove("cho")
+    with pytest.raises(MisconfigurationException, match="Key: cho is not in FlashRegistry"):
+        backbones.get("cho")
+
+    backbones.register_function(my_model, name="cho", namespace="timm")
+    registered_function = backbones.get("cho", with_metadata=True)
+    assert registered_function["metadata"]["namespace"] == "timm"
+
+    backbones.register_function(my_model, name="cho", namespace="timm", type="resnet")
+    backbones.register_function(my_model, name="cho", namespace="torchvision", type="resnet")
+    backbones.register_function(my_model, name="cho", namespace="timm", type="densenet")
+    backbones.register_function(my_model, name="cho", namespace="timm", type="alexnet")
+
+    registered_function = backbones.get("cho", with_metadata=True, type="resnet", namespace="timm")
+    assert registered_function["name"] == "cho"
+    assert registered_function["metadata"] == {"namespace": "timm", "type": "resnet"}
+
+    registered_functions = backbones.get("cho", with_metadata=True, namespace="timm", strict=False)
+    assert len(registered_functions) == 4
