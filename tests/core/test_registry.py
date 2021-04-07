@@ -22,7 +22,7 @@ from flash.core.registry import FlashRegistry
 def test_registry_raises():
     backbones = FlashRegistry("backbones")
 
-    @backbones()
+    @backbones
     def my_model(nc_input=5, nc_output=6):
         return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
@@ -41,7 +41,7 @@ def test_registry_raises():
 def test_registry():
     backbones = FlashRegistry("backbones")
 
-    @backbones()
+    @backbones
     def my_model(nc_input=5, nc_output=6):
         return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
@@ -55,7 +55,7 @@ def test_registry():
     backbones.remove("cho")
 
     backbones(my_model, name="cho", namespace="timm")
-    function = backbones.get("cho", with_metadata=True, strict=False)
+    function = backbones.get("cho", with_metadata=True)
     assert function["metadata"] == {"namespace": "timm"}
 
     backbones(my_model, name="cho", namespace="timm", type="resnet")
