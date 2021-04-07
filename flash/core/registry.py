@@ -77,9 +77,7 @@ class FlashRegistry:
         if metadata:
             matches = [m for m in matches if metadata.items() <= m["metadata"].items()]
             if not matches:
-                raise MisconfigurationException(
-                    "Found no matches that fit your metadata criteria. Try removing some metadata"
-                )
+                raise KeyError("Found no matches that fit your metadata criteria. Try removing some metadata")
 
         matches = [e if with_metadata else e["fn"] for e in matches]
         return matches[0] if strict else matches
@@ -137,7 +135,7 @@ class FlashRegistry:
 
         # raise the error ahead of time
         if not (name is None or isinstance(name, str)):
-            raise TypeError(f'name must be a str, but got {type(name)}')
+            raise TypeError(f'`name` must be a str, found {name}')
 
         def _register(cls):
             self._register_function(fn=cls, name=name, override=override, metadata=metadata)
