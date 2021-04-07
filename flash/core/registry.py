@@ -81,7 +81,7 @@ class FlashRegistry(Dict):
         """
         if fn is not None:
             if self._verbose:
-                print(f"Registering: {fn} {name}")
+                print(f"Registering: {fn.__name__} function with {name}")
             self._register_function(fn=fn, name=name, override=override)
             return fn
 
