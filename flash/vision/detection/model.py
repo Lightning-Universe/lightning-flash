@@ -23,7 +23,7 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import box_iou
 
 from flash.core import Task
-from flash.vision.backbones import BACKBONES_REGISTRY
+from flash.vision.backbones import OBJ_DETECTION_BACKBONES
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 
 _models = {
@@ -65,6 +65,8 @@ class ObjectDetector(Task):
         learning_rate: The learning rate to use for training
 
     """
+
+    register = OBJ_DETECTION_BACKBONES
 
     def __init__(
         self,
@@ -133,7 +135,7 @@ class ObjectDetector(Task):
                     **kwargs
                 )
         else:
-            backbone_model, num_features = BACKBONES_REGISTRY.get(backbone, type="resnet-fpn")(
+            backbone_model, num_features = ObjectDetector.register.get(backbone)(
                 pretrained_backbone,
                 trainable_backbone_layers,
                 **kwargs,

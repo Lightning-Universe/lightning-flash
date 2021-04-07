@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-from flash.core.registry import BACKBONES_REGISTRY
+from flash.core.registry import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES
 from flash.utils.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TIMM_AVAILABLE:
@@ -41,7 +41,7 @@ TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MO
 BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
 
-@BACKBONES_REGISTRY.register_function(name="simclr-imagenet", namespace="vision", package="bolts")
+@IMAGE_CLASSIFIER_BACKBONES.register_function(name="simclr-imagenet", namespace="vision", package="bolts")
 def load_simclr_imagenet(
     path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt", **__
 ):
@@ -51,7 +51,7 @@ def load_simclr_imagenet(
     return backbone, 2048
 
 
-@BACKBONES_REGISTRY.register_function(name="swav-imagenet", namespace="vision", package="bolts")
+@IMAGE_CLASSIFIER_BACKBONES.register_function(name="swav-imagenet", namespace="vision", package="bolts")
 def load_swav_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar", **__):
     swav = SwAV.load_from_checkpoint(path_or_url, strict=True)
     # remove the last two layers & turn it into a Sequential model
@@ -71,7 +71,7 @@ if _TORCHVISION_AVAILABLE:
 
         _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
 
-        BACKBONES_REGISTRY.register_function(
+        IMAGE_CLASSIFIER_BACKBONES.register_function(
             fn=partial(_fn_mobilenet_vgg, model_name),
             name=model_name,
             namespace="vision",
@@ -87,7 +87,7 @@ if _TORCHVISION_AVAILABLE:
             num_features = model.fc.in_features
             return backbone, num_features
 
-        BACKBONES_REGISTRY.register_function(
+        IMAGE_CLASSIFIER_BACKBONES.register_function(
             fn=partial(_fn_resnet, model_name),
             name=model_name,
             namespace="vision",
@@ -104,7 +104,7 @@ if _TORCHVISION_AVAILABLE:
             )
             return backbone, 256
 
-        BACKBONES_REGISTRY.register_function(
+        OBJ_DETECTION_BACKBONES.register_function(
             fn=partial(_fn_resnet_fpn, model_name), name=model_name, package="torchvision", type="resnet-fpn"
         )
 
@@ -116,7 +116,7 @@ if _TORCHVISION_AVAILABLE:
             num_features = model.classifier.in_features
             return backbone, num_features
 
-        BACKBONES_REGISTRY.register_function(
+        IMAGE_CLASSIFIER_BACKBONES.register_function(
             fn=partial(_fn_densenet, model_name),
             name=model_name,
             namespace="vision",
@@ -137,6 +137,6 @@ if _TIMM_AVAILABLE:
             num_features = backbone.num_features
             return backbone, num_features
 
-        BACKBONES_REGISTRY.register_function(
+        IMAGE_CLASSIFIER_BACKBONES.register_function(
             fn=partial(_fn_timm, model_name), name=model_name, namespace="vision", package="timm"
         )

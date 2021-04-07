@@ -182,4 +182,5 @@ class FlashRegistry(Dict):
         return _matches
 
 
-BACKBONES_REGISTRY = FlashRegistry("backbones")
+IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
+OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")

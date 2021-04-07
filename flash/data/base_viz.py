@@ -24,45 +24,35 @@ class BaseViz(FlashCallback):
         self.enabled = enabled
         self._preprocess = None
 
+    def _store(self, data: Any, fn_name: str, running_stage: RunningStage) -> None:
+        if self.enabled:
+            store = self.batches[_STAGES_PREFIX[running_stage]]
+            store.setdefault(fn_name, [])
+            store[fn_name].append(data)
+
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("load_sample", [])
-        store["load_sample"].append(sample)
+        self._store(sample, "load_sample", running_stage)
 
     def on_pre_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("pre_tensor_transform", [])
-        store["pre_tensor_transform"].append(sample)
+        self._store(sample, "pre_tensor_transform", running_stage)
 
     def on_to_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("to_tensor_transform", [])
-        store["to_tensor_transform"].append(sample)
+        self._store(sample, "to_tensor_transform", running_stage)
 
     def on_post_tensor_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("post_tensor_transform", [])
-        store["post_tensor_transform"].append(sample)
+        self._store(sample, "post_tensor_transform", running_stage)
 
     def on_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("per_batch_transform", [])
-        store["per_batch_transform"].append(batch)
+        self._store(batch, "per_batch_transform", running_stage)
 
     def on_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("collate", [])
-        store["collate"].append(batch)
+        self._store(batch, "collate", running_stage)
 
     def on_per_sample_transform_on_device(self, samples: Sequence, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("per_sample_transform_on_device", [])
-        store["per_sample_transform_on_device"].append(samples)
+        self._store(samples, "per_sample_transform_on_device", running_stage)
 
     def on_per_batch_transform_on_device(self, batch: Any, running_stage: RunningStage) -> None:
-        store = self.batches[_STAGES_PREFIX[running_stage]]
-        store.setdefault("per_batch_transform_on_device", [])
-        store["per_batch_transform_on_device"].append(batch)
+        self._store(batch, "per_batch_transform_on_device", running_stage)
 
     @contextmanager
     def enable(self):
@@ -74,7 +64,7 @@ class BaseViz(FlashCallback):
         datamodule.viz = self
 
     def attach_to_preprocess(self, preprocess: Preprocess) -> None:
-        preprocess.callbacks = [self]
+        preprocess.add_callbacks([self])
         self._preprocess = preprocess
 
     def show(self, batch: Dict[str, Any], running_stage: RunningStage) -> None:

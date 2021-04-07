@@ -161,6 +161,9 @@ class Preprocess(Properties, torch.nn.Module):
 
     @callbacks.setter
     def callbacks(self, callbacks: List['FlashCallback']):
+        self._callbacks = callbacks
+
+    def add_callbacks(self, callbacks: List['FlashCallback']):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 

@@ -19,7 +19,7 @@ from torch.nn import functional as F
 from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
-from flash.vision.backbones import BACKBONES_REGISTRY
+from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
 
@@ -58,6 +58,8 @@ class ImageClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
+    register = IMAGE_CLASSIFIER_BACKBONES
+
     def __init__(
         self,
         num_classes: int,
@@ -83,9 +85,7 @@ class ImageClassifier(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, num_features = backbone
         else:
-            metadata = {"type": "resnet"} if "resnet" in backbone else {}
-            self.backbone, num_features = BACKBONES_REGISTRY.get(backbone,
-                                                                 **metadata)(pretrained=pretrained, **backbone_kwargs)
+            self.backbone, num_features = self.register(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         head = head(num_features, num_classes) if isinstance(head, Callable) else head
         self.head = head or nn.Sequential(

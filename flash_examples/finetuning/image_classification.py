@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torchvision
+from torch import nn
+
 import flash
 from flash import Trainer
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.vision import IMAGE_CLASSIFIER_BACKBONES, ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
@@ -27,8 +30,18 @@ datamodule = ImageClassificationData.from_folders(
     test_folder="data/hymenoptera_data/test/",
 )
 
+
+@ImageClassifier.register_function(name="username/resnet18")
+def fn_resnet(pretrained: bool = True):
+    model = getattr(torchvision.models, "resnet18", None)(pretrained)
+    backbone = nn.Sequential(*list(model.children())[:-2])
+    num_features = model.fc.in_features
+    # backbones need to return the num_features to build the head
+    return backbone, num_features
+
+
 # 3. Build the model
-model = ImageClassifier(num_classes=datamodule.num_classes)
+model = ImageClassifier(backbone="username/resnet18", num_classes=datamodule.num_classes)
 
 # 4. Create the trainer.
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)

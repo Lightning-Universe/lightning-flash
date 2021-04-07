@@ -13,9 +13,9 @@
 # limitations under the License.
 import pytest
 
-from flash.vision.backbones import BACKBONES_REGISTRY
+from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
 @pytest.mark.parametrize("name", ['simclr-imagenet', 'swav-imagenet'])
 def test_load_bolts(name):
-    BACKBONES_REGISTRY[name]
+    IMAGE_CLASSIFIER_BACKBONES[name]

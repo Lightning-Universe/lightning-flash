@@ -61,6 +61,8 @@ class Task(LightningModule):
         learning_rate: Learning rate to use for training, defaults to `5e-5`
     """
 
+    register = None
+
     def __init__(
         self,
         model: Optional[nn.Module] = None,
@@ -256,3 +258,18 @@ class Task(LightningModule):
         super().on_load_checkpoint(checkpoint)
         if 'data_pipeline' in checkpoint:
             self.data_pipeline = checkpoint['data_pipeline']
+
+    def available_models(self):
+        if self.register is not None:
+            return None
+
+    @classmethod
+    def register_function(
+        cls,
+        fn: Optional[Callable] = None,
+        name: Optional[str] = None,
+        override: bool = False,
+        **metadata
+    ) -> Optional[Callable]:
+        if cls.register is not None:
+            return cls.register.register_function(fn=fn, name=name, override=override, **metadata)
