@@ -117,7 +117,7 @@ class FlashRegistry:
 
         item = {"fn": fn, "name": name, "metadata": metadata}
 
-        matching_index = self._find_matching_indexes(item)
+        matching_index = self._find_matching_index(item)
 
         if override and matching_index is not None:
             self._registered_functions[matching_index] = item
@@ -134,7 +134,7 @@ class FlashRegistry:
         if key in metadata:
             return metadata[key]
 
-    def _find_matching_indexes(self, item: Dict[str, Any]) -> Optional[int]:
+    def _find_matching_index(self, item: Dict[str, Any]) -> Optional[int]:
         for idx, _item in enumerate(self._registered_functions):
             if (
                 _item["fn"] == item["fn"] and _item["name"] == item["name"]
