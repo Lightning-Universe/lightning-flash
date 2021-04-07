@@ -19,7 +19,7 @@ from pytorch_lightning.utilities import _BOLTS_AVAILABLE
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-from flash.core.registry import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES
+from flash.core.registry import FlashRegistry
 from flash.utils.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TIMM_AVAILABLE:
@@ -40,11 +40,12 @@ DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
 TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS
 BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
+IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
+OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
+
 
 @IMAGE_CLASSIFIER_BACKBONES(name="simclr-imagenet", namespace="vision", package="bolts")
-def load_simclr_imagenet(
-    path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt", **__
-):
+def load_simclr_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt", **_):
     simclr: LightningModule = SimCLR.load_from_checkpoint(path_or_url, strict=False)
     # remove the last two layers & turn it into a Sequential model
     backbone = nn.Sequential(*list(simclr.encoder.children())[:-2])
@@ -52,8 +53,10 @@ def load_simclr_imagenet(
 
 
 @IMAGE_CLASSIFIER_BACKBONES(name="swav-imagenet", namespace="vision", package="bolts")
-def load_swav_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar",
-                       **__) -> Tuple[nn.Module, int]:
+def load_swav_imagenet(
+    path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar",
+    **_,
+) -> Tuple[nn.Module, int]:
     swav: LightningModule = SwAV.load_from_checkpoint(path_or_url, strict=True)
     # remove the last two layers & turn it into a Sequential model
     backbone = nn.Sequential(*list(swav.model.children())[:-2])
@@ -96,10 +99,12 @@ if _TORCHVISION_AVAILABLE:
             type="resnet"
         )
 
-        def _fn_resnet_fpn(model_name: str,
-                           pretrained: bool = True,
-                           trainable_layers: bool = True,
-                           **kwargs) -> Tuple[nn.Module, int]:
+        def _fn_resnet_fpn(
+            model_name: str,
+            pretrained: bool = True,
+            trainable_layers: bool = True,
+            **kwargs,
+        ) -> Tuple[nn.Module, int]:
             backbone = resnet_fpn_backbone(
                 model_name, pretrained=pretrained, trainable_layers=trainable_layers, **kwargs
             )
@@ -131,10 +136,12 @@ if _TIMM_AVAILABLE:
         if model_name in TORCHVISION_MODELS:
             continue
 
-        def _fn_timm(model_name: str,
-                     pretrained: bool = True,
-                     num_classes: int = 0,
-                     global_pool: str = '') -> Tuple[nn.Module, int]:
+        def _fn_timm(
+            model_name: str,
+            pretrained: bool = True,
+            num_classes: int = 0,
+            global_pool: str = '',
+        ) -> Tuple[nn.Module, int]:
             backbone = timm.create_model(
                 model_name, pretrained=pretrained, num_classes=num_classes, global_pool=global_pool
             )

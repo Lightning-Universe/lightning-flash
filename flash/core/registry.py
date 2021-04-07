@@ -1,11 +1,24 @@
-import hashlib
-from collections import defaultdict
-from dataclasses import dataclass
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from functools import partial
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Union
 
+from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+
+_REGISTERED_FUNCTION = Dict[str, Any]
 
 
 class FlashRegistry:
@@ -16,145 +29,102 @@ class FlashRegistry:
 
         backbones = FlashRegistry("backbones")
 
-        @backbones.register_function()
+        @backbones
         def my_model(nc_input=5, nc_output=6):
             return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
         mlp, nc_input, nc_output = backbones("my_model")(nc_output=7)
 
-        backbones.register_function(my_model, name="cho")
-        assert backbones("cho")
+        backbones(my_model, name="foo")
+        assert backbones("foo")
 
     """
 
-    def __init__(self, registry_name: str, verbose: bool = False) -> None:
-        self._registry_name = registry_name
-        self._registered_functions: List[Dict[str, Any]] = []
+    def __init__(self, name: str, verbose: bool = False) -> None:
+        self.name = name
+        self.functions: List[_REGISTERED_FUNCTION] = []
         self._verbose = verbose
 
     def __len__(self) -> int:
-        return len(self._registered_functions)
+        return len(self.functions)
 
     def __contains__(self, key) -> bool:
-        return any(key == e["name"] for e in self._registered_functions)
+        return any(key == e["name"] for e in self.functions)
 
     def __repr__(self) -> str:
-        format_str = self.__class__.__name__ + \
-            f'(name={self._registry_name}, ' \
-            f'registered_items={self._registered_functions})'
-        return format_str
+        return f'{self.__class__.__name__}(name={self.name}, functions={self.functions})'
 
-    @property
-    def name(self) -> str:
-        return self._registry_name
-
-    @property
-    def registered_funcs(self) -> Dict[str, Any]:
-        return self._registered_functions
-
-    def validate_matches(self, key: str, matches: Dict, with_metadata: bool, key_in: bool = False):
-        if len(matches) == 1:
-            registered_function = matches[0]
-            if with_metadata:
-                return registered_function
-            return registered_function["fn"]
-        elif len(matches) == 0:
-            if key_in:
-                raise MisconfigurationException(
-                    f"Found {len(matches)} matches within {matches}. Add more metadata to filter them out."
-                )
-            raise MisconfigurationException(f"Key: {key} is not in {self.__repr__()}")
-
-    def get(self,
-            key: str,
-            with_metadata: bool = False,
-            strict: bool = True,
-            **metadata) -> Union[Callable, Dict[str, Any], List[Dict[str, Any]], List[Callable]]:
+    def get(
+        self,
+        key: str,
+        with_metadata: bool = False,
+        strict: bool = True,
+        **metadata: Dict[str, Any],
+    ) -> Union[callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[callable]]:
         """
         This function is used to gather matches from the registry:
 
         Args:
             key: Name of the registered function.
-            with_metadata: Whether to return associated metadata used during registration.
-            strict: Whether to return all matches if higher than 1.
-            metadata: All filtering metadata used for the registry.
-
+            with_metadata: Whether to include the associated metadata in the return value.
+            strict: Whether to return all matches or just one.
+            metadata: Metadata used to filter against existing registry item's metadata.
         """
-        matches = [e for e in self._registered_functions if key == e["name"]]
-        key_in = False
-        if len(matches) > 1:
-            key_in = True
-            matches = self._filter_matches_on_metadata(matches, with_metadata=with_metadata, metadata=metadata)
-            if not strict:
-                return [e if with_metadata else e["fn"] for e in matches]
-            if len(matches) > 1:
-                raise MisconfigurationException(
-                    f"Found {len(matches)} matches within {matches}. Add more metadata to filter them out."
-                )
-        return self.validate_matches(key, matches, with_metadata, key_in=key_in)
+        matches = [e for e in self.functions if key == e["name"]]
+        if not matches:
+            raise KeyError(f"Key: {key} is not in {repr(self)}")
 
-    def _filter_matches_on_metadata(self, matches, with_metadata: bool = False, **metadata) -> List[Dict[str, Any]]:
-        _matches = []
-        for item in matches:
-            if all(
-                self._extract_value_from_metadata(item["metadata"], k) == v for k, v in metadata["metadata"].items()
-            ):
-                _matches.append(item)
-        return _matches
+        if metadata:
+            matches = [m for m in matches if metadata.items() <= m["metadata"].items()]
+            if not matches:
+                raise MisconfigurationException(
+                    "Found no matches that fit your metadata criteria. Try removing some metadata"
+                )
+
+        matches = [e if with_metadata else e["fn"] for e in matches]
+        return matches[0] if strict else matches
 
     def remove(self, key: str) -> None:
-        _registered_functions = []
-        for item in self._registered_functions:
-            if item["name"] != key:
-                _registered_functions.append(item)
-        self._registered_functions = _registered_functions
+        self.functions = [f for f in self.functions if f["name"] != key]
 
     def _register_function(
-        self, fn: Callable, name: Optional[str] = None, override: bool = False, metadata: Dict[str, Any] = None
+        self, fn: callable, name: Optional[str] = None, override: bool = False, metadata: Dict[str, Any] = None
     ):
         if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
-            raise MisconfigurationException("``register_function`` should be used with a function")
+            raise MisconfigurationException(f"You can only register a function, found: {fn}")
 
         name = name or fn.__name__
 
-        item = {"fn": fn, "name": name, "metadata": metadata}
+        if self._verbose:
+            rank_zero_info(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")
+
+        item = {"fn": fn, "name": name, "metadata": metadata or {}}
 
         matching_index = self._find_matching_index(item)
-
         if override and matching_index is not None:
-            self._registered_functions[matching_index] = item
+            self.functions[matching_index] = item
         else:
             if matching_index is not None:
                 raise MisconfigurationException(
                     f"Function with name: {name} and metadata: {metadata} is already present within {self}."
-                    "HINT: Use `override=True`."
+                    " HINT: Use `override=True`."
                 )
-            self._registered_functions.append(item)
+            self.functions.append(item)
 
-    @staticmethod
-    def _extract_value_from_metadata(metadata: Dict, key: str) -> Optional[Any]:
-        if key in metadata:
-            return metadata[key]
-
-    def _find_matching_index(self, item: Dict[str, Any]) -> Optional[int]:
-        for idx, _item in enumerate(self._registered_functions):
-            if (
-                _item["fn"] == item["fn"] and _item["name"] == item["name"] and
-                all(self._extract_value_from_metadata(_item["metadata"], k) == v for k, v in item["metadata"].items())
-            ):
+    def _find_matching_index(self, item: _REGISTERED_FUNCTION) -> Optional[int]:
+        for idx, fn in enumerate(self.functions):
+            if fn["fn"] == item["fn"] and fn["name"] == item["name"] and fn["metadata"] == item["metadata"]:
                 return idx
 
     def __call__(
         self,
-        fn: Optional[Callable] = None,
+        fn: Optional[callable] = None,
         name: Optional[str] = None,
         override: bool = False,
-        **metadata
-    ) -> Callable:
+        **metadata: Dict[str, Any]
+    ) -> callable:
         """Register a callable"""
         if fn is not None:
-            if self._verbose:
-                print(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)
             return fn
 
@@ -169,8 +139,4 @@ class FlashRegistry:
         return _register
 
     def available_keys(self) -> List[str]:
-        return sorted([v["name"] for v in self._registered_functions])
-
-
-IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
-OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
+        return sorted([v["name"] for v in self.functions])

@@ -259,23 +259,8 @@ class Task(LightningModule):
             self.data_pipeline = checkpoint['data_pipeline']
 
     @classmethod
-    def available_backbones(cls, ) -> List:
+    def available_backbones(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
-        return cls._available_models(registry=registry)
-
-    @staticmethod
-    def _available_models(registry: Optional[FlashRegistry] = None) -> List[str]:
-        if registry is not None:
-            return registry.available_keys()
-        return []
-
-    @staticmethod
-    def _register_function(
-        registry: Optional[FlashRegistry] = None,
-        fn: Optional[Callable] = None,
-        name: Optional[str] = None,
-        override: bool = False,
-        **metadata
-    ) -> Optional[Callable]:
-        if registry is not None:
-            return registry(fn=fn, name=name, override=override, **metadata)
+        if registry is None:
+            return []
+        return registry.available_keys()

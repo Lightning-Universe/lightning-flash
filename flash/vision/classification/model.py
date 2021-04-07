@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
@@ -22,7 +22,6 @@ from torchmetrics import Accuracy
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
 
 class ImageClassifier(ClassificationTask):

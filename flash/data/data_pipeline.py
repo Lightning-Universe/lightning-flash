@@ -49,7 +49,7 @@ class DataPipeline:
                 def __getitem__(self, index):
                     return Preprocess.load_sample(self.preprocessed_data[index])
 
-                def __len__(self) -> int:
+                def __len__(self):
                     return len(self.preprocessed_data)
 
     2. Create a ``worker_collate_fn`` which is injected directly into the ``DataLoader``

@@ -18,7 +18,7 @@ import flash
 from flash import Trainer
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
-from flash.vision import IMAGE_CLASSIFIER_BACKBONES, ImageClassificationData, ImageClassifier
+from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
@@ -36,6 +36,7 @@ datamodule = ImageClassificationData.from_folders(
 @ImageClassifier.backbones(name="username/resnet18")
 def fn_resnet(pretrained: bool = True):
     model = torchvision.models.resnet18(pretrained)
+    # remove the last two layers & turn it into a Sequential model
     backbone = nn.Sequential(*list(model.children())[:-2])
     num_features = model.fc.in_features
     # backbones need to return the num_features to build the head
