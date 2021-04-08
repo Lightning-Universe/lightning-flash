@@ -101,6 +101,128 @@ class PreprocessState:
 
 
 class Preprocess(Properties, torch.nn.Module):
+    """
+    The ``Preprocess`` is used to encapsulate ``all the processing logic`` from data loading up to the model.
+
+    It is particularly relevant when you want to provide ready-to-production implementation which works
+    with 4 different stages: ``TRAINING``, ``VALIDATING``, ``TESTING``, ``PREDICTING``.
+
+    The ``Preprocess`` is currently supporting ``9 hooks`` which can be overridden by the users.
+
+    .. note:: By default, each hook will perform will be a no-op.
+
+    Each hook can be made specialized with an added prefix such as ``train``, ``val``, ``test``, ``predict``.
+
+    Example::
+
+        class CustomPreprocess(Preprocess):
+
+            def train_load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
+                pass
+
+    Each hook is aware of its name through `current_fn` and running stage as follow:
+
+    Example::
+
+        class CustomPreprocess(Preprocess):
+
+            def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
+
+                print(self.current_fn)
+                # Out: `load_data`
+
+                if self.training:
+                    # logic for train
+
+                elif self.validating:
+                    # logic from validation
+
+                elif self.testing:
+                    # logic for test
+
+                elif self.predicting:
+                    # logic for predict
+
+    .. note:: The ``load_data`` and ``load_sample`` will be used to generate an AutoDataset object.
+
+    Here is the ``AutoDataset`` pseudo-code.
+
+    Example::
+
+        from pytorch_lightning.trainer.states import RunningStage
+
+        class AutoDataset
+            def __init__(
+                self,
+                data: Any,
+                load_data: Optional[Callable] = None,
+                load_sample: Optional[Callable] = None,
+                data_pipeline: Optional['DataPipeline'] = None,
+                running_stage: Optional[RunningStage] = None
+            ) -> None:
+
+                self.preprocess = data_pipeline._preprocess_pipeline
+                self.preprocessed_data: Iterable = self.preprocess.load_data(data)
+
+            def __getitem__(self, index):
+                return self.preprocess.load_sample(self.preprocessed_data[index])
+
+            def __len__(self):
+                return len(self.preprocessed_data)
+
+    .. note:: The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive as it will impact performances
+
+    .. note:: The ``pre_tensor_transform``, ``to_tensor_transform``, ``post_tensor_transform``, ``collate``, ``per_batch_transform`` are injected as the ``collate_fn`` function of the DataLoader:
+
+    Here is the pseudo code using the preprocess hooks name. Surely, Flash will take care of calling the right hooks for each stage.
+
+    Example::
+
+        # This will be wrapped into a :class:`~flash.data.batch._PreProcessor`.
+        def collate_fn(samples: Sequence[Any]) -> Any:
+
+            # This will be wrapped into a :class:`~flash.data.batch._Sequential`
+            for sample in samples:
+                sample = pre_tensor_transform(sample)
+                sample = to_tensor_transform(sample)
+                sample = post_tensor_transform(sample)
+
+            samples = type(samples)(samples)
+
+            # if ``per_sample_transform_on_device`` hook is overridden, those functions below will be no-ops
+
+            samples = collate(samples)
+            samples = per_batch_transform(samples)
+            return samples
+
+        dataloader = DataLoader(dataset, collate_fn=collate_fn)
+
+    .. note:: The ``per_sample_transform_on_device``, ``collate``, ``per_batch_transform_on_device`` are injected after the ``LightningModule`` ``transfer_batch_to_device`` hook.
+
+    Here is the pseudo code using the preprocess hooks name. Surely, Flash will take care of calling the right hooks for each stage.
+
+    Example::
+
+        # This will be wrapped into a :class:`~flash.data.batch._PreProcessor`
+        def collate_fn(samples: Sequence[Any]) -> Any:
+
+            # if ``per_batch_transform`` hook is overridden, those functions below will be no-ops
+            samples = [per_sample_transform_on_device(sample) for sample in samples]
+            samples = type(samples)(samples)
+            samples = self.collate(samples)
+
+            samples = self.per_batch_transform_on_device(samples)
+            return samples
+
+        # move the data to device
+        data = lightning_module.transfer_data_to_device(data)
+        data = collate_fn(data)
+        lightning_module.forward(data)
+
+
+
+
+    """
 
     def __init__(
         self,
@@ -178,17 +300,22 @@ class Preprocess(Properties, torch.nn.Module):
         return sample
 
     def pre_tensor_transform(self, sample: Any) -> Any:
+        """Transforms to apply on a single object."""
         return sample
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
+        """Transforms to convert single object to a tensor."""
         return sample
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
+        """Transforms to apply on a tensor."""
         return sample
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
+
         .. note::
+
             This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.
         """
@@ -199,10 +326,14 @@ class Preprocess(Properties, torch.nn.Module):
 
     def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
+
         .. note::
+
             This option is mutually exclusive with :meth:`per_batch_transform`,
             since if both are specified, uncollation has to be applied.
+
         .. note::
+
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
@@ -211,7 +342,9 @@ class Preprocess(Properties, torch.nn.Module):
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """
         Transforms to apply to a whole batch (if possible use this for efficiency).
+
         .. note::
+
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """

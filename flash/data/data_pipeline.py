@@ -34,99 +34,24 @@ if TYPE_CHECKING:
 
 class DataPipeline:
     """
-    DataPipeline handles the connecting logic between ``Preprocess``, ``PostProcess``,
-    ``DataModule``, and ``LightningModule`` depending on the current ``RunningStage``
+    DataPipeline hold the engineering logic to connect ``Preprocess`` and/or ``PostProcess`` objects to
+    the ``DataModule``, Flash ``Task`` and ``Trainer``.
 
-    The ``Preprocess`` hooks are used to generate several objects:
+    Example::
 
-    1. Generate an ``AutoDataset`` from ``load_data`` and ``load_sample``.
+        class CustomPreprocess(Preprocess):
+            pass
 
-        Example::
-            class AutoDataset
-                def __init__(self, ..., data, ...):
-                    self.preprocessed_data: Iterable = Preprocess.load_data(data)
+        class CustomPostprocess(Postprocess):
+            pass
 
-                def __getitem__(self, index):
-                    return Preprocess.load_sample(self.preprocessed_data[index])
+        custom_data_pipeline = DataPipeline(CustomPreprocess(), CustomPostprocess())
 
-                def __len__(self):
-                    return len(self.preprocessed_data)
+        # And it can set to either the datamodule or model.
 
-    2. Create a ``worker_collate_fn`` which is injected directly into the ``DataLoader``
-       and a ``device_collate_fn`` injected after ``LightningModule.transfer_batch_to_device`` hook.
+        datamodule.data_pipeline = custom_data_pipeline
 
-        Objects description:
-
-        _Sequential:
-
-            ┌─────────────────────────┐
-            │  pre_tensor_transform   │
-            │            |            │
-            │  to_tensor_transform    │
-            │            |            │
-            │  post_tensor_transform  │
-            └─────────────────────────┘
-
-        _PreProcessor:
-
-            The ``_PreProcessor`` performs ``per_sample_transform``, ``collate``, ``per_batch_transform`` as follow:
-
-            ``per_batch_transform`` and ``per_sample_transform_on_device`` are mutually exclusive
-
-            def forward(self, samples: Sequence[Any]):
-                    samples = [self.per_sample_transform(sample) for sample in samples]
-                    samples = type(samples)(samples)
-                    samples = self.collate_fn(samples)
-                samples = self.per_batch_transform(samples)
-                return samples
-
-            ``_PreProcessor`` in worker:
-
-                * per_sample_transform: _Sequential(
-                    pre_tensor_transform, to_tensor_transform, post_tensor_transform)
-
-                * collate: Set to ``do_nothing`` is ``per_sample_transform_on_device`` is implemented
-                    and not ``per_batch_transform``
-
-                * per_batch_transform
-
-            ``_PreProcessor`` on device:
-
-                * per_sample_transform_on_device
-
-                * collate: Set to ``do_nothing`` is ``per_batch_transform`` is implemented
-                    and not ``per_sample_transform_on_device``
-
-                * per_batch_transform_on_device
-
-
-        General flow:
-                                                          load_sample
-                                                               │
-                                                      pre_tensor_transform
-                                                               │
-                                                      to_tensor_transform
-                                                               │
-                                                     post_tensor_transform
-                                                               │
-                                              ┌────────────────┴───────────────────┐
-(move samples's sequence to main worker) -->  │                                    │
-                                  per_sample_transform_on_device                collate
-                                              │                                    │
-                                            collate                          per_batch_transform
-                                              │                                    │ <-- (move batch to main worker)
-                                    per_batch_transform_on_device      per_batch_transform_on_device
-                                              │                                    │
-                                              └─────────────────┬──────────────────┘
-                                                                │
-                                                        model.predict_step
-                                                                │
-                                                        per_batch_transform
-                                                                │
-                                                            uncollate
-                                                                │
-                                                        per_sample_transform
-
+        model.data_pipeline = custom_data_pipeline
     """
 
     PREPROCESS_FUNCS = _PREPROCESS_FUNCS
