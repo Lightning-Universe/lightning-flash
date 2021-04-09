@@ -13,7 +13,7 @@
 # limitations under the License.
 from functools import partial
 from types import FunctionType
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -33,10 +33,10 @@ class FlashRegistry:
         def my_model(nc_input=5, nc_output=6):
             return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
-        mlp, nc_input, nc_output = backbones("my_model")(nc_output=7)
+        mlp, nc_input, nc_output = backbones.get("my_model")(nc_output=7)
 
         backbones(my_model, name="foo")
-        assert backbones("foo")
+        assert backbones.get("foo")
 
     """
 
@@ -60,7 +60,7 @@ class FlashRegistry:
         with_metadata: bool = False,
         strict: bool = True,
         **metadata,
-    ) -> Union[callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[callable]]:
+    ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
         """
         This function is used to gather matches from the registry:
 
@@ -87,7 +87,7 @@ class FlashRegistry:
 
     def _register_function(
         self,
-        fn: callable,
+        fn: Callable,
         name: Optional[str] = None,
         override: bool = False,
         metadata: Optional[Dict[str, Any]] = None
@@ -123,12 +123,17 @@ class FlashRegistry:
 
     def __call__(
         self,
-        fn: Optional[callable] = None,
+        fn: Optional[Callable[..., Any]] = None,
         name: Optional[str] = None,
         override: bool = False,
         **metadata
-    ) -> callable:
-        """Register a function"""
+    ) -> Callable:
+        """
+        This function is used to register new functions to the registry along their metadata.
+
+        Functions can be filtered using metadata using the ``get`` function.
+
+        """
         if fn is not None:
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)
             return fn
