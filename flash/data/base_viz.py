@@ -65,7 +65,10 @@ class BaseViz(BaseDataFetcher):
         # visualize a ``predict`` batch
         dm.show_predict_batches()
 
-    .. note:: If the user wants to plot all different transformation stages at once, override the ``show`` function directly.   # noqa E501
+    .. note::
+
+        If the user wants to plot all different transformation stages at once,
+        override the ``show`` function directly.
 
     Example::
 
@@ -83,7 +86,10 @@ class BaseViz(BaseDataFetcher):
                     'per_batch_transform': [...],
                 }
 
-    .. note:: As the ``preprocess`` hooks are injected within the threaded workers for the DataLoader, the data won't be accessible when using ``num_workers > 0``.     # noqa E501
+    .. note::
+
+        As the ``preprocess`` hooks are injected within the threaded workers for the DataLoader,
+        the data won't be accessible when using ``num_workers > 0``.
 
     """
 

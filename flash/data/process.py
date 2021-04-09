@@ -109,8 +109,7 @@ class Preprocess(Properties, torch.nn.Module):
 
     The ``Preprocess`` is currently supporting the following hooks:
 
-        - ``load_data``: Expect some metadata (like a path to folder)
-            and return an Iterable (can be a ``Dataset``, but not recommended)
+        - ``load_data``: Expect some metadata and return an Mapping (can be a ``Dataset``, but not recommended)
         - ``load_sample``: Hook containing the logic to load a sample from metadata. Example: an image from a path.
         - ``pre_tensor_transform``: Hook used to transform objects.
         - ``to_tensor_transform``: Hook used to convert an object to tensor or data structure containing tensors.
@@ -121,9 +120,15 @@ class Preprocess(Properties, torch.nn.Module):
         - ``per_batch_transform_on_device``: Hook used to transform a batch already on ``GPU`` or ``TPU``.
 
 
-    .. note:: By default, each hook will be no-op. To customize them, just override the hooks and ``Flash`` will take care of calling them at the right moment.     # noqa E501
+    .. note::
 
-    .. note:: The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive as it will impact performances.     # noqa E501
+        By default, each hook will be no-op. To customize them,
+        just override the hooks and ``Flash`` will take care of calling them at the right moment.
+
+    .. note::
+
+        The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive
+        as it will impact performances.
 
     Each hook can be made specialized by adding prefix such as ``train``, ``val``, ``test``, ``predict``.
 
@@ -157,7 +162,10 @@ class Preprocess(Properties, torch.nn.Module):
                 elif self.predicting:
                     # logic for predict
 
-    .. note:: It is possible to wrap a ``Dataset`` within a ``Preprocess`` ``load_data`` function. However, it is recommended to split the processing logic within the hooks.   # noqa E501
+    .. note::
+
+        It is possible to wrap a ``Dataset`` within a ``Preprocess`` ``load_data`` function.
+        However, it is recommended to split the processing logic within the hooks.
 
     Example::
 
@@ -196,7 +204,10 @@ class Preprocess(Properties, torch.nn.Module):
             def __len__(self):
                 return len(self.preprocessed_data)
 
-    .. note:: The ``pre_tensor_transform``, ``to_tensor_transform``, ``post_tensor_transform``, ``collate``, ``per_batch_transform`` are injected as the ``collate_fn`` function of the DataLoader.     # noqa E501
+    .. note::
+
+        The ``pre_tensor_transform``, ``to_tensor_transform``, ``post_tensor_transform``, ``collate``, ``per_batch_transform``
+        are injected as the ``collate_fn`` function of the DataLoader.
 
     Here is the pseudo code using the preprocess hooks name. Surely, Flash will take care of calling the right hooks for each stage.
 
@@ -221,7 +232,10 @@ class Preprocess(Properties, torch.nn.Module):
 
         dataloader = DataLoader(dataset, collate_fn=collate_fn)
 
-    .. note:: The ``per_sample_transform_on_device``, ``collate``, ``per_batch_transform_on_device`` are injected after the ``LightningModule`` ``transfer_batch_to_device`` hook.      # noqa E501
+    .. note::
+
+        The ``per_sample_transform_on_device``, ``collate``, ``per_batch_transform_on_device`` are injected
+        after the ``LightningModule`` ``transfer_batch_to_device`` hook.
 
     Here is the pseudo code using the preprocess hooks name.
     Surely, Flash will take care of calling the right hooks for each stage.
