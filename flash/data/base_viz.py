@@ -1,75 +1,98 @@
-from contextlib import contextmanager
 from typing import Any, Dict, List, Sequence
 
 from pytorch_lightning.trainer.states import RunningStage
-from torch import Tensor
 
 from flash.core.utils import _is_overriden
-from flash.data.callback import FlashCallback
-from flash.data.process import Preprocess
-from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.data.callback import BaseDataFetcher
+from flash.data.utils import _PREPROCESS_FUNCS
 
 
-class BaseViz(FlashCallback):
+class BaseViz(BaseDataFetcher):
     """
-    This class is used to profile ``Preprocess`` hook outputs and visualize the data transformations.
-    It is disabled by default.
+    This Base Class is used to create visualization tool on top of ``Preprocess`` hooks.
 
-    batches: Dict = {"train": {"to_tensor_transform": [], ...}, ...}
+    Override any of the ``show_{preprocess_hook_name}`` to receive the associated data and visualize them.
+
+    Example::
+
+        from flash.vision import ImageClassificationData
+        from flash.data.base_viz import BaseViz
+
+        class CustomBaseViz(BaseViz):
+
+            def show_load_sample(self, samples: List[Any], running_stage):
+                # plot samples
+
+            def show_pre_tensor_transform(self, samples: List[Any], running_stage):
+                # plot samples
+
+            def show_to_tensor_transform(self, samples: List[Any], running_stage):
+                # plot samples
+
+            def show_post_tensor_transform(self, samples: List[Any], running_stage):
+                # plot samples
+
+            def show_collate(self, batch: List[Any], running_stage):
+                # plot batch
+
+            def show_per_batch_transform(self, batch: List[Any], running_stage):
+                # plot batch
+
+        class CustomImageClassificationData(ImageClassificationData):
+
+            @staticmethod
+            def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
+                return CustomBaseViz(*args, **kwargs)
+
+        dm = CustomImageClassificationData.from_folders(
+            train_folder="./data/train",
+            val_folder="./data/val",
+            test_folder="./data/test",
+            predict_folder="./data/predict")
+
+        # visualize a ``train`` batch
+        dm.show_train_batches()
+
+        # visualize next ``train`` batch
+        dm.show_train_batches()
+
+        # visualize a ``val`` batch
+        dm.show_val_batches()
+
+        # visualize a ``test`` batch
+        dm.show_test_batches()
+
+        # visualize a ``predict`` batch
+        dm.show_predict_batches()
+
+    .. note:: If the user wants to plot all different transformation stages at once, override the ``show`` function directly.   # noqa E501
+
+    Example::
+
+        class CustomBaseViz(BaseViz):
+
+            def show(self, batch: Dict[str, Any], running_stage: RunningStage):
+                print(batch)
+                # out
+                {
+                    'load_sample': [...],
+                    'pre_tensor_transform': [...],
+                    'to_tensor_transform': [...],
+                    'post_tensor_transform': [...],
+                    'collate': [...],
+                    'per_batch_transform': [...],
+                }
+
+    .. note:: As the ``preprocess`` hooks are injected within the threaded workers for the DataLoader, the data won't be accessible when using ``num_workers > 0``.     # noqa E501
 
     """
 
-    def __init__(self, enabled: bool = False):
-        self.batches = {k: {} for k in _STAGES_PREFIX.values()}
-        self.enabled = enabled
-        self._preprocess = None
-
-    def _store(self, data: Any, fn_name: str, running_stage: RunningStage) -> None:
-        if self.enabled:
-            store = self.batches[_STAGES_PREFIX[running_stage]]
-            store.setdefault(fn_name, [])
-            store[fn_name].append(data)
-
-    def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
-        self._store(sample, "load_sample", running_stage)
-
-    def on_pre_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        self._store(sample, "pre_tensor_transform", running_stage)
-
-    def on_to_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        self._store(sample, "to_tensor_transform", running_stage)
-
-    def on_post_tensor_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
-        self._store(sample, "post_tensor_transform", running_stage)
-
-    def on_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
-        self._store(batch, "per_batch_transform", running_stage)
-
-    def on_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
-        self._store(batch, "collate", running_stage)
-
-    def on_per_sample_transform_on_device(self, samples: Sequence, running_stage: RunningStage) -> None:
-        self._store(samples, "per_sample_transform_on_device", running_stage)
-
-    def on_per_batch_transform_on_device(self, batch: Any, running_stage: RunningStage) -> None:
-        self._store(batch, "per_batch_transform_on_device", running_stage)
-
-    @contextmanager
-    def enable(self):
-        self.enabled = True
-        yield
-        self.enabled = False
-
-    def attach_to_datamodule(self, datamodule) -> None:
-        datamodule.viz = self
-
-    def attach_to_preprocess(self, preprocess: Preprocess) -> None:
-        preprocess.add_callbacks([self])
-        self._preprocess = preprocess
+    def _show(self, running_stage: RunningStage) -> None:
+        self.show(self.batches[running_stage], running_stage)
 
     def show(self, batch: Dict[str, Any], running_stage: RunningStage) -> None:
         """
-        This function is a hook for users to override with their visualization on a batch.
+        Override this function when you want to visualize a composition.
         """
         for func_name in _PREPROCESS_FUNCS:
             hook_name = f"show_{func_name}"
@@ -77,25 +100,33 @@ class BaseViz(FlashCallback):
                 getattr(self, hook_name)(batch[func_name], running_stage)
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+        """Override to visualize preprocess ``load_sample`` output data."""
         pass
 
     def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        """Override to visualize preprocess ``pre_tensor_transform`` output data."""
         pass
 
     def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        """Override to visualize preprocess ``to_tensor_transform`` output data."""
         pass
 
     def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        """Override to visualize preprocess ``post_tensor_transform`` output data."""
         pass
 
-    def show_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
+    def show_collate(self, batch: List[Any], running_stage: RunningStage) -> None:
+        """Override to visualize preprocess ``collate`` output data."""
         pass
 
-    def show_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
+    def show_per_batch_transform(self, batch: List[Any], running_stage: RunningStage) -> None:
+        """Override to visualize preprocess ``per_batch_transform`` output data."""
         pass
 
-    def show_per_sample_transform_on_device(self, samples: Sequence, running_stage: RunningStage) -> None:
+    def show_per_sample_transform_on_device(self, samples: List[Any], running_stage: RunningStage) -> None:
+        """Override to visualize preprocess ``per_sample_transform_on_device`` output data."""
         pass
 
-    def show_per_batch_transform_on_device(self, batch: Any, running_stage: RunningStage) -> None:
+    def show_per_batch_transform_on_device(self, batch: List[Any], running_stage: RunningStage) -> None:
+        """Override to visualize preprocess ``per_batch_transform_on_device`` output data."""
         pass

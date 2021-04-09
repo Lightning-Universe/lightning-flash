@@ -47,7 +47,7 @@ class DataPipeline:
 
         custom_data_pipeline = DataPipeline(CustomPreprocess(), CustomPostprocess())
 
-        # And it can set to either the datamodule or model.
+        # And it can attached to both the datamodule and model.
 
         datamodule.data_pipeline = custom_data_pipeline
 

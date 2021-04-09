@@ -13,6 +13,7 @@ In this section, we will create a very simple ``ImageClassificationPreprocess`` 
 Example::
 
     import os
+    import numpy as np
     from flash.data.data_module import DataModule
     from flash.data.process import Preprocess
     from PIL.Image import Image
@@ -26,12 +27,19 @@ Example::
         to_tensor = T.ToTensor()
 
         def load_data(self, folder: str, dataset: AutoDataset) -> Iterable:
-            # The AutoDataset is optional but can be useful to save some metadata
-            # This returns [(image_path_1, label_1), ... (image_path_n, label_n)]
-            return make_dataset_from_folder(folder)
+            # The AutoDataset is optional but can be useful to save some metadata.
+
+            # metadata looks like this: [(image_path_1, label_1), ... (image_path_n, label_n)].
+            metadata = make_dataset_from_folder(folder)
+
+            # for the train ``AutoDataset``, we want to store the ``num_classes``.
+            if self.training:
+                dataset.num_classes = len(np.unique([m[1] for m in metadata]))
+
+            return metadata
 
         def predict_load_data(self, predict_folder: str) -> Iterable:
-            # This returns [image_path_1, ... image_path_m]
+            # This returns [image_path_1, ... image_path_m].
             return os.listdir(folder)
 
         def load_sample(self, sample: Union[str, Tuple[str, int]]) -> Tuple[Image, int]
@@ -41,7 +49,11 @@ Example::
                 image_path, label = sample
                 return load_pil(image_path), label
 
-        def to_tensor_transform(self, sample: Union[Image, Tuple[Image, int]]) -> Union[Tensor, Tuple[Tensor, int]]:
+        def to_tensor_transform(
+            self,
+            sample: Union[Image, Tuple[Image, int]]
+        ) -> Union[Tensor, Tuple[Tensor, int]]:
+
             if self.predicting:
                 return self.to_tensor(sample)
             else:
@@ -54,11 +66,19 @@ Example::
         preprocess_cls = ImageClassificationPreprocess
 
         @classmethod
-        def from_folders(cls, train_folder: Optional[str], val_folder: Optional[str], test_folder: Optional[str], predict_folder: Optional[str], **kwargs):
+        def from_folders(
+            cls,
+            train_folder: Optional[str],
+            val_folder: Optional[str],
+            test_folder: Optional[str],
+            predict_folder: Optional[str],
+            **kwargs
+        ):
 
             preprocess = cls.preprocess_cls()
 
-            # {stage}_load_data_input will be given to your ``Preprocess`` ``{stage}_load_data`` function.
+            # {stage}_load_data_input will be given to your
+            # ``Preprocess`` ``{stage}_load_data`` function.
             return cls.from_load_data_inputs(
                     train_load_data_input=train_folder,
                     val_load_data_input=val_folder,
@@ -68,8 +88,9 @@ Example::
                     **kwargs,
                 )
 
-    dm = ImageClassificationDataModule.from_folders()
+    dm = ImageClassificationDataModule.from_folders("./data/train", "./data/val", "./data/test", "./data/predict")
 
+    # todo (tchaton): Add model des
     ...
     trainer.fit(model, dm)
 

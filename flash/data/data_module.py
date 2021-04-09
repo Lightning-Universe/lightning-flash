@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Dict, Generator, Iterable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -25,6 +25,7 @@ from torch.utils.data.dataset import Subset
 
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseViz
+from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 from flash.data.utils import _STAGES_PREFIX
 
@@ -83,24 +84,33 @@ class DataModule(pl.LightningDataModule):
             num_workers = 0 if platform.system() == "Darwin" else os.cpu_count()
         self.num_workers = num_workers
 
-        self._preprocess = None
-        self._postprocess = None
-        self._viz = None
+        self._preprocess: Optional[Preprocess] = None
+        self._postprocess: Optional[Postprocess] = None
+        self._viz: Optional[BaseViz] = None
+        self._data_fetcher: Optional[BaseDataFetcher] = None
 
         # this may also trigger data preloading
         self.set_running_stages()
 
     @property
     def viz(self) -> BaseViz:
-        return self._viz or DataModule.configure_vis()
+        return self._viz or DataModule.configure_data_fetcher()
 
     @viz.setter
     def viz(self, viz: BaseViz) -> None:
         self._viz = viz
 
     @staticmethod
-    def configure_vis(*args, **kwargs) -> BaseViz:
-        return BaseViz()
+    def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
+        return BaseDataFetcher()
+
+    @property
+    def data_fetcher(self) -> BaseDataFetcher:
+        return self._data_fetcher or DataModule.configure_data_fetcher()
+
+    @data_fetcher.setter
+    def data_fetcher(self, data_fetcher: BaseDataFetcher) -> None:
+        self._data_fetcher = data_fetcher
 
     def _reset_iterator(self, stage: RunningStage) -> Iterable[Any]:
         iter_name = f"_{stage}_iter"
@@ -108,12 +118,6 @@ class DataModule(pl.LightningDataModule):
         iterator = iter(dataloader_fn())
         setattr(self, iter_name, iterator)
         return iterator
-
-    def show(self, batch: Dict[str, Any], stage: RunningStage) -> None:
-        """
-        This function is a hook for users to override with their visualization on a batch.
-        """
-        self.viz.show(batch, stage)
 
     def _show_batch(self, stage: RunningStage, reset: bool = True) -> None:
         """
@@ -125,13 +129,14 @@ class DataModule(pl.LightningDataModule):
             self._reset_iterator(stage)
 
         iter_dataloader = getattr(self, iter_name)
-        with self.viz.enable():
+        with self.data_fetcher.enable():
             try:
                 _ = next(iter_dataloader)
             except StopIteration:
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
-            self.show(self.viz.batches[stage], stage)
+            data_fetcher: BaseViz = self.data_fetcher
+            data_fetcher._show(stage)
             if reset:
                 self.viz.batches[stage] = {}
 
@@ -380,8 +385,9 @@ class DataModule(pl.LightningDataModule):
         else:
             data_pipeline = cls(**kwargs).data_pipeline
 
-        viz_callback = cls.configure_vis()
-        viz_callback.attach_to_preprocess(data_pipeline._preprocess_pipeline)
+        data_fetcher = cls.configure_data_fetcher()
+
+        data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 
         train_dataset = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
@@ -404,5 +410,5 @@ class DataModule(pl.LightningDataModule):
         )
         datamodule._preprocess = data_pipeline._preprocess_pipeline
         datamodule._postprocess = data_pipeline._postprocess_pipeline
-        viz_callback.attach_to_datamodule(datamodule)
+        data_fetcher.attach_to_datamodule(datamodule)
         return datamodule

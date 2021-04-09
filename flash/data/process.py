@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -107,26 +107,40 @@ class Preprocess(Properties, torch.nn.Module):
     It is particularly relevant when you want to provide ready-to-production implementation which works
     with 4 different stages: ``TRAINING``, ``VALIDATING``, ``TESTING``, ``PREDICTING``.
 
-    The ``Preprocess`` is currently supporting ``9 hooks`` which can be overridden by the users.
+    The ``Preprocess`` is currently supporting the following hooks:
 
-    .. note:: By default, each hook will perform will be a no-op.
+        - ``load_data``: Expect some metadata (like a path to folder)
+            and return an Iterable (can be a ``Dataset``, but not recommended)
+        - ``load_sample``: Hook containing the logic to load a sample from metadata. Example: an image from a path.
+        - ``pre_tensor_transform``: Hook used to transform objects.
+        - ``to_tensor_transform``: Hook used to convert an object to tensor or data structure containing tensors.
+        - ``post_tensor_transform``: Hook used to transform a single tensor sample.
+        - ``per_batch_transform``: Hook used to transform  a batch.
+        - ``collate``: Hook to transform a sequences of sample into a batch.
+        - ``per_sample_transform_on_device``: Hook used to transform a sample already on ``GPU`` or ``TPU``.
+        - ``per_batch_transform_on_device``: Hook used to transform a batch already on ``GPU`` or ``TPU``.
 
-    Each hook can be made specialized with an added prefix such as ``train``, ``val``, ``test``, ``predict``.
+
+    .. note:: By default, each hook will be no-op. To customize them, just override the hooks and ``Flash`` will take care of calling them at the right moment.     # noqa E501
+
+    .. note:: The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive as it will impact performances.     # noqa E501
+
+    Each hook can be made specialized by adding prefix such as ``train``, ``val``, ``test``, ``predict``.
 
     Example::
 
         class CustomPreprocess(Preprocess):
 
-            def train_load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
+            def train_load_data(cls, data: Any, dataset: Optional[Any] = None) -> Iterable:
                 pass
 
-    Each hook is aware of its name through `current_fn` and running stage as follow:
+    Each hook is aware of its name through ``current_fn`` and ``running stage`` as follow:
 
     Example::
 
         class CustomPreprocess(Preprocess):
 
-            def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
+            def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Iterable:
 
                 print(self.current_fn)
                 # Out: `load_data`
@@ -142,6 +156,18 @@ class Preprocess(Properties, torch.nn.Module):
 
                 elif self.predicting:
                     # logic for predict
+
+    .. note:: It is possible to wrap a ``Dataset`` within a ``Preprocess`` ``load_data`` function. However, it is recommended to split the processing logic within the hooks.   # noqa E501
+
+    Example::
+
+        from torchvision import datasets
+
+        class CustomPreprocess(Preprocess):
+
+            def load_data(cls, path_to_data: str) -> Iterable:
+
+                return datasets.MNIST(path_to_data, download=True, transform=transforms.ToTensor())
 
     .. note:: The ``load_data`` and ``load_sample`` will be used to generate an AutoDataset object.
 
@@ -170,9 +196,7 @@ class Preprocess(Properties, torch.nn.Module):
             def __len__(self):
                 return len(self.preprocessed_data)
 
-    .. note:: The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive as it will impact performances
-
-    .. note:: The ``pre_tensor_transform``, ``to_tensor_transform``, ``post_tensor_transform``, ``collate``, ``per_batch_transform`` are injected as the ``collate_fn`` function of the DataLoader:
+    .. note:: The ``pre_tensor_transform``, ``to_tensor_transform``, ``post_tensor_transform``, ``collate``, ``per_batch_transform`` are injected as the ``collate_fn`` function of the DataLoader.     # noqa E501
 
     Here is the pseudo code using the preprocess hooks name. Surely, Flash will take care of calling the right hooks for each stage.
 
@@ -197,9 +221,10 @@ class Preprocess(Properties, torch.nn.Module):
 
         dataloader = DataLoader(dataset, collate_fn=collate_fn)
 
-    .. note:: The ``per_sample_transform_on_device``, ``collate``, ``per_batch_transform_on_device`` are injected after the ``LightningModule`` ``transfer_batch_to_device`` hook.
+    .. note:: The ``per_sample_transform_on_device``, ``collate``, ``per_batch_transform_on_device`` are injected after the ``LightningModule`` ``transfer_batch_to_device`` hook.      # noqa E501
 
-    Here is the pseudo code using the preprocess hooks name. Surely, Flash will take care of calling the right hooks for each stage.
+    Here is the pseudo code using the preprocess hooks name.
+    Surely, Flash will take care of calling the right hooks for each stage.
 
     Example::
 
@@ -209,18 +234,15 @@ class Preprocess(Properties, torch.nn.Module):
             # if ``per_batch_transform`` hook is overridden, those functions below will be no-ops
             samples = [per_sample_transform_on_device(sample) for sample in samples]
             samples = type(samples)(samples)
-            samples = self.collate(samples)
+            samples = collate(samples)
 
-            samples = self.per_batch_transform_on_device(samples)
+            samples = per_batch_transform_on_device(samples)
             return samples
 
         # move the data to device
         data = lightning_module.transfer_data_to_device(data)
         data = collate_fn(data)
-        lightning_module.forward(data)
-
-
-
+        lightning_module(data)
 
     """
 
@@ -290,7 +312,7 @@ class Preprocess(Properties, torch.nn.Module):
         self._callbacks.extend(_callbacks)
 
     @classmethod
-    def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
+    def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
         """Loads entire data from Dataset"""
         return data
 
