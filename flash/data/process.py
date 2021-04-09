@@ -102,14 +102,14 @@ class PreprocessState:
 
 class Preprocess(Properties, torch.nn.Module):
     """
-    The :class:`~flash.data.process.Preprocess` is used to encapsulate ``all the processing logic`` from data loading up to the model.
+    The :class:`~flash.data.process.Preprocess` is used to encapsulate all the processing data loading logic up to the model.
 
     It is particularly relevant when you want to provide ready-to-production implementation which works
-    with 4 different stages: ``TRAINING``, ``VALIDATING``, ``TESTING``, ``PREDICTING``.
+    with 4 different stages: ``training``, ``validation``, ``test` and inference(``predicting``).
 
-    The :class:`~flash.data.process.Preprocess` is currently supporting the following hooks:
+    The :class:`~flash.data.process.Preprocess` supports the following hooks:
 
-        - ``load_data``: Expect some metadata and return an Mapping (can be a ``Dataset``, but not recommended)
+        - ``load_data``: Receive some metadata to generate a Mapping from. Example: Take a folder path and return list of image paths.
         - ``load_sample``: Hook containing the logic to load a sample from metadata. Example: an image from a path.
         - ``pre_tensor_transform``: Hook used to transform objects.
         - ``to_tensor_transform``: Hook used to convert an object to tensor or data structure containing tensors.

@@ -365,9 +365,9 @@ class DataPipeline:
             save_per_sample=save_per_sample
         )
 
-    def _attach_postprocess_to_model(self, model: 'Task') -> 'Task':
+    def _attach_postprocess_to_model(self, model: 'Task', stage) -> 'Task':
         model.predict_step = self._model_predict_step_wrapper(
-            model.predict_step, self._create_uncollate_postprocessors(), model
+            model.predict_step, self._create_uncollate_postprocessors(stage), model
         )
         return model
 
@@ -376,7 +376,7 @@ class DataPipeline:
         self._attach_preprocess_to_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
-            self._attach_postprocess_to_model(model)
+            self._attach_postprocess_to_model(model, stage)
 
     def _detach_from_model(self, model: 'Task', stage: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stage)

@@ -31,7 +31,7 @@ def call_script(
     if args is None:
         args = []
     args = [str(a) for a in args]
-    command = [sys.executable, filepath] + args
+    command = [sys.executable, "-m", "coverage", "run", filepath] + args
     print(" ".join(command))
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
@@ -76,3 +76,7 @@ def test_example(tmpdir, folder, file):
 @pytest.mark.skipif(reason="CI bug")
 def test_generic_example(tmpdir):
     run_test(str(root / "flash_examples" / "generic_task.py"))
+
+
+def test_custom_task(tmpdir):
+    run_test(str(root / "flash_examples" / "custom_task.py"))

@@ -6,13 +6,21 @@ along with a custom data module.
 
 .. testcode:: python
 
-    import flash
+    from typing import Any, List, Tuple
 
+    import numpy as np
     import torch
-    from torch.utils.data import TensorDataset, DataLoader
-    from torch import nn
+    from pytorch_lightning import seed_everything
     from sklearn import datasets
     from sklearn.model_selection import train_test_split
+    from torch import nn
+
+    import flash
+    from flash.data.auto_dataset import AutoDataset
+    from flash.data.process import Postprocess, Preprocess
+
+    seed_everything(42)
+
 
 The Task: Linear regression
 ---------------------------
@@ -23,19 +31,7 @@ override the ``__init__`` and ``forward`` methods.
 
 .. testcode::
 
-    from flash.data.process import Postprocess
-    from flash.data.process import Postprocess
-
-    class LinearRegressionPostprocess(Postprocess)
-
-        def per_sample_transform(self, samples):
-            for sample in samples:
-                print(f'disease progression: {sample}')
-            return samples
-
     class LinearRegression(flash.Task):
-
-        postprocess_cls = LinearRegressionPostprocess
 
         def __init__(self, num_inputs, learning_rate=0.001, metrics=None):
             # what kind of model do we want?
@@ -74,28 +70,81 @@ Lightning’s
 The Data
 --------
 
-For a task you will likely need a specific way of loading data. For this
-example, lets say we want a ``flash.DataModule`` to be used explicitly
-for the prediction of diabetes disease progression. We can create this
-``DataModule`` below, wrapping the scikit-learn `Diabetes
+For a task you will likely need a specific way of loading data.
+
+Firstly, it is recommended to create a :class:`~flash.data.process.Preprocess` object.
+The :class:`~flash.data.process.Preprocess` contains all the processing logic and are similar to ``Callback``.
+The user would to override hooks with their processing logic.
+
+.. note::
+    As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`
+    before going further in the tutorial.
+
+Secondly, the user would have to implement a ``DataModule``.
+
+For this task, we will be using ``scikit-learn`` `Diabetes
 dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
 
+Example::
 
-You’ll notice we added a ``DataPipeline``, which will be used when we
-call ``.predict()`` on our model. In this case we want to nicely format
-our output from the model with the string ``"disease progression"``, but
-you could do any sort of post processing you want (see :ref:`datapipeline`).
+    import torch
+    from torch import Tensor
+    import numpy as np
 
-Fit
----
+    ND = np.ndarray
+
+    class NumpyPreprocess(Preprocess):
+
+        def load_data(self, data: Tuple[ND, ND], dataset: AutoDataset) -> List[Tuple[ND, float]]:
+            if self.training:
+                dataset.num_inputs = data[0].shape[1]
+            return [(x, y) for x, y in zip(*data)]
+
+        def to_tensor_transform(self, sample: Any) -> Tuple[Tensor, Tensor]:
+            x, y = sample
+            x = torch.from_numpy(x).float()
+            y = torch.tensor(y, dtype=torch.float)
+            return x, y
+
+        def predict_load_data(self, data: ND) -> ND:
+            return data
+
+        def predict_to_tensor_transform(self, sample: ND) -> ND:
+            return torch.from_numpy(sample).float()
+
+
+    class SklearnDataModule(flash.DataModule):
+
+        preprocess_cls = NumpyPreprocess
+
+        @classmethod
+        def from_dataset(cls, x: ND, y: ND, batch_size: int = 64, num_workers: int = 0):
+
+            preprocess = cls.preprocess_cls()
+
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
+
+            dm = cls.from_load_data_inputs(
+                train_load_data_input=(x_train, y_train),
+                test_load_data_input=(x_test, y_test),
+                preprocess=preprocess,
+                batch_size=batch_size,
+                num_workers=num_workers
+            )
+            dm.num_inputs = dm._train_ds.num_inputs
+            return dm
+
+
+Fitting
+-------
 
 Like any Flash Task, we can fit our model using the ``flash.Trainer`` by
 supplying the task itself, and the associated data:
 
 .. code:: python
 
-    data = DiabetesData()
-    model = LinearRegression(num_inputs=data.num_inputs)
+    datamodule = SklearnDataModule.from_dataset(*datasets.load_diabetes(return_X_y=True))
+    model = LinearRegression(num_inputs=datamodule.num_inputs)
 
     trainer = flash.Trainer(max_epochs=1000)
     trainer.fit(model, data)
@@ -112,15 +161,43 @@ few examples from the test set of our data:
         [-0.0128, -0.0446, -0.0235, -0.0401, -0.0167,  0.0046, -0.0176, -0.0026, -0.0385, -0.0384],
         [-0.0237, -0.0446,  0.0455,  0.0907, -0.0181, -0.0354,  0.0707, -0.0395, -0.0345, -0.0094]])
 
-    model.predict(predict_data)
+    predictions = model.predict(predict_data)
+    print(predictions)
+    #out: [tensor([14.7190]), tensor([14.7100]), tensor([14.7288]), tensor([14.6685]), tensor([14.6687])]
 
-Because of our custom data pipeline’s ``after_uncollate`` method, we
-will get a nicely formatted output like the following:
 
-.. code::
+To customize the postprocessing of this task, you can create a :class:`~flash.data.process.Postprocess` objects and assign it to your model as follow:
 
-   ['disease progression: 155.90',
-    'disease progression: 156.59',
-    'disease progression: 152.69',
-    'disease progression: 149.05',
-    'disease progression: 150.90']
+.. code:: python
+
+    class CustomPostprocess(Postprocess):
+
+        THRESHOLD = 14.72
+
+        def predict_per_sample_transform(self, pred: Any) -> Any:
+            if pred > self.THRESHOLD:
+
+                def send_slack_message(pred):
+                    print(f"This prediction: {pred} is above the threshold: {self.THRESHOLD}")
+
+                send_slack_message(pred)
+            return pred
+
+
+    class LinearRegression(flash.Task):
+
+        postprocess_cls = CustomPostprocess
+
+        ...
+
+And when running predict one more time.
+
+.. code:: python
+
+    predict_data = ...
+
+    predictions = model.predict(predict_data)
+    # out: This prediction: tensor([14.7288]) is above the threshold: 14.72
+
+    print(predictions)
+    # out: [tensor([14.7190]), tensor([14.7100]), tensor([14.7288]), tensor([14.6685]), tensor([14.6687])]
