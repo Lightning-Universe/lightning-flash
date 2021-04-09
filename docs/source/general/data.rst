@@ -90,8 +90,9 @@ Example::
 
     dm = ImageClassificationDataModule.from_folders("./data/train", "./data/val", "./data/test", "./data/predict")
 
-    # todo (tchaton): Add model des
-    ...
+    model = ImageClassifier(...)
+    trainer = Trainer(...)
+
     trainer.fit(model, dm)
 
 
