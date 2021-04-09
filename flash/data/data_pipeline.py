@@ -26,7 +26,7 @@ from torch.utils.data.dataloader import DataLoader
 from flash.data.auto_dataset import AutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess
-from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
     from flash.core.model import Task
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 class DataPipeline:
     """
-    DataPipeline hold the engineering logic to connect ``Preprocess`` and/or ``PostProcess`` objects to
+    DataPipeline hold the engineering logic to connect :class:`~flash.data.process.Preprocess` and/or ``PostProcess`` objects to
     the ``DataModule``, Flash ``Task`` and ``Trainer``.
 
     Example::
@@ -55,6 +55,7 @@ class DataPipeline:
     """
 
     PREPROCESS_FUNCS = _PREPROCESS_FUNCS
+    POSTPROCES_FUNCS = _POSTPROCESS_FUNCS
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
@@ -116,13 +117,8 @@ class DataPipeline:
     def device_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
         return self._create_collate_preprocessors(running_stage)[1]
 
-    @property
-    def postprocessor(self) -> _PostProcessor:
-        return self._postprocessor or self._create_uncollate_postprocessors()
-
-    @postprocessor.setter
-    def postprocessor(self, new_processor: _PostProcessor):
-        self._postprocessor = new_processor
+    def postprocessor(self, running_stage: RunningStage) -> _PostProcessor:
+        return self._create_uncollate_postprocessors(running_stage)
 
     @classmethod
     def _resolve_function_hierarchy(
@@ -339,23 +335,32 @@ class DataPipeline:
                 self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn, model, stage)
             )
 
-    def _create_uncollate_postprocessors(self) -> _PostProcessor:
+    def _create_uncollate_postprocessors(self, stage: RunningStage) -> _PostProcessor:
         save_per_sample = None
         save_fn = None
 
+        postprocess = self._postprocess_pipeline
+
+        func_names: Dict[str, str] = {
+            k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=Postprocess)
+            for k in self.POSTPROCES_FUNCS
+        }
+
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
-        if self._postprocess_pipeline._save_path:
-            save_per_sample = self._is_overriden('save_sample', self._postprocess_pipeline, Postprocess)
+        if postprocess._save_path:
+            save_per_sample = self._is_overriden_recursive(
+                "save_sample", postprocess, object_type=Postprocess, prefix=_STAGES_PREFIX[stage]
+            )
 
             if save_per_sample:
-                save_per_sample = self._postprocess_pipeline._save_sample
+                save_per_sample = getattr(postprocess, func_names["save_sample"])
             else:
-                save_fn = self._postprocess_pipeline._save_data
+                save_fn = getattr(postprocess, func_names["save_data"])
 
         return _PostProcessor(
-            self._postprocess_pipeline.uncollate,
-            self._postprocess_pipeline.per_batch_transform,
-            self._postprocess_pipeline.per_sample_transform,
+            getattr(postprocess, func_names["uncollate"]),
+            getattr(postprocess, func_names["per_batch_transform"]),
+            getattr(postprocess, func_names["per_sample_transform"]),
             save_fn=save_fn,
             save_per_sample=save_per_sample
         )

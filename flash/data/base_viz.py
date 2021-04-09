@@ -9,7 +9,7 @@ from flash.data.utils import _PREPROCESS_FUNCS
 
 class BaseViz(BaseDataFetcher):
     """
-    This Base Class is used to create visualization tool on top of ``Preprocess`` hooks.
+    This Base Class is used to create visualization tool on top of :class:`~flash.data.process.Preprocess` hooks.
 
     Override any of the ``show_{preprocess_hook_name}`` to receive the associated data and visualize them.
 
@@ -88,7 +88,7 @@ class BaseViz(BaseDataFetcher):
 
     .. note::
 
-        As the ``preprocess`` hooks are injected within the threaded workers for the DataLoader,
+        As the :class:`~flash.data.process.Preprocess` hooks are injected within the threaded workers for the DataLoader,
         the data won't be accessible when using ``num_workers > 0``.
 
     """

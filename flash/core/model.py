@@ -148,7 +148,7 @@ class Task(LightningModule):
         x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
-        predictions = data_pipeline.postprocessor(predictions)
+        predictions = data_pipeline.postprocessor(running_stage)(predictions)
         return predictions
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
@@ -176,7 +176,11 @@ class Task(LightningModule):
 
     @property
     def postprocess(self) -> Postprocess:
-        return getattr(self._data_pipeline, '_postprocess_pipeline', None) or self._postprocess
+        _postprocess_pipeline = getattr(self._data_pipeline, '_postprocess_pipeline', None)
+        if type(_postprocess_pipeline) != Postprocess:
+            return _postprocess_pipeline
+        else:
+            return self._postprocess or self.postprocess_cls()
 
     @postprocess.setter
     def postprocess(self, postprocess: Postprocess) -> None:
@@ -185,10 +189,7 @@ class Task(LightningModule):
 
     @property
     def data_pipeline(self) -> Optional[DataPipeline]:
-        if self._data_pipeline is not None:
-            return self._data_pipeline
-
-        elif self.preprocess is not None or self.postprocess is not None:
+        if self.preprocess is not None or self.postprocess is not None:
             # use direct attributes here to avoid recursion with properties that also check the data_pipeline property
             return DataPipeline(self.preprocess, self.postprocess)
 
@@ -205,12 +206,8 @@ class Task(LightningModule):
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
         self._data_pipeline = data_pipeline
-        if data_pipeline is not None and getattr(data_pipeline, '_preprocess_pipeline', None) is not None:
-            self._preprocess = data_pipeline._preprocess_pipeline
-
-        if data_pipeline is not None and getattr(data_pipeline, '_postprocess_pipeline', None) is not None:
-            if type(data_pipeline._postprocess_pipeline) != Postprocess:
-                self._postprocess = data_pipeline._postprocess_pipeline
+        self._preprocess = self.preprocess
+        self._postprocess = self.postprocess
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:

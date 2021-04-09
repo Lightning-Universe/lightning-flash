@@ -43,6 +43,14 @@ _PREPROCESS_FUNCS = {
     "collate",
 }
 
+_POSTPROCESS_FUNCS = {
+    "per_batch_transform",
+    "uncollate",
+    "per_sample_transform",
+    "save_sample",
+    "save_data",
+}
+
 
 class CurrentRunningStageContext:
 

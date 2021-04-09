@@ -1,0 +1,116 @@
+from typing import Any, List, Tuple
+
+import numpy as np
+import torch
+from pytorch_lightning import seed_everything
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from torch import nn
+
+import flash
+from flash.data.auto_dataset import AutoDataset
+from flash.data.process import Postprocess, Preprocess
+
+seed_everything(42)
+
+
+class CustomPostprocess(Postprocess):
+
+    THRESHOLD = 14.72
+
+    def predict_per_sample_transform(self, pred: Any) -> Any:
+        if pred > self.THRESHOLD:
+
+            def send_slack_message(pred):
+                print(f"This prediction: {pred} is above the threshold: {self.THRESHOLD}")
+
+            send_slack_message(pred)
+        return pred
+
+
+class LinearRegression(flash.Task):
+
+    postprocess_cls = CustomPostprocess
+
+    def __init__(self, num_inputs, learning_rate=0.001, metrics=None):
+        # what kind of model do we want?
+        model = nn.Linear(num_inputs, 1)
+
+        # what loss function do we want?
+        loss_fn = torch.nn.functional.mse_loss
+
+        # what optimizer to do we want?
+        optimizer = torch.optim.SGD
+
+        super().__init__(
+            model=model,
+            loss_fn=loss_fn,
+            optimizer=optimizer,
+            metrics=metrics,
+            learning_rate=learning_rate,
+        )
+
+    def forward(self, x):
+        # we don't actually need to override this method for this example
+        return self.model(x)
+
+
+class NumpyPreprocess(Preprocess):
+
+    def load_data(self, data: Tuple[np.ndarray, np.ndarray], dataset: AutoDataset) -> List[Tuple[np.ndarray, float]]:
+        if self.training:
+            dataset.num_inputs = data[0].shape[1]
+        return [(x, y) for x, y in zip(*data)]
+
+    def to_tensor_transform(self, sample: Any) -> Tuple[torch.Tensor, torch.Tensor]:
+        x, y = sample
+        x = torch.from_numpy(x).float()
+        y = torch.tensor(y, dtype=torch.float)
+        return x, y
+
+    def predict_load_data(self, data: np.ndarray) -> np.ndarray:
+        return data
+
+    def predict_to_tensor_transform(self, sample: np.ndarray) -> np.ndarray:
+        return torch.from_numpy(sample).float()
+
+
+class SklearnDataModule(flash.DataModule):
+
+    preprocess_cls = NumpyPreprocess
+
+    @classmethod
+    def from_dataset(cls, x: np.ndarray, y: np.ndarray, batch_size: int = 64, num_workers: int = 0):
+
+        preprocess = cls.preprocess_cls()
+
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
+
+        dm = cls.from_load_data_inputs(
+            train_load_data_input=(x_train, y_train),
+            test_load_data_input=(x_test, y_test),
+            preprocess=preprocess,
+            batch_size=batch_size,
+            num_workers=num_workers
+        )
+        dm.num_inputs = dm._train_ds.num_inputs
+        return dm
+
+
+datamodule = SklearnDataModule.from_dataset(*datasets.load_diabetes(return_X_y=True))
+model = LinearRegression(num_inputs=datamodule.num_inputs)
+
+trainer = flash.Trainer(max_epochs=10, progress_bar_refresh_rate=20)
+trainer.fit(model, datamodule=datamodule)
+
+predict_data = np.array([[0.0199, 0.0507, 0.1048, 0.0701, -0.0360, -0.0267, -0.0250, -0.0026, 0.0037, 0.0403],
+                         [-0.0128, -0.0446, 0.0606, 0.0529, 0.0480, 0.0294, -0.0176, 0.0343, 0.0702, 0.0072],
+                         [0.0381, 0.0507, 0.0089, 0.0425, -0.0428, -0.0210, -0.0397, -0.0026, -0.0181, 0.0072],
+                         [-0.0128, -0.0446, -0.0235, -0.0401, -0.0167, 0.0046, -0.0176, -0.0026, -0.0385, -0.0384],
+                         [-0.0237, -0.0446, 0.0455, 0.0907, -0.0181, -0.0354, 0.0707, -0.0395, -0.0345, -0.0094]])
+
+predictions = model.predict(predict_data)
+# out: This prediction: tensor([14.7288]) is above the threshold: 14.72
+
+print(predictions)
+# out: [tensor([14.7190]), tensor([14.7100]), tensor([14.7288]), tensor([14.6685]), tensor([14.6687])]

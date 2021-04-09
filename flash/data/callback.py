@@ -73,7 +73,7 @@ class ControlFlow(FlashCallback):
 
 class BaseDataFetcher(FlashCallback):
     """
-    This class is used to profile ``Preprocess`` hook outputs.
+    This class is used to profile :class:`~flash.data.process.Preprocess` hook outputs.
 
     By default, the callback won't profile the data being processed as it may lead to ``OOMError``.
 
