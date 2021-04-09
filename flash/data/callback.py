@@ -79,6 +79,10 @@ class BaseDataFetcher(FlashCallback):
 
     Example::
 
+        from flash.data.callback import BaseDataFetcher
+        from flash.data.data_module import DataModule
+
+
         class PrintData(BaseDataFetcher):
 
             def print(self):
@@ -109,11 +113,12 @@ class BaseDataFetcher(FlashCallback):
                     batch_size=5)
 
         dm = CustomDataModule.from_inputs(range(5), range(5), range(5), range(5))
+        data_fetcher: PrintData = dm.data_fetcher
 
-        with dm.data_fetcher.enable():
+        with data_fetcher.enable():
             _ = next(iter(dm.val_dataloader()))
 
-        dm.data_fetcher.print()
+        data_fetcher.print()
         # out:
         {
             'train': {},
@@ -127,8 +132,8 @@ class BaseDataFetcher(FlashCallback):
                 'per_batch_transform': [tensor([0, 1, 2, 3, 4])]},
             'predict': {}
         }
-        dm.data_fetcher.reset()
-        dm.data_fetcher.print()
+        data_fetcher.reset()
+        data_fetcher.print()
         # out:
         {
             'train': {},

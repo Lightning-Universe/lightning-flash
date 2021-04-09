@@ -22,7 +22,8 @@ from pytorch_lightning import seed_everything
 from pytorch_lightning.trainer.states import RunningStage
 from torch import tensor
 
-from flash.data.base_viz import BaseDataFetcher, BaseViz
+from flash.data.base_viz import BaseViz
+from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.utils import _STAGES_PREFIX
 from flash.vision import ImageClassificationData
