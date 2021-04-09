@@ -132,8 +132,8 @@ class DataPipeline:
     PREPROCESS_FUNCS = _PREPROCESS_FUNCS
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
-        self._preprocess_pipeline = preprocess or Preprocess()
-        self._postprocess_pipeline = postprocess or Postprocess()
+        self._preprocess_pipeline: Optional[Preprocess] = preprocess or Preprocess()
+        self._postprocess_pipeline: Optional[Postprocess] = postprocess or Postprocess()
         self._postprocessor = None
         self._running_stage = None
 

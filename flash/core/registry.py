@@ -13,7 +13,7 @@
 # limitations under the License.
 from functools import partial
 from types import FunctionType
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -48,7 +48,7 @@ class FlashRegistry:
     def __len__(self) -> int:
         return len(self.functions)
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         return any(key == e["name"] for e in self.functions)
 
     def __repr__(self) -> str:
@@ -59,8 +59,8 @@ class FlashRegistry:
         key: str,
         with_metadata: bool = False,
         strict: bool = True,
-        **metadata,
-    ) -> Union[callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[callable]]:
+        **metadata: Any,
+    ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
         """
         This function is used to gather matches from the registry:
 
@@ -87,15 +87,19 @@ class FlashRegistry:
 
     def _register_function(
         self,
-        fn: callable,
+        fn: Callable,
         name: Optional[str] = None,
         override: bool = False,
         metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
             raise MisconfigurationException(f"You can only register a function, found: {fn}")
 
-        name = name or fn.__name__
+        if name is None:
+            if isinstance(fn, partial):
+                name = fn.func.__name__
+            else:
+                name = fn.__name__
 
         if self._verbose:
             rank_zero_info(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")
@@ -120,14 +124,15 @@ class FlashRegistry:
                 and item["metadata"].items() <= fn["metadata"].items()
             ):
                 return idx
+        return None
 
     def __call__(
         self,
-        fn: Optional[callable] = None,
+        fn: Optional[Callable] = None,
         name: Optional[str] = None,
         override: bool = False,
-        **metadata
-    ) -> callable:
+        **metadata: Any
+    ) -> Callable:
         """Register a function"""
         if fn is not None:
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)
@@ -137,7 +142,7 @@ class FlashRegistry:
         if not (name is None or isinstance(name, str)):
             raise TypeError(f'`name` must be a str, found {name}')
 
-        def _register(cls):
+        def _register(cls: Callable) -> Callable:
             self._register_function(fn=cls, name=name, override=override, metadata=metadata)
             return cls
 

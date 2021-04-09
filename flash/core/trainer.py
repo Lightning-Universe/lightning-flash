@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
-from typing import List, Optional, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Union
 
-from pytorch_lightning import LightningDataModule, LightningModule, Trainer
+from pytorch_lightning import LightningDataModule, LightningModule
+from pytorch_lightning import Trainer as PLTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.callbacks.base import Callback
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
 
+if TYPE_CHECKING:
+    from flash.core.model import Task
 
-class Trainer(Trainer):
+
+class Trainer(PLTrainer):
 
     def fit(
         self,
@@ -31,7 +36,7 @@ class Trainer(Trainer):
         train_dataloader: Optional[DataLoader] = None,
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[LightningDataModule] = None,
-    ):
+    ) -> Union[Any, int]:
         r"""
         Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit()
 
@@ -58,7 +63,7 @@ class Trainer(Trainer):
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[LightningDataModule] = None,
         strategy: Optional[Union[str, BaseFinetuning]] = None,
-    ):
+    ) -> Union[Any, int]:
         r"""
 
         Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
@@ -88,7 +93,7 @@ class Trainer(Trainer):
         self._resolve_callbacks(model, strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
-    def _resolve_callbacks(self, model, strategy):
+    def _resolve_callbacks(self, model: 'Task', strategy: Optional[Union[str, BaseFinetuning]]) -> None:
         """
         This function is used to select the `BaseFinetuning` to be used for finetuning.
         """

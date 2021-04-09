@@ -27,7 +27,8 @@ if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipeline
 
 
-class AutoDataset(Dataset):
+# The Iterable baseclass is necessary for Mypy typing
+class AutoDataset(Dataset, Iterable):
 
     DATASET_KEY = "dataset"
     """

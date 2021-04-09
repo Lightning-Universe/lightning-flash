@@ -11,13 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Union
+from typing import List, TYPE_CHECKING, Union
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim import Optimizer
+
+if TYPE_CHECKING:
+    from flash.core.model import Task
 
 
 class NoFreeze(BaseFinetuning):
@@ -37,7 +40,7 @@ class NoFreeze(BaseFinetuning):
 
 class FlashBaseFinetuning(BaseFinetuning):
 
-    def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True):
+    def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True) -> None:
         r"""
 
         FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
@@ -54,17 +57,17 @@ class FlashBaseFinetuning(BaseFinetuning):
         self.attr_names = [attr_names] if isinstance(attr_names, str) else attr_names
         self.train_bn = train_bn
 
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
+    def freeze_before_training(self, pl_module: Task) -> None:
         self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
-    def freeze_using_attr_names(self, pl_module, attr_names: List[str], train_bn: bool = True):
+    def freeze_using_attr_names(self, pl_module: Task, attr_names: List[str], train_bn: bool = True) -> None:
         for attr_name in attr_names:
             attr = getattr(pl_module, attr_name, None)
             if not attr or not isinstance(attr, nn.Module):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(modules=attr, train_bn=train_bn)
 
-    def finetune_function(self, pl_module: LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
+    def finetune_function(self, pl_module: Task, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
         pass
 
 
@@ -82,7 +85,9 @@ class Freeze(FlashBaseFinetuning):
 
 class FreezeUnfreeze(FlashBaseFinetuning):
 
-    def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True, unfreeze_epoch: int = 10):
+    def __init__(
+        self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True, unfreeze_epoch: int = 10
+    ) -> None:
         super().__init__(attr_names, train_bn)
         self.unfreeze_epoch = unfreeze_epoch
 
@@ -111,7 +116,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         train_bn: bool = True,
         unfreeze_milestones: tuple = (5, 10),
         num_layers: int = 5
-    ):
+    ) -> None:
         self.unfreeze_milestones = unfreeze_milestones
         self.num_layers = num_layers
 
@@ -119,7 +124,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
     def finetune_function(
         self,
-        pl_module: LightningModule,
+        pl_module: Task,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -150,7 +155,7 @@ _DEFAULTS_FINETUNE_STRATEGIES = {
 }
 
 
-def instantiate_default_finetuning_callbacks(strategy):
+def instantiate_default_finetuning_callbacks(strategy: Optional[str]) -> List[BaseFinetuning]:
     if not strategy or strategy not in _DEFAULTS_FINETUNE_STRATEGIES:
         raise MisconfigurationException(
             f"a strategy should be provided. Use {list(_DEFAULTS_FINETUNE_STRATEGIES)} or provide a callback"

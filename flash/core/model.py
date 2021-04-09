@@ -35,7 +35,7 @@ def predict_context(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
+    def wrapper(self: LightningModule, *args: Any, **kwargs: Any) -> Any:
         grad_enabled = torch.is_grad_enabled()
         is_training = self.training
         self.eval()
@@ -69,7 +69,7 @@ class Task(LightningModule):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-    ):
+    ) -> None:
         super().__init__()
         if model is not None:
             self.model = model
@@ -80,9 +80,9 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._data_pipeline = None
-        self._preprocess = None
-        self._postprocess = None
+        self._data_pipeline: Optional[DataPipeline] = None
+        self._preprocess: Optional[Preprocess] = None
+        self._postprocess: Optional[Postprocess] = None
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -108,20 +108,22 @@ class Task(LightningModule):
         output["y"] = y
         return output
 
-    def forward(self, x: Any) -> Any:
-        return self.model(x)
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        return self.model(*args, **kwargs)
 
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        output = self.step(batch, batch_idx)
+    # Mypy requires the steps to have this signature since the base class has it and a more explicit
+    # phrasing of the arguments would violate the Liskov substitution principle
+    def training_step(self, *args: Any, **kwargs: Any) -> Any:
+        output = self.step(*args, **kwargs)
         self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
         return output["loss"]
 
-    def validation_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx)
+    def validation_step(self, *args: Any, **kwargs: Any) -> None:
+        output = self.step(*args, **kwargs)
         self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
-    def test_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx)
+    def test_step(self, *args: Any, **kwargs: Any) -> None:
+        output = self.step(*args, **kwargs)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
     @predict_context
@@ -143,9 +145,16 @@ class Task(LightningModule):
         """
         running_stage = RunningStage.PREDICTING
         data_pipeline = data_pipeline or self.data_pipeline
+
+        # This check is necessary for mypy compatibility
+        if not isinstance(data_pipeline, DataPipeline):
+            raise TypeError(
+                f'data_pipeline should be of type DataPipeline, but is of type {type(data_pipeline).__name__}!'
+            )
+
         x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
-        x = self.transfer_batch_to_device(x, self.device)
+        x = self.transfer_batch_to_device(x, torch.device(self.device))
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(predictions)
@@ -175,7 +184,7 @@ class Task(LightningModule):
         self.data_pipeline = DataPipeline(preprocess, self.postprocess)
 
     @property
-    def postprocess(self) -> Postprocess:
+    def postprocess(self) -> Optional[Postprocess]:
         return getattr(self._data_pipeline, '_postprocess_pipeline', None) or self._postprocess
 
     @postprocess.setter
@@ -224,7 +233,7 @@ class Task(LightningModule):
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
         super().on_val_dataloader()
 
-    def on_test_dataloader(self, *_) -> None:
+    def on_test_dataloader(self, *_: Any) -> None:
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
             self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
