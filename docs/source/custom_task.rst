@@ -23,7 +23,20 @@ override the ``__init__`` and ``forward`` methods.
 
 .. testcode::
 
+    from flash.data.process import Postprocess
+    from flash.data.process import Postprocess
+
+    class LinearRegressionPostprocess(Postprocess)
+
+        def per_sample_transform(self, samples):
+            for sample in samples:
+                print(f'disease progression: {sample}')
+            return samples
+
     class LinearRegression(flash.Task):
+
+        postprocess_cls = LinearRegressionPostprocess
+
         def __init__(self, num_inputs, learning_rate=0.001, metrics=None):
             # what kind of model do we want?
             model = nn.Linear(num_inputs, 1)
@@ -70,7 +83,7 @@ dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-data
 
 You’ll notice we added a ``DataPipeline``, which will be used when we
 call ``.predict()`` on our model. In this case we want to nicely format
-our ouput from the model with the string ``"disease progression"``, but
+our output from the model with the string ``"disease progression"``, but
 you could do any sort of post processing you want (see :ref:`datapipeline`).
 
 Fit
