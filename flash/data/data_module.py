@@ -94,18 +94,22 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def train_dataset(self) -> Optional[Dataset]:
+        """This property returns the train dataset"""
         return self._train_ds
 
     @property
     def val_dataset(self) -> Optional[Dataset]:
+        """This property returns the validation dataset"""
         return self._val_ds
 
     @property
     def test_dataset(self) -> Optional[Dataset]:
+        """This property returns the test dataset"""
         return self._test_ds
 
     @property
     def predict_dataset(self) -> Optional[Dataset]:
+        """This property returns the predict dataset"""
         return self._predict_ds
 
     @property
@@ -118,6 +122,10 @@ class DataModule(pl.LightningDataModule):
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
+        """
+        This function is used to configure a :class:`~flash.data.callback.BaseDataFetcher`.
+        Override with your custom one.
+        """
         return BaseDataFetcher()
 
     @property
@@ -157,15 +165,19 @@ class DataModule(pl.LightningDataModule):
                 self.viz.batches[stage] = {}
 
     def show_train_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the train dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.TRAINING], reset=reset)
 
     def show_val_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the validation dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.VALIDATING], reset=reset)
 
     def show_test_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the test dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.TESTING], reset=reset)
 
     def show_predict_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the predict dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.PREDICTING], reset=reset)
 
     @staticmethod
@@ -313,6 +325,8 @@ class DataModule(pl.LightningDataModule):
             test_split: If Float, ratio of data to be contained within the test dataset. If Int,
                 number of samples to be contained within test dataset.
             seed: Used for the train/val splits when val_split is not None.
+
+        .. note:: Make sure to always rely on this function when using :class:`~flash.data.process.Preprocess`.
 
         """
         n = len(dataset)

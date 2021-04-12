@@ -78,7 +78,7 @@ For a task you will likely need a specific way of loading data.
 
 It is recommended to create a :class:`~flash.data.process.Preprocess` object.
 The :class:`~flash.data.process.Preprocess` contains all the processing logic and are similar to ``Callback``.
-The user would override hooks with their processing logic.
+The user has to override hooks with their processing logic.
 
 .. note::
     As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`
@@ -103,7 +103,7 @@ Example::
     preprocess_cls = ...
     datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess_cls)
 
-Here are the
+Here are the `NumpyDataModule`` implementation:
 
 Example::
 
@@ -113,7 +113,7 @@ Example::
     class NumpyDataModule(DataModule):
 
         @classmethod
-        def from_dataset(cls, x: ND, y: ND, preprocess_cls: Preprocess = NumpyPreprocess, batch_size: int = 64, num_workers: int = 0):
+        def from_xy_dataset(cls, x: ND, y: ND, preprocess_cls: Preprocess = NumpyPreprocess, batch_size: int = 64, num_workers: int = 0):
 
             preprocess = preprocess_cls()
 
