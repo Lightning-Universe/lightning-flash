@@ -61,7 +61,7 @@ class Task(pl.LightningModule):
             model: Optional[nn.Module] = None,
             loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
             optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-            scheduler:  Optional[Type[torch.optim.lr_scheduler._LRScheduler]] = None,
+            scheduler: Optional[Type[torch.optim.lr_scheduler._LRScheduler]] = None,
             metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
             learning_rate: float = 5e-5,
     ):
