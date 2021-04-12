@@ -50,20 +50,21 @@ or to study data transforms during training.
 But more importantly, it is hard to make a trained model ready for production.
 
 The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` have been created to resolve those issues.
-By providing a series of hooks which can overridden with custom data processing logic, the user have a much more granular control on the data processing flow.
+By providing a series of hooks which can overridden with custom data processing logic, the user have a much more granular control on his data processing flow.
 
 But it also makes your code more readable, modular and easy to extend.
 
 To change the processing behavior only on specific stages for a given hook,
-you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
+you can prefix all the hooks by adding ``train``, ``val``, ``test`` or ``predict``.
+Check out :class:`~flash.data.process.Preprocess` for some examples.
 
 .. note::
 
-    [WIP] We are currently working on a new feature to convert a fully implemented :class:`~flash.data.process.Preprocess`
+    ``[WIP]`` We are currently working on a new feature to make :class:`~flash.data.process.Preprocess`
 
-    and :class:`~flash.data.process.Postprocess` are fully implemented, to be fully deployable for ``Endpoints``
+    and :class:`~flash.data.process.Postprocess` automatically deployable for ``Endpoints``
 
-    or ``BatchTransformJob`` directly from checkpoints. Stay tuned !
+    or ``BatchTransformJob`` from checkpoints directly. Stay tuned !
 
 *************************************
 How to customize existing datamodules
@@ -101,10 +102,12 @@ Example::
 
     class CustomImageClassificationPreprocess(ImageClassificationPreprocess):
 
+        # Assuming you have images in numpy format,
+        # just override ``load_sample`` hook and add your own logic.
         @staticmethod
         def load_sample(sample) -> Tuple[Image.Image, int]:
-            # By default, ``ImageClassificationPreprocess`` expects ``.PNG`` or ``.JPB`` to be loaded into PIL Image.
-            # Assuming you have numpy image, just override this hook and add your own logic.
+            # By default, ``ImageClassificationPreprocess`` expects
+            # ``.png`` or ``.jpg`` to be loaded into PIL Image.
             numpy_image_path, label = sample
             return np.load(numpy_image_path), sample
 
@@ -116,17 +119,93 @@ Example::
     )
 
 
-*****************************************************
-How to build a Datamodule + Preprocess for a new task
-*****************************************************
+******************************
+Custom Preprocess + Datamodule
+******************************
 
 In this section, we will create a very simple ``ImageClassificationPreprocess`` with a ``ImageClassificationDataModule``.
+
+1. User-Facing API design
+_________________________
+
+Designing an easy to use API is key. This is the first and most important step.
+
+We want the ``ImageClassificationDataModule`` to generate a dataset from folders of images arranged in this way.
+
+Example::
+
+    train/dog/xxx.png
+    train/dog/xxy.png
+    train/dog/xxz.png
+    train/cat/123.png
+    train/cat/nsdf3.png
+    train/cat/asd932.png
+
+Example::
+
+    preprocess = ...
+
+    dm = ImageClassificationDataModule.from_folders(
+        train_folder="./data/train",
+        val_folder="./data/val",
+        test_folder="./data/test",
+        predict_folder="./data/predict",
+        preprocess=preprocess
+    )
+
+    model = ImageClassifier(...)
+    trainer = Trainer(...)
+
+    trainer.fit(model, dm)
+
+2 . The DataModule
+__________________
+
+Secondly, let's implement the ``ImageClassificationDataModule`` from_folders classmethod.
+
+Example::
+
+    from flash.data.data_module import DataModule
+
+    class ImageClassificationDataModule(DataModule):
+
+        # Set ``preprocess_cls`` with your custom ``preprocess``.
+        preprocess_cls = ImageClassificationPreprocess
+
+        @classmethod
+        def from_folders(
+            cls,
+            train_folder: Optional[str],
+            val_folder: Optional[str],
+            test_folder: Optional[str],
+            predict_folder: Optional[str],
+            preprocess: Optional[Preprocess] = None,
+            **kwargs
+        ):
+
+            preprocess = preprocess or cls.preprocess_cls()
+
+            # {stage}_load_data_input will be given to your
+            # ``Preprocess`` ``{stage}_load_data`` function.
+            return cls.from_load_data_inputs(
+                    train_load_data_input=train_folder,
+                    val_load_data_input=val_folder,
+                    test_load_data_input=test_folder,
+                    predict_load_data_input=predict_folder,
+                    preprocess=preprocess,  # DON'T FORGET TO PASS THE CREATED PREPROCESS
+                    **kwargs,
+            )
+
+
+3 . The Preprocess
+__________________
+
+Finally, implement your custom ``ImageClassificationPreprocess``.
 
 Example::
 
     import os
     import numpy as np
-    from flash.data.data_module import DataModule
     from flash.data.process import Preprocess
     from PIL import Image
     import torchvision.transforms as T
@@ -171,52 +250,6 @@ Example::
                 return self.to_tensor(sample)
             else:
                 return self.to_tensor(sample[0]), sample[1]
-
-    class ImageClassificationDataModule(DataModule):
-
-        # Set ``preprocess_cls`` with your custom ``preprocess``.
-
-        preprocess_cls = ImageClassificationPreprocess
-
-        @classmethod
-        def from_folders(
-            cls,
-            train_folder: Optional[str],
-            val_folder: Optional[str],
-            test_folder: Optional[str],
-            predict_folder: Optional[str],
-            preprocess: Optional[Preprocess] = None,
-            **kwargs
-        ):
-
-            preprocess = preprocess or cls.preprocess_cls()
-
-            # {stage}_load_data_input will be given to your
-            # ``Preprocess`` ``{stage}_load_data`` function.
-            return cls.from_load_data_inputs(
-                    train_load_data_input=train_folder,
-                    val_load_data_input=val_folder,
-                    test_load_data_input=test_folder,
-                    predict_load_data_input=predict_folder,
-                    preprocess=preprocess,  # DON'T FORGET TO PASS THE CREATED PREPROCESS
-                    **kwargs,
-                )
-
-    # When structuring your code, it is possible to pass the ``preprocess`` directly to the DataModule ``classmethod``.
-    preprocess = ImageClassificationPreprocess()
-
-    dm = ImageClassificationDataModule.from_folders(
-        "./data/train",
-        "./data/val",
-        "./data/test",
-        "./data/predict",
-        preprocess=preprocess)
-
-    model = ImageClassifier(...)
-    trainer = Trainer(...)
-
-    trainer.fit(model, dm)
-
 
 
 *************
