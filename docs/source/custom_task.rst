@@ -163,6 +163,12 @@ override the ``__init__`` and ``forward`` methods.
             # we don't actually need to override this method for this example
             return self.model(x)
 
+.. note::
+
+   Lightning Flash provides an API to register models within a store.
+   Check out :ref:`registry`.
+
+
 Where is the training step?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
