@@ -4,7 +4,7 @@ Tutorial: Creating a Custom Task
 In this tutorial we will go over the process of creating a custom task,
 along with a custom data module.
 
-1 . Imports
+1. Imports
 -----------
 
 
@@ -26,7 +26,7 @@ along with a custom data module.
     seed_everything(42)
 
 
-2 . The Task: Linear regression
+2. The Task: Linear regression
 -------------------------------
 
 Here we create a basic linear regression task by subclassing
@@ -71,7 +71,7 @@ testing) or override ``training_step``, ``validation_step``, and
 Lightning’s
 `methods <https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html#methods>`__.
 
-3 . The Data
+3. The Data
 -------------
 
 For a task you will likely need a specific way of loading data.

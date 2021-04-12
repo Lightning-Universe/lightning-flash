@@ -158,7 +158,7 @@ Example::
 
     trainer.fit(model, dm)
 
-2 . The DataModule
+2. The DataModule
 __________________
 
 Secondly, let's implement the ``ImageClassificationDataModule`` from_folders classmethod.
@@ -197,7 +197,7 @@ Example::
             )
 
 
-3 . The Preprocess
+3. The Preprocess
 __________________
 
 Finally, implement your custom ``ImageClassificationPreprocess``.
