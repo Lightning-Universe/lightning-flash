@@ -69,7 +69,7 @@ override ``step`` (which is called for training, validation, and
 testing) or override ``training_step``, ``validation_step``, and
 ``test_step`` individually. These methods behave identically to PyTorch
 Lightning’s
-`methods <https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html#methods>`__.
+`methods <https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#methods>`__.
 
 3. The Data
 -------------
@@ -77,7 +77,7 @@ Lightning’s
 For a task you will likely need a specific way of loading data.
 
 It is recommended to create a :class:`~flash.data.process.Preprocess` object.
-The :class:`~flash.data.process.Preprocess` contains all the processing logic and are similar to ``Callback``.
+The :class:`~flash.data.process.Preprocess` contains all the preprocessing logic and works similarly to ``Callback``.
 The user has to override hooks with their processing logic.
 
 .. note::

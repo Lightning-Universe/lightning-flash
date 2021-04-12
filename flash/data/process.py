@@ -105,8 +105,8 @@ class Preprocess(Properties, torch.nn.Module):
     The :class:`~flash.data.process.Preprocess` is used to encapsulate
     all the processing data loading logic up to the model.
 
-    It is particularly relevant when you want to provide ready-to-production implementation which works
-    with 4 different stages: ``training``, ``validation``, ``test` and inference(``predicting``).
+    It is particularly relevant when you want to provide an end to end implementation which works
+    with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
 
     The :class:`~flash.data.process.Preprocess` supports the following hooks:
 
@@ -115,7 +115,7 @@ class Preprocess(Properties, torch.nn.Module):
 
                 * Input: Receive a folder path:
 
-                * Action: Walk the folder path and find image paths and their associated labels.
+                * Action: Walk the folder path to find image paths and their associated labels.
 
                 * Output: Return a list of image paths and their associated labels.
 
@@ -128,7 +128,7 @@ class Preprocess(Properties, torch.nn.Module):
 
                 * Output: Return the PIL Image and its label.
 
-        - ``pre_tensor_transform``: Preforms transforms on a single data sample object.
+        - ``pre_tensor_transform``: Performs transforms on a single data sample.
             Example::
 
                 * Input: Receive a PIL Image and its label.
@@ -146,7 +146,7 @@ class Preprocess(Properties, torch.nn.Module):
 
                 * Output: Return the tensored image and its label.
 
-        - ``post_tensor_transform``: Preforms transform on a single tensor sample.
+        - ``post_tensor_transform``: Performs transform on a single tensor sample.
             Example::
 
                 * Input: Receive the tensored image and its label.
@@ -155,10 +155,10 @@ class Preprocess(Properties, torch.nn.Module):
 
                 * Output: Return the tensored image and its label.
 
-        - ``per_batch_transform``: Preforms transforms on a batch.
+        - ``per_batch_transform``: Performs transforms on a batch.
             In this example, we decided not to override the hook.
 
-        - ``per_sample_transform_on_device``: Preforms transform on a sample already on a ``GPU`` or ``TPU``.
+        - ``per_sample_transform_on_device``: Performs transform on a sample already on a ``GPU`` or ``TPU``.
             Example::
 
                 * Input: Receive a tensored image on device and its label.
@@ -176,27 +176,27 @@ class Preprocess(Properties, torch.nn.Module):
 
                 * Output: Return a batch of images and their labels.
 
-        - ``per_batch_transform_on_device``: Preforms transform a batch already on ``GPU`` or ``TPU``.
+        - ``per_batch_transform_on_device``: Performs transform on a batch already on ``GPU`` or ``TPU``.
             Example::
 
                 * Input: Receive a batch of images and their labels.
 
                 * Action: Apply normalization on the batch by substracting the mean
-                    and dividing by the standard deviation from Imagenet.
+                    and dividing by the standard deviation from ImageNet.
 
                 * Output: Return a normalized augmented batch of images and their labels.
 
     .. note::
 
-        By default, each hook will be no-op. To customize them,
-        just override the hooks and ``Flash`` will take care of calling them at the right moment.
+        By default, each hook will be no-op execpt the collate which is PyTorch default collate.
+        To customize them, just override the hooks and ``Flash`` will take care of calling them at the right moment.
 
     .. note::
 
         The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive
         as it will impact performances.
 
-    To change the processing behaviour only on specific stages,
+    To change the processing behavior only on specific stages,
     you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
 
     For example, is useful to encapsulate ``predict`` logic as labels aren't availabled at inference time.
@@ -232,7 +232,7 @@ class Preprocess(Properties, torch.nn.Module):
 
     .. note::
 
-        It is possible to wrap a ``Dataset`` within a :class:`~flash.data.process.Preprocess` ``load_data`` function.
+        It is possible to wrap a ``Dataset`` within a :meth:`~flash.data.process.Preprocess.load_data` function.
         However, we don't recommend to do as such as it is better to rely entirely on the hooks.
 
     Example::
