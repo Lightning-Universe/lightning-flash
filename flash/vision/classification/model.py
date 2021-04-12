@@ -11,17 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union, Tuple
+from types import FunctionType
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.nn.functional import softmax
 from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
-from flash.vision.backbones import backbone_and_num_features
-from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
+from flash.core.registry import FlashRegistry
+from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
 class ImageClassifier(ClassificationTask):
@@ -59,10 +59,14 @@ class ImageClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
+    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+
     def __init__(
         self,
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
+        backbone_kwargs: Optional[Dict] = None,
+        head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
@@ -79,12 +83,16 @@ class ImageClassifier(ClassificationTask):
 
         self.save_hyperparameters()
 
+        if not backbone_kwargs:
+            backbone_kwargs = {}
+
         if isinstance(backbone, tuple):
             self.backbone, num_features = backbone
         else:
-            self.backbone, num_features = backbone_and_num_features(backbone, pretrained=pretrained)
+            self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
-        self.head = nn.Sequential(
+        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
+        self.head = head or nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
             nn.Linear(num_features, num_classes),
@@ -92,8 +100,4 @@ class ImageClassifier(ClassificationTask):
 
     def forward(self, x) -> Any:
         x = self.backbone(x)
-        return softmax(self.head(x))
-
-    @staticmethod
-    def default_pipeline() -> ImageClassificationDataPipeline:
-        return ImageClassificationData.default_pipeline()
+        return torch.softmax(self.head(x), -1)

@@ -13,6 +13,7 @@
 # limitations under the License.
 import pytest
 import torch
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.vision import ImageClassifier
@@ -25,7 +26,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return torch.rand(3, 224, 224), torch.randint(10, size=(1, )).item()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 100
 
 
@@ -50,7 +51,7 @@ def test_init_train(tmpdir, backbone):
 
 
 def test_non_existent_backbone():
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         ImageClassifier(2, "i am never going to implement this lol")
 
 

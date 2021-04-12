@@ -129,7 +129,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'da
 # 2. Load the data
 datamodule = ImageClassificationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
-    valid_folder="data/hymenoptera_data/val/",
+    val_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
 )
 
@@ -205,11 +205,11 @@ download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
 
 # 2. Load the data
 datamodule = SummarizationData.from_files(
-  train_file="data/xsum/train.csv",
-  valid_file="data/xsum/valid.csv",
-  test_file="data/xsum/test.csv",
-  input="input",
-  target="target"
+    train_file="data/xsum/train.csv",
+    val_file="data/xsum/valid.csv",
+    test_file="data/xsum/test.csv",
+    input="input",
+    target="target"
 )
 
 # 3. Build the model
@@ -254,8 +254,8 @@ download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 datamodule = TabularData.from_csv(
   "./data/titanic/titanic.csv",
   test_csv="./data/titanic/test.csv",
-  categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-  numerical_input=["Fare"],
+  cat_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+  num_cols=["Fare"],
   target="Survived",
   val_size=0.25,
 )
@@ -403,7 +403,7 @@ gives you the most flexibility because it is simply organized PyTorch.
 ## Contribute!
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases. But we're looking for incredible contributors like you to submit new tasks!
 
-Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A) to get help becoming a contributor!
+Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A) and/or read our [CONTRIBUTING](https://github.com/PyTorchLightning/lightning-flash/blob/master/.github/CONTRIBUTING.md) guidelines to get help becoming a contributor!
 
 ## Community
 For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A)!

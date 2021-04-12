@@ -21,9 +21,9 @@ class ObjectDetectionFineTuning(FlashBaseFinetuning):
     Freezes the backbone during Detector training.
     """
 
-    def __init__(self, train_bn: bool = True):
-        self.train_bn = train_bn
+    def __init__(self, train_bn: bool = True) -> None:
+        super().__init__(train_bn=train_bn)
 
     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
         model = pl_module.model
-        self.freeze(module=model.backbone, train_bn=self.train_bn)
+        self.freeze(modules=model.backbone, train_bn=self.train_bn)

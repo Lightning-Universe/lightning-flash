@@ -13,7 +13,7 @@
 # limitations under the License.
 from pytorch_lightning import Trainer
 
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
@@ -48,7 +48,7 @@ predictions = model.predict([
 print(predictions)
 
 # 2b. Or generate summaries from a sheet file!
-datamodule = SummarizationData.from_file(
+datamodule = SummarizationData.from_files(
     predict_file="data/xsum/predict.csv",
     input="input",
 )

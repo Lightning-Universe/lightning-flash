@@ -12,15 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-import os
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union, Tuple
+import inspect
+from copy import deepcopy
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union, Tuple
 
-import pytorch_lightning as pl
 import torch
+import torchmetrics
+from pytorch_lightning import LightningModule
+from pytorch_lightning.callbacks import Callback
+from pytorch_lightning.trainer.states import RunningStage
 from torch import nn
 
-from flash.core.data import DataModule, DataPipeline
+from flash.core.registry import FlashRegistry
 from flash.core.utils import get_callable_dict
+from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
 SchedulerType = Union[Tuple[torch.optim.lr_scheduler._LRScheduler], torch.optim.lr_scheduler._LRScheduler]
 
@@ -33,25 +38,28 @@ def predict_context(func: Callable) -> Callable:
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
+        grad_enabled = torch.is_grad_enabled()
+        is_training = self.training
         self.eval()
         torch.set_grad_enabled(False)
 
         result = func(self, *args, **kwargs)
 
-        self.train()
-        torch.set_grad_enabled(True)
+        if is_training:
+            self.train()
+        torch.set_grad_enabled(grad_enabled)
         return result
 
     return wrapper
 
 
-class Task(pl.LightningModule):
+class Task(LightningModule):
     """A general Task.
 
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training
-        optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
+        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`
     """
@@ -62,7 +70,7 @@ class Task(pl.LightningModule):
             loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
             optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
             scheduler: Optional[Type[torch.optim.lr_scheduler._LRScheduler]] = None,
-            metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+            metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
             learning_rate: float = 5e-5,
     ):
         super().__init__()
@@ -75,20 +83,23 @@ class Task(pl.LightningModule):
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
+
         self._data_pipeline = None
+        self._preprocess = None
+        self._postprocess = None
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
         The training/validation/test step. Override for custom behavior.
         """
         x, y = batch
-        y_hat = self.forward(x)
-        output = {"y_hat": self.data_pipeline.before_uncollate(y_hat)}
+        y_hat = self(x)
+        output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         for name, metric in self.metrics.items():
-            if isinstance(metric, pl.metrics.Metric):
-                metric(output["y_hat"], y)
+            if isinstance(metric, torchmetrics.metric.Metric):
+                metric(y_hat, y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)
@@ -121,44 +132,36 @@ class Task(pl.LightningModule):
     def predict(
             self,
             x: Any,
-            batch_idx: Optional[int] = None,
-            skip_collate_fn: bool = False,
-            dataloader_idx: Optional[int] = None,
             data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
         Predict function for raw data or processed data
 
         Args:
-
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
-
-            batch_idx: Batch index
-
-            dataloader_idx: Dataloader index
-
-            skip_collate_fn: Whether to skip the collate step.
-                this is required when passing data already processed
-                for the model, for example, data from a dataloader
 
             data_pipeline: Use this to override the current data pipeline
 
         Returns:
             The post-processed model predictions
-
         """
-        # enable x to be a path to a folder
-        if isinstance(x, str):
-            files = os.listdir(x)
-            files = [os.path.join(x, y) for y in files]
-            x = files
-
+        running_stage = RunningStage.PREDICTING
         data_pipeline = data_pipeline or self.data_pipeline
-        batch = x if skip_collate_fn else data_pipeline.collate_fn(x)
-        batch_x, batch_y = batch if len(batch) == 2 and isinstance(batch, (list, tuple)) else (batch, None)
-        predictions = self.forward(batch_x)
-        output = data_pipeline.uncollate_fn(predictions)  # TODO: pass batch and x
-        return output
+        x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
+        x = data_pipeline.worker_preprocessor(running_stage)(x)
+        x = self.transfer_batch_to_device(x, self.device)
+        x = data_pipeline.device_preprocessor(running_stage)(x)
+        predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
+        predictions = data_pipeline.postprocessor(predictions)
+        return predictions
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        if isinstance(batch, tuple):
+            batch = batch[0]
+        elif isinstance(batch, list):
+            # Todo: Understand why stack is needed
+            batch = torch.stack(batch)
+        return self(batch)
 
     def configure_optimizers(
             self
@@ -168,32 +171,105 @@ class Task(pl.LightningModule):
             return optimizers, self.scheduler(optimizer=optimizer)
         return optimizers
 
+    def configure_finetune_callback(self) -> List[Callback]:
+        return []
+
     @property
-    def data_pipeline(self) -> DataPipeline:
-        # we need to save the pipeline in case this class
-        # is loaded from checkpoint and used to predict
-        if not self._data_pipeline:
-            try:
-                # datamodule pipeline takes priority
-                self._data_pipeline = self.trainer.datamodule.data_pipeline
-            except AttributeError:
-                self._data_pipeline = self.default_pipeline()
+    def preprocess(self) -> Optional[Preprocess]:
+        return getattr(self._data_pipeline, '_preprocess_pipeline', None) or self._preprocess
+
+    @preprocess.setter
+    def preprocess(self, preprocess: Preprocess) -> None:
+        self._preprocess = preprocess
+        self.data_pipeline = DataPipeline(preprocess, self.postprocess)
+
+    @property
+    def postprocess(self) -> Postprocess:
+        return getattr(self._data_pipeline, '_postprocess_pipeline', None) or self._postprocess
+
+    @postprocess.setter
+    def postprocess(self, postprocess: Postprocess) -> None:
+        self.data_pipeline = DataPipeline(self.preprocess, postprocess)
+        self._postprocess = postprocess
+
+    @property
+    def data_pipeline(self) -> Optional[DataPipeline]:
+        if self._data_pipeline is not None:
+            return self._data_pipeline
+
+        elif self.preprocess is not None or self.postprocess is not None:
+            # use direct attributes here to avoid recursion with properties that also check the data_pipeline property
+            return DataPipeline(self.preprocess, self.postprocess)
+
+        elif self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
+            return self.datamodule.data_pipeline
+
+        elif self.trainer is not None and hasattr(
+            self.trainer, 'datamodule'
+        ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+            return self.trainer.datamodule.data_pipeline
+
         return self._data_pipeline
 
     @data_pipeline.setter
-    def data_pipeline(self, data_pipeline: DataPipeline) -> None:
+    def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
         self._data_pipeline = data_pipeline
+        if data_pipeline is not None and getattr(data_pipeline, '_preprocess_pipeline', None) is not None:
+            self._preprocess = data_pipeline._preprocess_pipeline
 
-    @staticmethod
-    def default_pipeline() -> DataPipeline:
-        """Pipeline to use when there is no datamodule or it has not defined its pipeline"""
-        return DataModule.default_pipeline()
+        if data_pipeline is not None and getattr(data_pipeline, '_postprocess_pipeline', None) is not None:
+            if type(data_pipeline._postprocess_pipeline) != Postprocess:
+                self._postprocess = data_pipeline._postprocess_pipeline
 
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        self.data_pipeline = checkpoint["pipeline"]
+    def on_train_dataloader(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
+            self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
+        super().on_train_dataloader()
+
+    def on_val_dataloader(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
+            self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
+        super().on_val_dataloader()
+
+    def on_test_dataloader(self, *_) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
+            self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
+        super().on_test_dataloader()
+
+    def on_predict_dataloader(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
+            self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
+        super().on_predict_dataloader()
+
+    def on_predict_end(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        super().on_predict_end()
+
+    def on_fit_end(self) -> None:
+        if self.data_pipeline is not None:
+            self.data_pipeline._detach_from_model(self)
+        super().on_fit_end()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        checkpoint["pipeline"] = self.data_pipeline
+        # This may be an issue since here we create the same problems with pickle as in
+        # https://pytorch.org/docs/stable/notes/serialization.html
+        if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
+            checkpoint['data_pipeline'] = self.data_pipeline
+        super().on_save_checkpoint(checkpoint)
 
-    def configure_finetune_callback(self):
-        return []
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        super().on_load_checkpoint(checkpoint)
+        if 'data_pipeline' in checkpoint:
+            self.data_pipeline = checkpoint['data_pipeline']
+
+    @classmethod
+    def available_backbones(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+        if registry is None:
+            return []
+        return registry.available_keys()

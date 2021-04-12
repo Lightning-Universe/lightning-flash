@@ -14,55 +14,32 @@
 """Root package info."""
 import os
 
-__version__ = "0.2.2rc2"
-__author__ = "PyTorchLightning et al."
-__author_email__ = "name@pytorchlightning.ai"
-__license__ = 'Apache-2.0'
-__copyright__ = f"Copyright (c) 2020-2021, f{__author__}."
-__homepage__ = "https://github.com/PyTorchLightning/lightning-flash"
-__docs__ = "Flash is a framework for fast prototyping, finetuning, and solving most standard deep learning challenges"
-__long_doc__ = """
-Flash is a task-based deep learning framework for flexible deep learning built on PyTorch Lightning.
-Tasks can be anything from text classification to object segmentation.
-Although PyTorch Lightning provides ultimate flexibility, for common tasks it does not remove 100% of the boilerplate.
-Flash is built for applied researchers, beginners, data scientists, Kagglers or anyone starting out with Deep Learning.
-But unlike other entry-level frameworks (keras, etc...), Flash users can switch to Lightning trivially when they need
-the added flexibility.
-"""
+from flash.info import (  # noqa: F401
+    __author__,
+    __author_email__,
+    __copyright__,
+    __docs__,
+    __homepage__,
+    __license__,
+    __version__,
+)
 
 _PACKAGE_ROOT = os.path.dirname(__file__)
 _PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
 
-try:
-    # This variable is injected in the __builtins__ by the build process.
-    # It used to enable importing subpackages when the binaries are not built.
-    __LIGHTNING_FLASH_SETUP__
-except NameError:
-    __LIGHTNING_FLASH_SETUP__: bool = False
+from flash import tabular, text, vision  # noqa: E402
+from flash.core.classification import ClassificationTask  # noqa: E402
+from flash.core.model import Task  # noqa: E402
+from flash.core.trainer import Trainer  # noqa: E402
+from flash.data.data_module import DataModule  # noqa: E402
+from flash.data.utils import download_data  # noqa: E402
 
-if __LIGHTNING_FLASH_SETUP__:
-    import sys  # pragma: no-cover
-
-    sys.stdout.write(f"Partial import of `{__name__}` during the build process.\n")  # pragma: no-cover
-    # We are not importing the rest of the lightning during the build process, as it may not be compiled yet
-else:
-
-    from flash import tabular, text, vision
-    from flash.core import data, utils
-    from flash.core.classification import ClassificationTask
-    from flash.core.data import DataModule
-    from flash.core.data.utils import download_data
-    from flash.core.model import Task
-    from flash.core.trainer import Trainer
-
-    __all__ = [
-        "Task",
-        "ClassificationTask",
-        "DataModule",
-        "vision",
-        "text",
-        "tabular",
-        "data",
-        "utils",
-        "download_data",
-    ]
+__all__ = [
+    "Task",
+    "ClassificationTask",
+    "DataModule",
+    "vision",
+    "text",
+    "tabular",
+    "download_data",
+]

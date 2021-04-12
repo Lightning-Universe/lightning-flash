@@ -16,27 +16,10 @@ import os
 import re
 from typing import List
 
-from flash import __homepage__, __version__, _PROJECT_ROOT
-
-_PATH_BADGES = os.path.join('.', 'docs', 'source', '_images', 'badges')
-# badge to download
-_DEFAULT_BADGES = (
-    'Conda',
-    'DockerHub',
-    'codecov',
-    'ReadTheDocs',
-    'Slack',
-    'Discourse status',
-    'license',
-)
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
 
 
 def _load_requirements(path_dir: str, file_name: str = 'requirements.txt', comment_chars: str = '#@') -> List[str]:
-    """Load requirements from a file
-
-    >>> _load_requirements(_PROJECT_ROOT)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    ['pytorch-lightning..., 'torch...'...]
-    """
     with open(os.path.join(path_dir, file_name), 'r') as file:
         lines = [ln.strip() for ln in file.readlines()]
     reqs = []
@@ -53,10 +36,10 @@ def _load_requirements(path_dir: str, file_name: str = 'requirements.txt', comme
     return reqs
 
 
-def _load_readme_description(path_dir: str, homepage: str = __homepage__, ver: str = __version__) -> str:
+def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
     """Load readme as decribtion
 
-    >>> _load_readme_description(_PROJECT_ROOT)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    >>> _load_readme_description(_PROJECT_ROOT, "", "")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     '<div align="center">...'
     """
     path_readme = os.path.join(path_dir, "README.md")

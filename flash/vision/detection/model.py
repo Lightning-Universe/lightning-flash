@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchvision
-from torch import nn
+from torch import nn, tensor
 from torch.optim import Optimizer
 from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
 from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead
@@ -23,8 +23,8 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import box_iou
 
 from flash.core import Task
-from flash.vision.backbones import backbone_and_num_features
-from flash.vision.detection.data import ObjectDetectionDataPipeline
+from flash.core.registry import FlashRegistry
+from flash.vision.backbones import OBJ_DETECTION_BACKBONES
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 
 _models = {
@@ -39,7 +39,7 @@ def _evaluate_iou(target, pred):
     """
     if pred["boxes"].shape[0] == 0:
         # no box detected, 0 IOU
-        return torch.tensor(0.0, device=pred["boxes"].device)
+        return tensor(0.0, device=pred["boxes"].device)
     return box_iou(target["boxes"], pred["boxes"]).diag().mean()
 
 
@@ -66,6 +66,8 @@ class ObjectDetector(Task):
         learning_rate: The learning rate to use for training
 
     """
+
+    backbones: FlashRegistry = OBJ_DETECTION_BACKBONES
 
     def __init__(
         self,
@@ -134,9 +136,7 @@ class ObjectDetector(Task):
                     **kwargs
                 )
         else:
-            backbone_model, num_features = backbone_and_num_features(
-                backbone,
-                fpn,
+            backbone_model, num_features = ObjectDetector.backbones.get(backbone)(
                 pretrained_backbone,
                 trainable_backbone_layers,
                 **kwargs,
@@ -188,10 +188,6 @@ class ObjectDetector(Task):
         avg_iou = torch.stack([o["test_iou"] for o in outs]).mean()
         logs = {"test_iou": avg_iou}
         return {"avg_test_iou": avg_iou, "log": logs}
-
-    @staticmethod
-    def default_pipeline() -> ObjectDetectionDataPipeline:
-        return ObjectDetectionDataPipeline()
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]

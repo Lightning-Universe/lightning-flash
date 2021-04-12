@@ -15,54 +15,14 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from pytorch_lightning.utilities.distributed import rank_zero_warn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy
 
 from flash.core import Task
-from flash.core.data import TaskDataPipeline
-from flash.core.data.utils import _contains_any_tensor
-from flash.vision.backbones import backbone_and_num_features
-from flash.vision.classification.data import _DEFAULT_VALID_TRANSFORMS, _pil_loader
-
-
-class ImageEmbedderDataPipeline(TaskDataPipeline):
-    """
-    >>> from flash.vision.embedding import ImageEmbedderDataPipeline
-    >>> iedata = ImageEmbedderDataPipeline()
-    >>> iedata.before_collate(torch.tensor([1]))
-    tensor([1])
-    >>> import os, numpy, PIL
-    >>> img = PIL.Image.fromarray(numpy.random.randint(0, 255, (150, 200, 3)), 'RGB')
-    >>> img.save('sample-image.png')
-    >>> iedata.before_collate('sample-image.png')  # doctest: +ELLIPSIS
-    [tensor([[[...]]])]
-    >>> os.remove('sample-image.png')
-    """
-
-    def __init__(
-        self,
-        valid_transform: Optional[Callable] = _DEFAULT_VALID_TRANSFORMS,
-        loader: Callable = _pil_loader,
-    ):
-        self._valid_transform = valid_transform
-        self._loader = loader
-
-    def before_collate(self, samples: Any) -> Any:
-        if _contains_any_tensor(samples):
-            return samples
-
-        if isinstance(samples, str):
-            samples = [samples]
-
-        if isinstance(samples, (list, tuple)) and all(isinstance(p, str) for p in samples):
-            outputs = []
-            for sample in samples:
-                output = self._loader(sample)
-                outputs.append(self._valid_transform(output))
-            return outputs
-        raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
+from flash.core.registry import FlashRegistry
+from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
 
 class ImageEmbedder(Task):
@@ -86,6 +46,12 @@ class ImageEmbedder(Task):
         >>> embeddings = embedder(image)
 
     """
+
+    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+
+    @property
+    def preprocess(self):
+        return ImageClassificationPreprocess(predict_transform=ImageClassificationData.default_val_transforms())
 
     def __init__(
         self,
@@ -112,7 +78,7 @@ class ImageEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone, num_features = backbone_and_num_features(backbone, pretrained=pretrained)
+        self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained)
 
         if embedding_dim is None:
             self.head = nn.Identity()
@@ -121,7 +87,7 @@ class ImageEmbedder(Task):
                 nn.Flatten(),
                 nn.Linear(num_features, embedding_dim),
             )
-            rank_zero_warn('embedding_dim is not None. Remember to finetune first!')
+            rank_zero_warn('embedding_dim. Remember to finetune first!')
 
     def apply_pool(self, x):
         if self.pooling_fn == torch.max:
@@ -140,12 +106,8 @@ class ImageEmbedder(Task):
         if isinstance(x, tuple):
             x = x[-1]
 
-        if x.dim() == 4 and self.embedding_dim is not None:
+        if x.dim() == 4 and self.embedding_dim:
             x = self.apply_pool(x)
 
         x = self.head(x)
         return x
-
-    @staticmethod
-    def default_pipeline() -> ImageEmbedderDataPipeline:
-        return ImageEmbedderDataPipeline()

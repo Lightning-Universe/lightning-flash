@@ -10,9 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import builtins
 import os
 import sys
+from importlib.util import module_from_spec, spec_from_file_location
 
 import pt_lightning_sphinx_theme
 
@@ -21,9 +21,14 @@ _PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
-if SPHINX_MOCK_REQUIREMENTS:
-    builtins.__LIGHTNING_FLASH_SETUP__ = True
-import flash  # noqa: E402
+
+try:
+    from flash import info
+except (ImportError, ModuleNotFoundError):
+    # alternative https://stackoverflow.com/a/67692/4521646
+    spec = spec_from_file_location("flash/info.py", os.path.join(_PATH_ROOT, "flash", "info.py"))
+    info = module_from_spec(spec)
+    spec.loader.exec_module(info)
 
 html_favicon = '_static/images/icon.svg'
 
@@ -95,8 +100,8 @@ html_theme_path = [pt_lightning_sphinx_theme.get_html_theme_path()]
 # documentation.
 
 html_theme_options = {
-    "pytorch_project": flash.__homepage__,
-    "canonical_url": flash.__homepage__,
+    'pytorch_project': 'https://pytorchlightning.ai',
+    'canonical_url': info.__docs_url__,
     "collapse_navigation": False,
     "display_version": True,
     "logo_only": False,

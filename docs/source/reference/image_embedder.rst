@@ -23,14 +23,14 @@ Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on a
 
 .. code-block:: python
 
-	from flash.vision import ImageEmbedder
+    from flash.vision import ImageEmbedder
 
-	# Load finetuned task
-	embedder = ImageEmbedder(backbone="resnet18")
+    # Load finetuned task
+    embedder = ImageEmbedder(backbone="resnet18")
 
-	# 2. Perform inference on an image file
-	embeddings = embedder.predict("path/to/image.png")
-	print(embeddings)
+    # 2. Perform inference on an image file
+    embeddings = embedder.predict("path/to/image.png")
+    print(embeddings)
 
 Or on a random image tensor
 

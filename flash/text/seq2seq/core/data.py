@@ -11,95 +11,51 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from functools import partial
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-from datasets import load_dataset
+import datasets
+import torch
+from datasets import DatasetDict, load_dataset
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 
-from flash.core.data import DataModule, TaskDataPipeline
+from flash.data.data_module import DataModule
+from flash.data.process import Preprocess
 
 
-def prepare_dataset(
-    test_file: str,
-    filetype: str,
-    pipeline: TaskDataPipeline,
-    train_file: Optional[str] = None,
-    valid_file: Optional[str] = None,
-    predict: bool = False
-):
-    data_files = {}
-
-    if train_file is not None:
-        data_files["train"] = train_file
-    if valid_file is not None:
-        data_files["validation"] = valid_file
-    if test_file is not None:
-        data_files["test"] = test_file
-
-    # load the dataset
-    dataset_dict = load_dataset(
-        filetype,
-        data_files=data_files,
-    )
-
-    # tokenize the dataset
-    dataset_dict = dataset_dict.map(
-        pipeline._tokenize_fn,
-        batched=True,
-    )
-    columns = ["input_ids", "attention_mask"] if predict else ["input_ids", "attention_mask", "labels"]
-    dataset_dict.set_format(columns=columns)
-
-    train_ds = None
-    valid_ds = None
-    test_ds = None
-
-    if "train" in dataset_dict:
-        train_ds = dataset_dict["train"]
-
-    if "validation" in dataset_dict:
-        valid_ds = dataset_dict["validation"]
-
-    if "test" in dataset_dict:
-        test_ds = dataset_dict["test"]
-
-    return train_ds, valid_ds, test_ds
-
-
-class Seq2SeqDataPipeline(TaskDataPipeline):
+class Seq2SeqPreprocess(Preprocess):
 
     def __init__(
         self,
         tokenizer,
         input: str,
+        filetype: str,
         target: Optional[str] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'longest'
     ):
+        super().__init__()
+
         self.tokenizer = tokenizer
-        self._input = input
-        self._target = target
-        self._max_target_length = max_target_length
-        self._max_source_length = max_source_length
-        self._padding = padding
+        self.input = input
+        self.filetype = filetype
+        self.target = target
+        self.max_target_length = max_target_length
+        self.max_source_length = max_source_length
+        self.padding = padding
         self._tokenize_fn = partial(
             self._tokenize_fn,
             tokenizer=self.tokenizer,
-            input=self._input,
-            target=self._target,
-            max_source_length=self._max_source_length,
-            max_target_length=self._max_target_length,
-            padding=self._padding,
+            input=self.input,
+            target=self.target,
+            max_source_length=self.max_source_length,
+            max_target_length=self.max_target_length,
+            padding=self.padding
         )
-
-    def before_collate(self, samples: Any) -> Any:
-        """Override to apply transformations to samples"""
-        if isinstance(samples, (list, tuple)) and len(samples) > 0 and all(isinstance(s, str) for s in samples):
-            return [self._tokenize_fn({self._input: s, self._target: None}) for s in samples]
-        return samples
 
     @staticmethod
     def _tokenize_fn(
@@ -120,98 +76,154 @@ class Seq2SeqDataPipeline(TaskDataPipeline):
         )
         return output
 
+    def load_data(
+        self,
+        file: str,
+        use_full: bool = True,
+        columns: List[str] = ["input_ids", "attention_mask", "labels"]
+    ) -> 'datasets.Dataset':
+        data_files = {}
+        stage = self._running_stage.value
+        data_files[stage] = str(file)
+
+        # FLASH_TESTING is set in the CI to run faster.
+        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
+            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        else:
+            # used for debugging. Avoid processing the entire dataset   # noqa E265
+            try:
+                dataset_dict = DatasetDict({
+                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                })
+            except AssertionError:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
+
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
+        dataset_dict.set_format(columns=columns)
+        return dataset_dict[stage]
+
+    def predict_load_data(self, sample: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
+        if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
+            return self.load_data(sample, use_full=True, columns=["input_ids", "attention_mask"])
+        else:
+            if isinstance(sample, (list, tuple)) and len(sample) > 0 and all(isinstance(s, str) for s in sample):
+                return [self._tokenize_fn({self.input: s, self.target: None}) for s in sample]
+            else:
+                raise MisconfigurationException("Currently, we support only list of sentences")
+
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
         return default_data_collator(samples)
-
-    def after_collate(self, batch: Any) -> Any:
-        return batch
-
-    def uncollate(self, generated_tokens: Any) -> Any:
-        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-        pred_str = [str.strip(s) for s in pred_str]
-        return pred_str
 
 
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
-    @staticmethod
-    def default_pipeline():
-        return Seq2SeqDataPipeline(
-            AutoTokenizer.from_pretrained("sshleifer/tiny-mbart", use_fast=True),
-            input="input",
+    preprocess_cls = Seq2SeqPreprocess
+
+    @classmethod
+    def instantiate_preprocess(
+        cls,
+        tokenizer: AutoTokenizer,
+        input: str,
+        filetype: str,
+        target: str,
+        max_source_length: int,
+        max_target_length: int,
+        padding: int,
+        preprocess_cls: Optional[Type[Preprocess]] = None
+    ) -> Preprocess:
+        """
+        This function is used to instantiate the  ``Seq2SeqPreprocess`` preprocess.
+
+        Args:
+            tokenizer: Path to training data.
+            input: The field storing the source translation text.
+            filetype: ``csv`` or ``json`` File
+            target: The field storing the target translation text.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
+            max_source_length: Maximum length of the source text. Any text longer will be truncated.
+            max_target_length: Maximum length of the target text. Any text longer will be truncated.
+            padding: Padding strategy for batches. Default is pad to maximum length.
+            preprocess_cls: Preprocess cls
+        """
+
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+
+        return preprocess_cls(
+            tokenizer=tokenizer,
+            input=input,
+            filetype=filetype,
+            target=target,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
         )
 
     @classmethod
     def from_files(
         cls,
-        train_file: str,
+        train_file: Optional[str],
         input: str = 'input',
         target: Optional[str] = None,
         filetype: str = "csv",
         backbone: str = "sshleifer/tiny-mbart",
-        valid_file: Optional[str] = None,
+        val_file: Optional[str] = None,
         test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 32,
         num_workers: Optional[int] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
     ):
         """Creates a Seq2SeqData object from files.
-
         Args:
             train_file: Path to training data.
             input: The field storing the source translation text.
             target: The field storing the target translation text.
-            filetype: .csv or .json
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
-            valid_file: Path to validation data.
+            filetype: ``csv`` or ``json`` File
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
+            val_file: Path to validation data.
             test_file: Path to test data.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 32.
+            batch_size: The batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
-
+                Defaults to None which equals the number of available CPU threads,
+                or 0 for Darwin platform.
         Returns:
             Seq2SeqData: The constructed data module.
-
         Examples::
-
             train_df = pd.read_csv("train_data.csv")
-            tab_data = TabularData.from_df(train_df, target="fraud",
-                                           numerical_input=["account_value"],
-                                           categorical_input=["account_type"])
-
+            tab_data = TabularData.from_df(train_df,
+                                           target="fraud",
+                                           num_cols=["account_value"],
+                                           cat_cols=["account_type"])
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-        pipeline = Seq2SeqDataPipeline(
-            tokenizer=tokenizer,
-            input=input,
-            target=target,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding
+        preprocess = cls.instantiate_preprocess(
+            tokenizer,
+            input,
+            filetype,
+            target,
+            max_source_length,
+            max_target_length,
+            padding,
+            preprocess_cls=preprocess_cls
         )
 
-        train_ds, valid_ds, test_ds = prepare_dataset(
-            train_file=train_file, valid_file=valid_file, test_file=test_file, filetype=filetype, pipeline=pipeline
-        )
-
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_file,
+            val_load_data_input=val_file,
+            test_load_data_input=test_file,
+            predict_load_data_input=predict_file,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess=preprocess
         )
-
-        datamodule.data_pipeline = pipeline
-        return datamodule
 
     @classmethod
     def from_file(
@@ -226,48 +238,36 @@ class Seq2SeqData(DataModule):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 32,
         num_workers: Optional[int] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
     ):
         """Creates a TextClassificationData object from files.
-
         Args:
             predict_file: Path to prediction input file.
             input: The field storing the source translation text.
             target: The field storing the target translation text.
-            backbone: tokenizer to use, can use any HuggingFace tokenizer.
-            filetype: csv or json.
+            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
+            filetype: Csv or json.
             max_source_length: Maximum length of the source text. Any text longer will be truncated.
             max_target_length: Maximum length of the target text. Any text longer will be truncated.
             padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: the batchsize to use for parallel loading. Defaults to 32.
+            batch_size: The batchsize to use for parallel loading. Defaults to 32.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
-
+                Defaults to None which equals the number of available CPU threads,
+                or 0 for Darwin platform.
         Returns:
             Seq2SeqData: The constructed data module.
-
         """
-        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-        pipeline = Seq2SeqDataPipeline(
-            tokenizer=tokenizer,
+        return cls.from_files(
+            train_file=None,
             input=input,
             target=target,
+            filetype=filetype,
+            backbone=backbone,
+            predict_file=predict_file,
             max_source_length=max_source_length,
             max_target_length=max_target_length,
-            padding=padding
-        )
-
-        train_ds, valid_ds, test_ds = prepare_dataset(
-            test_file=predict_file, filetype=filetype, pipeline=pipeline, predict=True
-        )
-
-        datamodule = cls(
-            train_ds=train_ds,
-            valid_ds=valid_ds,
-            test_ds=test_ds,
+            padding=padding,
             batch_size=batch_size,
             num_workers=num_workers,
+            preprocess_cls=preprocess_cls,
         )
-
-        datamodule.data_pipeline = pipeline
-        return datamodule

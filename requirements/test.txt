@@ -1,9 +1,14 @@
 codecov>=2.1
 pytest>=5.0
+pytest-flake8
+flake8
+
+# install pkg
 check-manifest
 twine==3.2
+
+# formatting
+pre-commit
 isort
 yapf
-flake8
-pre-commit
 #mypy

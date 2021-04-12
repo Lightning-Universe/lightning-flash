@@ -32,7 +32,7 @@ class DummyDataset(torch.utils.data.Dataset):
         num_vars = torch.rand(self.num_num)
         return (cat_vars, num_vars), target
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 100
 
 

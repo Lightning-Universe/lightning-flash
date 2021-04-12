@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
+from unittest import mock
 
 import pytest
 
@@ -49,26 +51,28 @@ def run_test(filepath):
     assert not code
 
 
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
-    "step,file",
+    "folder, file",
     [
-        # ("finetuning", "image_classification.py"),
+        ("finetuning", "image_classification.py"),
         # ("finetuning", "object_detection.py"),  # TODO: takes too long.
         # ("finetuning", "summarization.py"),  # TODO: takes too long.
-        # ("finetuning", "tabular_classification.py"),
-        # ("finetuning", "text_classification.py"),
+        ("finetuning", "tabular_classification.py"),
+        # ("finetuning", "text_classification.py"),  # TODO: takes too long
         # ("finetuning", "translation.py"),  # TODO: takes too long.
-        # ("predict", "classify_image.py"),
-        # ("predict", "classify_tabular.py"),
-        # ("predict", "classify_text.py"),
-        # ("predict", "image_embedder.py"),
-        # ("predict", "summarize.py"),
+        ("predict", "image_classification.py"),
+        ("predict", "tabular_classification.py"),
+        # ("predict", "text_classification.py"),
+        ("predict", "image_embedder.py"),
+        # ("predict", "summarization.py"),  # TODO: takes too long
         # ("predict", "translate.py"),  # TODO: takes too long
     ]
 )
-def test_example(tmpdir, step, file):
-    run_test(str(root / "flash_examples" / step / file))
+def test_example(tmpdir, folder, file):
+    run_test(str(root / "flash_examples" / folder / file))
 
 
+@pytest.mark.skipif(reason="CI bug")
 def test_generic_example(tmpdir):
     run_test(str(root / "flash_examples" / "generic_task.py"))

@@ -18,6 +18,7 @@ from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities import rank_zero_info
+from torch import Tensor
 from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
 
 from flash.core import Task
@@ -26,7 +27,7 @@ from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 
 def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
-    pad_token_id = model_cfg.pad_token_id if model_cfg.pad_token_id is not None else model_cfg.eos_token_id
+    pad_token_id = model_cfg.pad_token_id if model_cfg.pad_token_id else model_cfg.eos_token_id
     if pad_token_id is None:
         raise ValueError(
             f"Make sure that either `config.pad_token_id` or `config.eos_token_id` "
@@ -83,14 +84,14 @@ class Seq2SeqTask(Task):
             )
         return generated_tokens
 
-    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: Any, batch_idx: int) -> Tensor:
         outputs = self.model(**batch)
         loss = outputs[0]
         self.log("train_loss", loss)
         return loss
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
-        generated_tokens = self.predict(batch, skip_collate_fn=True)
+        generated_tokens = self(batch)
         self.compute_metrics(generated_tokens, batch, prefix)
 
     def validation_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):
@@ -107,21 +108,21 @@ class Seq2SeqTask(Task):
         """
         Override to define AutoConfig task specific parameters stored within the model.
         """
-        pass
+        return
 
     def _initialize_model_specific_parameters(self):
         task_specific_params = self.model.config.task_specific_params
 
-        if task_specific_params is not None:
+        if task_specific_params:
             pars = task_specific_params.get(self.task, {})
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
     @property
     def tokenizer(self) -> PreTrainedTokenizerBase:
-        return self.data_pipeline.tokenizer
+        return self.data_pipeline._preprocess_pipeline.tokenizer
 
-    def tokenize_labels(self, labels: torch.Tensor) -> List[str]:
+    def tokenize_labels(self, labels: Tensor) -> List[str]:
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
         return [str.strip(s) for s in label_str]
 

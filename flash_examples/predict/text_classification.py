@@ -13,7 +13,7 @@
 # limitations under the License.
 from pytorch_lightning import Trainer
 
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Download the data
@@ -36,6 +36,8 @@ print(predictions)
 datamodule = TextClassificationData.from_file(
     predict_file="data/imdb/predict.csv",
     input="review",
+    # use the same data pre-processing values we used to predict in 2a
+    preprocess_state=model.data_pipeline.preprocess_state,
 )
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
