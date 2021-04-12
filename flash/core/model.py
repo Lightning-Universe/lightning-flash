@@ -70,7 +70,7 @@ class Task(pl.LightningModule):
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer_cls = optimizer
-        self.schedulers = schedulers
+        self.scheduler = scheduler
         self.metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
