@@ -25,19 +25,6 @@ class FlashRegistry:
     """
     This class is used to register function or ``functools.partial`` class to a registry.
 
-    Example::
-
-        backbones = FlashRegistry("backbones")
-
-        @backbones
-        def my_model(nc_input=5, nc_output=6):
-            return nn.Linear(nc_input, nc_output), nc_input, nc_output
-
-        mlp, nc_input, nc_output = backbones.get("my_model")(nc_output=7)
-
-        backbones(my_model, name="foo")
-        assert backbones.get("foo")
-
     """
 
     def __init__(self, name: str, verbose: bool = False) -> None:
