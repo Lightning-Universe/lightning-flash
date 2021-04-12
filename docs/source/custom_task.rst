@@ -74,7 +74,7 @@ For a task you will likely need a specific way of loading data.
 
 Firstly, it is recommended to create a :class:`~flash.data.process.Preprocess` object.
 The :class:`~flash.data.process.Preprocess` contains all the processing logic and are similar to ``Callback``.
-The user would to override hooks with their processing logic.
+The user would override hooks with their processing logic.
 
 .. note::
     As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`

@@ -109,16 +109,80 @@ class Preprocess(Properties, torch.nn.Module):
 
     The :class:`~flash.data.process.Preprocess` supports the following hooks:
 
-        - ``load_data``: Receive some metadata to generate a Mapping from. Example: Take a folder path and return list of image paths.
-        - ``load_sample``: Hook containing the logic to load a sample from metadata. Example: an image from a path.
-        - ``pre_tensor_transform``: Hook used to transform objects.
-        - ``to_tensor_transform``: Hook used to convert an object to tensor or data structure containing tensors.
-        - ``post_tensor_transform``: Hook used to transform a single tensor sample.
-        - ``per_batch_transform``: Hook used to transform  a batch.
-        - ``collate``: Hook to transform a sequences of sample into a batch.
-        - ``per_sample_transform_on_device``: Hook used to transform a sample already on ``GPU`` or ``TPU``.
-        - ``per_batch_transform_on_device``: Hook used to transform a batch already on ``GPU`` or ``TPU``.
+        - ``load_data``: Function to receiving some metadata to generate a Mapping from.
+            Example::
 
+                * Input: Receive a folder path:
+
+                * Action: Walk the folder path and find image paths and their associated labels.
+
+                * Output: Return a list of image paths and their associated labels.
+
+        - ``load_sample``: Function to load a sample from metadata sample.
+            Example::
+
+                * Input: Receive an image path and its label.
+
+                * Action: Load a PIL Image from received image_path.
+
+                * Output: Return the PIL Image and its label.
+
+        - ``pre_tensor_transform``: Preforms transforms on a single data sample object.
+            Example::
+
+                * Input: Receive a PIL Image and its label.
+
+                * Action: Rotate the PIL Image.
+
+                * Output: Return the rotated PIL image and its label.
+
+        - ``to_tensor_transform``: Converts a single data sample to a tensor / data structure containing tensors.
+            Example::
+
+                * Input: Receive the rotated PIL Image and its label.
+
+                * Action: Convert the rotated PIL Image to a tensor.
+
+                * Output: Return the tensored image and its label.
+
+        - ``post_tensor_transform``: Preforms transform on a single tensor sample.
+            Example::
+
+                * Input: Receive the tensored image and its label.
+
+                * Action: Flip the tensored image randomly.
+
+                * Output: Return the tensored image and its label.
+
+        - ``per_batch_transform``: Preforms transforms on a batch.
+            In this example, we decided not to override the hook.
+
+        - ``per_sample_transform_on_device``: Preforms transform on a sample already on a ``GPU`` or ``TPU``.
+            Example::
+
+                * Input: Receive a tensored image on device and its label.
+
+                * Action: Apply random transforms.
+
+                * Output: Return an augmented tensored image on device and its label.
+
+        - ``collate``: Converts a sequence of data samples into a batch.
+            Example::
+
+                * Input: Receive a list of augmented tensored images and their respective labels.
+
+                * Action: Collate the list of images into batch.
+
+                * Output: Return a batch of images and their labels.
+
+        - ``per_batch_transform_on_device``: Preforms transform a batch already on ``GPU`` or ``TPU``.
+            Example::
+
+                * Input: Receive a batch of images and their labels.
+
+                * Action: Apply normalization on the batch by substracting the mean and dividing by the standard deviation from Imagenet.
+
+                * Output: Return a normalized augmented batch of images and their labels.
 
     .. note::
 
@@ -130,25 +194,26 @@ class Preprocess(Properties, torch.nn.Module):
         The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive
         as it will impact performances.
 
-    Each hook can be made specialized by adding prefix such as ``train``, ``val``, ``test``, ``predict``.
+    To change the processing behaviour only on specific stages, you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
+
+    For example, is useful to encapsulate ``predict`` logic as labels aren't availabled at inference time.
 
     Example::
 
         class CustomPreprocess(Preprocess):
 
-            def train_load_data(cls, data: Any, dataset: Optional[Any] = None) -> Iterable:
-                pass
+            def predict_load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
+                # logic for predict data only.
 
-    Each hook is aware of its name through ``current_fn`` and ``running stage`` as follow:
+    Each hook is aware of the Trainer ``running stage`` through booleans as follow.
+
+    This is useful to adapt a hook internals for a stage without duplicating code.
 
     Example::
 
         class CustomPreprocess(Preprocess):
 
-            def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Iterable:
-
-                print(self.current_fn)
-                # Out: `load_data`
+            def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
 
                 if self.training:
                     # logic for train
@@ -165,7 +230,7 @@ class Preprocess(Properties, torch.nn.Module):
     .. note::
 
         It is possible to wrap a ``Dataset`` within a :class:`~flash.data.process.Preprocess` ``load_data`` function.
-        However, it is recommended to split the processing logic within the hooks.
+        However, we don't recommend to do as such as it is better to rely entirely on the hooks.
 
     Example::
 
@@ -224,7 +289,7 @@ class Preprocess(Properties, torch.nn.Module):
 
             samples = type(samples)(samples)
 
-            # if ``per_sample_transform_on_device`` hook is overridden, those functions below will be no-ops
+            # if :func:`flash.data.process.Preprocess.per_sample_transform_on_device` hook is overridden, those functions below will be no-ops
 
             samples = collate(samples)
             samples = per_batch_transform(samples)
