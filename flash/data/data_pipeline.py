@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 class DataPipeline:
     """
-    DataPipeline hold the engineering logic to connect
+    DataPipeline holds the engineering logic to connect
     :class:`~flash.data.process.Preprocess` and/or ``PostProcess`` objects to
     the ``DataModule``, Flash ``Task`` and ``Trainer``.
 
