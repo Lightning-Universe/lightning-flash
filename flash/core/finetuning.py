@@ -57,7 +57,7 @@ class FlashBaseFinetuning(BaseFinetuning):
         self.attr_names = [attr_names] if isinstance(attr_names, str) else attr_names
         self.train_bn = train_bn
 
-    def freeze_before_training(self, pl_module: Task) -> None:
+    def freeze_before_training(self, pl_module: 'Task') -> None:
         self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
     def freeze_using_attr_names(self, pl_module: Task, attr_names: List[str], train_bn: bool = True) -> None:
@@ -67,7 +67,7 @@ class FlashBaseFinetuning(BaseFinetuning):
                 MisconfigurationException(f"Your model must have a {attr} attribute")
             self.freeze(modules=attr, train_bn=train_bn)
 
-    def finetune_function(self, pl_module: Task, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
+    def finetune_function(self, pl_module: 'Task', epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
         pass
 
 
