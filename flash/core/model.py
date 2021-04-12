@@ -166,9 +166,9 @@ class Task(LightningModule):
     def configure_optimizers(
             self
     ) -> Union[Tuple[Tuple[torch.optim.Optimizer], Any], Tuple[torch.optim.Optimizer]]:
-        optimizers = self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate),
+        optimizers = self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
         if self.scheduler:
-            return optimizers, self.scheduler(optimizer=optimizer)
+            return optimizers, self.scheduler(optimizer=optimizers)
         return optimizers
 
     def configure_finetune_callback(self) -> List[Callback]:
