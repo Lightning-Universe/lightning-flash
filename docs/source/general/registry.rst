@@ -8,8 +8,8 @@ Registry
 Available Registries
 ********************
 
-Registries are mapping a name and metadata to a function.
-It helps organize code and make the functions accessible all across the ``Flash`` codebase.
+Registries are Flash internal key-value database to store mapping between a name and a function.
+It helps organize code and make the functions accessible all across the ``Flash`` codebase directly from the key.
 Each Flash ``Task`` can have several registries as static attributes.
 It enables to quickly experiment with your backbone functions or use our long list of available backbones.
 

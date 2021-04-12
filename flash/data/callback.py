@@ -115,7 +115,11 @@ class BaseDataFetcher(FlashCallback):
         dm = CustomDataModule.from_inputs(range(5), range(5), range(5), range(5))
         data_fetcher: PrintData = dm.data_fetcher
 
+        # By default, the ``data_fetcher`` is disabled to prevent OOM.
+        # The ``enable`` context manager will activate it.
         with data_fetcher.enable():
+
+            # This will fetch the first val dataloader batch.
             _ = next(iter(dm.val_dataloader()))
 
         data_fetcher.print()

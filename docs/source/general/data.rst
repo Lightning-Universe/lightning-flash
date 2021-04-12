@@ -23,7 +23,8 @@ Here are common terms you need to be familiar with:
      - The :class:`~flash.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` objects.
    * - :class:`~flash.data.process.Preprocess`
      - The :class:`~flash.data.process.Preprocess` provides a simple hook-based API to encapsulate your pre-processing logic.
-        This enables to not rely on Dataset anymore even if supported.
+        The :class:`~flash.data.process.Preprocess` provides multiple hooks and :meth:`~flash.data.process.Preprocess.load_data`
+        and :meth:`~flash.data.process.Preprocess.load_sample` functions are used to replace a traditional `Dataset`.
         Flash DataPipeline contains a system to call the right hooks when needed.
         The :class:`~flash.data.process.Preprocess` hooks covers from data-loading to model forwarding.
    * - :class:`~flash.data.process.Postprocess`
@@ -41,30 +42,29 @@ Checkout the :ref:`image_classification` section or any other tasks to learn mor
 Why Preprocess and PostProcess ?
 ********************************
 
-Currently, it is common practice to implement a :class:`~torch.data.utils.Dataset` and provide them to a :class:`~torch.data.utils.DataLoader`.
+Currently, it is common practice to implement a `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_
+and provide them to a `DataLoader <https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader>`_.
 
-However, once the model is trained, lot of engineering work is required
-to perform predictions on ``un-processed data`` (called raw data) directly with the model
-or to study data transforms during training.
+However, after model training, it requires a lot of engineering overhead to make inference on raw data and deploy the model in production environnement.
 
-But more importantly, it is hard to make a trained model ready for production.
-
-The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` have been created to resolve those issues.
-By providing a series of hooks which can overridden with custom data processing logic, the user have a much more granular control on his data processing flow.
+The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` have been created to resolve these issues.
+By providing a series of hooks that can be overridden with custom data processing logic, the user has much more granular control over their data processing flow.
 
 But it also makes your code more readable, modular and easy to extend.
 
 To change the processing behavior only on specific stages for a given hook,
-you can prefix all the hooks by adding ``train``, ``val``, ``test`` or ``predict``.
+you can prefix each of the :class:`~flash.data.process.Preprocess` and  :class:`~flash.data.process.Postprocess`
+hooks by adding ``train``, ``val``, ``test`` or ``predict``.
+
 Check out :class:`~flash.data.process.Preprocess` for some examples.
 
 .. note::
 
     ``[WIP]`` We are currently working on a new feature to make :class:`~flash.data.process.Preprocess`
 
-    and :class:`~flash.data.process.Postprocess` automatically deployable for ``Endpoints``
+    and :class:`~flash.data.process.Postprocess` automatically deployable from checkpoints as
 
-    or ``BatchTransformJob`` from checkpoints directly. Stay tuned !
+    ``Endpoints`` or ``BatchTransformJob``. Stay tuned !
 
 *************************************
 How to customize existing datamodules
@@ -87,14 +87,14 @@ and :class:`~flash.data.process.Preprocess` responsibilities.
 
 .. note::
 
-    From this point, we strongly encourage the readers to quickly check the :class:`~flash.data.process.Preprocess` API before getting further.
+    At this point, we strongly encourage the readers to quickly check the :class:`~flash.data.process.Preprocess` API before getting further.
 
 The :class:`~flash.data.data_module.DataModule` provides ``classmethod`` helpers to build
 :class:`~flash.data.process.Preprocess` and :class:`~flash.data.data_pipeline.DataPipeline`,
-generate ``AutoDataset`` and populate DataLoaders from them.
+generate Flash Internal :class:`~flash.data.auto_dataset.AutoDataset` and populate DataLoaders with them.
 
-The :class:`~flash.data.process.Preprocess` contains the processing logic related to a given task. One can easily override hooks
-to customize a built-in :class:`~flash.data.process.Preprocess` for his need.
+The :class:`~flash.data.process.Preprocess` contains the processing logic related to a given task. Users can easily override hooks
+to customize a built-in :class:`~flash.data.process.Preprocess` for their needs.
 
 Example::
 
@@ -123,7 +123,7 @@ Example::
 Custom Preprocess + Datamodule
 ******************************
 
-In this section, we will create a very simple ``ImageClassificationPreprocess`` with a ``ImageClassificationDataModule``.
+The example below shows a very simple ``ImageClassificationPreprocess`` with a ``ImageClassificationDataModule``.
 
 1. User-Facing API design
 _________________________
@@ -349,7 +349,7 @@ Example::
     ``per_batch_transform`` are injected as the ``collate_fn`` function of the DataLoader.
 
 Here is the pseudo code using the preprocess hooks name.
-Surely, Flash will take care of calling the right hooks for each stage.
+Flash takes care of calling the right hooks for each stage.
 
 Example::
 
@@ -379,7 +379,7 @@ Example::
     after the ``LightningModule`` ``transfer_batch_to_device`` hook.
 
 Here is the pseudo code using the preprocess hooks name.
-Surely, Flash will take care of calling the right hooks for each stage.
+Flash takes care of calling the right hooks for each stage.
 
 Example::
 
