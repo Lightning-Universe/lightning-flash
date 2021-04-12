@@ -4,6 +4,17 @@ Data
 
 .. _data:
 
+*******************************************
+How to use out-of-the-box flashdatamodules
+*******************************************
+
+Flash provides several DataModules with helpers functions instantiate them.
+
+Checkout flash.vision.ImageClassificationData
+
+
+
+
 *******************************
 Using DataModule + DataPipeline
 *******************************

@@ -370,10 +370,14 @@ class DataModule(pl.LightningDataModule):
 
         Args:
             cls: ``DataModule`` subclass
-            train_load_data_input: Data to be received by the ``train_load_data`` function from this :class:`~flash.data.process.Preprocess`
-            val_load_data_input: Data to be received by the ``val_load_data`` function from this :class:`~flash.data.process.Preprocess`
-            test_load_data_input: Data to be received by the ``test_load_data`` function from this :class:`~flash.data.process.Preprocess`
-            predict_load_data_input: Data to be received by the ``predict_load_data`` function from this :class:`~flash.data.process.Preprocess`
+            train_load_data_input: Data to be received by the ``train_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
+            val_load_data_input: Data to be received by the ``val_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
+            test_load_data_input: Data to be received by the ``test_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
+            predict_load_data_input: Data to be received by the ``predict_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
             kwargs: Any extra arguments to instantiate the provided ``DataModule``
         """
         # trick to get data_pipeline from empty DataModule

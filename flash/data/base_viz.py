@@ -88,7 +88,8 @@ class BaseViz(BaseDataFetcher):
 
     .. note::
 
-        As the :class:`~flash.data.process.Preprocess` hooks are injected within the threaded workers for the DataLoader,
+        As the :class:`~flash.data.process.Preprocess` hooks are injected within
+        the threaded workers for the DataLoader,
         the data won't be accessible when using ``num_workers > 0``.
 
     """

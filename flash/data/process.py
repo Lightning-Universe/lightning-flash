@@ -102,7 +102,8 @@ class PreprocessState:
 
 class Preprocess(Properties, torch.nn.Module):
     """
-    The :class:`~flash.data.process.Preprocess` is used to encapsulate all the processing data loading logic up to the model.
+    The :class:`~flash.data.process.Preprocess` is used to encapsulate
+    all the processing data loading logic up to the model.
 
     It is particularly relevant when you want to provide ready-to-production implementation which works
     with 4 different stages: ``training``, ``validation``, ``test` and inference(``predicting``).
@@ -180,7 +181,8 @@ class Preprocess(Properties, torch.nn.Module):
 
                 * Input: Receive a batch of images and their labels.
 
-                * Action: Apply normalization on the batch by substracting the mean and dividing by the standard deviation from Imagenet.
+                * Action: Apply normalization on the batch by substracting the mean
+                    and dividing by the standard deviation from Imagenet.
 
                 * Output: Return a normalized augmented batch of images and their labels.
 
@@ -194,7 +196,8 @@ class Preprocess(Properties, torch.nn.Module):
         The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive
         as it will impact performances.
 
-    To change the processing behaviour only on specific stages, you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
+    To change the processing behaviour only on specific stages,
+    you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
 
     For example, is useful to encapsulate ``predict`` logic as labels aren't availabled at inference time.
 
@@ -271,10 +274,11 @@ class Preprocess(Properties, torch.nn.Module):
 
     .. note::
 
-        The ``pre_tensor_transform``, ``to_tensor_transform``, ``post_tensor_transform``, ``collate``, ``per_batch_transform``
-        are injected as the ``collate_fn`` function of the DataLoader.
+        The ``pre_tensor_transform``, ``to_tensor_transform``, ``post_tensor_transform``, ``collate``,
+        ``per_batch_transform`` are injected as the ``collate_fn`` function of the DataLoader.
 
-    Here is the pseudo code using the preprocess hooks name. Surely, Flash will take care of calling the right hooks for each stage.
+    Here is the pseudo code using the preprocess hooks name.
+    Surely, Flash will take care of calling the right hooks for each stage.
 
     Example::
 
@@ -289,7 +293,8 @@ class Preprocess(Properties, torch.nn.Module):
 
             samples = type(samples)(samples)
 
-            # if :func:`flash.data.process.Preprocess.per_sample_transform_on_device` hook is overridden, those functions below will be no-ops
+            # if :func:`flash.data.process.Preprocess.per_sample_transform_on_device` hook is overridden,
+            # those functions below will be no-ops
 
             samples = collate(samples)
             samples = per_batch_transform(samples)
