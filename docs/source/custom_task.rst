@@ -36,7 +36,7 @@ Example::
     preprocess_cls = ...
     datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess_cls)
 
-Here is the `NumpyDataModule`` implementation:
+Here is the ``NumpyDataModule`` implementation:
 
 Example::
 
@@ -49,11 +49,19 @@ Example::
     class NumpyDataModule(DataModule):
 
         @classmethod
-        def from_xy_dataset(cls, x: ND, y: ND, preprocess_cls: Preprocess = NumpyPreprocess, batch_size: int = 64, num_workers: int = 0):
+        def from_xy_dataset(
+            cls,
+            x: ND,
+            y: ND,
+            preprocess_cls: Preprocess = NumpyPreprocess,
+            batch_size: int = 64,
+            num_workers: int = 0
+        ):
 
             preprocess = preprocess_cls()
 
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
+            x_train, x_test, y_train, y_test = train_test_split(
+                x, y, test_size=.20, random_state=0)
 
             # Make sure to call ``from_load_data_inputs``.
             dm = cls.from_load_data_inputs(
@@ -82,6 +90,17 @@ Example::
 
     As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`
     before going further with the tutorial.
+
+.. note::
+
+    Why introducing :class:`~flash.data.process.Preprocess` ?
+
+    A :class:`~flash.data.process.Preprocess` object provides a series of hooks that can be overridden with custom data processing logic.
+    The user has much more granular control over their data processing flow.
+
+    The :class:`~flash.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
+    to deploy the model in production environnement compared to traditional
+    `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_.
 
 Example::
 
@@ -156,6 +175,21 @@ testing) or override ``training_step``, ``validation_step``, and
 Lightning’s
 `methods <https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#methods>`__.
 
+Here is the pseudo code behind :class:`~flash.core.model.Task` step.
+
+Example::
+
+    def step(self, batch: Any, batch_idx: int) -> Any:
+        """
+        The training/validation/test step. Override for custom behavior.
+        """
+        x, y = batch
+        y_hat = self(x)
+        # compute the logs, loss and metrics as an output dictionary
+        return output
+
+
+
 4. Fitting
 ----------
 
@@ -187,7 +221,8 @@ few examples from the test set of our data:
         [-0.0128, -0.0446,  0.0606,  0.0529,  0.0480,  0.0294, -0.0176,  0.0343, 0.0702,  0.0072],
         [ 0.0381,  0.0507,  0.0089,  0.0425, -0.0428, -0.0210, -0.0397, -0.0026, -0.0181,  0.0072],
         [-0.0128, -0.0446, -0.0235, -0.0401, -0.0167,  0.0046, -0.0176, -0.0026, -0.0385, -0.0384],
-        [-0.0237, -0.0446,  0.0455,  0.0907, -0.0181, -0.0354,  0.0707, -0.0395, -0.0345, -0.0094]])
+        [-0.0237, -0.0446,  0.0455,  0.0907, -0.0181, -0.0354,  0.0707, -0.0395, -0.0345, -0.0094]]
+    )
 
     predictions = model.predict(predict_data)
     print(predictions)
