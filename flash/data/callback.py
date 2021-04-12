@@ -113,7 +113,7 @@ class BaseDataFetcher(FlashCallback):
                     batch_size=5)
 
         dm = CustomDataModule.from_inputs(range(5), range(5), range(5), range(5))
-        data_fetcher: PrintData = dm.data_fetcher
+        data_fetcher = dm.data_fetcher
 
         # By default, the ``data_fetcher`` is disabled to prevent OOM.
         # The ``enable`` context manager will activate it.
