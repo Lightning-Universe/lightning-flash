@@ -1,11 +1,21 @@
 Tutorial: Creating a Custom Task
 ================================
 
-In this tutorial we will go over the process of creating a custom task,
-along with a custom data module.
+In this tutorial we will go over the process of creating a custom :class:`~flash.core.model.Task`,
+along with a custom :class:`~flash.data.data_module.DataModule`.
+
+
+The tutorial objective is to create a ``RegressionTask`` to learn to predict if someone has ``diabetes`` or not.
+The diabetes  (stored as a numpy dataset).
+
+.. note::
+
+    Find the complete tutorial example at
+    `flash_examples/custom_task.py <https://github.com/PyTorchLightning/lightning-flash/blob/revamp_doc/flash_examples/custom_task.py>`_.
+
 
 1. Imports
------------
+----------
 
 
 .. testcode:: python
@@ -23,114 +33,11 @@ along with a custom data module.
     from flash.data.auto_dataset import AutoDataset
     from flash.data.process import Postprocess, Preprocess
 
+    # set the random seeds.
     seed_everything(42)
 
-2.a The DataModule API
-----------------------
 
-First, let's design the user-facing API. The ``NumpyDataModule`` will provide a ``from_xy_dataset`` helper ``classmethod``.
-
-Example::
-
-    x, y = ...
-    preprocess_cls = ...
-    datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess_cls)
-
-Here is the ``NumpyDataModule`` implementation:
-
-Example::
-
-    from flash import DataModule
-    from flash.data.process import Preprocess
-    import numpy as np
-
-    ND = np.ndarray
-
-    class NumpyDataModule(DataModule):
-
-        @classmethod
-        def from_xy_dataset(
-            cls,
-            x: ND,
-            y: ND,
-            preprocess_cls: Preprocess = NumpyPreprocess,
-            batch_size: int = 64,
-            num_workers: int = 0
-        ):
-
-            preprocess = preprocess_cls()
-
-            x_train, x_test, y_train, y_test = train_test_split(
-                x, y, test_size=.20, random_state=0)
-
-            # Make sure to call ``from_load_data_inputs``.
-            dm = cls.from_load_data_inputs(
-                train_load_data_input=(x_train, y_train),
-                test_load_data_input=(x_test, y_test),
-                preprocess=preprocess,  # DON'T FORGET TO PROVIDE THE PREPROCESS
-                batch_size=batch_size,
-                num_workers=num_workers
-            )
-            # Some metatada can be accessed from ``train_ds`` directly.
-            dm.num_inputs = dm.train_dataset.num_inputs
-            return dm
-
-
-.. note::
-
-    The :class:`~flash.data.data_module.DataModule` provides a ``from_load_data_inputs`` helper function. This function will take care
-    of connecting the provided :class:`~flash.data.process.Preprocess` with the :class:`~flash.data.data_module.DataModule`.
-    Make sure to instantiate your :class:`~flash.data.data_module.DataModule` with this helper if you rely on :class:`~flash.data.process.Preprocess`
-    objects.
-
-2.b The Preprocess API
-----------------------
-
-.. note::
-
-    As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`
-    before going further with the tutorial.
-
-.. note::
-
-    Why introducing :class:`~flash.data.process.Preprocess` ?
-
-    A :class:`~flash.data.process.Preprocess` object provides a series of hooks that can be overridden with custom data processing logic.
-    The user has much more granular control over their data processing flow.
-
-    The :class:`~flash.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
-    to deploy the model in production environnement compared to traditional
-    `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_.
-
-Example::
-
-    import torch
-    from torch import Tensor
-    import numpy as np
-
-    ND = np.ndarray
-
-    class NumpyPreprocess(Preprocess):
-
-        def load_data(self, data: Tuple[ND, ND], dataset: AutoDataset) -> List[Tuple[ND, float]]:
-            if self.training:
-                dataset.num_inputs = data[0].shape[1]
-            return [(x, y) for x, y in zip(*data)]
-
-        def to_tensor_transform(self, sample: Any) -> Tuple[Tensor, Tensor]:
-            x, y = sample
-            x = torch.from_numpy(x).float()
-            y = torch.tensor(y, dtype=torch.float)
-            return x, y
-
-        def predict_load_data(self, data: ND) -> ND:
-            return data
-
-        def predict_to_tensor_transform(self, sample: ND) -> ND:
-            return torch.from_numpy(sample).float()
-
-
-3. The Task: Linear regression
+2. The Task: Linear regression
 -------------------------------
 
 Here we create a basic linear regression task by subclassing
@@ -195,6 +102,113 @@ Example::
         return output
 
 
+3.a The DataModule API
+----------------------
+
+First, let's first design the user-facing API.
+We are going to create a ``NumpyDataModule`` class subclassing :class:`~flash.data.data_module.DataModule`.
+This ``NumpyDataModule`` will provide a ``from_xy_dataset`` helper ``classmethod`` to instantiate
+:class:`~flash.data.data_module.DataModule` from x, y numpy arrays.
+
+Example::
+
+    x, y = ...
+    preprocess_cls = ...
+    datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess_cls)
+
+Here is the ``NumpyDataModule`` implementation:
+
+Example::
+
+    from flash import DataModule
+    from flash.data.process import Preprocess
+    import numpy as np
+
+    ND = np.ndarray
+
+    class NumpyDataModule(DataModule):
+
+        @classmethod
+        def from_xy_dataset(
+            cls,
+            x: ND,
+            y: ND,
+            preprocess_cls: Preprocess = NumpyPreprocess,
+            batch_size: int = 64,
+            num_workers: int = 0
+        ):
+
+            preprocess = preprocess_cls()
+
+            x_train, x_test, y_train, y_test = train_test_split(
+                x, y, test_size=.20, random_state=0)
+
+            # Make sure to call ``from_load_data_inputs``.
+            dm = cls.from_load_data_inputs(
+                train_load_data_input=(x_train, y_train),
+                test_load_data_input=(x_test, y_test),
+                preprocess=preprocess,  # DON'T FORGET TO PROVIDE THE PREPROCESS
+                batch_size=batch_size,
+                num_workers=num_workers
+            )
+            # Some metatada can be accessed from ``train_ds`` directly.
+            dm.num_inputs = dm.train_dataset.num_inputs
+            return dm
+
+
+.. note::
+
+    The :class:`~flash.data.data_module.DataModule` provides a ``from_load_data_inputs`` helper function. This function will take care
+    of connecting the provided :class:`~flash.data.process.Preprocess` with the :class:`~flash.data.data_module.DataModule`.
+    Make sure to instantiate your :class:`~flash.data.data_module.DataModule` with this helper if you rely on :class:`~flash.data.process.Preprocess`
+    objects.
+
+3.b The Preprocess API
+----------------------
+
+.. note::
+
+    As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`
+    before going further with the tutorial.
+
+.. note::
+
+    Why introducing :class:`~flash.data.process.Preprocess` ?
+
+    A :class:`~flash.data.process.Preprocess` object provides a series of hooks that can be overridden with custom data processing logic.
+    The user has much more granular control over their data processing flow.
+
+    The :class:`~flash.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
+    to deploy the model in production environnement compared to traditional
+    `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_.
+
+Example::
+
+    import torch
+    from torch import Tensor
+    import numpy as np
+
+    ND = np.ndarray
+
+    class NumpyPreprocess(Preprocess):
+
+        def load_data(self, data: Tuple[ND, ND], dataset: AutoDataset) -> List[Tuple[ND, float]]:
+            if self.training:
+                dataset.num_inputs = data[0].shape[1]
+            return [(x, y) for x, y in zip(*data)]
+
+        def to_tensor_transform(self, sample: Any) -> Tuple[Tensor, Tensor]:
+            x, y = sample
+            x = torch.from_numpy(x).float()
+            y = torch.tensor(y, dtype=torch.float)
+            return x, y
+
+        def predict_load_data(self, data: ND) -> ND:
+            return data
+
+        def predict_to_tensor_transform(self, sample: ND) -> ND:
+            return torch.from_numpy(sample).float()
+
 
 4. Fitting
 ----------
@@ -213,6 +227,7 @@ supplying the task itself, and the associated data:
 
     trainer = flash.Trainer(max_epochs=1000)
     trainer.fit(model, data)
+
 
 5. Predicting
 -------------
@@ -233,45 +248,3 @@ few examples from the test set of our data:
     predictions = model.predict(predict_data)
     print(predictions)
     #out: [tensor([14.7190]), tensor([14.7100]), tensor([14.7288]), tensor([14.6685]), tensor([14.6687])]
-
-
-6. Customize PostProcess
-------------------------
-
-To customize the postprocessing of this task, you can create a :class:`~flash.data.process.Postprocess` object and assign it to your model as follows:
-
-.. code:: python
-
-    class CustomPostprocess(Postprocess):
-
-        THRESHOLD = 14.72
-
-        def predict_per_sample_transform(self, pred: Any) -> Any:
-            if pred > self.THRESHOLD:
-
-                def send_slack_message(pred):
-                    print(f"This prediction: {pred} is above the threshold: {self.THRESHOLD}")
-
-                send_slack_message(pred)
-            return pred
-
-
-    class RegressionTask(flash.Task):
-
-        # ``postprocess_cls`` is a special attribute name used internally
-        # to instantiate your Postprocess.
-        postprocess_cls = CustomPostprocess
-
-        ...
-
-And when running predict one more time.
-
-.. code:: python
-
-    predict_data = ...
-
-    predictions = model.predict(predict_data)
-    # out: This prediction: tensor([14.7288]) is above the threshold: 14.72
-
-    print(predictions)
-    # out: [tensor([14.7190]), tensor([14.7100]), tensor([14.7288]), tensor([14.6685]), tensor([14.6687])]

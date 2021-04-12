@@ -15,25 +15,25 @@ class FlashCallback(Callback):
         """Called once a sample has been loaded using ``load_sample``."""
 
     def on_pre_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once ``pre_tensor_transform`` have been applied to a sample."""
+        """Called once ``pre_tensor_transform`` has been applied to a sample."""
 
     def on_to_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once ``to_tensor_transform`` have been applied to a sample."""
+        """Called once ``to_tensor_transform`` has been applied to a sample."""
 
     def on_post_tensor_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
-        """Called once ``post_tensor_transform`` have been applied to a sample."""
+        """Called once ``post_tensor_transform`` has been applied to a sample."""
 
     def on_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
-        """Called once ``per_batch_transform`` have been applied to a batch."""
+        """Called once ``per_batch_transform`` has been applied to a batch."""
 
     def on_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
-        """Called once ``collate`` have been applied to a sequence of samples."""
+        """Called once ``collate`` has been applied to a sequence of samples."""
 
     def on_per_sample_transform_on_device(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once ``per_sample_transform_on_device`` have been applied to a sample."""
+        """Called once ``per_sample_transform_on_device`` has been applied to a sample."""
 
     def on_per_batch_transform_on_device(self, batch: Any, running_stage: RunningStage) -> None:
-        """Called once ``per_batch_transform_on_device`` have been applied to a sample."""
+        """Called once ``per_batch_transform_on_device`` has been applied to a sample."""
 
 
 class ControlFlow(FlashCallback):

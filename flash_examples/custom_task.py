@@ -5,7 +5,7 @@ import torch
 from pytorch_lightning import seed_everything
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-from torch import nn
+from torch import nn, Tensor
 
 import flash
 from flash.data.auto_dataset import AutoDataset
@@ -13,24 +13,10 @@ from flash.data.process import Postprocess, Preprocess
 
 seed_everything(42)
 
-
-class CustomPostprocess(Postprocess):
-
-    THRESHOLD = 14.72
-
-    def predict_per_sample_transform(self, pred: Any) -> Any:
-        if pred > self.THRESHOLD:
-
-            def send_slack_message(pred):
-                print(f"This prediction: {pred} is above the threshold: {self.THRESHOLD}")
-
-            send_slack_message(pred)
-        return pred
+ND = np.ndarray
 
 
-class LinearRegression(flash.Task):
-
-    postprocess_cls = CustomPostprocess
+class RegressionTask(flash.Task):
 
     def __init__(self, num_inputs, learning_rate=0.001, metrics=None):
         # what kind of model do we want?
@@ -57,32 +43,30 @@ class LinearRegression(flash.Task):
 
 class NumpyPreprocess(Preprocess):
 
-    def load_data(self, data: Tuple[np.ndarray, np.ndarray], dataset: AutoDataset) -> List[Tuple[np.ndarray, float]]:
+    def load_data(self, data: Tuple[ND, ND], dataset: AutoDataset) -> List[Tuple[ND, float]]:
         if self.training:
             dataset.num_inputs = data[0].shape[1]
         return [(x, y) for x, y in zip(*data)]
 
-    def to_tensor_transform(self, sample: Any) -> Tuple[torch.Tensor, torch.Tensor]:
+    def to_tensor_transform(self, sample: Any) -> Tuple[Tensor, Tensor]:
         x, y = sample
         x = torch.from_numpy(x).float()
         y = torch.tensor(y, dtype=torch.float)
         return x, y
 
-    def predict_load_data(self, data: np.ndarray) -> np.ndarray:
+    def predict_load_data(self, data: ND) -> ND:
         return data
 
-    def predict_to_tensor_transform(self, sample: np.ndarray) -> np.ndarray:
+    def predict_to_tensor_transform(self, sample: ND) -> ND:
         return torch.from_numpy(sample).float()
 
 
-class SklearnDataModule(flash.DataModule):
-
-    preprocess_cls = NumpyPreprocess
+class NumpyDataModule(flash.DataModule):
 
     @classmethod
-    def from_dataset(cls, x: np.ndarray, y: np.ndarray, batch_size: int = 64, num_workers: int = 0):
+    def from_dataset(cls, x: ND, y: ND, preprocess: Preprocess, batch_size: int = 64, num_workers: int = 0):
 
-        preprocess = cls.preprocess_cls()
+        preprocess = preprocess
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
 
@@ -93,12 +77,13 @@ class SklearnDataModule(flash.DataModule):
             batch_size=batch_size,
             num_workers=num_workers
         )
-        dm.num_inputs = dm._train_ds.num_inputs
+        dm.num_inputs = dm.train_dataset.num_inputs
         return dm
 
 
-datamodule = SklearnDataModule.from_dataset(*datasets.load_diabetes(return_X_y=True))
-model = LinearRegression(num_inputs=datamodule.num_inputs)
+x, y = datasets.load_diabetes(return_X_y=True)
+datamodule = NumpyDataModule.from_dataset(x, y, NumpyPreprocess())
+model = RegressionTask(num_inputs=datamodule.num_inputs)
 
 trainer = flash.Trainer(max_epochs=10, progress_bar_refresh_rate=20)
 trainer.fit(model, datamodule=datamodule)

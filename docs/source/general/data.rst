@@ -23,8 +23,8 @@ Here are common terms you need to be familiar with:
      - The :class:`~flash.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` objects.
    * - :class:`~flash.data.process.Preprocess`
      - The :class:`~flash.data.process.Preprocess` provides a simple hook-based API to encapsulate your pre-processing logic.
-        The :class:`~flash.data.process.Preprocess` provides multiple hooks and :meth:`~flash.data.process.Preprocess.load_data`
-        and :meth:`~flash.data.process.Preprocess.load_sample` functions are used to replace a traditional `Dataset`.
+        The :class:`~flash.data.process.Preprocess` provides multiple hooks such as :meth:`~flash.data.process.Preprocess.load_data`
+        and :meth:`~flash.data.process.Preprocess.load_sample` which are used to replace a traditional `Dataset` logic.
         Flash DataPipeline contains a system to call the right hooks when needed.
         The :class:`~flash.data.process.Preprocess` hooks covers from data-loading to model forwarding.
    * - :class:`~flash.data.process.Postprocess`
