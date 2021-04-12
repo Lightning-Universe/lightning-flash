@@ -23,7 +23,7 @@ _REGISTERED_FUNCTION = Dict[str, Any]
 
 class FlashRegistry:
     """
-    This class is used to register function or partial to a registry:
+    This class is used to register function or ``functools.partial`` class to a registry.
 
     Example::
 
