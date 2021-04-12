@@ -30,7 +30,7 @@ along with a custom data module.
 -------------------------------
 
 Here we create a basic linear regression task by subclassing
-:class:`~flash.Task`. For the majority of tasks, you will likely only need to
+:class:`~flash.core.model.Task`. For the majority of tasks, you will likely only need to
 override the ``__init__`` and ``forward`` methods.
 
 .. testcode::
@@ -89,7 +89,7 @@ The user would have to implement a :class:`~flash.data.data_module.DataModule` a
 .. note::
 
    Philosophically, the :class:`~flash.data.process.Preprocess` belongs with the :class:`~flash.data.data_module.DataModule`
-   and the :class:`~flash.data.process.Postprocess` with the :class:`~flash.Task`.
+   and the :class:`~flash.data.process.Postprocess` with the :class:`~flash.core.model.Task`.
 
 
 3.a The DataModule API
