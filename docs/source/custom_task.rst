@@ -4,6 +4,10 @@ Tutorial: Creating a Custom Task
 In this tutorial we will go over the process of creating a custom task,
 along with a custom data module.
 
+1 . Imports
+-----------
+
+
 .. testcode:: python
 
     from typing import Any, List, Tuple
@@ -22,11 +26,11 @@ along with a custom data module.
     seed_everything(42)
 
 
-The Task: Linear regression
----------------------------
+2 . The Task: Linear regression
+-------------------------------
 
 Here we create a basic linear regression task by subclassing
-``flash.Task``. For the majority of tasks, you will likely only need to
+:class:`~flash.Task`. For the majority of tasks, you will likely only need to
 override the ``__init__`` and ``forward`` methods.
 
 .. testcode::
@@ -67,12 +71,12 @@ testing) or override ``training_step``, ``validation_step``, and
 Lightning’s
 `methods <https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html#methods>`__.
 
-The Data
---------
+3 . The Data
+-------------
 
 For a task you will likely need a specific way of loading data.
 
-Firstly, it is recommended to create a :class:`~flash.data.process.Preprocess` object.
+It is recommended to create a :class:`~flash.data.process.Preprocess` object.
 The :class:`~flash.data.process.Preprocess` contains all the processing logic and are similar to ``Callback``.
 The user would override hooks with their processing logic.
 
@@ -80,10 +84,62 @@ The user would override hooks with their processing logic.
     As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`
     before going further in the tutorial.
 
-Secondly, the user would have to implement a ``DataModule``.
+The user would have to implement a :class:`~flash.data.data_module.DataModule` as a way to perform data checks and instantiate the preprocess.
 
-For this task, we will be using ``scikit-learn`` `Diabetes
-dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
+.. note::
+
+   Philosophically, the :class:`~flash.data.process.Preprocess` belongs with the :class:`~flash.data.data_module.DataModule`
+   and the :class:`~flash.data.process.Postprocess` with the :class:`~flash.Task`.
+
+
+3.a The DataModule API
+----------------------
+
+First, let's design the user-facing API. The ``NumpyDataModule`` will provide a ``from_xy_dataset`` helper ``classmethod``.
+
+Example::
+
+    x, y = ...
+    preprocess_cls = ...
+    datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess_cls)
+
+Here are the
+
+Example::
+
+    from flash import DataModule
+    from flash.data.process import Preprocess
+
+    class NumpyDataModule(DataModule):
+
+        @classmethod
+        def from_dataset(cls, x: ND, y: ND, preprocess_cls: Preprocess = NumpyPreprocess, batch_size: int = 64, num_workers: int = 0):
+
+            preprocess = preprocess_cls()
+
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
+
+            dm = cls.from_load_data_inputs(
+                train_load_data_input=(x_train, y_train),
+                test_load_data_input=(x_test, y_test),
+                preprocess=preprocess,  # DON'T FORGET TO PROVIDE THE PREPROCESS
+                batch_size=batch_size,
+                num_workers=num_workers
+            )
+            # Some metatada can be accessed from ``train_ds`` directly.
+            dm.num_inputs = dm.train_dataset.num_inputs
+            return dm
+
+
+.. note::
+
+    The :class:`~flash.data.data_module.DataModule` provides a ``from_load_data_inputs`` helper function. This function will take care
+    of connecting the provided :class:`~flash.data.process.Preprocess` with the :class:`~flash.data.data_module.DataModule`.
+    Make sure to instantiate your :class:`~flash.data.data_module.DataModule` with this helper if you rely on :class:`~flash.data.process.Preprocess`
+    objects.
+
+3.b The Preprocess API
+----------------------
 
 Example::
 
@@ -112,42 +168,26 @@ Example::
         def predict_to_tensor_transform(self, sample: ND) -> ND:
             return torch.from_numpy(sample).float()
 
+4. Fitting
+----------
 
-    class SklearnDataModule(flash.DataModule):
-
-        preprocess_cls = NumpyPreprocess
-
-        @classmethod
-        def from_dataset(cls, x: ND, y: ND, batch_size: int = 64, num_workers: int = 0):
-
-            preprocess = cls.preprocess_cls()
-
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
-
-            dm = cls.from_load_data_inputs(
-                train_load_data_input=(x_train, y_train),
-                test_load_data_input=(x_test, y_test),
-                preprocess=preprocess,
-                batch_size=batch_size,
-                num_workers=num_workers
-            )
-            dm.num_inputs = dm._train_ds.num_inputs
-            return dm
-
-
-Fitting
--------
+For this task, we will be using ``scikit-learn`` `Diabetes
+dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
 
 Like any Flash Task, we can fit our model using the ``flash.Trainer`` by
 supplying the task itself, and the associated data:
 
 .. code:: python
 
-    datamodule = SklearnDataModule.from_dataset(*datasets.load_diabetes(return_X_y=True))
+    x, y = datasets.load_diabetes(return_X_y=True)
+    datamodule = NumpyDataModule.from_xy_dataset(x, y)
     model = LinearRegression(num_inputs=datamodule.num_inputs)
 
     trainer = flash.Trainer(max_epochs=1000)
     trainer.fit(model, data)
+
+5. Predicting
+-------------
 
 With a trained model we can now perform inference. Here we will use a
 few examples from the test set of our data:
@@ -165,6 +205,9 @@ few examples from the test set of our data:
     print(predictions)
     #out: [tensor([14.7190]), tensor([14.7100]), tensor([14.7288]), tensor([14.6685]), tensor([14.6687])]
 
+
+6. Customize PostProcess
+------------------------
 
 To customize the postprocessing of this task, you can create a :class:`~flash.data.process.Postprocess` objects and assign it to your model as follows:
 
@@ -186,6 +229,8 @@ To customize the postprocessing of this task, you can create a :class:`~flash.da
 
     class LinearRegression(flash.Task):
 
+        # ``postprocess_cls`` is a special attribute name used internally
+        # to instantiate your Postprocess.
         postprocess_cls = CustomPostprocess
 
         ...

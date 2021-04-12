@@ -14,7 +14,7 @@
 
 import os.path
 import zipfile
-from typing import Any, Callable, Dict, Iterable, Mapping, Type
+from typing import Any, Callable, Dict, Iterable, Mapping, Set, Type
 
 import requests
 import torch
@@ -31,7 +31,7 @@ _STAGES_PREFIX = {
 }
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
-_PREPROCESS_FUNCS = {
+_PREPROCESS_FUNCS: Set[str] = {
     "load_data",
     "load_sample",
     "pre_tensor_transform",
@@ -43,7 +43,7 @@ _PREPROCESS_FUNCS = {
     "collate",
 }
 
-_POSTPROCESS_FUNCS = {
+_POSTPROCESS_FUNCS: Set[str] = {
     "per_batch_transform",
     "uncollate",
     "per_sample_transform",

@@ -41,22 +41,28 @@ Checkout the ``Task Section`` to learn more about them.
 Why Preprocess and PostProcess ?
 ********************************
 
-Currently, it is common pratices to implement a :class:`~torch.data.utils.Dataset` and provide them to a :class:`~torch.data.utils.DataLoader`.
+Currently, it is common practice to implement a :class:`~torch.data.utils.Dataset` and provide them to a :class:`~torch.data.utils.DataLoader`.
 
 However, once the model is trained, lot of engineering work is required to enable the model
-to perform predictions on ``un-processed data`` (called raw data) or easily experiment when some transforms should applied during training.
+to perform predictions on ``un-processed data`` (called raw data) or to study data transforms impact during training.
+
 But more importantly, it is hard to make a trainer model ready for production.
+
 The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` have been created to resolve those issues.
-By providing a series of hooks which can overridden with custom data processing logic, the user have a more granular control.
-But more importantly, it makes your code more readable, modular and easy to extend.
-To change the processing behaviour only on specific stages for a given hook,
+By providing a series of hooks which can overridden with custom data processing logic, the user have a much more granular control on the data processing flow.
+
+But it also makes your code more readable, modular and easy to extend.
+
+To change the processing behavior only on specific stages for a given hook,
 you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
 
 .. note::
 
-    [WIP] Once the :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` are fully implemented,
+    [WIP] We are currently working on a new feature to convert fully implemented :class:`~flash.data.process.Preprocess`
 
-    the model should deployable for ``Endpoints`` or ``BatchTransformJob`` directly from checkpoints.
+    and :class:`~flash.data.process.Postprocess` are fully implemented, to be fully deployable for ``Endpoints``
+
+    or ``BatchTransformJob`` directly from checkpoints. Stay tuned !
 
 *************************************
 How to customize existing datamodules
@@ -121,12 +127,12 @@ Example::
     import numpy as np
     from flash.data.data_module import DataModule
     from flash.data.process import Preprocess
-    from PIL.Image import Image
+    from PIL import Image
     import torchvision.transforms as T
     from torch import Tensor
+    from torchvision.datasets.folder import make_dataset
 
     # Subclass ``Preprocess``
-
     class ImageClassificationPreprocess(Preprocess):
 
         to_tensor = T.ToTensor()
@@ -134,8 +140,9 @@ Example::
         def load_data(self, folder: str, dataset: AutoDataset) -> Iterable:
             # The AutoDataset is optional but can be useful to save some metadata.
 
-            # metadata looks like this: [(image_path_1, label_1), ... (image_path_n, label_n)].
-            metadata = make_dataset_from_folder(folder)
+            # metadata contains the image path and its corresponding label with the following structure:
+            # [(image_path_1, label_1), ... (image_path_n, label_n)].
+            metadata = make_dataset(folder)
 
             # for the train ``AutoDataset``, we want to store the ``num_classes``.
             if self.training:
@@ -149,10 +156,10 @@ Example::
 
         def load_sample(self, sample: Union[str, Tuple[str, int]]) -> Tuple[Image, int]
             if self.predicting:
-                return load_pil(image_path)
+                return Image.open(image_path)
             else:
                 image_path, label = sample
-                return load_pil(image_path), label
+                return Image.open(image_path), label
 
         def to_tensor_transform(
             self,
@@ -177,10 +184,11 @@ Example::
             val_folder: Optional[str],
             test_folder: Optional[str],
             predict_folder: Optional[str],
+            preprocess: Optional[Preprocess] = None,
             **kwargs
         ):
 
-            preprocess = cls.preprocess_cls()
+            preprocess = preprocess or cls.preprocess_cls()
 
             # {stage}_load_data_input will be given to your
             # ``Preprocess`` ``{stage}_load_data`` function.
@@ -193,7 +201,15 @@ Example::
                     **kwargs,
                 )
 
-    dm = ImageClassificationDataModule.from_folders("./data/train", "./data/val", "./data/test", "./data/predict")
+    # When structuring your code, it is possible to pass the ``preprocess`` directly to the DataModule ``classmethod``.
+    preprocess = ImageClassificationPreprocess()
+
+    dm = ImageClassificationDataModule.from_folders(
+        "./data/train",
+        "./data/val",
+        "./data/test",
+        "./data/predict",
+        preprocess=preprocess)
 
     model = ImageClassifier(...)
     trainer = Trainer(...)

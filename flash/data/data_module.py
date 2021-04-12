@@ -93,6 +93,22 @@ class DataModule(pl.LightningDataModule):
         self.set_running_stages()
 
     @property
+    def train_dataset(self) -> Optional[Dataset]:
+        return self._train_ds
+
+    @property
+    def val_dataset(self) -> Optional[Dataset]:
+        return self._val_ds
+
+    @property
+    def test_dataset(self) -> Optional[Dataset]:
+        return self._test_ds
+
+    @property
+    def predict_dataset(self) -> Optional[Dataset]:
+        return self._predict_ds
+
+    @property
     def viz(self) -> BaseViz:
         return self._viz or DataModule.configure_data_fetcher()
 
@@ -389,7 +405,7 @@ class DataModule(pl.LightningDataModule):
         else:
             data_pipeline = cls(**kwargs).data_pipeline
 
-        data_fetcher = cls.configure_data_fetcher()
+        data_fetcher: BaseDataFetcher = cls.configure_data_fetcher()
 
         data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 

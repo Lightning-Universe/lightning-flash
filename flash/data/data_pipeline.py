@@ -14,7 +14,7 @@
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -55,8 +55,8 @@ class DataPipeline:
         model.data_pipeline = custom_data_pipeline
     """
 
-    PREPROCESS_FUNCS = _PREPROCESS_FUNCS
-    POSTPROCES_FUNCS = _POSTPROCESS_FUNCS
+    PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
+    POSTPROCES_FUNCS: Set[str] = _POSTPROCESS_FUNCS
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
@@ -340,7 +340,7 @@ class DataPipeline:
         save_per_sample = None
         save_fn = None
 
-        postprocess = self._postprocess_pipeline
+        postprocess: Postprocess = self._postprocess_pipeline
 
         func_names: Dict[str, str] = {
             k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=Postprocess)
@@ -349,14 +349,14 @@ class DataPipeline:
 
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
         if postprocess._save_path:
-            save_per_sample = self._is_overriden_recursive(
+            save_per_sample: bool = self._is_overriden_recursive(
                 "save_sample", postprocess, object_type=Postprocess, prefix=_STAGES_PREFIX[stage]
             )
 
             if save_per_sample:
-                save_per_sample = getattr(postprocess, func_names["save_sample"])
+                save_per_sample: Callable = getattr(postprocess, func_names["save_sample"])
             else:
-                save_fn = getattr(postprocess, func_names["save_data"])
+                save_fn: Callable = getattr(postprocess, func_names["save_data"])
 
         return _PostProcessor(
             getattr(postprocess, func_names["uncollate"]),
@@ -484,7 +484,7 @@ class DataPipeline:
 
     def __str__(self) -> str:
         preprocess: Preprocess = self._preprocess_pipeline
-        postprocess = self._postprocess_pipeline
+        postprocess: Postprocess = self._postprocess_pipeline
         return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
 
 

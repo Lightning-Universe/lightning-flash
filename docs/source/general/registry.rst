@@ -34,16 +34,18 @@ Your custom functions can be registered within a :class:`~flash.core.registry.Fl
 
 Example::
 
+    from functools import partial
+
     # Create a registry
     backbones = FlashRegistry("backbones")
 
     # Option 1: Used with partial.
-    def fn():
+    def fn(backbone: str):
         # Create backbone and backbone output dimension (`num_features`)
         return backbone, num_features
 
     # HINT 1: Use `from functools import partial` if you want to store some arguments.
-    backbones(fn=fn, name="username/my_backbone")
+    backbones(fn=partial(fn, backbone="my_backbone"), name="username/my_backbone")
 
 
     # Option 2: Using decorator.
