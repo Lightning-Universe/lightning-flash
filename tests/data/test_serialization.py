@@ -47,11 +47,11 @@ def test_serialization_data_pipeline(tmpdir):
     dummy_data = DataLoader(list(zip(torch.arange(10, dtype=torch.float), torch.arange(10, dtype=torch.float))))
     trainer.fit(model, dummy_data)
 
-    assert model.data_pipeline is None
+    assert model.data_pipeline
     trainer.save_checkpoint(checkpoint_file)
 
     loaded_model = CustomModel.load_from_checkpoint(checkpoint_file)
-    assert loaded_model.data_pipeline is None
+    assert loaded_model.data_pipeline
 
     model.data_pipeline = DataPipeline(CustomPreprocess())
 

@@ -20,14 +20,63 @@ import torch
 from PIL import Image
 from pytorch_lightning import seed_everything
 from pytorch_lightning.trainer.states import RunningStage
+from torch import tensor
 
-from flash.data.base_viz import BaseViz
+from flash.data.base_viz import BaseVisualization
+from flash.data.callback import BaseDataFetcher
+from flash.data.data_module import DataModule
 from flash.data.utils import _STAGES_PREFIX
 from flash.vision import ImageClassificationData
 
 
 def _rand_image():
     return Image.fromarray(np.random.randint(0, 255, (196, 196, 3), dtype="uint8"))
+
+
+def test_base_data_fetcher(tmpdir):
+
+    class CheckData(BaseDataFetcher):
+
+        def check(self):
+            assert self.batches["val"]["load_sample"] == [0, 1, 2, 3, 4]
+            assert self.batches["val"]["pre_tensor_transform"] == [0, 1, 2, 3, 4]
+            assert self.batches["val"]["to_tensor_transform"] == [0, 1, 2, 3, 4]
+            assert self.batches["val"]["post_tensor_transform"] == [0, 1, 2, 3, 4]
+            assert torch.equal(self.batches["val"]["collate"][0], tensor([0, 1, 2, 3, 4]))
+            assert torch.equal(self.batches["val"]["per_batch_transform"][0], tensor([0, 1, 2, 3, 4]))
+            assert self.batches["train"] == {}
+            assert self.batches["test"] == {}
+            assert self.batches["predict"] == {}
+
+    class CustomDataModule(DataModule):
+
+        @staticmethod
+        def configure_data_fetcher():
+            return CheckData()
+
+        @classmethod
+        def from_inputs(cls, train_data: Any, val_data: Any, test_data: Any, predict_data: Any) -> "CustomDataModule":
+
+            preprocess = cls.preprocess_cls()
+
+            return cls.from_load_data_inputs(
+                train_load_data_input=train_data,
+                val_load_data_input=val_data,
+                test_load_data_input=test_data,
+                predict_load_data_input=predict_data,
+                preprocess=preprocess,
+                batch_size=5
+            )
+
+    dm = CustomDataModule.from_inputs(range(5), range(5), range(5), range(5))
+    data_fetcher: CheckData = dm.data_fetcher
+
+    with data_fetcher.enable():
+        _ = next(iter(dm.val_dataloader()))
+
+    data_fetcher.check()
+    data_fetcher.reset()
+    assert data_fetcher.batches == {'train': {}, 'test': {}, 'val': {}, 'predict': {}}
 
 
 def test_base_viz(tmpdir):
@@ -43,7 +92,7 @@ def test_base_viz(tmpdir):
     _rand_image().save(tmpdir / "b" / "a_1.png")
     _rand_image().save(tmpdir / "b" / "a_2.png")
 
-    class CustomBaseViz(BaseViz):
+    class CustomBaseVisualization(BaseVisualization):
 
         show_load_sample_called = False
         show_pre_tensor_transform_called = False
@@ -70,7 +119,7 @@ def test_base_viz(tmpdir):
         def show_per_batch_transform(self, batch: Sequence, running_stage: RunningStage) -> None:
             self.per_batch_transform_called = True
 
-        def reset(self):
+        def check_reset(self):
             self.show_load_sample_called = False
             self.show_pre_tensor_transform_called = False
             self.show_to_tensor_transform_called = False
@@ -81,8 +130,8 @@ def test_base_viz(tmpdir):
     class CustomImageClassificationData(ImageClassificationData):
 
         @staticmethod
-        def configure_vis(*args, **kwargs) -> CustomBaseViz:
-            return CustomBaseViz(*args, **kwargs)
+        def configure_data_fetcher(*args, **kwargs) -> CustomBaseVisualization:
+            return CustomBaseVisualization(*args, **kwargs)
 
     dm = CustomImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
@@ -108,27 +157,27 @@ def test_base_viz(tmpdir):
                 return data[0][0]
             return data[0]
 
-        assert isinstance(extract_data(dm.viz.batches[stage]["load_sample"]), Image.Image)
+        assert isinstance(extract_data(dm.data_fetcher.batches[stage]["load_sample"]), Image.Image)
         if not is_predict:
-            assert isinstance(dm.viz.batches[stage]["load_sample"][0][1], int)
+            assert isinstance(dm.data_fetcher.batches[stage]["load_sample"][0][1], int)
 
-        assert isinstance(extract_data(dm.viz.batches[stage]["to_tensor_transform"]), torch.Tensor)
+        assert isinstance(extract_data(dm.data_fetcher.batches[stage]["to_tensor_transform"]), torch.Tensor)
         if not is_predict:
-            assert isinstance(dm.viz.batches[stage]["to_tensor_transform"][0][1], int)
+            assert isinstance(dm.data_fetcher.batches[stage]["to_tensor_transform"][0][1], int)
 
-        assert extract_data(dm.viz.batches[stage]["collate"]).shape == torch.Size([2, 3, 196, 196])
+        assert extract_data(dm.data_fetcher.batches[stage]["collate"]).shape == torch.Size([2, 3, 196, 196])
         if not is_predict:
-            assert dm.viz.batches[stage]["collate"][0][1].shape == torch.Size([2])
+            assert dm.data_fetcher.batches[stage]["collate"][0][1].shape == torch.Size([2])
 
-        generated = extract_data(dm.viz.batches[stage]["per_batch_transform"]).shape
+        generated = extract_data(dm.data_fetcher.batches[stage]["per_batch_transform"]).shape
         assert generated == torch.Size([2, 3, 196, 196])
         if not is_predict:
-            assert dm.viz.batches[stage]["per_batch_transform"][0][1].shape == torch.Size([2])
+            assert dm.data_fetcher.batches[stage]["per_batch_transform"][0][1].shape == torch.Size([2])
 
-        assert dm.viz.show_load_sample_called
-        assert dm.viz.show_pre_tensor_transform_called
-        assert dm.viz.show_to_tensor_transform_called
-        assert dm.viz.show_post_tensor_transform_called
-        assert dm.viz.show_collate_called
-        assert dm.viz.per_batch_transform_called
-        dm.viz.reset()
+        assert dm.data_fetcher.show_load_sample_called
+        assert dm.data_fetcher.show_pre_tensor_transform_called
+        assert dm.data_fetcher.show_to_tensor_transform_called
+        assert dm.data_fetcher.show_post_tensor_transform_called
+        assert dm.data_fetcher.show_collate_called
+        assert dm.data_fetcher.per_batch_transform_called
+        dm.data_fetcher.check_reset()

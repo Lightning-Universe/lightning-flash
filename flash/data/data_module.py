@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Dict, Generator, Iterable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -24,7 +24,8 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
 from flash.data.auto_dataset import AutoDataset
-from flash.data.base_viz import BaseViz
+from flash.data.base_viz import BaseVisualization
+from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 from flash.data.utils import _STAGES_PREFIX
 
@@ -83,24 +84,57 @@ class DataModule(pl.LightningDataModule):
             num_workers = 0 if platform.system() == "Darwin" else os.cpu_count()
         self.num_workers = num_workers
 
-        self._preprocess = None
-        self._postprocess = None
-        self._viz = None
+        self._preprocess: Optional[Preprocess] = None
+        self._postprocess: Optional[Postprocess] = None
+        self._viz: Optional[BaseVisualization] = None
+        self._data_fetcher: Optional[BaseDataFetcher] = None
 
         # this may also trigger data preloading
         self.set_running_stages()
 
     @property
-    def viz(self) -> BaseViz:
-        return self._viz or DataModule.configure_vis()
+    def train_dataset(self) -> Optional[Dataset]:
+        """This property returns the train dataset"""
+        return self._train_ds
+
+    @property
+    def val_dataset(self) -> Optional[Dataset]:
+        """This property returns the validation dataset"""
+        return self._val_ds
+
+    @property
+    def test_dataset(self) -> Optional[Dataset]:
+        """This property returns the test dataset"""
+        return self._test_ds
+
+    @property
+    def predict_dataset(self) -> Optional[Dataset]:
+        """This property returns the predict dataset"""
+        return self._predict_ds
+
+    @property
+    def viz(self) -> BaseVisualization:
+        return self._viz or DataModule.configure_data_fetcher()
 
     @viz.setter
-    def viz(self, viz: BaseViz) -> None:
+    def viz(self, viz: BaseVisualization) -> None:
         self._viz = viz
 
     @staticmethod
-    def configure_vis(*args, **kwargs) -> BaseViz:
-        return BaseViz()
+    def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
+        """
+        This function is used to configure a :class:`~flash.data.callback.BaseDataFetcher`.
+        Override with your custom one.
+        """
+        return BaseDataFetcher()
+
+    @property
+    def data_fetcher(self) -> BaseDataFetcher:
+        return self._data_fetcher or DataModule.configure_data_fetcher()
+
+    @data_fetcher.setter
+    def data_fetcher(self, data_fetcher: BaseDataFetcher) -> None:
+        self._data_fetcher = data_fetcher
 
     def _reset_iterator(self, stage: RunningStage) -> Iterable[Any]:
         iter_name = f"_{stage}_iter"
@@ -108,12 +142,6 @@ class DataModule(pl.LightningDataModule):
         iterator = iter(dataloader_fn())
         setattr(self, iter_name, iterator)
         return iterator
-
-    def show(self, batch: Dict[str, Any], stage: RunningStage) -> None:
-        """
-        This function is a hook for users to override with their visualization on a batch.
-        """
-        self.viz.show(batch, stage)
 
     def _show_batch(self, stage: RunningStage, reset: bool = True) -> None:
         """
@@ -125,26 +153,31 @@ class DataModule(pl.LightningDataModule):
             self._reset_iterator(stage)
 
         iter_dataloader = getattr(self, iter_name)
-        with self.viz.enable():
+        with self.data_fetcher.enable():
             try:
                 _ = next(iter_dataloader)
             except StopIteration:
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
-            self.show(self.viz.batches[stage], stage)
+            data_fetcher: BaseVisualization = self.data_fetcher
+            data_fetcher._show(stage)
             if reset:
                 self.viz.batches[stage] = {}
 
     def show_train_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the train dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.TRAINING], reset=reset)
 
     def show_val_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the validation dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.VALIDATING], reset=reset)
 
     def show_test_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the test dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.TESTING], reset=reset)
 
     def show_predict_batch(self, reset: bool = True) -> None:
+        """This function is used to visualize a batch from the predict dataloader."""
         self._show_batch(_STAGES_PREFIX[RunningStage.PREDICTING], reset=reset)
 
     @staticmethod
@@ -293,6 +326,8 @@ class DataModule(pl.LightningDataModule):
                 number of samples to be contained within test dataset.
             seed: Used for the train/val splits when val_split is not None.
 
+        .. note:: Make sure to always rely on this function when using :class:`~flash.data.process.Preprocess`.
+
         """
         n = len(dataset)
 
@@ -365,10 +400,14 @@ class DataModule(pl.LightningDataModule):
 
         Args:
             cls: ``DataModule`` subclass
-            train_load_data_input: Data to be received by the ``train_load_data`` function from this ``Preprocess``
-            val_load_data_input: Data to be received by the ``val_load_data`` function from this ``Preprocess``
-            test_load_data_input: Data to be received by the ``test_load_data`` function from this ``Preprocess``
-            predict_load_data_input: Data to be received by the ``predict_load_data`` function from this ``Preprocess``
+            train_load_data_input: Data to be received by the ``train_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
+            val_load_data_input: Data to be received by the ``val_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
+            test_load_data_input: Data to be received by the ``test_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
+            predict_load_data_input: Data to be received by the ``predict_load_data`` function
+                from this :class:`~flash.data.process.Preprocess`
             kwargs: Any extra arguments to instantiate the provided ``DataModule``
         """
         # trick to get data_pipeline from empty DataModule
@@ -380,8 +419,9 @@ class DataModule(pl.LightningDataModule):
         else:
             data_pipeline = cls(**kwargs).data_pipeline
 
-        viz_callback = cls.configure_vis()
-        viz_callback.attach_to_preprocess(data_pipeline._preprocess_pipeline)
+        data_fetcher: BaseDataFetcher = cls.configure_data_fetcher()
+
+        data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 
         train_dataset = cls._generate_dataset_if_possible(
             train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
@@ -404,5 +444,5 @@ class DataModule(pl.LightningDataModule):
         )
         datamodule._preprocess = data_pipeline._preprocess_pipeline
         datamodule._postprocess = data_pipeline._postprocess_pipeline
-        viz_callback.attach_to_datamodule(datamodule)
+        data_fetcher.attach_to_datamodule(datamodule)
         return datamodule

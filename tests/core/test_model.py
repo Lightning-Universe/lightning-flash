@@ -23,7 +23,7 @@ from PIL import Image
 from torch import nn, Tensor
 from torch.nn import functional as F
 
-from flash import ClassificationTask
+from flash.core.classification import ClassificationTask
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier
 from flash.vision import ImageClassificationData, ImageClassifier

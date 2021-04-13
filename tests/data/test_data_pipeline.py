@@ -481,7 +481,7 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
             return model
 
     data_pipeline = CustomDataPipeline(preprocess)
-    _postprocesssor = data_pipeline._create_uncollate_postprocessors()
+    _postprocesssor = data_pipeline._create_uncollate_postprocessors(RunningStage.PREDICTING)
     data_pipeline._attach_postprocess_to_model(model, _postprocesssor)
     assert model.predict_step._original == _original_predict_step
     assert model.predict_step._stage_mapping[RunningStage.PREDICTING] == _postprocesssor

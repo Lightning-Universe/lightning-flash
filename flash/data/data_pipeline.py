@@ -14,7 +14,7 @@
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -26,7 +26,7 @@ from torch.utils.data.dataloader import DataLoader
 from flash.data.auto_dataset import AutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess
-from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
     from flash.core.model import Task
@@ -34,102 +34,29 @@ if TYPE_CHECKING:
 
 class DataPipeline:
     """
-    DataPipeline handles the connecting logic between ``Preprocess``, ``PostProcess``,
-    ``DataModule``, and ``LightningModule`` depending on the current ``RunningStage``
+    DataPipeline holds the engineering logic to connect
+    :class:`~flash.data.process.Preprocess` and/or ``PostProcess`` objects to
+    the ``DataModule``, Flash ``Task`` and ``Trainer``.
 
-    The ``Preprocess`` hooks are used to generate several objects:
+    Example::
 
-    1. Generate an ``AutoDataset`` from ``load_data`` and ``load_sample``.
+        class CustomPreprocess(Preprocess):
+            pass
 
-        Example::
-            class AutoDataset
-                def __init__(self, ..., data, ...):
-                    self.preprocessed_data: Iterable = Preprocess.load_data(data)
+        class CustomPostprocess(Postprocess):
+            pass
 
-                def __getitem__(self, index):
-                    return Preprocess.load_sample(self.preprocessed_data[index])
+        custom_data_pipeline = DataPipeline(CustomPreprocess(), CustomPostprocess())
 
-                def __len__(self):
-                    return len(self.preprocessed_data)
+        # And it can attached to both the datamodule and model.
 
-    2. Create a ``worker_collate_fn`` which is injected directly into the ``DataLoader``
-       and a ``device_collate_fn`` injected after ``LightningModule.transfer_batch_to_device`` hook.
+        datamodule.data_pipeline = custom_data_pipeline
 
-        Objects description:
-
-        _Sequential:
-
-            ┌─────────────────────────┐
-            │  pre_tensor_transform   │
-            │            |            │
-            │  to_tensor_transform    │
-            │            |            │
-            │  post_tensor_transform  │
-            └─────────────────────────┘
-
-        _PreProcessor:
-
-            The ``_PreProcessor`` performs ``per_sample_transform``, ``collate``, ``per_batch_transform`` as follow:
-
-            ``per_batch_transform`` and ``per_sample_transform_on_device`` are mutually exclusive
-
-            def forward(self, samples: Sequence[Any]):
-                    samples = [self.per_sample_transform(sample) for sample in samples]
-                    samples = type(samples)(samples)
-                    samples = self.collate_fn(samples)
-                samples = self.per_batch_transform(samples)
-                return samples
-
-            ``_PreProcessor`` in worker:
-
-                * per_sample_transform: _Sequential(
-                    pre_tensor_transform, to_tensor_transform, post_tensor_transform)
-
-                * collate: Set to ``do_nothing`` is ``per_sample_transform_on_device`` is implemented
-                    and not ``per_batch_transform``
-
-                * per_batch_transform
-
-            ``_PreProcessor`` on device:
-
-                * per_sample_transform_on_device
-
-                * collate: Set to ``do_nothing`` is ``per_batch_transform`` is implemented
-                    and not ``per_sample_transform_on_device``
-
-                * per_batch_transform_on_device
-
-
-        General flow:
-                                                          load_sample
-                                                               │
-                                                      pre_tensor_transform
-                                                               │
-                                                      to_tensor_transform
-                                                               │
-                                                     post_tensor_transform
-                                                               │
-                                              ┌────────────────┴───────────────────┐
-(move samples's sequence to main worker) -->  │                                    │
-                                  per_sample_transform_on_device                collate
-                                              │                                    │
-                                            collate                          per_batch_transform
-                                              │                                    │ <-- (move batch to main worker)
-                                    per_batch_transform_on_device      per_batch_transform_on_device
-                                              │                                    │
-                                              └─────────────────┬──────────────────┘
-                                                                │
-                                                        model.predict_step
-                                                                │
-                                                        per_batch_transform
-                                                                │
-                                                            uncollate
-                                                                │
-                                                        per_sample_transform
-
+        model.data_pipeline = custom_data_pipeline
     """
 
-    PREPROCESS_FUNCS = _PREPROCESS_FUNCS
+    PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
+    POSTPROCES_FUNCS: Set[str] = _POSTPROCESS_FUNCS
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
@@ -191,13 +118,8 @@ class DataPipeline:
     def device_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
         return self._create_collate_preprocessors(running_stage)[1]
 
-    @property
-    def postprocessor(self) -> _PostProcessor:
-        return self._postprocessor or self._create_uncollate_postprocessors()
-
-    @postprocessor.setter
-    def postprocessor(self, new_processor: _PostProcessor):
-        self._postprocessor = new_processor
+    def postprocessor(self, running_stage: RunningStage) -> _PostProcessor:
+        return self._create_uncollate_postprocessors(running_stage)
 
     @classmethod
     def _resolve_function_hierarchy(
@@ -414,30 +336,39 @@ class DataPipeline:
                 self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn, model, stage)
             )
 
-    def _create_uncollate_postprocessors(self) -> _PostProcessor:
+    def _create_uncollate_postprocessors(self, stage: RunningStage) -> _PostProcessor:
         save_per_sample = None
         save_fn = None
 
+        postprocess: Postprocess = self._postprocess_pipeline
+
+        func_names: Dict[str, str] = {
+            k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=Postprocess)
+            for k in self.POSTPROCES_FUNCS
+        }
+
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
-        if self._postprocess_pipeline._save_path:
-            save_per_sample = self._is_overriden('save_sample', self._postprocess_pipeline, Postprocess)
+        if postprocess._save_path:
+            save_per_sample: bool = self._is_overriden_recursive(
+                "save_sample", postprocess, object_type=Postprocess, prefix=_STAGES_PREFIX[stage]
+            )
 
             if save_per_sample:
-                save_per_sample = self._postprocess_pipeline._save_sample
+                save_per_sample: Callable = getattr(postprocess, func_names["save_sample"])
             else:
-                save_fn = self._postprocess_pipeline._save_data
+                save_fn: Callable = getattr(postprocess, func_names["save_data"])
 
         return _PostProcessor(
-            self._postprocess_pipeline.uncollate,
-            self._postprocess_pipeline.per_batch_transform,
-            self._postprocess_pipeline.per_sample_transform,
+            getattr(postprocess, func_names["uncollate"]),
+            getattr(postprocess, func_names["per_batch_transform"]),
+            getattr(postprocess, func_names["per_sample_transform"]),
             save_fn=save_fn,
             save_per_sample=save_per_sample
         )
 
-    def _attach_postprocess_to_model(self, model: 'Task') -> 'Task':
+    def _attach_postprocess_to_model(self, model: 'Task', stage) -> 'Task':
         model.predict_step = self._model_predict_step_wrapper(
-            model.predict_step, self._create_uncollate_postprocessors(), model
+            model.predict_step, self._create_uncollate_postprocessors(stage), model
         )
         return model
 
@@ -446,7 +377,7 @@ class DataPipeline:
         self._attach_preprocess_to_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
-            self._attach_postprocess_to_model(model)
+            self._attach_postprocess_to_model(model, stage)
 
     def _detach_from_model(self, model: 'Task', stage: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stage)
@@ -553,7 +484,7 @@ class DataPipeline:
 
     def __str__(self) -> str:
         preprocess: Preprocess = self._preprocess_pipeline
-        postprocess = self._postprocess_pipeline
+        postprocess: Postprocess = self._postprocess_pipeline
         return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
 
 

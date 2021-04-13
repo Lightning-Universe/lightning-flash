@@ -34,6 +34,9 @@ Lightning Flash
 
    general/model
    general/data
+   general/callback
+   general/registry
+
 
 .. toctree::
    :maxdepth: 1

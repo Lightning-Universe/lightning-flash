@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -101,6 +101,156 @@ class PreprocessState:
 
 
 class Preprocess(Properties, torch.nn.Module):
+    """
+    The :class:`~flash.data.process.Preprocess` encapsulates
+    all the data processing and loading logic that should run before the data is passed to the model.
+
+    It is particularly relevant when you want to provide an end to end implementation which works
+    with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
+
+    You can override any of the preprocessing hooks to provide custom functionality.
+    All hooks default to no-op (except the collate which is PyTorch default
+    `collate <https://pytorch.org/docs/stable/data.html#dataloader-collate-fn>`_)
+
+    The :class:`~flash.data.process.Preprocess` supports the following hooks:
+
+        - ``load_data``: Function to receiving some metadata to generate a Mapping from.
+            Example::
+
+                * Input: Receive a folder path:
+
+                * Action: Walk the folder path to find image paths and their associated labels.
+
+                * Output: Return a list of image paths and their associated labels.
+
+        - ``load_sample``: Function to load a sample from metadata sample.
+            Example::
+
+                * Input: Receive an image path and its label.
+
+                * Action: Load a PIL Image from received image_path.
+
+                * Output: Return the PIL Image and its label.
+
+        - ``pre_tensor_transform``: Performs transforms on a single data sample.
+            Example::
+
+                * Input: Receive a PIL Image and its label.
+
+                * Action: Rotate the PIL Image.
+
+                * Output: Return the rotated PIL image and its label.
+
+        - ``to_tensor_transform``: Converts a single data sample to a tensor / data structure containing tensors.
+            Example::
+
+                * Input: Receive the rotated PIL Image and its label.
+
+                * Action: Convert the rotated PIL Image to a tensor.
+
+                * Output: Return the tensored image and its label.
+
+        - ``post_tensor_transform``: Performs transform on a single tensor sample.
+            Example::
+
+                * Input: Receive the tensored image and its label.
+
+                * Action: Flip the tensored image randomly.
+
+                * Output: Return the tensored image and its label.
+
+        - ``per_batch_transform``: Performs transforms on a batch.
+            In this example, we decided not to override the hook.
+
+        - ``per_sample_transform_on_device``: Performs transform on a sample already on a ``GPU`` or ``TPU``.
+            Example::
+
+                * Input: Receive a tensored image on device and its label.
+
+                * Action: Apply random transforms.
+
+                * Output: Return an augmented tensored image on device and its label.
+
+        - ``collate``: Converts a sequence of data samples into a batch.
+            Example::
+
+                * Input: Receive a list of augmented tensored images and their respective labels.
+
+                * Action: Collate the list of images into batch.
+
+                * Output: Return a batch of images and their labels.
+
+        - ``per_batch_transform_on_device``: Performs transform on a batch already on ``GPU`` or ``TPU``.
+            Example::
+
+                * Input: Receive a batch of images and their labels.
+
+                * Action: Apply normalization on the batch by substracting the mean
+                    and dividing by the standard deviation from ImageNet.
+
+                * Output: Return a normalized augmented batch of images and their labels.
+
+    .. note::
+
+        By default, each hook will be no-op execpt the collate which is PyTorch default
+        `collate <https://pytorch.org/docs/stable/data.html#dataloader-collate-fn>`_.
+        To customize them, just override the hooks and ``Flash`` will take care of calling them at the right moment.
+
+    .. note::
+
+        The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive
+        as it will impact performances.
+
+    To change the processing behavior only on specific stages,
+    you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
+
+    For example, is useful to encapsulate ``predict`` logic as labels aren't availabled at inference time.
+
+    Example::
+
+        class CustomPreprocess(Preprocess):
+
+            def predict_load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
+                # logic for predict data only.
+
+    Each hook is aware of the Trainer ``running stage`` through booleans as follow.
+
+    This is useful to adapt a hook internals for a stage without duplicating code.
+
+    Example::
+
+        class CustomPreprocess(Preprocess):
+
+            def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
+
+                if self.training:
+                    # logic for train
+
+                elif self.validating:
+                    # logic from validation
+
+                elif self.testing:
+                    # logic for test
+
+                elif self.predicting:
+                    # logic for predict
+
+    .. note::
+
+        It is possible to wrap a ``Dataset`` within a :meth:`~flash.data.process.Preprocess.load_data` function.
+        However, we don't recommend to do as such as it is better to rely entirely on the hooks.
+
+    Example::
+
+        from torchvision import datasets
+
+        class CustomPreprocess(Preprocess):
+
+            def load_data(cls, path_to_data: str) -> Iterable:
+
+                return datasets.MNIST(path_to_data, download=True, transform=transforms.ToTensor())
+
+    """
 
     def __init__(
         self,
@@ -168,8 +318,17 @@ class Preprocess(Properties, torch.nn.Module):
         self._callbacks.extend(_callbacks)
 
     @classmethod
-    def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Any:
-        """Loads entire data from Dataset"""
+    def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
+        """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
+
+        Example::
+
+            # data: "."
+            # output: [("./cat/1.png", 1), ..., ("./dog/10.png", 0)]
+
+            output: Mapping = load_data(data)
+
+        """
         return data
 
     @classmethod
@@ -178,17 +337,22 @@ class Preprocess(Properties, torch.nn.Module):
         return sample
 
     def pre_tensor_transform(self, sample: Any) -> Any:
+        """Transforms to apply on a single object."""
         return sample
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
+        """Transforms to convert single object to a tensor."""
         return sample
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
+        """Transforms to apply on a tensor."""
         return sample
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
+
         .. note::
+
             This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.
         """
@@ -199,10 +363,14 @@ class Preprocess(Properties, torch.nn.Module):
 
     def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
+
         .. note::
+
             This option is mutually exclusive with :meth:`per_batch_transform`,
             since if both are specified, uncollation has to be applied.
+
         .. note::
+
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
@@ -211,7 +379,9 @@ class Preprocess(Properties, torch.nn.Module):
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """
         Transforms to apply to a whole batch (if possible use this for efficiency).
+
         .. note::
+
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """

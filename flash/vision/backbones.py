@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import os
+import warnings
 from functools import partial
 from typing import Tuple
 
@@ -29,7 +32,11 @@ if _TORCHVISION_AVAILABLE:
     import torchvision
 
 if _BOLTS_AVAILABLE:
-    from pl_bolts.models.self_supervised import SimCLR, SwAV
+    if os.getenv("WARN_MISSING_PACKAGE") == "0":
+        with warnings.catch_warnings(record=True) as w:
+            from pl_bolts.models.self_supervised import SimCLR, SwAV
+    else:
+        from pl_bolts.models.self_supervised import SimCLR, SwAV
 
 ROOT_S3_BUCKET = "https://pl-bolts-weights.s3.us-east-2.amazonaws.com"
 

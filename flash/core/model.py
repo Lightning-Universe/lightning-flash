@@ -148,7 +148,7 @@ class Task(LightningModule):
         x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
-        predictions = data_pipeline.postprocessor(predictions)
+        predictions = data_pipeline.postprocessor(running_stage)(predictions)
         return predictions
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
@@ -176,7 +176,11 @@ class Task(LightningModule):
 
     @property
     def postprocess(self) -> Postprocess:
-        return getattr(self._data_pipeline, '_postprocess_pipeline', None) or self._postprocess
+        postprocess_cls = getattr(self, "postprocess_cls", None)
+        return (
+            self._postprocess or (postprocess_cls() if postprocess_cls else None)
+            or getattr(self._data_pipeline, '_postprocess_pipeline', None) or Postprocess()
+        )
 
     @postprocess.setter
     def postprocess(self, postprocess: Postprocess) -> None:
