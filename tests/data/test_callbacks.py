@@ -22,7 +22,7 @@ from pytorch_lightning import seed_everything
 from pytorch_lightning.trainer.states import RunningStage
 from torch import tensor
 
-from flash.data.base_viz import BaseViz
+from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.utils import _STAGES_PREFIX
@@ -92,7 +92,7 @@ def test_base_viz(tmpdir):
     _rand_image().save(tmpdir / "b" / "a_1.png")
     _rand_image().save(tmpdir / "b" / "a_2.png")
 
-    class CustomBaseViz(BaseViz):
+    class CustomBaseVisualization(BaseVisualization):
 
         show_load_sample_called = False
         show_pre_tensor_transform_called = False
@@ -130,8 +130,8 @@ def test_base_viz(tmpdir):
     class CustomImageClassificationData(ImageClassificationData):
 
         @staticmethod
-        def configure_data_fetcher(*args, **kwargs) -> CustomBaseViz:
-            return CustomBaseViz(*args, **kwargs)
+        def configure_data_fetcher(*args, **kwargs) -> CustomBaseVisualization:
+            return CustomBaseVisualization(*args, **kwargs)
 
     dm = CustomImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],

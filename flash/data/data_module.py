@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
 from flash.data.auto_dataset import AutoDataset
-from flash.data.base_viz import BaseViz
+from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 from flash.data.utils import _STAGES_PREFIX
@@ -86,7 +86,7 @@ class DataModule(pl.LightningDataModule):
 
         self._preprocess: Optional[Preprocess] = None
         self._postprocess: Optional[Postprocess] = None
-        self._viz: Optional[BaseViz] = None
+        self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = None
 
         # this may also trigger data preloading
@@ -113,11 +113,11 @@ class DataModule(pl.LightningDataModule):
         return self._predict_ds
 
     @property
-    def viz(self) -> BaseViz:
+    def viz(self) -> BaseVisualization:
         return self._viz or DataModule.configure_data_fetcher()
 
     @viz.setter
-    def viz(self, viz: BaseViz) -> None:
+    def viz(self, viz: BaseVisualization) -> None:
         self._viz = viz
 
     @staticmethod
@@ -159,7 +159,7 @@ class DataModule(pl.LightningDataModule):
             except StopIteration:
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
-            data_fetcher: BaseViz = self.data_fetcher
+            data_fetcher: BaseVisualization = self.data_fetcher
             data_fetcher._show(stage)
             if reset:
                 self.viz.batches[stage] = {}

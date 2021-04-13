@@ -6,7 +6,8 @@ along with a custom :class:`~flash.data.data_module.DataModule`.
 
 
 The tutorial objective is to create a ``RegressionTask`` to learn to predict if someone has ``diabetes`` or not.
-The diabetes  (stored as a numpy dataset).
+We will use ``scikit-learn`` `Diabetes dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
+which is stored as numpy arrays.
 
 .. note::
 
@@ -72,8 +73,11 @@ override the ``__init__`` and ``forward`` methods.
 
 .. note::
 
-   Lightning Flash provides an API to register models within a store.
-   Check out :ref:`registry`.
+    Lightning Flash provides registries.
+    Registries are Flash internal key-value database to store a mapping between a name and a function.
+    In simple words, they are just advanced dictionary storing a function from a key string.
+    They are useful to store list of backbones and make them available for a :class:`~flash.core.model.Task`.
+    Check out to learn more :ref:`registry`.
 
 
 Where is the training step?
@@ -99,16 +103,19 @@ Example::
         x, y = batch
         y_hat = self(x)
         # compute the logs, loss and metrics as an output dictionary
+        ...
         return output
 
 
 3.a The DataModule API
 ----------------------
 
-First, let's first design the user-facing API.
-We are going to create a ``NumpyDataModule`` class subclassing :class:`~flash.data.data_module.DataModule`.
-This ``NumpyDataModule`` will provide a ``from_xy_dataset`` helper ``classmethod`` to instantiate
+Now that we have defined our ``RegressionTask``, we need to load our data.
+We will define a custom ``NumpyDataModule`` class subclassing :class:`~flash.data.data_module.DataModule`.
+This ``NumpyDataModule`` class will provide a ``from_xy_dataset`` helper ``classmethod`` to instantiate
 :class:`~flash.data.data_module.DataModule` from x, y numpy arrays.
+
+Here is how it would look like:
 
 Example::
 
@@ -144,6 +151,8 @@ Example::
                 x, y, test_size=.20, random_state=0)
 
             # Make sure to call ``from_load_data_inputs``.
+            # The ``train_load_data_input`` value will be given to ``Preprocess``
+            # ``train_load_data`` function.
             dm = cls.from_load_data_inputs(
                 train_load_data_input=(x_train, y_train),
                 test_load_data_input=(x_test, y_test),
@@ -166,21 +175,18 @@ Example::
 3.b The Preprocess API
 ----------------------
 
-.. note::
-
-    As new concepts are being introduced, we strongly encourage the reader to click on :class:`~flash.data.process.Preprocess`
-    before going further with the tutorial.
+A :class:`~flash.data.process.Preprocess` object provides a series of hooks that can be overridden with custom data processing logic.
+It allows the user much more granular control over their data processing flow.
 
 .. note::
 
     Why introducing :class:`~flash.data.process.Preprocess` ?
 
-    A :class:`~flash.data.process.Preprocess` object provides a series of hooks that can be overridden with custom data processing logic.
-    The user has much more granular control over their data processing flow.
-
     The :class:`~flash.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
     to deploy the model in production environnement compared to traditional
     `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_.
+
+    You can override ``predict_{hook_name}`` hooks to handle data processing logic specific for inference.
 
 Example::
 
@@ -210,10 +216,14 @@ Example::
             return torch.from_numpy(sample).float()
 
 
+You now have a new customized Flash Task! Congratulations !
+
+You can fit, finetune, validate and predict directly with those objects.
+
 4. Fitting
 ----------
 
-For this task, we will be fitting the ``RegressionTask`` Task on ``scikit-learn`` `Diabetes
+For this task, here is how to fit the ``RegressionTask`` Task on ``scikit-learn`` `Diabetes
 dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
 
 Like any Flash Task, we can fit our model using the ``flash.Trainer`` by
@@ -226,7 +236,7 @@ supplying the task itself, and the associated data:
     model = RegressionTask(num_inputs=datamodule.num_inputs)
 
     trainer = flash.Trainer(max_epochs=1000)
-    trainer.fit(model, data)
+    trainer.fit(model, datamodule=datamodule)
 
 
 5. Predicting

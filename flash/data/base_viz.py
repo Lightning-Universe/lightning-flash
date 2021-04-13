@@ -7,7 +7,7 @@ from flash.data.callback import BaseDataFetcher
 from flash.data.utils import _PREPROCESS_FUNCS
 
 
-class BaseViz(BaseDataFetcher):
+class BaseVisualization(BaseDataFetcher):
     """
     This Base Class is used to create visualization tool on top of :class:`~flash.data.process.Preprocess` hooks.
 
@@ -16,9 +16,9 @@ class BaseViz(BaseDataFetcher):
     Example::
 
         from flash.vision import ImageClassificationData
-        from flash.data.base_viz import BaseViz
+        from flash.data.base_viz import BaseVisualization
 
-        class CustomBaseViz(BaseViz):
+        class CustomBaseVisualization(BaseVisualization):
 
             def show_load_sample(self, samples: List[Any], running_stage):
                 # plot samples
@@ -42,7 +42,7 @@ class BaseViz(BaseDataFetcher):
 
             @staticmethod
             def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-                return CustomBaseViz(*args, **kwargs)
+                return CustomBaseVisualization(*args, **kwargs)
 
         dm = CustomImageClassificationData.from_folders(
             train_folder="./data/train",
@@ -72,7 +72,7 @@ class BaseViz(BaseDataFetcher):
 
     Example::
 
-        class CustomBaseViz(BaseViz):
+        class CustomBaseVisualization(BaseVisualization):
 
             def show(self, batch: Dict[str, Any], running_stage: RunningStage):
                 print(batch)
@@ -103,7 +103,7 @@ class BaseViz(BaseDataFetcher):
         """
         for func_name in _PREPROCESS_FUNCS:
             hook_name = f"show_{func_name}"
-            if _is_overriden(hook_name, self, BaseViz):
+            if _is_overriden(hook_name, self, BaseVisualization):
                 getattr(self, hook_name)(batch[func_name], running_stage)
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
