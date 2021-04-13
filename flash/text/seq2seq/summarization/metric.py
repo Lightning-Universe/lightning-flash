@@ -19,7 +19,7 @@ from rouge_score.scoring import AggregateScore, Score
 from torch import tensor
 from torchmetrics import Metric
 
-from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_sentence
+from flash.text.seq2seq import summarization
 
 
 class RougeMetric(Metric):
@@ -67,8 +67,8 @@ class RougeMetric(Metric):
         for pred, tgt in zip(pred_lns, tgt_lns):
             # rougeLsum expects "\n" separated sentences within a summary
             if self.rouge_newline_sep:
-                pred = add_newline_to_end_of_each_sentence(pred)
-                tgt = add_newline_to_end_of_each_sentence(tgt)
+                pred = summarization.utils.add_newline_to_end_of_each_sentence(pred)
+                tgt = summarization.utils.add_newline_to_end_of_each_sentence(tgt)
             results = self.scorer.score(pred, tgt)
             for key, score in results.items():
                 score = tensor([score.precision, score.recall, score.fmeasure])
