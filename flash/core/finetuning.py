@@ -60,7 +60,7 @@ class FlashBaseFinetuning(BaseFinetuning):
     def freeze_before_training(self, pl_module: 'Task') -> None:
         self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
 
-    def freeze_using_attr_names(self, pl_module: Task, attr_names: List[str], train_bn: bool = True) -> None:
+    def freeze_using_attr_names(self, pl_module: 'Task', attr_names: List[str], train_bn: bool = True) -> None:
         for attr_name in attr_names:
             attr = getattr(pl_module, attr_name, None)
             if not attr or not isinstance(attr, nn.Module):
