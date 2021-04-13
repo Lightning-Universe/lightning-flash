@@ -102,11 +102,15 @@ class PreprocessState:
 
 class Preprocess(Properties, torch.nn.Module):
     """
-    The :class:`~flash.data.process.Preprocess` is used to encapsulate
-    all the processing data loading logic up to the model.
+    The :class:`~flash.data.process.Preprocess` encapsulates
+    all the data processing and loading logic that should run before the data is passed to the model.
 
     It is particularly relevant when you want to provide an end to end implementation which works
     with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
+
+    You can override any of the preprocessing hooks to provide custom functionality.
+    All hooks default to no-op (except the collate which is PyTorch default
+    `collate <https://pytorch.org/docs/stable/data.html#dataloader-collate-fn>`_)
 
     The :class:`~flash.data.process.Preprocess` supports the following hooks:
 
@@ -188,7 +192,8 @@ class Preprocess(Properties, torch.nn.Module):
 
     .. note::
 
-        By default, each hook will be no-op execpt the collate which is PyTorch default collate.
+        By default, each hook will be no-op execpt the collate which is PyTorch default
+        `collate <https://pytorch.org/docs/stable/data.html#dataloader-collate-fn>`_.
         To customize them, just override the hooks and ``Flash`` will take care of calling them at the right moment.
 
     .. note::
@@ -314,7 +319,16 @@ class Preprocess(Properties, torch.nn.Module):
 
     @classmethod
     def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
-        """Loads entire data from Dataset"""
+        """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
+
+        Example::
+
+            # data: "."
+            # output: [("./cat/1.png", 1), ..., ("./dog/10.png", 0)]
+
+            output: Mapping = load_data(data)
+
+        """
         return data
 
     @classmethod

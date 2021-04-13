@@ -38,19 +38,28 @@ How to use out-of-the-box flashdatamodules
 Flash provides several DataModules with helpers functions.
 Checkout the :ref:`image_classification` section or any other tasks to learn more about them.
 
-********************************
-Why Preprocess and PostProcess ?
-********************************
+***************
+Data Processing
+***************
 
 Currently, it is common practice to implement a `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_
 and provide them to a `DataLoader <https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader>`_.
 
 However, after model training, it requires a lot of engineering overhead to make inference on raw data and deploy the model in production environnement.
+Usually, extra processing logic should be added to bridge the gap between training data and raw data.
 
-The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` have been created to resolve these issues.
-By providing a series of hooks that can be overridden with custom data processing logic, the user has much more granular control over their data processing flow.
+The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` classes can be used to
+store the data as well as the preprocessing and postprocessing transforms.
 
-But it also makes your code more readable, modular and easy to extend.
+By providing a series of hooks that can be overridden with custom data processing logic,
+the user has much more granular control over their data processing flow.
+
+Here are the primary advantages:
+
+*  Making inference on raw data simple
+*  Make the code more readable, modular and self-contained
+*  Data Augmentation experimentation is simpler
+
 
 To change the processing behavior only on specific stages for a given hook,
 you can prefix each of the :class:`~flash.data.process.Preprocess` and  :class:`~flash.data.process.Postprocess`
@@ -70,9 +79,7 @@ Check out :class:`~flash.data.process.Preprocess` for some examples.
 How to customize existing datamodules
 *************************************
 
-Currently, Flash Tasks are implementing using :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
-However, it is not a hard requirement and one can still use :class:`~torch.data.utils.Dataset`, but we highly recommend
-using :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` instead.
+Flash DataModule can receive directly dataset as follow:
 
 Example::
 
@@ -250,6 +257,13 @@ Example::
                 return self.to_tensor(sample)
             else:
                 return self.to_tensor(sample[0]), sample[1]
+
+
+.. note::
+
+    Currently, Flash Tasks are implemented using :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
+    However, it is not a hard requirement and one can still use :class:`~torch.data.utils.Dataset`, but we highly recommend
+    using :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` instead.
 
 
 *************
