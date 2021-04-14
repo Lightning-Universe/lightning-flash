@@ -49,10 +49,6 @@ class ImageEmbedder(Task):
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
 
-    @property
-    def preprocess(self):
-        return ImageClassificationPreprocess(predict_transform=ImageClassificationData.default_val_transforms())
-
     def __init__(
         self,
         embedding_dim: Optional[int] = None,
@@ -70,6 +66,9 @@ class ImageEmbedder(Task):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            default_preprocess=ImageClassificationPreprocess(
+                predict_transform=ImageClassificationData.default_val_transforms(),
+            )
         )
 
         self.save_hyperparameters()
