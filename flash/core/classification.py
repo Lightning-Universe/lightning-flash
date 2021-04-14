@@ -28,5 +28,4 @@ class ClassificationPostprocess(Postprocess):
 class ClassificationTask(Task):
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._postprocess = ClassificationPostprocess()
+        super().__init__(*args, default_postprocess=ClassificationPostprocess(), **kwargs)
