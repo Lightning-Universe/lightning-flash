@@ -136,6 +136,8 @@ class _PreProcessor(torch.nn.Module):
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
     def forward(self, samples: Sequence[Any]) -> Any:
+        if not isinstance(samples, Sequence):
+            samples = [samples]
         with self._current_stage_context:
 
             if self.apply_per_sample_transform:

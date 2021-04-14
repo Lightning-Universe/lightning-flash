@@ -147,6 +147,8 @@ class ImageClassificationPreprocess(Preprocess):
     def collate(self, samples: Sequence) -> Any:
         _samples = []
         # todo: Kornia transforms add batch dimension which need to be removed
+        if len(samples) == 1:
+            return samples[0]
         for sample in samples:
             if isinstance(sample, tuple):
                 sample = (sample[0].squeeze(0), ) + sample[1:]
@@ -156,9 +158,11 @@ class ImageClassificationPreprocess(Preprocess):
         return default_collate(_samples)
 
     def common_step(self, sample: Any) -> Any:
-        if isinstance(sample, (list, tuple)):
+        if isinstance(sample, (list, tuple)) and len(sample) > 1:
             source, target = sample
             return self.current_transform(source), target
+        elif isinstance(sample, (list, tuple)) and len(sample) == 1:
+            sample = sample[0]
         return self.current_transform(sample)
 
     def pre_tensor_transform(self, sample: Any) -> Any:

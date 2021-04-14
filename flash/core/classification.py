@@ -17,9 +17,14 @@ import torch
 
 from flash.core.model import Task
 from flash.data.process import Postprocess
+from flash.data.types import Identity
 
 
 class ClassificationPostprocess(Postprocess):
+
+    @property
+    def serving_outputs(self):
+        return {"outputs": Identity()}
 
     def per_sample_transform(self, samples: Any) -> Any:
         return torch.argmax(samples, -1).tolist()
