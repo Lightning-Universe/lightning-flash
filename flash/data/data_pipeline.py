@@ -26,6 +26,7 @@ from torch.utils.data.dataloader import DataLoader
 from flash.data.auto_dataset import AutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess
+from flash.data.types.base import BaseType
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
@@ -82,6 +83,16 @@ class DataPipeline:
     def preprocess_state(self):
         if self._preprocess_pipeline:
             return self._preprocess_pipeline.state
+
+    @property
+    def serving_inputs(self) -> Optional[Dict[str, BaseType]]:
+        if self._preprocess_pipeline:
+            return self._preprocess_pipeline.serving_inputs
+
+    @property
+    def serving_outputs(self) -> Optional[Dict[str, BaseType]]:
+        if self._postprocess_pipeline:
+            return self._postprocess_pipeline.serving_outputs
 
     @classmethod
     def _is_overriden_recursive(

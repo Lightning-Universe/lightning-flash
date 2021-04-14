@@ -24,6 +24,7 @@ from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
+import flash
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
@@ -43,6 +44,10 @@ class ImageClassificationPreprocess(Preprocess):
     # are mutually exclusive on the DataPipeline internals
     _skip_mutual_check = True
     to_tensor = torchvision.transforms.ToTensor()
+
+    @property
+    def serving_inputs(self):
+        return {"inputs": flash.data.types.Image()}
 
     @staticmethod
     def _find_classes(dir: str) -> Tuple:

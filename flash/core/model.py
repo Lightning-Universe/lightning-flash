@@ -83,6 +83,7 @@ class Task(LightningModule):
         self._data_pipeline = None
         self._preprocess = None
         self._postprocess = None
+        self._skip_auto_dataset = False
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -143,7 +144,8 @@ class Task(LightningModule):
         """
         running_stage = RunningStage.PREDICTING
         data_pipeline = data_pipeline or self.data_pipeline
-        x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
+        if not self._skip_auto_dataset:
+            x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
