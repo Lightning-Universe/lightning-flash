@@ -60,8 +60,8 @@ class Task(LightningModule):
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`.
-        default_preprocess: ``Preprocess`` to use as the default for this task.
-        default_postprocess: ``Postprocess`` to use as the default for this task.
+        default_preprocess: :class:`.Preprocess` to use as the default for this task.
+        default_postprocess: :class:`.Postprocess` to use as the default for this task.
     """
 
     def __init__(
@@ -177,17 +177,17 @@ class Task(LightningModule):
             new_preprocess: Optional[Preprocess],
             new_postprocess: Optional[Postprocess],
     ) -> Tuple[Optional[Preprocess], Optional[Postprocess]]:
-        """Resolves the correct ``Preprocess`` and ``Postprocess`` to use, choosing `new_*` if it is not None or a base
-        class (``Preprocess`` or ``Postprocess``) and `old_*` otherwise.
+        """Resolves the correct :class:`.Preprocess` and :class:`.Postprocess` to use, choosing ``new_*`` if it is not
+        None or a base class (:class:`.Preprocess` or :class:`.Postprocess`) and ``old_*`` otherwise.
 
         Args:
-            old_preprocess: ``Preprocess`` to be overridden.
-            old_postprocess: ``Postprocess`` to be overridden.
-            new_preprocess: ``Preprocess`` to override with.
-            new_postprocess: ``Postprocess`` to override with.
+            old_preprocess: :class:`.Preprocess` to be overridden.
+            old_postprocess: :class:`.Postprocess` to be overridden.
+            new_preprocess: :class:`.Preprocess` to override with.
+            new_postprocess: :class:`.Postprocess` to override with.
 
         Returns:
-            The resolved ``Preprocess`` and ``Postprocess``.
+            The resolved :class:`.Preprocess` and :class:`.Postprocess`.
         """
         preprocess = old_preprocess
         if new_preprocess is not None and type(new_preprocess) != Preprocess:
@@ -200,18 +200,19 @@ class Task(LightningModule):
         return preprocess, postprocess
 
     def build_data_pipeline(self, data_pipeline: Optional[DataPipeline] = None) -> Optional[DataPipeline]:
-        """Build a ``DataPipeline`` incorporating available ``Preprocess`` and ``Postprocess`` objects. These will be
-        overridden in the following resolution order (lowest priority first):
-            - ``Datamodule``, either attached to the ``Trainer`` or to the ``Task``.
-            - ``Task`` defaults given to ``Task.__init__``.
-            - ``Task`` manual overrides by setting ``Task.data_pipeline``.
-            - ``DataPipeline`` passed to this method.
+        """Build a :class:`.DataPipeline` incorporating available :class:`.Preprocess` and :class:`.Postprocess`
+        objects. These will be overridden in the following resolution order (lowest priority first):
+
+        - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
+        - :class:`.Task` defaults given to ``.Task.__init__``.
+        - :class:`.Task` manual overrides by setting :py:attr:`~data_pipeline`.
+        - :class:`.DataPipeline` passed to this method.
 
         Args:
-            data_pipeline: Optional highest priority source of ``Preprocess`` and ``Postprocess``.
+            data_pipeline: Optional highest priority source of :class:`.Preprocess` and :class:`.Postprocess`.
 
         Returns:
-            The fully resolved ``DataPipeline``.
+            The fully resolved :class:`.DataPipeline`.
         """
         preprocess, postprocess = None, None
 
@@ -242,6 +243,8 @@ class Task(LightningModule):
 
     @property
     def data_pipeline(self) -> DataPipeline:
+        """The current :class:`.DataPipeline`. If set, the new value will override the :class:`.Task` defaults. See
+        :py:meth:`~build_data_pipeline` for more details on the resolution order."""
         return self.build_data_pipeline()
 
     @data_pipeline.setter
