@@ -51,7 +51,6 @@ class Image(BaseType):
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
         pil_image = PILImage.open(buffer, mode="r")
-        print(pil_image)
         return pil_image
 
     def serialize(self, tensor: torch.Tensor) -> str:

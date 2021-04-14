@@ -11,6 +11,4 @@ class Identity(BaseType):
         return data
 
     def serialize(self, data: Any) -> Any:
-        import pdb
-        pdb.set_trace()
         return data
