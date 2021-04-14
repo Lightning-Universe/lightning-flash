@@ -115,7 +115,7 @@ def test_task_datapipeline_save(tmpdir):
     task = ClassificationTask(model, F.nll_loss)
 
     # to check later
-    task.postprocess.test = True
+    task._postprocess.test = True
 
     # generate a checkpoint
     trainer = pl.Trainer(
@@ -132,7 +132,7 @@ def test_task_datapipeline_save(tmpdir):
 
     # load from file
     task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task.postprocess.test
+    assert task._postprocess.test
 
 
 @pytest.mark.parametrize(

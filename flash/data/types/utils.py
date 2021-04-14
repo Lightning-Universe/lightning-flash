@@ -5,8 +5,6 @@ cached_property() - computed once per instance, cached as attribute
 credits: https://github.com/penguinolog/backports.cached_property
 """
 
-from __future__ import annotations
-
 __all__ = ("cached_property", )
 
 # Standard Library

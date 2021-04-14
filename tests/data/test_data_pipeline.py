@@ -71,8 +71,16 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 
     model = CustomModel(postprocess=Postprocess())
     model.data_pipeline = data_pipeline
-    assert isinstance(model._preprocess, SubPreprocess if use_preprocess else Preprocess)
-    assert isinstance(model._postprocess, SubPostprocess if use_postprocess else Postprocess)
+
+    if use_preprocess:
+        assert isinstance(model._preprocess, SubPreprocess)
+    else:
+        assert model._preprocess is None or isinstance(model._preprocess, Preprocess)
+
+    if use_postprocess:
+        assert isinstance(model._postprocess, SubPostprocess)
+    else:
+        assert model._postprocess is None or isinstance(model._postprocess, Postprocess)
 
 
 def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
@@ -330,15 +338,17 @@ class TestPreprocess(Preprocess):
 
 def test_attaching_datapipeline_to_model(tmpdir):
 
-    preprocess = Preprocess()
+    class SubPreprocess(Preprocess):
+        pass
+
+    preprocess = SubPreprocess()
     data_pipeline = DataPipeline(preprocess)
 
     class CustomModel(Task):
 
-        _postprocess = Postprocess()
-
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+            self._postprocess = Postprocess()
 
         def training_step(self, batch: Any, batch_idx: int) -> Any:
             pass

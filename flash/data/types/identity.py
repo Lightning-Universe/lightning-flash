@@ -1,18 +1,5 @@
-from __future__ import annotations
-
-import base64
 from dataclasses import dataclass
-from io import BytesIO
-from typing import Any, Optional
-
-import numpy as np
-import torch
-
-try:
-    from PIL import Image as PILImage
-except (ImportError, ModuleNotFoundError) as e:  # pragma: no cover
-    msg = f"install the 'Pillow' package to make use of this feature"
-    raise ValueError(msg) from e
+from typing import Any
 
 from flash.data.types.base import BaseType
 
