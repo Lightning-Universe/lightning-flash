@@ -92,7 +92,7 @@ class Task(LightningModule):
         The training/validation/test step. Override for custom behavior.
         """
         x, y = batch
-        y_hat, y = self(x)
+        y_hat = self(x)
         output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
