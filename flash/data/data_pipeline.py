@@ -23,7 +23,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate, default_convert
 from torch.utils.data.dataloader import DataLoader
 
-from flash.data.auto_dataset import AutoDataset
+from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
@@ -458,7 +458,16 @@ class DataPipeline:
 
         return fn
 
-    def _generate_auto_dataset(self, data: Union[Iterable, Any], running_stage: RunningStage = None) -> AutoDataset:
+    def _generate_auto_dataset(
+        self,
+        data: Union[Iterable, Any],
+        running_stage: RunningStage = None,
+        use_iterable_auto_dataset: bool = False
+    ) -> Union[AutoDataset, IterableAutoDataset]:
+        if use_iterable_auto_dataset:
+            return IterableAutoDataset(
+                data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage
+            )
         return AutoDataset(data=data, data_pipeline=self, running_stage=running_stage)
 
     def to_dataloader(

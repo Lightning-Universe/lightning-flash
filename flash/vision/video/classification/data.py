@@ -11,17 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import pathlib
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 import torch
-import torchvision
-from PIL import Image
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import Module
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, RandomSampler, Sampler
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataset import IterableDataset
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
@@ -40,7 +37,7 @@ else:
 
 if _PYTORCH_VIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
-    from pytorchvideo.data.labeled_video_paths import LabeledVideoPaths
+    from pytorchvideo.data.encoded_video_dataset import labeled_encoded_video_dataset
 
 
 class VideoPreprocessPreprocess(Preprocess):
@@ -58,12 +55,10 @@ class VideoPreprocessPreprocess(Preprocess):
         self.clip_sampler = clip_sampler
 
     def load_data(self, data: Any, dataset: IterableDataset) -> Dict:
-        if not isinstance(data, str):
-            raise MisconfigurationException("data should be a string")
-        if os.path.isdir(data):
-            return LabeledVideoPaths.from_directory(data)
-        else:
-            return MisconfigurationException("Only support for directory for now.")
+        return labeled_encoded_video_dataset(
+            data,
+            self.clip_sampler,
+        )
 
 
 class VideoClassificationData(DataModule):
@@ -75,6 +70,7 @@ class VideoClassificationData(DataModule):
     def instantiate_preprocess(
         cls,
         clip_sampler: ClipSampler,
+        video_sampler: Type[Sampler] = RandomSampler,
         train_transform: Dict[str, Union[nn.Module, Callable]],
         val_transform: Dict[str, Union[nn.Module, Callable]],
         test_transform: Dict[str, Union[nn.Module, Callable]],
@@ -98,6 +94,7 @@ class VideoClassificationData(DataModule):
         predict_folder: Union[str, pathlib.Path] = None,
         clip_sampler: Union[str, ClipSampler] = "random",
         clip_duration: float = 2,
+        video_sampler: Type[Sampler] = RandomSampler,
         clip_sampler_kwargs: Dict[str, Any] = None,
         train_transform: Optional[Union[str, Dict]] = 'default',
         val_transform: Optional[Union[str, Dict]] = 'default',
@@ -153,6 +150,7 @@ class VideoClassificationData(DataModule):
 
         preprocess = cls.instantiate_preprocess(
             clip_sampler,
+            video_sampler,
             train_transform,
             val_transform,
             test_transform,

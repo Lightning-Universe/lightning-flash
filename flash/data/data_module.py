@@ -23,7 +23,7 @@ from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
-from flash.data.auto_dataset import AutoDataset
+from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
@@ -287,7 +287,8 @@ class DataModule(pl.LightningDataModule):
         whole_data_load_fn: Optional[Callable] = None,
         per_sample_load_fn: Optional[Callable] = None,
         data_pipeline: Optional[DataPipeline] = None,
-    ) -> AutoDataset:
+        use_iterable_auto_dataset: bool = False,
+    ) -> Union[AutoDataset, IterableAutoDataset]:
         """
         This function is used to generate an ``AutoDataset`` from a ``DataPipeline`` if provided
         or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly
@@ -303,6 +304,10 @@ class DataModule(pl.LightningDataModule):
             per_sample_load_fn = getattr(
                 cls.preprocess_cls,
                 DataPipeline._resolve_function_hierarchy('load_sample', cls.preprocess_cls, running_stage, Preprocess)
+            )
+        if use_iterable_auto_dataset:
+            return IterableAutoDataset(
+                data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage
             )
         return AutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
 
@@ -374,15 +379,25 @@ class DataModule(pl.LightningDataModule):
         running_stage: RunningStage,
         whole_data_load_fn: Optional[Callable] = None,
         per_sample_load_fn: Optional[Callable] = None,
-        data_pipeline: Optional[DataPipeline] = None
+        data_pipeline: Optional[DataPipeline] = None,
+        use_iterable_auto_dataset: bool = False,
     ) -> Optional[AutoDataset]:
         if data is None:
             return
 
         if data_pipeline:
-            return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
+            return data_pipeline._generate_auto_dataset(
+                data, running_stage=running_stage, use_iterable_auto_dataset=use_iterable_auto_dataset
+            )
 
-        return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)
+        return cls.autogenerate_dataset(
+            data,
+            running_stage,
+            whole_data_load_fn,
+            per_sample_load_fn,
+            data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset
+        )
 
     @classmethod
     def from_load_data_inputs(
@@ -393,6 +408,7 @@ class DataModule(pl.LightningDataModule):
         predict_load_data_input: Optional[Any] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
+        use_iterable_auto_dataset: bool = False,
         **kwargs,
     ) -> 'DataModule':
         """
@@ -424,16 +440,28 @@ class DataModule(pl.LightningDataModule):
         data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 
         train_dataset = cls._generate_dataset_if_possible(
-            train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
+            train_load_data_input,
+            running_stage=RunningStage.TRAINING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset
         )
         val_dataset = cls._generate_dataset_if_possible(
-            val_load_data_input, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
+            val_load_data_input,
+            running_stage=RunningStage.VALIDATING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset
         )
         test_dataset = cls._generate_dataset_if_possible(
-            test_load_data_input, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
+            test_load_data_input,
+            running_stage=RunningStage.TESTING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset
         )
         predict_dataset = cls._generate_dataset_if_possible(
-            predict_load_data_input, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
+            predict_load_data_input,
+            running_stage=RunningStage.PREDICTING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset
         )
         datamodule = cls(
             train_dataset=train_dataset,
