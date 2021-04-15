@@ -71,7 +71,7 @@ class VideoPreprocessPreprocess(Preprocess):
 
 
 class VideoClassificationData(DataModule):
-    """Data module for image classification tasks."""
+    """Data module for Video classification tasks."""
 
     preprocess_cls = VideoPreprocessPreprocess
 
