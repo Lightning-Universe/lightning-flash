@@ -123,7 +123,7 @@ class AutoDataset(Dataset):
                     "This is not expected! Preloading Data again to ensure compatibility. This may take some time."
                 )
             with self._load_data_context:
-                self.processed_data = self._call_load_data(self.data)
+                self.preprocessed_data = self._call_load_data(self.data)
             self._load_data_called = True
 
     def __getitem__(self, index: int) -> Any:
@@ -131,16 +131,16 @@ class AutoDataset(Dataset):
             raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
         if self.load_sample:
             with self._load_sample_context:
-                data: Any = self._call_load_sample(self.processed_data[index])
+                data: Any = self._call_load_sample(self.preprocessed_data[index])
                 if self.control_flow_callback:
                     self.control_flow_callback.on_load_sample(data, self.running_stage)
                 return data
-        return self.processed_data[index]
+        return self.preprocessed_data[index]
 
     def __len__(self) -> int:
         if not self.load_sample and not self.load_data:
             raise RuntimeError("`__len__` for `load_sample` and `load_data` could not be inferred.")
-        return len(self.processed_data)
+        return len(self.preprocessed_data)
 
 
 class IterableAutoDataset(IterableDataset):
