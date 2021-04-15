@@ -21,7 +21,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.dataset import Subset
+from torch.utils.data.dataset import IterableDataset, Subset
 
 from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
@@ -215,7 +215,8 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(
             train_ds,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=False if isinstance(train_ds, (IterableDataset,
+                                                   IterableAutoDataset)) else True,  # IterableDataset can't be shuffled
             num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,

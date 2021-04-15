@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from inspect import signature
-from typing import Any, Callable, Iterable, Optional, TYPE_CHECKING
+from typing import Any, Callable, Iterable, Iterator, Optional, TYPE_CHECKING
 
+import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.warning_utils import rank_zero_warn
 from torch.utils.data import Dataset, IterableDataset
@@ -175,6 +176,8 @@ class IterableAutoDataset(IterableDataset):
         self.data_pipeline = data_pipeline
         self.load_data = load_data
         self.load_sample = load_sample
+        self.dataset: Optional[IterableDataset] = None
+        self.dataset_iter: Optional[Iterator] = None
 
         # trigger the setup only if `running_stage` is provided
         self.running_stage = running_stage
@@ -238,18 +241,19 @@ class IterableAutoDataset(IterableDataset):
                     "This is not expected! Preloading Data again to ensure compatibility. This may take some time."
                 )
             with self._load_data_context:
-                self.iterable = self._call_load_data(self.data)
-                self.iterable_iter = None
+                self.dataset = self._call_load_data(self.data)
+                self.dataset_iter = None
             self._load_data_called = True
 
-    def __next___(self) -> Any:
+    def __iter__(self):
+        self.dataset_iter = iter(self.dataset)
+        return self
+
+    def __next__(self) -> Any:
         if not self.load_sample and not self.load_data:
             raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
 
-        if self.iterable_iter is None:
-            self.iterable_iter = iter(self.iterable)
-
-        data = next(self.iterable_iter)
+        data = next(self.dataset_iter)
 
         if self.load_sample:
             with self._load_sample_context:

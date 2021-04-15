@@ -297,7 +297,7 @@ class DataPipeline:
             if isinstance(dataloader, (_PatchDataLoader, Callable)):
                 dataloader = dataloader()
 
-            if not dataloader:
+            if dataloader is not None:
                 continue
 
             if isinstance(dataloader, Sequence):

@@ -115,8 +115,12 @@ class VideoClassifier(ClassificationTask):
         else:
             raise MisconfigurationException(f"model should be either a string or a nn.Module. Found: {model}")
 
-    def forward(self, x) -> Any:
-        return self.model(x["video"])
+    def step(self, batch: Any, batch_idx: int) -> Any:
+        return super().step((batch["video"], batch["label"]), batch_idx)
+
+    def forward(self, x: Any) -> Any:
+        # AssertionError: input for MultiPathWayWithFuse needs to be a list of tensors
+        return self.model(x)
 
     def configure_finetune_callback(self) -> List[Callback]:
         return [VideoClassifierFinetuning()]
