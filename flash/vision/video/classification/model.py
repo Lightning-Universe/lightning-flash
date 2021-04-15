@@ -42,7 +42,7 @@ class VideoClassifier(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
+        model: A string mapped to ``pytorch_video`` models or ``nn.Module``, defaults to ``"slowfast_r50"``.
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
