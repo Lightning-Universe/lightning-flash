@@ -26,18 +26,20 @@ except ImportError:
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
 
 _PATH_ROOT = os.path.dirname(__file__)
-_PATH_REQUIRE = os.path.join(_PATH_ROOT, 'requirements')
+_PATH_REQUIRE = os.path.join(_PATH_ROOT, "requirements")
 
 extras = {
-    'test': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='test.txt'),
-    'image': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='image.txt'),
-    'video': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='video.txt'),
-    'tabular': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='tabular.txt'),
-    'text': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='text.txt'),
+    "docs": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="docs.txt"),
+    "test": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="test.txt"),
+    "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="image.txt"),
+    "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="video.txt"),
+    "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="tabular.txt"),
+    "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="text.txt"),
 }
 
 extras["vision"] = extras["image"] + extras["video"]
-extras["all"] = extras["vision"] + extras["tabular"] + extras["text"] + extras["test"]
+extras["dev"] = extras["vision"] + extras["tabular"] + extras["text"] + extras["test"]
+extras["all"] = extras["dev"] + extras["docs"]
 
 long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=info.__homepage__, ver=info.__version__)
 

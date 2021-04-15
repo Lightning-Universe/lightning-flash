@@ -61,7 +61,7 @@ jobs:
       run: |
         python --version
         pip --version
-        pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install -e .[dev] --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install -e . --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip list
       shell: bash
