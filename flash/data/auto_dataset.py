@@ -238,18 +238,18 @@ class IterableAutoDataset(IterableDataset):
                     "This is not expected! Preloading Data again to ensure compatibility. This may take some time."
                 )
             with self._load_data_context:
-                self.sampler = self._call_load_data(self.data)
-                self.sampler_iter = None
+                self.iterable = self._call_load_data(self.data)
+                self.iterable_iter = None
             self._load_data_called = True
 
     def __next___(self) -> Any:
         if not self.load_sample and not self.load_data:
             raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
 
-        if self.sampler_iter is None:
-            self.sampler_iter = iter(self.sampler)
+        if self.iterable_iter is None:
+            self.iterable_iter = iter(self.iterable)
 
-        data = next(self.sampler_iter)
+        data = next(self.iterable_iter)
 
         if self.load_sample:
             with self._load_sample_context:

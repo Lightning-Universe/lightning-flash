@@ -14,6 +14,7 @@
 import pathlib
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
+import numpy as np
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
@@ -37,7 +38,7 @@ else:
 
 if _PYTORCH_VIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
-    from pytorchvideo.data.encoded_video_dataset import labeled_encoded_video_dataset
+    from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
 
 
 class VideoPreprocessPreprocess(Preprocess):
@@ -60,14 +61,17 @@ class VideoPreprocessPreprocess(Preprocess):
         self.decode_audio = decode_audio
         self.decoder = decoder
 
-    def load_data(self, data: Any, dataset: IterableDataset) -> Dict:
-        return labeled_encoded_video_dataset(
+    def load_data(self, data: Any, dataset: IterableDataset) -> EncodedVideoDataset:
+        ds: EncodedVideoDataset = labeled_encoded_video_dataset(
             data,
             self.clip_sampler,
             video_sampler=self.video_sampler,
             decode_audio=self.decode_audio,
             decoder=self.decoder,
         )
+        if self.training:
+            dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
+        return ds
 
 
 class VideoClassificationData(DataModule):
@@ -174,7 +178,7 @@ class VideoClassificationData(DataModule):
             preprocess_cls=preprocess_cls,
         )
 
-        return cls.from_load_data_inputs(
+        dm = cls.from_load_data_inputs(
             train_load_data_input=train_folder,
             val_load_data_input=val_folder,
             test_load_data_input=test_folder,
@@ -185,3 +189,6 @@ class VideoClassificationData(DataModule):
             use_iterable_auto_dataset=True,
             **kwargs,
         )
+        if dm.train_dataset:
+            dm.num_classes = dm.train_dataset.num_classes
+        return dm

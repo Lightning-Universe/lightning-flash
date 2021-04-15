@@ -21,7 +21,6 @@ import torchvision.io as io
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
 from flash.utils.imports import _PYTORCH_VIDEO_AVAILABLE
 from flash.vision.video import VideoClassificationData, VideoClassifier
@@ -102,24 +101,8 @@ def test_image_classifier_finetune(tmpdir):
         label_videos,
         total_duration,
     ):
-        """
-        half_duration = total_duration / 2 - _EPS
-        labeled_video_paths = LabeledVideoPaths.from_path(mock_csv)
-        dataset = EncodedVideoDataset(
-            labeled_video_paths,
-            clip_sampler="uniform",
-            duration=half_duration,
-            video_sampler=SequentialSampler,
-            decode_audio=False,
-        )
 
-        expected_labels = [label for label, _ in label_videos]
-        for i, sample in enumerate(dataset):
-            expected_t_shape = 5
-            self.assertEqual(sample["video"].shape[1], expected_t_shape)
-            self.assertEqual(sample["label"], expected_labels[i])
-        """
-    half_duration = total_duration / 2 - _EPS
+        half_duration = total_duration / 2 - _EPS
 
     datamodule = VideoClassificationData.from_folders(
         train_folder=mock_csv,
@@ -129,13 +112,16 @@ def test_image_classifier_finetune(tmpdir):
         decode_audio=False,
     )
 
+    expected_labels = [label for label, _ in label_videos]
+    for i, sample in enumerate(datamodule.train_dataset.iterable):
+        expected_t_shape = 5
+        assert sample["video"].shape[1], expected_t_shape
+        assert sample["label"], expected_labels[i]
+
     assert len(VideoClassifier.available_models()) > 5
 
-    # 4. Build the model
-    model = VideoClassifier(num_classes=datamodule.num_classes)
+    model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
 
-    # 5. Create the trainer.
-    trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
+    trainer = flash.Trainer(fast_dev_run=True)
 
-    # 6. Train the model
-    trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
+    trainer.finetune(model, datamodule=datamodule)

@@ -11,15 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import importlib
 import types
-from types import FunctionType
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
+from pytorch_lightning import LightningModule
+from pytorch_lightning.callbacks import Callback
+from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
+from torch.optim import Optimizer
 from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
@@ -35,6 +37,32 @@ if _PYTORCH_VIDEO_AVAILABLE:
             fn = getattr(hub, fn_name)
             if isinstance(fn, types.FunctionType):
                 _VIDEO_CLASSIFIER_MODELS(fn=fn)
+
+
+class VideoClassifierFinetuning(BaseFinetuning):
+
+    def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
+        self.num_layers = num_layers
+        self.train_bn = train_bn
+        self.unfreeze_epoch = unfreeze_epoch
+
+    def freeze_before_training(self, pl_module: LightningModule) -> None:
+        self.freeze(modules=list(pl_module.model.children())[:-self.num_layers], train_bn=self.train_bn)
+
+    def finetune_function(
+        self,
+        pl_module: LightningModule,
+        epoch: int,
+        optimizer: Optimizer,
+        opt_idx: int,
+    ) -> None:
+        if epoch != self.unfreeze_epoch:
+            return
+        self.unfreeze_and_add_param_group(
+            modules=list(pl_module.model.children())[-self.num_layers:],
+            optimizer=optimizer,
+            train_bn=self.train_bn,
+        )
 
 
 class VideoClassifier(ClassificationTask):
@@ -89,3 +117,6 @@ class VideoClassifier(ClassificationTask):
 
     def forward(self, x) -> Any:
         return self.model(x["video"])
+
+    def configure_finetune_callback(self) -> List[Callback]:
+        return [VideoClassifierFinetuning()]
