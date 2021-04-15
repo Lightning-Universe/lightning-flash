@@ -465,9 +465,7 @@ class DataPipeline:
         use_iterable_auto_dataset: bool = False
     ) -> Union[AutoDataset, IterableAutoDataset]:
         if use_iterable_auto_dataset:
-            return IterableAutoDataset(
-                data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage
-            )
+            return IterableAutoDataset(data, data_pipeline=self, running_stage=running_stage)
         return AutoDataset(data=data, data_pipeline=self, running_stage=running_stage)
 
     def to_dataloader(

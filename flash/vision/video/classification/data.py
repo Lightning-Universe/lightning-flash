@@ -45,6 +45,9 @@ class VideoPreprocessPreprocess(Preprocess):
     def __init__(
         self,
         clip_sampler: ClipSampler,
+        video_sampler: Type[Sampler],
+        decode_audio: bool,
+        decoder: str,
         train_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
         val_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
@@ -53,11 +56,17 @@ class VideoPreprocessPreprocess(Preprocess):
 
         super().__init__()
         self.clip_sampler = clip_sampler
+        self.video_sampler = video_sampler
+        self.decode_audio = decode_audio
+        self.decoder = decoder
 
     def load_data(self, data: Any, dataset: IterableDataset) -> Dict:
         return labeled_encoded_video_dataset(
             data,
             self.clip_sampler,
+            video_sampler=self.video_sampler,
+            decode_audio=self.decode_audio,
+            decoder=self.decoder,
         )
 
 
@@ -70,7 +79,9 @@ class VideoClassificationData(DataModule):
     def instantiate_preprocess(
         cls,
         clip_sampler: ClipSampler,
-        video_sampler: Type[Sampler] = RandomSampler,
+        video_sampler: Type[Sampler],
+        decode_audio: bool,
+        decoder: str,
         train_transform: Dict[str, Union[nn.Module, Callable]],
         val_transform: Dict[str, Union[nn.Module, Callable]],
         test_transform: Dict[str, Union[nn.Module, Callable]],
@@ -81,7 +92,8 @@ class VideoClassificationData(DataModule):
         """
         preprocess_cls = preprocess_cls or cls.preprocess_cls
         preprocess: Preprocess = preprocess_cls(
-            clip_sampler, train_transform, val_transform, test_transform, predict_transform
+            clip_sampler, video_sampler, decode_audio, decoder, train_transform, val_transform, test_transform,
+            predict_transform
         )
         return preprocess
 
@@ -96,6 +108,8 @@ class VideoClassificationData(DataModule):
         clip_duration: float = 2,
         video_sampler: Type[Sampler] = RandomSampler,
         clip_sampler_kwargs: Dict[str, Any] = None,
+        decode_audio: bool = True,
+        decoder: str = "pyav",
         train_transform: Optional[Union[str, Dict]] = 'default',
         val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
@@ -151,6 +165,8 @@ class VideoClassificationData(DataModule):
         preprocess = cls.instantiate_preprocess(
             clip_sampler,
             video_sampler,
+            decode_audio,
+            decoder,
             train_transform,
             val_transform,
             test_transform,
@@ -166,5 +182,6 @@ class VideoClassificationData(DataModule):
             batch_size=batch_size,
             num_workers=num_workers,
             preprocess=preprocess,
+            use_iterable_auto_dataset=True,
             **kwargs,
         )

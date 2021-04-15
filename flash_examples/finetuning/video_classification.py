@@ -11,10 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytorchvideo
+
 import flash
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
 from flash.vision.video import VideoClassificationData, VideoClassifier
+
+dataset = pytorchvideo.data.Kinetics(
+    data_path="path/to/kinetics_root/train.csv",
+    clip_sampler=pytorchvideo.data.make_clip_sampler("random", 2),
+)
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
@@ -27,7 +34,7 @@ datamodule = VideoClassificationData.from_folders(
 )
 
 # 3.b Optional: List available backbones
-print(VideoClassifier.available_backbones())
+print(VideoClassifier.available_models())
 
 # 4. Build the model
 model = VideoClassifier(num_classes=datamodule.num_classes)

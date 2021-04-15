@@ -172,10 +172,10 @@ class Task(LightningModule):
 
     @staticmethod
     def _resolve(
-            old_preprocess: Optional[Preprocess],
-            old_postprocess: Optional[Postprocess],
-            new_preprocess: Optional[Preprocess],
-            new_postprocess: Optional[Postprocess],
+        old_preprocess: Optional[Preprocess],
+        old_postprocess: Optional[Postprocess],
+        new_preprocess: Optional[Preprocess],
+        new_postprocess: Optional[Postprocess],
     ) -> Tuple[Optional[Preprocess], Optional[Postprocess]]:
         """Resolves the correct :class:`.Preprocess` and :class:`.Postprocess` to use, choosing ``new_*`` if it is not
         None or a base class (:class:`.Preprocess` or :class:`.Postprocess`) and ``old_*`` otherwise.
@@ -305,6 +305,13 @@ class Task(LightningModule):
     @classmethod
     def available_backbones(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+        if registry is None:
+            return []
+        return registry.available_keys()
+
+    @classmethod
+    def available_models(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
         if registry is None:
             return []
         return registry.available_keys()
