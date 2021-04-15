@@ -1,0 +1,5 @@
+torchvision>=0.8  # TODO: lower to 0.7 after PT 1.6
+lightning-bolts==0.3.2  # TODO: align with proper release
+Pillow>=7.2
+pycocotools>=2.0.2 ; python_version >= "3.7"
+kornia>=0.5.0

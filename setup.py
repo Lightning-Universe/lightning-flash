@@ -26,6 +26,18 @@ except ImportError:
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
 
 _PATH_ROOT = os.path.dirname(__file__)
+_PATH_REQUIRE = os.path.join(_PATH_ROOT, 'requirements')
+
+extras = {
+    'test': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='test.txt'),
+    'image': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='image.txt'),
+    'video': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='video.txt'),
+    'tabular': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='tabular.txt'),
+    'text': setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name='text.txt'),
+}
+
+extras["vision"] = extras["image"] + extras["video"]
+extras["all"] = extras["vision"] + extras["tabular"] + extras["text"] + extras["test"]
 
 long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=info.__homepage__, ver=info.__version__)
 
@@ -52,6 +64,7 @@ setup(
     python_requires=">=3.6",
     setup_requires=[],
     install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name='requirements.txt'),
+    extras_require=extras,
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
