@@ -26,6 +26,7 @@ from torch import nn
 from flash.core.registry import FlashRegistry
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
+from flash.return_types import ReturnType
 
 
 def predict_context(func: Callable) -> Callable:
@@ -71,8 +72,9 @@ class Task(LightningModule):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-        default_preprocess: Preprocess = None,
-        default_postprocess: Postprocess = None,
+        default_preprocess: Optional[Preprocess] = None,
+        default_postprocess: Optional[Postprocess] = None,
+        return_type: Optional[ReturnType] = None,
     ):
         super().__init__()
         if model is not None:
@@ -86,6 +88,7 @@ class Task(LightningModule):
 
         self._preprocess = default_preprocess
         self._postprocess = default_postprocess
+        self._return_type = return_type
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -239,6 +242,9 @@ class Task(LightningModule):
                 getattr(data_pipeline, '_postprocess_pipeline', None),
             )
 
+        if self.return_type is not None:
+            postprocess = self.return_type.wrap(postprocess)
+
         return DataPipeline(preprocess, postprocess)
 
     @property
@@ -255,6 +261,14 @@ class Task(LightningModule):
             getattr(data_pipeline, '_preprocess_pipeline', None),
             getattr(data_pipeline, '_postprocess_pipeline', None),
         )
+
+    @property
+    def return_type(self) -> Optional[ReturnType]:
+        return self._return_type
+
+    @return_type.setter
+    def return_type(self, return_type: Optional[ReturnType]) -> None:
+        self._return_type = return_type
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:

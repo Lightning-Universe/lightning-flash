@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Callable, Mapping, Sequence, Type, Union
+from typing import Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from torchmetrics import Accuracy
@@ -21,6 +21,7 @@ from transformers import BertForSequenceClassification
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationTask
+from flash.return_types.classification import ClassificationReturnType
 
 
 class TextClassifier(ClassificationTask):
@@ -41,6 +42,7 @@ class TextClassifier(ClassificationTask):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
         learning_rate: float = 1e-3,
+        return_type: Optional[ClassificationReturnType] = None,
     ):
         self.save_hyperparameters()
 
@@ -56,6 +58,7 @@ class TextClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            return_type=return_type,
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
 

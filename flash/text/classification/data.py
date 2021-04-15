@@ -14,7 +14,7 @@
 import os
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from datasets import DatasetDict, load_dataset
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -22,10 +22,9 @@ from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 from transformers.modeling_outputs import SequenceClassifierOutput
 
-from flash.core.classification import ClassificationPostprocess
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.process import Preprocess, PreprocessState
+from flash.data.process import Preprocess, PreprocessState, Postprocess
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -172,7 +171,7 @@ class TextClassificationPreprocess(Preprocess):
                 raise MisconfigurationException("Currently, we support only list of sentences")
 
 
-class TextClassificationPostProcess(ClassificationPostprocess):
+class TextClassificationPostProcess(Postprocess):
 
     def per_batch_transform(self, batch: Any) -> Any:
         if isinstance(batch, SequenceClassifierOutput):

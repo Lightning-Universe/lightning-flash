@@ -11,21 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
-
-import torch
+from typing import Optional
 
 from flash.core.model import Task
-from flash.data.process import Postprocess
-
-
-class ClassificationPostprocess(Postprocess):
-
-    def per_sample_transform(self, samples: Any) -> Any:
-        return torch.argmax(samples, -1).tolist()
+from flash.return_types.classification import ClassificationReturnType, Classes
 
 
 class ClassificationTask(Task):
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, default_postprocess=ClassificationPostprocess(), **kwargs)
+    def __init__(
+            self,
+            *args,
+            return_type: Optional[ClassificationReturnType] = None,
+            **kwargs,
+    ) -> None:
+        super().__init__(*args, return_type=return_type or Classes(), **kwargs)

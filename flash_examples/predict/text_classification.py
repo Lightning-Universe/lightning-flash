@@ -14,6 +14,7 @@
 from pytorch_lightning import Trainer
 
 from flash.data.utils import download_data
+from flash.return_types.classification import Labels
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Download the data
@@ -22,12 +23,14 @@ download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
 # 2. Load the model from a checkpoint
 model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
 
+model.return_type = Labels(['Positive', 'Negative'])
+
 # 2a. Classify a few sentences! How was the movie?
 predictions = model.predict([
     "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
     "The worst movie in the history of cinema.",
-    "I come from Bulgaria where it 's almost impossible to have a tornado."
-    "Very, very afraid"
+    "I come from Bulgaria where it 's almost impossible to have a tornado.",
+    "Very, very afraid.",
     "This guy has done a great job with this movie!",
 ])
 print(predictions)
