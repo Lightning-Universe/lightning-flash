@@ -29,7 +29,7 @@ else:
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
 
-# 1. Download a video dataset
+# 1. Download a video dataset: https://pytorchvideo.readthedocs.io/en/latest/data.html
 download_data("NEED_TO_BE_CREATED")
 
 # 2. [Optional] Specify transforms to be used during training.
