@@ -23,7 +23,7 @@ from torch.utils.data import SequentialSampler
 import flash
 from flash.data.utils import download_data
 from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
-from flash.vision.video import VideoClassificationData, VideoClassifier
+from flash.video import VideoClassificationData, VideoClassifier
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.utils import thwc_to_cthw
