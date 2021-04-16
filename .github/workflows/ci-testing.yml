@@ -42,6 +42,15 @@ jobs:
       run: |
         python -c "req = open('requirements.txt').read().replace('>', '=') ; open('requirements.txt', 'w').write(req)"
 
+    - name: Filter requirements
+      run: |
+        import sys
+        if sys.version_info.minor > 6:
+          fname = 'requirements.txt'
+          lines = [line for line in open(fname).readlines() if not line.startswith('pytorchvideo')]
+          open(fname, 'w').writelines(lines)
+      shell: python
+
     # Note: This uses an internal pip API and may not always work
     # https://github.com/actions/cache/blob/master/examples.md#multiple-oss-in-a-workflow
     - name: Get pip cache
