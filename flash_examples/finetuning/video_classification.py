@@ -70,7 +70,7 @@ datamodule = VideoClassificationData.from_paths(
 
 # 4. List the available models
 print(VideoClassifier.available_models())
-# out: ['efficient_x3d_s', 'efficient_x3d_xs', 'slow_r50', 'slowfast_r101', 'slowfast_r50', 'x3d_m', 'x3d_s', 'x3d_xs']
+# out: ['efficient_x3d_s', 'efficient_x3d_xs', ... ,slowfast_r50', 'x3d_m', 'x3d_s', 'x3d_xs']
 
 # 5. Build the model
 model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
