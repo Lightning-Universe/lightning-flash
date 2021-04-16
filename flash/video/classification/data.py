@@ -63,7 +63,7 @@ class VideoClassificationPreprocess(Preprocess):
         self.decode_audio = decode_audio
         self.decoder = decoder
 
-    def load_data(self, data: Any, dataset: IterableDataset) -> EncodedVideoDataset:
+    def load_data(self, data: Any, dataset: IterableDataset) -> 'EncodedVideoDataset':
         ds: EncodedVideoDataset = labeled_encoded_video_dataset(
             data,
             self.clip_sampler,
@@ -99,7 +99,7 @@ class VideoClassificationData(DataModule):
     @classmethod
     def instantiate_preprocess(
         cls,
-        clip_sampler: ClipSampler,
+        clip_sampler: 'ClipSampler',
         video_sampler: Type[Sampler],
         decode_audio: bool,
         decoder: str,
@@ -125,7 +125,7 @@ class VideoClassificationData(DataModule):
         val_folder: Optional[Union[str, pathlib.Path]] = None,
         test_folder: Optional[Union[str, pathlib.Path]] = None,
         predict_folder: Union[str, pathlib.Path] = None,
-        clip_sampler: Union[str, ClipSampler] = "random",
+        clip_sampler: Union[str, 'ClipSampler'] = "random",
         clip_duration: float = 2,
         video_sampler: Type[Sampler] = RandomSampler,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -172,6 +172,9 @@ class VideoClassificationData(DataModule):
             >>> img_data = VideoClassificationData.from_paths("train/") # doctest: +SKIP
 
         """
+        if not _PYTORCHVIDEO_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install pytorchvideo`.")
+
         if not clip_sampler_kwargs:
             clip_sampler_kwargs = {}
 
