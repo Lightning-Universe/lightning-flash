@@ -260,6 +260,13 @@ class DataModule(pl.LightningDataModule):
         return self.data_pipeline._generate_auto_dataset(*args, **kwargs)
 
     @property
+    def num_classes(self) -> Optional[int]:
+        return (
+            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None)
+            or getattr(self.test_dataset, "num_classes", None)
+        )
+
+    @property
     def preprocess(self) -> Preprocess:
         return self._preprocess or self.preprocess_cls()
 

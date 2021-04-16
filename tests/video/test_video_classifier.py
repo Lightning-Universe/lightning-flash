@@ -22,10 +22,10 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.data.utils import download_data
-from flash.utils.imports import _PYTORCH_VIDEO_AVAILABLE
+from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.vision.video import VideoClassificationData, VideoClassifier
 
-if _PYTORCH_VIDEO_AVAILABLE:
+if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.utils import thwc_to_cthw
 
 
@@ -91,7 +91,7 @@ def mock_encoded_video_dataset_file():
             yield f.name, label_videos, video_duration
 
 
-@pytest.mark.skipif(not _PYTORCH_VIDEO_AVAILABLE, reason="PyTorch Video isn't installed.")
+@pytest.mark.skipif(not _PYTORCHVIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_image_classifier_finetune(tmpdir):
 
     _EPS = 1e-9

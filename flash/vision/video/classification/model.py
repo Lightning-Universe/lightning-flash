@@ -26,11 +26,11 @@ from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
-from flash.utils.imports import _PYTORCH_VIDEO_AVAILABLE
+from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
 
 _VIDEO_CLASSIFIER_MODELS = FlashRegistry("backbones")
 
-if _PYTORCH_VIDEO_AVAILABLE:
+if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.models import hub
     for fn_name in dir(hub):
         if "__" not in fn_name:

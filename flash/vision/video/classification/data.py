@@ -28,7 +28,7 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
-from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCH_VIDEO_AVAILABLE
+from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -36,12 +36,12 @@ if _KORNIA_AVAILABLE:
 else:
     from torchvision import transforms as T
 
-if _PYTORCH_VIDEO_AVAILABLE:
+if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
     from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
 
 
-class VideoPreprocessPreprocess(Preprocess):
+class VideoClassificationPreprocess(Preprocess):
 
     def __init__(
         self,
@@ -92,7 +92,7 @@ class VideoPreprocessPreprocess(Preprocess):
 class VideoClassificationData(DataModule):
     """Data module for Video classification tasks."""
 
-    preprocess_cls = VideoPreprocessPreprocess
+    preprocess_cls = VideoClassificationPreprocess
 
     @classmethod
     def instantiate_preprocess(
@@ -140,7 +140,7 @@ class VideoClassificationData(DataModule):
     ) -> 'DataModule':
         """
 
-        Creates a VideoClassificationData object from folders of images arranged in this way: ::
+        Creates a VideoClassificationData object from folders of videos arranged in this way: ::
 
             train/class_x/xxx.ext
             train/class_x/xxy.ext
@@ -154,12 +154,11 @@ class VideoClassificationData(DataModule):
             val_folder: Path to validation folder. Default: None.
             test_folder: Path to test folder. Default: None.
             predict_folder: Path to predict folder. Default: None.
-            val_transform: Image transform to use for validation and test set.
             clip_sampler: ClipSampler to be used on videos.
-            train_transform: Image transform to use for training set.
-            val_transform: Image transform to use for validation set.
-            test_transform: Image transform to use for test set.
-            predict_transform: Image transform to use for predict set.
+            train_transform: Dictionnary of Video Clip transform to use for training set.
+            val_transform:  Dictionnary of Video Clip transform to use for validation set.
+            test_transform:  Dictionnary of Video Clip transform to use for test set.
+            predict_transform:  Dictionnary of Video Clip transform to use for predict set.
             batch_size: Batch size for data loading.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
@@ -193,7 +192,7 @@ class VideoClassificationData(DataModule):
             preprocess_cls=preprocess_cls,
         )
 
-        dm = cls.from_load_data_inputs(
+        return cls.from_load_data_inputs(
             train_load_data_input=train_folder,
             val_load_data_input=val_folder,
             test_load_data_input=test_folder,
@@ -204,6 +203,3 @@ class VideoClassificationData(DataModule):
             use_iterable_auto_dataset=True,
             **kwargs,
         )
-        if dm.train_dataset:
-            dm.num_classes = dm.train_dataset.num_classes
-        return dm
