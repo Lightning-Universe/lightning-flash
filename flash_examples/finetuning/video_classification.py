@@ -29,8 +29,8 @@ else:
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
 
-# 1. Download a video dataset: https://pytorchvideo.readthedocs.io/en/latest/data.html
-# download_data("NEED_TO_BE_CREATED")
+# 1. Download a video clip dataset. Check for more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
+download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
 
 # 2. [Optional] Specify transforms to be used during training.
 train_transform = {
