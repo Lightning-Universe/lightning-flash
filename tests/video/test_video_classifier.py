@@ -29,7 +29,7 @@ if _PYTORCHVIDEO_AVAILABLE:
     import kornia.augmentation as K
     from pytorchvideo.data.utils import thwc_to_cthw
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
-    from torchvision.transforms import Compose, Normalize, RandomCrop, RandomHorizontalFlip
+    from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
@@ -97,15 +97,13 @@ def mock_encoded_video_dataset_file():
 @pytest.mark.skipif(not _PYTORCHVIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_image_classifier_finetune(tmpdir):
 
-    _EPS = 1e-9
-
     with mock_encoded_video_dataset_file() as (
         mock_csv,
         label_videos,
         total_duration,
     ):
 
-        half_duration = total_duration / 2 - _EPS
+        half_duration = total_duration / 2 - 1e-9
 
         datamodule = VideoClassificationData.from_paths(
             train_folder=mock_csv,
@@ -115,11 +113,9 @@ def test_image_classifier_finetune(tmpdir):
             decode_audio=False,
         )
 
-        # expected_labels = [label for label, _ in label_videos]
-        for i, sample in enumerate(datamodule.train_dataset.dataset):
+        for sample in datamodule.train_dataset.dataset:
             expected_t_shape = 5
             assert sample["video"].shape[1] == expected_t_shape
-            # assert sample["label"] == expected_labels[i]
 
         assert len(VideoClassifier.available_models()) > 5
 

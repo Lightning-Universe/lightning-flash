@@ -17,3 +17,4 @@ sentencepiece>=0.1.95
 filelock  # comes with 3rd-party dependency
 pycocotools>=2.0.2 ; python_version >= "3.7"
 kornia>=0.5.0
+pytorchvideo

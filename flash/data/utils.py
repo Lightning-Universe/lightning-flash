@@ -178,7 +178,7 @@ class FuncModule(torch.nn.Module):
         return f"{self.__class__.__name__}({str(self.func)})"
 
 
-def convert_to_modules(transforms: Optional[Dict[str, Module]]):
+def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 
     if transforms is None or isinstance(transforms, torch.nn.Module):
         return transforms

@@ -255,10 +255,10 @@ class Preprocess(Properties, Module):
 
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Module]] = None,
-        val_transform: Optional[Dict[str, Module]] = None,
-        test_transform: Optional[Dict[str, Module]] = None,
-        predict_transform: Optional[Dict[str, Module]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
     ):
         super().__init__()
 
@@ -279,8 +279,8 @@ class Preprocess(Properties, Module):
         self._callbacks: List[FlashCallback] = []
 
     # todo (tchaton) Add a warning if a transform is provided, but the hook hasn't been overriden !
-    def _check_transforms(self, transform: Optional[Dict[str, Module]],
-                          stage: RunningStage) -> Optional[Dict[str, Module]]:
+    def _check_transforms(self, transform: Optional[Dict[str, Callable]],
+                          stage: RunningStage) -> Optional[Dict[str, Callable]]:
         if transform is None:
             return transform
 
@@ -321,9 +321,21 @@ class Preprocess(Properties, Module):
     def _identify(x: Any) -> Any:
         return x
 
+    # todo (tchaton): Remove when merged. https://github.com/PyTorchLightning/pytorch-lightning/pull/7056
+    def tmp_wrap(self, transform) -> Callable:
+        if "on_device" in self.current_fn:
+
+            def fn(batch: Any):
+                if isinstance(batch, list) and len(batch) == 1 and isinstance(batch[0], dict):
+                    return [transform(batch[0])]
+                return transform(batch)
+
+            return fn
+        return transform
+
     def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
         if self.current_fn in transform:
-            return transform[self.current_fn]
+            return self.tmp_wrap(transform[self.current_fn])
         return self._identify
 
     @property

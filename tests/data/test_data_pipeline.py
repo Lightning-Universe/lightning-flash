@@ -594,7 +594,8 @@ class TestPreprocessTransformations(Preprocess):
         assert self.validating
         assert self.current_fn == "per_batch_transform_on_device"
         self.val_per_batch_transform_on_device_called = True
-        batch = batch[0]
+        if isinstance(batch, list):
+            batch = batch[0]
         assert torch.equal(batch["a"], tensor([0, 1]))
         assert torch.equal(batch["b"], tensor([1, 2]))
         return [False]

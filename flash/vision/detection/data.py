@@ -216,7 +216,7 @@ class ObjectDetectionData(DataModule):
             train_transform, val_transform, predict_transform, predict_transform, preprocess_cls=preprocess_cls
         )
 
-        datamodule = cls.from_load_data_inputs(
+        return cls.from_load_data_inputs(
             train_load_data_input=(train_folder, train_ann_file, train_transform),
             val_load_data_input=(val_folder, val_ann_file, val_transform) if val_folder else None,
             test_load_data_input=(test_folder, test_ann_file, test_transform) if test_folder else None,
@@ -225,5 +225,3 @@ class ObjectDetectionData(DataModule):
             preprocess=preprocess,
             **kwargs
         )
-        datamodule.num_classes = datamodule._train_ds.num_classes
-        return datamodule
