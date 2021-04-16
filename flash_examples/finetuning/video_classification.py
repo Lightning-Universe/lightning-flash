@@ -30,7 +30,7 @@ else:
     sys.exit(0)
 
 # 1. Download a video dataset: https://pytorchvideo.readthedocs.io/en/latest/data.html
-download_data("NEED_TO_BE_CREATED")
+# download_data("NEED_TO_BE_CREATED")
 
 # 2. [Optional] Specify transforms to be used during training.
 train_transform = {
@@ -60,7 +60,9 @@ train_transform = {
 
 # 3. Load the data
 datamodule = VideoClassificationData.from_paths(
-    train_data_path="path_to_train_data",
+    train_data_path="data/kinetics/train",
+    val_data_path="data/kinetics/val",
+    predict_data_path="data/kinetics/predict",
     clip_sampler="uniform",
     clip_duration=2,
     video_sampler=SequentialSampler,
@@ -73,10 +75,13 @@ print(VideoClassifier.available_models())
 # out: ['efficient_x3d_s', 'efficient_x3d_xs', ... ,slowfast_r50', 'x3d_m', 'x3d_s', 'x3d_xs']
 
 # 5. Build the model
-model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
+model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
 
 # 6. Train the model
 trainer = flash.Trainer(fast_dev_run=True)
 
 # 6. Finetune the model
 trainer.finetune(model, datamodule=datamodule)
+
+predictions = model.predict("data/kinetics/train/archery/-1q7jA3DXQM_000005_000015.mp4")
+print(predictions)

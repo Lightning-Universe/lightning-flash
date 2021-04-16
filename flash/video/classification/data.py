@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import pathlib
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
@@ -35,17 +36,36 @@ if _KORNIA_AVAILABLE:
     import kornia.geometry.transform as T
 else:
     from torchvision import transforms as T
-
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
+    from pytorchvideo.data.encoded_video import EncodedVideo
     from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
+    from pytorchvideo.transforms import ApplyTransformToKey
+    from torchvision.transforms import Compose
 else:
-    ClipSampler, EncodedVideoDataset = None, None
+    ClipSampler, EncodedVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 _PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
 
 
 class VideoClassificationPreprocess(Preprocess):
+
+    EXTENSIONS = ("mp4", "avi")
+
+    @staticmethod
+    def default_predict_transform() -> Dict[str, 'Compose']:
+        return {
+            "per_batch_transform_on_device": Compose([
+                ApplyTransformToKey(
+                    key="video",
+                    transform=K.VideoSequential(
+                        K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
+                        data_format="BCTHW",
+                        same_on_frame=False
+                    )
+                ),
+            ]),
+        }
 
     def __init__(
         self,
@@ -59,7 +79,9 @@ class VideoClassificationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
     ):
         # Make sure to provide your transform to the Preprocess Class
-        super().__init__(train_transform, val_transform, test_transform, predict_transform)
+        super().__init__(
+            train_transform, val_transform, test_transform, predict_transform or self.default_predict_transform()
+        )
         self.clip_sampler = clip_sampler
         self.video_sampler = video_sampler
         self.decode_audio = decode_audio
@@ -76,6 +98,51 @@ class VideoClassificationPreprocess(Preprocess):
         if self.training:
             dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
         return ds
+
+    def predict_load_data(self, folder_or_file: str) -> List[str]:
+        if os.path.isdir(folder_or_file):
+            return [f for f in os.listdir(folder_or_file) if f.lower().endswith(self.EXTENSIONS)]
+        elif os.path.exists(folder_or_file) and folder_or_file.lower().endswith(self.EXTENSIONS):
+            return [folder_or_file]
+        raise MisconfigurationException(
+            f"The provided predict output should be a folder or a path. Found: {folder_or_file}"
+        )
+
+    def _encoded_video_to_dict(self, video) -> Dict[str, Any]:
+        (
+            clip_start,
+            clip_end,
+            clip_index,
+            aug_index,
+            is_last_clip,
+        ) = self.clip_sampler(0.0, video.duration)
+
+        loaded_clip = video.get_clip(clip_start, clip_end)
+
+        clip_is_null = (
+            loaded_clip is None or loaded_clip["video"] is None or (loaded_clip["audio"] is None and self.decode_audio)
+        )
+
+        if clip_is_null:
+            raise MisconfigurationException(
+                f"The provided video is too short {video.duration} to be clipped at {self.clip_sampler._clip_duration}"
+            )
+
+        frames = loaded_clip["video"]
+        audio_samples = loaded_clip["audio"]
+        return {
+            "video": frames,
+            "video_name": video.name,
+            "video_index": 0,
+            "clip_index": clip_index,
+            "aug_index": aug_index,
+            **({
+                "audio": audio_samples
+            } if audio_samples is not None else {}),
+        }
+
+    def predict_load_sample(self, video_path: str) -> "EncodedVideo":
+        return self._encoded_video_to_dict(EncodedVideo.from_path(video_path))
 
     def pre_tensor_transform(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)

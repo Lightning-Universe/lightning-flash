@@ -245,10 +245,13 @@ class DataModule(pl.LightningDataModule):
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+        if isinstance(predict_ds, IterableAutoDataset):
+            batch_size = self.batch_size
+        else:
+            batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
         return DataLoader(
             predict_ds,
-            batch_size=min(self.batch_size,
-                           len(predict_ds) if len(predict_ds) > 0 else 1),
+            batch_size=batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
             collate_fn=self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)

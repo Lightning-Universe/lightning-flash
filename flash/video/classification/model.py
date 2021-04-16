@@ -122,5 +122,8 @@ class VideoClassifier(ClassificationTask):
         # AssertionError: input for MultiPathWayWithFuse needs to be a list of tensors
         return self.model(x)
 
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch["video"])
+
     def configure_finetune_callback(self) -> List[Callback]:
         return [VideoClassifierFinetuning()]
