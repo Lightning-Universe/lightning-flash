@@ -133,8 +133,6 @@ Once we download the data using :func:`~flash.data.download_data`, all we need i
             ...
 
 
-Now all we need is three lines of code to build to train our task!
-
 .. code-block:: python
 
     import sys
