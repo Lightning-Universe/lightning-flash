@@ -213,7 +213,7 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert _seq.pre_tensor_transform.func == preprocess.val_pre_tensor_transform
     assert _seq.to_tensor_transform.func == preprocess.to_tensor_transform
     assert _seq.post_tensor_transform.func == preprocess.post_tensor_transform
-    assert val_worker_preprocessor.collate_fn.func == default_collate
+    assert val_worker_preprocessor.collate_fn.func == DataPipeline._identity
     assert val_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
     _seq = test_worker_preprocessor.per_sample_transform
@@ -846,10 +846,7 @@ def test_preprocess_transforms(tmpdir):
     assert preprocess._test_collate_in_worker_from_transform is None
     assert preprocess._predict_collate_in_worker_from_transform is None
 
-    with pytest.raises(
-        MisconfigurationException,
-        match="`per_batch_transform` and `per_sample_transform_on_device` are mutual exclusive"
-    ):
+    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
         preprocess = Preprocess(
             train_transform={
                 "per_batch_transform": torch.nn.Linear(1, 1),
@@ -875,7 +872,7 @@ def test_preprocess_transforms(tmpdir):
     assert train_preprocessor.collate_fn.func == default_collate
     assert val_preprocessor.collate_fn.func == default_collate
     assert test_preprocessor.collate_fn.func == default_collate
-    assert predict_preprocessor.collate_fn.func == default_collate
+    assert predict_preprocessor.collate_fn.func == DataPipeline._identity
 
     class CustomPreprocess(Preprocess):
 
@@ -898,15 +895,9 @@ def test_preprocess_transforms(tmpdir):
     data_pipeline = DataPipeline(preprocess)
 
     train_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TRAINING)
-    with pytest.raises(
-        MisconfigurationException,
-        match="`per_batch_transform` and `per_sample_transform_on_device` are mutual exclusive"
-    ):
+    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
         val_preprocessor = data_pipeline.worker_preprocessor(RunningStage.VALIDATING)
-    with pytest.raises(
-        MisconfigurationException,
-        match="`per_batch_transform` and `per_sample_transform_on_device` are mutual exclusive"
-    ):
+    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
         test_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TESTING)
     predict_preprocessor = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 

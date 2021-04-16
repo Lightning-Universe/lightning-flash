@@ -303,7 +303,7 @@ class Preprocess(Properties, Module):
         if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
             raise MisconfigurationException(
                 f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutual exclusive.'
+                f'are mutually exclusive.'
             )
 
         collate_in_worker: Optional[bool] = None

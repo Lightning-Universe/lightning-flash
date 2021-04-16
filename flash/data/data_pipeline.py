@@ -144,6 +144,12 @@ class DataPipeline:
 
         return function_name
 
+    def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
+        if on_device:
+            return self._identity, collate
+        else:
+            return collate, self._identity
+
     def _create_collate_preprocessors(
         self,
         stage: RunningStage,
@@ -187,13 +193,12 @@ class DataPipeline:
                 f'are mutual exclusive for stage {stage}'
             )
 
-        if collate_in_worker_from_transform is False and per_sample_transform_on_device_overriden:
-            worker_collate_fn = self._identity
-            device_collate_fn = collate_fn
-
+        if isinstance(collate_in_worker_from_transform, bool):
+            worker_collate_fn, device_collate_fn = self._make_collates(not collate_in_worker_from_transform, collate_fn)
         else:
-            worker_collate_fn = collate_fn
-            device_collate_fn = self._identity
+            worker_collate_fn, device_collate_fn = self._make_collates(
+                per_sample_transform_on_device_overriden, collate_fn
+            )
 
         worker_collate_fn = worker_collate_fn.collate_fn if isinstance(
             worker_collate_fn, _PreProcessor
@@ -431,9 +436,9 @@ class DataPipeline:
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
                     if isinstance(dl_args['collate_fn'], _PreProcessor):
-                        dl_args['collate_fn'] = dl_args['collate_fn']._original_collate_fn
+                        dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
 
-                        if isinstance(dl_args['dataset'], IterableAutoDataset):
+                        if isinstance(dl_args["dataset"], IterableAutoDataset):
                             del dl_args['sampler']
 
                         del dl_args["batch_sampler"]

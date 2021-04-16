@@ -27,13 +27,13 @@ if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipeline
 
 
-class AutoDataset(Dataset):
+class BaseAutoDataset:
 
     DATASET_KEY = "dataset"
     """
         This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions.
         ``load_data`` will be called within the ``__init__`` function of the AutoDataset if ``running_stage``
-        is provided and ``load_sample`` within ``__getitem__`` function.
+        is provided and ``load_sample`` within ``__getitem__``.
     """
 
     def __init__(
@@ -104,6 +104,12 @@ class AutoDataset(Dataset):
             return self.load_sample(sample)
 
     def _setup(self, stage: Optional[RunningStage]) -> None:
+        raise NotImplementedError
+
+
+class AutoDataset(BaseAutoDataset, Dataset):
+
+    def _setup(self, stage: Optional[RunningStage]) -> None:
         assert not stage or _STAGES_PREFIX[stage] in _STAGES_PREFIX_VALUES
         previous_load_data = self.load_data.__code__ if self.load_data else None
 
@@ -143,83 +149,7 @@ class AutoDataset(Dataset):
         return len(self.preprocessed_data)
 
 
-class IterableAutoDataset(IterableDataset):
-
-    DATASET_KEY = "dataset"
-    """
-        This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions.
-        ``load_data`` will be called within the ``__init__`` function of the AutoDataset if ``running_stage``
-        is provided and ``load_sample`` within ``__getitem__`` function.
-    """
-
-    def __init__(
-        self,
-        data: Any,
-        load_data: Optional[Callable] = None,
-        load_sample: Optional[Callable] = None,
-        data_pipeline: Optional['DataPipeline'] = None,
-        running_stage: Optional[RunningStage] = None
-    ) -> None:
-        super().__init__()
-
-        if load_data or load_sample:
-            if data_pipeline:
-                rank_zero_warn(
-                    "``datapipeline`` is specified but load_sample and/or load_data are also specified. "
-                    "Won't use datapipeline"
-                )
-        # initial states
-        self._load_data_called = False
-        self._running_stage = None
-
-        self.data = data
-        self.data_pipeline = data_pipeline
-        self.load_data = load_data
-        self.load_sample = load_sample
-        self.dataset: Optional[IterableDataset] = None
-        self.dataset_iter: Optional[Iterator] = None
-
-        # trigger the setup only if `running_stage` is provided
-        self.running_stage = running_stage
-
-    @property
-    def running_stage(self) -> Optional[RunningStage]:
-        return self._running_stage
-
-    @running_stage.setter
-    def running_stage(self, running_stage: RunningStage) -> None:
-        if self._running_stage != running_stage or (not self._running_stage):
-            self._running_stage = running_stage
-            self._load_data_context = CurrentRunningStageFuncContext(self._running_stage, "load_data", self.preprocess)
-            self._load_sample_context = CurrentRunningStageFuncContext(
-                self._running_stage, "load_sample", self.preprocess
-            )
-            self._setup(running_stage)
-
-    @property
-    def preprocess(self) -> Optional[Preprocess]:
-        if self.data_pipeline is not None:
-            return self.data_pipeline._preprocess_pipeline
-
-    @property
-    def control_flow_callback(self) -> Optional[ControlFlow]:
-        preprocess = self.preprocess
-        if preprocess is not None:
-            return ControlFlow(preprocess.callbacks)
-
-    def _call_load_data(self, data: Any) -> Iterable:
-        parameters = signature(self.load_data).parameters
-        if len(parameters) > 1 and self.DATASET_KEY in parameters:
-            return self.load_data(data, self)
-        else:
-            return self.load_data(data)
-
-    def _call_load_sample(self, sample: Any) -> Any:
-        parameters = signature(self.load_sample).parameters
-        if len(parameters) > 1 and self.DATASET_KEY in parameters:
-            return self.load_sample(sample, self)
-        else:
-            return self.load_sample(sample)
+class IterableAutoDataset(BaseAutoDataset, IterableDataset):
 
     def _setup(self, stage: Optional[RunningStage]) -> None:
         assert not stage or _STAGES_PREFIX[stage] in _STAGES_PREFIX_VALUES

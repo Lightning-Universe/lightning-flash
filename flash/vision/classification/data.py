@@ -244,7 +244,7 @@ class ImageClassificationData(DataModule):
         if "per_batch_transform" in transform and "per_sample_transform_on_device" in transform:
             raise MisconfigurationException(
                 f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutual exclusive.'
+                f'are mutually exclusive.'
             )
         return transform
 
