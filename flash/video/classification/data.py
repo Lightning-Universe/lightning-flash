@@ -40,6 +40,8 @@ if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
     from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
 
+_PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
+
 
 class VideoClassificationPreprocess(Preprocess):
 
@@ -49,10 +51,10 @@ class VideoClassificationPreprocess(Preprocess):
         video_sampler: Type[Sampler],
         decode_audio: bool,
         decoder: str,
-        train_transform: Optional[Dict[str, nn.Module]] = None,
-        val_transform: Optional[Dict[str, nn.Module]] = None,
-        test_transform: Optional[Dict[str, nn.Module]] = None,
-        predict_transform: Optional[Dict[str, nn.Module]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
     ):
         # Make sure to provide your transform to the Preprocess Class
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
@@ -73,19 +75,19 @@ class VideoClassificationPreprocess(Preprocess):
             dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
         return ds
 
-    def pre_tensor_transform(self, sample: Any) -> Any:
+    def pre_tensor_transform(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)
 
-    def to_tensor_transform(self, sample: Any) -> Any:
+    def to_tensor_transform(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)
 
-    def post_tensor_transform(self, sample: Any) -> Any:
+    def post_tensor_transform(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)
 
-    def per_batch_transform(self, sample: Any) -> Any:
+    def per_batch_transform(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)
 
-    def per_batch_transform_on_device(self, sample: Any) -> Any:
+    def per_batch_transform_on_device(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)
 
 
@@ -101,10 +103,10 @@ class VideoClassificationData(DataModule):
         video_sampler: Type[Sampler],
         decode_audio: bool,
         decoder: str,
-        train_transform: Optional[Dict[str, nn.Module]],
-        val_transform: Optional[Dict[str, nn.Module]],
-        test_transform: Optional[Dict[str, nn.Module]],
-        predict_transform: Optional[Dict[str, nn.Module]],
+        train_transform: Optional[Dict[str, Callable]],
+        val_transform: Optional[Dict[str, Callable]],
+        test_transform: Optional[Dict[str, Callable]],
+        predict_transform: Optional[Dict[str, Callable]],
         preprocess_cls: Type[Preprocess] = None
     ) -> Preprocess:
         """
@@ -117,7 +119,7 @@ class VideoClassificationData(DataModule):
         return preprocess
 
     @classmethod
-    def from_folders(
+    def from_paths(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]] = None,
         val_folder: Optional[Union[str, pathlib.Path]] = None,
@@ -129,10 +131,10 @@ class VideoClassificationData(DataModule):
         clip_sampler_kwargs: Dict[str, Any] = None,
         decode_audio: bool = True,
         decoder: str = "pyav",
-        train_transform: Optional[Dict[str, nn.Module]] = None,
-        val_transform: Optional[Dict[str, nn.Module]] = None,
-        test_transform: Optional[Dict[str, nn.Module]] = None,
-        predict_transform: Optional[Dict[str, nn.Module]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         preprocess_cls: Optional[Type[Preprocess]] = None,
@@ -167,7 +169,7 @@ class VideoClassificationData(DataModule):
             VideoClassificationData: the constructed data module
 
         Examples:
-            >>> img_data = VideoClassificationData.from_folders("train/") # doctest: +SKIP
+            >>> img_data = VideoClassificationData.from_paths("train/") # doctest: +SKIP
 
         """
         if not clip_sampler_kwargs:

@@ -26,7 +26,10 @@ from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 
 if _PYTORCHVIDEO_AVAILABLE:
+    import kornia.augmentation as K
     from pytorchvideo.data.utils import thwc_to_cthw
+    from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
+    from torchvision.transforms import Compose, Normalize, RandomCrop, RandomHorizontalFlip
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
@@ -104,7 +107,7 @@ def test_image_classifier_finetune(tmpdir):
 
         half_duration = total_duration / 2 - _EPS
 
-        datamodule = VideoClassificationData.from_folders(
+        datamodule = VideoClassificationData.from_paths(
             train_folder=mock_csv,
             clip_sampler="uniform",
             clip_duration=half_duration,
@@ -120,12 +123,38 @@ def test_image_classifier_finetune(tmpdir):
 
         assert len(VideoClassifier.available_models()) > 5
 
-        datamodule = VideoClassificationData.from_folders(
+        train_transform = {
+            "post_tensor_transform": Compose([
+                ApplyTransformToKey(
+                    key="video",
+                    transform=Compose([
+                        UniformTemporalSubsample(8),
+                        RandomShortSideScale(min_size=256, max_size=320),
+                        RandomCrop(244),
+                        RandomHorizontalFlip(p=0.5),
+                    ]),
+                ),
+            ]),
+            "per_batch_transform_on_device": Compose([
+                ApplyTransformToKey(
+                    key="video",
+                    transform=K.VideoSequential(
+                        K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
+                        K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0),
+                        data_format="BCTHW",
+                        same_on_frame=False
+                    )
+                ),
+            ]),
+        }
+
+        datamodule = VideoClassificationData.from_paths(
             train_folder=mock_csv,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
+            train_transform=train_transform
         )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)

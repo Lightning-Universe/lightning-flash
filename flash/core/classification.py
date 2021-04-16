@@ -14,6 +14,7 @@
 from typing import Any
 
 import torch
+import torch.nn.functional as F
 
 from flash.core.model import Task
 from flash.data.process import Postprocess
@@ -29,3 +30,6 @@ class ClassificationTask(Task):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, default_postprocess=ClassificationPostprocess(), **kwargs)
+
+    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+        return F.softmax(x, -1)
