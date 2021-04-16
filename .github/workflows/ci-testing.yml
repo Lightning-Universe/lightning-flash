@@ -45,7 +45,7 @@ jobs:
     - name: Filter requirements
       run: |
         import sys
-        if sys.version_info.minor > 6:
+        if sys.version_info.minor < 7:
           fname = 'requirements.txt'
           lines = [line for line in open(fname).readlines() if not line.startswith('pytorchvideo')]
           open(fname, 'w').writelines(lines)
