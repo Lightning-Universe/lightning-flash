@@ -14,6 +14,7 @@
 from typing import Any
 
 import torch
+from torch import Tensor
 
 from flash.core.model import Task
 from flash.data.process import Postprocess
@@ -29,3 +30,6 @@ class ClassificationTask(Task):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, default_postprocess=ClassificationPostprocess(), **kwargs)
+
+    def pre_metric_transform(self, y_hat: Tensor) -> Tensor:
+        return torch.softmax(y_hat, 1)

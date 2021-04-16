@@ -100,4 +100,4 @@ class ImageClassifier(ClassificationTask):
 
     def forward(self, x) -> Any:
         x = self.backbone(x)
-        return torch.softmax(self.head(x), -1)
+        return self.head(x)

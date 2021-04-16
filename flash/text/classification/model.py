@@ -75,6 +75,6 @@ class TextClassifier(ClassificationTask):
         output["y_hat"] = logits
         if isinstance(logits, SequenceClassifierOutput):
             logits = logits.logits
-        probs = torch.softmax(logits, 1)
+        probs = self.pre_metric_transform(logits)
         output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
         return output

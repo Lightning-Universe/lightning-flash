@@ -17,6 +17,8 @@ from copy import deepcopy
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
+from torch import Tensor
+
 import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
@@ -96,6 +98,7 @@ class Task(LightningModule):
         output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
+        y_hat = self.pre_metric_transform(y_hat)
         for name, metric in self.metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
@@ -255,6 +258,10 @@ class Task(LightningModule):
             getattr(data_pipeline, '_preprocess_pipeline', None),
             getattr(data_pipeline, '_postprocess_pipeline', None),
         )
+
+    def pre_metric_transform(self, y_hat: Tensor) -> Tensor:
+        """Transform to apply to the model output (``y_hat``) before forwarding to the metrics."""
+        return y_hat
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:

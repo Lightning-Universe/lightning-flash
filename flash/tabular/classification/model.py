@@ -73,7 +73,7 @@ class TabularClassifier(ClassificationTask):
     def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
-        return F.softmax(self.model(x)[0], -1)
+        return self.model(x)[0]
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self(batch)
