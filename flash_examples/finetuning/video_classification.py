@@ -16,7 +16,7 @@ else:
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
 
-download_data()
+download_data("NEED_TO_BE_CREATED")
 
 train_transform = {
     "post_tensor_transform": Compose([
@@ -44,7 +44,7 @@ train_transform = {
 }
 
 datamodule = VideoClassificationData.from_paths(
-    train_folder=mock_csv,
+    train_folder="data/action_youtube_naudio",
     clip_sampler="uniform",
     clip_duration=2,
     video_sampler=SequentialSampler,

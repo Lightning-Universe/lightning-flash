@@ -21,7 +21,6 @@ import torchvision.io as io
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.data.utils import download_data
 from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 
