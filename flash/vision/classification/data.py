@@ -157,7 +157,7 @@ class ImageClassificationPreprocess(Preprocess):
         return self.common_step(sample)
 
     def to_tensor_transform(self, sample: Any) -> Any:
-        if self.current_transform == self._identify:
+        if self.current_transform == self._identity:
             if isinstance(sample, (list, tuple)):
                 source, target = sample
                 if isinstance(source, torch.Tensor):
@@ -310,7 +310,7 @@ class ImageClassificationData(DataModule):
         val_transform: Dict[str, Union[nn.Module, Callable]],
         test_transform: Dict[str, Union[nn.Module, Callable]],
         predict_transform: Dict[str, Union[nn.Module, Callable]],
-        preprocess_cls: Type[Preprocess] = None
+        preprocess_cls: Type[Preprocess] = None,
     ) -> Preprocess:
         """
         This function is used to instantiate ImageClassificationData preprocess object.

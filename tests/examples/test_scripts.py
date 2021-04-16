@@ -73,6 +73,7 @@ def test_example(tmpdir, folder, file):
     run_test(str(root / "flash_examples" / folder / file))
 
 
+@pytest.mark.skipif(reason="CI bug")
 def test_generic_example(tmpdir):
     run_test(str(root / "flash_examples" / "generic_task.py"))
 

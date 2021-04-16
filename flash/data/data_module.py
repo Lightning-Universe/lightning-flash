@@ -296,7 +296,7 @@ class DataModule(pl.LightningDataModule):
         per_sample_load_fn: Optional[Callable] = None,
         data_pipeline: Optional[DataPipeline] = None,
         use_iterable_auto_dataset: bool = False,
-    ) -> Union[BaseAutoDataset]:
+    ) -> BaseAutoDataset:
         """
         This function is used to generate an ``BaseAutoDataset`` from a ``DataPipeline`` if provided
         or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly

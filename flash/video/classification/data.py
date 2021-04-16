@@ -107,7 +107,7 @@ class VideoClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]],
         test_transform: Optional[Dict[str, Callable]],
         predict_transform: Optional[Dict[str, Callable]],
-        preprocess_cls: Type[Preprocess] = None
+        preprocess_cls: Type[Preprocess] = None,
     ) -> Preprocess:
         """
         """
@@ -127,8 +127,8 @@ class VideoClassificationData(DataModule):
         predict_folder: Union[str, pathlib.Path] = None,
         clip_sampler: Union[str, 'ClipSampler'] = "random",
         clip_duration: float = 2,
-        video_sampler: Type[Sampler] = RandomSampler,
         clip_sampler_kwargs: Dict[str, Any] = None,
+        video_sampler: Type[Sampler] = RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -157,6 +157,12 @@ class VideoClassificationData(DataModule):
             test_folder: Path to test folder. Default: None.
             predict_folder: Path to predict folder. Default: None.
             clip_sampler: ClipSampler to be used on videos.
+            clip_duration: Clip duration for the clip sampler.
+            clip_sampler_kwargs: Extra Clip Sampler arguments.
+            video_sampler: Sampler for the internal video container.
+                This defines the order videos are decoded and, if necessary, the distributed split.
+            decode_audio: Wheter to decode the audio with the video clip.
+            decoder: Defines what type of decoder used to decode a video.
             train_transform: Dictionnary of Video Clip transform to use for training set.
             val_transform:  Dictionnary of Video Clip transform to use for validation set.
             test_transform:  Dictionnary of Video Clip transform to use for test set.

@@ -187,7 +187,7 @@ class ObjectDetectionData(DataModule):
         val_transform: Optional[Dict[str, Module]] = None,
         test_transform: Optional[Dict[str, Module]] = None,
         predict_transform: Optional[Dict[str, Module]] = None,
-        preprocess_cls: Type[Preprocess] = None
+        preprocess_cls: Type[Preprocess] = None,
     ) -> Preprocess:
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls

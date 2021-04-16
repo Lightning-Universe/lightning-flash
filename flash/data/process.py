@@ -318,7 +318,7 @@ class Preprocess(Properties, Module):
         return transform
 
     @staticmethod
-    def _identify(x: Any) -> Any:
+    def _identity(x: Any) -> Any:
         return x
 
     # todo (tchaton): Remove when merged. https://github.com/PyTorchLightning/pytorch-lightning/pull/7056
@@ -336,7 +336,7 @@ class Preprocess(Properties, Module):
     def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
         if self.current_fn in transform:
             return self.tmp_wrap(transform[self.current_fn])
-        return self._identify
+        return self._identity
 
     @property
     def current_transform(self) -> Callable:
@@ -349,7 +349,7 @@ class Preprocess(Properties, Module):
         elif self.predicting and self.predict_transform:
             return self._get_transform(self.predict_transform)
         else:
-            return self._identify
+            return self._identity
 
     @classmethod
     def from_state(cls, state: PreprocessState) -> 'Preprocess':
