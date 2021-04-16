@@ -65,12 +65,14 @@ class TranslationData(Seq2SeqData):
             TranslateData: The constructed data module.
 
         Examples::
-
-            train_df = pd.read_csv("train_data.csv")
-            tab_data = TabularData.from_df(train_df, target="fraud",
-                                           numerical_input=["account_value"],
-                                           categorical_input=["account_type"])
-
+            datamodule = TranslationData.from_files(
+                train_file="data/wmt_en_ro/train.csv",
+                val_file="data/wmt_en_ro/valid.csv",
+                test_file="data/wmt_en_ro/test.csv",
+                input="input",
+                target="target",
+                batch_size=1
+            )
         """
         return super().from_files(
             train_file=train_file,
