@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-
+- Added a `pre_metric_transform` hook to `Task` for converting model outputs to the correct format for metric computation ([#219](https://github.com/PyTorchLightning/lightning-flash/pull/219))
 
 ### Changed
 
@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fixed classification softmax ([#169](https://github.com/PyTorchLightning/lightning-flash/pull/169))
+
+
+- Fixed a bug where `ClassificationTask` would sometimes call `softmax` followed by `log_softmax` during training ([#219](https://github.com/PyTorchLightning/lightning-flash/pull/219))
 
 ### Removed
 
