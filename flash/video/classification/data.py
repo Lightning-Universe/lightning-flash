@@ -121,10 +121,10 @@ class VideoClassificationData(DataModule):
     @classmethod
     def from_paths(
         cls,
-        train_folder: Optional[Union[str, pathlib.Path]] = None,
-        val_folder: Optional[Union[str, pathlib.Path]] = None,
-        test_folder: Optional[Union[str, pathlib.Path]] = None,
-        predict_folder: Union[str, pathlib.Path] = None,
+        train_data_path: Optional[Union[str, pathlib.Path]] = None,
+        val_data_path: Optional[Union[str, pathlib.Path]] = None,
+        test_data_path: Optional[Union[str, pathlib.Path]] = None,
+        predict_data_path: Union[str, pathlib.Path] = None,
         clip_sampler: Union[str, 'ClipSampler'] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -152,10 +152,10 @@ class VideoClassificationData(DataModule):
             train/class_y/asd932_.ext
 
         Args:
-            train_folder: Path to training folder. Default: None.
-            val_folder: Path to validation folder. Default: None.
-            test_folder: Path to test folder. Default: None.
-            predict_folder: Path to predict folder. Default: None.
+            train_data_path: Path to training folder. Default: None.
+            val_data_path: Path to validation folder. Default: None.
+            test_data_path: Path to test folder. Default: None.
+            predict_data_path: Path to predict folder. Default: None.
             clip_sampler: ClipSampler to be used on videos.
             clip_duration: Clip duration for the clip sampler.
             clip_sampler_kwargs: Extra Clip Sampler arguments.
@@ -204,10 +204,10 @@ class VideoClassificationData(DataModule):
         )
 
         return cls.from_load_data_inputs(
-            train_load_data_input=train_folder,
-            val_load_data_input=val_folder,
-            test_load_data_input=test_folder,
-            predict_load_data_input=predict_folder,
+            train_load_data_input=train_data_path,
+            val_load_data_input=val_data_path,
+            test_load_data_input=test_data_path,
+            predict_load_data_input=predict_data_path,
             batch_size=batch_size,
             num_workers=num_workers,
             preprocess=preprocess,

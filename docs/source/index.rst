@@ -27,6 +27,8 @@ Lightning Flash
    reference/tabular_classification
    reference/translation
    reference/object_detection
+   reference/video_classification
+
 
 .. toctree::
    :maxdepth: 1

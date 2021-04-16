@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import sys
 
 import torch
@@ -16,8 +29,10 @@ else:
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
 
+# 1. Download a video dataset
 download_data("NEED_TO_BE_CREATED")
 
+# 2. [Optional] Specify transforms to be used during training.
 train_transform = {
     "post_tensor_transform": Compose([
         ApplyTransformToKey(
@@ -43,8 +58,9 @@ train_transform = {
     ]),
 }
 
+# 3. Load the data
 datamodule = VideoClassificationData.from_paths(
-    train_folder="data/action_youtube_naudio",
+    train_data_path="path_to_train_data",
     clip_sampler="uniform",
     clip_duration=2,
     video_sampler=SequentialSampler,
@@ -52,10 +68,14 @@ datamodule = VideoClassificationData.from_paths(
     train_transform=train_transform
 )
 
+# 4. List the available models
 print(VideoClassifier.available_models())
 
+# 5. Build the model
 model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
 
+# 6. Train the model
 trainer = flash.Trainer(fast_dev_run=True)
 
+# 6. Finetune the model
 trainer.finetune(model, datamodule=datamodule)
