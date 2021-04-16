@@ -20,8 +20,8 @@ from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import imports
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data import DataLoader, IterableDataset
 from torch.utils.data._utils.collate import default_collate, default_convert
-from torch.utils.data.dataloader import DataLoader
 
 from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
@@ -149,41 +149,45 @@ class DataPipeline:
         stage: RunningStage,
         collate_fn: Optional[Callable] = None,
     ) -> Tuple[_PreProcessor, _PreProcessor]:
+
         original_collate_fn = collate_fn
+
         if collate_fn is None:
             collate_fn = default_collate
 
         preprocess: Preprocess = self._preprocess_pipeline
+        prefix: str = _STAGES_PREFIX[stage]
 
         func_names: Dict[str, str] = {
             k: self._resolve_function_hierarchy(k, preprocess, stage, Preprocess)
             for k in self.PREPROCESS_FUNCS
         }
 
-        if self._is_overriden_recursive("collate", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]):
+        if self._is_overriden_recursive("collate", preprocess, Preprocess, prefix=prefix):
             collate_fn: Callable = getattr(preprocess, func_names["collate"])
 
         per_batch_transform_overriden: bool = self._is_overriden_recursive(
-            "per_batch_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "per_batch_transform", preprocess, Preprocess, prefix=prefix
         )
 
         per_sample_transform_on_device_overriden: bool = self._is_overriden_recursive(
-            "per_sample_transform_on_device", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "per_sample_transform_on_device", preprocess, Preprocess, prefix=prefix
         )
 
-        skip_mutual_check: bool = getattr(preprocess, "skip_mutual_check", False)
+        collate_in_worker_from_transform: Optional[bool] = getattr(
+            preprocess, f"_{prefix}_collate_in_worker_from_transform"
+        )
 
-        if (not skip_mutual_check and per_batch_transform_overriden and per_sample_transform_on_device_overriden):
+        if (
+            collate_in_worker_from_transform is None and per_batch_transform_overriden
+            and per_sample_transform_on_device_overriden
+        ):
             raise MisconfigurationException(
                 f'{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` '
                 f'are mutual exclusive for stage {stage}'
             )
 
-        elif per_batch_transform_overriden:
-            worker_collate_fn = collate_fn
-            device_collate_fn = self._identity
-
-        elif per_sample_transform_on_device_overriden:
+        if collate_in_worker_from_transform is False and per_sample_transform_on_device_overriden:
             worker_collate_fn = self._identity
             device_collate_fn = collate_fn
 
@@ -284,9 +288,6 @@ class DataPipeline:
 
         for stage in stages:
 
-            if stage == RunningStage.PREDICTING:
-                pass
-
             loader_name = f'{_STAGES_PREFIX[stage]}_dataloader'
 
             dataloader, whole_attr_name = self._get_dataloader(model, loader_name)
@@ -297,7 +298,7 @@ class DataPipeline:
             if isinstance(dataloader, (_PatchDataLoader, Callable)):
                 dataloader = dataloader()
 
-            if dataloader is not None:
+            if dataloader is None:
                 continue
 
             if isinstance(dataloader, Sequence):
@@ -314,6 +315,9 @@ class DataPipeline:
                     dl_args['collate_fn'], device_collate_fn = self._create_collate_preprocessors(
                         stage=stage, collate_fn=dl_args['collate_fn']
                     )
+
+                    if isinstance(dl_args["dataset"], IterableDataset):
+                        del dl_args["sampler"]
 
                     # don't have to reinstantiate loader if just rewrapping devices (happens during detach)
                     if not device_transform_only:
@@ -428,7 +432,12 @@ class DataPipeline:
 
                     if isinstance(dl_args['collate_fn'], _PreProcessor):
                         dl_args['collate_fn'] = dl_args['collate_fn']._original_collate_fn
+
+                        if isinstance(dl_args['dataset'], IterableAutoDataset):
+                            del dl_args['sampler']
+
                         del dl_args["batch_sampler"]
+
                         loader = type(loader)(**dl_args)
 
                 dataloader[idx] = loader

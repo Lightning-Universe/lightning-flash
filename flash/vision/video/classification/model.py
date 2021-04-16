@@ -84,7 +84,7 @@ class VideoClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        model: Union[str, nn.Module] = "slowfast_r50",
+        model: Union[str, nn.Module] = "slow_r50",
         model_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,

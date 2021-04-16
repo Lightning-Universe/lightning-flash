@@ -14,13 +14,14 @@
 
 import os.path
 import zipfile
-from typing import Any, Callable, Dict, Iterable, Mapping, Set, Type
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set, Type
 
 import requests
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
+from torch.nn import Module
 from tqdm.auto import tqdm as tq
 
 _STAGES_PREFIX = {
@@ -177,7 +178,7 @@ class FuncModule(torch.nn.Module):
         return f"{self.__class__.__name__}({str(self.func)})"
 
 
-def convert_to_modules(transforms: Dict):
+def convert_to_modules(transforms: Optional[Dict[str, Module]]):
 
     if transforms is None or isinstance(transforms, torch.nn.Module):
         return transforms

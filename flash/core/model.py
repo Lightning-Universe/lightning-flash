@@ -98,10 +98,10 @@ class Task(LightningModule):
         logs = {}
         for name, metric in self.metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
-                metric(y_hat, y)
+                metric(self.to_metrics_format(y_hat), y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
-                logs[name] = metric(y_hat, y)
+                logs[name] = metric(self.to_metrics_format(y_hat), y)
         logs.update(losses)
         if len(losses.values()) > 1:
             logs["total_loss"] = sum(losses.values())
@@ -110,6 +110,9 @@ class Task(LightningModule):
         output["logs"] = logs
         output["y"] = y
         return output
+
+    def to_metrics_format(self, x):
+        return x
 
     def forward(self, x: Any) -> Any:
         return self.model(x)

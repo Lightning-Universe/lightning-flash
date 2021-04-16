@@ -45,17 +45,17 @@ class VideoPreprocessPreprocess(Preprocess):
 
     def __init__(
         self,
-        clip_sampler: ClipSampler,
+        clip_sampler: 'ClipSampler',
         video_sampler: Type[Sampler],
         decode_audio: bool,
         decoder: str,
-        train_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
-        predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
+        train_transform: Optional[Dict[str, nn.Module]] = None,
+        val_transform: Optional[Dict[str, nn.Module]] = None,
+        test_transform: Optional[Dict[str, nn.Module]] = None,
+        predict_transform: Optional[Dict[str, nn.Module]] = None,
     ):
-
-        super().__init__()
+        # Make sure to provide your transform to the Preprocess Class
+        super().__init__(train_transform, val_transform, test_transform, predict_transform)
         self.clip_sampler = clip_sampler
         self.video_sampler = video_sampler
         self.decode_audio = decode_audio
@@ -73,6 +73,21 @@ class VideoPreprocessPreprocess(Preprocess):
             dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
         return ds
 
+    def pre_tensor_transform(self, sample: Any) -> Any:
+        return self.current_transform(sample)
+
+    def to_tensor_transform(self, sample: Any) -> Any:
+        return self.current_transform(sample)
+
+    def post_tensor_transform(self, sample: Any) -> Any:
+        return self.current_transform(sample)
+
+    def per_batch_transform(self, sample: Any) -> Any:
+        return self.current_transform(sample)
+
+    def per_batch_transform_on_device(self, sample: Any) -> Any:
+        return self.current_transform(sample)
+
 
 class VideoClassificationData(DataModule):
     """Data module for Video classification tasks."""
@@ -86,10 +101,10 @@ class VideoClassificationData(DataModule):
         video_sampler: Type[Sampler],
         decode_audio: bool,
         decoder: str,
-        train_transform: Dict[str, Union[nn.Module, Callable]],
-        val_transform: Dict[str, Union[nn.Module, Callable]],
-        test_transform: Dict[str, Union[nn.Module, Callable]],
-        predict_transform: Dict[str, Union[nn.Module, Callable]],
+        train_transform: Optional[Dict[str, nn.Module]],
+        val_transform: Optional[Dict[str, nn.Module]],
+        test_transform: Optional[Dict[str, nn.Module]],
+        predict_transform: Optional[Dict[str, nn.Module]],
         preprocess_cls: Type[Preprocess] = None
     ) -> Preprocess:
         """
@@ -114,10 +129,10 @@ class VideoClassificationData(DataModule):
         clip_sampler_kwargs: Dict[str, Any] = None,
         decode_audio: bool = True,
         decoder: str = "pyav",
-        train_transform: Optional[Union[str, Dict]] = 'default',
-        val_transform: Optional[Union[str, Dict]] = 'default',
-        test_transform: Optional[Union[str, Dict]] = 'default',
-        predict_transform: Optional[Union[str, Dict]] = 'default',
+        train_transform: Optional[Dict[str, nn.Module]] = None,
+        val_transform: Optional[Dict[str, nn.Module]] = None,
+        test_transform: Optional[Dict[str, nn.Module]] = None,
+        predict_transform: Optional[Dict[str, nn.Module]] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         preprocess_cls: Optional[Type[Preprocess]] = None,

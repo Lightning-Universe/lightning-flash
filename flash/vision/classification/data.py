@@ -39,9 +39,6 @@ else:
 
 class ImageClassificationPreprocess(Preprocess):
 
-    # this assignement is used to skip the assert that `per_batch_transform` and `per_sample_transform_on_device`
-    # are mutually exclusive on the DataPipeline internals
-    _skip_mutual_check = True
     to_tensor = torchvision.transforms.ToTensor()
 
     @staticmethod
@@ -176,9 +173,6 @@ class ImageClassificationPreprocess(Preprocess):
     def post_tensor_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
-    # todo: (tchaton) `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive
-    # `skip_mutual_check` is used to skip the checks as the information are provided from the transforms directly
-    # Need to properly set the `collate` depending on user provided transforms
     def per_batch_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 

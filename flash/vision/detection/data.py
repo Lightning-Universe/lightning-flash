@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import torch
 from PIL import Image
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch._six import container_abcs
+from torch.nn import Module
 from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 
@@ -130,9 +131,6 @@ def _coco_remove_images_without_annotations(dataset):
     return dataset
 
 
-_default_transform = T.ToTensor()
-
-
 class ObjectDetectionPreprocess(Preprocess):
 
     to_tensor = T.ToTensor()
@@ -163,6 +161,9 @@ class ObjectDetectionPreprocess(Preprocess):
             return outputs
         raise MisconfigurationException("The samples should either be a tensor, a list of paths or a path.")
 
+    def to_tensor_transform(self, sample) -> Any:
+        return self.to_tensor(sample[0]), sample[1]
+
     def predict_to_tensor_transform(self, sample) -> Any:
         return self.to_tensor(sample[0])
 
@@ -182,33 +183,38 @@ class ObjectDetectionData(DataModule):
     @classmethod
     def instantiate_preprocess(
         cls,
-        train_transform: Optional[Callable],
-        val_transform: Optional[Callable],
+        train_transform: Optional[Dict[str, Module]] = None,
+        val_transform: Optional[Dict[str, Module]] = None,
+        test_transform: Optional[Dict[str, Module]] = None,
+        predict_transform: Optional[Dict[str, Module]] = None,
         preprocess_cls: Type[Preprocess] = None
     ) -> Preprocess:
 
         preprocess_cls = preprocess_cls or cls.preprocess_cls
-        return preprocess_cls(train_transform, val_transform)
+        return preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
 
     @classmethod
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
-        train_transform: Optional[Callable] = _default_transform,
+        train_transform: Optional[Dict[str, Module]] = None,
         val_folder: Optional[str] = None,
         val_ann_file: Optional[str] = None,
-        val_transform: Optional[Callable] = _default_transform,
+        val_transform: Optional[Dict[str, Module]] = None,
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
-        test_transform: Optional[Callable] = _default_transform,
+        test_transform: Optional[Dict[str, Module]] = None,
+        predict_transform: Optional[Dict[str, Module]] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         preprocess_cls: Type[Preprocess] = None,
         **kwargs
     ):
 
-        preprocess = cls.instantiate_preprocess(train_transform, val_transform, preprocess_cls=preprocess_cls)
+        preprocess = cls.instantiate_preprocess(
+            train_transform, val_transform, predict_transform, predict_transform, preprocess_cls=preprocess_cls
+        )
 
         datamodule = cls.from_load_data_inputs(
             train_load_data_input=(train_folder, train_ann_file, train_transform),
