@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import sys
 
 import torch
@@ -28,6 +29,8 @@ if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
 else:
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
+
+_PATH_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 1. Download a video clip dataset. Check for more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
 download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
@@ -60,9 +63,9 @@ train_transform = {
 
 # 3. Load the data
 datamodule = VideoClassificationData.from_paths(
-    train_data_path="data/kinetics/train",
-    val_data_path="data/kinetics/val",
-    predict_data_path="data/kinetics/predict",
+    train_data_path=os.path.join(_PATH_ROOT, "data/kinetics/train"),
+    val_data_path=os.path.join(_PATH_ROOT, "data/kinetics/val"),
+    predict_data_path=os.path.join(_PATH_ROOT, "data/kinetics/predict"),
     clip_sampler="uniform",
     clip_duration=2,
     video_sampler=SequentialSampler,
@@ -83,5 +86,5 @@ trainer = flash.Trainer(fast_dev_run=True)
 # 6. Finetune the model
 trainer.finetune(model, datamodule=datamodule)
 
-predictions = model.predict("data/kinetics/train/archery/-1q7jA3DXQM_000005_000015.mp4")
+predictions = model.predict(os.path.join(_PATH_ROOT, "data/kinetics/train/archery/-1q7jA3DXQM_000005_000015.mp4"))
 print(predictions)
