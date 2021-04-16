@@ -27,7 +27,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core import Task
-from flash.data.auto_dataset import AutoDataset
+from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import _StageOrchestrator, DataPipeline
@@ -902,4 +902,19 @@ def test_preprocess_transforms(tmpdir):
     predict_preprocessor = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
     assert train_preprocessor.collate_fn.func == default_collate
-    assert predict_preprocessor.collate_fn.func != default_collate
+    assert predict_preprocessor.collate_fn.func == DataPipeline._identity
+
+
+def test_iterable_auto_dataset(tmpdir):
+
+    class CustomPreprocess(Preprocess):
+
+        def load_sample(self, index: int) -> Dict[str, int]:
+            return {"index": index}
+
+    data_pipeline = DataPipeline(CustomPreprocess())
+
+    ds = IterableAutoDataset(range(10), running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline)
+
+    for index, v in enumerate(ds):
+        assert v == {"index": index}
