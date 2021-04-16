@@ -32,10 +32,12 @@ else:
 
 _PATH_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 1. Download a video clip dataset. Check for more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
+# 1. Download a video clip dataset. Find more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
 download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
 
 # 2. [Optional] Specify transforms to be used during training.
+# Flash helps you to place your transform exactly where you want.
+# Learn more at https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.data.process.Preprocess
 train_transform = {
     "post_tensor_transform": Compose([
         ApplyTransformToKey(
@@ -61,7 +63,7 @@ train_transform = {
     ]),
 }
 
-# 3. Load the data
+# 3. Load the data from directories.
 datamodule = VideoClassificationData.from_paths(
     train_data_path=os.path.join(_PATH_ROOT, "data/kinetics/train"),
     val_data_path=os.path.join(_PATH_ROOT, "data/kinetics/val"),

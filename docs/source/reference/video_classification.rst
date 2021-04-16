@@ -9,7 +9,7 @@ Video Classification
 The task
 ********
 
-Typically, Video Classification usually refers to action classification in a video clip .
+Typically, Video Classification refers to the task of producing a label for actions identified in a given video.
 
 The task predicts which ‘class’ the video clip most likely belongs to with a degree of certainty.
 
@@ -71,10 +71,12 @@ Once we download the data using :func:`~flash.data.download_data`, all we need i
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
     from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
 
-    # 1. Download a video clip dataset. Check for more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
+    # 1. Download a video clip dataset. Find more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
     download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
 
     # 2. [Optional] Specify transforms to be used during training.
+    # Flash helps you to place your transform exactly where you want.
+    # Learn more at https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.data.process.Preprocess
     train_transform = {
         "post_tensor_transform": Compose([
             ApplyTransformToKey(
@@ -100,7 +102,7 @@ Once we download the data using :func:`~flash.data.download_data`, all we need i
         ]),
     }
 
-    # 3. Load the data
+    # 3. Load the data from directories.
     datamodule = VideoClassificationData.from_paths(
         train_data_path="data/kinetics/train",
         val_data_path="data/kinetics/val",
