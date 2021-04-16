@@ -202,29 +202,6 @@ Now all we need is three lines of code to build to train our task!
 
 ------
 
-*********************
-Changing the backbone
-*********************
-By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image classification. You can change the model run by the task by passing in a different backbone.
-
-.. note::
-
-    When changing the backbone, make sure you pass in the same backbone to the Task and the Data object!
-
-.. code-block:: python
-
-    # 1. organize the data
-    data = ImageClassificationData.from_folders(
-        backbone="resnet34",
-        train_folder="data/hymenoptera_data/train/",
-        valid_folder="data/hymenoptera_data/val/"
-    )
-
-    # 2. build the task
-    task = ImageClassifier(num_classes=2, backbone="resnet34")
-
-------
-
 *************
 API reference
 *************
