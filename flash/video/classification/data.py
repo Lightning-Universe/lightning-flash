@@ -227,15 +227,15 @@ class VideoClassificationData(DataModule):
             predict_data_path: Path to predict folder. Default: None.
             clip_sampler: ClipSampler to be used on videos.
             clip_duration: Clip duration for the clip sampler.
-            clip_sampler_kwargs: Extra Clip Sampler arguments.
+            clip_sampler_kwargs: Extra ClipSampler keyword arguments.
             video_sampler: Sampler for the internal video container.
                 This defines the order videos are decoded and, if necessary, the distributed split.
-            decode_audio: Wheter to decode the audio with the video clip.
+            decode_audio: Whether to decode the audio with the video clip.
             decoder: Defines what type of decoder used to decode a video.
-            train_transform: Dictionnary of Video Clip transform to use for training set.
-            val_transform:  Dictionnary of Video Clip transform to use for validation set.
-            test_transform:  Dictionnary of Video Clip transform to use for test set.
-            predict_transform:  Dictionnary of Video Clip transform to use for predict set.
+            train_transform: Video clip dictionary transform to use for training set.
+            val_transform:  Video clip dictionary transform to use for validation set.
+            test_transform:  Video clip dictionary transform to use for test set.
+            predict_transform:  Video clip dictionary transform to use for predict set.
             batch_size: Batch size for data loading.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
@@ -244,7 +244,7 @@ class VideoClassificationData(DataModule):
             VideoClassificationData: the constructed data module
 
         Examples:
-            >>> img_data = VideoClassificationData.from_paths("train/") # doctest: +SKIP
+            >>> videos = VideoClassificationData.from_paths("train/") # doctest: +SKIP
 
         """
         if not _PYTORCHVIDEO_AVAILABLE:
