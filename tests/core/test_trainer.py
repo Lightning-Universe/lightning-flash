@@ -43,7 +43,7 @@ class DummyClassifier(nn.Module):
     def __init__(self):
         super().__init__()
         self.backbone = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
-        self.head = nn.LogSoftmax()
+        self.head = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
         return self.head(self.backbone(x))
