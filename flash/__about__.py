@@ -14,3 +14,13 @@ Flash is built for applied researchers, beginners, data scientists, Kagglers or 
 But unlike other entry-level frameworks (keras, etc...), Flash users can switch to Lightning trivially when they need
 the added flexibility.
 """
+
+__all__ = [
+    "__author__",
+    "__author_email__",
+    "__copyright__",
+    "__docs__",
+    "__homepage__",
+    "__license__",
+    "__version__",
+]

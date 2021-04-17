@@ -15,11 +15,12 @@ except (ImportError, AssertionError):
 """
 
 try:
-    from flash import info, setup_tools
+    from flash import __about__ as about
+    from flash import setup_tools
 except ImportError:
     # alternative https://stackoverflow.com/a/67692/4521646
     sys.path.append("flash")
-    import info
+    import about
     import setup_tools
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
@@ -27,7 +28,7 @@ except ImportError:
 
 _PATH_ROOT = os.path.dirname(__file__)
 
-long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=info.__homepage__, ver=info.__version__)
+long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__)
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
@@ -36,13 +37,13 @@ long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=inf
 # engineer specific practices
 setup(
     name="lightning-flash",
-    version=info.__version__,
-    description=info.__docs__,
-    author=info.__author__,
-    author_email=info.__author_email__,
-    url=info.__homepage__,
+    version=about.__version__,
+    description=about.__docs__,
+    author=about.__author__,
+    author_email=about.__author_email__,
+    url=about.__homepage__,
     download_url="https://github.com/PyTorchLightning/lightning-flash",
-    license=info.__license__,
+    license=about.__license__,
     packages=find_packages(exclude=["tests", "docs"]),
     long_description=long_description,
     long_description_content_type="text/markdown",
