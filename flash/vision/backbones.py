@@ -14,12 +14,12 @@
 from typing import Tuple
 
 import torchvision
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-from flash.utils.imports import _TIMM_AVAILABLE
+from flash.utils.imports import _BOLTS_AVAILABLE, _TIMM_AVAILABLE
 
 if _TIMM_AVAILABLE:
     import timm

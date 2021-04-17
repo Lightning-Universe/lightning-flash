@@ -16,7 +16,6 @@ from typing import Any, Callable, List, Optional, Tuple
 
 import torch
 from PIL import Image
-from pytorch_lightning.utilities import _module_available
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch._six import container_abcs
@@ -26,9 +25,9 @@ from torchvision import transforms as T
 from flash.core.data import TaskDataPipeline
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
+from flash.utils.imports import _COCO_AVAILABLE
 from flash.vision.classification.data import _pil_loader
 
-_COCO_AVAILABLE = _module_available("pycocotools")
 if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
 

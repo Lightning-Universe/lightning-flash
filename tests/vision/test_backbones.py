@@ -1,7 +1,6 @@
 import pytest
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE, _TORCHVISION_AVAILABLE
 
-from flash.utils.imports import _TIMM_AVAILABLE
+from flash.utils.imports import _BOLTS_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.vision.backbones import (
     backbone_and_num_features,
     bolts_backbone_and_num_features,

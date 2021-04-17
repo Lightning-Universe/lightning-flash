@@ -4,11 +4,9 @@ from pathlib import Path
 
 import pytest
 from PIL import Image
-from pytorch_lightning.utilities import _module_available
 
+from flash.utils.imports import _COCO_AVAILABLE
 from flash.vision.detection.data import ObjectDetectionData
-
-_COCO_AVAILABLE = _module_available("pycocotools")
 
 
 def _create_dummy_coco_json(dummy_json_path):
