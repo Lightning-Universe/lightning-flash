@@ -44,7 +44,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 @pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, F.nll_loss, metrics=metrics)
