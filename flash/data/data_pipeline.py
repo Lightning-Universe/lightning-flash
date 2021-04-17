@@ -56,7 +56,7 @@ class DataPipeline:
     """
 
     PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
-    POSTPROCES_FUNCS: Set[str] = _POSTPROCESS_FUNCS
+    POSTPROCESS_FUNCS: Set[str] = _POSTPROCESS_FUNCS
 
     def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
@@ -344,7 +344,7 @@ class DataPipeline:
 
         func_names: Dict[str, str] = {
             k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=Postprocess)
-            for k in self.POSTPROCES_FUNCS
+            for k in self.POSTPROCESS_FUNCS
         }
 
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
