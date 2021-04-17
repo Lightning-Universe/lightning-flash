@@ -20,7 +20,7 @@ try:
 except ImportError:
     # alternative https://stackoverflow.com/a/67692/4521646
     sys.path.append("flash")
-    import about
+    import __about__ as about
     import setup_tools
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
