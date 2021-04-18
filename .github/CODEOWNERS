@@ -13,7 +13,9 @@
 # main
 /README.md            @edenlightning @tchaton
 # installation
-/setup.py             @borda @tchaton
+/setup.py                 @borda @tchaton
+/__about__.py             @borda @tchaton
+/__init__.py              @borda @tchaton
 
 # CI/CD
 /.github/workflows/   @borda @tchaton
