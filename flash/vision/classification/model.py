@@ -21,7 +21,8 @@ from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
-from flash.data.process import Serializer
+from flash.data.process import Preprocess, Serializer
+from flash.vision.classification.data import ImageClassificationPreprocess
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
@@ -73,6 +74,7 @@ class ImageClassifier(ClassificationTask):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-3,
+        preprocess: Optional[Preprocess] = None,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
         super().__init__(
@@ -81,6 +83,7 @@ class ImageClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            preprocess=preprocess or ImageClassificationPreprocess(),
             serializer=serializer,
         )
 

@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 import torch
 import torchvision
 from PIL import Image
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.utils.data import Dataset
@@ -54,20 +55,6 @@ class ImageClassificationPreprocess(Preprocess):
             train_transform, val_transform, test_transform, predict_transform
         )
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
-
-    @staticmethod
-    def _check_transforms(transform: Dict[str, Union[nn.Module, Callable]]) -> Dict[str, Union[nn.Module, Callable]]:
-        if transform and not isinstance(transform, Dict):
-            raise MisconfigurationException(
-                "Transform should be a dict. "
-                f"Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
-            )
-        if "per_batch_transform" in transform and "per_sample_transform_on_device" in transform:
-            raise MisconfigurationException(
-                f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutual exclusive.'
-            )
-        return transform
 
     @staticmethod
     def _find_classes(dir: str) -> Tuple:
@@ -160,10 +147,10 @@ class ImageClassificationPreprocess(Preprocess):
             predict_transform = self.default_val_transforms()
 
         return (
-            self._check_transforms(train_transform),
-            self._check_transforms(val_transform),
-            self._check_transforms(test_transform),
-            self._check_transforms(predict_transform),
+            self._check_transforms(train_transform, RunningStage.TRAINING),
+            self._check_transforms(val_transform, RunningStage.VALIDATING),
+            self._check_transforms(test_transform, RunningStage.TESTING),
+            self._check_transforms(predict_transform, RunningStage.PREDICTING),
         )
 
     @classmethod

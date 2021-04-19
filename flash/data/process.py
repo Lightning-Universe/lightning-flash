@@ -129,7 +129,6 @@ class Properties:
             self._running_stage = None
 
 
-
 class Preprocess(Process, Properties, torch.nn.Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
