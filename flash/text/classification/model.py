@@ -21,7 +21,6 @@ from transformers import BertForSequenceClassification
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationTask
-# from flash.return_types.classification import ClassificationReturnType
 
 
 class TextClassifier(ClassificationTask):
@@ -58,7 +57,6 @@ class TextClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            # return_type=return_type,
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
 

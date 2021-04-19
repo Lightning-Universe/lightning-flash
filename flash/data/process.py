@@ -129,7 +129,7 @@ class Properties:
             self._running_stage = None
 
 
-class Preprocess(Process, Properties, torch.nn.Module):
+class Preprocess(Process, Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -464,7 +464,7 @@ class Preprocess(Process, Properties, torch.nn.Module):
         return batch
 
 
-class Postprocess(Process, Properties, torch.nn.Module):
+class Postprocess(Process, Properties, Module):
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()

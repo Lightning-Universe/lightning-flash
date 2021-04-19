@@ -178,24 +178,6 @@ class ObjectDetectionPreprocess(Preprocess):
 
 class ObjectDetectionData(DataModule):
 
-# <<<<<<< HEAD
-# =======
-#     preprocess_cls = ObjectDetectionPreprocess
-#
-#     @classmethod
-#     def instantiate_preprocess(
-#         cls,
-#         train_transform: Optional[Dict[str, Module]] = None,
-#         val_transform: Optional[Dict[str, Module]] = None,
-#         test_transform: Optional[Dict[str, Module]] = None,
-#         predict_transform: Optional[Dict[str, Module]] = None,
-#         preprocess_cls: Type[Preprocess] = None,
-#     ) -> Preprocess:
-#
-#         preprocess_cls = preprocess_cls or cls.preprocess_cls
-#         return preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
-#
-# >>>>>>> master
     @classmethod
     def from_coco(
         cls,
