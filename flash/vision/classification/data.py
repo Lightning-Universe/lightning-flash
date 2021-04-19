@@ -237,6 +237,10 @@ class ImageClassificationData(DataModule):
             self.set_dataset_attribute(self._predict_ds, 'num_classes', self.num_classes)
 
     @staticmethod
+    def configure_data_fetcher(*args, **kwargs) -> 'BaseDataFetcher':
+        return _MatplotlibVisualization(*args, **kwargs)
+
+    @staticmethod
     def _check_transforms(transform: Dict[str, Union[nn.Module, Callable]]) -> Dict[str, Union[nn.Module, Callable]]:
         if transform and not isinstance(transform, Dict):
             raise MisconfigurationException(
@@ -530,10 +534,14 @@ class ImageClassificationData(DataModule):
         )
 
 
-class _CustomBaseVisualization(BaseVisualization):
+class _MatplotlibVisualization(BaseVisualization):
     """Process and show the image batch and its associated label.
     """
     max_cols: int = 4  # maximum number of columns we accept
+
+    @staticmethod
+    def _tensor_to_image(tensor):
+        return tensor.permute(1, 2, 0).cpu().numpy()
 
     def show_per_batch_transform(self, batch: List[Any], running_stage):
         # get the batch data
@@ -548,26 +556,7 @@ class _CustomBaseVisualization(BaseVisualization):
 
         for i, ax in enumerate(axs.ravel()):
             _img, _label = img[i], label[i]
-            ax.imshow(K.tensor_to_image(_img))
-            ax.set_title(_label)
+            ax.imshow(self._tensor_to_image(_img))
+            ax.set_title(str(_label.item()))
             ax.axis('off')
         plt.show()
-
-
-class ImageClassificationDataVisualizer(ImageClassificationData):
-    """Base class to be used for visualizing the Image Classificatio data.
-
-    Usage:
-
-    data_viz = ImageClassificationDataVisualizer.from_filepaths(
-        train_filepaths=["path/img1.png", "path/img2.png"],
-        train_labels=[0, 1],
-        batch_size=2,
-    )
-    data_viz.show_train_batch()
-
-    """
-
-    @staticmethod
-    def configure_data_fetcher(*args, **kwargs) -> 'BaseDataFetcher':
-        return _CustomBaseVisualization(*args, **kwargs)
