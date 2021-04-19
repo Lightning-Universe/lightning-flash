@@ -21,7 +21,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.dataset import Subset
+from torch.utils.data.dataset import IterableDataset, Subset
 
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization
@@ -138,8 +138,12 @@ class DataModule(pl.LightningDataModule):
 
     def _reset_iterator(self, stage: RunningStage) -> Iterable[Any]:
         iter_name = f"_{stage}_iter"
+        # num_workers has to be set to 0 to work properly
+        num_workers = self.num_workers
+        self.num_workers = 0
         dataloader_fn = getattr(self, f"{stage}_dataloader")
         iterator = iter(dataloader_fn())
+        self.num_workers = num_workers
         setattr(self, iter_name, iterator)
         return iterator
 
@@ -191,7 +195,8 @@ class DataModule(pl.LightningDataModule):
     def set_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, value: Any) -> None:
         if isinstance(dataset, Subset):
             dataset = dataset.dataset
-        setattr(dataset, attr_name, value)
+        if isinstance(dataset, (Dataset, IterableDataset)):
+            setattr(dataset, attr_name, value)
 
     def set_running_stages(self):
         if self._train_ds:
