@@ -19,7 +19,7 @@ import torch
 from PIL import Image
 
 from flash.data.data_utils import labels_from_categorical_csv
-from flash.vision import ImageClassificationData
+from flash.vision import ImageClassificationData, ImageClassificationDataVisualizer
 
 
 def _dummy_image_loader(_):
@@ -94,6 +94,31 @@ def test_from_filepaths(tmpdir):
     imgs, labels = data
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
+
+
+def test_from_filepaths_visualise(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a" / "a_1.png")
+    _rand_image().save(tmpdir / "a" / "a_2.png")
+
+    _rand_image().save(tmpdir / "b" / "a_1.png")
+    _rand_image().save(tmpdir / "b" / "a_2.png")
+
+    data_viz = ImageClassificationDataVisualizer.from_filepaths(
+        train_filepaths=[tmpdir / "a", tmpdir / "b"],
+        train_labels=[0, 1],
+        val_filepaths=[tmpdir / "a", tmpdir / "b"],
+        val_labels=[0, 1],
+        test_filepaths=[tmpdir / "a", tmpdir / "b"],
+        test_labels=[0, 1],
+        batch_size=2,
+    )
+    data_viz.show_train_batch()
+    data_viz.show_val_batch()
+    data_viz.show_test_batch()
 
 
 def test_categorical_csv_labels(tmpdir):

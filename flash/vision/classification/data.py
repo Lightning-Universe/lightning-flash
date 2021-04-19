@@ -24,17 +24,22 @@ from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
+from flash.core.utils import _is_overriden
 from flash.data.auto_dataset import AutoDataset
+from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
+from flash.data.utils import _PREPROCESS_FUNCS
 from flash.utils.imports import _KORNIA_AVAILABLE
 
 if _KORNIA_AVAILABLE:
-    import kornia.augmentation as K
-    import kornia.geometry.transform as T
+    import kornia as K
 else:
     from torchvision import transforms as T
+
+# TODO(edgar): check if is available: if _MATPLOTLIB_AVAILABLE
+import matplotlib.pyplot as plt
 
 
 class ImageClassificationPreprocess(Preprocess):
@@ -253,14 +258,16 @@ class ImageClassificationData(DataModule):
 
     @staticmethod
     def default_train_transforms():
-        image_size = ImageClassificationData.image_size
+        image_size: Tuple[int, int] = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size), K.RandomHorizontalFlip()),
+                "post_tensor_transform": nn.Sequential(
+                    K.augmentation.RandomResizedCrop(image_size), K.augmentation.RandomHorizontalFlip()
+                ),
                 "per_batch_transform_on_device": nn.Sequential(
-                    K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
             }
         else:
@@ -273,14 +280,14 @@ class ImageClassificationData(DataModule):
 
     @staticmethod
     def default_val_transforms():
-        image_size = ImageClassificationData.image_size
+        image_size: Tuple[int, int] = ImageClassificationData.image_size
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": nn.Sequential(K.RandomResizedCrop(image_size)),
+                "post_tensor_transform": nn.Sequential(K.augmentation.RandomResizedCrop(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
-                    K.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
             }
         else:
@@ -527,3 +534,46 @@ class ImageClassificationData(DataModule):
             seed=seed,
             **kwargs
         )
+
+
+class _CustomBaseVisualization(BaseVisualization):
+    """Process and show the image batch and its associated label.
+    """
+    max_cols: int = 4  # maximum number of columns we accept
+
+    def show_per_batch_transform(self, batch: List[Any], running_stage):
+        # get the batch data
+        img, label = batch[0]
+
+        # define the image grid
+        cols: int = min(img.shape[0], self.max_cols)
+        rows: int = img.shape[0] // cols
+
+        fig, axs = plt.subplots(rows, cols)
+        fig.suptitle(str(running_stage))
+
+        for i, ax in enumerate(axs.ravel()):
+            _img, _label = img[i], label[i]
+            ax.imshow(K.tensor_to_image(_img))
+            ax.set_title(_label)
+            ax.axis('off')
+        plt.show()
+
+
+class ImageClassificationDataVisualizer(ImageClassificationData):
+    """Base class to be used for visualizing the Image Classificatio data.
+
+    Usage:
+
+    data_viz = ImageClassificationDataVisualizer.from_filepaths(
+        train_filepaths=["path/img1.png", "path/img2.png"],
+        train_labels=[0, 1],
+        batch_size=2,
+    )
+    data_viz.show_train_batch()
+
+    """
+
+    @staticmethod
+    def configure_data_fetcher(*args, **kwargs) -> 'BaseDataFetcher':
+        return _CustomBaseVisualization(*args, **kwargs)
