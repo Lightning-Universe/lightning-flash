@@ -649,6 +649,8 @@ class CustomModel(Task):
         assert batch is None
 
     def validation_step(self, batch, batch_idx):
+        if isinstance(batch, list):
+            batch = batch[0]
         assert batch is False
 
     def test_step(self, batch, batch_idx):
