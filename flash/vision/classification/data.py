@@ -182,9 +182,6 @@ class ImageClassificationPreprocess(Preprocess):
     def per_batch_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
-    def per_sample_transform_on_device(self, sample: Any) -> Any:
-        return self.common_step(sample)
-
     def per_batch_transform_on_device(self, sample: Any) -> Any:
         return self.common_step(sample)
 

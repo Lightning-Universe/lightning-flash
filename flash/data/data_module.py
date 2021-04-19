@@ -138,7 +138,7 @@ class DataModule(pl.LightningDataModule):
 
     def _reset_iterator(self, stage: RunningStage) -> Iterable[Any]:
         iter_name = f"_{stage}_iter"
-        # the num_workers has to be set to 0 to work properly.
+        # num_workers has to be set to 0 to work properly
         num_workers = self.num_workers
         self.num_workers = 0
         dataloader_fn = getattr(self, f"{stage}_dataloader")
