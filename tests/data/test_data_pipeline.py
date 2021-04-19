@@ -598,7 +598,7 @@ class TestPreprocessTransformations(Preprocess):
             batch = batch[0]
         assert torch.equal(batch["a"], tensor([0, 1]))
         assert torch.equal(batch["b"], tensor([1, 2]))
-        return [False]
+        return False
 
     @staticmethod
     def fn_test_load_data() -> List[torch.Tensor]:
