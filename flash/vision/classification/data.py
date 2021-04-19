@@ -44,9 +44,6 @@ import matplotlib.pyplot as plt
 
 class ImageClassificationPreprocess(Preprocess):
 
-    # this assignement is used to skip the assert that `per_batch_transform` and `per_sample_transform_on_device`
-    # are mutually exclusive on the DataPipeline internals
-    _skip_mutual_check = True
     to_tensor = torchvision.transforms.ToTensor()
 
     @staticmethod
@@ -165,7 +162,7 @@ class ImageClassificationPreprocess(Preprocess):
         return self.common_step(sample)
 
     def to_tensor_transform(self, sample: Any) -> Any:
-        if self.current_transform == self._identify:
+        if self.current_transform == self._identity:
             if isinstance(sample, (list, tuple)):
                 source, target = sample
                 if isinstance(source, torch.Tensor):
@@ -181,9 +178,6 @@ class ImageClassificationPreprocess(Preprocess):
     def post_tensor_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
-    # todo: (tchaton) `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive
-    # `skip_mutual_check` is used to skip the checks as the information are provided from the transforms directly
-    # Need to properly set the `collate` depending on user provided transforms
     def per_batch_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
@@ -252,7 +246,7 @@ class ImageClassificationData(DataModule):
         if "per_batch_transform" in transform and "per_sample_transform_on_device" in transform:
             raise MisconfigurationException(
                 f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutual exclusive.'
+                f'are mutually exclusive.'
             )
         return transform
 
@@ -320,7 +314,7 @@ class ImageClassificationData(DataModule):
         val_transform: Dict[str, Union[nn.Module, Callable]],
         test_transform: Dict[str, Union[nn.Module, Callable]],
         predict_transform: Dict[str, Union[nn.Module, Callable]],
-        preprocess_cls: Type[Preprocess] = None
+        preprocess_cls: Type[Preprocess] = None,
     ) -> Preprocess:
         """
         This function is used to instantiate ImageClassificationData preprocess object.

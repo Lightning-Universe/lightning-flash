@@ -14,13 +14,14 @@
 
 import os.path
 import zipfile
-from typing import Any, Callable, Dict, Iterable, Mapping, Set, Type
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set, Type
 
 import requests
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
+from torch.nn import Module
 from tqdm.auto import tqdm as tq
 
 _STAGES_PREFIX = {
@@ -119,10 +120,13 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     Usage:
         download_file('http://web4host.net/5MB.zip')
     """
+    if url == "NEED_TO_BE_CREATED":
+        raise NotImplementedError
+
     if not os.path.exists(path):
         os.makedirs(path)
     local_filename = os.path.join(path, url.split('/')[-1])
-    r = requests.get(url, stream=True)
+    r = requests.get(url, stream=True, verify=False)
     file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
     chunk_size = 1024
     num_bars = int(file_size / chunk_size)
@@ -177,7 +181,7 @@ class FuncModule(torch.nn.Module):
         return f"{self.__class__.__name__}({str(self.func)})"
 
 
-def convert_to_modules(transforms: Dict):
+def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 
     if transforms is None or isinstance(transforms, torch.nn.Module):
         return transforms

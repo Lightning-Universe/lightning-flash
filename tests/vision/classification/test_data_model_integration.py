@@ -42,7 +42,7 @@ def test_classification(tmpdir):
     data = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
         train_labels=[0, 1],
-        train_transform={"per_sample_per_batch_transform": lambda x: x},
+        train_transform={"per_batch_transform": lambda x: x},
         num_workers=0,
         batch_size=2,
     )

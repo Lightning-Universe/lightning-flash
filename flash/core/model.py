@@ -96,6 +96,7 @@ class Task(LightningModule):
         output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
+        y_hat = self.to_metrics_format(y_hat)
         for name, metric in self.metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
@@ -110,6 +111,9 @@ class Task(LightningModule):
         output["logs"] = logs
         output["y"] = y
         return output
+
+    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+        return x
 
     def forward(self, x: Any) -> Any:
         return self.model(x)
@@ -172,10 +176,10 @@ class Task(LightningModule):
 
     @staticmethod
     def _resolve(
-            old_preprocess: Optional[Preprocess],
-            old_postprocess: Optional[Postprocess],
-            new_preprocess: Optional[Preprocess],
-            new_postprocess: Optional[Postprocess],
+        old_preprocess: Optional[Preprocess],
+        old_postprocess: Optional[Postprocess],
+        new_preprocess: Optional[Preprocess],
+        new_postprocess: Optional[Postprocess],
     ) -> Tuple[Optional[Preprocess], Optional[Postprocess]]:
         """Resolves the correct :class:`.Preprocess` and :class:`.Postprocess` to use, choosing ``new_*`` if it is not
         None or a base class (:class:`.Preprocess` or :class:`.Postprocess`) and ``old_*`` otherwise.
@@ -305,6 +309,13 @@ class Task(LightningModule):
     @classmethod
     def available_backbones(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+        if registry is None:
+            return []
+        return registry.available_keys()
+
+    @classmethod
+    def available_models(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
         if registry is None:
             return []
         return registry.available_keys()
