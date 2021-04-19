@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-import inspect
-from copy import deepcopy
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
@@ -25,8 +23,8 @@ from torch import nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utils import get_callable_dict
-from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
-from flash.return_types import ReturnType
+from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
+from flash.data.data_pipeline import DataPipeline
 
 
 def predict_context(func: Callable) -> Callable:
@@ -74,7 +72,7 @@ class Task(LightningModule):
         learning_rate: float = 5e-5,
         default_preprocess: Optional[Preprocess] = None,
         default_postprocess: Optional[Postprocess] = None,
-        return_type: Optional[ReturnType] = None,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
         super().__init__()
         if model is not None:
@@ -88,7 +86,9 @@ class Task(LightningModule):
 
         self._preprocess = default_preprocess
         self._postprocess = default_postprocess
-        self._return_type = return_type
+        self._serializer = None
+
+        self.serializer = serializer
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -177,9 +177,11 @@ class Task(LightningModule):
     def _resolve(
             old_preprocess: Optional[Preprocess],
             old_postprocess: Optional[Postprocess],
+            old_serializer: Optional[Serializer],
             new_preprocess: Optional[Preprocess],
             new_postprocess: Optional[Postprocess],
-    ) -> Tuple[Optional[Preprocess], Optional[Postprocess]]:
+            new_serializer: Optional[Serializer],
+    ) -> Tuple[Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
         """Resolves the correct :class:`.Preprocess` and :class:`.Postprocess` to use, choosing ``new_*`` if it is not
         None or a base class (:class:`.Preprocess` or :class:`.Postprocess`) and ``old_*`` otherwise.
 
@@ -200,7 +202,23 @@ class Task(LightningModule):
         if new_postprocess is not None and type(new_postprocess) != Postprocess:
             postprocess = new_postprocess
 
-        return preprocess, postprocess
+        serializer = old_serializer
+        if new_serializer is not None and type(new_serializer) != Serializer:
+            serializer = new_serializer
+
+        return preprocess, postprocess, serializer
+
+    @property
+    def serializer(self) -> Optional[Serializer]:
+        """The current :class:`.Serializer` associated with this model. If this property was set to a mapping
+        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`."""
+        return self._serializer
+
+    @serializer.setter
+    def serializer(self, serializer: Union[Serializer, Mapping[str, Serializer]]):
+        if isinstance(serializer, Mapping):
+            serializer = SerializerMapping(serializer)
+        self._serializer = serializer
 
     def build_data_pipeline(self, data_pipeline: Optional[DataPipeline] = None) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available :class:`.Preprocess` and :class:`.Postprocess`
@@ -217,35 +235,45 @@ class Task(LightningModule):
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        preprocess, postprocess = None, None
+        preprocess, postprocess, serializer = None, None, None
 
         # Datamodule
         if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
             preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
+            serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
 
         elif self.trainer is not None and hasattr(
             self.trainer, 'datamodule'
         ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
+            serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
 
         # Defaults / task attributes
-        preprocess, postprocess = Task._resolve(preprocess, postprocess, self._preprocess, self._postprocess)
+        preprocess, postprocess, serializer = Task._resolve(
+            preprocess,
+            postprocess,
+            serializer,
+            self._preprocess,
+            self._postprocess,
+            self.serializer,
+        )
 
         # Datapipeline
         if data_pipeline is not None:
-            preprocess, postprocess = Task._resolve(
+            preprocess, postprocess, serializer = Task._resolve(
                 preprocess,
                 postprocess,
+                serializer,
                 getattr(data_pipeline, '_preprocess_pipeline', None),
                 getattr(data_pipeline, '_postprocess_pipeline', None),
+                getattr(data_pipeline, '_serializer', None),
             )
 
-        if self.return_type is not None:
-            postprocess = self.return_type.wrap(postprocess)
-
-        return DataPipeline(preprocess, postprocess)
+        data_pipeline = DataPipeline(preprocess, postprocess, serializer)
+        data_pipeline.initialize()
+        return data_pipeline
 
     @property
     def data_pipeline(self) -> DataPipeline:
@@ -255,20 +283,22 @@ class Task(LightningModule):
 
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._preprocess, self._postprocess = Task._resolve(
+        self._preprocess, self._postprocess, self.serializer = Task._resolve(
             self._preprocess,
             self._postprocess,
+            self.serializer,
             getattr(data_pipeline, '_preprocess_pipeline', None),
             getattr(data_pipeline, '_postprocess_pipeline', None),
+            getattr(data_pipeline, '_serializer', None),
         )
 
     @property
-    def return_type(self) -> Optional[ReturnType]:
-        return self._return_type
+    def preprocess(self) -> Preprocess:
+        return getattr(self.data_pipeline, '_preprocess_pipeline', None)
 
-    @return_type.setter
-    def return_type(self, return_type: Optional[ReturnType]) -> None:
-        self._return_type = return_type
+    @property
+    def postprocess(self) -> Postprocess:
+        return getattr(self.data_pipeline, '_postprocess_pipeline', None)
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:

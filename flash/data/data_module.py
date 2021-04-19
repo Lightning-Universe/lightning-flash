@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -37,17 +37,13 @@ class DataModule(pl.LightningDataModule):
         train_dataset: Dataset for training. Defaults to None.
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
-        predict_dataset: Dataset to predict model performance. Defaults to None.
+        predict_dataset: Dataset for predicting. Defaults to None.
         num_workers: The number of workers to use for parallelized loading. Defaults to None.
-        predict_ds: Dataset for predicting. Defaults to None.
         batch_size: The batch size to be used by the DataLoader. Defaults to 1.
         num_workers: The number of workers to use for parallelized loading.
             Defaults to None which equals the number of available CPU threads,
             or 0 for Darwin platform.
     """
-
-    preprocess_cls = Preprocess
-    postprocess_cls = Postprocess
 
     def __init__(
         self,
@@ -260,11 +256,11 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def preprocess(self) -> Preprocess:
-        return self._preprocess or self.preprocess_cls()
+        return self._preprocess or Preprocess()
 
     @property
     def postprocess(self) -> Postprocess:
-        return self._postprocess or self.postprocess_cls()
+        return self._postprocess or Postprocess()
 
     @property
     def data_pipeline(self) -> DataPipeline:
@@ -293,16 +289,18 @@ class DataModule(pl.LightningDataModule):
         or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly
         """
 
+        preprocess = getattr(data_pipeline, '_preprocess_pipeline', None)
+
         if whole_data_load_fn is None:
             whole_data_load_fn = getattr(
-                cls.preprocess_cls,
-                DataPipeline._resolve_function_hierarchy('load_data', cls.preprocess_cls, running_stage, Preprocess)
+                preprocess,
+                DataPipeline._resolve_function_hierarchy('load_data', preprocess, running_stage, Preprocess)
             )
 
         if per_sample_load_fn is None:
             per_sample_load_fn = getattr(
-                cls.preprocess_cls,
-                DataPipeline._resolve_function_hierarchy('load_sample', cls.preprocess_cls, running_stage, Preprocess)
+                preprocess,
+                DataPipeline._resolve_function_hierarchy('load_sample', preprocess, running_stage, Preprocess)
             )
         return AutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
 
@@ -374,7 +372,7 @@ class DataModule(pl.LightningDataModule):
         running_stage: RunningStage,
         whole_data_load_fn: Optional[Callable] = None,
         per_sample_load_fn: Optional[Callable] = None,
-        data_pipeline: Optional[DataPipeline] = None
+        data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[AutoDataset]:
         if data is None:
             return

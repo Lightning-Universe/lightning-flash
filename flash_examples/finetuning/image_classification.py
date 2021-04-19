@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torchvision
-from torch import nn
-
 import flash
 from flash import Trainer
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
+
+import torchvision
+from torch import nn
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")

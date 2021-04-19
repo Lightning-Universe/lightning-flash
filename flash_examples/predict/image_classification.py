@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash import Trainer
+from flash.core.classification import Labels
 from flash.data.utils import download_data
-from flash.return_types.classification import Labels
 from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
@@ -22,10 +22,9 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "da
 # 2. Load the model from a checkpoint
 model = ImageClassifier.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/image_classification_model.pt",
-    # return_type=,
 )
 
-model.return_type = Labels(['ant', 'bee'])
+model.serializer = Labels(['ant', 'bee'])
 
 # 3a. Predict what's on a few images! ants or bees?
 predictions = model.predict([
@@ -36,6 +35,13 @@ predictions = model.predict([
 print(predictions)
 
 # 3b. Or generate predictions with a whole folder!
-datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
+datamodule = ImageClassificationData.from_folders(
+    train_folder="data/hymenoptera_data/train/",
+    predict_folder="data/hymenoptera_data/predict/",
+)
+
+model = ImageClassifier(2)
+model.serializer = Labels()
+
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)

@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
@@ -25,7 +26,8 @@ from torch.utils.data.dataloader import DataLoader
 
 from flash.data.auto_dataset import AutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
-from flash.data.process import Postprocess, Preprocess
+from flash.data.process import Postprocess, Preprocess, Serializer, ProcessState
+# from flash.data.state import Stateful
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
@@ -58,11 +60,41 @@ class DataPipeline:
     PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
     POSTPROCES_FUNCS: Set[str] = _POSTPROCESS_FUNCS
 
-    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
+    def __init__(
+            self,
+            preprocess: Optional[Preprocess] = None,
+            postprocess: Optional[Postprocess] = None,
+            serializer: Optional[Serializer] = None,
+    ) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
-        self._postprocessor = None
+
+        self._serializer = serializer or Serializer()
+
+        # self._postprocessor = None
         self._running_stage = None
+
+        self._states: Dict[Type[ProcessState], ProcessState] = {}
+
+        self._initialized = False
+
+    def set_state(self, state: ProcessState):
+        if not self._initialized:
+            self._states[type(state)] = state
+        else:
+            pass  # TODO: Warn or error here
+
+    def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
+        if state_type in self._states:
+            return self._states[state_type]
+        else:
+            return None  # TODO: something better here?
+
+    def initialize(self):
+        self._preprocess_pipeline.attach_data_pipeline(self)
+        self._postprocess_pipeline.attach_data_pipeline(self)
+        self._serializer.attach_data_pipeline(self)
+        self._initialized = True
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
@@ -78,10 +110,10 @@ class DataPipeline:
 
         return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
 
-    @property
-    def preprocess_state(self):
-        if self._preprocess_pipeline:
-            return self._preprocess_pipeline.state
+    # @property
+    # def preprocess_state(self):
+    #     if self._preprocess_pipeline:
+    #         return self._preprocess_pipeline.state
 
     @classmethod
     def _is_overriden_recursive(
@@ -362,6 +394,7 @@ class DataPipeline:
             getattr(postprocess, func_names["uncollate"]),
             getattr(postprocess, func_names["per_batch_transform"]),
             getattr(postprocess, func_names["per_sample_transform"]),
+            serializer=self._serializer,
             save_fn=save_fn,
             save_per_sample=save_per_sample
         )

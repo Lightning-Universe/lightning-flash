@@ -11,10 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
+from dataclasses import dataclass
+from typing import Any, List, Mapping, Optional, Union
+
+import torch
 
 from flash.core.model import Task
-from flash.return_types.classification import ClassificationReturnType, Classes
+from flash.data.process import Serializer, ProcessState
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class ClassificationState(ProcessState):
+    classes: List[str]
 
 
 class ClassificationTask(Task):
@@ -22,7 +30,47 @@ class ClassificationTask(Task):
     def __init__(
             self,
             *args,
-            return_type: Optional[ClassificationReturnType] = None,
+            serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
             **kwargs,
     ) -> None:
-        super().__init__(*args, return_type=return_type or Classes(), **kwargs)
+        super().__init__(*args, serializer=serializer or Classes(), **kwargs)
+
+
+class Logits(Serializer):
+
+    def serialize(self, sample: Any) -> Any:
+        return sample.tolist()
+
+
+class Probabilities(Serializer):
+
+    def serialize(self, sample: Any) -> Any:
+        return torch.softmax(sample, -1).tolist()
+
+
+class Classes(Serializer):
+
+    def serialize(self, sample: Any) -> Union[int, List[int]]:
+        return torch.argmax(sample, -1).tolist()
+
+
+class Labels(Classes):
+
+    def __init__(self, labels: Optional[List[str]] = None):
+        super().__init__()
+        self._labels = labels
+
+    def serialize(self, sample: Any) -> Union[str, List[str]]:
+        if self._labels is not None:
+            labels = self._labels
+        else:
+            state = self.get_state(ClassificationState)
+            if state is not None:
+                labels = state.classes
+            else:
+                raise ValueError  # TODO: Better error
+
+        argmax = super().serialize(sample)
+        if isinstance(argmax, List):
+            return [labels[i] for i in argmax]
+        return labels[argmax]

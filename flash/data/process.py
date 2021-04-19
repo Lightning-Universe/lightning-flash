@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -24,6 +24,42 @@ from torch.utils.data._utils.collate import default_collate
 from flash.data.batch import default_uncollate
 from flash.data.callback import FlashCallback
 from flash.data.utils import convert_to_modules
+
+if TYPE_CHECKING:
+    from flash.data.data_pipeline import DataPipeline
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class ProcessState:
+    """
+    Base class for all data pipeline states
+    """
+    pass
+
+
+STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
+
+
+class Process:
+
+    _local_states: Dict[Type[ProcessState], ProcessState] = {}
+    _data_pipeline: Optional['DataPipeline'] = None
+
+    def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
+        if self._data_pipeline is not None:
+            return self._data_pipeline.get_state(state_type)
+        else:
+            return None
+
+    def set_state(self, state: ProcessState):
+        self._local_states[type(state)] = state
+        if self._data_pipeline is not None:
+            self._data_pipeline.set_state(state)
+
+    def attach_data_pipeline(self, data_pipeline: 'DataPipeline'):
+        self._data_pipeline = data_pipeline
+        for local_state in self._local_states.values():
+            self._data_pipeline.set_state(local_state)
 
 
 class Properties:
@@ -92,15 +128,7 @@ class Properties:
             self._running_stage = None
 
 
-@dataclass(unsafe_hash=True, frozen=True)
-class PreprocessState:
-    """
-    Base class for all preprocess states
-    """
-    pass
-
-
-class Preprocess(Properties, torch.nn.Module):
+class Preprocess(Process, Properties, torch.nn.Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -299,10 +327,6 @@ class Preprocess(Properties, torch.nn.Module):
         else:
             return self._identify
 
-    @classmethod
-    def from_state(cls, state: PreprocessState) -> 'Preprocess':
-        return cls(**vars(state))
-
     @property
     def callbacks(self) -> List['FlashCallback']:
         if not hasattr(self, "_callbacks"):
@@ -388,7 +412,7 @@ class Preprocess(Properties, torch.nn.Module):
         return batch
 
 
-class Postprocess(Properties, torch.nn.Module):
+class Postprocess(Process, Properties, torch.nn.Module):
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()
@@ -431,3 +455,40 @@ class Postprocess(Properties, torch.nn.Module):
 
     def _save_sample(self, sample: Any) -> None:
         self.save_sample(sample, self.format_sample_save_path(self._save_path))
+
+
+class Serializer(Process):
+
+    def __init__(self):
+        super().__init__()
+        self._is_enabled = True
+
+    def enable(self):
+        self._is_enabled = True
+
+    def disable(self):
+        self._is_enabled = False
+
+    def serialize(self, sample: Any) -> Any:
+        return sample
+
+    def __call__(self, sample: Any):
+        if self._is_enabled:
+            return self.serialize(sample)
+        else:
+            return sample
+
+
+class SerializerMapping(Serializer):
+
+    def __init__(self, serializers: Mapping[str, Serializer]):
+        super().__init__()
+
+        self._serializers = serializers
+
+    def serialize(self, sample: Any) -> Any:
+        if isinstance(sample, Mapping):
+            return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers}
+        else:
+            # TODO: some error here
+            pass
