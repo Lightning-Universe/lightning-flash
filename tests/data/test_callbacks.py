@@ -181,3 +181,15 @@ def test_base_viz(tmpdir):
         assert dm.data_fetcher.show_collate_called
         assert dm.data_fetcher.per_batch_transform_called
         dm.data_fetcher.check_reset()
+
+
+def test_data_loaders_num_workers_to_0(tmpdir):
+    """
+    num_workers should be set to `0` internally for visualization and not for training.
+    """
+
+    datamodule = DataModule(train_dataset=range(10), num_workers=3)
+    iterator = datamodule._reset_iterator(RunningStage.TRAINING)
+    assert isinstance(iterator, torch.utils.data.dataloader._SingleProcessDataLoaderIter)
+    iterator = iter(datamodule.train_dataloader())
+    assert isinstance(iterator, torch.utils.data.dataloader._MultiProcessingDataLoaderIter)
