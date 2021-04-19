@@ -21,9 +21,9 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.dataset import Subset
+from torch.utils.data.dataset import IterableDataset, Subset
 
-from flash.data.auto_dataset import AutoDataset
+from flash.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
@@ -134,8 +134,12 @@ class DataModule(pl.LightningDataModule):
 
     def _reset_iterator(self, stage: RunningStage) -> Iterable[Any]:
         iter_name = f"_{stage}_iter"
+        # num_workers has to be set to 0 to work properly
+        num_workers = self.num_workers
+        self.num_workers = 0
         dataloader_fn = getattr(self, f"{stage}_dataloader")
         iterator = iter(dataloader_fn())
+        self.num_workers = num_workers
         setattr(self, iter_name, iterator)
         return iterator
 
@@ -187,7 +191,8 @@ class DataModule(pl.LightningDataModule):
     def set_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, value: Any) -> None:
         if isinstance(dataset, Subset):
             dataset = dataset.dataset
-        setattr(dataset, attr_name, value)
+        if isinstance(dataset, (Dataset, IterableDataset)):
+            setattr(dataset, attr_name, value)
 
     def set_running_stages(self):
         if self._train_ds:
@@ -203,15 +208,16 @@ class DataModule(pl.LightningDataModule):
             self.set_dataset_attribute(self._predict_ds, 'running_stage', RunningStage.PREDICTING)
 
     def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
-        if isinstance(dataset, AutoDataset):
+        if isinstance(dataset, BaseAutoDataset):
             return self.data_pipeline.worker_preprocessor(running_stage)
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
+        shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
         return DataLoader(
             train_ds,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=shuffle,
             num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,
@@ -240,10 +246,13 @@ class DataModule(pl.LightningDataModule):
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+        if isinstance(predict_ds, IterableAutoDataset):
+            batch_size = self.batch_size
+        else:
+            batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
         return DataLoader(
             predict_ds,
-            batch_size=min(self.batch_size,
-                           len(predict_ds) if len(predict_ds) > 0 else 1),
+            batch_size=batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
             collate_fn=self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
@@ -253,6 +262,13 @@ class DataModule(pl.LightningDataModule):
         if all(a is None for a in args) and len(kwargs) == 0:
             return None
         return self.data_pipeline._generate_auto_dataset(*args, **kwargs)
+
+    @property
+    def num_classes(self) -> Optional[int]:
+        return (
+            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None)
+            or getattr(self.test_dataset, "num_classes", None)
+        )
 
     @property
     def preprocess(self) -> Preprocess:
@@ -283,9 +299,10 @@ class DataModule(pl.LightningDataModule):
         whole_data_load_fn: Optional[Callable] = None,
         per_sample_load_fn: Optional[Callable] = None,
         data_pipeline: Optional[DataPipeline] = None,
-    ) -> AutoDataset:
+        use_iterable_auto_dataset: bool = False,
+    ) -> BaseAutoDataset:
         """
-        This function is used to generate an ``AutoDataset`` from a ``DataPipeline`` if provided
+        This function is used to generate an ``BaseAutoDataset`` from a ``DataPipeline`` if provided
         or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly
         """
 
@@ -302,7 +319,11 @@ class DataModule(pl.LightningDataModule):
                 preprocess,
                 DataPipeline._resolve_function_hierarchy('load_sample', preprocess, running_stage, Preprocess)
             )
-        return AutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
+        if use_iterable_auto_dataset:
+            return IterableAutoDataset(
+                data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage
+            )
+        return BaseAutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
 
     @staticmethod
     def train_val_test_split(
@@ -373,14 +394,26 @@ class DataModule(pl.LightningDataModule):
         whole_data_load_fn: Optional[Callable] = None,
         per_sample_load_fn: Optional[Callable] = None,
         data_pipeline: Optional[DataPipeline] = None,
-    ) -> Optional[AutoDataset]:
+        use_iterable_auto_dataset: bool = False,
+    ) -> Optional[BaseAutoDataset]:
         if data is None:
             return
 
         if data_pipeline:
-            return data_pipeline._generate_auto_dataset(data, running_stage=running_stage)
+            return data_pipeline._generate_auto_dataset(
+                data,
+                running_stage=running_stage,
+                use_iterable_auto_dataset=use_iterable_auto_dataset,
+            )
 
-        return cls.autogenerate_dataset(data, running_stage, whole_data_load_fn, per_sample_load_fn, data_pipeline)
+        return cls.autogenerate_dataset(
+            data,
+            running_stage,
+            whole_data_load_fn,
+            per_sample_load_fn,
+            data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset,
+        )
 
     @classmethod
     def from_load_data_inputs(
@@ -391,6 +424,7 @@ class DataModule(pl.LightningDataModule):
         predict_load_data_input: Optional[Any] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
+        use_iterable_auto_dataset: bool = False,
         **kwargs,
     ) -> 'DataModule':
         """
@@ -422,16 +456,28 @@ class DataModule(pl.LightningDataModule):
         data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 
         train_dataset = cls._generate_dataset_if_possible(
-            train_load_data_input, running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline
+            train_load_data_input,
+            running_stage=RunningStage.TRAINING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset,
         )
         val_dataset = cls._generate_dataset_if_possible(
-            val_load_data_input, running_stage=RunningStage.VALIDATING, data_pipeline=data_pipeline
+            val_load_data_input,
+            running_stage=RunningStage.VALIDATING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset,
         )
         test_dataset = cls._generate_dataset_if_possible(
-            test_load_data_input, running_stage=RunningStage.TESTING, data_pipeline=data_pipeline
+            test_load_data_input,
+            running_stage=RunningStage.TESTING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset,
         )
         predict_dataset = cls._generate_dataset_if_possible(
-            predict_load_data_input, running_stage=RunningStage.PREDICTING, data_pipeline=data_pipeline
+            predict_load_data_input,
+            running_stage=RunningStage.PREDICTING,
+            data_pipeline=data_pipeline,
+            use_iterable_auto_dataset=use_iterable_auto_dataset,
         )
         datamodule = cls(
             train_dataset=train_dataset,

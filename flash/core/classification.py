@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Any, List, Mapping, Optional, Union
 
 import torch
+import torch.nn.functional as F
 
 from flash.core.model import Task
 from flash.data.process import Serializer, ProcessState
@@ -26,7 +27,6 @@ class ClassificationState(ProcessState):
 
 
 class ClassificationTask(Task):
-
     def __init__(
             self,
             *args,
@@ -34,6 +34,9 @@ class ClassificationTask(Task):
             **kwargs,
     ) -> None:
         super().__init__(*args, serializer=serializer or Classes(), **kwargs)
+
+    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+        return F.softmax(x, -1)
 
 
 class Logits(Serializer):

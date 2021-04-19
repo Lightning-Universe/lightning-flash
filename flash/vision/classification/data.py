@@ -40,9 +40,6 @@ else:
 
 class ImageClassificationPreprocess(Preprocess):
 
-    # this assignment is used to skip the assert that `per_batch_transform` and `per_sample_transform_on_device`
-    # are mutually exclusive on the DataPipeline internals
-    _skip_mutual_check = True
     to_tensor = torchvision.transforms.ToTensor()
     image_size = (196, 196)
 
@@ -259,7 +256,7 @@ class ImageClassificationPreprocess(Preprocess):
         return self.common_step(sample)
 
     def to_tensor_transform(self, sample: Any) -> Any:
-        if self.current_transform == self._identify:
+        if self.current_transform == self._identity:
             if isinstance(sample, (list, tuple)):
                 source, target = sample
                 if isinstance(source, torch.Tensor):
@@ -275,13 +272,7 @@ class ImageClassificationPreprocess(Preprocess):
     def post_tensor_transform(self, sample: Any) -> Any:
         return self.common_step(sample)
 
-    # todo: (tchaton) `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive
-    # `skip_mutual_check` is used to skip the checks as the information are provided from the transforms directly
-    # Need to properly set the `collate` depending on user provided transforms
     def per_batch_transform(self, sample: Any) -> Any:
-        return self.common_step(sample)
-
-    def per_sample_transform_on_device(self, sample: Any) -> Any:
         return self.common_step(sample)
 
     def per_batch_transform_on_device(self, sample: Any) -> Any:

@@ -27,7 +27,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core import Task
-from flash.data.auto_dataset import AutoDataset
+from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import _StageOrchestrator, DataPipeline
@@ -213,7 +213,7 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert _seq.pre_tensor_transform.func == preprocess.val_pre_tensor_transform
     assert _seq.to_tensor_transform.func == preprocess.to_tensor_transform
     assert _seq.post_tensor_transform.func == preprocess.post_tensor_transform
-    assert val_worker_preprocessor.collate_fn.func == data_pipeline._identity
+    assert val_worker_preprocessor.collate_fn.func == DataPipeline._identity
     assert val_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
     _seq = test_worker_preprocessor.per_sample_transform
@@ -594,7 +594,8 @@ class TestPreprocessTransformations(Preprocess):
         assert self.validating
         assert self.current_fn == "per_batch_transform_on_device"
         self.val_per_batch_transform_on_device_called = True
-        batch = batch[0]
+        if isinstance(batch, list):
+            batch = batch[0]
         assert torch.equal(batch["a"], tensor([0, 1]))
         assert torch.equal(batch["b"], tensor([1, 2]))
         return [False]
@@ -648,6 +649,8 @@ class CustomModel(Task):
         assert batch is None
 
     def validation_step(self, batch, batch_idx):
+        if isinstance(batch, list):
+            batch = batch[0]
         assert batch is False
 
     def test_step(self, batch, batch_idx):
@@ -824,3 +827,96 @@ def test_dummy_example(tmpdir):
     )
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model)
+
+
+def test_preprocess_transforms(tmpdir):
+    """
+    This test makes sure that when a preprocess is being provided transforms as dictionaries,
+    checking is done properly, and collate_in_worker_from_transform is properly extracted.
+    """
+
+    with pytest.raises(MisconfigurationException, match="Transform should be a dict."):
+        Preprocess(train_transform="choco")
+
+    with pytest.raises(MisconfigurationException, match="train_transform contains {'choco'}. Only"):
+        Preprocess(train_transform={"choco": None})
+
+    preprocess = Preprocess(train_transform={"to_tensor_transform": torch.nn.Linear(1, 1)})
+    # keep is None
+    assert preprocess._train_collate_in_worker_from_transform is True
+    assert preprocess._val_collate_in_worker_from_transform is None
+    assert preprocess._test_collate_in_worker_from_transform is None
+    assert preprocess._predict_collate_in_worker_from_transform is None
+
+    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
+        preprocess = Preprocess(
+            train_transform={
+                "per_batch_transform": torch.nn.Linear(1, 1),
+                "per_sample_transform_on_device": torch.nn.Linear(1, 1)
+            }
+        )
+
+    preprocess = Preprocess(
+        train_transform={"per_batch_transform": torch.nn.Linear(1, 1)},
+        predict_transform={"per_sample_transform_on_device": torch.nn.Linear(1, 1)}
+    )
+    # keep is None
+    assert preprocess._train_collate_in_worker_from_transform is True
+    assert preprocess._val_collate_in_worker_from_transform is None
+    assert preprocess._test_collate_in_worker_from_transform is None
+    assert preprocess._predict_collate_in_worker_from_transform is False
+
+    train_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.TRAINING)
+    val_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.VALIDATING)
+    test_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.TESTING)
+    predict_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.PREDICTING)
+
+    assert train_preprocessor.collate_fn.func == default_collate
+    assert val_preprocessor.collate_fn.func == default_collate
+    assert test_preprocessor.collate_fn.func == default_collate
+    assert predict_preprocessor.collate_fn.func == DataPipeline._identity
+
+    class CustomPreprocess(Preprocess):
+
+        def per_sample_transform_on_device(self, sample: Any) -> Any:
+            return super().per_sample_transform_on_device(sample)
+
+        def per_batch_transform(self, batch: Any) -> Any:
+            return super().per_batch_transform(batch)
+
+    preprocess = CustomPreprocess(
+        train_transform={"per_batch_transform": torch.nn.Linear(1, 1)},
+        predict_transform={"per_sample_transform_on_device": torch.nn.Linear(1, 1)}
+    )
+    # keep is None
+    assert preprocess._train_collate_in_worker_from_transform is True
+    assert preprocess._val_collate_in_worker_from_transform is None
+    assert preprocess._test_collate_in_worker_from_transform is None
+    assert preprocess._predict_collate_in_worker_from_transform is False
+
+    data_pipeline = DataPipeline(preprocess)
+
+    train_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TRAINING)
+    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
+        val_preprocessor = data_pipeline.worker_preprocessor(RunningStage.VALIDATING)
+    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
+        test_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TESTING)
+    predict_preprocessor = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
+
+    assert train_preprocessor.collate_fn.func == default_collate
+    assert predict_preprocessor.collate_fn.func == DataPipeline._identity
+
+
+def test_iterable_auto_dataset(tmpdir):
+
+    class CustomPreprocess(Preprocess):
+
+        def load_sample(self, index: int) -> Dict[str, int]:
+            return {"index": index}
+
+    data_pipeline = DataPipeline(CustomPreprocess())
+
+    ds = IterableAutoDataset(range(10), running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline)
+
+    for index, v in enumerate(ds):
+        assert v == {"index": index}
