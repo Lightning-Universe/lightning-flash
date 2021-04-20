@@ -252,7 +252,6 @@ def test_from_folders_only_train(tmpdir):
     assert img_data.test_dataloader() is None
 
 
-# TODO: not clear this test is ok
 def test_from_folders_train_val(tmpdir):
 
     train_dir = Path(tmpdir / "train")
@@ -269,18 +268,23 @@ def test_from_folders_train_val(tmpdir):
         train_dir,
         val_folder=train_dir,
         test_folder=train_dir,
-        batch_size=1,
+        batch_size=2,
         num_workers=0,
     )
 
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
-    assert list(labels.numpy()) == [0]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [0, 0]
 
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
-    assert list(labels.numpy()) == [0]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [0, 0]
