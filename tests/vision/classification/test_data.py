@@ -246,7 +246,7 @@ def test_categorical_csv_labels(tmpdir):
         assert list(y.numpy()) == list(test_labels.values())[:B]
 
 
-def test_from_folders(tmpdir):
+def test_from_folders_only_train(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
@@ -259,6 +259,7 @@ def test_from_folders(tmpdir):
     _rand_image().save(train_dir / "b" / "2.png")
 
     img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 196, 196)
@@ -267,6 +268,20 @@ def test_from_folders(tmpdir):
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
 
+
+# TODO: not clear this test is ok
+def test_from_folders_train_val(tmpdir):
+
+    train_dir = Path(tmpdir / "train")
+    train_dir.mkdir()
+
+    (train_dir / "a").mkdir()
+    _rand_image().save(train_dir / "a" / "1.png")
+    _rand_image().save(train_dir / "a" / "2.png")
+
+    (train_dir / "b").mkdir()
+    _rand_image().save(train_dir / "b" / "1.png")
+    _rand_image().save(train_dir / "b" / "2.png")
     img_data = ImageClassificationData.from_folders(
         train_dir,
         val_folder=train_dir,
