@@ -15,11 +15,11 @@ from dataclasses import dataclass
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities import imports
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, IterableDataset
 from torch.utils.data._utils.collate import default_collate, default_convert
@@ -27,7 +27,6 @@ from torch.utils.data._utils.collate import default_collate, default_convert
 from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.process import Postprocess, Preprocess, Serializer, ProcessState
-# from flash.data.state import Stateful
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
@@ -35,21 +34,30 @@ if TYPE_CHECKING:
 
 
 class DataPipelineState:
+    """A class to store and share all process states once a :class:`.DataPipeline` has been initialized."""
+
     def __init__(self):
         self._state: Dict[Type[ProcessState], ProcessState] = {}
         self._initialized = False
 
     def set_state(self, state: ProcessState):
+        """Add the given :class:`.ProcessState` to the :class:`.DataPipelineState`."""
+
         if not self._initialized:
             self._state[type(state)] = state
         else:
-            pass  # TODO: Warn or error here
+            rank_zero_warn(
+                f"Attempted to add a state ({state}) after the data pipeline has already been initialized. This will"
+                " only have an effect when a new data pipeline is created.", UserWarning
+            )
 
     def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
+        """Get the :class:`.ProcessState` of the given type from the :class:`.DataPipelineState`."""
+
         if state_type in self._state:
             return self._state[state_type]
         else:
-            return None  # TODO: something better here?
+            return None
 
 
 class DataPipeline:
@@ -92,6 +100,9 @@ class DataPipeline:
         self._running_stage = None
 
     def initialize(self):
+        """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
+        :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
+        give a warning."""
         data_pipeline_state = DataPipelineState()
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)

@@ -21,12 +21,14 @@ from flash.core.model import Task
 from flash.data.process import Serializer, ProcessState
 
 
-@dataclass()
+@dataclass(unsafe_hash=True, frozen=True)
 class ClassificationState(ProcessState):
-    classes: List[str]
+
+    labels: List[str]
 
 
 class ClassificationTask(Task):
+
     def __init__(
             self,
             *args,
@@ -40,24 +42,36 @@ class ClassificationTask(Task):
 
 
 class Logits(Serializer):
+    """A :class:`.Serializer` which simply converts the model outputs (assumed to be logits) to a list."""
 
     def serialize(self, sample: Any) -> Any:
         return sample.tolist()
 
 
 class Probabilities(Serializer):
+    """A :class:`.Serializer` which applies a softmax to the model outputs (assumed to be logits) and converts to a
+    list."""
 
     def serialize(self, sample: Any) -> Any:
         return torch.softmax(sample, -1).tolist()
 
 
 class Classes(Serializer):
+    """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
+    converts to a list."""
 
     def serialize(self, sample: Any) -> Union[int, List[int]]:
         return torch.argmax(sample, -1).tolist()
 
 
 class Labels(Classes):
+    """A :class:`.Serializer` which converts the model outputs (either logits or probabilities) to the label of the
+    argmax classification.
+
+    Args:
+        labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
+            provided, will attempt to get them from the :class:`.ClassificationState`.
+    """
 
     def __init__(self, labels: Optional[List[str]] = None):
         super().__init__()
@@ -69,7 +83,7 @@ class Labels(Classes):
         else:
             state = self.get_state(ClassificationState)
             if state is not None:
-                labels = state.classes
+                labels = state.labels
             else:
                 raise ValueError  # TODO: Better error
 

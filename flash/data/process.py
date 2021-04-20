@@ -30,10 +30,10 @@ if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipelineState
 
 
-@dataclass()
+@dataclass(unsafe_hash=True, frozen=True)
 class ProcessState:
     """
-    Base class for all data pipeline states
+    Base class for all process states
     """
     pass
 
@@ -46,8 +46,7 @@ class Properties:
     _running_stage: Optional[RunningStage] = None
     _current_fn: Optional[str] = None
     _data_pipeline_state: Optional['DataPipelineState'] = None
-
-    state: Dict[Type[ProcessState], ProcessState] = {}
+    _state: Dict[Type[ProcessState], ProcessState] = {}
 
     def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
         if self._data_pipeline_state is not None:
@@ -64,6 +63,14 @@ class Properties:
         self._data_pipeline_state = data_pipeline_state
         for state in self.state.values():
             self._data_pipeline_state.set_state(state)
+
+    @property
+    def state(self) -> Dict[Type[ProcessState], ProcessState]:
+        return self._state
+
+    @state.setter
+    def state(self, state: Dict[Type[ProcessState], ProcessState]):
+        self._state = state
 
     @property
     def current_fn(self) -> Optional[str]:
@@ -507,15 +514,19 @@ class Postprocess(Properties, Module):
 
 
 class Serializer(Properties):
+    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model ouptut into
+    the desired output format when predicting."""
 
     def __init__(self):
         super().__init__()
         self._is_enabled = True
 
     def enable(self):
+        """Enable serialization."""
         self._is_enabled = True
 
     def disable(self):
+        """Disable serialization."""
         self._is_enabled = False
 
     def serialize(self, sample: Any) -> Any:
@@ -529,6 +540,8 @@ class Serializer(Properties):
 
 
 class SerializerMapping(Serializer):
+    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the dictionary
+    to be passed to it's own :class:`.Serializer`."""
 
     def __init__(self, serializers: Mapping[str, Serializer]):
         super().__init__()
@@ -541,3 +554,16 @@ class SerializerMapping(Serializer):
         else:
             # TODO: some error here
             pass
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        for serializer in self._serializers.values():
+            serializer.attach_data_pipeline_state(data_pipeline_state)
+
+    @property
+    def state(self) -> Dict[str, Dict[Type[ProcessState], ProcessState]]:
+        return {key: serializer.state for key, serializer in self._serializers.items()}
+
+    @state.setter
+    def state(self, state: Dict[str, Dict[Type[ProcessState], ProcessState]]):
+        for key, serializer in self._serializers.items():
+            serializer.state = state[key]
