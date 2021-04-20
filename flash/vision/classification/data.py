@@ -86,9 +86,11 @@ class ImageClassificationPreprocess(Preprocess):
             # labels might not contain the complete set of ids so that you can infer the total
             # number of classes to train in your dataset.
             dataset.num_classes = len(data)
-            out: List[str, int] = []
+            out: List[Tuple[str, int]] = []
             for p, label in data:
                 if os.path.isdir(p):
+                    # TODO: there is an issue here when a path is provided along with labels.
+                    # os.listdir cannot assure the same file order as the passed labels list.
                     files_list: List[str] = os.listdir(p)
                     if len(files_list) > 1:
                         raise ValueError(
