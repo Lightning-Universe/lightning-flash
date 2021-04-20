@@ -16,12 +16,12 @@ from typing import Any, Iterable, Optional
 
 import pandas as pd
 import torch
+import torchvision.transforms.functional as T
+from torchvision.utils import make_grid
 
-import flash
 from flash import Trainer
-from flash.core.classification import Classes
-from flash.core.finetuning import FreezeUnfreeze
 from flash.data.auto_dataset import AutoDataset
+from flash.data.base_viz import BaseVisualization
 from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 from flash.vision.classification.data import ImageClassificationPreprocess
@@ -56,48 +56,47 @@ class CustomMultiLabelPreprocess(ImageClassificationPreprocess):
         return list(zip(images, labels))
 
 
-# 3. Load the data
-datamodule = ImageClassificationData.from_folders(
+# 3a. Define our custom visualisation and datamodule
+class CustomViz(BaseVisualization):
+
+    def show_per_batch_transform(self, batch: Any, _):
+        images, labels = batch[0]
+        image = make_grid(images, nrow=2)
+        image = T.to_pil_image(image, 'RGB')
+        image.show()
+
+
+class CustomImageClassificationData(ImageClassificationData):
+
+    @classmethod
+    def configure_data_fetcher(cls):
+        return CustomViz()
+
+
+# 3b. Load the data
+datamodule = CustomImageClassificationData.from_folders(
     train_folder="data/multi_label/train/",
     val_folder="data/multi_label/val/",
     test_folder="data/multi_label/test/",
     preprocess=CustomMultiLabelPreprocess(),
 )
 
-# 4. Build the model
-model = ImageClassifier(
-    backbone="resnet18",
-    num_classes=datamodule.num_classes,
-    multi_label=True,
-)
+# 3c. Show some data!
+datamodule.show_train_batch()
 
-# 5. Create the trainer.
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
+# 4. Load the model from a checkpoint
+model = ImageClassifier.load_from_checkpoint("../finetuning/image_classification_multi_label_model.pt")
 
-# 6. Train the model
-trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
-
-# 7a. Predict what's on a few images!
-
-# Serialize predictions as classes.
-model.serializer = Classes(multi_label=True)
-
+# 5a. Predict what's on a few images! ants or bees?
 predictions = model.predict([
     "data/multi_label/val/tt0107111.jpg",
     "data/multi_label/val/tt0107199.jpg",
     "data/multi_label/val/tt0107606.jpg",
 ])
-
 print(predictions)
 
-datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/multi_label/predict/",
-    preprocess=model.preprocess,
-)
+# 5b. Or generate predictions with a whole folder!
+datamodule = ImageClassificationData.from_folders(predict_folder="data/multi_label/predict/")
 
-# 7b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
-
-# 8. Save it!
-trainer.save_checkpoint("image_classification_multi_label_model.pt")
