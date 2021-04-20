@@ -350,14 +350,18 @@ class Task(LightningModule):
         # https://pytorch.org/docs/stable/notes/serialization.html
         if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
             checkpoint['data_pipeline'] = self.data_pipeline
-            checkpoint['data_pipeline_state'] = checkpoint['data_pipeline'].state
+
+            if 'data_pipeline_state' not in checkpoint:
+                checkpoint['data_pipeline_state'] = checkpoint['data_pipeline'].state
         super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)
         if 'data_pipeline' in checkpoint:
             data_pipeline = checkpoint['data_pipeline']
-            data_pipeline.state = checkpoint['data_pipeline_state']
+
+            if 'data_pipeline_state' in checkpoint:
+                data_pipeline.state = checkpoint['data_pipeline_state']
             self.data_pipeline = data_pipeline
 
     @classmethod
