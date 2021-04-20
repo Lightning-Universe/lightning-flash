@@ -66,7 +66,7 @@ class ImageEmbedder(Task):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            default_preprocess=ImageClassificationPreprocess(
+            preprocess=ImageClassificationPreprocess(
                 predict_transform=ImageClassificationData.default_val_transforms(),
             )
         )
@@ -98,7 +98,7 @@ class ImageEmbedder(Task):
             x = self.pooling_fn(x, dim=-1)
         return x
 
-    def forward(self, x) -> Any:
+    def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
 
         # bolts ssl models return lists

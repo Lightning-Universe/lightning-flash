@@ -60,8 +60,8 @@ class Task(LightningModule):
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`.
-        default_preprocess: :class:`.Preprocess` to use as the default for this task.
-        default_postprocess: :class:`.Postprocess` to use as the default for this task.
+        preprocess: :class:`~flash.data.process.Preprocess` to use as the default for this task.
+        postprocess: :class:`~flash.data.process.Postprocess` to use as the default for this task.
     """
 
     def __init__(
@@ -71,8 +71,8 @@ class Task(LightningModule):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-        default_preprocess: Preprocess = None,
-        default_postprocess: Postprocess = None,
+        preprocess: Preprocess = None,
+        postprocess: Postprocess = None,
     ):
         super().__init__()
         if model is not None:
@@ -84,8 +84,8 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._preprocess = default_preprocess
-        self._postprocess = default_postprocess
+        self._preprocess = preprocess
+        self._postprocess = postprocess
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -181,17 +181,19 @@ class Task(LightningModule):
         new_preprocess: Optional[Preprocess],
         new_postprocess: Optional[Postprocess],
     ) -> Tuple[Optional[Preprocess], Optional[Postprocess]]:
-        """Resolves the correct :class:`.Preprocess` and :class:`.Postprocess` to use, choosing ``new_*`` if it is not
-        None or a base class (:class:`.Preprocess` or :class:`.Postprocess`) and ``old_*`` otherwise.
+        """Resolves the correct :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` to use,
+        choosing ``new_*`` if it is not None or a base class
+        (:class:`~flash.data.process.Preprocess` or :class:`~flash.data.process.Postprocess`)
+        and ``old_*`` otherwise.
 
         Args:
-            old_preprocess: :class:`.Preprocess` to be overridden.
-            old_postprocess: :class:`.Postprocess` to be overridden.
-            new_preprocess: :class:`.Preprocess` to override with.
-            new_postprocess: :class:`.Postprocess` to override with.
+            old_preprocess: :class:`~flash.data.process.Preprocess` to be overridden.
+            old_postprocess: :class:`~flash.data.process.Postprocess` to be overridden.
+            new_preprocess: :class:`~flash.data.process.Preprocess` to override with.
+            new_postprocess: :class:`~flash.data.process.Postprocess` to override with.
 
         Returns:
-            The resolved :class:`.Preprocess` and :class:`.Postprocess`.
+            The resolved :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
         """
         preprocess = old_preprocess
         if new_preprocess is not None and type(new_preprocess) != Preprocess:
@@ -204,7 +206,8 @@ class Task(LightningModule):
         return preprocess, postprocess
 
     def build_data_pipeline(self, data_pipeline: Optional[DataPipeline] = None) -> Optional[DataPipeline]:
-        """Build a :class:`.DataPipeline` incorporating available :class:`.Preprocess` and :class:`.Postprocess`
+        """Build a :class:`.DataPipeline` incorporating available
+        :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`
         objects. These will be overridden in the following resolution order (lowest priority first):
 
         - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
@@ -213,7 +216,8 @@ class Task(LightningModule):
         - :class:`.DataPipeline` passed to this method.
 
         Args:
-            data_pipeline: Optional highest priority source of :class:`.Preprocess` and :class:`.Postprocess`.
+            data_pipeline: Optional highest priority source of
+                :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
 
         Returns:
             The fully resolved :class:`.DataPipeline`.
