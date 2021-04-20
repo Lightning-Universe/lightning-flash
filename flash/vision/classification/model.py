@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationTask, Classes
 from flash.core.registry import FlashRegistry
 from flash.data.process import Preprocess, Serializer
-from flash.vision.classification.data import ImageClassificationPreprocess
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.vision.classification.data import ImageClassificationPreprocess
+
+
+def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
+    return F.binary_cross_entropy_with_logits(x, y.float())
 
 
 class ImageClassifier(ClassificationTask):
@@ -59,6 +64,7 @@ class ImageClassifier(ClassificationTask):
         metrics: Metrics to compute for training and evaluation,
             defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        multi_label: Whether the labels are multi labels or not.
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
@@ -70,13 +76,21 @@ class ImageClassifier(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: bool = True,
-        loss_fn: Callable = F.cross_entropy,
+        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
+        metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
         learning_rate: float = 1e-3,
+        multi_label: bool = False,
         preprocess: Optional[Preprocess] = None,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+
+        if metrics is None:
+            metrics = Accuracy(subset_accuracy=multi_label)
+
+        if loss_fn is None:
+            loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
+
         super().__init__(
             model=None,
             loss_fn=loss_fn,
@@ -84,7 +98,7 @@ class ImageClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             preprocess=preprocess or ImageClassificationPreprocess(),
-            serializer=serializer,
+            serializer=serializer or Classes(multi_label=multi_label),
         )
 
         self.save_hyperparameters()
@@ -104,6 +118,6 @@ class ImageClassifier(ClassificationTask):
             nn.Linear(num_features, num_classes),
         )
 
-    def forward(self, x) -> Any:
+    def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
-        return torch.softmax(self.head(x), -1)
+        return self.head(x)

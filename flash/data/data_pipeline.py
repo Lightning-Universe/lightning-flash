@@ -414,7 +414,7 @@ class DataPipeline:
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
         if postprocess._save_path:
             save_per_sample: bool = self._is_overriden_recursive(
-                "save_sample", postprocess, object_type=Postprocess, prefix=_STAGES_PREFIX[stage]
+                "save_sample", postprocess, Postprocess, prefix=_STAGES_PREFIX[stage]
             )
 
             if save_per_sample:

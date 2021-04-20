@@ -16,9 +16,10 @@ from typing import Any, List, Mapping, Optional, Union
 
 import torch
 import torch.nn.functional as F
+from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.model import Task
-from flash.data.process import Serializer, ProcessState
+from flash.data.process import Postprocess, Preprocess, ProcessState, Serializer
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -38,29 +39,52 @@ class ClassificationTask(Task):
         super().__init__(*args, serializer=serializer or Classes(), **kwargs)
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+        if getattr(self.hparams, "multi_label", False):
+            return F.sigmoid(x)
         return F.softmax(x, -1)
 
 
-class Logits(Serializer):
+class ClassificationSerializer(Serializer):
+    """A base class for classification serializers.
+
+    Args:
+        multi_label: If true, treats outputs as multi label logits.
+    """
+
+    def __init__(self, multi_label: bool = False):
+        super().__init__()
+
+        self._mutli_label = multi_label
+
+    @property
+    def multi_label(self) -> bool:
+        return True
+
+
+class Logits(ClassificationSerializer):
     """A :class:`.Serializer` which simply converts the model outputs (assumed to be logits) to a list."""
 
     def serialize(self, sample: Any) -> Any:
         return sample.tolist()
 
 
-class Probabilities(Serializer):
+class Probabilities(ClassificationSerializer):
     """A :class:`.Serializer` which applies a softmax to the model outputs (assumed to be logits) and converts to a
     list."""
 
     def serialize(self, sample: Any) -> Any:
+        if self.multi_label:
+            return torch.sigmoid(sample).tolist()
         return torch.softmax(sample, -1).tolist()
 
 
-class Classes(Serializer):
+class Classes(ClassificationSerializer):
     """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list."""
 
     def serialize(self, sample: Any) -> Union[int, List[int]]:
+        if self.multi_label:
+            return torch.round(sample).tolist()  # TODO: Add optional threshold to use?
         return torch.argmax(sample, -1).tolist()
 
 
@@ -74,20 +98,26 @@ class Labels(Classes):
     """
 
     def __init__(self, labels: Optional[List[str]] = None):
-        super().__init__()
+        super().__init__(multi_label=False)  # TODO: Add support for multi-label
         self._labels = labels
 
     def serialize(self, sample: Any) -> Union[str, List[str]]:
+        labels = None
+
         if self._labels is not None:
             labels = self._labels
         else:
             state = self.get_state(ClassificationState)
             if state is not None:
                 labels = state.labels
-            else:
-                raise ValueError  # TODO: Better error
 
-        argmax = super().serialize(sample)
-        if isinstance(argmax, List):
-            return [labels[i] for i in argmax]
-        return labels[argmax]
+        classes = super().serialize(sample)
+
+        if labels is not None:
+            if isinstance(classes, List):
+                return [labels[i] for i in classes]
+            return labels[classes]
+        else:
+            rank_zero_warn(
+                "No ClassificationState was found, this serializer will act as a Classes serializer.", UserWarning
+            )
