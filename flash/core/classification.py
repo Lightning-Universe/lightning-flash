@@ -101,7 +101,7 @@ class Labels(Classes):
         super().__init__(multi_label=False)  # TODO: Add support for multi-label
         self._labels = labels
 
-    def serialize(self, sample: Any) -> Union[str, List[str]]:
+    def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
 
         if self._labels is not None:
@@ -121,3 +121,4 @@ class Labels(Classes):
             rank_zero_warn(
                 "No ClassificationState was found, this serializer will act as a Classes serializer.", UserWarning
             )
+            return classes

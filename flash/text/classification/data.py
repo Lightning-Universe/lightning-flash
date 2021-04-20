@@ -21,6 +21,7 @@ from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 from transformers.modeling_outputs import SequenceClassifierOutput
 
+from flash.core.classification import ClassificationState
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.process import Postprocess, Preprocess
@@ -79,6 +80,11 @@ class TextClassificationPreprocess(Preprocess):
             truncation=True,
             padding="max_length"
         )
+
+        class_to_label_mapping = ['CLASS_UNKNOWN'] * (max(self.label_to_class_mapping.values()) + 1)
+        for label, cls in self.label_to_class_mapping.items():
+            class_to_label_mapping[cls] = label
+        self.set_state(ClassificationState(class_to_label_mapping))
 
     def per_batch_transform(self, batch: Any) -> Any:
         if "labels" not in batch:
