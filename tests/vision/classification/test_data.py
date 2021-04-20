@@ -37,28 +37,28 @@ def test_from_filepaths_smoke(tmpdir):
 
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
-    _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
-
-    _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
+    _rand_image().save(tmpdir / "a_1.png")
+    _rand_image().save(tmpdir / "b_1.png")
 
     img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_labels=[0, 1],
+        train_filepaths=[tmpdir / "a_1.png", tmpdir / "b_1.png"],
+        train_labels=[1, 2],
         batch_size=2,
         num_workers=0,
     )
+    assert img_data.train_dataloader() is not None
+    assert img_data.val_dataloader() is None
+    assert img_data.test_dataloader() is None
+
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, )
+    assert 1 in list(labels.numpy())
+    assert 2 in list(labels.numpy())
 
-    assert img_data.val_dataloader() is None
-    assert img_data.test_dataloader() is None
 
-
-def test_from_filepaths_list_paths(tmpdir):
+def test_from_filepaths_list_image_paths(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "e").mkdir()

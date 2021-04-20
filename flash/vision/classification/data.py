@@ -80,7 +80,7 @@ class ImageClassificationPreprocess(Preprocess):
 
     @classmethod
     def _load_data_dir(cls, data: Any, dataset: Optional[AutoDataset] = None) -> List[Tuple[str, int]]:
-        # case where we pass a list of: directories, files ?
+        # case where we pass a list of files
         if isinstance(data, list):
             # TODO: define num_classes elsewhere. This is a bad assumption since the list of
             # labels might not contain the complete set of ids so that you can infer the total
@@ -100,12 +100,11 @@ class ImageClassificationPreprocess(Preprocess):
                     for f in files_list:
                         if has_file_allowed_extension(f, IMG_EXTENSIONS):
                             out.append([os.path.join(p, f), label])
-                elif os.path.isfile(p) and has_file_allowed_extension(p, IMG_EXTENSIONS):
+                elif os.path.isfile(p) and has_file_allowed_extension(str(p), IMG_EXTENSIONS):
                     out.append([p, label])
                 else:
                     raise TypeError(f"Unexpected file path type: {p}.")
             return out
-        # case where we pass a single directory ?
         else:
             classes, class_to_idx = cls._find_classes(data)
             # TODO: define num_classes elsewhere. This is a bad assumption since the list of
