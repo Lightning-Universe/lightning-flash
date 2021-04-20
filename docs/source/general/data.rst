@@ -122,7 +122,7 @@ Example::
         train_folder="data/hymenoptera_data/train/",
         val_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
-        preprocess_cls=CustomImageClassificationPreprocess
+        preprocess=CustomImageClassificationPreprocess(),
     )
 
 
@@ -157,7 +157,7 @@ Example::
         val_folder="./data/val",
         test_folder="./data/test",
         predict_folder="./data/predict",
-        preprocess=preprocess
+        preprocess=preprocess,
     )
 
     model = ImageClassifier(...)
@@ -176,9 +176,6 @@ Example::
 
     class ImageClassificationDataModule(DataModule):
 
-        # Set ``preprocess_cls`` with your custom ``preprocess``.
-        preprocess_cls = ImageClassificationPreprocess
-
         @classmethod
         def from_folders(
             cls,
@@ -190,7 +187,8 @@ Example::
             **kwargs
         ):
 
-            preprocess = preprocess or cls.preprocess_cls()
+            # Set a custom ``Preprocess`` if none was provided
+            preprocess = preprocess or ImageClassificationPreprocess()
 
             # {stage}_load_data_input will be given to your
             # ``Preprocess`` ``{stage}_load_data`` function.
