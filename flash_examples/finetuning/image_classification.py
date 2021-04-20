@@ -57,6 +57,8 @@ trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
 
 # 7a. Predict what's on a few images! ants or bees?
+
+# Serialize predictions as lables, automatically inferred from the training data in part 2.
 model.serializer = Labels()
 
 predictions = model.predict([
