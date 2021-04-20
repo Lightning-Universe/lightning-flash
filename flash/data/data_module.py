@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -92,6 +92,9 @@ class DataModule(pl.LightningDataModule):
         # this may also trigger data preloading
         self.set_running_stages()
 
+        # buffer to store the functions to visualise
+        self._fcn_white_list: Dict[str, Set[str]] = {}
+
     @property
     def train_dataset(self) -> Optional[Dataset]:
         """This property returns the train dataset"""
@@ -164,25 +167,35 @@ class DataModule(pl.LightningDataModule):
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
             data_fetcher: BaseVisualization = self.data_fetcher
+            # list of functions to visualise
+            data_fetcher._fcn_white_list = self._fcn_white_list
             data_fetcher._show(stage)
             if reset:
                 self.viz.batches[stage] = {}
 
-    def show_train_batch(self, reset: bool = True) -> None:
+    def show_train_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the train dataloader."""
-        self._show_batch(_STAGES_PREFIX[RunningStage.TRAINING], reset=reset)
+        stage_name: str = _STAGES_PREFIX[RunningStage.TRAINING]
+        self._fcn_white_list[stage_name] = name
+        self._show_batch(stage_name, reset=reset)
 
-    def show_val_batch(self, reset: bool = True) -> None:
+    def show_val_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the validation dataloader."""
-        self._show_batch(_STAGES_PREFIX[RunningStage.VALIDATING], reset=reset)
+        stage_name: str = _STAGES_PREFIX[RunningStage.VALIDATING]
+        self._fcn_white_list[stage_name] = name
+        self._show_batch(stage_name, reset=reset)
 
-    def show_test_batch(self, reset: bool = True) -> None:
+    def show_test_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the test dataloader."""
-        self._show_batch(_STAGES_PREFIX[RunningStage.TESTING], reset=reset)
+        stage_name: str = _STAGES_PREFIX[RunningStage.TESTING]
+        self._fcn_white_list[stage_name] = name
+        self._show_batch(stage_name, reset=reset)
 
-    def show_predict_batch(self, reset: bool = True) -> None:
+    def show_predict_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the predict dataloader."""
-        self._show_batch(_STAGES_PREFIX[RunningStage.PREDICTING], reset=reset)
+        stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
+        self._fcn_white_list[stage_name] = name
+        self._show_batch(stage_name, reset=reset)
 
     @staticmethod
     def get_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, default: Optional[Any] = None) -> Any:

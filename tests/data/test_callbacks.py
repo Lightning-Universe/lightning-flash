@@ -25,7 +25,7 @@ from torch import tensor
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.utils import _STAGES_PREFIX
+from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.vision import ImageClassificationData
 
 
@@ -144,8 +144,9 @@ def test_base_viz(tmpdir):
 
     for stage in _STAGES_PREFIX.values():
 
-        for _ in range(10):
-            getattr(dm, f"show_{stage}_batch")(reset=False)
+        for fcn_name in _PREPROCESS_FUNCS:
+            fcn = getattr(dm, f"show_{stage}_batch")
+            fcn(fcn_name, reset=False)
 
         is_predict = stage == "predict"
 

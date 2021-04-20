@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Sequence, Set
 
 from pytorch_lightning.trainer.states import RunningStage
 
@@ -101,7 +101,13 @@ class BaseVisualization(BaseDataFetcher):
         """
         Override this function when you want to visualize a composition.
         """
-        for func_name in _PREPROCESS_FUNCS:
+        # filter out the functions to visualise
+        func_name: str = self._fcn_white_list[running_stage]
+        func_names_list: Set[str] = list(set([func_name]) & set(_PREPROCESS_FUNCS))
+        if len(func_names_list) == 0:
+            raise ValueError(f"Invalid function name: {func_name}.")
+
+        for func_name in func_names_list:
             hook_name = f"show_{func_name}"
             if _is_overriden(hook_name, self, BaseVisualization):
                 getattr(self, hook_name)(batch[func_name], running_stage)

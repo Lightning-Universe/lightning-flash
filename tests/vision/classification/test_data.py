@@ -121,7 +121,7 @@ def test_from_filepaths_visualise(tmpdir):
         batch_size=2,
     )
     dm.show_train_batch()
-    dm.show_val_batch()
+    dm.show_val_batch("pre_tensor_transform")
     dm.show_test_batch()
     # dm.show()
 
