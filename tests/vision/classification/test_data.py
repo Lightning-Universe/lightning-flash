@@ -103,52 +103,6 @@ def test_from_filepaths_list_image_paths(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-def test_from_filepaths_list_directories(tmpdir):
-    tmpdir = Path(tmpdir)
-
-    (tmpdir / "c").mkdir()
-    (tmpdir / "d").mkdir()
-    _rand_image().save(tmpdir / "c" / "c_1.png")
-    _rand_image().save(tmpdir / "d" / "d_1.png")
-
-    (tmpdir / "e").mkdir()
-    (tmpdir / "f").mkdir()
-    _rand_image().save(tmpdir / "e" / "e_1.png")
-    _rand_image().save(tmpdir / "f" / "f_1.png")
-
-    img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "c", tmpdir / "d", tmpdir / "e"],
-        train_labels=[0, 3, 6],
-        val_filepaths=[tmpdir / "c", tmpdir / "e", tmpdir / "f"],
-        val_labels=[1, 4, 7],
-        test_filepaths=[tmpdir / "d", tmpdir / "f", tmpdir / "c"],
-        test_labels=[2, 5, 8],
-        batch_size=2,
-        num_workers=0,
-    )
-
-    # check training data
-    data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
-    assert sorted(list(labels.numpy())) == [0, 3]
-
-    # check validation data
-    data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
-    assert list(labels.numpy()) == [1, 4]
-
-    # check test data
-    data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
-    assert list(labels.numpy()) == [2, 5]
-
-
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
