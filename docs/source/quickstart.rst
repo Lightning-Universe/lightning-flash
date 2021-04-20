@@ -15,7 +15,7 @@ For getting started with Deep Learning
 
 Easy to learn
 ^^^^^^^^^^^^^
-If you are just getting started with deep learning, Flash offers common deep learning tasks you can use out-of-the-box in a few lines of code, no math, fancy nn.Modules or research experience required! 
+If you are just getting started with deep learning, Flash offers common deep learning tasks you can use out-of-the-box in a few lines of code, no math, fancy nn.Modules or research experience required!
 
 Easy to scale
 ^^^^^^^^^^^^^
@@ -70,7 +70,7 @@ You can install flash using pip or conda:
 Tasks
 =====
 
-Flash is comprised of a collection of Tasks. The Flash tasks are laser-focused objects designed to solve a well-defined type of problem, using state-of-the-art methods. 
+Flash is comprised of a collection of Tasks. The Flash tasks are laser-focused objects designed to solve a well-defined type of problem, using state-of-the-art methods.
 
 The Flash tasks contain all the relevant information to solve the task at hand- the number of class labels you want to predict, number of columns in your dataset, as well as details on the model architecture used such as loss function, optimizers, etc.
 
