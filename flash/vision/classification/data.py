@@ -158,7 +158,7 @@ class ImageClassificationPreprocess(Preprocess):
         cls,
         data: Any,
         dataset: Optional[AutoDataset] = None,
-    ) -> Tuple[List[str], List[Tuple[str, int]]]:
+    ) -> Tuple[Optional[List[str]], List[Tuple[str, int]]]:
         if isinstance(data, list):
             dataset.num_classes = len(data)
             out = []
@@ -169,7 +169,7 @@ class ImageClassificationPreprocess(Preprocess):
                             out.append([os.path.join(p, f), label])
                 elif os.path.isfile(p) and has_file_allowed_extension(p, IMG_EXTENSIONS):
                     out.append([p, label])
-            return out
+            return None, out
         else:
             classes, class_to_idx = cls._find_classes(data)
             dataset.num_classes = len(classes)

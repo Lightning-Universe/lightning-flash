@@ -19,13 +19,13 @@ import torch.nn.functional as F
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.model import Task
-from flash.data.process import Postprocess, Preprocess, ProcessState, Serializer
+from flash.data.process import ProcessState, Serializer
 
 
 @dataclass(unsafe_hash=True, frozen=True)
 class ClassificationState(ProcessState):
 
-    labels: List[str]
+    labels: Optional[List[str]]
 
 
 class ClassificationTask(Task):
