@@ -82,14 +82,19 @@ class Classes(ClassificationSerializer):
     """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list."""
 
-    def __init__(self, multi_label: bool = False, threshold: float = 0.0):
+    def __init__(self, multi_label: bool = False, threshold: float = 0.5):
         super().__init__(multi_label)
 
         self.threshold = threshold
 
-    def serialize(self, sample: Any) -> int:
+    def serialize(self, sample: Any) -> Union[int, List[int]]:
         if self.multi_label:
-            return (sample > self.threshold).int().tolist()
+            one_hot = (sample.sigmoid() > self.threshold).int().tolist()
+            result = []
+            for index, value in enumerate(one_hot):
+                if value == 1:
+                    result.append(index)
+            return result
         return torch.argmax(sample, -1).tolist()
 
 
@@ -102,11 +107,11 @@ class Labels(Classes):
             provided, will attempt to get them from the :class:`.ClassificationState`.
     """
 
-    def __init__(self, labels: Optional[List[str]] = None):
-        super().__init__(multi_label=False)  # TODO: Add support for multi-label
+    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False):
+        super().__init__(multi_label=multi_label)
         self._labels = labels
 
-    def serialize(self, sample: Any) -> Union[int, str]:
+    def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
 
         if self._labels is not None:
@@ -116,12 +121,14 @@ class Labels(Classes):
             if state is not None:
                 labels = state.labels
 
-        cls = super().serialize(sample)
+        classes = super().serialize(sample)
 
         if labels is not None:
-            return labels[cls]
+            if self.multi_label:
+                return [labels[cls] for cls in classes]
+            return labels[classes]
         else:
             rank_zero_warn(
                 "No ClassificationState was found, this serializer will act as a Classes serializer.", UserWarning
             )
-            return cls
+            return classes

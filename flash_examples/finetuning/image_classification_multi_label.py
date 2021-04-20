@@ -19,7 +19,7 @@ import torch
 
 import flash
 from flash import Trainer
-from flash.core.classification import Classes
+from flash.core.classification import Labels
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.auto_dataset import AutoDataset
 from flash.data.utils import download_data
@@ -79,8 +79,8 @@ trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_
 
 # 7a. Predict what's on a few images!
 
-# Serialize predictions as classes.
-model.serializer = Classes(multi_label=True)
+# Serialize predictions as labels.
+model.serializer = Labels(CustomMultiLabelPreprocess.genres, multi_label=True)
 
 predictions = model.predict([
     "data/movie_posters/val/tt0361500.jpg",
