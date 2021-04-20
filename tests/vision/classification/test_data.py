@@ -135,7 +135,6 @@ def test_from_filepaths_list_directories(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-#@pytest.mark.skip(reason="fix first other tests")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 

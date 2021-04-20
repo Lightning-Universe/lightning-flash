@@ -27,6 +27,7 @@ from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIO
 from flash.core.utils import _is_overriden
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
+from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
@@ -256,7 +257,7 @@ class ImageClassificationData(DataModule):
             self.set_dataset_attribute(self._predict_ds, 'num_classes', self.num_classes)
 
     @staticmethod
-    def configure_data_fetcher(*args, **kwargs) -> 'BaseDataFetcher':
+    def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return _MatplotlibVisualization(*args, **kwargs)
 
     @staticmethod
