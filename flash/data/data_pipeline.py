@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
 import functools
 import inspect
 import weakref
@@ -26,7 +25,7 @@ from torch.utils.data._utils.collate import default_collate, default_convert
 
 from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
-from flash.data.process import Postprocess, Preprocess, Serializer, ProcessState
+from flash.data.process import Postprocess, Preprocess, ProcessState, Serializer
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
@@ -87,10 +86,10 @@ class DataPipeline:
     POSTPROCESS_FUNCS: Set[str] = _POSTPROCESS_FUNCS
 
     def __init__(
-            self,
-            preprocess: Optional[Preprocess] = None,
-            postprocess: Optional[Postprocess] = None,
-            serializer: Optional[Serializer] = None,
+        self,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
+        serializer: Optional[Serializer] = None,
     ) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
