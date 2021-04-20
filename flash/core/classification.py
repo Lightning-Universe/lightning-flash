@@ -82,9 +82,14 @@ class Classes(ClassificationSerializer):
     """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list."""
 
+    def __init__(self, multi_label: bool = False, threshold: float = 0.0):
+        super().__init__(multi_label)
+
+        self.threshold = threshold
+
     def serialize(self, sample: Any) -> int:
         if self.multi_label:
-            return torch.round(sample).tolist()  # TODO: Add optional threshold to use?
+            return (sample > self.threshold).int().tolist()
         return torch.argmax(sample, -1).tolist()
 
 
