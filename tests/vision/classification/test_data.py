@@ -157,7 +157,7 @@ def test_from_filepaths_visualise(tmpdir):
     _rand_image().save(tmpdir / "a" / "a_1.png")
     _rand_image().save(tmpdir / "b" / "b_1.png")
 
-    data_viz = ImageClassificationData.from_filepaths(
+    dm = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
         train_labels=[0, 1],
         val_filepaths=[tmpdir / "b", tmpdir / "a"],
@@ -166,10 +166,10 @@ def test_from_filepaths_visualise(tmpdir):
         test_labels=[2, 1],
         batch_size=2,
     )
-    data_viz.show_train_batch()
-    data_viz.show_val_batch()
-    data_viz.show_test_batch()
-    # data_viz.show()
+    dm.show_train_batch()
+    dm.show_val_batch()
+    dm.show_test_batch()
+    # dm.show()
 
 
 def test_categorical_csv_labels(tmpdir):
