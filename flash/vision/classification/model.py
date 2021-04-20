@@ -115,7 +115,4 @@ class ImageClassifier(ClassificationTask):
 
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
-        if self.hparams.multi_label:
-            return self.head(x)
-        else:
-            return torch.softmax(self.head(x), -1)
+        return self.head(x)
