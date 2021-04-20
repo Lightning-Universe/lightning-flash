@@ -73,9 +73,9 @@ class ImageClassifier(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: bool = True,
-        loss_fn: Callable = None,
+        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
+        metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
     ):
