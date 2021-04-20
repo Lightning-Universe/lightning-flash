@@ -102,16 +102,12 @@ def test_from_filepaths_list_directories(tmpdir):
     (tmpdir / "c").mkdir()
     (tmpdir / "d").mkdir()
     _rand_image().save(tmpdir / "c" / "c_1.png")
-    _rand_image().save(tmpdir / "c" / "c_2.png")
     _rand_image().save(tmpdir / "d" / "d_1.png")
-    _rand_image().save(tmpdir / "d" / "d_2.png")
 
     (tmpdir / "e").mkdir()
     (tmpdir / "f").mkdir()
     _rand_image().save(tmpdir / "e" / "e_1.png")
-    _rand_image().save(tmpdir / "e" / "e_2.png")
     _rand_image().save(tmpdir / "f" / "f_1.png")
-    _rand_image().save(tmpdir / "f" / "f_2.png")
 
     img_data = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "c", tmpdir / "d", tmpdir / "e"],
