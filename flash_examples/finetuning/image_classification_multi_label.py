@@ -30,7 +30,7 @@ from flash.vision.classification.data import ImageClassificationPreprocess
 # This is a subset of the movie poster genre prediction data set from the paper
 # “Movie Genre Classification based on Poster Images with Deep Neural Networks” by Wei-Ta Chu and Hung-Jui Guo.
 # Please consider citing their paper if you use it. More here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
-download_data("https://pl-flash-data.s3.amazonaws.com/multi_label.zip", "data/")
+download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
 
 # 2. Define our custom preprocess
@@ -58,9 +58,9 @@ class CustomMultiLabelPreprocess(ImageClassificationPreprocess):
 
 # 3. Load the data
 datamodule = ImageClassificationData.from_folders(
-    train_folder="data/multi_label/train/",
-    val_folder="data/multi_label/val/",
-    test_folder="data/multi_label/test/",
+    train_folder="data/movie_posters/train/",
+    val_folder="data/movie_posters/val/",
+    test_folder="data/movie_posters/test/",
     preprocess=CustomMultiLabelPreprocess(),
 )
 
@@ -83,15 +83,15 @@ trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_
 model.serializer = Classes(multi_label=True)
 
 predictions = model.predict([
-    "data/multi_label/val/tt0107111.jpg",
-    "data/multi_label/val/tt0107199.jpg",
-    "data/multi_label/val/tt0107606.jpg",
+    "data/movie_posters/val/tt0361500.jpg",
+    "data/movie_posters/val/tt0361748.jpg",
+    "data/movie_posters/val/tt0362478.jpg",
 ])
 
 print(predictions)
 
 datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/multi_label/predict/",
+    predict_folder="data/movie_posters/predict/",
     preprocess=model.preprocess,
 )
 

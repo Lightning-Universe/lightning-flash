@@ -26,7 +26,7 @@ from flash.vision.classification.data import ImageClassificationPreprocess
 # This is a subset of the movie poster genre prediction data set from the paper
 # “Movie Genre Classification based on Poster Images with Deep Neural Networks” by Wei-Ta Chu and Hung-Jui Guo.
 # Please consider citing their paper if you use it. More here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
-download_data("https://pl-flash-data.s3.amazonaws.com/multi_label.zip", "data/")
+download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
 
 # 2. Define our custom visualisation and datamodule
@@ -45,19 +45,21 @@ class CustomMultiLabelPreprocess(ImageClassificationPreprocess):
 
 
 # 3. Load the model from a checkpoint
-model = ImageClassifier.load_from_checkpoint("../finetuning/image_classification_multi_label_model.pt")
+model = ImageClassifier.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/image_classification_multi_label_model.pt",
+)
 
 # 4a. Predict what's on a few images! ants or bees?
 predictions = model.predict([
-    "data/multi_label/val/tt0107111.jpg",
-    "data/multi_label/val/tt0107199.jpg",
-    "data/multi_label/val/tt0107606.jpg",
+    "data/movie_posters/val/tt0361500.jpg",
+    "data/movie_posters/val/tt0361748.jpg",
+    "data/movie_posters/val/tt0362478.jpg",
 ])
 print(predictions)
 
 # 4b. Or generate predictions with a whole folder!
 datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/multi_label/predict/",
+    predict_folder="data/movie_posters/predict/",
     data_fetcher=CustomViz(),
     preprocess=model.preprocess,
 )
