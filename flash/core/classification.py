@@ -21,7 +21,7 @@ from flash.core.model import Task
 from flash.data.process import Serializer, ProcessState
 
 
-@dataclass(unsafe_hash=True, frozen=True)
+@dataclass()
 class ClassificationState(ProcessState):
     classes: List[str]
 

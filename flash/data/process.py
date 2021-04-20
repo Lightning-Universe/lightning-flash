@@ -27,10 +27,10 @@ from flash.data.callback import FlashCallback
 from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules
 
 if TYPE_CHECKING:
-    from flash.data.data_pipeline import DataPipeline
+    from flash.data.data_pipeline import DataPipelineState
 
 
-@dataclass(unsafe_hash=True, frozen=True)
+@dataclass()
 class ProcessState:
     """
     Base class for all data pipeline states
@@ -41,32 +41,29 @@ class ProcessState:
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
 
 
-class Process:
-
-    _local_states: Dict[Type[ProcessState], ProcessState] = {}
-    _data_pipeline: Optional['DataPipeline'] = None
-
-    def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
-        if self._data_pipeline is not None:
-            return self._data_pipeline.get_state(state_type)
-        else:
-            return None
-
-    def set_state(self, state: ProcessState):
-        self._local_states[type(state)] = state
-        if self._data_pipeline is not None:
-            self._data_pipeline.set_state(state)
-
-    def attach_data_pipeline(self, data_pipeline: 'DataPipeline'):
-        self._data_pipeline = data_pipeline
-        for local_state in self._local_states.values():
-            self._data_pipeline.set_state(local_state)
-
-
 class Properties:
 
     _running_stage: Optional[RunningStage] = None
     _current_fn: Optional[str] = None
+    _data_pipeline_state: Optional['DataPipelineState'] = None
+
+    state: Dict[Type[ProcessState], ProcessState] = {}
+
+    def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        else:
+            return None
+
+    def set_state(self, state: ProcessState):
+        self.state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        self._data_pipeline_state = data_pipeline_state
+        for state in self.state.values():
+            self._data_pipeline_state.set_state(state)
 
     @property
     def current_fn(self) -> Optional[str]:
@@ -129,7 +126,7 @@ class Properties:
             self._running_stage = None
 
 
-class Preprocess(Process, Properties, Module):
+class Preprocess(Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -464,7 +461,7 @@ class Preprocess(Process, Properties, Module):
         return batch
 
 
-class Postprocess(Process, Properties, Module):
+class Postprocess(Properties, Module):
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()
@@ -509,7 +506,7 @@ class Postprocess(Process, Properties, Module):
         self.save_sample(sample, self.format_sample_save_path(self._save_path))
 
 
-class Serializer(Process):
+class Serializer(Properties):
 
     def __init__(self):
         super().__init__()

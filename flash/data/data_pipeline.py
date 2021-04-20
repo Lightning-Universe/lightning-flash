@@ -34,6 +34,24 @@ if TYPE_CHECKING:
     from flash.core.model import Task
 
 
+class DataPipelineState:
+    def __init__(self):
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+        self._initialized = False
+
+    def set_state(self, state: ProcessState):
+        if not self._initialized:
+            self._state[type(state)] = state
+        else:
+            pass  # TODO: Warn or error here
+
+    def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
+        if state_type in self._state:
+            return self._state[state_type]
+        else:
+            return None  # TODO: something better here?
+
+
 class DataPipeline:
     """
     DataPipeline holds the engineering logic to connect
@@ -71,30 +89,29 @@ class DataPipeline:
 
         self._serializer = serializer or Serializer()
 
-        # self._postprocessor = None
         self._running_stage = None
 
-        self._states: Dict[Type[ProcessState], ProcessState] = {}
-
-        self._initialized = False
-
-    def set_state(self, state: ProcessState):
-        if not self._initialized:
-            self._states[type(state)] = state
-        else:
-            pass  # TODO: Warn or error here
-
-    def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
-        if state_type in self._states:
-            return self._states[state_type]
-        else:
-            return None  # TODO: something better here?
-
     def initialize(self):
-        self._preprocess_pipeline.attach_data_pipeline(self)
-        self._postprocess_pipeline.attach_data_pipeline(self)
-        self._serializer.attach_data_pipeline(self)
-        self._initialized = True
+        data_pipeline_state = DataPipelineState()
+        self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._serializer.attach_data_pipeline_state(data_pipeline_state)
+        data_pipeline_state._initialized = True
+
+    @property
+    def state(self) -> Dict[str, Dict[Type[ProcessState], ProcessState]]:
+        state = {
+            'preprocess': self._preprocess_pipeline.state,
+            'postprocess': self._postprocess_pipeline.state,
+            'serializer': self._serializer.state,
+        }
+        return state
+
+    @state.setter
+    def state(self, state: Dict[str, Dict[Type[ProcessState], ProcessState]]):
+        self._preprocess_pipeline.state = state['preprocess']
+        self._postprocess_pipeline.state = state['postprocess']
+        self._serializer.state = state['serializer']
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
@@ -109,11 +126,6 @@ class DataPipeline:
             return False
 
         return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
-
-    # @property
-    # def preprocess_state(self):
-    #     if self._preprocess_pipeline:
-    #         return self._preprocess_pipeline.state
 
     @classmethod
     def _is_overriden_recursive(
