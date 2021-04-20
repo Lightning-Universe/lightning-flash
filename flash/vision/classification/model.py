@@ -19,7 +19,7 @@ from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy
 
-from flash.core.classification import ClassificationTask, Classes
+from flash.core.classification import Classes, ClassificationTask
 from flash.core.registry import FlashRegistry
 from flash.data.process import Preprocess, Serializer
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
@@ -81,7 +81,6 @@ class ImageClassifier(ClassificationTask):
         metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
-        preprocess: Optional[Preprocess] = None,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
 
@@ -97,7 +96,6 @@ class ImageClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            preprocess=preprocess or ImageClassificationPreprocess(),
             serializer=serializer or Classes(multi_label=multi_label),
         )
 

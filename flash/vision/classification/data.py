@@ -45,11 +45,11 @@ class ImageClassificationPreprocess(Preprocess):
     image_size = (196, 196)
 
     def __init__(
-            self,
-            train_transform: Optional[Union[Dict[str, Callable]]] = None,
-            val_transform: Optional[Union[Dict[str, Callable]]] = None,
-            test_transform: Optional[Union[Dict[str, Callable]]] = None,
-            predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+        self,
+        train_transform: Optional[Union[Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Dict[str, Callable]]] = None,
     ):
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform
@@ -127,11 +127,11 @@ class ImageClassificationPreprocess(Preprocess):
             }
 
     def _resolve_transforms(
-            self,
-            train_transform: Optional[Union[str, Dict]] = 'default',
-            val_transform: Optional[Union[str, Dict]] = 'default',
-            test_transform: Optional[Union[str, Dict]] = 'default',
-            predict_transform: Optional[Union[str, Dict]] = 'default',
+        self,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
     ):
 
         if not train_transform or train_transform == 'default':
@@ -155,9 +155,9 @@ class ImageClassificationPreprocess(Preprocess):
 
     @classmethod
     def _load_data_dir(
-            cls,
-            data: Any,
-            dataset: Optional[AutoDataset] = None,
+        cls,
+        data: Any,
+        dataset: Optional[AutoDataset] = None,
     ) -> Tuple[List[str], List[Tuple[str, int]]]:
         if isinstance(data, list):
             dataset.num_classes = len(data)
