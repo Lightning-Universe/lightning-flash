@@ -213,7 +213,7 @@ class DataPipeline:
         )
 
         collate_in_worker_from_transform: Optional[bool] = getattr(
-            preprocess, f"_{prefix}_collate_in_worker_from_transform"
+            preprocess, f"_{prefix}_collate_in_worker_from_transform", None
         )
 
         if (
