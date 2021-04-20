@@ -135,24 +135,21 @@ def test_from_filepaths_list_directories(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skip(reason="fix first other tests")
+#@pytest.mark.skip(reason="fix first other tests")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
     _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
-
-    _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
+    _rand_image().save(tmpdir / "b" / "b_1.png")
 
     data_viz = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
         train_labels=[0, 1],
-        val_filepaths=[tmpdir / "a", tmpdir / "b"],
+        val_filepaths=[tmpdir / "b", tmpdir / "a"],
         val_labels=[0, 2],
-        test_filepaths=[tmpdir / "a", tmpdir / "b"],
+        test_filepaths=[tmpdir / "b", tmpdir / "b"],
         test_labels=[2, 1],
         batch_size=2,
     )
