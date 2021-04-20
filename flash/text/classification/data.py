@@ -23,7 +23,7 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.process import Preprocess, Postprocess
+from flash.data.process import Postprocess, Preprocess
 
 
 class TextClassificationPreprocess(Preprocess):
