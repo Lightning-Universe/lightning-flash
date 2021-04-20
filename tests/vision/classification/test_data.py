@@ -54,20 +54,19 @@ def test_from_filepaths_smoke(tmpdir):
     imgs, labels = data
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, )
-    assert 1 in list(labels.numpy())
-    assert 2 in list(labels.numpy())
+    assert sorted(list(labels.numpy())) == [1, 2]
 
 
 def test_from_filepaths_list_image_paths(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "e").mkdir()
-    _rand_image().save(tmpdir / "e" / "e_1.png")
+    _rand_image().save(tmpdir / "e_1.png")
 
     train_images = [
-        str(tmpdir / "e" / "e_1.png"),
-        str(tmpdir / "e" / "e_1.png"),
-        str(tmpdir / "e" / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
     ]
 
     img_data = ImageClassificationData.from_filepaths(
@@ -80,6 +79,14 @@ def test_from_filepaths_list_image_paths(tmpdir):
         batch_size=2,
         num_workers=0,
     )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
+    assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
@@ -119,6 +126,13 @@ def test_from_filepaths_list_directories(tmpdir):
         batch_size=2,
         num_workers=0,
     )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [0, 3]
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
@@ -218,15 +232,15 @@ def test_categorical_csv_labels(tmpdir):
 
     for (x, y) in data.train_dataloader():
         assert len(x) == 2
-        assert list(y.numpy()) == list(train_labels.values())[:B]
+        assert sorted(list(y.numpy())) == sorted(list(train_labels.values())[:B])
 
     for (x, y) in data.val_dataloader():
         assert len(x) == 2
-        assert list(y.numpy()) == list(val_labels.values())[:B]
+        assert sorted(list(y.numpy())) == sorted(list(val_labels.values())[:B])
 
     for (x, y) in data.test_dataloader():
         assert len(x) == 2
-        assert list(y.numpy()) == list(test_labels.values())[:B]
+        assert sorted(list(y.numpy())) == sorted(list(test_labels.values())[:B])
 
 
 def test_from_folders_only_train(tmpdir):

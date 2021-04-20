@@ -190,3 +190,4 @@ def test_data_loaders_num_workers_to_0(tmpdir):
     assert isinstance(iterator, torch.utils.data.dataloader._SingleProcessDataLoaderIter)
     iterator = iter(datamodule.train_dataloader())
     assert isinstance(iterator, torch.utils.data.dataloader._MultiProcessingDataLoaderIter)
+    assert datamodule.num_workers == 3
