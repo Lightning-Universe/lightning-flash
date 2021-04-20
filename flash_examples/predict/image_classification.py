@@ -30,9 +30,7 @@ predictions = model.predict([
 print(predictions)
 
 # 3b. Or generate predictions with a whole folder!
-datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/hymenoptera_data/predict/",
-)
+datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
 
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
