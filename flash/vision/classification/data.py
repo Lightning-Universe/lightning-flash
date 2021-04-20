@@ -31,15 +31,17 @@ from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
 from flash.data.utils import _PREPROCESS_FUNCS
-from flash.utils.imports import _KORNIA_AVAILABLE
+from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
 else:
     from torchvision import transforms as T
 
-# TODO(edgar): check if is available: if _MATPLOTLIB_AVAILABLE
-import matplotlib.pyplot as plt
+if _MATPLOTLIB_AVAILABLE:
+    import matplotlib.pyplot as plt
+else:
+    plt = None
 
 
 class ImageClassificationPreprocess(Preprocess):
@@ -552,7 +554,7 @@ class ImageClassificationData(DataModule):
 
 
 class _MatplotlibVisualization(BaseVisualization):
-    """Process and show the image batch and its associated label.
+    """Process and show the image batch and its associated label using matplotlib.
     """
     max_cols: int = 4  # maximum number of columns we accept
 
