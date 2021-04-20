@@ -262,7 +262,7 @@ class ImageClassificationData(DataModule):
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return _MatplotlibVisualization(*args, **kwargs)
 
-    def show(self):
+    def show(self) -> None:
         """Method to block matplotlib windows."""
         plt.show()
 

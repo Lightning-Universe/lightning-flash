@@ -87,10 +87,7 @@ def test_base_viz(tmpdir):
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
     _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
-
     _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
 
     class CustomBaseVisualization(BaseVisualization):
 
