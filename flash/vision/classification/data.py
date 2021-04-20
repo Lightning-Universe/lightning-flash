@@ -19,7 +19,6 @@ import torch
 import torchvision
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
@@ -28,7 +27,6 @@ from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIO
 from flash.core.classification import ClassificationState
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
 from flash.utils.imports import _KORNIA_AVAILABLE
 
