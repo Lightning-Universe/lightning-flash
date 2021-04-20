@@ -89,6 +89,9 @@ def test_multilabel(tmpdir):
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
-    image, _ = ds[0]
+    image, label = ds[0]
     predictions = model.predict(image.unsqueeze(0))
-    assert len(predictions[0]) == num_classes
+    assert (torch.tensor(predictions) > 1).sum() == 0
+    assert (torch.tensor(predictions) < 0).sum() == 0
+    assert len(predictions[0]) == num_classes == len(label)
+    assert len(torch.unique(label)) <= 2

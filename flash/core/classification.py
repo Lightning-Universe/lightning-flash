@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import torch
 import torch.nn.functional as F
@@ -26,7 +26,7 @@ class ClassificationPostprocess(Postprocess):
         super().__init__(save_path=save_path)
         self.multi_label = multi_label
 
-    def per_sample_transform(self, samples: Any) -> Any:
+    def per_sample_transform(self, samples: Any) -> List[Any]:
         if self.multi_label:
             return F.sigmoid(samples).tolist()
         else:
@@ -42,5 +42,5 @@ class ClassificationTask(Task):
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
         if getattr(self.hparams, "multi_label", False):
-            return F.sigmoid(x).int()
+            return F.sigmoid(x)
         return F.softmax(x, -1)

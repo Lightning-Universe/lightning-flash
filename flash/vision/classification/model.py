@@ -24,7 +24,8 @@ from flash.core.registry import FlashRegistry
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
-def binary_cross_entropy_with_logits(x, y):
+def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
     return F.binary_cross_entropy_with_logits(x, y.float())
 
 
@@ -112,7 +113,7 @@ class ImageClassifier(ClassificationTask):
             nn.Linear(num_features, num_classes),
         )
 
-    def forward(self, x) -> Any:
+    def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
         if self.hparams.multi_label:
             return self.head(x)

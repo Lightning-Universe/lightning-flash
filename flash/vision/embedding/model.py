@@ -98,7 +98,7 @@ class ImageEmbedder(Task):
             x = self.pooling_fn(x, dim=-1)
         return x
 
-    def forward(self, x) -> Any:
+    def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
 
         # bolts ssl models return lists
