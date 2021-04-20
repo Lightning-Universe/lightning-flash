@@ -38,6 +38,6 @@ class ClassificationTask(Task):
     postprocess_cls = ClassificationPostprocess
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
-        if self.hparams.multi_label:
+        if getattr(self.hparams, "multi_label", False):
             return F.sigmoid(x).int()
         return F.softmax(x, -1)
