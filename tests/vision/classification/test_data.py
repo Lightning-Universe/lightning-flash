@@ -45,7 +45,6 @@ def test_from_filepaths_smoke(tmpdir):
 
     img_data = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_transform=None,
         train_labels=[0, 1],
         batch_size=2,
         num_workers=0,
@@ -74,11 +73,8 @@ def test_from_filepaths_list_paths(tmpdir):
     img_data = ImageClassificationData.from_filepaths(
         train_filepaths=train_images,
         train_labels=[0, 3, 6],
-        train_transform=None,
         val_filepaths=train_images,
         val_labels=[1, 4, 7],
-        val_transform=None,
-        test_transform=None,
         test_filepaths=train_images,
         test_labels=[2, 5, 8],
         batch_size=2,
@@ -120,11 +116,8 @@ def test_from_filepaths_list_directories(tmpdir):
     img_data = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "c", tmpdir / "d", tmpdir / "e"],
         train_labels=[0, 3, 6],
-        train_transform=None,
         val_filepaths=[tmpdir / "c", tmpdir / "e", tmpdir / "f"],
         val_labels=[1, 4, 7],
-        val_transform=None,
-        test_transform=None,
         test_filepaths=[tmpdir / "d", tmpdir / "f", tmpdir / "c"],
         test_labels=[2, 5, 8],
         batch_size=2,
@@ -222,9 +215,6 @@ def test_categorical_csv_labels(tmpdir):
     B: int = 2  # batch_size
     data = ImageClassificationData.from_filepaths(
         batch_size=B,
-        train_transform=None,
-        val_transform=None,
-        test_transform=None,
         train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
         train_labels=train_labels.values(),
         val_filepaths=os.path.join(tmpdir, 'some_dataset', 'valid'),
