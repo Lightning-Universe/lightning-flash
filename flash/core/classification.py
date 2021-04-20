@@ -31,10 +31,10 @@ class ClassificationState(ProcessState):
 class ClassificationTask(Task):
 
     def __init__(
-            self,
-            *args,
-            serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-            **kwargs,
+        self,
+        *args,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        **kwargs,
     ) -> None:
         super().__init__(*args, serializer=serializer or Classes(), **kwargs)
 
@@ -58,7 +58,7 @@ class ClassificationSerializer(Serializer):
 
     @property
     def multi_label(self) -> bool:
-        return True
+        return self._mutli_label
 
 
 class Logits(ClassificationSerializer):
