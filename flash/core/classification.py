@@ -17,7 +17,7 @@ import torch
 import torch.nn.functional as F
 
 from flash.core.model import Task
-from flash.data.process import Postprocess
+from flash.data.process import Postprocess, Preprocess
 
 
 class ClassificationPostprocess(Postprocess):
@@ -36,6 +36,9 @@ class ClassificationPostprocess(Postprocess):
 class ClassificationTask(Task):
 
     postprocess_cls = ClassificationPostprocess
+
+    def __init__(self, *args, postprocess: Optional[Preprocess] = None, **kwargs):
+        super().__init__(*args, postprocess=postprocess or self.postprocess_cls(), **kwargs)
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
         if getattr(self.hparams, "multi_label", False):
