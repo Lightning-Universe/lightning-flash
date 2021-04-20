@@ -155,6 +155,7 @@ def test_from_filepaths_visualise(tmpdir):
     data_viz.show_train_batch()
     data_viz.show_val_batch()
     data_viz.show_test_batch()
+    # data_viz.show()
 
 
 def test_categorical_csv_labels(tmpdir):

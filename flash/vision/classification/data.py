@@ -15,9 +15,11 @@ import os
 import pathlib
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
+import numpy as np
 import torch
 import torchvision
 from PIL import Image
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.utils.data import Dataset
@@ -259,6 +261,10 @@ class ImageClassificationData(DataModule):
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return _MatplotlibVisualization(*args, **kwargs)
+
+    def show(self):
+        """Method to block matplotlib windows."""
+        plt.show()
 
     @staticmethod
     def _check_transforms(transform: Dict[str, Union[nn.Module, Callable]]) -> Dict[str, Union[nn.Module, Callable]]:
@@ -560,23 +566,60 @@ class _MatplotlibVisualization(BaseVisualization):
     max_cols: int = 4  # maximum number of columns we accept
 
     @staticmethod
-    def _tensor_to_image(tensor):
-        return tensor.permute(1, 2, 0).cpu().numpy()
+    def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
+        out: np.ndarray
+        if isinstance(img, Image.Image):
+            out = np.array(img)
+        elif isinstance(img, torch.Tensor):
+            out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        else:
+            raise TypeError(f"Unknown image type. Got: {type(img)}.")
+        return out
 
-    def show_per_batch_transform(self, batch: List[Any], running_stage):
-        # get the batch data
-        img, label = batch[0]
-
+    def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
-        cols: int = min(img.shape[0], self.max_cols)
-        rows: int = img.shape[0] // cols
+        cols: int = min(num_samples, self.max_cols)
+        rows: int = num_samples // cols
 
+        # create figure and set title
         fig, axs = plt.subplots(rows, cols)
-        fig.suptitle(str(running_stage))
+        fig.suptitle(title)
 
         for i, ax in enumerate(axs.ravel()):
-            _img, _label = img[i], label[i]
-            ax.imshow(self._tensor_to_image(_img))
-            ax.set_title(str(_label.item()))
+            # unpack images and labels
+            if isinstance(data, list):
+                _img, _label = data[i]
+            elif isinstance(data, tuple):
+                imgs, labels = data
+                _img, _label = imgs[i], labels[i]
+            else:
+                raise TypeError(f"Unknown data type. Got: {type(data)}.")
+            # convert images to numpy
+            _img: np.ndarray = self._to_numpy(_img)
+            if isinstance(_label, torch.Tensor):
+                _label = int(_label.item())
+            # show image and set label as subplot title
+            ax.imshow(_img)
+            ax.set_title(str(_label))
             ax.axis('off')
-        plt.show()
+        plt.show(block=False)
+
+    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_load_sample"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_pre_tensor_transform"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_to_tensor_transform"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_post_tensor_transform"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_per_batch_transform(self, batch: List[Any], running_stage):
+        win_title: str = f"{running_stage} - show_per_batch_transform"
+        self._show_images_and_labels(batch[0], batch[0][0].shape[0], win_title)
