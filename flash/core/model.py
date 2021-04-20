@@ -60,8 +60,8 @@ class Task(LightningModule):
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`.
-        default_preprocess: :class:`.Preprocess` to use as the default for this task.
-        default_postprocess: :class:`.Postprocess` to use as the default for this task.
+        preprocess: :class:`.Preprocess` to use as the default for this task.
+        postprocess: :class:`.Postprocess` to use as the default for this task.
     """
 
     def __init__(
@@ -71,8 +71,8 @@ class Task(LightningModule):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-        default_preprocess: Preprocess = None,
-        default_postprocess: Postprocess = None,
+        preprocess: Preprocess = None,
+        postprocess: Postprocess = None,
     ):
         super().__init__()
         if model is not None:
@@ -84,8 +84,8 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._preprocess = default_preprocess
-        self._postprocess = default_postprocess
+        self._preprocess = preprocess
+        self._postprocess = postprocess
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -99,8 +99,7 @@ class Task(LightningModule):
         y_hat = self.to_metrics_format(y_hat)
         for name, metric in self.metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
-                metric(y_hat, y)
-                logs[name] = metric  # log the metric itself if it is of type Metric
+                logs[name] = metric(y_hat, y)  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)
         logs.update(losses)

@@ -66,7 +66,7 @@ class ImageEmbedder(Task):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            default_preprocess=ImageClassificationPreprocess(
+            preprocess=ImageClassificationPreprocess(
                 predict_transform=ImageClassificationData.default_val_transforms(),
             )
         )
