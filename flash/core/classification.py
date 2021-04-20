@@ -82,7 +82,7 @@ class Classes(ClassificationSerializer):
     """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list."""
 
-    def serialize(self, sample: Any) -> Union[int, List[int]]:
+    def serialize(self, sample: Any) -> int:
         if self.multi_label:
             return torch.round(sample).tolist()  # TODO: Add optional threshold to use?
         return torch.argmax(sample, -1).tolist()
@@ -101,7 +101,7 @@ class Labels(Classes):
         super().__init__(multi_label=False)  # TODO: Add support for multi-label
         self._labels = labels
 
-    def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
+    def serialize(self, sample: Any) -> Union[int, str]:
         labels = None
 
         if self._labels is not None:
@@ -111,14 +111,12 @@ class Labels(Classes):
             if state is not None:
                 labels = state.labels
 
-        classes = super().serialize(sample)
+        cls = super().serialize(sample)
 
         if labels is not None:
-            if isinstance(classes, List):
-                return [labels[i] for i in classes]
-            return labels[classes]
+            return labels[cls]
         else:
             rank_zero_warn(
                 "No ClassificationState was found, this serializer will act as a Classes serializer.", UserWarning
             )
-            return classes
+            return cls
