@@ -26,6 +26,7 @@ from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIO
 
 from flash.core.classification import ClassificationState
 from flash.data.auto_dataset import AutoDataset
+from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.utils.imports import _KORNIA_AVAILABLE
@@ -340,6 +341,7 @@ class ImageClassificationData(DataModule):
         predict_transform: Optional[Union[str, Dict]] = 'default',
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
         **kwargs,
     ) -> 'DataModule':
@@ -388,6 +390,7 @@ class ImageClassificationData(DataModule):
             predict_load_data_input=predict_folder,
             batch_size=batch_size,
             num_workers=num_workers,
+            data_fetcher=data_fetcher,
             preprocess=preprocess,
             **kwargs,
         )
@@ -409,6 +412,7 @@ class ImageClassificationData(DataModule):
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: Optional[int] = 42,
+        data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
         **kwargs,
     ) -> 'ImageClassificationData':
@@ -480,6 +484,7 @@ class ImageClassificationData(DataModule):
             predict_load_data_input=predict_filepaths,
             batch_size=batch_size,
             num_workers=num_workers,
+            data_fetcher=data_fetcher,
             preprocess=preprocess,
             seed=seed,
             **kwargs

@@ -422,6 +422,7 @@ class DataModule(pl.LightningDataModule):
         val_load_data_input: Optional[Any] = None,
         test_load_data_input: Optional[Any] = None,
         predict_load_data_input: Optional[Any] = None,
+        data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         use_iterable_auto_dataset: bool = False,
@@ -451,7 +452,7 @@ class DataModule(pl.LightningDataModule):
         else:
             data_pipeline = cls(**kwargs).data_pipeline
 
-        data_fetcher: BaseDataFetcher = cls.configure_data_fetcher()
+        data_fetcher: BaseDataFetcher = data_fetcher or cls.configure_data_fetcher()
 
         data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 
