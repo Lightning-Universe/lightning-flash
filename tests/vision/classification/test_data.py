@@ -59,7 +59,48 @@ def test_from_filepaths_smoke(tmpdir):
     assert img_data.test_dataloader() is None
 
 
-def test_from_filepaths_batch2(tmpdir):
+def test_from_filepaths_list_paths(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "e").mkdir()
+    _rand_image().save(tmpdir / "e" / "e_1.png")
+
+    train_images = [
+        str(tmpdir / "e" / "e_1.png"),
+        str(tmpdir / "e" / "e_1.png"),
+        str(tmpdir / "e" / "e_1.png"),
+    ]
+
+    img_data = ImageClassificationData.from_filepaths(
+        train_filepaths=train_images,
+        train_labels=[0, 3, 6],
+        train_transform=None,
+        val_filepaths=train_images,
+        val_labels=[1, 4, 7],
+        val_transform=None,
+        test_transform=None,
+        test_filepaths=train_images,
+        test_labels=[2, 5, 8],
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check validation data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [1, 4]
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [2, 5]
+
+
+def test_from_filepaths_list_directories(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "c").mkdir()
@@ -77,14 +118,14 @@ def test_from_filepaths_batch2(tmpdir):
     _rand_image().save(tmpdir / "f" / "f_2.png")
 
     img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b", tmpdir / "c"],
+        train_filepaths=[tmpdir / "c", tmpdir / "d", tmpdir / "e"],
         train_labels=[0, 3, 6],
         train_transform=None,
-        val_filepaths=[tmpdir / "c", tmpdir / "d", tmpdir / "e"],
+        val_filepaths=[tmpdir / "c", tmpdir / "e", tmpdir / "f"],
         val_labels=[1, 4, 7],
         val_transform=None,
         test_transform=None,
-        test_filepaths=[tmpdir / "e", tmpdir / "f", tmpdir / "f"],
+        test_filepaths=[tmpdir / "d", tmpdir / "f", tmpdir / "c"],
         test_labels=[2, 5, 8],
         batch_size=2,
         num_workers=0,
