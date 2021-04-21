@@ -231,3 +231,15 @@ def test_from_filepaths_multilabel(tmpdir):
     imgs, labels = data
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
+
+    data = next(iter(dm.val_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+    torch.testing.assert_allclose(labels, torch.tensor(train_labels))
+
+    data = next(iter(dm.test_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+    torch.testing.assert_allclose(labels, torch.tensor(train_labels))

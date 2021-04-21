@@ -110,7 +110,7 @@ class ImageClassificationPreprocess(Preprocess):
         return cls._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
-    def load_sample(sample) -> Union[Image.Image]:
+    def load_sample(sample) -> Union[Image.Image, Tuple[Image.Image, torch.Tensor]]:
         # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
         if isinstance(sample, torch.Tensor):
             return sample
@@ -126,6 +126,7 @@ class ImageClassificationPreprocess(Preprocess):
 
         if isinstance(sample, list):
             sample[0] = img
+            sample[1] = torch.tensor(sample[1])
             return sample
 
         return img
