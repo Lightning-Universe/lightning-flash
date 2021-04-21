@@ -88,6 +88,7 @@ class Task(LightningModule):
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
 
+        # Explicitly set the serializer to call the setter
         self.serializer = serializer
 
     def step(self, batch: Any, batch_idx: int) -> Any:
