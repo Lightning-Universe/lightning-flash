@@ -119,6 +119,8 @@ class Seq2SeqPreprocess(Preprocess):
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
+    preprocess_cls = Seq2SeqPreprocess
+
     @classmethod
     def from_files(
         cls,
@@ -164,7 +166,7 @@ class Seq2SeqData(DataModule):
                                            cat_cols=["account_type"])
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        preprocess = preprocess or Seq2SeqPreprocess(
+        preprocess = preprocess or cls.preprocess_cls(
             tokenizer,
             input,
             filetype,

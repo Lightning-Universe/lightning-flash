@@ -188,6 +188,9 @@ class TextClassificationPostProcess(Postprocess):
 class TextClassificationData(DataModule):
     """Data Module for text classification tasks"""
 
+    preprocess_cls = TextClassificationPreprocess
+    postprocess_cls = TextClassificationPostProcess
+
     @property
     def num_classes(self) -> int:
         return len(self._preprocess.label_to_class_mapping)
@@ -236,7 +239,7 @@ class TextClassificationData(DataModule):
                                            cat_cols=["account_type"])
 
         """
-        preprocess = preprocess or TextClassificationPreprocess(
+        preprocess = preprocess or cls.preprocess_cls(
             input,
             backbone,
             max_length,
@@ -246,7 +249,7 @@ class TextClassificationData(DataModule):
             label_to_class_mapping,
         )
 
-        postprocess = postprocess or TextClassificationPostProcess()
+        postprocess = postprocess or cls.postprocess_cls()
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,

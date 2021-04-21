@@ -180,6 +180,9 @@ Example::
 
     class ImageClassificationDataModule(DataModule):
 
+        # Set ``preprocess_cls`` with your custom ``preprocess``.
+        preprocess_cls = ImageClassificationPreprocess
+
         @classmethod
         def from_folders(
             cls,
@@ -192,7 +195,7 @@ Example::
         ):
 
             # Set a custom ``Preprocess`` if none was provided
-            preprocess = preprocess or ImageClassificationPreprocess()
+            preprocess = preprocess or cls.preprocess_cls()
 
             # {stage}_load_data_input will be given to your
             # ``Preprocess`` ``{stage}_load_data`` function.

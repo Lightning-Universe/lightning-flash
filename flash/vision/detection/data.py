@@ -178,6 +178,8 @@ class ObjectDetectionPreprocess(Preprocess):
 
 class ObjectDetectionData(DataModule):
 
+    preprocess_cls = ObjectDetectionPreprocess
+
     @classmethod
     def from_coco(
         cls,
@@ -196,7 +198,7 @@ class ObjectDetectionData(DataModule):
         preprocess: Preprocess = None,
         **kwargs
     ):
-        preprocess = preprocess or ObjectDetectionPreprocess(
+        preprocess = preprocess or cls.preprocess_cls(
             train_transform,
             val_transform,
             test_transform,

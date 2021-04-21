@@ -21,6 +21,7 @@ from transformers import BertForSequenceClassification
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationTask
+from flash.data.process import Serializer
 
 
 class TextClassifier(ClassificationTask):
@@ -41,7 +42,7 @@ class TextClassifier(ClassificationTask):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
         learning_rate: float = 1e-3,
-        # serializer: Optional[Serializ] = None,
+        serializer: Optional[Serializer] = None,
     ):
         self.save_hyperparameters()
 
@@ -57,6 +58,7 @@ class TextClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            serializer=serializer,
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
 

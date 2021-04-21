@@ -36,6 +36,9 @@ class SummarizationPostprocess(Postprocess):
 
 class SummarizationData(Seq2SeqData):
 
+    preprocess_cls = Seq2SeqPreprocess
+    postprocess_cls = SummarizationPostprocess
+
     @classmethod
     def from_files(
         cls,
@@ -86,7 +89,7 @@ class SummarizationData(Seq2SeqData):
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
-        preprocess = preprocess or Seq2SeqPreprocess(
+        preprocess = preprocess or cls.preprocess_cls(
             tokenizer,
             input,
             filetype,
@@ -96,7 +99,7 @@ class SummarizationData(Seq2SeqData):
             padding,
         )
 
-        postprocess = postprocess or SummarizationPostprocess(tokenizer)
+        postprocess = postprocess or cls.postprocess_cls(tokenizer)
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,

@@ -45,6 +45,9 @@ class DataModule(pl.LightningDataModule):
             or 0 for Darwin platform.
     """
 
+    preprocess_cls = Preprocess
+    postprocess_cls = Postprocess
+
     def __init__(
         self,
         train_dataset: Optional[Dataset] = None,
@@ -272,11 +275,11 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def preprocess(self) -> Preprocess:
-        return self._preprocess or Preprocess()
+        return self._preprocess or self.preprocess_cls()
 
     @property
     def postprocess(self) -> Postprocess:
-        return self._postprocess or Postprocess()
+        return self._postprocess or self.postprocess_cls()
 
     @property
     def data_pipeline(self) -> DataPipeline:

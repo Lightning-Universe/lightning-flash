@@ -18,6 +18,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from sklearn.model_selection import train_test_split
+from torch.utils.data import Dataset
 
 from flash.core.classification import ClassificationState
 from flash.data.auto_dataset import AutoDataset
@@ -111,7 +112,27 @@ class TabularPreprocess(Preprocess):
 class TabularData(DataModule):
     """Data module for tabular tasks"""
 
-    _preprocess: Preprocess = None
+    preprocess_cls = TabularPreprocess
+
+    def __init__(
+        self,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        batch_size: int = 1,
+        num_workers: Optional[int] = 0,
+    ) -> None:
+        super().__init__(
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+
+        self._preprocess: Optional[Preprocess] = None
 
     @property
     def codes(self) -> Dict[str, str]:
@@ -276,7 +297,7 @@ class TabularData(DataModule):
 
         train_df, val_df, test_df = cls._split_dataframe(train_df, val_df, test_df, val_size, test_size)
 
-        preprocess = preprocess or TabularPreprocess(
+        preprocess = preprocess or cls.preprocess_cls(
             train_df,
             val_df,
             test_df,
