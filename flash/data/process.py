@@ -550,10 +550,9 @@ class SerializerMapping(Serializer):
 
     def serialize(self, sample: Any) -> Any:
         if isinstance(sample, Mapping):
-            return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers}
+            return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
         else:
-            # TODO: some error here
-            pass
+            raise ValueError("The model output must be a mapping when using a SerializerMapping.")
 
     def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
         for serializer in self._serializers.values():
