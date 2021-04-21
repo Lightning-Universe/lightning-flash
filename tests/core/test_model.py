@@ -168,7 +168,7 @@ def test_available_backbones():
 
 def test_optimization(tmpdir):
 
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     optim = torch.optim.Adam(model.parameters())
     task = ClassificationTask(model, optimizer=optim, scheduler=None)
 
