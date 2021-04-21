@@ -25,7 +25,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
-from transformers.trainer_utils import SchedulerType
 
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULER_REGISTRY
@@ -379,7 +378,7 @@ class Task(LightningModule):
             num_warmup_steps *= num_training_steps
         return int(num_warmup_steps)
 
-    def _instantiate_scheduler(self, optimizer: Optimizer) -> SchedulerType:
+    def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
         scheduler = self.scheduler
         if isinstance(scheduler, _LRScheduler):
             return scheduler
