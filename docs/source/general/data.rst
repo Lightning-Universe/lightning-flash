@@ -29,7 +29,9 @@ Here are common terms you need to be familiar with:
         The :class:`~flash.data.process.Preprocess` hooks covers from data-loading to model forwarding.
    * - :class:`~flash.data.process.Postprocess`
      - The :class:`~flash.data.process.Postprocess` provides a simple hook-based API to encapsulate your post-processing logic.
-        The :class:`~flash.data.process.Postprocess` hooks covers from model outputs to predictions export.
+        The :class:`~flash.data.process.Postprocess` hooks cover from model outputs to predictions export.
+   * - :class:`~flash.data.process.Serializer`
+     - The :class:`~flash.data.process.Serializer` provides a single ``serialize`` method that is used to convert model outputs (after the :class:`~flash.data.process.Postprocess`) to the desired output format during prediction.
 
 *******************************************
 How to use out-of-the-box flashdatamodules
@@ -49,7 +51,9 @@ However, after model training, it requires a lot of engineering overhead to make
 Usually, extra processing logic should be added to bridge the gap between training data and raw data.
 
 The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` classes can be used to
-store the data as well as the preprocessing and postprocessing transforms.
+store the data as well as the preprocessing and postprocessing transforms. The :class:`~flash.data.process.Serializer`
+class provides the logic for converting :class:`~flash.data.process.Postprocess` outputs to the desired predict format
+(e.g. classes, labels, probabilites, etc.).
 
 By providing a series of hooks that can be overridden with custom data processing logic,
 the user has much more granular control over their data processing flow.
