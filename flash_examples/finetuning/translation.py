@@ -1,5 +1,3 @@
-import flash
-from flash import download_data
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,31 +11,36 @@ from flash import download_data
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
+import flash
+from flash import download_data
 from flash.text import TranslationData, TranslationTask
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 
 # 2. Load the data
 datamodule = TranslationData.from_files(
     train_file="data/wmt_en_ro/train.csv",
-    valid_file="data/wmt_en_ro/valid.csv",
+    val_file="data/wmt_en_ro/valid.csv",
     test_file="data/wmt_en_ro/test.csv",
     input="input",
     target="target",
+    batch_size=1
 )
 
 # 3. Build the model
 model = TranslationTask()
 
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, precision=16, gpus=1)
+# 4. Create the trainer
+trainer = flash.Trainer(precision=32, gpus=int(torch.cuda.is_available()), fast_dev_run=True)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)
 
 # 6. Test model
-trainer.test()
+trainer.test(model)
 
 # 7. Save it!
 trainer.save_checkpoint("translation_model_en_ro.pt")

@@ -11,213 +11,220 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from sklearn.model_selection import train_test_split
-from torch import Tensor
 
-from flash.core.classification import ClassificationDataPipeline
-from flash.core.data import DataPipeline
-from flash.core.data.datamodule import DataModule
-from flash.core.data.utils import _contains_any_tensor
+from flash.data.auto_dataset import AutoDataset
+from flash.data.data_module import DataModule
+from flash.data.process import Preprocess, PreprocessState
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
     _dfs_to_samples,
     _generate_codes,
     _impute,
     _pre_transform,
+    _to_cat_vars_numpy,
+    _to_num_vars_numpy,
     PandasDataset,
 )
 
 
-class TabularDataPipeline(ClassificationDataPipeline):
+@dataclass(unsafe_hash=True, frozen=True)
+class TabularState(PreprocessState):
+    cat_cols: List[str]  # categorical columns used for training
+    num_cols: List[str]  # numerical columns used for training
+    target_col: str  # target column name used for training
+    mean: DataFrame  # mean DataFrame for categorical columsn on train DataFrame
+    std: DataFrame  # std DataFrame for categorical columsn on train DataFrame
+    codes: Dict  # codes for numerical columns used for training
+    target_codes: Dict  # target codes for target used for training
+    num_classes: int  # number of classes used for training
+    is_regression: bool  # whether the task was a is_regression
+
+
+class TabularPreprocess(Preprocess):
 
     def __init__(
         self,
-        categorical_input: List,
-        numerical_input: List,
-        target: str,
+        cat_cols: List[str],
+        num_cols: List[str],
+        target_col: str,
         mean: DataFrame,
         std: DataFrame,
         codes: Dict,
+        target_codes: Dict,
+        num_classes: int,
+        is_regression: bool = False,
     ):
-        self._categorical_input = categorical_input
-        self._numerical_input = numerical_input
-        self._target = target
-        self._mean = mean
-        self._std = std
-        self._codes = codes
+        super().__init__()
+        self.cat_cols = cat_cols
+        self.num_cols = num_cols
+        self.target_col = target_col
+        self.mean = mean
+        self.std = std
+        self.codes = codes
+        self.target_codes = target_codes
+        self.num_classes = num_classes
+        self.is_regression = is_regression
 
-    def before_collate(self, samples: Any) -> Any:
-        """Override to apply transformations to samples"""
-        if _contains_any_tensor(samples, dtype=(Tensor, np.ndarray)):
-            return samples
-        if isinstance(samples, str):
-            samples = pd.read_csv(samples)
-        if isinstance(samples, DataFrame):
-            samples = [samples]
-        dfs = _pre_transform(
-            samples, self._numerical_input, self._categorical_input, self._codes, self._mean, self._std
+    @property
+    def state(self) -> TabularState:
+        return TabularState(
+            self.cat_cols, self.num_cols, self.target_col, self.mean, self.std, self.codes, self.target_codes,
+            self.num_classes, self.is_regression
         )
-        return _dfs_to_samples(dfs, self._categorical_input, self._numerical_input)
+
+    @staticmethod
+    def generate_state(
+        train_df: DataFrame,
+        val_df: Optional[DataFrame],
+        test_df: Optional[DataFrame],
+        predict_df: Optional[DataFrame],
+        target_col: str,
+        num_cols: List[str],
+        cat_cols: List[str],
+        is_regression: bool,
+        preprocess_state: Optional[TabularState] = None
+    ):
+        if preprocess_state is not None:
+            return preprocess_state
+
+        if train_df is None:
+            raise MisconfigurationException("train_df is required to compute the preprocess state")
+
+        dfs = [train_df]
+
+        if val_df is not None:
+            dfs += [val_df]
+
+        if test_df is not None:
+            dfs += [test_df]
+
+        if predict_df is not None:
+            dfs += [predict_df]
+
+        mean, std = _compute_normalization(dfs[0], num_cols)
+        num_classes = len(dfs[0][target_col].unique())
+        if dfs[0][target_col].dtype == object:
+            # if the target_col is a category, not an int
+            target_codes = _generate_codes(dfs, [target_col])
+        else:
+            target_codes = None
+        codes = _generate_codes(dfs, cat_cols)
+
+        return TabularState(
+            cat_cols,
+            num_cols,
+            target_col,
+            mean,
+            std,
+            codes,
+            target_codes,
+            num_classes,
+            is_regression,
+        )
+
+    def common_load_data(self, df: DataFrame, dataset: AutoDataset):
+        # impute_data
+        # compute train dataset stats
+        dfs = _pre_transform([df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col,
+                             self.target_codes)
+
+        df = dfs[0]
+
+        dataset.num_samples = len(df)
+        cat_vars = _to_cat_vars_numpy(df, self.cat_cols)
+        num_vars = _to_num_vars_numpy(df, self.num_cols)
+
+        cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((len(self), 0))
+        num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((len(self), 0))
+        return df, cat_vars, num_vars
+
+    def load_data(self, df: DataFrame, dataset: AutoDataset):
+        df, cat_vars, num_vars = self.common_load_data(df, dataset)
+        target = df[self.target_col].to_numpy().astype(np.float32 if self.is_regression else np.int64)
+        return [((c, n), t) for c, n, t in zip(cat_vars, num_vars, target)]
+
+    def predict_load_data(self, sample: Union[str, DataFrame], dataset: AutoDataset):
+        df = pd.read_csv(sample) if isinstance(sample, str) else sample
+        _, cat_vars, num_vars = self.common_load_data(df, dataset)
+        return list(zip(cat_vars, num_vars))
 
 
 class TabularData(DataModule):
     """Data module for tabular tasks"""
 
-    def __init__(
-        self,
-        train_df,
-        categorical_input: List,
-        numerical_input: List,
-        target: str,
-        valid_df=None,
-        test_df=None,
-        batch_size=2,
-        num_workers: Optional[int] = None,
-    ):
-        dfs = [train_df]
-        self._test_df = None
+    preprocess_cls = TabularPreprocess
 
-        if valid_df is not None:
-            dfs.append(valid_df)
+    @property
+    def preprocess_state(self) -> PreprocessState:
+        return self._preprocess.state
 
-        if test_df is not None:
-            # save for predict function
-            self._test_df = test_df.copy()
-            self._test_df.drop(target, axis=1)
-            dfs.append(test_df)
+    @preprocess_state.setter
+    def preprocess_state(self, preprocess_state):
+        self._preprocess = self.preprocess_cls.from_state(preprocess_state)
 
-        # impute missing values
-        dfs = _impute(dfs, numerical_input)
-
-        # compute train dataset stats
-        self.mean, self.std = _compute_normalization(dfs[0], numerical_input)
-
-        if dfs[0][target].dtype == object:
-            # if the target is a category, not an int
-            self.target_codes = _generate_codes(dfs, [target])
-        else:
-            self.target_codes = None
-
-        self.codes = _generate_codes(dfs, categorical_input)
-
-        dfs = _pre_transform(
-            dfs, numerical_input, categorical_input, self.codes, self.mean, self.std, target, self.target_codes
-        )
-
-        # normalize
-        self.cat_cols = categorical_input
-        self.num_cols = numerical_input
-
-        self._num_classes = len(train_df[target].unique())
-
-        train_ds = PandasDataset(dfs[0], categorical_input, numerical_input, target)
-        valid_ds = PandasDataset(dfs[1], categorical_input, numerical_input, target) if valid_df is not None else None
-        test_ds = PandasDataset(dfs[-1], categorical_input, numerical_input, target) if test_df is not None else None
-        super().__init__(train_ds, valid_ds, test_ds, batch_size=batch_size, num_workers=num_workers)
+    @property
+    def codes(self) -> Dict[str, str]:
+        return self.preprocess_state.codes
 
     @property
     def num_classes(self) -> int:
-        return self._num_classes
+        return self.preprocess_state.num_classes
+
+    @property
+    def cat_cols(self) -> Optional[List[str]]:
+        return self.preprocess_state.cat_cols
+
+    @property
+    def num_cols(self) -> Optional[List[str]]:
+        return self.preprocess_state.num_cols
 
     @property
     def num_features(self) -> int:
         return len(self.cat_cols) + len(self.num_cols)
 
     @classmethod
-    def from_df(
-        cls,
-        train_df: pd.DataFrame,
-        target: str,
-        categorical_input: List,
-        numerical_input: List,
-        valid_df: pd.DataFrame = None,
-        test_df: pd.DataFrame = None,
-        batch_size: int = 8,
-        num_workers: Optional[int] = None,
-        val_size: float = None,
-        test_size: float = None,
-    ):
-        """Creates a TabularData object from pandas DataFrames.
-
-        Args:
-            train_df: train data DataFrame
-            target: The column containing the class id.
-            categorical_input: The list of categorical columns.
-            numerical_input: The list of numerical columns.
-            valid_df: validation data DataFrame
-            test_df: test data DataFrame
-            batch_size: the batchsize to use for parallel loading. Defaults to 64.
-            num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
-            val_size: float between 0 and 1 to create a validation dataset from train dataset
-            test_size: float between 0 and 1 to create a test dataset from train validation
-
-        Returns:
-            TabularData: The constructed data module.
-
-        Examples::
-
-            text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence")
-        """
-        if valid_df is None and isinstance(val_size, float) and isinstance(test_size, float):
-            assert 0 < val_size and val_size < 1
-            assert 0 < test_size and test_size < 1
-            train_df, valid_df = train_test_split(train_df, test_size=(val_size + test_size))
-
-        if test_df is None and isinstance(test_size, float):
-            assert 0 < test_size and test_size < 1
-            valid_df, test_df = train_test_split(valid_df, test_size=test_size)
-
-        datamodule = cls(
-            train_df=train_df,
-            target=target,
-            categorical_input=categorical_input,
-            numerical_input=numerical_input,
-            valid_df=valid_df,
-            test_df=test_df,
-            batch_size=batch_size,
-            num_workers=num_workers,
-        )
-        datamodule.data_pipeline = TabularDataPipeline(
-            categorical_input, numerical_input, target, datamodule.mean, datamodule.std, datamodule.codes
-        )
-
-        return datamodule
-
-    @classmethod
     def from_csv(
         cls,
-        train_csv,
-        target: str,
-        categorical_input: List,
-        numerical_input: List,
-        valid_csv: Optional[str] = None,
+        target_col: str,
+        train_csv: Optional[str] = None,
+        categorical_cols: Optional[List] = None,
+        numerical_cols: Optional[List] = None,
+        val_csv: Optional[str] = None,
         test_csv: Optional[str] = None,
+        predict_csv: Optional[str] = None,
         batch_size: int = 8,
         num_workers: Optional[int] = None,
         val_size: Optional[float] = None,
         test_size: Optional[float] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+        preprocess_state: Optional[TabularState] = None,
         **pandas_kwargs,
     ):
         """Creates a TextClassificationData object from pandas DataFrames.
 
         Args:
-            train_csv: train data csv file.
-            target: The column containing the class id.
-            categorical_input: The list of categorical columns.
-            numerical_input: The list of numerical columns.
-            valid_csv: validation data csv file.
-            test_csv: test data csv file.
-            batch_size: the batchsize to use for parallel loading. Defaults to 64.
+            train_csv: Train data csv file.
+            target_col: The column containing the class id.
+            categorical_cols: The list of categorical columns.
+            numerical_cols: The list of numerical columns.
+            val_csv: Validation data csv file.
+            test_csv: Test data csv file.
+            batch_size: The batchsize to use for parallel loading. Defaults to 64.
             num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads.
-            val_size: float between 0 and 1 to create a validation dataset from train dataset
-            test_size: float between 0 and 1 to create a test dataset from train validation
+                Defaults to None which equals the number of available CPU threads,
+                or 0 for Darwin platform.
+            val_size: Float between 0 and 1 to create a validation dataset from train dataset.
+            test_size: Float between 0 and 1 to create a test dataset from train validation.
+            preprocess_cls: Preprocess class to be used within this DataModule DataPipeline.
+            preprocess_state: Used to store the train statistics.
 
         Returns:
             TabularData: The constructed data module.
@@ -227,13 +234,25 @@ class TabularData(DataModule):
             text_data = TabularData.from_files("train.csv", label_field="class", text_field="sentence")
         """
         train_df = pd.read_csv(train_csv, **pandas_kwargs)
-        valid_df = pd.read_csv(valid_csv, **pandas_kwargs) if valid_csv is not None else None
-        test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv is not None else None
-        datamodule = cls.from_df(
-            train_df, target, categorical_input, numerical_input, valid_df, test_df, batch_size, num_workers, val_size,
-            test_size
+        val_df = pd.read_csv(val_csv, **pandas_kwargs) if val_csv else None
+        test_df = pd.read_csv(test_csv, **pandas_kwargs) if test_csv else None
+        predict_df = pd.read_csv(predict_csv, **pandas_kwargs) if predict_csv else None
+
+        return cls.from_df(
+            train_df,
+            target_col,
+            categorical_cols,
+            numerical_cols,
+            val_df,
+            test_df,
+            predict_df,
+            batch_size,
+            num_workers,
+            val_size,
+            test_size,
+            preprocess_state=preprocess_state,
+            preprocess_cls=preprocess_cls,
         )
-        return datamodule
 
     @property
     def emb_sizes(self) -> list:
@@ -242,12 +261,102 @@ class TabularData(DataModule):
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
         # The following "formula" provides a general rule of thumb about the number of embedding dimensions:
         # embedding_dimensions =  number_of_categories**0.25
-
         num_classes = [len(self.codes[cat]) for cat in self.cat_cols]
         emb_dims = [max(int(n**0.25), 16) for n in num_classes]
         return list(zip(num_classes, emb_dims))
 
     @staticmethod
-    def default_pipeline() -> DataPipeline():
-        # TabularDataPipeline depends on the data
-        return DataPipeline()
+    def _split_dataframe(
+        train_df: DataFrame,
+        val_df: Optional[DataFrame] = None,
+        test_df: Optional[DataFrame] = None,
+        val_size: float = None,
+        test_size: float = None,
+    ):
+        if val_df is None and isinstance(val_size, float) and isinstance(test_size, float):
+            assert 0 < val_size < 1
+            assert 0 < test_size < 1
+            train_df, val_df = train_test_split(train_df, test_size=(val_size + test_size))
+
+        if test_df is None and isinstance(test_size, float):
+            assert 0 < test_size < 1
+            val_df, test_df = train_test_split(val_df, test_size=test_size)
+
+        return train_df, val_df, test_df
+
+    @staticmethod
+    def _sanetize_cols(cat_cols: Optional[List], num_cols: Optional[List]):
+        if cat_cols is None and num_cols is None:
+            raise RuntimeError('Both `cat_cols` and `num_cols` are None!')
+
+        return cat_cols or [], num_cols or []
+
+    @classmethod
+    def from_df(
+        cls,
+        train_df: DataFrame,
+        target_col: str,
+        categorical_cols: Optional[List] = None,
+        numerical_cols: Optional[List] = None,
+        val_df: Optional[DataFrame] = None,
+        test_df: Optional[DataFrame] = None,
+        predict_df: Optional[DataFrame] = None,
+        batch_size: int = 8,
+        num_workers: Optional[int] = None,
+        val_size: float = None,
+        test_size: float = None,
+        is_regression: bool = False,
+        preprocess_state: Optional[TabularState] = None,
+        preprocess_cls: Optional[Type[Preprocess]] = None,
+    ):
+        """Creates a TabularData object from pandas DataFrames.
+
+        Args:
+            train_df: Train data DataFrame.
+            target_col: The column containing the class id.
+            categorical_cols: The list of categorical columns.
+            numerical_cols: The list of numerical columns.
+            val_df: Validation data DataFrame.
+            test_df: Test data DataFrame.
+            batch_size: The batchsize to use for parallel loading. Defaults to 64.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to None which equals the number of available CPU threads,
+                or 0 for Darwin platform.
+            val_size: Float between 0 and 1 to create a validation dataset from train dataset.
+            test_size: Float between 0 and 1 to create a test dataset from train validation.
+
+        Returns:
+            TabularData: The constructed data module.
+
+        Examples::
+
+            text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence")
+        """
+        categorical_cols, numerical_cols = cls._sanetize_cols(categorical_cols, numerical_cols)
+
+        train_df, val_df, test_df = cls._split_dataframe(train_df, val_df, test_df, val_size, test_size)
+
+        preprocess_cls = preprocess_cls or cls.preprocess_cls
+
+        preprocess_state = preprocess_cls.generate_state(
+            train_df,
+            val_df,
+            test_df,
+            predict_df,
+            target_col,
+            numerical_cols,
+            categorical_cols,
+            is_regression,
+            preprocess_state=preprocess_state
+        )
+        preprocess: Preprocess = preprocess_cls.from_state(preprocess_state)
+
+        return cls.from_load_data_inputs(
+            train_load_data_input=train_df,
+            val_load_data_input=val_df,
+            test_load_data_input=test_df,
+            predict_load_data_input=predict_df,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            preprocess=preprocess
+        )

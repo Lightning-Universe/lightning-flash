@@ -11,23 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
+from unittest import mock
 
 import pytest
 
 root = Path(__file__).parent.parent.parent
 
 
-def call_script(filepath: str,
-                args: Optional[List[str]] = None,
-                timeout: Optional[int] = 60 * 5) -> Tuple[int, str, str]:
+def call_script(
+    filepath: str,
+    args: Optional[List[str]] = None,
+    timeout: Optional[int] = 60 * 5,
+) -> Tuple[int, str, str]:
     if args is None:
         args = []
     args = [str(a) for a in args]
-    command = [sys.executable, filepath] + args
+    command = [sys.executable, "-m", "coverage", "run", filepath] + args
     print(" ".join(command))
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
@@ -42,26 +46,37 @@ def call_script(filepath: str,
 
 def run_test(filepath):
     code, stdout, stderr = call_script(filepath)
-    assert not code
     print(f"{filepath} STDOUT: {stdout}")
     print(f"{filepath} STDERR: {stderr}")
+    assert not code
 
 
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
-    "step,file",
+    "folder, file",
     [
         ("finetuning", "image_classification.py"),
+        # ("finetuning", "object_detection.py"),  # TODO: takes too long.
+        # ("finetuning", "summarization.py"),  # TODO: takes too long.
         ("finetuning", "tabular_classification.py"),
-        ("predict", "classify_image.py"),
-        ("predict", "classify_tabular.py"),
-        # "classify_text.py" TODO: takes too long
+        # ("finetuning", "text_classification.py"),  # TODO: takes too long
+        # ("finetuning", "translation.py"),  # TODO: takes too long.
+        ("predict", "image_classification.py"),
+        ("predict", "tabular_classification.py"),
+        # ("predict", "text_classification.py"),
+        ("predict", "image_embedder.py"),
+        # ("predict", "summarization.py"),  # TODO: takes too long
+        # ("predict", "translate.py"),  # TODO: takes too long
     ]
 )
-def test_finetune_example(tmpdir, step, file):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / step / file))
+def test_example(tmpdir, folder, file):
+    run_test(str(root / "flash_examples" / folder / file))
 
 
+@pytest.mark.skipif(reason="CI bug")
 def test_generic_example(tmpdir):
-    with tmpdir.as_cwd():
-        run_test(str(root / "flash_examples" / "generic_task.py"))
+    run_test(str(root / "flash_examples" / "generic_task.py"))
+
+
+def test_custom_task(tmpdir):
+    run_test(str(root / "flash_examples" / "custom_task.py"))

@@ -1,41 +1,31 @@
+***********
 Quick Start
-===========
+***********
 
-Flash is a high-level deep learning framework for fast prototyping, baselining, finetuning and solving deep learning problems. It features a set of tasks for you to use for inference and finetuning out of the box, and an easy to implement API to customize every step of the process.
+Flash is a high-level deep learning framework for fast prototyping, baselining, finetuning and solving deep learning problems. It features a set of tasks for you to use for inference and finetuning out of the box, and an easy to implement API to customize every step of the process for full flexibility.
 
-
-Flash is excellent for:
-
-- data scientists
-- kagglers
-- applied corporate researchers
-- applied academic researchers
+Flash is built for beginners with a simple API that requires very little deep learning background, and for data scientists, kagglers, applied ML practitioners and deep learning researchers that want a quick way to get a deep learning baseline with advnaced features `Pytorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ offers.
 
 
 Why Flash?
-----------
+==========
 
+For getting started with Deep Learning
+--------------------------------------
+
+Easy to learn
+^^^^^^^^^^^^^
+If you are just getting started with deep learning, Flash offers common deep learning tasks you can use out-of-the-box in a few lines of code, no math, fancy nn.Modules or research experience required! 
+
+Easy to scale
+^^^^^^^^^^^^^
 Flash is built on top of `Pytorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_,
 a powerful deep learning research framework for training models at scale. With the power of Lightning,
 you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes.
 
-End-to-end deep learning
-^^^^^^^^^^^^^^^^^^^^^^^^
-Flash is built for 3 major use-cases:
-
-- Inference (predictions)
-- Finetuning
-- Training
-
-
-Scalability
-^^^^^^^^^^^
-Flash is built on top of `Pytorch Lightning
-<https://github.com/PyTorchLightning/pytorch-lightning>`_, a powerful deep learning research framework for training models at scale. With the power of Lightning, you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes. 
-
-Flexibility
-^^^^^^^^^^^
-Unlike other high-level frameworks, it's easy to customize the Flash tasks with `Pytorch Lightning
+Easy to upskill
+^^^^^^^^^^^^^^^
+If you want create more complex and custmoized models, you can refactor any part of flash with PyTorch or `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ components to get all the flexibility you need. Lightning is just
 organized PyTorch with the unecessary engineering details abstracted away.
 
@@ -45,6 +35,21 @@ organized PyTorch with the unecessary engineering details abstracted away.
 
 When you need more flexibility you can build your own tasks or simply use Lightning directly.
 
+For Deep learning research
+--------------------------
+
+Quickest way to a baseline
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+`Pytorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ is designed to abstract away unnecessary boilerplate, while enabling maximal flexibility. In order to provide full flexibility, solving very common deep learning problems such as classification in Lightning still requires some boilerplate. It can still take quite some time to get a baseline model running on a new dataset or out of domain task. We created Flash to answer our users need for a super quick way to baseline for Lightning using proven backbones for common data patterns. Flash aims to be the easiest starting point for your research- start with a Flash Task to benchmark against, and override any part of flash with Lightning or PyTorch components on your way to SOTA research.
+
+Flexibility where you want it
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Flash tasks are essentialy LightningModules, and the Flash Trainer is a thin wrapper for the Lightning Trainer. You can use your own LightningModule instead of the Flash task, the Lightning Trainer instead of the flash trainer, etc. Flash helps you focus even more only on your research, and less on anything else.
+
+Standard best practices
+^^^^^^^^^^^^^^^^^^^^^^^
+Flash tasks implement the standard best practices for a variety of diffrent models and domains, to save you time digging through different implementations. Flash abstracts even more details than lightning, allowing deep learning experts to share their tips and tricks for solving scoped deep learning problems.
+
 .. tip::
 
     Read :doc:`here <reference/flash_to_pl>` to understand when to use Flash vs Lightning.
@@ -52,19 +57,20 @@ When you need more flexibility you can build your own tasks or simply use Lightn
 ----
 
 Install
--------
+=======
 
 You can install flash using pip or conda:
 
 .. code-block:: bash
 
-    pip install pytorch-lightning-flash -U
+    pip install lightning-flash -U
 
 ------
 
 Tasks
------
-Flash is comprised of a collection of Tasks. The Flash tasks are opinionated and laser-focused objects designed to solve a specific type of problem, using state-of-the-art methods. 
+=====
+
+Flash is comprised of a collection of Tasks. The Flash tasks are laser-focused objects designed to solve a well-defined type of problem, using state-of-the-art methods. 
 
 The Flash tasks contain all the relevant information to solve the task at hand- the number of class labels you want to predict, number of columns in your dataset, as well as details on the model architecture used such as loss function, optimizers, etc.
 
@@ -81,7 +87,8 @@ Here are examples of tasks:
 ------
 
 Inference
----------
+=========
+
 Inference is the process of generating predictions from trained models. To use a task for inference:
 
 1. Init your task with pretrained weights using a checkpoint (a checkpoint is simply a file that capture the exact value of all parameters used by a model). Local file or URL works.
@@ -112,7 +119,8 @@ Here's an example of inference.
 -------
 
 Finetune
---------
+========
+
 Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset.
 To use a Task for finetuning:
 
@@ -178,7 +186,8 @@ Once your model is finetuned, use it for prediction anywhere you want!
 ----
 
 Train
------
+=====
+
 When you have enough data, you're likely better off training from scratch instead of finetuning.
 Steps here are similar to finetune:
 
@@ -192,14 +201,17 @@ Steps here are similar to finetune:
 -----
 
 A few Built-in Tasks
---------------------
+====================
 
-- :doc:`Task <reference/task>`
+- :doc:`Generic Flash Task <reference/task>`
 - :doc:`ImageClassification <reference/image_classification>`
+- :doc:`ImageEmbedder <reference/image_embedder>`
 - :doc:`TextClassification <reference/text_classification>`
+- :doc:`SummarizationTask <reference/summarization>`
+- :doc:`TranslationTask <reference/translation>`
 - :doc:`TabularClassification <reference/tabular_classification>`
 
------
+More tasks coming soon!
 
 Contribute a task
 -----------------

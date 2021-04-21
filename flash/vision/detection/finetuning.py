@@ -11,11 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
+import pytorch_lightning as pl
 
-from flash.vision.backbones import bolts_backbone_and_num_features
+from flash.core.finetuning import FlashBaseFinetuning
 
 
-@pytest.mark.parametrize("name", ['simclr-imagenet', 'swav-imagenet'])
-def test_load_bolts(name):
-    bolts_backbone_and_num_features(name)
+class ObjectDetectionFineTuning(FlashBaseFinetuning):
+    """
+    Freezes the backbone during Detector training.
+    """
+
+    def __init__(self, train_bn: bool = True) -> None:
+        super().__init__(train_bn=train_bn)
+
+    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+        model = pl_module.model
+        self.freeze(modules=model.backbone, train_bn=self.train_bn)

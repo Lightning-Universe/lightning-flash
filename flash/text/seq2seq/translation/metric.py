@@ -20,7 +20,8 @@ from collections import Counter
 from typing import List
 
 import torch
-from pytorch_lightning.metrics import Metric
+from torch import tensor
+from torchmetrics import Metric
 
 
 def _count_ngram(ngram_input_list: List[str], n_gram: int) -> Counter:
@@ -66,8 +67,8 @@ class BLEUScore(Metric):
         self.n_gram = n_gram
         self.smooth = smooth
 
-        self.add_state("c", torch.tensor(0, dtype=torch.float), dist_reduce_fx="sum")
-        self.add_state("r", torch.tensor(0, dtype=torch.float), dist_reduce_fx="sum")
+        self.add_state("c", tensor(0, dtype=torch.float), dist_reduce_fx="sum")
+        self.add_state("r", tensor(0, dtype=torch.float), dist_reduce_fx="sum")
         self.add_state("numerator", torch.zeros(self.n_gram), dist_reduce_fx="sum")
         self.add_state("denominator", torch.zeros(self.n_gram), dist_reduce_fx="sum")
 
@@ -77,7 +78,7 @@ class BLEUScore(Metric):
         ref_len = self.r.clone().detach()
 
         if min(self.numerator) == 0.0:
-            return torch.tensor(0.0, device=self.r.device)
+            return tensor(0.0, device=self.r.device)
 
         if self.smooth:
             precision_scores = torch.add(self.numerator, torch.ones(
@@ -86,11 +87,11 @@ class BLEUScore(Metric):
         else:
             precision_scores = self.numerator / self.denominator
 
-        log_precision_scores = torch.tensor([1.0 / self.n_gram] * self.n_gram,
-                                            device=self.r.device) * torch.log(precision_scores)
+        log_precision_scores = tensor([1.0 / self.n_gram] * self.n_gram,
+                                      device=self.r.device) * torch.log(precision_scores)
         geometric_mean = torch.exp(torch.sum(log_precision_scores))
         brevity_penalty = (
-            torch.tensor(1.0, device=self.r.device) if self.c > self.r else torch.exp(1 - (ref_len / trans_len))
+            tensor(1.0, device=self.r.device) if self.c > self.r else torch.exp(1 - (ref_len / trans_len))
         )
         bleu = brevity_penalty * geometric_mean
         return bleu

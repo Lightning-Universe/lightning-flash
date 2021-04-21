@@ -11,64 +11,108 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Sequence, Type, Union
+from types import FunctionType
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
-from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
+from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
-from flash.vision.backbones import backbone_and_num_features
-from flash.vision.classification.data import ImageClassificationData, ImageClassificationDataPipeline
+from flash.core.registry import FlashRegistry
+from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
+
+
+def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
+    return F.binary_cross_entropy_with_logits(x, y.float())
 
 
 class ImageClassifier(ClassificationTask):
     """Task that classifies images.
 
+    Use a built in backbone
+
+    Example::
+
+        from flash.vision import ImageClassifier
+
+        classifier = ImageClassifier(backbone='resnet18')
+
+    Or your own backbone (num_features is the number of features produced by your backbone)
+
+    Example::
+
+        from flash.vision import ImageClassifier
+        from torch import nn
+
+        # use any backbone
+        some_backbone = nn.Conv2D(...)
+        num_out_features = 1024
+        classifier = ImageClassifier(backbone=(some_backbone, num_out_features))
+
+
     Args:
         num_classes: Number of classes to classify.
-        backbone: A model to use to compute image features.
-        pretrained: Use a pretrained backbone.
-        loss_fn: Loss function for training, defaults to cross entropy.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation.
-        learning_rate: Learning rate to use for training, defaults to `1e-3`
+        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
+        pretrained: Use a pretrained backbone, defaults to ``True``.
+        loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
+        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
+        metrics: Metrics to compute for training and evaluation,
+            defaults to :class:`torchmetrics.Accuracy`.
+        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        multi_label: Whether the labels are multi labels or not.
     """
+
+    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
 
     def __init__(
         self,
-        num_classes,
-        backbone="resnet18",
-        num_features: int = None,
-        pretrained=True,
-        loss_fn: Callable = F.cross_entropy,
+        num_classes: int,
+        backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
+        backbone_kwargs: Optional[Dict] = None,
+        head: Optional[Union[FunctionType, nn.Module]] = None,
+        pretrained: bool = True,
+        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = (Accuracy()),
+        metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
         learning_rate: float = 1e-3,
+        multi_label: bool = False,
     ):
+
+        if metrics is None:
+            metrics = Accuracy(subset_accuracy=multi_label)
+
+        if loss_fn is None:
+            loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
+
         super().__init__(
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            postprocess=self.postprocess_cls(multi_label)
         )
 
         self.save_hyperparameters()
 
-        self.backbone, num_features = backbone_and_num_features(backbone, pretrained)
+        if not backbone_kwargs:
+            backbone_kwargs = {}
 
-        self.head = nn.Sequential(
+        if isinstance(backbone, tuple):
+            self.backbone, num_features = backbone
+        else:
+            self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+
+        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
+        self.head = head or nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
             nn.Linear(num_features, num_classes),
         )
 
-    def forward(self, x) -> Any:
+    def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
         return self.head(x)
-
-    @staticmethod
-    def default_pipeline() -> ImageClassificationDataPipeline:
-        return ImageClassificationData.default_pipeline()

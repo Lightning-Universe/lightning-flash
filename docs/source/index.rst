@@ -26,6 +26,7 @@ Lightning Flash
    reference/text_classification
    reference/tabular_classification
    reference/translation
+   reference/object_detection
 
 .. toctree::
    :maxdepth: 1
@@ -33,6 +34,9 @@ Lightning Flash
 
    general/model
    general/data
+   general/callback
+   general/registry
+
 
 .. toctree::
    :maxdepth: 1

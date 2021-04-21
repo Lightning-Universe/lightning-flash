@@ -20,7 +20,7 @@ from pandas.core.frame import DataFrame
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 
-from flash.core.data import download_data
+from flash.data.utils import download_data
 
 
 def _impute(dfs: List, num_cols: List) -> list:
@@ -84,8 +84,8 @@ def _categorize(dfs: List, cat_cols: List, codes: Dict = None) -> list:
 
 def _pre_transform(
     dfs: List,
-    num_cols: List,
-    cat_cols: List,
+    num_cols: List[str],
+    cat_cols: List[str],
     codes: Dict,
     mean: DataFrame,
     std: DataFrame,
@@ -95,48 +95,57 @@ def _pre_transform(
     dfs = _impute(dfs, num_cols)
     dfs = _normalize(dfs, num_cols, mean=mean, std=std)
     dfs = _categorize(dfs, cat_cols, codes=codes)
-    if target_codes is not None and target is not None:
+    if target_codes and target:
         dfs = _categorize(dfs, [target], codes=target_codes)
     return dfs
 
 
-def _to_cat_vars_numpy(df, cat_cols) -> list:
+def _to_cat_vars_numpy(df, cat_cols: List[str]) -> list:
     if isinstance(df, list) and len(df) == 1:
         df = df[0]
     return [c.to_numpy().astype(np.int64) for n, c in df[cat_cols].items()]
 
 
-def _to_num_cols_numpy(df, num_cols) -> list:
+def _to_num_vars_numpy(df, num_cols: List[str]) -> list:
     if isinstance(df, list) and len(df) == 1:
         df = df[0]
     return [c.to_numpy().astype(np.float32) for n, c in df[num_cols].items()]
 
 
-def _dfs_to_samples(dfs, cat_cols, num_cols) -> list:
+def _dfs_to_samples(dfs, cat_cols: List[str], num_cols: List[str]) -> list:
     num_samples = sum([len(df) for df in dfs])
     cat_vars_list = []
     num_vars_list = []
     for df in dfs:
         cat_vars = _to_cat_vars_numpy(df, cat_cols)
-        num_vars = _to_num_cols_numpy(df, num_cols)
+        num_vars = _to_num_vars_numpy(df, num_cols)
         cat_vars_list.append(cat_vars)
         cat_vars_list.append(num_vars_list)
 
+    # todo: assumes that dfs is not empty
     cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0))
     num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0))
-    return [(c, n) for c, n in zip(cat_vars, num_vars)]
+    return list(zip(cat_vars, num_vars))
 
 
 class PandasDataset(Dataset):
 
-    def __init__(self, df, cat_cols, num_cols, target_col, regression=False, predict=False):
+    def __init__(
+        self,
+        df: DataFrame,
+        cat_cols: List[str],
+        num_cols: List[str],
+        target_col: str,
+        is_regression: bool = False,
+        predict: bool = False
+    ):
         self._num_samples = len(df)
         self.predict = predict
         cat_vars = _to_cat_vars_numpy(df, cat_cols)
-        num_vars = _to_num_cols_numpy(df, num_cols)
+        num_vars = _to_num_vars_numpy(df, num_cols)
 
         if not predict:
-            self.target = df[target_col].to_numpy().astype(np.float32 if regression else np.int64)
+            self.target = df[target_col].to_numpy().astype(np.float32 if is_regression else np.int64)
 
         self.cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((len(self), 0))
         self.num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((len(self), 0))
@@ -157,7 +166,7 @@ def titanic_data_download(path: str, predict_size: float = 0.1) -> None:
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.csv", path_data)
 
     if set(os.listdir(path)) != {"predict.csv", "titanic.csv"}:
-        assert predict_size > 0 and predict_size < 1
+        assert 0 < predict_size < 1
         df = pd.read_csv(path_data)
         df_train, df_predict = train_test_split(df, test_size=predict_size)
         df_train.to_csv(path_data)

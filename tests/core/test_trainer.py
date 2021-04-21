@@ -17,7 +17,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from flash import ClassificationTask, Trainer
+from flash import Trainer
+from flash.core.classification import ClassificationTask
 from flash.core.finetuning import NoFreeze
 
 

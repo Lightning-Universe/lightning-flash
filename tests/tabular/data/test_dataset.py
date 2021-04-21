@@ -43,7 +43,7 @@ def test_pandas():
         cat_cols=["category"],
         num_cols=["scalar_a", "scalar_b"],
         target_col="label",
-        regression=False,
+        is_regression=False,
     )
     assert len(ds) == 6
     (cat, num), target = ds[0]
@@ -59,7 +59,7 @@ def test_pandas_no_cat():
         cat_cols=[],
         num_cols=["scalar_a", "scalar_b"],
         target_col="label",
-        regression=False,
+        is_regression=False,
     )
     assert len(ds) == 6
     (cat, num), target = ds[0]
@@ -75,7 +75,7 @@ def test_pandas_no_num():
         cat_cols=["category"],
         num_cols=[],
         target_col="label",
-        regression=False,
+        is_regression=False,
     )
     assert len(ds) == 6
     (cat, num), target = ds[0]

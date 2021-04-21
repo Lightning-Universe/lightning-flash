@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 
+import pytest
 import torch
 
 from flash import Trainer
@@ -29,7 +30,7 @@ class DummyDataset(torch.utils.data.Dataset):
             "labels": torch.randint(1000, size=(128, )),
         }
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 100
 
 
@@ -38,10 +39,8 @@ class DummyDataset(torch.utils.data.Dataset):
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_init_train(tmpdir):
-    if os.name == "nt":
-        # TODO: huggingface stuff timing out on windows
-        return True
     model = SummarizationTask(TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)

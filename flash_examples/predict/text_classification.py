@@ -13,11 +13,11 @@
 # limitations under the License.
 from pytorch_lightning import Trainer
 
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
 
 # 2. Load the model from a checkpoint
 model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
@@ -36,6 +36,8 @@ print(predictions)
 datamodule = TextClassificationData.from_file(
     predict_file="data/imdb/predict.csv",
     input="review",
+    # use the same data pre-processing values we used to predict in 2a
+    preprocess_state=model.data_pipeline.preprocess_state,
 )
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)

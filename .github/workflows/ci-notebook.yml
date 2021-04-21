@@ -38,12 +38,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -U pip wheel
-        #pip install treon
-        pip install . --pre --upgrade --quiet --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install --requirement requirements/test.txt --quiet --find-links https://download.pytorch.org/whl/torch_stable.html
-        pip install --requirement requirements/notebooks.txt --quiet --find-links https://download.pytorch.org/whl/torch_stable.html
+        pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install --requirement requirements/notebooks.txt --quiet --upgrade-strategy only-if-needed
 
     - name: Cache datasets
       uses: actions/cache@v2
@@ -61,8 +58,8 @@ jobs:
 
     - name: Run Notebooks
       run: |
-        jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
+        # jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
         jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb
 
-        ipython flash_notebooks/image_classification.py
+        # ipython flash_notebooks/image_classification.py
         ipython flash_notebooks/tabular_classification.py

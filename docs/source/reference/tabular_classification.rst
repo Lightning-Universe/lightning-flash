@@ -35,8 +35,8 @@ We can use the Flash Tabular classification task to predict the probability a pa
 We can create :class:`~flash.tabular.TabularData` from csv files using the :func:`~flash.tabular.TabularData.from_csv` method. We will pass in:
 
 * **train_csv**- csv file containing the training data converted to a Pandas DataFrame
-* **categorical_input**- a list of the names of columns that contain categorical data (strings or integers)
-* **numerical_input**- a list of the names of columns that contain numerical continuous data (floats)
+* **cat_cols**- a list of the names of columns that contain categorical data (strings or integers)
+* **num_cols**- a list of the names of columns that contain numerical continuous data (floats)
 * **target**- the name of the column we want to predict
 
 
@@ -47,7 +47,7 @@ Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Da
     import flash
     from flash import download_data
     from flash.tabular import TabularClassifier, TabularData
-    from pytorch_lightning.metrics.classification import Accuracy, Precision, Recall
+    from torchmetrics.classification import Accuracy, Precision, Recall
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
@@ -56,8 +56,8 @@ Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Da
     datamodule = TabularData.from_csv(
         "./data/titanic/titanic.csv",
         test_csv="./data/titanic/test.csv",
-        categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-        numerical_input=["Fare"],
+        cat_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+        num_cols=["Fare"],
         target="Survived",
         val_size=0.25,
         )
@@ -100,7 +100,7 @@ You can make predcitions on a pretrained model, that has already been trained fo
 
     # 2. Load the model from a checkpoint
     model = TabularClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt"
+        "https://flash-weights.s3.amazonaws.com/tabnet_classification_model.pt"
     )
 
     # 3. Generate predictions from a sheet file! Who would survive?
@@ -120,8 +120,8 @@ Or you can finetune your own model and use that for prediction:
     datamodule = TabularData.from_csv(
         "my_data_file.csv",
         test_csv="./data/titanic/test.csv",
-        categorical_input=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-        numerical_input=["Fare"],
+        cat_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+        num_cols=["Fare"],
         target="Survived",
         val_size=0.25,
     )
@@ -166,4 +166,3 @@ TabularData
 .. automethod:: flash.tabular.TabularData.from_csv
 
 .. automethod:: flash.tabular.TabularData.from_df
-
