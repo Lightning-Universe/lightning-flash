@@ -13,8 +13,8 @@
 # limitations under the License.
 import torch
 
-import flash
-from flash import download_data, Trainer
+from flash import Trainer
+from flash.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
@@ -33,7 +33,7 @@ datamodule = SummarizationData.from_files(
 model = SummarizationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(gpus=int(torch.cuda.is_available()), fast_dev_run=True)
+trainer = Trainer(gpus=int(torch.cuda.is_available()), fast_dev_run=True)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)
