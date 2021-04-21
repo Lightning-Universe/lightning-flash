@@ -215,14 +215,16 @@ def test_from_filepaths_multilabel(tmpdir):
 
     train_images = [str(tmpdir / "a1.png"), str(tmpdir / "a2.png")]
     train_labels = [[1, 0, 1, 0], [0, 0, 1, 1]]
+    valid_labels = [[1, 1, 1, 0], [1, 0, 0, 1]]
+    test_labels = [[1, 0, 1, 0], [1, 1, 0, 1]]
 
     dm = ImageClassificationData.from_filepaths(
         train_filepaths=train_images,
         train_labels=train_labels,
         val_filepaths=train_images,
-        val_labels=train_labels,
+        val_labels=valid_labels,
         test_filepaths=train_images,
-        test_labels=train_labels,
+        test_labels=test_labels,
         batch_size=2,
         num_workers=0,
     )
@@ -236,10 +238,10 @@ def test_from_filepaths_multilabel(tmpdir):
     imgs, labels = data
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
-    torch.testing.assert_allclose(labels, torch.tensor(train_labels))
+    torch.testing.assert_allclose(labels, torch.tensor(valid_labels))
 
     data = next(iter(dm.test_dataloader()))
     imgs, labels = data
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
-    torch.testing.assert_allclose(labels, torch.tensor(train_labels))
+    torch.testing.assert_allclose(labels, torch.tensor(test_labels))
