@@ -27,7 +27,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
 from flash.core.registry import FlashRegistry
-from flash.core.schedulers import _SCHEDULER_REGISTRY
+from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
 
@@ -68,7 +68,7 @@ class Task(LightningModule):
         postprocess: :class:`~flash.data.process.Postprocess` to use as the default for this task.
     """
 
-    schedulers = _SCHEDULER_REGISTRY
+    schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
 
     def __init__(
         self,
@@ -181,7 +181,7 @@ class Task(LightningModule):
             batch = torch.stack(batch)
         return self(batch)
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         optimizer = self.optimizer
         if not isinstance(self.optimizer, Optimizer):
             self.optimizer_kwargs["lr"] = self.learning_rate
@@ -352,6 +352,8 @@ class Task(LightningModule):
 
     def get_num_training_steps(self) -> int:
         """Total training steps inferred from datamodule and devices."""
+        if not getattr(self, "trainer", None):
+            raise MisconfigurationException("The LightningModule isn't attached to the trainer yet.")
         if isinstance(self.trainer.limit_train_batches, int) and self.trainer.limit_train_batches != 0:
             dataset_size = self.trainer.limit_train_batches
         elif isinstance(self.trainer.limit_train_batches, float):
@@ -373,10 +375,14 @@ class Task(LightningModule):
         return max_estimated_steps
 
     def _compute_warmup(self, num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
+        if not isinstance(num_warmup_steps, float) or (num_warmup_steps > 1 or num_warmup_steps < 0):
+            raise MisconfigurationException(
+                "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
+            )
         if isinstance(num_warmup_steps, float):
             # Convert float values to percentage of training steps to use as warmup
             num_warmup_steps *= num_training_steps
-        return int(num_warmup_steps)
+        return round(num_warmup_steps)
 
     def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
         scheduler = self.scheduler
@@ -384,22 +390,12 @@ class Task(LightningModule):
             return scheduler
         if isinstance(scheduler, str):
             scheduler_fn = self.schedulers.get(self.scheduler)
-            if "num_warmup_steps" in self.scheduler_kwargs:
-                num_warmup_steps = self.scheduler_kwargs.get("num_warmup_steps")
-                if not isinstance(num_warmup_steps, float) or (num_warmup_steps > 1 or num_warmup_steps < 0):
-                    raise MisconfigurationException(
-                        "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
-                    )
-                num_training_steps = self.get_num_training_steps()
-                num_warmup_steps = self._compute_warmup(
-                    num_training_steps=num_training_steps,
-                    num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
-                )
-                return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-            else:
-                raise MisconfigurationException(
-                    "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
-                )
+            num_training_steps: int = self.get_num_training_steps()
+            num_warmup_steps: int = self._compute_warmup(
+                num_training_steps=num_training_steps,
+                num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
+            )
+            return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
         elif issubclass(scheduler, _LRScheduler):
             return scheduler(optimizer, **self.scheduler_kwargs)
         raise MisconfigurationException(

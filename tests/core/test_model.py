@@ -206,9 +206,7 @@ def test_optimization(tmpdir):
         ]
 
         optim = torch.optim.Adadelta(model.parameters())
-        with pytest.raises(
-            MisconfigurationException, match="`num_warmup_steps` should be provided as float between 0 and 1"
-        ):
+        with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
             task = ClassificationTask(model, optimizer=optim, scheduler="linear_schedule_with_warmup")
             optimizer, scheduler = task.configure_optimizers()
 

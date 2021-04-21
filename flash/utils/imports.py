@@ -5,8 +5,4 @@ _KORNIA_AVAILABLE = _module_available("kornia")
 _COCO_AVAILABLE = _module_available("pycocotools")
 _TIMM_AVAILABLE = _module_available("timm")
 _TORCHVISION_AVAILABLE = _module_available("torchvision")
-try:
-    import transformers
-    _TRANSFORMERS_AVAILABLE = True
-except ModuleNotFoundError:
-    _TRANSFORMERS_AVAILABLE = False
+_TRANSFORMERS_AVAILABLE = _module_available("transformers")
