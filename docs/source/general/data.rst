@@ -458,7 +458,7 @@ Example::
         samples = uncollate(batch)
 
         samples = [per_sample_transform(sample) for sample in samples]
-
+        # only if serializers are enabled.
         return [serialize(sample) for sample in samples]
 
     predictions = lightning_module(data)
