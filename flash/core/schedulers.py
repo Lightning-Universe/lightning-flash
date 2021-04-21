@@ -4,7 +4,7 @@ from flash.utils.imports import _TRANSFORMERS_AVAILABLE
 _SCHEDULER_REGISTRY = FlashRegistry("scheduler")
 
 if _TRANSFORMERS_AVAILABLE:
-    from transformers.optimization import TYPE_TO_SCHEDULER_FUNCTION
-
-    for v in TYPE_TO_SCHEDULER_FUNCTION.values():
-        _SCHEDULER_REGISTRY(v, name=v.__name__[4:])
+    from transformers import optimization
+    functions = [getattr(optimization, n) for n in dir(optimization) if ("get_" in n and n != 'get_scheduler')]
+    for fn in functions:
+        _SCHEDULER_REGISTRY(fn, name=fn.__name__[4:])

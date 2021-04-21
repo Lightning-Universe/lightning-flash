@@ -197,7 +197,7 @@ def test_optimization(tmpdir):
     assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
 
     if _TRANSFORMERS_AVAILABLE:
-        from transformers.optimization import SchedulerType, TYPE_TO_SCHEDULER_FUNCTION
+        from transformers.optimization import get_linear_schedule_with_warmup
 
         assert task.available_schedulers() == [
             'constant_schedule', 'constant_schedule_with_warmup', 'cosine_schedule_with_warmup',
@@ -219,11 +219,11 @@ def test_optimization(tmpdir):
             scheduler_kwargs={"num_warmup_steps": 0.1},
             loss_fn=F.nll_loss,
         )
-        trainer = flash.Trainer(max_epochs=100)
+        trainer = flash.Trainer(max_epochs=1, limit_train_batches=2)
         ds = DummyDataset()
         trainer.fit(task, train_dataloader=DataLoader(ds))
         optimizer, scheduler = task.configure_optimizers()
         assert isinstance(optimizer[0], torch.optim.Adadelta)
         assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
-        expected = TYPE_TO_SCHEDULER_FUNCTION[SchedulerType.LINEAR].__name__
+        expected = get_linear_schedule_with_warmup.__name__
         assert scheduler[0].lr_lambdas[0].__qualname__.split('.')[0] == expected
