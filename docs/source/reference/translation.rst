@@ -42,7 +42,7 @@ Or on a given dataset, use :class:`~flash.core.trainer.Trainer` `predict` method
 
     # import our libraries
     from flash import Trainer
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.text import TranslationData, TranslationTask
 
     # 1. Download data
@@ -86,7 +86,7 @@ All we need is three lines of code to train our model! By default, we use a `mBA
 
     # import our libraries
     import flash
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.text import TranslationData, TranslationTask
 
     # 1. Download data

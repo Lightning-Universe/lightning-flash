@@ -52,7 +52,7 @@ Here are the steps in code
 .. code-block:: python
 
     import flash
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. download and organize the data
