@@ -543,7 +543,7 @@ class Serializer(Properties):
         """
         return sample
 
-    def __call__(self, sample: Any):
+    def __call__(self, sample: Any) -> Any:
         if self._is_enabled:
             return self.serialize(sample)
         else:
