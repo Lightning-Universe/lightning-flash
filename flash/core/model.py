@@ -84,9 +84,9 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._preprocess = preprocess
-        self._postprocess = postprocess
-        self._serializer = None
+        self._preprocess: Optional[Preprocess] = preprocess
+        self._postprocess: Optional[Postprocess] = postprocess
+        self._serializer: Optional[Serializer] = None
 
         self.serializer = serializer
 
