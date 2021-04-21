@@ -530,6 +530,14 @@ class Serializer(Properties):
         self._is_enabled = False
 
     def serialize(self, sample: Any) -> Any:
+        """Serialize the given sample into the desired output format.
+
+        Args:
+            sample: The output from the :class:`.Postprocess`.
+
+        Returns:
+            The serialized output.
+        """
         return sample
 
     def __call__(self, sample: Any):

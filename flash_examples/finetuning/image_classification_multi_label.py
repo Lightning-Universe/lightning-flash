@@ -18,7 +18,6 @@ import pandas as pd
 import torch
 
 import flash
-from flash import Trainer
 from flash.core.classification import Labels
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.auto_dataset import AutoDataset
@@ -96,7 +95,7 @@ datamodule = ImageClassificationData.from_folders(
 )
 
 # 7b. Or generate predictions with a whole folder!
-predictions = Trainer().predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 8. Save it!
