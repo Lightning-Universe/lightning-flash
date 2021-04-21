@@ -32,7 +32,10 @@ def test_properties_data_pipeline_state():
     class OtherProcessState(ProcessState):
         pass
 
-    my_properties = Properties()
+    class MyProperties(Properties):
+        pass
+
+    my_properties = MyProperties()
     my_properties.set_state(MyProcessState1())
     assert my_properties.state == {MyProcessState1: MyProcessState1()}
     assert my_properties.get_state(OtherProcessState) is None

@@ -43,10 +43,13 @@ STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
 
 class Properties:
 
-    _running_stage: Optional[RunningStage] = None
-    _current_fn: Optional[str] = None
-    _data_pipeline_state: Optional['DataPipelineState'] = None
-    _state: Dict[Type[ProcessState], ProcessState] = {}
+    def __init__(self):
+        super().__init__()
+
+        self._running_stage: Optional[RunningStage] = None
+        self._current_fn: Optional[str] = None
+        self._data_pipeline_state: Optional['DataPipelineState'] = None
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
 
     def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
         if self._data_pipeline_state is not None:
