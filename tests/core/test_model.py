@@ -20,12 +20,16 @@ import pytest
 import pytorch_lightning as pl
 import torch
 from PIL import Image
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
+from torch.utils.data import DataLoader
 
+import flash
 from flash.core.classification import ClassificationTask
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier
+from flash.utils.imports import _TRANSFORMERS_AVAILABLE
 from flash.vision import ImageClassificationData, ImageClassifier
 
 # ======== Mock functions ========
@@ -160,3 +164,64 @@ def test_available_backbones():
         backbones = None
 
     assert Foo.available_backbones() == []
+
+
+def test_optimization(tmpdir):
+
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+    optim = torch.optim.Adam(model.parameters())
+    task = ClassificationTask(model, optimizer=optim, scheduler=None)
+
+    optimizer = task.configure_optimizers()
+    assert optimizer == optim
+
+    task = ClassificationTask(model, optimizer=torch.optim.Adadelta, optimizer_kwargs={"eps": 0.5}, scheduler=None)
+    optimizer = task.configure_optimizers()
+    assert isinstance(optimizer, torch.optim.Adadelta)
+    assert optimizer.defaults["eps"] == 0.5
+
+    task = ClassificationTask(
+        model,
+        optimizer=torch.optim.Adadelta,
+        scheduler=torch.optim.lr_scheduler.StepLR,
+        scheduler_kwargs={"step_size": 1}
+    )
+    optimizer, scheduler = task.configure_optimizers()
+    assert isinstance(optimizer[0], torch.optim.Adadelta)
+    assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
+
+    optim = torch.optim.Adadelta(model.parameters())
+    task = ClassificationTask(model, optimizer=optim, scheduler=torch.optim.lr_scheduler.StepLR(optim, step_size=1))
+    optimizer, scheduler = task.configure_optimizers()
+    assert isinstance(optimizer[0], torch.optim.Adadelta)
+    assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
+
+    if _TRANSFORMERS_AVAILABLE:
+        from transformers.optimization import get_linear_schedule_with_warmup
+
+        assert task.available_schedulers() == [
+            'constant_schedule', 'constant_schedule_with_warmup', 'cosine_schedule_with_warmup',
+            'cosine_with_hard_restarts_schedule_with_warmup', 'linear_schedule_with_warmup',
+            'polynomial_decay_schedule_with_warmup'
+        ]
+
+        optim = torch.optim.Adadelta(model.parameters())
+        with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
+            task = ClassificationTask(model, optimizer=optim, scheduler="linear_schedule_with_warmup")
+            optimizer, scheduler = task.configure_optimizers()
+
+        task = ClassificationTask(
+            model,
+            optimizer=optim,
+            scheduler="linear_schedule_with_warmup",
+            scheduler_kwargs={"num_warmup_steps": 0.1},
+            loss_fn=F.nll_loss,
+        )
+        trainer = flash.Trainer(max_epochs=1, limit_train_batches=2)
+        ds = DummyDataset()
+        trainer.fit(task, train_dataloader=DataLoader(ds))
+        optimizer, scheduler = task.configure_optimizers()
+        assert isinstance(optimizer[0], torch.optim.Adadelta)
+        assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
+        expected = get_linear_schedule_with_warmup.__name__
+        assert scheduler[0].lr_lambdas[0].__qualname__.split('.')[0] == expected

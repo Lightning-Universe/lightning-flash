@@ -11,7 +11,7 @@ Some Flash tasks have been pretrained on large data sets. To accelerate your tra
 .. code-block:: python
 
     import flash
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. download and organize the data
@@ -48,7 +48,7 @@ Flash tasks supports many advanced training functionalities out-of-the-box, such
 
     # train on 1 GPU
     flash.Trainer(gpus=1)
-    
+
 * Training on multiple GPUs
 
 .. code-block:: python
@@ -60,7 +60,7 @@ Flash tasks supports many advanced training functionalities out-of-the-box, such
 
     # train on gpu 1, 3, 5 (3 gpus total)
     flash.Trainer(gpus=[1, 3, 5])
-    
+
 * Using mixed precision training
 
 .. code-block:: python
