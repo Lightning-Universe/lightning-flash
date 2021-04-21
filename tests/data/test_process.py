@@ -16,14 +16,39 @@ from unittest.mock import Mock
 import pytest
 
 from flash.data.data_pipeline import DataPipelineState
-from flash.data.process import ProcessState, Serializer, SerializerMapping
+from flash.data.process import ProcessState, Properties, Serializer, SerializerMapping
 
 
 def test_properties_data_pipeline_state():
-    pass
+    """Tests that ``get_state`` and ``set_state`` work for properties and that ``DataPipelineState`` is attached
+    correctly."""
+
+    class MyProcessState1(ProcessState):
+        pass
+
+    class MyProcessState2(ProcessState):
+        pass
+
+    class OtherProcessState(ProcessState):
+        pass
+
+    my_properties = Properties()
+    my_properties.set_state(MyProcessState1())
+    assert my_properties.state == {MyProcessState1: MyProcessState1()}
+    assert my_properties.get_state(OtherProcessState) is None
+
+    data_pipeline_state = DataPipelineState()
+    data_pipeline_state.set_state(OtherProcessState())
+    my_properties.attach_data_pipeline_state(data_pipeline_state)
+    assert my_properties.get_state(OtherProcessState) == OtherProcessState()
+
+    my_properties.set_state(MyProcessState2())
+    assert data_pipeline_state.get_state(MyProcessState2) == MyProcessState2()
 
 
 def test_serializer():
+    """Tests that ``Serializer`` can be enabled and disabled correctly."""
+
     my_serializer = Serializer()
 
     assert my_serializer.serialize('test') == 'test'
@@ -39,6 +64,9 @@ def test_serializer():
 
 
 def test_serializer_mapping():
+    """Tests that ``SerializerMapping`` correctly passes its inputs to the underlying serializers. Also checks that
+    state is retrieved / loaded correctly."""
+
     serializer1 = Serializer()
     serializer1.serialize = Mock(return_value='test1')
 
