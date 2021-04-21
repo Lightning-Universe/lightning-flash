@@ -54,7 +54,7 @@ To tailor this image embedder to your dataset, finetune first.
 .. code-block:: python
 
     import flash
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageEmbedder
 
     # 1. Download the data
