@@ -41,7 +41,6 @@ We can also add a simple visualisation by extending :class:`~flash.data.base_viz
     from flash.data.base_viz import BaseVisualization
     from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
-    from flash.vision.classification.data import ImageClassificationPreprocess
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
@@ -56,17 +55,12 @@ We can also add a simple visualisation by extending :class:`~flash.data.base_viz
             image.show()
 
 
-    class CustomMultiLabelPreprocess(ImageClassificationPreprocess):
-        # Just define this so that we can un-pickle the model
-        pass
-
-
     # 3. Load the model from a checkpoint
     model = ImageClassifier.load_from_checkpoint(
         "https://flash-weights.s3.amazonaws.com/image_classification_multi_label_model.pt",
     )
 
-    # 4a. Predict what's on a few images! ants or bees?
+    # 4a. Predict the genres of a few movie posters!
     predictions = model.predict([
         "data/movie_posters/val/tt0361500.jpg",
         "data/movie_posters/val/tt0361748.jpg",
@@ -115,39 +109,31 @@ Once we download the data using :func:`~flash.data.download_data`, all we need i
         ...
 
 
-The ``metadata.csv`` files in each folder contain our labels, so we need to create a custom :class:`~flash.data.process.Preprocess` to extract the list of images and associated labels:
+The ``metadata.csv`` files in each folder contain our labels, so we need to create a function (``load_data``) to extract the list of images and associated labels:
 
 .. code-block:: python
 
     # import our libraries
     import os
-    from typing import Any, Iterable, Optional
+    from typing import List, Tuple
 
     import pandas as pd
     import torch
 
-    from flash.data.auto_dataset import AutoDataset
-    from flash.vision.classification.data import ImageClassificationPreprocess
+    genres = [
+        "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Musical", "Mystery", "N/A", "News", "Reality-TV", "Romance", "Sci-Fi", "Short", "Sport", "Thriller", "War", "Western"
+    ]
 
-    # Define our custom preprocess
-    class CustomMultiLabelPreprocess(ImageClassificationPreprocess):
+    def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[torch.Tensor]]:
+        metadata = pd.read_csv(os.path.join(root, data, "metadata.csv"))
 
-        image_size = (128, 128)
-        genres = [
-            "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Musical", "Mystery", "N/A", "News", "Reality-TV", "Romance", "Sci-Fi", "Short", "Sport", "Thriller", "War", "Western"
-        ]
+        images = []
+        labels = []
+        for _, row in metadata.iterrows():
+            images.append(os.path.join(root, data, row['Id'] + ".jpg"))
+            labels.append(torch.tensor([row[genre] for genre in genres]))
 
-        def load_data(self, data: Any, dataset: Optional[AutoDataset] = None) -> Iterable:
-            dataset.num_classes = len(self.genres)
-            metadata = pd.read_csv(os.path.join(data, "metadata.csv"))
-
-            images = []
-            labels = []
-            for _, row in metadata.iterrows():
-                images.append(os.path.join(data, row['Id'] + ".jpg"))
-                labels.append(torch.IntTensor([row[genre] for genre in self.genres]))
-
-            return list(zip(images, labels))
+        return images, labels
 
 Our :class:`~flash.data.process.Preprocess` overrides the :meth:`~flash.data.process.Preprocess.load_data` method to create an iterable of image paths and label tensors. The :class:`~flash.vision.classification.data.ImageClassificationPreprocess` then handles loading and augmenting the images for us!
 Now all we need is three lines of code to build to train our task!
@@ -161,22 +147,32 @@ Now all we need is three lines of code to build to train our task!
     from flash.core.finetuning import FreezeUnfreeze
     from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
+    from flash.vision.classification.data import ImageClassificationPreprocess
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
     # 2. Load the data
-    datamodule = ImageClassificationData.from_folders(
-        train_folder="data/movie_posters/train/",
-        val_folder="data/movie_posters/val/",
-        test_folder="data/movie_posters/test/",
-        preprocess=CustomMultiLabelPreprocess(),
+    ImageClassificationPreprocess.image_size = (128, 128)
+
+    train_filepaths, train_labels = load_data('train')
+    val_filepaths, val_labels = load_data('val')
+    test_filepaths, test_labels = load_data('test')
+
+    datamodule = ImageClassificationData.from_filepaths(
+        train_filepaths=train_filepaths,
+        train_labels=train_labels,
+        val_filepaths=val_filepaths,
+        val_labels=val_labels,
+        test_filepaths=test_filepaths,
+        test_labels=test_labels,
+        preprocess=ImageClassificationPreprocess(),
     )
 
     # 3. Build the model
     model = ImageClassifier(
         backbone="resnet18",
-        num_classes=datamodule.num_classes,
+        num_classes=len(genres),
         multi_label=True,
     )
 
@@ -189,7 +185,7 @@ Now all we need is three lines of code to build to train our task!
     # 6a. Predict what's on a few images!
 
     # Serialize predictions as labels.
-    model.serializer = Labels(CustomMultiLabelPreprocess.genres, multi_label=True)
+    model.serializer = Labels(genres, multi_label=True)
 
     predictions = model.predict([
         "data/movie_posters/val/tt0361500.jpg",

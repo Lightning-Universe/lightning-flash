@@ -20,7 +20,6 @@ from flash import Trainer
 from flash.data.base_viz import BaseVisualization
 from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
-from flash.vision.classification.data import ImageClassificationPreprocess
 
 # 1. Download the data
 # This is a subset of the movie poster genre prediction data set from the paper
@@ -32,16 +31,11 @@ download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/
 # 2. Define our custom visualisation and datamodule
 class CustomViz(BaseVisualization):
 
-    def show_per_batch_transform(self, batch: Any, _):
+    def show_per_batch_transform(self, batch: Any, _) -> None:
         images = batch[0]
         image = make_grid(images, nrow=2)
         image = T.to_pil_image(image, 'RGB')
         image.show()
-
-
-class CustomMultiLabelPreprocess(ImageClassificationPreprocess):
-    # Just define this so that we can un-pickle the model
-    pass
 
 
 # 3. Load the model from a checkpoint
@@ -49,7 +43,7 @@ model = ImageClassifier.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/image_classification_multi_label_model.pt",
 )
 
-# 4a. Predict what's on a few images! ants or bees?
+# 4a. Predict the genres of a few movie posters!
 predictions = model.predict([
     "data/movie_posters/val/tt0361500.jpg",
     "data/movie_posters/val/tt0361748.jpg",

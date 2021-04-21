@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Iterable, Optional
+from typing import List, Tuple
 
 import pandas as pd
 import torch
@@ -20,7 +20,6 @@ import torch
 import flash
 from flash.core.classification import Labels
 from flash.core.finetuning import FreezeUnfreeze
-from flash.data.auto_dataset import AutoDataset
 from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 from flash.vision.classification.data import ImageClassificationPreprocess
@@ -31,55 +30,59 @@ from flash.vision.classification.data import ImageClassificationPreprocess
 # Please consider citing their paper if you use it. More here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
-
-# 2. Define our custom preprocess
-class CustomMultiLabelPreprocess(ImageClassificationPreprocess):
-
-    image_size = (128, 128)
-    genres = [
-        "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
-        "History", "Horror", "Music", "Musical", "Mystery", "N/A", "News", "Reality-TV", "Romance", "Sci-Fi", "Short",
-        "Sport", "Thriller", "War", "Western"
-    ]
-
-    def load_data(self, data: Any, dataset: Optional[AutoDataset] = None) -> Iterable:
-        dataset.num_classes = len(self.genres)
-        metadata = pd.read_csv(os.path.join(data, "metadata.csv"))
-
-        images = []
-        labels = []
-        for _, row in metadata.iterrows():
-            images.append(os.path.join(data, row['Id'] + ".jpg"))
-            labels.append(torch.IntTensor([row[genre] for genre in self.genres]))
-
-        return list(zip(images, labels))
+# 2. Load the data
+genres = [
+    "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
+    "History", "Horror", "Music", "Musical", "Mystery", "N/A", "News", "Reality-TV", "Romance", "Sci-Fi", "Short",
+    "Sport", "Thriller", "War", "Western"
+]
 
 
-# 3. Load the data
-datamodule = ImageClassificationData.from_folders(
-    train_folder="data/movie_posters/train/",
-    val_folder="data/movie_posters/val/",
-    test_folder="data/movie_posters/test/",
-    preprocess=CustomMultiLabelPreprocess(),
+def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[torch.Tensor]]:
+    metadata = pd.read_csv(os.path.join(root, data, "metadata.csv"))
+
+    images = []
+    labels = []
+    for _, row in metadata.iterrows():
+        images.append(os.path.join(root, data, row['Id'] + ".jpg"))
+        labels.append(torch.tensor([row[genre] for genre in genres]))
+
+    return images, labels
+
+
+ImageClassificationPreprocess.image_size = (128, 128)
+
+train_filepaths, train_labels = load_data('train')
+val_filepaths, val_labels = load_data('val')
+test_filepaths, test_labels = load_data('test')
+
+datamodule = ImageClassificationData.from_filepaths(
+    train_filepaths=train_filepaths,
+    train_labels=train_labels,
+    val_filepaths=val_filepaths,
+    val_labels=val_labels,
+    test_filepaths=test_filepaths,
+    test_labels=test_labels,
+    preprocess=ImageClassificationPreprocess(),
 )
 
-# 4. Build the model
+# 3. Build the model
 model = ImageClassifier(
     backbone="resnet18",
-    num_classes=datamodule.num_classes,
+    num_classes=len(genres),
     multi_label=True,
 )
 
-# 5. Create the trainer.
+# 4. Create the trainer.
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 
-# 6. Train the model
+# 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
 
-# 7a. Predict what's on a few images!
+# 6a. Predict what's on a few images!
 
 # Serialize predictions as labels.
-model.serializer = Labels(CustomMultiLabelPreprocess.genres, multi_label=True)
+model.serializer = Labels(genres, multi_label=True)
 
 predictions = model.predict([
     "data/movie_posters/val/tt0361500.jpg",
@@ -94,9 +97,9 @@ datamodule = ImageClassificationData.from_folders(
     preprocess=model.preprocess,
 )
 
-# 7b. Or generate predictions with a whole folder!
+# 6b. Or generate predictions with a whole folder!
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
-# 8. Save it!
+# 7. Save it!
 trainer.save_checkpoint("image_classification_multi_label_model.pt")
