@@ -260,7 +260,7 @@ class ImageClassificationData(DataModule):
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        return _MatplotlibVisualization(*args, **kwargs)
+        return MatplotlibVisualization(*args, **kwargs)
 
     def show(self) -> None:
         """Method to block matplotlib windows."""
@@ -560,7 +560,7 @@ class ImageClassificationData(DataModule):
         )
 
 
-class _MatplotlibVisualization(BaseVisualization):
+class MatplotlibVisualization(BaseVisualization):
     """Process and show the image batch and its associated label using matplotlib.
     """
     max_cols: int = 4  # maximum number of columns we accept
@@ -581,6 +581,9 @@ class _MatplotlibVisualization(BaseVisualization):
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
 
+        if not _MATPLOTLIB_AVAILABLE:
+            raise MisconfigurationException("You need matplotlib to visualise. Please, pip install matplotlib")
+
         # create figure and set title
         fig, axs = plt.subplots(rows, cols)
         fig.suptitle(title)
@@ -597,7 +600,7 @@ class _MatplotlibVisualization(BaseVisualization):
             # convert images to numpy
             _img: np.ndarray = self._to_numpy(_img)
             if isinstance(_label, torch.Tensor):
-                _label = int(_label.item())
+                _label = _label.squeeze().tolist()
             # show image and set label as subplot title
             ax.imshow(_img)
             ax.set_title(str(_label))

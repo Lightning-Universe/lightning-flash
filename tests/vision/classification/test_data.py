@@ -121,8 +121,33 @@ def test_from_filepaths_visualise(tmpdir):
         batch_size=2,
     )
     dm.show_train_batch()
-    dm.show_val_batch("pre_tensor_transform")
-    dm.show_test_batch()
+    dm.show_train_batch("pre_tensor_transform")
+    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_val_batch("per_batch_transform")
+    # dm.show()
+
+
+def test_from_filepaths_visualise_multilabel(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a" / "a_1.png")
+    _rand_image().save(tmpdir / "b" / "b_1.png")
+
+    dm = ImageClassificationData.from_filepaths(
+        train_filepaths=[tmpdir / "a", tmpdir / "b"],
+        train_labels=[[0, 1, 0], [0, 1, 1]],
+        val_filepaths=[tmpdir / "b", tmpdir / "a"],
+        val_labels=[[1, 1, 0], [0, 0, 1]],
+        test_filepaths=[tmpdir / "b", tmpdir / "b"],
+        test_labels=[[0, 0, 1], [1, 1, 0]],
+        batch_size=2,
+    )
+    dm.show_train_batch()
+    dm.show_train_batch("pre_tensor_transform")
+    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_val_batch("per_batch_transform")
     # dm.show()
 
 

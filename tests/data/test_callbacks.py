@@ -144,9 +144,10 @@ def test_base_viz(tmpdir):
 
     for stage in _STAGES_PREFIX.values():
 
-        for fcn_name in _PREPROCESS_FUNCS:
-            fcn = getattr(dm, f"show_{stage}_batch")
-            fcn(fcn_name, reset=False)
+        for _ in range(10):
+            for fcn_name in _PREPROCESS_FUNCS:
+                fcn = getattr(dm, f"show_{stage}_batch")
+                fcn(fcn_name, reset=False)
 
         is_predict = stage == "predict"
 

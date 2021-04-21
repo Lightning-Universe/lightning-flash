@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Sequence, Set
 
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.utils import _is_overriden
 from flash.data.callback import BaseDataFetcher
@@ -94,20 +95,19 @@ class BaseVisualization(BaseDataFetcher):
 
     """
 
-    def _show(self, running_stage: RunningStage) -> None:
-        self.show(self.batches[running_stage], running_stage)
+    def _show(self, running_stage: RunningStage, func_names_list: List[str]) -> None:
+        self.show(self.batches[running_stage], running_stage, func_names_list)
 
-    def show(self, batch: Dict[str, Any], running_stage: RunningStage) -> None:
+    def show(self, batch: Dict[str, Any], running_stage: RunningStage, func_names_list: List[str]) -> None:
         """
         Override this function when you want to visualize a composition.
         """
         # filter out the functions to visualise
-        func_name: str = self._fcn_white_list[running_stage]
-        func_names_list: Set[str] = list(set([func_name]) & set(_PREPROCESS_FUNCS))
-        if len(func_names_list) == 0:
-            raise ValueError(f"Invalid function name: {func_name}.")
+        func_names_set: Set[str] = set(func_names_list) & set(_PREPROCESS_FUNCS)
+        if len(func_names_set) == 0:
+            raise MisconfigurationException(f"Invalid function names: {func_names_list}.")
 
-        for func_name in func_names_list:
+        for func_name in func_names_set:
             hook_name = f"show_{func_name}"
             if _is_overriden(hook_name, self, BaseVisualization):
                 getattr(self, hook_name)(batch[func_name], running_stage)

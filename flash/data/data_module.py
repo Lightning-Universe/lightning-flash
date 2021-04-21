@@ -93,7 +93,7 @@ class DataModule(pl.LightningDataModule):
         self.set_running_stages()
 
         # buffer to store the functions to visualise
-        self._fcn_white_list: Dict[str, Set[str]] = {}
+        self._viz_func_white_list: Dict[str, Set[str]] = {}
 
     @property
     def train_dataset(self) -> Optional[Dataset]:
@@ -150,7 +150,7 @@ class DataModule(pl.LightningDataModule):
         setattr(self, iter_name, iterator)
         return iterator
 
-    def _show_batch(self, stage: RunningStage, reset: bool = True) -> None:
+    def _show_batch(self, stage: RunningStage, func_names: Union[str, List[str]], reset: bool = True) -> None:
         """
         This function is used to handle transforms profiling for batch visualization.
         """
@@ -158,6 +158,10 @@ class DataModule(pl.LightningDataModule):
 
         if not hasattr(self, iter_name):
             self._reset_iterator(stage)
+
+        # list of functions to visualise
+        if isinstance(func_names, str):
+            func_names = [func_names]
 
         iter_dataloader = getattr(self, iter_name)
         with self.data_fetcher.enable():
@@ -167,35 +171,29 @@ class DataModule(pl.LightningDataModule):
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
             data_fetcher: BaseVisualization = self.data_fetcher
-            # list of functions to visualise
-            data_fetcher._fcn_white_list = self._fcn_white_list
-            data_fetcher._show(stage)
+            data_fetcher._show(stage, func_names)
             if reset:
                 self.viz.batches[stage] = {}
 
-    def show_train_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
+    def show_train_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the train dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TRAINING]
-        self._fcn_white_list[stage_name] = name
-        self._show_batch(stage_name, reset=reset)
+        self._show_batch(stage_name, hooks_names, reset=reset)
 
-    def show_val_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
+    def show_val_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the validation dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.VALIDATING]
-        self._fcn_white_list[stage_name] = name
-        self._show_batch(stage_name, reset=reset)
+        self._show_batch(stage_name, hooks_names, reset=reset)
 
-    def show_test_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
+    def show_test_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the test dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TESTING]
-        self._fcn_white_list[stage_name] = name
-        self._show_batch(stage_name, reset=reset)
+        self._show_batch(stage_name, hooks_names, reset=reset)
 
-    def show_predict_batch(self, name: str = 'load_sample', reset: bool = True) -> None:
+    def show_predict_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
         """This function is used to visualize a batch from the predict dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
-        self._fcn_white_list[stage_name] = name
-        self._show_batch(stage_name, reset=reset)
+        self._show_batch(stage_name, hooks_names, reset=reset)
 
     @staticmethod
     def get_dataset_attribute(dataset: torch.utils.data.Dataset, attr_name: str, default: Optional[Any] = None) -> Any:
