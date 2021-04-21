@@ -204,3 +204,30 @@ def test_from_folders(tmpdir):
     imgs, labels = data
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
+
+
+def test_from_filepaths_multilabel(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    _rand_image().save(tmpdir / "a1.png")
+    _rand_image().save(tmpdir / "a2.png")
+
+    train_images = [str(tmpdir / "a1.png"), str(tmpdir / "a2.png")]
+    train_labels = [[1, 0, 1, 0], [0, 0, 1, 1]]
+
+    dm = ImageClassificationData.from_filepaths(
+        train_filepaths=train_images,
+        train_labels=train_labels,
+        val_filepaths=train_images,
+        val_labels=train_labels,
+        test_filepaths=train_images,
+        test_labels=train_labels,
+        batch_size=2,
+        num_workers=0,
+    )
+
+    data = next(iter(dm.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
