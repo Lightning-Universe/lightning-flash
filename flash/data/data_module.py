@@ -350,7 +350,7 @@ class DataModule(pl.LightningDataModule):
     ) -> Tuple[Any, Any]:
 
         if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):
-            raise MisconfigurationException("`val_split` should be a float between 0 and 1.")
+            raise MisconfigurationException(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
 
         if isinstance(train_dataset, IterableAutoDataset):
             raise MisconfigurationException(
@@ -404,7 +404,7 @@ class DataModule(pl.LightningDataModule):
         postprocess: Optional[Postprocess] = None,
         use_iterable_auto_dataset: bool = False,
         seed: int = 42,
-        val_split: float = 0,
+        val_split: Optional[float] = None,
         **kwargs,
     ) -> 'DataModule':
         """

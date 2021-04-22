@@ -24,6 +24,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
+from torchvision import transforms as T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
 from flash.core.classification import ClassificationState
@@ -38,8 +39,6 @@ from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
-else:
-    from torchvision import transforms as T
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -48,6 +47,8 @@ else:
 
 
 class ImageClassificationPreprocess(Preprocess):
+
+    to_tensor = T.ToTensor()
 
     def __init__(
         self,
@@ -407,7 +408,7 @@ class ImageClassificationData(DataModule):
         seed: Optional[int] = 42,
         data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
-        val_split: float = 0,
+        val_split: Optional[float] = None,
         **kwargs,
     ) -> 'ImageClassificationData':
         """
