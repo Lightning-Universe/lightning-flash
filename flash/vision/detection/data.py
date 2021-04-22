@@ -181,19 +181,6 @@ class ObjectDetectionData(DataModule):
     preprocess_cls = ObjectDetectionPreprocess
 
     @classmethod
-    def instantiate_preprocess(
-        cls,
-        train_transform: Optional[Dict[str, Module]] = None,
-        val_transform: Optional[Dict[str, Module]] = None,
-        test_transform: Optional[Dict[str, Module]] = None,
-        predict_transform: Optional[Dict[str, Module]] = None,
-        preprocess_cls: Type[Preprocess] = None,
-    ) -> Preprocess:
-
-        preprocess_cls = preprocess_cls or cls.preprocess_cls
-        return preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
-
-    @classmethod
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
@@ -208,12 +195,14 @@ class ObjectDetectionData(DataModule):
         predict_transform: Optional[Dict[str, Module]] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        preprocess_cls: Type[Preprocess] = None,
+        preprocess: Preprocess = None,
         **kwargs
     ):
-
-        preprocess = cls.instantiate_preprocess(
-            train_transform, val_transform, predict_transform, predict_transform, preprocess_cls=preprocess_cls
+        preprocess = preprocess or cls.preprocess_cls(
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
         )
 
         return cls.from_load_data_inputs(

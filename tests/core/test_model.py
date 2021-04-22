@@ -27,6 +27,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.classification import ClassificationTask
+from flash.data.process import Postprocess
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier
 from flash.utils.imports import _TRANSFORMERS_AVAILABLE
@@ -48,6 +49,11 @@ class PredictDummyDataset(DummyDataset):
 
     def __getitem__(self, index: int) -> Tensor:
         return torch.rand(1, 28, 28)
+
+
+class DummyPostprocess(Postprocess):
+
+    pass
 
 
 # ================================
@@ -116,10 +122,10 @@ def test_classification_task_trainer_predict(tmpdir):
 def test_task_datapipeline_save(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss)
+    task = ClassificationTask(model, F.nll_loss, postprocess=DummyPostprocess())
 
     # to check later
-    task._postprocess.test = True
+    task.postprocess.test = True
 
     # generate a checkpoint
     trainer = pl.Trainer(
@@ -136,7 +142,7 @@ def test_task_datapipeline_save(tmpdir):
 
     # load from file
     task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task._postprocess.test
+    assert task.postprocess.test
 
 
 @pytest.mark.parametrize(
