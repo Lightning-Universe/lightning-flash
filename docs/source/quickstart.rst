@@ -137,7 +137,7 @@ Here's an example of finetuning.
 .. code-block:: python
 
     import flash
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data

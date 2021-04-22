@@ -120,7 +120,7 @@ First, finetune:
 ```python
 # import our libraries
 import flash
-from flash import download_data
+from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
@@ -170,7 +170,7 @@ Flash has an Image embedding task to encodes an image into a vector of image fea
   <summary>View example</summary>
 
 ```python
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.vision import ImageEmbedder
 
 # 1. Download the data
@@ -197,7 +197,7 @@ Flash has a Summarization task to sum up text from a larger article into a short
 ```python
 # import our libraries
 import flash
-from flash import download_data
+from flash.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
@@ -244,7 +244,7 @@ To illustrate, say we want to build a model to predict if a passenger survived o
 # import our libraries
 from torchmetrics.classification import Accuracy, Precision, Recall
 import flash
-from flash import download_data
+from flash.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data
@@ -295,7 +295,7 @@ To illustrate, say we want to build a model on a tiny coco dataset.
 ```python
 # import our libraries
 import flash
-from flash.core.data import download_data
+from flash.data.utils import download_data
 from flash.vision import ObjectDetectionData, ObjectDetector
 
 # 1. Download the data

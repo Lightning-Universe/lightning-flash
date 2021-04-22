@@ -25,7 +25,7 @@ Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on
 
     # import our libraries
     from flash import Trainer
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
@@ -90,7 +90,7 @@ Now all we need is three lines of code to build to train our task!
 .. code-block:: python
 
     import flash
-    from flash import download_data
+    from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
 
     # 1. Download the data
