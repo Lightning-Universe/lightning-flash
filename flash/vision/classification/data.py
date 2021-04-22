@@ -49,18 +49,16 @@ else:
 
 class ImageClassificationPreprocess(Preprocess):
 
-    to_tensor = torchvision.transforms.ToTensor()
-    image_size = (196, 196)
-
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
         val_transform: Optional[Union[Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+        image_size: Tuple[int, int] = (196, 196)
     ):
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
-            train_transform, val_transform, test_transform, predict_transform
+            train_transform, val_transform, test_transform, predict_transform, image_size
         )
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
@@ -96,8 +94,7 @@ class ImageClassificationPreprocess(Preprocess):
 
         return files
 
-    def default_train_transforms(self):
-        image_size = self.image_size
+    def default_train_transforms(self, image_size):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
@@ -117,8 +114,7 @@ class ImageClassificationPreprocess(Preprocess):
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
-    def default_val_transforms(self):
-        image_size = self.image_size
+    def default_val_transforms(self, image_size):
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
@@ -142,25 +138,26 @@ class ImageClassificationPreprocess(Preprocess):
         val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
         predict_transform: Optional[Union[str, Dict]] = 'default',
+        image_size: Tuple[int, int] = (196, 196)
     ):
 
         if not train_transform or train_transform == 'default':
-            train_transform = self.default_train_transforms()
+            train_transform = self.default_train_transforms(image_size)
 
         if not val_transform or val_transform == 'default':
-            val_transform = self.default_val_transforms()
+            val_transform = self.default_val_transforms(image_size)
 
         if not test_transform or test_transform == 'default':
-            test_transform = self.default_val_transforms()
+            test_transform = self.default_val_transforms(image_size)
 
         if not predict_transform or predict_transform == 'default':
-            predict_transform = self.default_val_transforms()
+            predict_transform = self.default_val_transforms(image_size)
 
         return (
-            self._check_transforms(train_transform, RunningStage.TRAINING),
-            self._check_transforms(val_transform, RunningStage.VALIDATING),
-            self._check_transforms(test_transform, RunningStage.TESTING),
-            self._check_transforms(predict_transform, RunningStage.PREDICTING),
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
         )
 
     @classmethod
@@ -300,51 +297,6 @@ class ImageClassificationPreprocess(Preprocess):
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
-    def __init__(
-        self,
-        train_dataset: Optional[Dataset] = None,
-        val_dataset: Optional[Dataset] = None,
-        test_dataset: Optional[Dataset] = None,
-        predict_dataset: Optional[Dataset] = None,
-        batch_size: int = 1,
-        num_workers: Optional[int] = None,
-        seed: int = 1234,
-        train_split: Optional[Union[float, int]] = None,
-        val_split: Optional[Union[float, int]] = None,
-        test_split: Optional[Union[float, int]] = None,
-        **kwargs,
-    ) -> None:
-        """Creates a ImageClassificationData object from lists of image filepaths and labels"""
-
-        if train_dataset is not None and (train_split is not None or val_split is not None or test_split is not None):
-            train_dataset, val_dataset, test_dataset = self.train_val_test_split(
-                train_dataset, train_split, val_split, test_split, seed
-            )
-
-        super().__init__(
-            train_dataset=train_dataset,
-            val_dataset=val_dataset,
-            test_dataset=test_dataset,
-            predict_dataset=predict_dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **kwargs,
-        )
-
-        self._num_classes = None
-
-        if self._train_ds:
-            self.set_dataset_attribute(self._train_ds, 'num_classes', self.num_classes)
-
-        if self._val_ds:
-            self.set_dataset_attribute(self._val_ds, 'num_classes', self.num_classes)
-
-        if self._test_ds:
-            self.set_dataset_attribute(self._test_ds, 'num_classes', self.num_classes)
-
-        if self._predict_ds:
-            self.set_dataset_attribute(self._predict_ds, 'num_classes', self.num_classes)
-
     def set_block_viz_window(self, value: bool) -> None:
         """Setter method to switch on/off matplotlib to pop up windows."""
         self.data_fetcher.block_viz_window = value
@@ -449,11 +401,13 @@ class ImageClassificationData(DataModule):
         val_transform: Union[str, Dict] = 'default',
         test_transform: Union[str, Dict] = 'default',
         predict_transform: Union[str, Dict] = 'default',
+        image_size: Tuple[int, int] = (196, 196),
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: Optional[int] = 42,
         data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
+        val_split: float = 0,
         **kwargs,
     ) -> 'ImageClassificationData':
         """
@@ -515,6 +469,7 @@ class ImageClassificationData(DataModule):
             val_transform,
             test_transform,
             predict_transform,
+            image_size=image_size,
         )
 
         return cls.from_load_data_inputs(
@@ -527,6 +482,7 @@ class ImageClassificationData(DataModule):
             data_fetcher=data_fetcher,
             preprocess=preprocess,
             seed=seed,
+            val_split=val_split,
             **kwargs
         )
 

@@ -13,11 +13,10 @@
 # limitations under the License.
 import os
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import kornia as K
 import numpy as np
-import pytest
 import torch
 from PIL import Image
 
@@ -167,7 +166,6 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
 def test_from_filepaths_splits(tmpdir):
     tmpdir = Path(tmpdir)
 
-    #B, _, H, W = 2, 3, 24, 33
     B, _, H, W = 2, 3, 224, 224
     img_size: Tuple[int, int] = (H, W)
 
@@ -188,27 +186,27 @@ def test_from_filepaths_splits(tmpdir):
         return out
 
     _to_tensor = {
-        "pre_tensor_transform": lambda x: preprocess(x),
+        "to_tensor_transform": lambda x: preprocess(x),
     }
 
-    img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=train_filepaths,
-        train_labels=train_labels,
-        train_transform=_to_tensor,
-        val_transform=_to_tensor,
-        batch_size=B,
-        num_workers=0,
-        val_split=val_split,
-    )
-    #assert img_data.train_dataloader() is not None
-    #assert img_data.val_dataloader() is not None
-    #assert img_data.test_dataloader() is None
+    def run(transform: Any = None):
+        img_data = ImageClassificationData.from_filepaths(
+            train_filepaths=train_filepaths,
+            train_labels=train_labels,
+            train_transform=transform,
+            val_transform=transform,
+            batch_size=B,
+            num_workers=0,
+            val_split=val_split,
+            image_size=img_size,
+        )
+        data = next(iter(img_data.train_dataloader()))
+        imgs, labels = data
+        assert imgs.shape == (B, 3, H, W)
+        assert labels.shape == (B, )
 
-    #data = next(iter(img_data.val_dataloader()))
-    data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (B, 3, H, W)
-    assert labels.shape == (B, )
+    run()
+    run(_to_tensor)
 
 
 def test_categorical_csv_labels(tmpdir):
