@@ -19,9 +19,13 @@ import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
+from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.optimizer import Optimizer
 
 from flash.core.registry import FlashRegistry
+from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
@@ -63,11 +67,16 @@ class Task(LightningModule):
         postprocess: :class:`~flash.data.process.Postprocess` to use as the default for this task.
     """
 
+    schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+
     def __init__(
         self,
         model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
         preprocess: Optional[Preprocess] = None,
@@ -78,7 +87,11 @@ class Task(LightningModule):
         if model is not None:
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
-        self.optimizer_cls = optimizer
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.optimizer_kwargs = optimizer_kwargs or {}
+        self.scheduler_kwargs = scheduler_kwargs or {}
+
         self.metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
@@ -172,8 +185,14 @@ class Task(LightningModule):
             batch = torch.stack(batch)
         return self(batch)
 
-    def configure_optimizers(self) -> torch.optim.Optimizer:
-        return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
+    def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
+        optimizer = self.optimizer
+        if not isinstance(self.optimizer, Optimizer):
+            self.optimizer_kwargs["lr"] = self.learning_rate
+            optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), **self.optimizer_kwargs)
+        if self.scheduler:
+            return [optimizer], [self._instantiate_scheduler(optimizer)]
+        return optimizer
 
     def configure_finetune_callback(self) -> List[Callback]:
         return []
@@ -371,3 +390,63 @@ class Task(LightningModule):
         if registry is None:
             return []
         return registry.available_keys()
+
+    @classmethod
+    def available_schedulers(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "schedulers", None)
+        if registry is None:
+            return []
+        return registry.available_keys()
+
+    def get_num_training_steps(self) -> int:
+        """Total training steps inferred from datamodule and devices."""
+        if not getattr(self, "trainer", None):
+            raise MisconfigurationException("The LightningModule isn't attached to the trainer yet.")
+        if isinstance(self.trainer.limit_train_batches, int) and self.trainer.limit_train_batches != 0:
+            dataset_size = self.trainer.limit_train_batches
+        elif isinstance(self.trainer.limit_train_batches, float):
+            # limit_train_batches is a percentage of batches
+            dataset_size = len(self.train_dataloader())
+            dataset_size = int(dataset_size * self.trainer.limit_train_batches)
+        else:
+            dataset_size = len(self.train_dataloader())
+
+        num_devices = max(1, self.trainer.num_gpus, self.trainer.num_processes)
+        if self.trainer.tpu_cores:
+            num_devices = max(num_devices, self.trainer.tpu_cores)
+
+        effective_batch_size = self.trainer.accumulate_grad_batches * num_devices
+        max_estimated_steps = (dataset_size // effective_batch_size) * self.trainer.max_epochs
+
+        if self.trainer.max_steps and self.trainer.max_steps < max_estimated_steps:
+            return self.trainer.max_steps
+        return max_estimated_steps
+
+    def _compute_warmup(self, num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
+        if not isinstance(num_warmup_steps, float) or (num_warmup_steps > 1 or num_warmup_steps < 0):
+            raise MisconfigurationException(
+                "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
+            )
+        if isinstance(num_warmup_steps, float):
+            # Convert float values to percentage of training steps to use as warmup
+            num_warmup_steps *= num_training_steps
+        return round(num_warmup_steps)
+
+    def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
+        scheduler = self.scheduler
+        if isinstance(scheduler, _LRScheduler):
+            return scheduler
+        if isinstance(scheduler, str):
+            scheduler_fn = self.schedulers.get(self.scheduler)
+            num_training_steps: int = self.get_num_training_steps()
+            num_warmup_steps: int = self._compute_warmup(
+                num_training_steps=num_training_steps,
+                num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
+            )
+            return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
+        elif issubclass(scheduler, _LRScheduler):
+            return scheduler(optimizer, **self.scheduler_kwargs)
+        raise MisconfigurationException(
+            "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
+            f"or a built-in scheduler in {self.available_schedulers()}"
+        )

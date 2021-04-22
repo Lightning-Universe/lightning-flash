@@ -16,6 +16,7 @@ import inspect
 import weakref
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
+import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
@@ -324,6 +325,8 @@ class DataPipeline:
     def _attach_preprocess_to_model(
         self, model: 'Task', stage: Optional[RunningStage] = None, device_transform_only: bool = False
     ) -> None:
+        device_collate_fn = torch.nn.Identity()
+
         if not stage:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 
