@@ -80,7 +80,10 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            num_workers = 0 if platform.system() == "Darwin" else os.cpu_count()
+            if platform.system() == "Darwin" or os.getenv("FLASH_TESTING", "0") == "1":
+                num_workers = 0
+            else:
+                num_workers = os.cpu_count()
         self.num_workers = num_workers
 
         self._preprocess: Optional[Preprocess] = None
