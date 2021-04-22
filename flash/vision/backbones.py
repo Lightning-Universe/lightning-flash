@@ -55,11 +55,11 @@ OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
 def catch_url_error(fn):
 
     @functools.wraps(fn)
-    def wrapper(*args, pretrained=False, **kwargs):
+    def wrapper(pretrained=False, **kwargs):
         try:
-            return fn(*args, pretrained=pretrained, **kwargs)
+            return fn(pretrained=pretrained, **kwargs)
         except urllib.error.URLError:
-            result = fn(*args, pretrained=False, **kwargs)
+            result = fn(pretrained=False, **kwargs)
             rank_zero_warn(
                 "Failed to download pretrained weights for the selected backbone. The backbone has been created with"
                 " `pretrained=False` instead. If you are loading from a local checkpoint, this warning can be safely"
