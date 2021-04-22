@@ -6,6 +6,16 @@ from torch.utils.data import Dataset
 
 
 class SplitDataset(Dataset):
+    """
+    SplitDataset is used to create Dataset Subset using indices.
+
+    Example::
+
+        split_ds = SplitDataset(dataset, indices=[10, 14, 25])
+
+        split_ds = SplitDataset(dataset, indices=[10, 10, 10, 14, 25], use_duplicated_indices=True)
+
+    """
 
     def __init__(self, dataset: Any, indices: List[int] = [], use_duplicated_indices: bool = False) -> None:
         if not isinstance(indices, list):
