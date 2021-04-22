@@ -38,14 +38,14 @@ genres = [
 ]
 
 
-def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[torch.Tensor]]:
+def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[List[int]]]:
     metadata = pd.read_csv(os.path.join(root, data, "metadata.csv"))
 
     images = []
     labels = []
     for _, row in metadata.iterrows():
         images.append(os.path.join(root, data, row['Id'] + ".jpg"))
-        labels.append(torch.tensor([row[genre] for genre in genres]))
+        labels.append([int(row[genre]) for genre in genres])
 
     return images, labels
 

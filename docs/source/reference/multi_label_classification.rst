@@ -124,14 +124,14 @@ The ``metadata.csv`` files in each folder contain our labels, so we need to crea
         "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Musical", "Mystery", "N/A", "News", "Reality-TV", "Romance", "Sci-Fi", "Short", "Sport", "Thriller", "War", "Western"
     ]
 
-    def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[torch.Tensor]]:
+    def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[List[int]]]:
         metadata = pd.read_csv(os.path.join(root, data, "metadata.csv"))
 
         images = []
         labels = []
         for _, row in metadata.iterrows():
             images.append(os.path.join(root, data, row['Id'] + ".jpg"))
-            labels.append(torch.tensor([row[genre] for genre in genres]))
+            labels.append([int(row[genre]) for genre in genres])
 
         return images, labels
 
