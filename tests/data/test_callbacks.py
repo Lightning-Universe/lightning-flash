@@ -26,7 +26,7 @@ from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
-from flash.data.utils import _STAGES_PREFIX
+from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.vision import ImageClassificationData
 
 
@@ -146,8 +146,9 @@ def test_base_viz(tmpdir):
     for stage in _STAGES_PREFIX.values():
 
         for _ in range(10):
-            fcn = getattr(dm, f"show_{stage}_batch")
-            fcn(reset=False)
+            for fcn_name in _PREPROCESS_FUNCS:
+                fcn = getattr(dm, f"show_{stage}_batch")
+                fcn(fcn_name, reset=False)
 
         is_predict = stage == "predict"
 
@@ -206,3 +207,4 @@ def test_data_loaders_num_workers_to_0(tmpdir):
     assert isinstance(iterator, torch.utils.data.dataloader._SingleProcessDataLoaderIter)
     iterator = iter(datamodule.train_dataloader())
     assert isinstance(iterator, torch.utils.data.dataloader._MultiProcessingDataLoaderIter)
+    assert datamodule.num_workers == 3
