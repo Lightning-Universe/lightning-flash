@@ -50,8 +50,6 @@ def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], L
     return images, labels
 
 
-ImageClassificationPreprocess.image_size = (128, 128)
-
 train_filepaths, train_labels = load_data('train')
 val_filepaths, val_labels = load_data('val')
 test_filepaths, test_labels = load_data('test')
@@ -63,7 +61,7 @@ datamodule = ImageClassificationData.from_filepaths(
     val_labels=val_labels,
     test_filepaths=test_filepaths,
     test_labels=test_labels,
-    preprocess=ImageClassificationPreprocess(),
+    preprocess=ImageClassificationPreprocess(image_size=(128, 128)),
 )
 
 # 3. Build the model

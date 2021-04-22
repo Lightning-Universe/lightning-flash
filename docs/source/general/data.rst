@@ -336,7 +336,6 @@ __________
         show_test_batch,
         show_predict_batch,
     :exclude-members:
-        train_val_test_split,
         autogenerate_dataset,
 
 

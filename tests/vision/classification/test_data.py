@@ -13,9 +13,10 @@
 # limitations under the License.
 import os
 from pathlib import Path
+from typing import Any, List, Tuple
 
+import kornia as K
 import numpy as np
-import pytest
 import torch
 from PIL import Image
 
@@ -27,9 +28,11 @@ def _dummy_image_loader(_):
     return torch.rand(3, 196, 196)
 
 
-def _rand_image():
-    _size = np.random.choice([196, 244])
-    return Image.fromarray(np.random.randint(0, 255, (_size, _size, 3), dtype="uint8"))
+def _rand_image(size: Tuple[int, int] = None):
+    if size is None:
+        _size = np.random.choice([196, 244])
+        size = (_size, _size)
+    return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
 
 
 def test_from_filepaths_smoke(tmpdir):
@@ -158,6 +161,52 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
     dm.show_train_batch("pre_tensor_transform")
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
     dm.show_val_batch("per_batch_transform")
+
+
+def test_from_filepaths_splits(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    B, _, H, W = 2, 3, 224, 224
+    img_size: Tuple[int, int] = (H, W)
+
+    (tmpdir / "splits").mkdir()
+    _rand_image(img_size).save(tmpdir / "s.png")
+
+    num_samples: int = 10
+    val_split: float = .3
+
+    train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
+
+    train_labels: List[int] = [i for i in range(num_samples)]
+
+    assert len(train_filepaths) == len(train_labels)
+
+    def preprocess(x):
+        out = K.image_to_tensor(np.array(x))
+        return out
+
+    _to_tensor = {
+        "to_tensor_transform": lambda x: preprocess(x),
+    }
+
+    def run(transform: Any = None):
+        img_data = ImageClassificationData.from_filepaths(
+            train_filepaths=train_filepaths,
+            train_labels=train_labels,
+            train_transform=transform,
+            val_transform=transform,
+            batch_size=B,
+            num_workers=0,
+            val_split=val_split,
+            image_size=img_size,
+        )
+        data = next(iter(img_data.train_dataloader()))
+        imgs, labels = data
+        assert imgs.shape == (B, 3, H, W)
+        assert labels.shape == (B, )
+
+    run()
+    run(_to_tensor)
 
 
 def test_categorical_csv_labels(tmpdir):

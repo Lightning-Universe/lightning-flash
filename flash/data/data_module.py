@@ -15,18 +15,21 @@ import os
 import platform
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
+from datasets.splits import SplitInfo
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
 
-from flash.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
+from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
+from flash.data.splits import SplitDataset
 from flash.data.utils import _STAGES_PREFIX
 
 
@@ -222,7 +225,7 @@ class DataModule(pl.LightningDataModule):
             self.set_dataset_attribute(self._predict_ds, 'running_stage', RunningStage.PREDICTING)
 
     def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
-        if isinstance(dataset, BaseAutoDataset):
+        if isinstance(dataset, (BaseAutoDataset, SplitDataset)):
             return self.data_pipeline.worker_preprocessor(running_stage)
 
     def _train_dataloader(self) -> DataLoader:
@@ -339,66 +342,26 @@ class DataModule(pl.LightningDataModule):
             )
         return BaseAutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
 
-    @staticmethod
-    def train_val_test_split(
-        dataset: torch.utils.data.Dataset,
-        train_split: Optional[Union[float, int]] = None,
-        val_split: Optional[Union[float, int]] = None,
-        test_split: Optional[Union[float, int]] = None,
-        seed: Optional[int] = 1234,
-    ) -> Tuple[Dataset, Optional[Dataset], Optional[Dataset]]:
-        """Returns split Datasets based on train, valid & test split parameters
+    @classmethod
+    def _split_train_val(
+        cls,
+        train_dataset: Union[AutoDataset, IterableAutoDataset],
+        val_split: float,
+    ) -> Tuple[Any, Any]:
 
-        Args:
-            dataset: Dataset to be split.
-            train_split: If Float, ratio of data to be contained within the train dataset. If Int,
-                number of samples to be contained within train dataset.
-            val_split: If Float, ratio of data to be contained within the validation dataset. If Int,
-                number of samples to be contained within test dataset.
-            test_split: If Float, ratio of data to be contained within the test dataset. If Int,
-                number of samples to be contained within test dataset.
-            seed: Used for the train/val splits when val_split is not None.
+        if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):
+            raise MisconfigurationException(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
 
-        .. note:: Make sure to always rely on this function when using :class:`~flash.data.process.Preprocess`.
+        if isinstance(train_dataset, IterableAutoDataset):
+            raise MisconfigurationException(
+                "`val_split` should be `None` when the dataset is built with an IterativeDataset."
+            )
 
-        """
-        n = len(dataset)
-
-        if test_split is None:
-            _test_length = 0
-        elif isinstance(test_split, float):
-            _test_length = int(n * test_split)
-        else:
-            _test_length = test_split
-
-        if val_split is None:
-            _val_length = 0
-        elif isinstance(val_split, float):
-            _val_length = int(n * val_split)
-        else:
-            _val_length = val_split
-
-        if train_split is None:
-            _train_length = n - _val_length - _test_length
-        elif isinstance(train_split, float):
-            _train_length = int(n * train_split)
-        else:
-            _train_length = train_split
-
-        if seed:
-            generator = torch.Generator().manual_seed(seed)
-        else:
-            generator = None
-
-        train_ds, val_ds, test_ds = torch.utils.data.random_split(
-            dataset, [_train_length, _val_length, _test_length], generator
-        )
-        if val_split is None:
-            val_ds = None
-        if test_split is None:
-            test_ds = None
-
-        return train_ds, val_ds, test_ds
+        train_num_samples = len(train_dataset)
+        val_num_samples = int(train_num_samples * val_split)
+        val_indices = list(np.random.choice(range(train_num_samples), val_num_samples, replace=False))
+        train_indices = [i for i in range(train_num_samples) if i not in val_indices]
+        return SplitDataset(train_dataset, train_indices), SplitDataset(train_dataset, val_indices)
 
     @classmethod
     def _generate_dataset_if_possible(
@@ -440,6 +403,8 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         use_iterable_auto_dataset: bool = False,
+        seed: int = 42,
+        val_split: Optional[float] = None,
         **kwargs,
     ) -> 'DataModule':
         """
@@ -494,6 +459,10 @@ class DataModule(pl.LightningDataModule):
             data_pipeline=data_pipeline,
             use_iterable_auto_dataset=use_iterable_auto_dataset,
         )
+
+        if train_dataset is not None and (val_split is not None and val_dataset is None):
+            train_dataset, val_dataset = cls._split_train_val(train_dataset, val_split)
+
         datamodule = cls(
             train_dataset=train_dataset,
             val_dataset=val_dataset,
