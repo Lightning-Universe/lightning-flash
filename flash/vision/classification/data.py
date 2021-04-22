@@ -56,7 +56,7 @@ class ImageClassificationPreprocess(Preprocess):
         val_transform: Optional[Union[Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Dict[str, Callable]]] = None,
-        image_size: Tuple[int, int] = (196, 196)
+        image_size: Tuple[int, int] = (196, 196),
     ):
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform, image_size
@@ -95,7 +95,7 @@ class ImageClassificationPreprocess(Preprocess):
 
         return files
 
-    def default_train_transforms(self, image_size):
+    def default_train_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
@@ -115,7 +115,7 @@ class ImageClassificationPreprocess(Preprocess):
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
-    def default_val_transforms(self, image_size):
+    def default_val_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
         if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
@@ -139,7 +139,7 @@ class ImageClassificationPreprocess(Preprocess):
         val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
         predict_transform: Optional[Union[str, Dict]] = 'default',
-        image_size: Tuple[int, int] = (196, 196)
+        image_size: Tuple[int, int] = (196, 196),
     ):
 
         if not train_transform or train_transform == 'default':
@@ -305,14 +305,6 @@ class ImageClassificationData(DataModule):
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return MatplotlibVisualization(*args, **kwargs)
-
-    @property
-    def num_classes(self) -> int:
-        if self._num_classes is None:
-            if self._train_ds is not None:
-                self._num_classes = self._get_num_classes(self._train_ds)
-
-        return self._num_classes
 
     def _get_num_classes(self, dataset: torch.utils.data.Dataset):
         num_classes = self.get_dataset_attribute(dataset, "num_classes", None)

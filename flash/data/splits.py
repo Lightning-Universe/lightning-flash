@@ -38,7 +38,7 @@ class SplitDataset(Dataset):
         self.dataset = dataset
         self.indices = indices
 
-    def __getitem__(self, index) -> Any:
+    def __getitem__(self, index: int) -> Any:
         return self.dataset[self.indices[index]]
 
     def __len__(self) -> int:
