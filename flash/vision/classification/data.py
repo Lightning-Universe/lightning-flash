@@ -316,7 +316,7 @@ class ImageClassificationData(DataModule):
     ) -> None:
         """Creates a ImageClassificationData object from lists of image filepaths and labels"""
 
-        if train_dataset is not None and train_split is not None or val_split is not None or test_split is not None:
+        if train_dataset is not None and (train_split is not None or val_split is not None or test_split is not None):
             train_dataset, val_dataset, test_dataset = self.train_val_test_split(
                 train_dataset, train_split, val_split, test_split, seed
             )
