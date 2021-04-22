@@ -71,7 +71,6 @@ def catch_url_error(fn):
 
 
 @IMAGE_CLASSIFIER_BACKBONES(name="simclr-imagenet", namespace="vision", package="bolts")
-@catch_url_error
 def load_simclr_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt", **_):
     simclr: LightningModule = SimCLR.load_from_checkpoint(path_or_url, strict=False)
     # remove the last two layers & turn it into a Sequential model
@@ -80,7 +79,6 @@ def load_simclr_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simc
 
 
 @IMAGE_CLASSIFIER_BACKBONES(name="swav-imagenet", namespace="vision", package="bolts")
-@catch_url_error
 def load_swav_imagenet(
     path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar",
     **_,
