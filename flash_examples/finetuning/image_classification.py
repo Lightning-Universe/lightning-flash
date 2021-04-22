@@ -69,7 +69,10 @@ predictions = model.predict([
 
 print(predictions)
 
-datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
+datamodule = ImageClassificationData.from_folders(
+    predict_folder="data/hymenoptera_data/predict/",
+    preprocess=model.preprocess,
+)
 
 # 7b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)
