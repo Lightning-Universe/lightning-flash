@@ -80,7 +80,7 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            if platform.system() == "Darwin" or os.getenv("FLASH_TESTING", "0") == "1":
+            if platform.system() == "Darwin" or platform.system() == "Windows":
                 num_workers = 0
             else:
                 num_workers = os.cpu_count()
