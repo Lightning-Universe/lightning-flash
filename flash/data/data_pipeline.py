@@ -19,18 +19,45 @@ from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
 import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities import imports
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, IterableDataset
 from torch.utils.data._utils.collate import default_collate, default_convert
 
 from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
-from flash.data.process import Postprocess, Preprocess
+from flash.data.process import Postprocess, Preprocess, ProcessState, Serializer
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
     from flash.core.model import Task
+
+
+class DataPipelineState:
+    """A class to store and share all process states once a :class:`.DataPipeline` has been initialized."""
+
+    def __init__(self):
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+        self._initialized = False
+
+    def set_state(self, state: ProcessState):
+        """Add the given :class:`.ProcessState` to the :class:`.DataPipelineState`."""
+
+        if not self._initialized:
+            self._state[type(state)] = state
+        else:
+            rank_zero_warn(
+                f"Attempted to add a state ({state}) after the data pipeline has already been initialized. This will"
+                " only have an effect when a new data pipeline is created.", UserWarning
+            )
+
+    def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
+        """Get the :class:`.ProcessState` of the given type from the :class:`.DataPipelineState`."""
+
+        if state_type in self._state:
+            return self._state[state_type]
+        else:
+            return None
 
 
 class DataPipeline:
@@ -59,11 +86,28 @@ class DataPipeline:
     PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
     POSTPROCESS_FUNCS: Set[str] = _POSTPROCESS_FUNCS
 
-    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
+    def __init__(
+        self,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
+        serializer: Optional[Serializer] = None,
+    ) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
-        self._postprocessor = None
+
+        self._serializer = serializer or Serializer()
+
         self._running_stage = None
+
+    def initialize(self):
+        """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
+        :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
+        give a warning."""
+        data_pipeline_state = DataPipelineState()
+        self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._serializer.attach_data_pipeline_state(data_pipeline_state)
+        data_pipeline_state._initialized = True
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
@@ -78,11 +122,6 @@ class DataPipeline:
             return False
 
         return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
-
-    @property
-    def preprocess_state(self):
-        if self._preprocess_pipeline:
-            return self._preprocess_pipeline.state
 
     @classmethod
     def _is_overriden_recursive(
@@ -182,7 +221,7 @@ class DataPipeline:
         )
 
         collate_in_worker_from_transform: Optional[bool] = getattr(
-            preprocess, f"_{prefix}_collate_in_worker_from_transform"
+            preprocess, f"_{prefix}_collate_in_worker_from_transform", None
         )
 
         if (
@@ -374,6 +413,7 @@ class DataPipeline:
             getattr(postprocess, func_names["uncollate"]),
             getattr(postprocess, func_names["per_batch_transform"]),
             getattr(postprocess, func_names["per_sample_transform"]),
+            serializer=self._serializer,
             save_fn=save_fn,
             save_per_sample=save_per_sample
         )

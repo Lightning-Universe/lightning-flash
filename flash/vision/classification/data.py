@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import pathlib
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -26,12 +26,12 @@ from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
+from flash.core.classification import ClassificationState
 from flash.core.utils import _is_overriden
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.data_pipeline import DataPipeline
 from flash.data.process import Preprocess
 from flash.data.utils import _PREPROCESS_FUNCS
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
@@ -50,6 +50,19 @@ else:
 class ImageClassificationPreprocess(Preprocess):
 
     to_tensor = torchvision.transforms.ToTensor()
+    image_size = (196, 196)
+
+    def __init__(
+        self,
+        train_transform: Optional[Union[Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+    ):
+        train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
+            train_transform, val_transform, test_transform, predict_transform
+        )
+        super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
     @staticmethod
     def _find_classes(dir: str) -> Tuple:
@@ -83,9 +96,79 @@ class ImageClassificationPreprocess(Preprocess):
 
         return files
 
+    def default_train_transforms(self):
+        image_size = self.image_size
+        if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
+            #  Better approach as all transforms are applied on tensor directly
+            return {
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
+                "post_tensor_transform": nn.Sequential(
+                    K.augmentation.RandomResizedCrop(image_size), K.augmentation.RandomHorizontalFlip()
+                ),
+                "per_batch_transform_on_device": nn.Sequential(
+                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+                )
+            }
+        else:
+            from torchvision import transforms as T  # noqa F811
+            return {
+                "pre_tensor_transform": nn.Sequential(T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()),
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
+                "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            }
+
+    def default_val_transforms(self):
+        image_size = self.image_size
+        if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
+            #  Better approach as all transforms are applied on tensor directly
+            return {
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
+                "post_tensor_transform": nn.Sequential(K.augmentation.RandomResizedCrop(image_size)),
+                "per_batch_transform_on_device": nn.Sequential(
+                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+                )
+            }
+        else:
+            from torchvision import transforms as T  # noqa F811
+            return {
+                "pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
+                "to_tensor_transform": torchvision.transforms.ToTensor(),
+                "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            }
+
+    def _resolve_transforms(
+        self,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+    ):
+
+        if not train_transform or train_transform == 'default':
+            train_transform = self.default_train_transforms()
+
+        if not val_transform or val_transform == 'default':
+            val_transform = self.default_val_transforms()
+
+        if not test_transform or test_transform == 'default':
+            test_transform = self.default_val_transforms()
+
+        if not predict_transform or predict_transform == 'default':
+            predict_transform = self.default_val_transforms()
+
+        return (
+            self._check_transforms(train_transform, RunningStage.TRAINING),
+            self._check_transforms(val_transform, RunningStage.VALIDATING),
+            self._check_transforms(test_transform, RunningStage.TESTING),
+            self._check_transforms(predict_transform, RunningStage.PREDICTING),
+        )
+
     @classmethod
-    def _load_data_dir(cls, data: Any, dataset: Optional[AutoDataset] = None) -> List[Tuple[str, int]]:
-        # case where we pass a list of files
+    def _load_data_dir(
+        cls,
+        data: Any,
+        dataset: Optional[AutoDataset] = None,
+    ) -> Tuple[Optional[List[str]], List[Tuple[str, int]]]:
         if isinstance(data, list):
             # TODO: define num_classes elsewhere. This is a bad assumption since the list of
             # labels might not contain the complete set of ids so that you can infer the total
@@ -109,14 +192,14 @@ class ImageClassificationPreprocess(Preprocess):
                     out.append([p, label])
                 else:
                     raise TypeError(f"Unexpected file path type: {p}.")
-            return out
+            return None, out
         else:
             classes, class_to_idx = cls._find_classes(data)
             # TODO: define num_classes elsewhere. This is a bad assumption since the list of
             # labels might not contain the complete set of ids so that you can infer the total
             # number of classes to train in your dataset.
             dataset.num_classes = len(classes)
-            return make_dataset(data, class_to_idx, IMG_EXTENSIONS, None)
+            return classes, make_dataset(data, class_to_idx, IMG_EXTENSIONS, None)
 
     @classmethod
     def _load_data_files_labels(cls, data: Any, dataset: Optional[AutoDataset] = None) -> Any:
@@ -130,18 +213,22 @@ class ImageClassificationPreprocess(Preprocess):
 
         return data
 
-    @classmethod
-    def load_data(cls, data: Any, dataset: Optional[AutoDataset] = None) -> Iterable:
+    def load_data(self, data: Any, dataset: Optional[AutoDataset] = None) -> Iterable:
         if isinstance(data, (str, pathlib.Path, list)):
-            return cls._load_data_dir(data=data, dataset=dataset)
-        return cls._load_data_files_labels(data=data, dataset=dataset)
+            classes, data = self._load_data_dir(data=data, dataset=dataset)
+            state = ClassificationState(classes)
+            self.set_state(state)
+            return data
+        return self._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
-    def load_sample(sample) -> Union[Image.Image]:
+    def load_sample(sample) -> Union[Image.Image, torch.Tensor, Tuple[Image.Image, torch.Tensor]]:
         # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
         if isinstance(sample, torch.Tensor):
-            return sample
+            out: torch.Tensor = sample
+            return out
 
+        path: str = ""
         if isinstance(sample, (tuple, list)):
             path = sample[0]
             sample = list(sample)
@@ -149,13 +236,16 @@ class ImageClassificationPreprocess(Preprocess):
             path = sample
 
         with open(path, "rb") as f, Image.open(f) as img:
-            img = img.convert("RGB")
+            img_out: Image.Image = img.convert("RGB")
 
         if isinstance(sample, list):
-            sample[0] = img
-            return sample
+            # return a tuple with the PIL image and tensor with the labels.
+            # returning the tensor helps later to easily collate the batch
+            # for single/multi label at the same time.
+            out: Tuple[Image.Image, torch.Tensor] = (img_out, torch.as_tensor(sample[1]))
+            return out
 
-        return img
+        return img_out
 
     @classmethod
     def predict_load_data(cls, samples: Any) -> Iterable:
@@ -210,9 +300,6 @@ class ImageClassificationPreprocess(Preprocess):
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
-    preprocess_cls = ImageClassificationPreprocess
-    image_size = (196, 196)
-
     def __init__(
         self,
         train_dataset: Optional[Dataset] = None,
@@ -226,7 +313,7 @@ class ImageClassificationData(DataModule):
         val_split: Optional[Union[float, int]] = None,
         test_split: Optional[Union[float, int]] = None,
         **kwargs,
-    ) -> 'ImageClassificationData':
+    ) -> None:
         """Creates a ImageClassificationData object from lists of image filepaths and labels"""
 
         if train_dataset is not None and train_split is not None or val_split is not None or test_split is not None:
@@ -266,62 +353,6 @@ class ImageClassificationData(DataModule):
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return MatplotlibVisualization(*args, **kwargs)
 
-    @staticmethod
-    def _check_transforms(transform: Dict[str, Union[nn.Module, Callable]]) -> Dict[str, Union[nn.Module, Callable]]:
-        if transform and not isinstance(transform, Dict):
-            raise MisconfigurationException(
-                "Transform should be a dict. "
-                f"Here are the available keys for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
-            )
-        if "per_batch_transform" in transform and "per_sample_transform_on_device" in transform:
-            raise MisconfigurationException(
-                f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutually exclusive.'
-            )
-        return transform
-
-    @staticmethod
-    def default_train_transforms():
-        image_size: Tuple[int, int] = ImageClassificationData.image_size
-        if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
-            #  Better approach as all transforms are applied on tensor directly
-            return {
-                "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": nn.Sequential(
-                    K.augmentation.RandomResizedCrop(image_size), K.augmentation.RandomHorizontalFlip()
-                ),
-                "per_batch_transform_on_device": nn.Sequential(
-                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-                )
-            }
-        else:
-            from torchvision import transforms as T  # noqa F811
-            return {
-                "pre_tensor_transform": nn.Sequential(T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()),
-                "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            }
-
-    @staticmethod
-    def default_val_transforms():
-        image_size: Tuple[int, int] = ImageClassificationData.image_size
-        if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
-            #  Better approach as all transforms are applied on tensor directly
-            return {
-                "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": nn.Sequential(K.augmentation.RandomResizedCrop(image_size)),
-                "per_batch_transform_on_device": nn.Sequential(
-                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-                )
-            }
-        else:
-            from torchvision import transforms as T  # noqa F811
-            return {
-                "pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
-                "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            }
-
     @property
     def num_classes(self) -> int:
         if self._num_classes is None:
@@ -338,72 +369,6 @@ class ImageClassificationData(DataModule):
         return num_classes
 
     @classmethod
-    def instantiate_preprocess(
-        cls,
-        train_transform: Dict[str, Union[nn.Module, Callable]],
-        val_transform: Dict[str, Union[nn.Module, Callable]],
-        test_transform: Dict[str, Union[nn.Module, Callable]],
-        predict_transform: Dict[str, Union[nn.Module, Callable]],
-        preprocess_cls: Type[Preprocess] = None,
-    ) -> Preprocess:
-        """
-        This function is used to instantiate ImageClassificationData preprocess object.
-
-        Args:
-            train_transform: Train transforms for images.
-            val_transform: Validation transforms for images.
-            test_transform: Test transforms for images.
-            predict_transform: Predict transforms for images.
-            preprocess_cls: User provided preprocess_cls.
-
-        Example::
-
-            train_transform = {
-                "per_sample_transform": T.Compose([
-                    T.RandomResizedCrop(224),
-                    T.RandomHorizontalFlip(),
-                    T.ToTensor(),
-                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-                ]),
-                "per_batch_transform_on_device": nn.Sequential(K.RandomAffine(360), K.ColorJitter(0.2, 0.3, 0.2, 0.3))
-            }
-
-        """
-        train_transform, val_transform, test_transform, predict_transform = cls._resolve_transforms(
-            train_transform, val_transform, test_transform, predict_transform
-        )
-
-        preprocess_cls = preprocess_cls or cls.preprocess_cls
-        preprocess: Preprocess = preprocess_cls(train_transform, val_transform, test_transform, predict_transform)
-        return preprocess
-
-    @classmethod
-    def _resolve_transforms(
-        cls,
-        train_transform: Optional[Union[str, Dict]] = 'default',
-        val_transform: Optional[Union[str, Dict]] = 'default',
-        test_transform: Optional[Union[str, Dict]] = 'default',
-        predict_transform: Optional[Union[str, Dict]] = 'default',
-    ):
-
-        if not train_transform or train_transform == 'default':
-            train_transform = cls.default_train_transforms()
-
-        if not val_transform or val_transform == 'default':
-            val_transform = cls.default_val_transforms()
-
-        if not test_transform or test_transform == 'default':
-            test_transform = cls.default_val_transforms()
-
-        if not predict_transform or predict_transform == 'default':
-            predict_transform = cls.default_val_transforms()
-
-        return (
-            cls._check_transforms(train_transform), cls._check_transforms(val_transform),
-            cls._check_transforms(test_transform), cls._check_transforms(predict_transform)
-        )
-
-    @classmethod
     def from_folders(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]] = None,
@@ -416,7 +381,8 @@ class ImageClassificationData(DataModule):
         predict_transform: Optional[Union[str, Dict]] = 'default',
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
         **kwargs,
     ) -> 'DataModule':
         """
@@ -450,12 +416,11 @@ class ImageClassificationData(DataModule):
             >>> img_data = ImageClassificationData.from_folders("train/") # doctest: +SKIP
 
         """
-        preprocess = cls.instantiate_preprocess(
+        preprocess = preprocess or ImageClassificationPreprocess(
             train_transform,
             val_transform,
             test_transform,
             predict_transform,
-            preprocess_cls=preprocess_cls,
         )
 
         return cls.from_load_data_inputs(
@@ -465,6 +430,7 @@ class ImageClassificationData(DataModule):
             predict_load_data_input=predict_folder,
             batch_size=batch_size,
             num_workers=num_workers,
+            data_fetcher=data_fetcher,
             preprocess=preprocess,
             **kwargs,
         )
@@ -486,7 +452,8 @@ class ImageClassificationData(DataModule):
         batch_size: int = 64,
         num_workers: Optional[int] = None,
         seed: Optional[int] = 42,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
         **kwargs,
     ) -> 'ImageClassificationData':
         """
@@ -507,10 +474,14 @@ class ImageClassificationData(DataModule):
             val_labels: Sequence of labels for validation dataset. Defaults to ``None``.
             test_filepaths: String or sequence of file paths for test dataset. Defaults to ``None``.
             test_labels: Sequence of labels for test dataset. Defaults to ``None``.
-            train_transform: Transforms for training dataset. Defaults to ``default``,
-                which loads imagenet transforms.
-            val_transform: Transforms for validation and testing dataset.
-                Defaults to ``default``, which loads imagenet transforms.
+            train_transform: Image transform to use for the train set. Defaults to ``default``, which loads imagenet
+                transforms.
+            val_transform: Image transform to use for the validation set. Defaults to ``default``, which loads
+                imagenet transforms.
+            test_transform: Image transform to use for the test set. Defaults to ``default``, which loads imagenet
+                transforms.
+            predict_transform: Image transform to use for the predict set. Defaults to ``default``, which loads imagenet
+                transforms.
             batch_size: The batchsize to use for parallel loading. Defaults to ``64``.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
@@ -539,12 +510,11 @@ class ImageClassificationData(DataModule):
             else:
                 test_filepaths = [test_filepaths]
 
-        preprocess = cls.instantiate_preprocess(
+        preprocess = preprocess or ImageClassificationPreprocess(
             train_transform,
             val_transform,
             test_transform,
             predict_transform,
-            preprocess_cls=preprocess_cls,
         )
 
         return cls.from_load_data_inputs(
@@ -554,6 +524,7 @@ class ImageClassificationData(DataModule):
             predict_load_data_input=predict_filepaths,
             batch_size=batch_size,
             num_workers=num_workers,
+            data_fetcher=data_fetcher,
             preprocess=preprocess,
             seed=seed,
             **kwargs

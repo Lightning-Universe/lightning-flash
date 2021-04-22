@@ -40,13 +40,6 @@ class SummarizationData(Seq2SeqData):
     postprocess_cls = SummarizationPostprocess
 
     @classmethod
-    def instantiate_postprocess(
-        cls, tokenizer: AutoTokenizer, postprocess_cls: Optional[Type[Postprocess]] = None
-    ) -> Postprocess:
-        postprocess_cls = postprocess_cls or cls.postprocess_cls
-        return postprocess_cls(tokenizer)
-
-    @classmethod
     def from_files(
         cls,
         train_file: Optional[str] = None,
@@ -62,8 +55,8 @@ class SummarizationData(Seq2SeqData):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 16,
         num_workers: Optional[int] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
-        postprocess_cls: Optional[Type[Postprocess]] = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
     ):
         """Creates a SummarizationData object from files.
 
@@ -95,7 +88,8 @@ class SummarizationData(Seq2SeqData):
 
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        preprocess = cls.instantiate_preprocess(
+
+        preprocess = preprocess or cls.preprocess_cls(
             tokenizer,
             input,
             filetype,
@@ -103,10 +97,9 @@ class SummarizationData(Seq2SeqData):
             max_source_length,
             max_target_length,
             padding,
-            preprocess_cls=preprocess_cls
         )
 
-        postprocess = cls.instantiate_postprocess(tokenizer, postprocess_cls=postprocess_cls)
+        postprocess = postprocess or cls.postprocess_cls(tokenizer)
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,
@@ -132,6 +125,8 @@ class SummarizationData(Seq2SeqData):
         padding: Union[str, bool] = 'longest',
         batch_size: int = 16,
         num_workers: Optional[int] = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
     ):
         """Creates a SummarizationData object from files.
 
@@ -163,5 +158,7 @@ class SummarizationData(Seq2SeqData):
             max_target_length=max_target_length,
             padding=padding,
             batch_size=batch_size,
-            num_workers=num_workers
+            num_workers=num_workers,
+            preprocess=preprocess,
+            postprocess=postprocess,
         )

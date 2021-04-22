@@ -665,14 +665,11 @@ class CustomModel(Task):
         return tensor([0, 0, 0])
 
 
-class CustomDataModule(DataModule):
-
-    preprocess_cls = TestPreprocessTransformations
-
-
 def test_datapipeline_transformations(tmpdir):
 
-    datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2, num_workers=0)
+    datamodule = DataModule.from_load_data_inputs(
+        1, 1, 1, 1, batch_size=2, num_workers=0, preprocess=TestPreprocessTransformations()
+    )
 
     assert datamodule.train_dataloader().dataset[0] == (0, 1, 2, 3)
     batch = next(iter(datamodule.train_dataloader()))
@@ -683,8 +680,9 @@ def test_datapipeline_transformations(tmpdir):
     with pytest.raises(MisconfigurationException, match="When ``to_tensor_transform``"):
         batch = next(iter(datamodule.val_dataloader()))
 
-    CustomDataModule.preprocess_cls = TestPreprocessTransformations2
-    datamodule = CustomDataModule.from_load_data_inputs(1, 1, 1, 1, batch_size=2, num_workers=0)
+    datamodule = DataModule.from_load_data_inputs(
+        1, 1, 1, 1, batch_size=2, num_workers=0, preprocess=TestPreprocessTransformations2()
+    )
     batch = next(iter(datamodule.val_dataloader()))
     assert torch.equal(batch["a"], tensor([0, 1]))
     assert torch.equal(batch["b"], tensor([1, 2]))

@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import datasets
 import torch
@@ -23,7 +23,7 @@ from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 
 from flash.data.data_module import DataModule
-from flash.data.process import Preprocess
+from flash.data.process import Postprocess, Preprocess
 
 
 class Seq2SeqPreprocess(Preprocess):
@@ -122,45 +122,6 @@ class Seq2SeqData(DataModule):
     preprocess_cls = Seq2SeqPreprocess
 
     @classmethod
-    def instantiate_preprocess(
-        cls,
-        tokenizer: AutoTokenizer,
-        input: str,
-        filetype: str,
-        target: str,
-        max_source_length: int,
-        max_target_length: int,
-        padding: int,
-        preprocess_cls: Optional[Type[Preprocess]] = None
-    ) -> Preprocess:
-        """
-        This function is used to instantiate the  ``Seq2SeqPreprocess`` preprocess.
-
-        Args:
-            tokenizer: Path to training data.
-            input: The field storing the source translation text.
-            filetype: ``csv`` or ``json`` File
-            target: The field storing the target translation text.
-            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
-            max_source_length: Maximum length of the source text. Any text longer will be truncated.
-            max_target_length: Maximum length of the target text. Any text longer will be truncated.
-            padding: Padding strategy for batches. Default is pad to maximum length.
-            preprocess_cls: Preprocess cls
-        """
-
-        preprocess_cls = preprocess_cls or cls.preprocess_cls
-
-        return preprocess_cls(
-            tokenizer=tokenizer,
-            input=input,
-            filetype=filetype,
-            target=target,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-        )
-
-    @classmethod
     def from_files(
         cls,
         train_file: Optional[str],
@@ -176,7 +137,8 @@ class Seq2SeqData(DataModule):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 32,
         num_workers: Optional[int] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
     ):
         """Creates a Seq2SeqData object from files.
         Args:
@@ -204,7 +166,7 @@ class Seq2SeqData(DataModule):
                                            cat_cols=["account_type"])
         """
         tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        preprocess = cls.instantiate_preprocess(
+        preprocess = preprocess or cls.preprocess_cls(
             tokenizer,
             input,
             filetype,
@@ -212,7 +174,6 @@ class Seq2SeqData(DataModule):
             max_source_length,
             max_target_length,
             padding,
-            preprocess_cls=preprocess_cls
         )
 
         return cls.from_load_data_inputs(
@@ -222,7 +183,8 @@ class Seq2SeqData(DataModule):
             predict_load_data_input=predict_file,
             batch_size=batch_size,
             num_workers=num_workers,
-            preprocess=preprocess
+            preprocess=preprocess,
+            postprocess=postprocess,
         )
 
     @classmethod
@@ -238,7 +200,8 @@ class Seq2SeqData(DataModule):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 32,
         num_workers: Optional[int] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
     ):
         """Creates a TextClassificationData object from files.
         Args:
@@ -269,5 +232,6 @@ class Seq2SeqData(DataModule):
             padding=padding,
             batch_size=batch_size,
             num_workers=num_workers,
-            preprocess_cls=preprocess_cls,
+            preprocess=preprocess,
+            postprocess=postprocess,
         )

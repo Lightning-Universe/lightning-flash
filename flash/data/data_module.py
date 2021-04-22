@@ -37,9 +37,8 @@ class DataModule(pl.LightningDataModule):
         train_dataset: Dataset for training. Defaults to None.
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
-        predict_dataset: Dataset to predict model performance. Defaults to None.
+        predict_dataset: Dataset for predicting. Defaults to None.
         num_workers: The number of workers to use for parallelized loading. Defaults to None.
-        predict_ds: Dataset for predicting. Defaults to None.
         batch_size: The batch size to be used by the DataLoader. Defaults to 1.
         num_workers: The number of workers to use for parallelized loading.
             Defaults to None which equals the number of available CPU threads,
@@ -81,7 +80,10 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            num_workers = 0 if platform.system() == "Darwin" else os.cpu_count()
+            if platform.system() == "Darwin" or platform.system() == "Windows":
+                num_workers = 0
+            else:
+                num_workers = os.cpu_count()
         self.num_workers = num_workers
 
         self._preprocess: Optional[Preprocess] = None
@@ -321,16 +323,18 @@ class DataModule(pl.LightningDataModule):
         or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly
         """
 
+        preprocess = getattr(data_pipeline, '_preprocess_pipeline', None)
+
         if whole_data_load_fn is None:
             whole_data_load_fn = getattr(
-                cls.preprocess_cls,
-                DataPipeline._resolve_function_hierarchy('load_data', cls.preprocess_cls, running_stage, Preprocess)
+                preprocess,
+                DataPipeline._resolve_function_hierarchy('load_data', preprocess, running_stage, Preprocess)
             )
 
         if per_sample_load_fn is None:
             per_sample_load_fn = getattr(
-                cls.preprocess_cls,
-                DataPipeline._resolve_function_hierarchy('load_sample', cls.preprocess_cls, running_stage, Preprocess)
+                preprocess,
+                DataPipeline._resolve_function_hierarchy('load_sample', preprocess, running_stage, Preprocess)
             )
         if use_iterable_auto_dataset:
             return IterableAutoDataset(
@@ -435,6 +439,7 @@ class DataModule(pl.LightningDataModule):
         val_load_data_input: Optional[Any] = None,
         test_load_data_input: Optional[Any] = None,
         predict_load_data_input: Optional[Any] = None,
+        data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         use_iterable_auto_dataset: bool = False,
@@ -464,7 +469,7 @@ class DataModule(pl.LightningDataModule):
         else:
             data_pipeline = cls(**kwargs).data_pipeline
 
-        data_fetcher: BaseDataFetcher = cls.configure_data_fetcher()
+        data_fetcher: BaseDataFetcher = data_fetcher or cls.configure_data_fetcher()
 
         data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 
