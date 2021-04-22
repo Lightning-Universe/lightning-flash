@@ -94,9 +94,6 @@ class DataModule(pl.LightningDataModule):
         # this may also trigger data preloading
         self.set_running_stages()
 
-        # buffer to store the functions to visualise
-        self._viz_func_white_list: Dict[str, Set[str]] = {}
-
     @property
     def train_dataset(self) -> Optional[Dataset]:
         """This property returns the train dataset"""
