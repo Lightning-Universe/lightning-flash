@@ -110,11 +110,13 @@ class ImageClassificationPreprocess(Preprocess):
         return cls._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
-    def load_sample(sample) -> Union[Image.Image]:
+    def load_sample(sample) -> Union[Image.Image, torch.Tensor, Tuple[Image.Image, torch.Tensor]]:
         # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
         if isinstance(sample, torch.Tensor):
-            return sample
+            out: torch.Tensor = sample
+            return out
 
+        path: str = ""
         if isinstance(sample, (tuple, list)):
             path = sample[0]
             sample = list(sample)
@@ -122,13 +124,16 @@ class ImageClassificationPreprocess(Preprocess):
             path = sample
 
         with open(path, "rb") as f, Image.open(f) as img:
-            img = img.convert("RGB")
+            img_out: Image.Image = img.convert("RGB")
 
         if isinstance(sample, list):
-            sample[0] = img
-            return sample
+            # return a tuple with the PIL image and tensor with the labels.
+            # returning the tensor helps later to easily collate the batch
+            # for single/multi label at the same time.
+            out: Tuple[Image.Image, torch.Tensor] = (img_out, torch.as_tensor(sample[1]))
+            return out
 
-        return img
+        return img_out
 
     @classmethod
     def predict_load_data(cls, samples: Any) -> Iterable:
