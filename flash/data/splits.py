@@ -9,6 +9,12 @@ class SplitDataset(Dataset):
     """
     SplitDataset is used to create Dataset Subset using indices.
 
+    Args:
+
+        dataset: A dataset to be splitted
+        indices: List of indices to expose from the dataset
+        use_duplicated_indices: Wether to allow duplicated indices.
+
     Example::
 
         split_ds = SplitDataset(dataset, indices=[10, 14, 25])
