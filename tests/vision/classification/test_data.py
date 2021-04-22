@@ -120,11 +120,15 @@ def test_from_filepaths_visualise(tmpdir):
         test_labels=[2, 1],
         batch_size=2,
     )
+    # disable visualisation for testing
+    assert dm.data_fetcher.block_viz_window is True
+    dm.set_block_viz_window(False)
+    assert dm.data_fetcher.block_viz_window is False
+
+    # call show functions
     dm.show_train_batch()
     dm.show_train_batch("pre_tensor_transform")
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
-    dm.show_val_batch("per_batch_transform")
-    # dm.show()
 
 
 def test_from_filepaths_visualise_multilabel(tmpdir):
@@ -144,11 +148,16 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
         test_labels=[[0, 0, 1], [1, 1, 0]],
         batch_size=2,
     )
+    # disable visualisation for testing
+    assert dm.data_fetcher.block_viz_window is True
+    dm.set_block_viz_window(False)
+    assert dm.data_fetcher.block_viz_window is False
+
+    # call show functions
     dm.show_train_batch()
     dm.show_train_batch("pre_tensor_transform")
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
     dm.show_val_batch("per_batch_transform")
-    # dm.show()
 
 
 def test_categorical_csv_labels(tmpdir):

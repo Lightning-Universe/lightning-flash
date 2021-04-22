@@ -258,13 +258,13 @@ class ImageClassificationData(DataModule):
         if self._predict_ds:
             self.set_dataset_attribute(self._predict_ds, 'num_classes', self.num_classes)
 
+    def set_block_viz_window(self, value: bool) -> None:
+        """Setter method to switch on/off matplotlib to pop up windows."""
+        self.data_fetcher.block_viz_window = value
+
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return MatplotlibVisualization(*args, **kwargs)
-
-    def show(self) -> None:
-        """Method to block matplotlib windows."""
-        plt.show()
 
     @staticmethod
     def _check_transforms(transform: Dict[str, Union[nn.Module, Callable]]) -> Dict[str, Union[nn.Module, Callable]]:
@@ -564,6 +564,7 @@ class MatplotlibVisualization(BaseVisualization):
     """Process and show the image batch and its associated label using matplotlib.
     """
     max_cols: int = 4  # maximum number of columns we accept
+    block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
@@ -605,7 +606,7 @@ class MatplotlibVisualization(BaseVisualization):
             ax.imshow(_img)
             ax.set_title(str(_label))
             ax.axis('off')
-        plt.show(block=False)
+        plt.show(block=self.block_viz_window)
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         win_title: str = f"{running_stage} - show_load_sample"
