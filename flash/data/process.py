@@ -58,22 +58,14 @@ class Properties:
             return None
 
     def set_state(self, state: ProcessState):
-        self.state[type(state)] = state
+        self._state[type(state)] = state
         if self._data_pipeline_state is not None:
             self._data_pipeline_state.set_state(state)
 
     def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
         self._data_pipeline_state = data_pipeline_state
-        for state in self.state.values():
+        for state in self._state.values():
             self._data_pipeline_state.set_state(state)
-
-    @property
-    def state(self) -> Dict[Type[ProcessState], ProcessState]:
-        return self._state
-
-    @state.setter
-    def state(self, state: Dict[Type[ProcessState], ProcessState]):
-        self._state = state
 
     @property
     def current_fn(self) -> Optional[str]:
@@ -568,12 +560,3 @@ class SerializerMapping(Serializer):
     def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
         for serializer in self._serializers.values():
             serializer.attach_data_pipeline_state(data_pipeline_state)
-
-    @property
-    def state(self) -> Dict[str, Dict[Type[ProcessState], ProcessState]]:
-        return {key: serializer.state for key, serializer in self._serializers.items()}
-
-    @state.setter
-    def state(self, state: Dict[str, Dict[Type[ProcessState], ProcessState]]):
-        for key, serializer in self._serializers.items():
-            serializer.state = state[key]

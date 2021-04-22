@@ -32,12 +32,9 @@ def test_properties_data_pipeline_state():
     class OtherProcessState(ProcessState):
         pass
 
-    class MyProperties(Properties):
-        pass
-
-    my_properties = MyProperties()
+    my_properties = Properties()
     my_properties.set_state(MyProcessState1())
-    assert my_properties.state == {MyProcessState1: MyProcessState1()}
+    assert my_properties._state == {MyProcessState1: MyProcessState1()}
     assert my_properties.get_state(OtherProcessState) is None
 
     data_pipeline_state = DataPipelineState()
@@ -90,23 +87,17 @@ def test_serializer_mapping():
     with pytest.raises(ValueError, match='output must be a mapping'):
         serializer_mapping('not a mapping')
 
-    test_state = {
-        'key1': {
-            Serializer1State: Serializer1State()
-        },
-        'key2': {
-            Serializer2State: Serializer2State()
-        },
-    }
+    serializer1_state = Serializer1State()
+    serializer2_state = Serializer2State()
 
-    serializer_mapping.state = test_state
-    assert serializer1.state == test_state['key1']
-    assert serializer2.state == test_state['key2']
-
-    assert serializer_mapping.state == test_state
+    serializer1.set_state(serializer1_state)
+    serializer2.set_state(serializer2_state)
 
     data_pipeline_state = DataPipelineState()
     serializer_mapping.attach_data_pipeline_state(data_pipeline_state)
 
     assert serializer1._data_pipeline_state is data_pipeline_state
     assert serializer2._data_pipeline_state is data_pipeline_state
+
+    assert data_pipeline_state.get_state(Serializer1State) is serializer1_state
+    assert data_pipeline_state.get_state(Serializer2State) is serializer2_state

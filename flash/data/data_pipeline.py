@@ -108,21 +108,6 @@ class DataPipeline:
         self._serializer.attach_data_pipeline_state(data_pipeline_state)
         data_pipeline_state._initialized = True
 
-    @property
-    def state(self) -> Dict[str, Dict[Type[ProcessState], ProcessState]]:
-        state = {
-            'preprocess': self._preprocess_pipeline.state,
-            'postprocess': self._postprocess_pipeline.state,
-            'serializer': self._serializer.state,
-        }
-        return state
-
-    @state.setter
-    def state(self, state: Dict[str, Dict[Type[ProcessState], ProcessState]]):
-        self._preprocess_pipeline.state = state['preprocess']
-        self._postprocess_pipeline.state = state['postprocess']
-        self._serializer.state = state['serializer']
-
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
         """
