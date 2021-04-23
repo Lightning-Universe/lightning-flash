@@ -59,7 +59,7 @@ class ImageClassificationPreprocess(Preprocess):
         image_size: Tuple[int, int] = (196, 196),
     ):
         """
-        Preprocess pipeline definition for image classification tasks.
+        Preprocess pipeline for image classification tasks.
 
         Args:
             train_transform: Dictionary with the set of transform to apply during training. Default: None.
