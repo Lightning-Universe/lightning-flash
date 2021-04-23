@@ -62,11 +62,11 @@ class ImageClassificationPreprocess(Preprocess):
         Preprocess pipeline for image classification tasks.
 
         Args:
-            train_transform: Dictionary with the set of transform to apply during training. Default: None.
-            val_transform: Dictionary with the set of transform to apply during validation. Default: None.
-            test_transform: Dictionary with the set of transform to apply during testing. Default: None.
-            predict_transform: Dictionary with the set of transform to apply during prediction. Default: None.
-            image_size: A tuple with the expected output image size. Default: (196, 196).
+            train_transform: Dictionary with the set of transforms to apply during training. Default: ``None``.
+            val_transform: Dictionary with the set of transforms to apply during validation. Default: ``None``.
+            test_transform: Dictionary with the set of transforms to apply during testing. Default: ``None``.
+            predict_transform: Dictionary with the set of transforms to apply during prediction. Default: ``None``.
+            image_size: A tuple with the expected output image size. Default: ``(196, 196)``.
 
         Returns:
             ImageClassificationPreprocess: The constructed preprocess module.
