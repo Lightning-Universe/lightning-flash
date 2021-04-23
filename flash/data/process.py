@@ -13,9 +13,11 @@
 # limitations under the License.
 import functools
 import os
+import subprocess
 from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
 from importlib import import_module
+from operator import truediv
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
 
 import torch
@@ -333,24 +335,31 @@ class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
 
         @functools.wraps(state_dict_fn)
         def wrapped_func(*args, **kwargs):
+            try:
+                from pip import get_installed_distributions
+            except:
+                from pip._internal.utils.misc import get_installed_distributions
+            try:
+                commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+            except:
+                commit_sha = "n/a"
+
+            try:
+                gitdiff = subprocess.check_output(["git", "diff"]).decode()
+            except:
+                gitdiff = ""
             state_dict = state_dict_fn(*args, **kwargs)
             state_dict["_meta"] = {}
             state_dict["_meta"]["module"] = self.__module__
             state_dict["_meta"]["class_name"] = self.__class__.__name__
             state_dict["_meta"]["args"] = self._args
             state_dict["_meta"]["kwargs"] = self._kwargs
+            state_dict["_meta"]["requirements"] = sorted([
+                "%s==%s" % (i.key, i.version) for i in get_installed_distributions()
+            ])
+            state_dict["_meta"]["commit_sha"] = commit_sha
+            state_dict["_meta"]["gitdiff"] = gitdiff
             return state_dict
-
-        return wrapped_func
-
-    def _wrap_load_from_state_dict(self, load_from_state_dict_fn: Callable) -> Callable:
-
-        @functools.wraps(load_from_state_dict_fn)
-        def wrapped_func(state_dict: Dict[str, Any]):
-            import pdb
-            pdb.set_trace()
-            obj = load_from_state_dict_fn(state_dict)
-            return obj
 
         return wrapped_func
 
