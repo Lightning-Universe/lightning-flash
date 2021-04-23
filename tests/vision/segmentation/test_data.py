@@ -47,15 +47,15 @@ class TestSemanticSegmentationData:
         # create random dummy data
 
         train_images = [
-            tmp_dir / "img1.png",
-            tmp_dir / "img2.png",
-            tmp_dir / "img3.png",
+            str(tmp_dir / "img1.png"),
+            str(tmp_dir / "img2.png"),
+            str(tmp_dir / "img3.png"),
         ]
 
         train_labels = [
-            tmp_dir / "labels_img1.png",
-            tmp_dir / "labels_img2.png",
-            tmp_dir / "labels_img3.png",
+            str(tmp_dir / "labels_img1.png"),
+            str(tmp_dir / "labels_img2.png"),
+            str(tmp_dir / "labels_img3.png"),
         ]
 
         img_size: Tuple[int, int] = (192, 192)
@@ -70,4 +70,4 @@ class TestSemanticSegmentationData:
             num_workers=0,
         )
         assert dm is not None
-        # assert dm.train_dataloader() is not None
+        assert dm.train_dataloader() is not None

@@ -1,11 +1,13 @@
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import kornia as K
 import numpy as np
 import torch
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 from flash.data.auto_dataset import AutoDataset
+from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 
@@ -18,6 +20,7 @@ class SemantincSegmentationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
     ) -> 'SemantincSegmentationPreprocess':
 
         # TODO: implement me
@@ -63,20 +66,12 @@ class SemantincSegmentationPreprocess(Preprocess):
 class SemanticSegmentationData(DataModule):
     """Data module for semantic segmentation tasks."""
 
-    def __init__(
-        train_dataset: Optional[Dataset] = None,
-        val_dataset: Optional[Dataset] = None,
-        test_dataset: Optional[Dataset] = None,
-        predict_dataset: Optional[Dataset] = None,
-        batch_size: int = 1,
-        num_workers: Optional[int] = None,
-        seed: int = 1234,
-        train_split: Optional[float] = None,
-        val_split: Optional[float] = None,
-        # test_split: Optional[float] = None,  ## THIS WILL GO OUT
-        preprocess: Optional[Preprocess] = None,
-    ) -> None:
-        pass
+    @staticmethod
+    def _check_valid_filepaths(filepaths: List[str]):
+        if filepaths is not None and (
+            not isinstance(filepaths, list) or not all(isinstance(n, str) for n in filepaths)
+        ):
+            raise MisconfigurationException(f"`filepaths` must be of type List[str]. Got: {filepaths}.")
 
     @classmethod
     def from_filepaths(
@@ -92,13 +87,26 @@ class SemanticSegmentationData(DataModule):
         val_transform: Union[str, Dict] = 'default',
         test_transform: Union[str, Dict] = 'default',
         predict_transform: Union[str, Dict] = 'default',
+        image_size: Tuple[int, int] = (196, 196),
         batch_size: int = 64,
         num_workers: Optional[int] = None,
-        seed: Optional[int] = 42,
+        #seed: Optional[int] = 42,  # SEED NEVER USED
+        data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
-        val_split: Optional[float] = None,
+        # val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
+        #**kwargs,
     ) -> 'SemanticSegmentationData':
 
+        # verify input data format
+        SemanticSegmentationData._check_valid_filepaths(train_filepaths)
+        SemanticSegmentationData._check_valid_filepaths(train_labels)
+        SemanticSegmentationData._check_valid_filepaths(val_filepaths)
+        SemanticSegmentationData._check_valid_filepaths(val_labels)
+        SemanticSegmentationData._check_valid_filepaths(test_filepaths)
+        SemanticSegmentationData._check_valid_filepaths(test_labels)
+        SemanticSegmentationData._check_valid_filepaths(predict_filepaths)
+
+        # create the preprocess objects
         preprocess = preprocess or SemantincSegmentationPreprocess(
             train_transform,
             val_transform,
@@ -106,14 +114,17 @@ class SemanticSegmentationData(DataModule):
             predict_transform,
         )
 
-        return cls()
-        '''return cls.from_load_data_inputs(
+        # instantiate the data module class
+        return DataModule.from_load_data_inputs(
             train_load_data_input=list(zip(train_filepaths, train_labels)) if train_filepaths else None,
             val_load_data_input=list(zip(val_filepaths, val_labels)) if val_filepaths else None,
             test_load_data_input=list(zip(test_filepaths, test_labels)) if test_filepaths else None,
             predict_load_data_input=predict_filepaths,
             batch_size=batch_size,
             num_workers=num_workers,
+            data_fetcher=data_fetcher,
             preprocess=preprocess,
-            seed=seed,
-        )'''
+            #seed=seed,
+            #val_split=val_split,
+            #**kwargs
+        )
