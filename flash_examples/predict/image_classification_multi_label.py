@@ -13,13 +13,13 @@
 # limitations under the License.
 from typing import Any
 
-import torchvision.transforms.functional as T
-from torchvision.utils import make_grid
-
 from flash import Trainer
 from flash.data.base_viz import BaseVisualization
 from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
+
+import torchvision.transforms.functional as T
+from torchvision.utils import make_grid
 
 # 1. Download the data
 # This is a subset of the movie poster genre prediction data set from the paper
@@ -45,9 +45,9 @@ model = ImageClassifier.load_from_checkpoint(
 
 # 4a. Predict the genres of a few movie posters!
 predictions = model.predict([
-    "data/movie_posters/val/tt0361500.jpg",
-    "data/movie_posters/val/tt0361748.jpg",
-    "data/movie_posters/val/tt0362478.jpg",
+    "data/movie_posters/val/tt0086873.jpg",
+    "data/movie_posters/val/tt0088247.jpg",
+    "data/movie_posters/val/tt0088930.jpg",
 ])
 print(predictions)
 
@@ -62,4 +62,4 @@ predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Show some data!
-datamodule.show_predict_batch()
+datamodule.show_predict_batch("per_batch_transform")
