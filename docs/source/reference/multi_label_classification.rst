@@ -62,9 +62,9 @@ We can also add a simple visualisation by extending :class:`~flash.data.base_viz
 
     # 4a. Predict the genres of a few movie posters!
     predictions = model.predict([
-        "data/movie_posters/val/tt0085995.jpg",
-        "data/movie_posters/val/tt0086508.jpg",
-        "data/movie_posters/val/tt0088184.jpg",
+        "data/movie_posters/val/tt0086873.jpg",
+        "data/movie_posters/val/tt0088247.jpg",
+        "data/movie_posters/val/tt0088930.jpg",
     ])
     print(predictions)
 
@@ -79,7 +79,7 @@ We can also add a simple visualisation by extending :class:`~flash.data.base_viz
     print(predictions)
 
     # 5. Show some data!
-    datamodule.show_predict_batch()
+    datamodule.show_predict_batch("per_batch_transform")
 
 For more advanced inference options, see :ref:`predictions`.
 
@@ -120,7 +120,7 @@ The ``metadata.csv`` files in each folder contain our labels, so we need to crea
     import pandas as pd
     import torch
 
-    genres = ["Action", "Animation", "Comedy", "Horror", "Musical"]
+    genres = ["Action", "Romance", "Crime", "Thriller", "Adventure"]
 
     def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[List[int]]]:
         metadata = pd.read_csv(osp.join(root, data, "metadata.csv"))
@@ -145,8 +145,6 @@ Now all we need is three lines of code to build to train our task!
     download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
     # 2. Load the data
-    ImageClassificationPreprocess.image_size = (128, 128)
-
     train_filepaths, train_labels = load_data('train')
     val_filepaths, val_labels = load_data('val')
     test_filepaths, test_labels = load_data('test')
@@ -158,7 +156,7 @@ Now all we need is three lines of code to build to train our task!
         val_labels=val_labels,
         test_filepaths=test_filepaths,
         test_labels=test_labels,
-        preprocess=ImageClassificationPreprocess(),
+        preprocess=ImageClassificationPreprocess(image_size=(128, 128)),
     )
 
     # 3. Build the model
@@ -172,17 +170,17 @@ Now all we need is three lines of code to build to train our task!
     trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 
     # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
     # 6a. Predict what's on a few images!
 
     # Serialize predictions as labels.
-    model.serializer = Labels(genres, multi_label=True)
+    model.serializer = Labels(genres, multi_label=True, threshold=0.25)
 
     predictions = model.predict([
-        "data/movie_posters/val/tt0085995.jpg",
-        "data/movie_posters/val/tt0086508.jpg",
-        "data/movie_posters/val/tt0088184.jpg",
+        "data/movie_posters/val/tt0086873.jpg",
+        "data/movie_posters/val/tt0088247.jpg",
+        "data/movie_posters/val/tt0088930.jpg",
     ])
 
     print(predictions)

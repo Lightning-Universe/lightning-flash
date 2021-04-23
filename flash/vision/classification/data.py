@@ -101,7 +101,7 @@ class ImageClassificationPreprocess(Preprocess):
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": nn.Sequential(
-                    K.augmentation.RandomResizedCrop(image_size), K.augmentation.RandomHorizontalFlip()
+                    K.Resize(image_size), K.augmentation.RandomHorizontalFlip()
                 ),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -110,7 +110,7 @@ class ImageClassificationPreprocess(Preprocess):
         else:
             from torchvision import transforms as T  # noqa F811
             return {
-                "pre_tensor_transform": nn.Sequential(T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()),
+                "pre_tensor_transform": nn.Sequential(T.Resize(image_size), T.RandomHorizontalFlip()),
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
@@ -120,7 +120,7 @@ class ImageClassificationPreprocess(Preprocess):
             #  Better approach as all transforms are applied on tensor directly
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": nn.Sequential(K.augmentation.RandomResizedCrop(image_size)),
+                "post_tensor_transform": nn.Sequential(K.Resize(image_size)),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
@@ -128,7 +128,7 @@ class ImageClassificationPreprocess(Preprocess):
         else:
             from torchvision import transforms as T  # noqa F811
             return {
-                "pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
+                "pre_tensor_transform": T.Compose([T.Resize(image_size)]),
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }

@@ -30,7 +30,7 @@ from flash.vision.classification.data import ImageClassificationPreprocess
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
 # 2. Load the data
-genres = ["Action", "Animation", "Comedy", "Horror", "Musical"]
+genres = ["Action", "Romance", "Crime", "Thriller", "Adventure"]
 
 
 def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[List[int]]]:
@@ -57,23 +57,35 @@ model = ImageClassifier(
     num_classes=len(genres),
     multi_label=True,
     metrics=F1(num_classes=len(genres)),
-    scheduler="linear_schedule_with_warmup",
-    scheduler_kwargs={"num_warmup_steps": 0.1}
 )
 
 # 4. Create the trainer. Train on 2 gpus for 10 epochs.
-trainer = flash.Trainer(max_epochs=10, gpus=2, accelerator='ddp')
+trainer = flash.Trainer(max_epochs=10, gpus=1)
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 6a. Predict what's on a few images!
 
-# Serialize predictions as labels.
-model.serializer = Labels(genres, multi_label=True)
+# Serialize predictions as labels, low threshold to see more predictions.
+model.serializer = Labels(genres, multi_label=True, threshold=0.25)
 
 predictions = model.predict([
-    "data/movie_posters/val/tt0085995.jpg",
-    "data/movie_posters/val/tt0086508.jpg",
-    "data/movie_posters/val/tt0088184.jpg",
+    "data/movie_posters/val/tt0086873.jpg",
+    "data/movie_posters/val/tt0088247.jpg",
+    "data/movie_posters/val/tt0088930.jpg",
 ])
+
+print(predictions)
+
+datamodule = ImageClassificationData.from_folders(
+    predict_folder="data/movie_posters/predict/",
+    preprocess=model.preprocess,
+)
+
+# 6b. Or generate predictions with a whole folder!
+predictions = trainer.predict(model, datamodule=datamodule)
+print(predictions)
+
+# 7. Save it!
+trainer.save_checkpoint("image_classification_multi_label_model.pt")
