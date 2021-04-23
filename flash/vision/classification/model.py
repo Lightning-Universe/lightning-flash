@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import Classes, ClassificationTask
 from flash.core.registry import FlashRegistry
+from flash.data.process import Preprocess, Serializer
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.vision.classification.data import ImageClassificationPreprocess
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -79,6 +81,7 @@ class ImageClassifier(ClassificationTask):
         metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
 
         if metrics is None:
@@ -93,7 +96,7 @@ class ImageClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            postprocess=self.postprocess_cls(multi_label)
+            serializer=serializer or Classes(multi_label=multi_label),
         )
 
         self.save_hyperparameters()

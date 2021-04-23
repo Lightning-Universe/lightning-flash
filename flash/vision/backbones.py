@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import functools
 import os
+import urllib.error
 import warnings
 from functools import partial
 from typing import Tuple
 
 from pytorch_lightning import LightningModule
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE
+from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
 from torch import nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
@@ -49,6 +50,24 @@ BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
+
+
+def catch_url_error(fn):
+
+    @functools.wraps(fn)
+    def wrapper(pretrained=False, **kwargs):
+        try:
+            return fn(pretrained=pretrained, **kwargs)
+        except urllib.error.URLError:
+            result = fn(pretrained=False, **kwargs)
+            rank_zero_warn(
+                "Failed to download pretrained weights for the selected backbone. The backbone has been created with"
+                " `pretrained=False` instead. If you are loading from a local checkpoint, this warning can be safely"
+                " ignored.", UserWarning
+            )
+            return result
+
+    return wrapper
 
 
 @IMAGE_CLASSIFIER_BACKBONES(name="simclr-imagenet", namespace="vision", package="bolts")
@@ -83,7 +102,7 @@ if _TORCHVISION_AVAILABLE:
         _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
 
         IMAGE_CLASSIFIER_BACKBONES(
-            fn=partial(_fn_mobilenet_vgg, model_name),
+            fn=catch_url_error(partial(_fn_mobilenet_vgg, model_name)),
             name=model_name,
             namespace="vision",
             package="torchvision",
@@ -99,7 +118,7 @@ if _TORCHVISION_AVAILABLE:
             return backbone, num_features
 
         IMAGE_CLASSIFIER_BACKBONES(
-            fn=partial(_fn_resnet, model_name),
+            fn=catch_url_error(partial(_fn_resnet, model_name)),
             name=model_name,
             namespace="vision",
             package="torchvision",
@@ -118,7 +137,10 @@ if _TORCHVISION_AVAILABLE:
             return backbone, 256
 
         OBJ_DETECTION_BACKBONES(
-            fn=partial(_fn_resnet_fpn, model_name), name=model_name, package="torchvision", type="resnet-fpn"
+            fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),
+            name=model_name,
+            package="torchvision",
+            type="resnet-fpn"
         )
 
     for model_name in DENSENET_MODELS:
@@ -130,7 +152,7 @@ if _TORCHVISION_AVAILABLE:
             return backbone, num_features
 
         IMAGE_CLASSIFIER_BACKBONES(
-            fn=partial(_fn_densenet, model_name),
+            fn=catch_url_error(partial(_fn_densenet, model_name)),
             name=model_name,
             namespace="vision",
             package="torchvision",
@@ -156,5 +178,5 @@ if _TIMM_AVAILABLE:
             return backbone, num_features
 
         IMAGE_CLASSIFIER_BACKBONES(
-            fn=partial(_fn_timm, model_name), name=model_name, namespace="vision", package="timm"
+            fn=catch_url_error(partial(_fn_timm, model_name)), name=model_name, namespace="vision", package="timm"
         )

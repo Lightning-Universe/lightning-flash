@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Type, Union
+from typing import Optional, Union
 
-from flash.data.process import Preprocess
+from flash.data.process import Postprocess, Preprocess
 from flash.text.seq2seq.core.data import Seq2SeqData
 
 
@@ -36,7 +36,8 @@ class TranslationData(Seq2SeqData):
         padding: Union[str, bool] = 'max_length',
         batch_size: int = 8,
         num_workers: Optional[int] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
     ):
         """Creates a TranslateData object from files.
 
@@ -85,7 +86,8 @@ class TranslationData(Seq2SeqData):
             padding=padding,
             batch_size=batch_size,
             num_workers=num_workers,
-            preprocess_cls=preprocess_cls
+            preprocess=preprocess,
+            postprocess=postprocess,
         )
 
     @classmethod
@@ -101,6 +103,8 @@ class TranslationData(Seq2SeqData):
         padding: Union[str, bool] = 'longest',
         batch_size: int = 8,
         num_workers: Optional[int] = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
     ):
         """Creates a TranslationData object from files.
 
@@ -132,5 +136,7 @@ class TranslationData(Seq2SeqData):
             max_target_length=max_target_length,
             padding=padding,
             batch_size=batch_size,
-            num_workers=num_workers
+            num_workers=num_workers,
+            preprocess=preprocess,
+            postprocess=postprocess,
         )

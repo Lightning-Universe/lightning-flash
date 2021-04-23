@@ -189,6 +189,7 @@ class _PostProcessor(torch.nn.Module):
         uncollate_fn: Callable,
         per_batch_transform: Callable,
         per_sample_transform: Callable,
+        serializer: Optional[Callable],
         save_fn: Optional[Callable] = None,
         save_per_sample: bool = False
     ):
@@ -196,13 +197,14 @@ class _PostProcessor(torch.nn.Module):
         self.uncollate_fn = convert_to_modules(uncollate_fn)
         self.per_batch_transform = convert_to_modules(per_batch_transform)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
+        self.serializer = convert_to_modules(serializer)
         self.save_fn = convert_to_modules(save_fn)
         self.save_per_sample = convert_to_modules(save_per_sample)
 
     def forward(self, batch: Sequence[Any]):
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
 
-        final_preds = type(uncollated)([self.per_sample_transform(sample) for sample in uncollated])
+        final_preds = type(uncollated)([self.serializer(self.per_sample_transform(sample)) for sample in uncollated])
 
         if self.save_fn:
             if self.save_per_sample:

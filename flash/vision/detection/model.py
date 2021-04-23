@@ -137,8 +137,8 @@ class ObjectDetector(Task):
                 )
         else:
             backbone_model, num_features = ObjectDetector.backbones.get(backbone)(
-                pretrained_backbone,
-                trainable_backbone_layers,
+                pretrained=pretrained_backbone,
+                trainable_layers=trainable_backbone_layers,
                 **kwargs,
             )
             backbone_model.out_channels = num_features

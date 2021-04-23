@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-import inspect
-from copy import deepcopy
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
@@ -21,11 +19,16 @@ import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
+from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.optimizer import Optimizer
 
 from flash.core.registry import FlashRegistry
+from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
-from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
+from flash.data.data_pipeline import DataPipeline
+from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 
 
 def predict_context(func: Callable) -> Callable:
@@ -64,28 +67,42 @@ class Task(LightningModule):
         postprocess: :class:`~flash.data.process.Postprocess` to use as the default for this task.
     """
 
+    schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+
     def __init__(
         self,
         model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-        preprocess: Preprocess = None,
-        postprocess: Postprocess = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
         super().__init__()
         if model is not None:
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
-        self.optimizer_cls = optimizer
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.optimizer_kwargs = optimizer_kwargs or {}
+        self.scheduler_kwargs = scheduler_kwargs or {}
+
         self.metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._preprocess = preprocess
-        self._postprocess = postprocess
+        self._preprocess: Optional[Preprocess] = preprocess
+        self._postprocess: Optional[Postprocess] = postprocess
+        self._serializer: Optional[Serializer] = None
+
+        # Explicitly set the serializer to call the setter
+        self.serializer = serializer
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -168,8 +185,14 @@ class Task(LightningModule):
             batch = torch.stack(batch)
         return self(batch)
 
-    def configure_optimizers(self) -> torch.optim.Optimizer:
-        return self.optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
+    def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
+        optimizer = self.optimizer
+        if not isinstance(self.optimizer, Optimizer):
+            self.optimizer_kwargs["lr"] = self.learning_rate
+            optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), **self.optimizer_kwargs)
+        if self.scheduler:
+            return [optimizer], [self._instantiate_scheduler(optimizer)]
+        return optimizer
 
     def configure_finetune_callback(self) -> List[Callback]:
         return []
@@ -178,22 +201,27 @@ class Task(LightningModule):
     def _resolve(
         old_preprocess: Optional[Preprocess],
         old_postprocess: Optional[Postprocess],
+        old_serializer: Optional[Serializer],
         new_preprocess: Optional[Preprocess],
         new_postprocess: Optional[Postprocess],
-    ) -> Tuple[Optional[Preprocess], Optional[Postprocess]]:
-        """Resolves the correct :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` to use,
-        choosing ``new_*`` if it is not None or a base class
-        (:class:`~flash.data.process.Preprocess` or :class:`~flash.data.process.Postprocess`)
-        and ``old_*`` otherwise.
+        new_serializer: Optional[Serializer],
+    ) -> Tuple[Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
+        """Resolves the correct :class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, and
+        :class:`~flash.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
+        (:class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, or
+        :class:`~flash.data.process.Serializer`) and ``old_*`` otherwise.
 
         Args:
             old_preprocess: :class:`~flash.data.process.Preprocess` to be overridden.
             old_postprocess: :class:`~flash.data.process.Postprocess` to be overridden.
+            old_serializer: :class:`~flash.data.process.Serializer` to be overridden.
             new_preprocess: :class:`~flash.data.process.Preprocess` to override with.
             new_postprocess: :class:`~flash.data.process.Postprocess` to override with.
+            new_serializer: :class:`~flash.data.process.Serializer` to override with.
 
         Returns:
-            The resolved :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
+            The resolved :class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, and
+            :class:`~flash.data.process.Serializer`.
         """
         preprocess = old_preprocess
         if new_preprocess is not None and type(new_preprocess) != Preprocess:
@@ -203,7 +231,23 @@ class Task(LightningModule):
         if new_postprocess is not None and type(new_postprocess) != Postprocess:
             postprocess = new_postprocess
 
-        return preprocess, postprocess
+        serializer = old_serializer
+        if new_serializer is not None and type(new_serializer) != Serializer:
+            serializer = new_serializer
+
+        return preprocess, postprocess, serializer
+
+    @property
+    def serializer(self) -> Optional[Serializer]:
+        """The current :class:`.Serializer` associated with this model. If this property was set to a mapping
+        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`."""
+        return self._serializer
+
+    @serializer.setter
+    def serializer(self, serializer: Union[Serializer, Mapping[str, Serializer]]):
+        if isinstance(serializer, Mapping):
+            serializer = SerializerMapping(serializer)
+        self._serializer = serializer
 
     def build_data_pipeline(self, data_pipeline: Optional[DataPipeline] = None) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
@@ -222,32 +266,45 @@ class Task(LightningModule):
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        preprocess, postprocess = None, None
+        preprocess, postprocess, serializer = None, None, None
 
         # Datamodule
         if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
             preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
+            serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
 
         elif self.trainer is not None and hasattr(
             self.trainer, 'datamodule'
         ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
+            serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
 
         # Defaults / task attributes
-        preprocess, postprocess = Task._resolve(preprocess, postprocess, self._preprocess, self._postprocess)
+        preprocess, postprocess, serializer = Task._resolve(
+            preprocess,
+            postprocess,
+            serializer,
+            self._preprocess,
+            self._postprocess,
+            self.serializer,
+        )
 
         # Datapipeline
         if data_pipeline is not None:
-            preprocess, postprocess = Task._resolve(
+            preprocess, postprocess, serializer = Task._resolve(
                 preprocess,
                 postprocess,
+                serializer,
                 getattr(data_pipeline, '_preprocess_pipeline', None),
                 getattr(data_pipeline, '_postprocess_pipeline', None),
+                getattr(data_pipeline, '_serializer', None),
             )
 
-        return DataPipeline(preprocess, postprocess)
+        data_pipeline = DataPipeline(preprocess, postprocess, serializer)
+        data_pipeline.initialize()
+        return data_pipeline
 
     @property
     def data_pipeline(self) -> DataPipeline:
@@ -257,12 +314,22 @@ class Task(LightningModule):
 
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._preprocess, self._postprocess = Task._resolve(
+        self._preprocess, self._postprocess, self.serializer = Task._resolve(
             self._preprocess,
             self._postprocess,
+            self.serializer,
             getattr(data_pipeline, '_preprocess_pipeline', None),
             getattr(data_pipeline, '_postprocess_pipeline', None),
+            getattr(data_pipeline, '_serializer', None),
         )
+
+    @property
+    def preprocess(self) -> Preprocess:
+        return getattr(self.data_pipeline, '_preprocess_pipeline', None)
+
+    @property
+    def postprocess(self) -> Postprocess:
+        return getattr(self.data_pipeline, '_postprocess_pipeline', None)
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:
@@ -323,3 +390,63 @@ class Task(LightningModule):
         if registry is None:
             return []
         return registry.available_keys()
+
+    @classmethod
+    def available_schedulers(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "schedulers", None)
+        if registry is None:
+            return []
+        return registry.available_keys()
+
+    def get_num_training_steps(self) -> int:
+        """Total training steps inferred from datamodule and devices."""
+        if not getattr(self, "trainer", None):
+            raise MisconfigurationException("The LightningModule isn't attached to the trainer yet.")
+        if isinstance(self.trainer.limit_train_batches, int) and self.trainer.limit_train_batches != 0:
+            dataset_size = self.trainer.limit_train_batches
+        elif isinstance(self.trainer.limit_train_batches, float):
+            # limit_train_batches is a percentage of batches
+            dataset_size = len(self.train_dataloader())
+            dataset_size = int(dataset_size * self.trainer.limit_train_batches)
+        else:
+            dataset_size = len(self.train_dataloader())
+
+        num_devices = max(1, self.trainer.num_gpus, self.trainer.num_processes)
+        if self.trainer.tpu_cores:
+            num_devices = max(num_devices, self.trainer.tpu_cores)
+
+        effective_batch_size = self.trainer.accumulate_grad_batches * num_devices
+        max_estimated_steps = (dataset_size // effective_batch_size) * self.trainer.max_epochs
+
+        if self.trainer.max_steps and self.trainer.max_steps < max_estimated_steps:
+            return self.trainer.max_steps
+        return max_estimated_steps
+
+    def _compute_warmup(self, num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
+        if not isinstance(num_warmup_steps, float) or (num_warmup_steps > 1 or num_warmup_steps < 0):
+            raise MisconfigurationException(
+                "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
+            )
+        if isinstance(num_warmup_steps, float):
+            # Convert float values to percentage of training steps to use as warmup
+            num_warmup_steps *= num_training_steps
+        return round(num_warmup_steps)
+
+    def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
+        scheduler = self.scheduler
+        if isinstance(scheduler, _LRScheduler):
+            return scheduler
+        if isinstance(scheduler, str):
+            scheduler_fn = self.schedulers.get(self.scheduler)
+            num_training_steps: int = self.get_num_training_steps()
+            num_warmup_steps: int = self._compute_warmup(
+                num_training_steps=num_training_steps,
+                num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
+            )
+            return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
+        elif issubclass(scheduler, _LRScheduler):
+            return scheduler(optimizer, **self.scheduler_kwargs)
+        raise MisconfigurationException(
+            "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
+            f"or a built-in scheduler in {self.available_schedulers()}"
+        )

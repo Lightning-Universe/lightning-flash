@@ -115,13 +115,13 @@ We will define a custom ``NumpyDataModule`` class subclassing :class:`~flash.dat
 This ``NumpyDataModule`` class will provide a ``from_xy_dataset`` helper ``classmethod`` to instantiate
 :class:`~flash.data.data_module.DataModule` from x, y numpy arrays.
 
-Here is how it would look like:
+Here is how it would look:
 
 Example::
 
     x, y = ...
-    preprocess_cls = ...
-    datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess_cls)
+    preprocess = ...
+    datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess)
 
 Here is the ``NumpyDataModule`` implementation:
 
@@ -140,12 +140,12 @@ Example::
             cls,
             x: ND,
             y: ND,
-            preprocess_cls: Preprocess = NumpyPreprocess,
+            preprocess: Preprocess = None,
             batch_size: int = 64,
             num_workers: int = 0
         ):
 
-            preprocess = preprocess_cls()
+            preprocess = preprocess or NumpyPreprocess()
 
             x_train, x_test, y_train, y_test = train_test_split(
                 x, y, test_size=.20, random_state=0)
@@ -180,7 +180,7 @@ It allows the user much more granular control over their data processing flow.
 
 .. note::
 
-    Why introducing :class:`~flash.data.process.Preprocess` ?
+    Why introduce :class:`~flash.data.process.Preprocess` ?
 
     The :class:`~flash.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
     to deploy the model in production environnement compared to traditional

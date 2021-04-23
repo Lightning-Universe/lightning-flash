@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from pytorch_lightning.utilities.distributed import rank_zero_warn
@@ -66,9 +66,7 @@ class ImageEmbedder(Task):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            preprocess=ImageClassificationPreprocess(
-                predict_transform=ImageClassificationData.default_val_transforms(),
-            )
+            preprocess=ImageClassificationPreprocess()
         )
 
         self.save_hyperparameters()
