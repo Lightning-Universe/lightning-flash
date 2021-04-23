@@ -58,6 +58,19 @@ class ImageClassificationPreprocess(Preprocess):
         predict_transform: Optional[Union[Dict[str, Callable]]] = None,
         image_size: Tuple[int, int] = (196, 196),
     ):
+        """
+        Preprocess pipeline definition for image classification tasks.
+
+        Args:
+            train_transform: Dictionary with the set of transform to apply during training. Default: None.
+            val_transform: Dictionary with the set of transform to apply during validation. Default: None.
+            test_transform: Dictionary with the set of transform to apply during testing. Default: None.
+            predict_transform: Dictionary with the set of transform to apply during prediction. Default: None.
+            image_size: A tuple with the expected output image size. Default: (196, 196).
+
+        Returns:
+            ImageClassificationPreprocess: The constructed preprocess module.
+        """
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform, image_size
         )
