@@ -60,7 +60,7 @@ model = ImageClassifier(
 )
 
 # 4. Create the trainer. Train on 2 gpus for 10 epochs.
-trainer = flash.Trainer(max_epochs=10, gpus=1)
+trainer = flash.Trainer(max_epochs=10, gpus=2, accelerator="ddp")
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
