@@ -1,5 +1,7 @@
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Union
 
+import kornia as K
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 
@@ -12,17 +14,26 @@ class SemantincSegmentationPreprocess(Preprocess):
 
     def __init__(
         self,
-        train_transform: Optional[Union[Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Dict[str, Callable]]] = None,
-        predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
     ) -> 'SemantincSegmentationPreprocess':
 
         # TODO: implement me
         '''train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform
         )'''
+        train_transform = dict(to_tensor_transform=self.to_tensor)
+        val_transform = dict(to_tensor_transform=self.to_tensor)
+        test_transform = dict(to_tensor_transform=self.to_tensor)
+        predict_transform = dict(to_tensor_transform=self.to_tensor)
+
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
+
+    @staticmethod
+    def to_tensor(self, x):
+        return K.utils.image_to_tensor(np.array(x))
 
     def load_data(self, data: Any, dataset: Optional[AutoDataset] = None) -> Iterable:
         pass
@@ -95,7 +106,8 @@ class SemanticSegmentationData(DataModule):
             predict_transform,
         )
 
-        return cls.from_load_data_inputs(
+        return cls()
+        '''return cls.from_load_data_inputs(
             train_load_data_input=list(zip(train_filepaths, train_labels)) if train_filepaths else None,
             val_load_data_input=list(zip(val_filepaths, val_labels)) if val_filepaths else None,
             test_load_data_input=list(zip(test_filepaths, test_labels)) if test_filepaths else None,
@@ -104,4 +116,4 @@ class SemanticSegmentationData(DataModule):
             num_workers=num_workers,
             preprocess=preprocess,
             seed=seed,
-        )
+        )'''
