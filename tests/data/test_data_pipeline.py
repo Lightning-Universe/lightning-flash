@@ -927,6 +927,13 @@ class CustomPreprocessHyperparameters(Preprocess):
         self.token = token
         super().__init__(*args, **kwargs)
 
+    @classmethod
+    def load_from_state_dict(cls, state_dict: Dict[str, Any]):
+        return cls(state_dict["token"])
+
+    def state_dict(self) -> Dict[str, Any]:
+        return {"token": self.token}
+
 
 def local_fn(x):
     return x
@@ -942,5 +949,9 @@ def test_save_hyperparemeters(tmpdir):
     state_dict = preprocess.state_dict()
     torch.save(state_dict, os.path.join(tmpdir, "state_dict.pt"))
     state_dict = torch.load(os.path.join(tmpdir, "state_dict.pt"))
-    preprocess = Preprocess.load_from_state_dict(state_dict)
+    preprocess = CustomPreprocessHyperparameters.load_from_state_dict(state_dict)
+    assert isinstance(preprocess, CustomPreprocessHyperparameters)
+    preprocess = CustomPreprocessHyperparameters.from_state_dict(state_dict)
+    assert isinstance(preprocess, CustomPreprocessHyperparameters)
+    preprocess = Preprocess.from_state_dict(state_dict)
     assert isinstance(preprocess, CustomPreprocessHyperparameters)

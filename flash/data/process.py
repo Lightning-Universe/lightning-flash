@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import os
+from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
@@ -42,7 +44,11 @@ class ProcessState:
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
 
 
-class PreprocessMeta(type):
+class PreprocessMeta(ABCMeta):
+
+    def __new__(cls, name, bases, namespace):
+        # create new instance of cls in order to apply any @expose class decorations.
+        return super().__new__(cls, name, bases, namespace)
 
     def __call__(cls, *args, **kwargs):
         klass = super().__call__(*args, **kwargs)
@@ -138,7 +144,7 @@ class Properties:
             self._running_stage = None
 
 
-class Preprocess(Properties, Module, metaclass=PreprocessMeta):
+class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -305,28 +311,74 @@ class Preprocess(Properties, Module, metaclass=PreprocessMeta):
         self._predict_collate_in_worker_from_transform: Optional[bool] = None
         self._test_collate_in_worker_from_transform: Optional[bool] = None
 
-        self.train_transform = convert_to_modules(self._check_transforms(train_transform, RunningStage.TRAINING))
-        self.val_transform = convert_to_modules(self._check_transforms(val_transform, RunningStage.VALIDATING))
-        self.test_transform = convert_to_modules(self._check_transforms(test_transform, RunningStage.TESTING))
-        self.predict_transform = convert_to_modules(self._check_transforms(predict_transform, RunningStage.PREDICTING))
+        self._train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
+        self._val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
+        self._test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
+        self._predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
+
+        self.train_transform = convert_to_modules(self._train_transform)
+        self.val_transform = convert_to_modules(self._val_transform)
+        self.test_transform = convert_to_modules(self._test_transform)
+        self.predict_transform = convert_to_modules(self._predict_transform)
 
         if not hasattr(self, "_skip_mutual_check"):
             self._skip_mutual_check = False
 
         self._callbacks: List[FlashCallback] = []
 
+        self.state_dict = self._wrap_state_dict(self.state_dict)
+
+    def _wrap_state_dict(self, state_dict_fn: Callable) -> Callable:
+
+        @functools.wraps(state_dict_fn)
+        def wrapped_func(*args, **kwargs):
+            state_dict = state_dict_fn(*args, **kwargs)
+            state_dict["_meta"] = {}
+            state_dict["_meta"]["module"] = self.__module__
+            state_dict["_meta"]["class_name"] = self.__class__.__name__
+            state_dict["_meta"]["args"] = self._args
+            state_dict["_meta"]["kwargs"] = self._kwargs
+            return state_dict
+
+        return wrapped_func
+
+    def _wrap_load_from_state_dict(self, load_from_state_dict_fn: Callable) -> Callable:
+
+        @functools.wraps(load_from_state_dict_fn)
+        def wrapped_func(state_dict: Dict[str, Any]):
+            import pdb
+            pdb.set_trace()
+            obj = load_from_state_dict_fn(state_dict)
+            return obj
+
+        return wrapped_func
+
+    @abstractmethod
     def state_dict(self) -> Dict[str, Any]:
-        return {
-            "module": self.__module__,
-            "class_name": self.__class__.__name__,
-            "args": self._args,
-            "kwargs": self._kwargs
-        }
+        """
+        Override this method to return state_dict
+        """
+        pass
+
+    @abstractclassmethod
+    def load_from_state_dict(cls, state_dict: Dict[str, Any]):
+        """
+        Override this method to load from state_dict
+        """
+        pass
 
     @classmethod
-    def load_from_state_dict(cls, state_dict) -> 'Preprocess':
-        cls = getattr(import_module(state_dict["module"]), state_dict["class_name"])
-        return cls(*state_dict["args"], **state_dict["kwargs"])
+    def from_state_dict(cls, state_dict: Dict[str, Any]):
+        if cls == Preprocess:
+            try:
+                import importlib
+                meta = state_dict["_meta"]
+                _cls = getattr(importlib.import_module(meta["module"]), meta["class_name"])
+                return _cls(*meta["args"], **meta["kwargs"])
+            except (ModuleNotFoundError, KeyError):
+                return None
+        else:
+            return cls.load_from_state_dict(state_dict)
 
     # todo (tchaton) Add a warning if a transform is provided, but the hook hasn't been overriden !
     def _check_transforms(self, transform: Optional[Dict[str, Callable]],
