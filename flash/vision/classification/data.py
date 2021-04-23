@@ -99,7 +99,7 @@ class ImageClassificationPreprocess(Preprocess):
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": nn.Sequential(
-                    # TODO: replace with resize once kornia is fixed
+                    # TODO (Edgar): replace with resize once kornia is fixed
                     K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
                     K.augmentation.RandomHorizontalFlip(),
                 ),
@@ -121,7 +121,7 @@ class ImageClassificationPreprocess(Preprocess):
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": nn.Sequential(
-                    # TODO: replace with resize once kornia is fixed
+                    # TODO (Edgar): replace with resize once kornia is fixed
                     K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
                 ),
                 "per_batch_transform_on_device": nn.Sequential(
