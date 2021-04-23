@@ -19,7 +19,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type,
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.parsing import save_hyperparameters
 from torch import Tensor
 from torch.nn import Module
 from torch.utils.data._utils.collate import default_collate
