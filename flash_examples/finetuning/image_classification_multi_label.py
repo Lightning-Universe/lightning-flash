@@ -46,6 +46,7 @@ datamodule = ImageClassificationData.from_filepaths(
     test_filepaths=test_filepaths,
     test_labels=test_labels,
     preprocess=ImageClassificationPreprocess(image_size=(128, 128)),
+    val_size=0.1,
 )
 
 # 3. Build the model
