@@ -1,20 +1,8 @@
-# Copyright The PyTorch Lightning team.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 import os.path as osp
 from typing import List, Tuple
 
 import pandas as pd
+import torch
 
 import flash
 from flash.core.classification import Labels
@@ -24,9 +12,7 @@ from flash.vision import ImageClassificationData, ImageClassifier
 from flash.vision.classification.data import ImageClassificationPreprocess
 
 # 1. Download the data
-# This is a subset of the movie poster genre prediction data set from the paper
-# “Movie Genre Classification based on Poster Images with Deep Neural Networks” by Wei-Ta Chu and Hung-Jui Guo.
-# Please consider citing their paper if you use it. More here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
+# https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
 # 2. Load the data
@@ -45,6 +31,10 @@ def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], L
 
 train_filepaths, train_labels = load_data('train')
 test_filepaths, test_labels = load_data('test')
+
+import pdb
+
+pdb.set_trace()
 
 datamodule = ImageClassificationData.from_filepaths(
     train_filepaths=train_filepaths,
