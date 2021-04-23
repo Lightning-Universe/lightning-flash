@@ -67,9 +67,6 @@ class ImageClassificationPreprocess(Preprocess):
             test_transform: Dictionary with the set of transforms to apply during testing. Default: ``None``.
             predict_transform: Dictionary with the set of transforms to apply during prediction. Default: ``None``.
             image_size: A tuple with the expected output image size. Default: ``(196, 196)``.
-
-        Returns:
-            ImageClassificationPreprocess: The constructed preprocess module.
         """
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform, image_size
