@@ -15,10 +15,9 @@ import os.path as osp
 from typing import List, Tuple
 
 import pandas as pd
-
+from torchmetrics import F1
 import flash
 from flash.core.classification import Labels
-from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
 from flash.vision.classification.data import ImageClassificationPreprocess
@@ -30,12 +29,7 @@ from flash.vision.classification.data import ImageClassificationPreprocess
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
 # 2. Load the data
-genres = [
-    "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy",
-    "History", "Horror", "Music", "Musical", "Mystery", "N/A", "News", "Reality-TV", "Romance", "Sci-Fi", "Short",
-    "Sport", "Thriller", "War", "Western"
-]
-
+genres = ["Animation", "Horror", "Musical", "News", "Sport"]
 
 def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[List[int]]]:
     metadata = pd.read_csv(osp.join(root, data, "metadata.csv"))
@@ -59,13 +53,16 @@ model = ImageClassifier(
     backbone="resnet18",
     num_classes=len(genres),
     multi_label=True,
+    metrics=F1(num_classes=len(genres)),
+    scheduler="linear_schedule_with_warmup",
+    scheduler_kwargs={"num_warmup_steps": 0.1}
 )
 
 # 4. Create the trainer. Train on 2 gpus for 10 epochs.
-trainer = flash.Trainer(max_epochs=10)
+trainer = flash.Trainer(max_epochs=10, gpus=1, accelerator="ddp")
 
 # 5. Train the model
-trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 6a. Predict what's on a few images!
 
