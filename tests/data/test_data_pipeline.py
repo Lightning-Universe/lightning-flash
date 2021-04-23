@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from unittest import mock
 
@@ -918,3 +919,28 @@ def test_iterable_auto_dataset(tmpdir):
 
     for index, v in enumerate(ds):
         assert v == {"index": index}
+
+
+class CustomPreprocessHyperparameters(Preprocess):
+
+    def __init__(self, token: str, *args, **kwargs):
+        self.token = token
+        super().__init__(*args, **kwargs)
+
+
+def local_fn(x):
+    return x
+
+
+def test_save_hyperparemeters(tmpdir):
+
+    kwargs = {"train_transform": {"pre_tensor_transform": local_fn}}
+
+    preprocess = CustomPreprocessHyperparameters("token", **kwargs)
+    type(preprocess)(*preprocess._args, **preprocess._kwargs)
+
+    state_dict = preprocess.state_dict()
+    torch.save(state_dict, os.path.join(tmpdir, "state_dict.pt"))
+    state_dict = torch.load(os.path.join(tmpdir, "state_dict.pt"))
+    preprocess = Preprocess.load_from_state_dict(state_dict)
+    assert isinstance(preprocess, CustomPreprocessHyperparameters)

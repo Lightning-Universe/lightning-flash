@@ -13,11 +13,13 @@
 # limitations under the License.
 import os
 from dataclasses import dataclass
+from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.parsing import save_hyperparameters
 from torch import Tensor
 from torch.nn import Module
 from torch.utils.data._utils.collate import default_collate
@@ -39,6 +41,15 @@ class ProcessState:
 
 
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
+
+
+class PreprocessMeta(type):
+
+    def __call__(cls, *args, **kwargs):
+        klass = super().__call__(*args, **kwargs)
+        klass._args = args
+        klass._kwargs = kwargs
+        return klass
 
 
 class Properties:
@@ -128,7 +139,7 @@ class Properties:
             self._running_stage = None
 
 
-class Preprocess(Properties, Module):
+class Preprocess(Properties, Module, metaclass=PreprocessMeta):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -304,6 +315,19 @@ class Preprocess(Properties, Module):
             self._skip_mutual_check = False
 
         self._callbacks: List[FlashCallback] = []
+
+    def state_dict(self) -> Dict[str, Any]:
+        return {
+            "module": self.__module__,
+            "class_name": self.__class__.__name__,
+            "args": self._args,
+            "kwargs": self._kwargs
+        }
+
+    @classmethod
+    def load_from_state_dict(cls, state_dict) -> 'Preprocess':
+        cls = getattr(import_module(state_dict["module"]), state_dict["class_name"])
+        return cls(*state_dict["args"], **state_dict["kwargs"])
 
     # todo (tchaton) Add a warning if a transform is provided, but the hook hasn't been overriden !
     def _check_transforms(self, transform: Optional[Dict[str, Callable]],
