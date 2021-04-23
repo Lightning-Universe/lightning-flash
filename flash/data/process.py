@@ -302,8 +302,11 @@ class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        save_meta: bool = True,
     ):
         super().__init__()
+
+        self.save_meta = save_meta
 
         # used to keep track of provided transforms
         self._train_collate_in_worker_from_transform: Optional[bool] = None
@@ -321,12 +324,10 @@ class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
         self.test_transform = convert_to_modules(self._test_transform)
         self.predict_transform = convert_to_modules(self._predict_transform)
 
-        if not hasattr(self, "_skip_mutual_check"):
-            self._skip_mutual_check = False
-
         self._callbacks: List[FlashCallback] = []
 
-        self.state_dict = self._wrap_state_dict(self.state_dict)
+        if self.save_meta:
+            self.state_dict = self._wrap_state_dict(self.state_dict)
 
     def _wrap_state_dict(self, state_dict_fn: Callable) -> Callable:
 
@@ -369,7 +370,7 @@ class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
 
     @classmethod
     def from_state_dict(cls, state_dict: Dict[str, Any]):
-        if cls == Preprocess:
+        if cls == Preprocess and "_meta" in state_dict:
             try:
                 import importlib
                 meta = state_dict["_meta"]
