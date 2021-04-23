@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 import kornia as K
 import numpy as np
 import torch
+import torchvision
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
@@ -10,6 +11,10 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
+
+
+def to_tensor(self, x):
+    return K.utils.image_to_tensor(np.array(x))
 
 
 class SemantincSegmentationPreprocess(Preprocess):
@@ -27,38 +32,37 @@ class SemantincSegmentationPreprocess(Preprocess):
         '''train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform
         )'''
-        train_transform = dict(to_tensor_transform=self.to_tensor)
-        val_transform = dict(to_tensor_transform=self.to_tensor)
-        test_transform = dict(to_tensor_transform=self.to_tensor)
-        predict_transform = dict(to_tensor_transform=self.to_tensor)
+        train_transform = dict(per_batch_transform=to_tensor)
+        val_transform = dict(per_batch_transform=to_tensor)
+        test_transform = dict(per_batch_transform=to_tensor)
+        predict_transform = dict(per_batch_transform=to_tensor)
 
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
-    @staticmethod
-    def to_tensor(self, x):
-        return K.utils.image_to_tensor(np.array(x))
+    def load_sample(self, sample: Tuple[str, str]) -> Tuple[torch.Tensor, torch.Tensor]:
+        if not isinstance(sample, tuple):
+            raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
+        # unpack data paths
+        img_path: str = sample[0]
+        img_labels_path: str = sample[1]
 
-    def load_data(self, data: Any, dataset: Optional[AutoDataset] = None) -> Iterable:
-        pass
+        # load images directly to torch tensors
+        img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
+        img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
 
-    def load_sample(sample) -> Tuple[torch.Tensor, torch.Tensor]:
-        pass
+        return img, img_labels
 
-    def collate(self, samples: Sequence) -> Any:
-        pass
+    def per_batch_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        if not isinstance(sample, list):
+            raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
+        img, img_labels = sample
+        # THIS IS CRASHING
+        # out1 = self.current_transform(img)  # images
+        # out2 = self.current_transform(img_labels)  # labels
+        # return out1, out2
+        return img, img_labels
 
-    def pre_tensor_transform(self, sample: Any) -> Any:
-        pass
-
-    def to_tensor_transform(self, sample: Any) -> Any:
-        pass
-
-    def post_tensor_transform(self, sample: Any) -> Any:
-        pass
-
-    def per_batch_transform(self, sample: Any) -> Any:
-        pass
-
+    # TODO: implement me
     def per_batch_transform_on_device(self, sample: Any) -> Any:
         pass
 

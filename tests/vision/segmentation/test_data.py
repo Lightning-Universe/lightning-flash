@@ -24,7 +24,7 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
         _rand_image(size).save(img_file)
 
     for label_file in label_files:
-        _rand_labels(size).save(img_file)
+        _rand_labels(size).save(label_file)
 
 
 class TestSemanticSegmentationPreprocess:
@@ -58,7 +58,7 @@ class TestSemanticSegmentationData:
             str(tmp_dir / "labels_img3.png"),
         ]
 
-        img_size: Tuple[int, int] = (192, 192)
+        img_size: Tuple[int, int] = (196, 196)
         create_random_data(train_images, train_labels, img_size)
 
         # instantiate the data module
@@ -71,3 +71,11 @@ class TestSemanticSegmentationData:
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
+        assert dm.val_dataloader() is None
+        assert dm.test_dataloader() is None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 3, 196, 196)
