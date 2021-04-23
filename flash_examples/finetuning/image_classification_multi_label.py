@@ -16,6 +16,7 @@ from typing import List, Tuple
 
 import pandas as pd
 from torchmetrics import F1
+
 import flash
 from flash.core.classification import Labels
 from flash.data.utils import download_data
@@ -29,7 +30,8 @@ from flash.vision.classification.data import ImageClassificationPreprocess
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
 # 2. Load the data
-genres = ["Animation", "Horror", "Musical", "News", "Sport"]
+genres = ["Action", "Animation", "Comedy", "Horror", "Musical"]
+
 
 def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[List[int]]]:
     metadata = pd.read_csv(osp.join(root, data, "metadata.csv"))
@@ -46,7 +48,7 @@ datamodule = ImageClassificationData.from_filepaths(
     test_filepaths=test_filepaths,
     test_labels=test_labels,
     preprocess=ImageClassificationPreprocess(image_size=(128, 128)),
-    val_split=0.2, # Use 20 % of the train dataset to generate validation one.
+    val_split=0.1,  # Use 10 % of the train dataset to generate validation one.
 )
 
 # 3. Build the model
@@ -60,7 +62,7 @@ model = ImageClassifier(
 )
 
 # 4. Create the trainer. Train on 2 gpus for 10 epochs.
-trainer = flash.Trainer(max_epochs=10, gpus=1, accelerator="ddp")
+trainer = flash.Trainer(max_epochs=10, gpus=2, accelerator='ddp')
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
@@ -71,7 +73,7 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 model.serializer = Labels(genres, multi_label=True)
 
 predictions = model.predict([
-    "data/movie_posters/val/tt0361500.jpg",
-    "data/movie_posters/val/tt0361748.jpg",
-    "data/movie_posters/val/tt0362478.jpg",
+    "data/movie_posters/val/tt0085995.jpg",
+    "data/movie_posters/val/tt0086508.jpg",
+    "data/movie_posters/val/tt0088184.jpg",
 ])

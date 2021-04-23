@@ -45,9 +45,9 @@ model = ImageClassifier.load_from_checkpoint(
 
 # 4a. Predict the genres of a few movie posters!
 predictions = model.predict([
-    "data/movie_posters/val/tt0361500.jpg",
-    "data/movie_posters/val/tt0361748.jpg",
-    "data/movie_posters/val/tt0362478.jpg",
+    "data/movie_posters/val/tt0085995.jpg",
+    "data/movie_posters/val/tt0086508.jpg",
+    "data/movie_posters/val/tt0088184.jpg",
 ])
 print(predictions)
 

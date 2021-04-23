@@ -62,9 +62,9 @@ We can also add a simple visualisation by extending :class:`~flash.data.base_viz
 
     # 4a. Predict the genres of a few movie posters!
     predictions = model.predict([
-        "data/movie_posters/val/tt0361500.jpg",
-        "data/movie_posters/val/tt0361748.jpg",
-        "data/movie_posters/val/tt0362478.jpg",
+        "data/movie_posters/val/tt0085995.jpg",
+        "data/movie_posters/val/tt0086508.jpg",
+        "data/movie_posters/val/tt0088184.jpg",
     ])
     print(predictions)
 
@@ -120,20 +120,12 @@ The ``metadata.csv`` files in each folder contain our labels, so we need to crea
     import pandas as pd
     import torch
 
-    genres = [
-        "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Musical", "Mystery", "N/A", "News", "Reality-TV", "Romance", "Sci-Fi", "Short", "Sport", "Thriller", "War", "Western"
-    ]
+    genres = ["Action", "Animation", "Comedy", "Horror", "Musical"]
 
     def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], List[List[int]]]:
-        metadata = pd.read_csv(os.path.join(root, data, "metadata.csv"))
-
-        images = []
-        labels = []
-        for _, row in metadata.iterrows():
-            images.append(os.path.join(root, data, row['Id'] + ".jpg"))
-            labels.append([int(row[genre]) for genre in genres])
-
-        return images, labels
+        metadata = pd.read_csv(osp.join(root, data, "metadata.csv"))
+        return ([osp.join(root, data, row['Id'] + ".jpg") for _, row in metadata.iterrows()],
+                [[int(row[genre]) for genre in genres] for _, row in metadata.iterrows()])
 
 Our :class:`~flash.data.process.Preprocess` overrides the :meth:`~flash.data.process.Preprocess.load_data` method to create an iterable of image paths and label tensors. The :class:`~flash.vision.classification.data.ImageClassificationPreprocess` then handles loading and augmenting the images for us!
 Now all we need is three lines of code to build to train our task!
@@ -188,9 +180,9 @@ Now all we need is three lines of code to build to train our task!
     model.serializer = Labels(genres, multi_label=True)
 
     predictions = model.predict([
-        "data/movie_posters/val/tt0361500.jpg",
-        "data/movie_posters/val/tt0361748.jpg",
-        "data/movie_posters/val/tt0362478.jpg",
+        "data/movie_posters/val/tt0085995.jpg",
+        "data/movie_posters/val/tt0086508.jpg",
+        "data/movie_posters/val/tt0088184.jpg",
     ])
 
     print(predictions)
