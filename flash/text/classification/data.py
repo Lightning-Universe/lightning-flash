@@ -48,11 +48,7 @@ class TextClassificationPreprocess(Preprocess):
             max_length:  Maximum number of tokens within a single sentence.
             target: The field storing the class id of the associated text.
             filetype: .csv or .json format type.
-            label_to_class_mapping: Dictionnary mapping target labels to class indexes.
-
-        Returns:
-            TextClassificationPreprocess: The constructed preprocess objects.
-
+            label_to_class_mapping: Dictionary mapping target labels to class indexes.
         """
 
         super().__init__()
