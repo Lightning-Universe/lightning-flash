@@ -65,7 +65,7 @@ trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-# 6a. Predict what's on a few images!
+# 6. Predict what's on a few images!
 
 # Serialize predictions as labels, low threshold to see more predictions.
 model.serializer = Labels(genres, multi_label=True, threshold=0.25)
@@ -76,15 +76,6 @@ predictions = model.predict([
     "data/movie_posters/val/tt0088930.jpg",
 ])
 
-print(predictions)
-
-datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/movie_posters/predict/",
-    preprocess=model.preprocess,
-)
-
-# 6b. Or generate predictions with a whole folder!
-predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 7. Save it!
