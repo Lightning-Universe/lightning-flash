@@ -80,7 +80,13 @@ class Probabilities(ClassificationSerializer):
 
 class Classes(ClassificationSerializer):
     """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
-    converts to a list."""
+    converts to a list.
+
+    Args:
+        multi_label: If true, treats outputs as multi label logits.
+
+        threshold: The threshold to use for multi_label classification.
+    """
 
     def __init__(self, multi_label: bool = False, threshold: float = 0.5):
         super().__init__(multi_label)
@@ -105,10 +111,14 @@ class Labels(Classes):
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
             provided, will attempt to get them from the :class:`.ClassificationState`.
+
+        multi_label: If true, treats outputs as multi label logits.
+
+        threshold: The threshold to use for multi_label classification.
     """
 
-    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False):
-        super().__init__(multi_label=multi_label)
+    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
+        super().__init__(multi_label=multi_label, threshold=threshold)
         self._labels = labels
 
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:

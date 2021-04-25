@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -88,6 +90,7 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
