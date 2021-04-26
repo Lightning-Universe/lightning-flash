@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, List, Mapping, Optional, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
 
 import torch
 import torch.nn.functional as F
+import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.model import Task
 from flash.data.process import ProcessState, Serializer
+
+
+def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
+    return F.binary_cross_entropy_with_logits(x, y.float())
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -33,10 +39,24 @@ class ClassificationTask(Task):
     def __init__(
         self,
         *args,
+        loss_fn: Optional[Callable] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs,
     ) -> None:
-        super().__init__(*args, serializer=serializer or Classes(), **kwargs)
+        if metrics is None:
+            metrics = torchmetrics.Accuracy(subset_accuracy=multi_label)
+
+        if loss_fn is None:
+            loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
+        super().__init__(
+            *args,
+            loss_fn=loss_fn,
+            metrics=metrics,
+            serializer=serializer or Classes(multi_label=multi_label),
+            **kwargs,
+        )
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
         if getattr(self.hparams, "multi_label", False):
@@ -80,7 +100,13 @@ class Probabilities(ClassificationSerializer):
 
 class Classes(ClassificationSerializer):
     """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
-    converts to a list."""
+    converts to a list.
+
+    Args:
+        multi_label: If true, treats outputs as multi label logits.
+
+        threshold: The threshold to use for multi_label classification.
+    """
 
     def __init__(self, multi_label: bool = False, threshold: float = 0.5):
         super().__init__(multi_label)
@@ -105,10 +131,14 @@ class Labels(Classes):
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
             provided, will attempt to get them from the :class:`.ClassificationState`.
+
+        multi_label: If true, treats outputs as multi label logits.
+
+        threshold: The threshold to use for multi_label classification.
     """
 
-    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False):
-        super().__init__(multi_label=multi_label)
+    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
+        super().__init__(multi_label=multi_label, threshold=threshold)
         self._labels = labels
 
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:

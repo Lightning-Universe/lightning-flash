@@ -173,7 +173,8 @@ class Task(LightningModule):
 
         x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
-        x = self.transfer_batch_to_device(x, self.device)
+        # switch to self.device when #7188 merge in Lightning
+        x = self.transfer_batch_to_device(x, next(self.parameters()).device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(running_stage)(predictions)
