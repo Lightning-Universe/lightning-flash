@@ -66,16 +66,32 @@ class TestSemanticSegmentationData:
         dm = SemanticSegmentationData.from_filepaths(
             train_filepaths=train_images,
             train_labels=train_labels,
+            val_filepaths=train_images,
+            val_labels=train_labels,
+            test_filepaths=train_images,
+            test_labels=train_labels,
             batch_size=2,
             num_workers=0,
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
-        assert dm.val_dataloader() is None
-        assert dm.test_dataloader() is None
+        assert dm.val_dataloader() is not None
+        assert dm.test_dataloader() is not None
 
         # check training data
         data = next(iter(dm.train_dataloader()))
+        imgs, labels = data
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 3, 196, 196)
+
+        # check training data
+        data = next(iter(dm.val_dataloader()))
+        imgs, labels = data
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 3, 196, 196)
+
+        # check training data
+        data = next(iter(dm.val_dataloader()))
         imgs, labels = data
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 3, 196, 196)

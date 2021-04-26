@@ -35,7 +35,7 @@ class SemanticSegmentation(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
+        backbone: Union[str, Tuple[nn.Module, int]] = "torchvision/fcn_resnet50",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: bool = True,
@@ -50,6 +50,7 @@ class SemanticSegmentation(ClassificationTask):
         if metrics is None:
             metrics = Accuracy(subset_accuracy=multi_label)
 
+        # TODO: do we have any case for this ?
         if loss_fn is None:
             # loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
             loss_fn = F.cross_entropy
@@ -68,16 +69,15 @@ class SemanticSegmentation(ClassificationTask):
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        # TODO: implement first torchvision
-        self.backbone, num_features = None, 1
-        '''if isinstance(backbone, tuple):
-            self.backbone, num_features = backbone
-        else:
-            self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)'''
-
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Conv2d(num_features, num_classes, kernel_size=1)
+        # TODO: pretrained to True causes some issues
+        self.model = self.backbones.get(backbone)(pretrained=False, num_classes=num_classes, **backbone_kwargs)
 
     def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
-        return self.head(x)
+        return self.model(x)['out']  # TODO: find a proper way to get 'out' from registry
+
+
+@SemanticSegmentation.backbones(name="torchvision/fcn_resnet50")
+def fn(pretrained: bool, num_classes: int):
+    import torchvision
+    model: nn.Module = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained, num_classes=num_classes)
+    return model

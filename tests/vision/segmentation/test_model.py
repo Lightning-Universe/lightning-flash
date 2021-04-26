@@ -9,11 +9,16 @@ def test_smoke():
     assert model is not None
 
 
-@pytest.mark.skip(reason="todo")
-def test_forward():
-    num_classes = 5
-    model = SemanticSegmentation(num_classes)
+@pytest.mark.parametrize("num_classes", [8, 256])
+@pytest.mark.parametrize("img_shape", [(1, 3, 224, 192), (2, 3, 127, 212)])
+def test_forward(num_classes, img_shape):
+    model = SemanticSegmentation(
+        num_classes=num_classes,
+        backbone='torchvision/fcn_resnet50',
+    )
 
-    img = torch.rand(1, 3, 224, 224)
+    B, C, H, W = img_shape
+    img = torch.rand(B, C, H, W)
+
     out = model(img)
-    assert out.shape == (1, num_classes, 224, 224)
+    assert out.shape == (B, num_classes, H, W)

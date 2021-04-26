@@ -127,6 +127,7 @@ class SemanticSegmentationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         # val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
         #**kwargs,
+        map_pix_to_labels: Dict[Tuple[int, int, int], int] = None,  # TODO: implement me
     ) -> 'SemanticSegmentationData':
 
         # verify input data format
