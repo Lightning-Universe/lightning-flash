@@ -80,7 +80,7 @@ class TabularPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool = False) -> 'Preprocess':
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> 'Preprocess':
         return cls(**state_dict)
 
     def common_load_data(self, df: DataFrame, dataset: AutoDataset):

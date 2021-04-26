@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -59,6 +59,17 @@ class NumpyPreprocess(Preprocess):
 
     def predict_to_tensor_transform(self, sample: ND) -> ND:
         return torch.from_numpy(sample).float()
+
+    def save_state_dict(self) -> Dict[str, Any]:
+        return {}
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool):
+        return cls()
+
+    @staticmethod
+    def version() -> str:
+        return "0.0.1"
 
 
 class NumpyDataModule(flash.DataModule):
