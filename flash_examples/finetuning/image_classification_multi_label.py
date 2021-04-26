@@ -71,9 +71,9 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 model.serializer = Labels(genres, multi_label=True, threshold=0.25)
 
 predictions = model.predict([
-    "data/movie_posters/predict/tt0498351.jpg",
-    "data/movie_posters/predict/tt1100089.jpg",
-    "data/movie_posters/predict/tt1216491.jpg",
+    "data/movie_posters/predict/tt0085318.jpg",
+    "data/movie_posters/predict/tt0089461.jpg",
+    "data/movie_posters/predict/tt0097179.jpg",
 ])
 
 print(predictions)
