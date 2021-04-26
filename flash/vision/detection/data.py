@@ -25,7 +25,7 @@ from torchvision import transforms as T
 
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.process import Preprocess
+from flash.data.process import DefaultPreprocess, Preprocess
 from flash.data.utils import _contains_any_tensor
 from flash.utils.imports import _COCO_AVAILABLE
 from flash.vision.utils import pil_loader
@@ -131,9 +131,13 @@ def _coco_remove_images_without_annotations(dataset):
     return dataset
 
 
-class ObjectDetectionPreprocess(Preprocess):
+class ObjectDetectionPreprocess(DefaultPreprocess):
 
     to_tensor = T.ToTensor()
+
+    @staticmethod
+    def version() -> str:
+        return "0.0.1"
 
     def load_data(self, metadata: Any, dataset: AutoDataset) -> CustomCOCODataset:
         # Extract folder, coco annotation file and the transform to be applied on the images

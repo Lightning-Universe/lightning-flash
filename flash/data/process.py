@@ -14,7 +14,7 @@
 import functools
 import os
 import subprocess
-from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod
+from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod, abstractproperty, abstractstaticmethod
 from dataclasses import dataclass
 from importlib import import_module
 from operator import truediv
@@ -44,19 +44,6 @@ class ProcessState:
 
 
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
-
-
-class PreprocessMeta(ABCMeta):
-
-    def __new__(cls, name, bases, namespace):
-        # create new instance of cls in order to apply any @expose class decorations.
-        return super().__new__(cls, name, bases, namespace)
-
-    def __call__(cls, *args, **kwargs):
-        klass = super().__call__(*args, **kwargs)
-        klass._args = args
-        klass._kwargs = kwargs
-        return klass
 
 
 class Properties:
@@ -146,7 +133,31 @@ class Properties:
             self._running_stage = None
 
 
-class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
+class AbstractPreprocess(ABC):
+
+    @abstractstaticmethod
+    def version() -> str:
+        """
+        Override to versioned to version your preprocess.
+        """
+        pass
+
+    @abstractmethod
+    def save_state_dict(self) -> Dict[str, Any]:
+        """
+        Override this method to return state_dict
+        """
+        pass
+
+    @abstractclassmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool = False):
+        """
+        Override this method to load from state_dict
+        """
+        pass
+
+
+class Preprocess(AbstractPreprocess, Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -304,11 +315,8 @@ class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        save_meta: bool = True,
     ):
         super().__init__()
-
-        self.save_meta = save_meta
 
         # used to keep track of provided transforms
         self._train_collate_in_worker_from_transform: Optional[bool] = None
@@ -328,69 +336,22 @@ class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
 
         self._callbacks: List[FlashCallback] = []
 
-        if self.save_meta:
-            self.state_dict = self._wrap_state_dict(self.state_dict)
+    def _save_to_state_dict(self, destination, prefix, keep_vars):
+        preprocess_state_dict = self.save_state_dict()
+        if not isinstance(preprocess_state_dict, Dict):
+            raise MisconfigurationException("save_state_dict should return a dictionary")
+        preprocess_state_dict["_meta"] = {}
+        preprocess_state_dict["_meta"]["module"] = self.__module__
+        preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
+        preprocess_state_dict["_meta"]["version"] = self.version()
+        try:
+            commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+        except subprocess.CalledProcessError:
+            commit_sha = "n/a"
+        preprocess_state_dict["_meta"]["commit_sha"] = commit_sha
+        destination['preprocess.state_dict'] = preprocess_state_dict
+        return super()._save_to_state_dict(destination, prefix, keep_vars)
 
-    def _wrap_state_dict(self, state_dict_fn: Callable) -> Callable:
-
-        @functools.wraps(state_dict_fn)
-        def wrapped_func(*args, **kwargs):
-            try:
-                from pip import get_installed_distributions
-            except:
-                from pip._internal.utils.misc import get_installed_distributions
-            try:
-                commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
-            except:
-                commit_sha = "n/a"
-
-            try:
-                gitdiff = subprocess.check_output(["git", "diff"]).decode()
-            except:
-                gitdiff = ""
-            state_dict = state_dict_fn(*args, **kwargs)
-            state_dict["_meta"] = {}
-            state_dict["_meta"]["module"] = self.__module__
-            state_dict["_meta"]["class_name"] = self.__class__.__name__
-            state_dict["_meta"]["args"] = self._args
-            state_dict["_meta"]["kwargs"] = self._kwargs
-            state_dict["_meta"]["requirements"] = sorted([
-                "%s==%s" % (i.key, i.version) for i in get_installed_distributions()
-            ])
-            state_dict["_meta"]["commit_sha"] = commit_sha
-            state_dict["_meta"]["gitdiff"] = gitdiff
-            return state_dict
-
-        return wrapped_func
-
-    @abstractmethod
-    def state_dict(self) -> Dict[str, Any]:
-        """
-        Override this method to return state_dict
-        """
-        pass
-
-    @abstractclassmethod
-    def load_from_state_dict(cls, state_dict: Dict[str, Any]):
-        """
-        Override this method to load from state_dict
-        """
-        pass
-
-    @classmethod
-    def from_state_dict(cls, state_dict: Dict[str, Any]):
-        if cls == Preprocess and "_meta" in state_dict:
-            try:
-                import importlib
-                meta = state_dict["_meta"]
-                _cls = getattr(importlib.import_module(meta["module"]), meta["class_name"])
-                return _cls(*meta["args"], **meta["kwargs"])
-            except (ModuleNotFoundError, KeyError):
-                return None
-        else:
-            return cls.load_from_state_dict(state_dict)
-
-    # todo (tchaton) Add a warning if a transform is provided, but the hook hasn't been overriden !
     def _check_transforms(self, transform: Optional[Dict[str, Callable]],
                           stage: RunningStage) -> Optional[Dict[str, Callable]]:
         if transform is None:
@@ -546,6 +507,20 @@ class Preprocess(ABC, Properties, Module, metaclass=PreprocessMeta):
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
         return batch
+
+
+class DefaultPreprocess(Preprocess):
+
+    @staticmethod
+    def version() -> str:
+        return "0.0.1"
+
+    def save_state_dict(self) -> Dict[str, Any]:
+        return {}
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
 
 
 class Postprocess(Properties, Module):

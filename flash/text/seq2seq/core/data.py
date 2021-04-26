@@ -58,6 +58,24 @@ class Seq2SeqPreprocess(Preprocess):
         )
 
     @staticmethod
+    def version() -> str:
+        return "0.0.1"
+
+    def save_state_dict(self) -> Dict[str, Any]:
+        return {
+            "input": self.input,
+            "backbone": self.backbone,
+            "max_length": self.max_length,
+            "target": self.target,
+            "filetype": self.filetype,
+            "label_to_class_mapping": self.label_to_class_mapping,
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool):
+        return cls(**state_dict)
+
+    @staticmethod
     def _tokenize_fn(
         ex,
         tokenizer,

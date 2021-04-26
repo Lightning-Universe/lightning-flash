@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -37,40 +37,19 @@ class TabularPreprocess(Preprocess):
 
     def __init__(
         self,
-        train_df: DataFrame,
-        val_df: Optional[DataFrame],
-        test_df: Optional[DataFrame],
-        predict_df: Optional[DataFrame],
-        target_col: str,
-        num_cols: List[str],
         cat_cols: List[str],
+        num_cols: List[str],
+        target_col: str,
+        mean: DataFrame,
+        std: DataFrame,
+        codes: Dict[str, Any],
+        target_codes: Optional[Dict[str, Any]],
+        classes: List[str],
+        num_classes: int,
         is_regression: bool,
     ):
         super().__init__()
-        if train_df is None:
-            raise MisconfigurationException("train_df is required to instantiate the TabularPreprocess")
-
-        dfs = [train_df]
-
-        if val_df is not None:
-            dfs += [val_df]
-
-        if test_df is not None:
-            dfs += [test_df]
-
-        if predict_df is not None:
-            dfs += [predict_df]
-
-        mean, std = _compute_normalization(dfs[0], num_cols)
-        classes = dfs[0][target_col].unique()
         self.set_state(ClassificationState(classes))
-        num_classes = len(classes)
-        if dfs[0][target_col].dtype == object:
-            # if the target_col is a category, not an int
-            target_codes = _generate_codes(dfs, [target_col])
-        else:
-            target_codes = None
-        codes = _generate_codes(dfs, cat_cols)
 
         self.cat_cols = cat_cols
         self.num_cols = num_cols
@@ -81,6 +60,28 @@ class TabularPreprocess(Preprocess):
         self.target_codes = target_codes
         self.num_classes = num_classes
         self.is_regression = is_regression
+
+    @staticmethod
+    def version() -> str:
+        return "0.0.1"
+
+    def save_state_dict(self, keep_vars: bool = False) -> Dict[str, Any]:
+        return {
+            "cat_cols": self.cat_cols,
+            "num_cols": self.num_cols,
+            "target_col": self.target_col,
+            "mean": self.mean,
+            "std": self.std,
+            "codes": self.codes,
+            "target_codes": self.target_codes,
+            "classes": self.num_classes,
+            "num_classes": self.num_classes,
+            "is_regression": self.is_regression,
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool = False) -> 'Preprocess':
+        return cls(**state_dict)
 
     def common_load_data(self, df: DataFrame, dataset: AutoDataset):
         # impute_data
@@ -107,6 +108,56 @@ class TabularPreprocess(Preprocess):
         df = pd.read_csv(sample) if isinstance(sample, str) else sample
         _, cat_vars, num_vars = self.common_load_data(df, dataset)
         return list(zip(cat_vars, num_vars))
+
+    @classmethod
+    def from_data(
+        cls,
+        train_df: DataFrame,
+        val_df: Optional[DataFrame],
+        test_df: Optional[DataFrame],
+        predict_df: Optional[DataFrame],
+        target_col: str,
+        num_cols: List[str],
+        cat_cols: List[str],
+        is_regression: bool,
+    ) -> 'TabularPreprocess':
+
+        if train_df is None:
+            raise MisconfigurationException("train_df is required to instantiate the TabularPreprocess")
+
+        dfs = [train_df]
+
+        if val_df is not None:
+            dfs += [val_df]
+
+        if test_df is not None:
+            dfs += [test_df]
+
+        if predict_df is not None:
+            dfs += [predict_df]
+
+        mean, std = _compute_normalization(dfs[0], num_cols)
+        classes = list(dfs[0][target_col].unique())
+        num_classes = len(classes)
+        if dfs[0][target_col].dtype == object:
+            # if the target_col is a category, not an int
+            target_codes = _generate_codes(dfs, [target_col])
+        else:
+            target_codes = None
+        codes = _generate_codes(dfs, cat_cols)
+
+        return cls(
+            cat_cols,
+            num_cols,
+            target_col,
+            mean,
+            std,
+            codes,
+            target_codes,
+            classes,
+            num_classes,
+            is_regression,
+        )
 
 
 class TabularData(DataModule):
@@ -297,7 +348,7 @@ class TabularData(DataModule):
 
         train_df, val_df, test_df = cls._split_dataframe(train_df, val_df, test_df, val_size, test_size)
 
-        preprocess = preprocess or cls.preprocess_cls(
+        preprocess = preprocess or cls.preprocess_cls.from_data(
             train_df,
             val_df,
             test_df,

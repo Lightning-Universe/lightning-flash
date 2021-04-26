@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
@@ -19,6 +20,7 @@ import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -449,4 +451,36 @@ class Task(LightningModule):
         raise MisconfigurationException(
             "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
             f"or a built-in scheduler in {self.available_schedulers()}"
+        )
+
+    def _load_from_state_dict(
+        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
+    ):
+        if 'preprocess.state_dict' in state_dict:
+            try:
+                preprocess_state_dict = state_dict["preprocess.state_dict"]
+                meta = preprocess_state_dict["_meta"]
+                module = meta["module"]
+                class_name = meta["class_name"]
+                checkpoint_version = meta["version"]
+                commit_sha = meta["commit_sha"]
+                cls = getattr(import_module(meta["module"]), meta["class_name"])
+                del preprocess_state_dict["_meta"]
+                current_version = cls.version()
+                if current_version != checkpoint_version:
+                    rank_zero_warn(
+                        f"The preprocess `{module}.{class_name}` was generated with a different version "
+                        f"current: {current_version} checkpoint: {checkpoint_version}. "
+                        "The behaviour might not be the one expected."
+                        f"Hint: Check commit: {commit_sha}.", UserWarning
+                    )
+                self._preprocess = cls.load_state_dict(preprocess_state_dict, strict=strict)
+                del state_dict["preprocess.state_dict"]
+            except (ModuleNotFoundError, KeyError):
+                raise MisconfigurationException(
+                    f"The `Preprocess` {module}.{class_name} has been moved and couldn't be imported."
+                )
+
+        super()._load_from_state_dict(
+            state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
         )
