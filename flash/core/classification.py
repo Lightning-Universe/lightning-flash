@@ -140,6 +140,7 @@ class Labels(Classes):
     def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
         super().__init__(multi_label=multi_label, threshold=threshold)
         self._labels = labels
+        self.set_state(ClassificationState(labels))
 
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None

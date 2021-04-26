@@ -465,6 +465,8 @@ class Task(LightningModule):
                 class_name = meta["class_name"]
                 checkpoint_version = meta["version"]
                 commit_sha = meta["commit_sha"]
+                _state = meta["_state"]
+                _data_pipeline_state = meta["_data_pipeline_state"]
                 cls = getattr(import_module(meta["module"]), meta["class_name"])
                 del preprocess_state_dict["_meta"]
                 current_version = cls.version()
@@ -476,6 +478,8 @@ class Task(LightningModule):
                         f"Hint: Check commit: {commit_sha}.", UserWarning
                     )
                 self._preprocess = cls.load_state_dict(preprocess_state_dict, strict=strict)
+                self._preprocess._state = _state
+                self._preprocess._data_pipeline_state = _data_pipeline_state
                 del state_dict["preprocess.state_dict"]
             except (ModuleNotFoundError, KeyError):
                 raise MisconfigurationException(
