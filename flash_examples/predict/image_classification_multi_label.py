@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from typing import Any
 
 import torchvision.transforms.functional as T
@@ -45,9 +46,9 @@ model = ImageClassifier.load_from_checkpoint(
 
 # 4a. Predict the genres of a few movie posters!
 predictions = model.predict([
-    "data/movie_posters/val/tt0361500.jpg",
-    "data/movie_posters/val/tt0361748.jpg",
-    "data/movie_posters/val/tt0362478.jpg",
+    "data/movie_posters/val/tt0086873.jpg",
+    "data/movie_posters/val/tt0088247.jpg",
+    "data/movie_posters/val/tt0088930.jpg",
 ])
 print(predictions)
 
@@ -61,5 +62,6 @@ datamodule = ImageClassificationData.from_folders(
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
 
-# 5. Show some data!
-datamodule.show_predict_batch()
+# 5. Show some data (unless we're just testing)!
+if os.getenv("FLASH_TESTING", "0") == "0":
+    datamodule.show_predict_batch("per_batch_transform")

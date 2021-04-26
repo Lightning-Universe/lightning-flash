@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Tuple, Type
+from typing import Any, Callable, List, Mapping, Optional, Tuple, Type, Union
 
 import torch
 from torch.nn import functional as F
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
+from flash.data.process import Serializer
 from flash.utils.imports import _TABNET_AVAILABLE
 
 if _TABNET_AVAILABLE:
@@ -35,6 +36,8 @@ class TabularClassifier(ClassificationTask):
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
+        multi_label: Whether the targets are multi-label or not.
+        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
         **tabnet_kwargs: Optional additional arguments for the TabNet model, see
             `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
     """
@@ -48,6 +51,8 @@ class TabularClassifier(ClassificationTask):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: List[Metric] = None,
         learning_rate: float = 1e-3,
+        multi_label: bool = False,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **tabnet_kwargs,
     ):
         self.save_hyperparameters()
@@ -68,6 +73,8 @@ class TabularClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            multi_label=multi_label,
+            serializer=serializer,
         )
 
     def forward(self, x_in) -> torch.Tensor:
