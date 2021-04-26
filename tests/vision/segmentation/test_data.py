@@ -6,7 +6,8 @@ import pytest
 import torch
 from PIL import Image
 
-from flash.vision import SemanticSegmentationData, SemantincSegmentationPreprocess
+from flash import Trainer
+from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemantincSegmentationPreprocess
 
 
 def _rand_image(size: Tuple[int, int]):
@@ -135,7 +136,13 @@ class TestSemanticSegmentationData:
         # instantiate the data module
 
         dm = SemanticSegmentationData.from_filepaths(
-            train_filepaths=train_images, train_labels=train_labels, batch_size=2, num_workers=0, map_labels=map_labels
+            train_filepaths=train_images,
+            train_labels=train_labels,
+            val_filepaths=train_images,
+            val_labels=train_labels,
+            batch_size=2,
+            num_workers=0,
+            map_labels=map_labels
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -148,3 +155,8 @@ class TestSemanticSegmentationData:
         assert labels.min().item() == 0
         assert labels.max().item() == 1
         assert labels.dtype == torch.int64
+
+        # now train with `fast_dev_run`
+        model = SemanticSegmentation(num_classes=2, backbone="torchvision/fcn_resnet50")
+        trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+        trainer.finetune(model, dm, strategy="freeze_unfreeze")

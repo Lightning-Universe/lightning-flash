@@ -14,6 +14,7 @@ from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 
 
+# container to apply augmentations at both image and mask reusing the same parameters
 class SegmentationSequential(nn.Sequential):
 
     def __init__(self, *args):
@@ -97,7 +98,7 @@ class SemantincSegmentationPreprocess(Preprocess):
         return img_out, img_labels_out
 
     # TODO: the labels are not clear how to forward to the loss once are transform from this point
-    def per_batch_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+    '''def per_batch_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         if not isinstance(sample, list):
             raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
         img, img_labels = sample
@@ -109,7 +110,7 @@ class SemantincSegmentationPreprocess(Preprocess):
 
     # TODO: the labels are not clear how to forward to the loss once are transform from this point
     def per_batch_transform_on_device(self, sample: Any) -> Any:
-        pass
+        pass'''
 
 
 class SemanticSegmentationData(DataModule):
