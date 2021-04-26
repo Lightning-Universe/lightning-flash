@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pytest
@@ -14,17 +14,27 @@ def _rand_image(size: Tuple[int, int]):
 
 
 # usually labels come as rgb images -> need to map to labels
-def _rand_labels(size: Tuple[int, int]):
-    data: np.ndarray = np.ones((*size, 3), dtype=np.uint8)
-    return Image.fromarray(data)
+def _rand_labels(size: Tuple[int, int], map_labels: Dict[Tuple[int, int, int], int] = None):
+    data: np.ndarray = np.random.rand(*size, 3)
+    if map_labels is not None:
+        data_bin = (data.mean(-1) > 0.5)
+        for k, v in map_labels.items():
+            mask = (data_bin == k)
+            data[mask] = v
+    return Image.fromarray(data.astype(np.uint8))
 
 
-def create_random_data(image_files: List[str], label_files: List[str], size: Tuple[int, int]) -> Image.Image:
+def create_random_data(
+    image_files: List[str],
+    label_files: List[str],
+    size: Tuple[int, int],
+    map_labels: Optional[Dict[Tuple[int, int, int], int]] = None,
+) -> Image.Image:
     for img_file in image_files:
         _rand_image(size).save(img_file)
 
     for label_file in label_files:
-        _rand_labels(size).save(label_file)
+        _rand_labels(size, map_labels).save(label_file)
 
 
 class TestSemanticSegmentationPreprocess:
@@ -95,3 +105,40 @@ class TestSemanticSegmentationData:
         imgs, labels = data
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 3, 196, 196)
+
+    def test_map_labels(self, tmpdir):
+        tmp_dir = Path(tmpdir)
+
+        # create random dummy data
+
+        train_images = [
+            str(tmp_dir / "img1.png"),
+            str(tmp_dir / "img2.png"),
+            str(tmp_dir / "img3.png"),
+        ]
+
+        train_labels = [
+            str(tmp_dir / "labels_img1.png"),
+            str(tmp_dir / "labels_img2.png"),
+            str(tmp_dir / "labels_img3.png"),
+        ]
+
+        map_labels: Dict[int, Tuple[int, int, int]] = {
+            0: [0, 0, 0],
+            1: [255, 255, 255],
+        }
+
+        img_size: Tuple[int, int] = (196, 196)
+        create_random_data(train_images, train_labels, img_size, map_labels)
+
+        # instantiate the data module
+
+        dm = SemanticSegmentationData.from_filepaths(
+            train_filepaths=train_images, train_labels=train_labels, batch_size=2, num_workers=0, map_labels=map_labels
+        )
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data

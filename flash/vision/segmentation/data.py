@@ -41,7 +41,9 @@ class SemantincSegmentationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
+        map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
     ) -> 'SemantincSegmentationPreprocess':
+        self._map_labels = map_labels
 
         # TODO: implement me
         '''train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
@@ -58,6 +60,16 @@ class SemantincSegmentationPreprocess(Preprocess):
 
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
+    def _apply_map_labels(self, img) -> torch.Tensor:
+        assert len(img.shape) == 3, img.shape
+        C, H, W = img.shape
+        outs = torch.empty(H, W, dtype=torch.int64)
+        for label, values in self._map_labels.items():
+            vals = torch.tensor(values).view(3, 1, 1)
+            mask = (img == vals).all(-3)
+            outs[mask] = label
+        return outs
+
     # TODO: is it a problem to load sample directly in tensor. What happens in to_tensor_tranform
     def load_sample(self, sample: Tuple[str, str]) -> Tuple[torch.Tensor, torch.Tensor]:
         if not isinstance(sample, tuple):
@@ -69,6 +81,10 @@ class SemantincSegmentationPreprocess(Preprocess):
         # load images directly to torch tensors
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
+
+        # TODO: decide at which point do we apply this
+        if self._map_labels is not None:
+            img_labels = self._apply_map_labels(img_labels)
 
         return img, img_labels
 
@@ -127,7 +143,7 @@ class SemanticSegmentationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         # val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
         #**kwargs,
-        map_pix_to_labels: Dict[Tuple[int, int, int], int] = None,  # TODO: implement me
+        map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
     ) -> 'SemanticSegmentationData':
 
         # verify input data format
@@ -145,6 +161,7 @@ class SemanticSegmentationData(DataModule):
             val_transform,
             test_transform,
             predict_transform,
+            map_labels=map_labels,
         )
 
         # instantiate the data module class
@@ -157,7 +174,7 @@ class SemanticSegmentationData(DataModule):
             num_workers=num_workers,
             data_fetcher=data_fetcher,
             preprocess=preprocess,
-            #seed=seed,
-            #val_split=val_split,
-            #**kwargs
+            #seed=seed, # THIS CRASHES
+            #val_split=val_split,  # THIS CRASHES
+            #**kwargs  # THIS CRASHES
         )
