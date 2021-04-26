@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pytest
+import torch
 from PIL import Image
 
 from flash.vision import SemanticSegmentationData, SemantincSegmentationPreprocess
@@ -14,7 +15,7 @@ def _rand_image(size: Tuple[int, int]):
 
 
 # usually labels come as rgb images -> need to map to labels
-def _rand_labels(size: Tuple[int, int], map_labels: Dict[Tuple[int, int, int], int] = None):
+def _rand_labels(size: Tuple[int, int], map_labels: Dict[int, Tuple[int, int, int]] = None):
     data: np.ndarray = np.random.rand(*size, 3)
     if map_labels is not None:
         data_bin = (data.mean(-1) > 0.5)
@@ -28,8 +29,8 @@ def create_random_data(
     image_files: List[str],
     label_files: List[str],
     size: Tuple[int, int],
-    map_labels: Optional[Dict[Tuple[int, int, int], int]] = None,
-) -> Image.Image:
+    map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
+):
     for img_file in image_files:
         _rand_image(size).save(img_file)
 
@@ -142,3 +143,8 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+        assert labels.min().item() == 0
+        assert labels.max().item() == 1
+        assert labels.dtype == torch.int64

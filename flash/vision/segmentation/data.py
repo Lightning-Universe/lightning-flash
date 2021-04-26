@@ -82,10 +82,6 @@ class SemantincSegmentationPreprocess(Preprocess):
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
 
-        # TODO: decide at which point do we apply this
-        if self._map_labels is not None:
-            img_labels = self._apply_map_labels(img_labels)
-
         return img, img_labels
 
     def to_tensor_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -93,6 +89,11 @@ class SemantincSegmentationPreprocess(Preprocess):
             raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
         img, img_labels = sample
         img_out, img_labels_out = self.current_transform(img, img_labels)
+
+        # TODO: decide at which point do we apply this
+        if self._map_labels is not None:
+            img_labels_out = self._apply_map_labels(img_labels_out)
+
         return img_out, img_labels_out
 
     # TODO: the labels are not clear how to forward to the loss once are transform from this point
