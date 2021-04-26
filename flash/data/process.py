@@ -338,7 +338,6 @@ class Preprocess(BasePreprocess, Properties, Module):
         preprocess_state_dict["_meta"]["module"] = self.__module__
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
         preprocess_state_dict["_meta"]["_state"] = self._state
-        preprocess_state_dict["_meta"]["_data_pipeline_state"] = self._data_pipeline_state
         try:
             commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
         except subprocess.CalledProcessError:

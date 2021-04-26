@@ -468,7 +468,6 @@ class Task(LightningModule):
                     strict=strict,
                 )
                 self._preprocess._state = meta["_state"]
-                self._preprocess._data_pipeline_state = meta["_data_pipeline_state"]
                 del state_dict["preprocess.state_dict"]
                 del preprocess_state_dict["_meta"]
             except (ModuleNotFoundError, KeyError):
