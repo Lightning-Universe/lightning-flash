@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, List, Mapping, Optional, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
 
 import torch
 import torch.nn.functional as F
+import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.model import Task
 from flash.data.process import ProcessState, Serializer
+
+
+def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
+    return F.binary_cross_entropy_with_logits(x, y.float())
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -33,10 +39,24 @@ class ClassificationTask(Task):
     def __init__(
         self,
         *args,
+        loss_fn: Optional[Callable] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs,
     ) -> None:
-        super().__init__(*args, serializer=serializer or Classes(), **kwargs)
+        if metrics is None:
+            metrics = torchmetrics.Accuracy(subset_accuracy=multi_label)
+
+        if loss_fn is None:
+            loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
+        super().__init__(
+            *args,
+            loss_fn=loss_fn,
+            metrics=metrics,
+            serializer=serializer or Classes(multi_label=multi_label),
+            **kwargs,
+        )
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
         if getattr(self.hparams, "multi_label", False):
