@@ -17,7 +17,7 @@ from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Uni
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, IoU
 
 from flash.core.classification import Classes, ClassificationTask
 from flash.core.registry import FlashRegistry
@@ -40,20 +40,22 @@ class SemanticSegmentation(ClassificationTask):
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: bool = True,
         loss_fn: Optional[Callable] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-    ):
+    ) -> None:
 
         if metrics is None:
-            metrics = Accuracy(subset_accuracy=multi_label)
+            metrics = IoU(num_classes=num_classes)
 
-        # TODO: do we have any case for this ?
         if loss_fn is None:
-            # loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
             loss_fn = F.cross_entropy
+
+        # TODO: need to check for multi_label
+        if multi_label:
+            raise NotImplementedError("Multi-label not supported yet.")
 
         super().__init__(
             model=None,
@@ -70,10 +72,10 @@ class SemanticSegmentation(ClassificationTask):
             backbone_kwargs = {}
 
         # TODO: pretrained to True causes some issues
-        self.model = self.backbones.get(backbone)(pretrained=False, num_classes=num_classes, **backbone_kwargs)
+        self.backbone = self.backbones.get(backbone)(pretrained=False, num_classes=num_classes, **backbone_kwargs)
 
     def forward(self, x) -> torch.Tensor:
-        return self.model(x)['out']  # TODO: find a proper way to get 'out' from registry
+        return self.backbone(x)['out']  # TODO: find a proper way to get 'out' from registry
 
 
 @SemanticSegmentation.backbones(name="torchvision/fcn_resnet50")
