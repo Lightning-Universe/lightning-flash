@@ -52,11 +52,11 @@ class _AutoDatasetTestPreprocess(Preprocess):
     def version() -> str:
         return "0.0.1"
 
-    def save_state_dict(self) -> Dict[str, Any]:
+    def get_state_dict(self) -> Dict[str, Any]:
         return {"with_dset": self.with_dset}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
         return _AutoDatasetTestPreprocess(state_dict["with_dset"])
 
     def load_data_no_dset(self, data):

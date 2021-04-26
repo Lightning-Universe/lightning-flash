@@ -87,7 +87,7 @@ class TextClassificationPreprocess(Preprocess):
     def version() -> str:
         return "0.0.1"
 
-    def save_state_dict(self) -> Dict[str, Any]:
+    def get_state_dict(self) -> Dict[str, Any]:
         return {
             "input": self.input,
             "backbone": self.backbone,
@@ -98,7 +98,7 @@ class TextClassificationPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
         return cls(**state_dict)
 
     def per_batch_transform(self, batch: Any) -> Any:

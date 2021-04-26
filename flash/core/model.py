@@ -461,29 +461,28 @@ class Task(LightningModule):
             try:
                 preprocess_state_dict = state_dict["preprocess.state_dict"]
                 meta = preprocess_state_dict["_meta"]
-                module = meta["module"]
-                class_name = meta["class_name"]
-                checkpoint_version = meta["version"]
-                commit_sha = meta["commit_sha"]
-                _state = meta["_state"]
-                _data_pipeline_state = meta["_data_pipeline_state"]
                 cls = getattr(import_module(meta["module"]), meta["class_name"])
-                del preprocess_state_dict["_meta"]
                 current_version = cls.version()
-                if current_version != checkpoint_version:
+                if current_version != meta["version"]:
                     rank_zero_warn(
-                        f"The preprocess `{module}.{class_name}` was generated with a different version "
-                        f"current: {current_version} checkpoint: {checkpoint_version}. "
+                        f"The preprocess `{meta['module']}.{meta['class_name']}` was generated with a different version "
+                        f"current: {current_version} checkpoint: {meta['version']}. "
                         "The behaviour might not be the one expected."
-                        f"Hint: Check commit: {commit_sha}.", UserWarning
+                        f"Hint: Check commit: {meta['commit_sha'] if meta['commit_sha'] != 'n/a' else ''}", UserWarning
                     )
-                self._preprocess = cls.load_state_dict(preprocess_state_dict, strict=strict)
-                self._preprocess._state = _state
-                self._preprocess._data_pipeline_state = _data_pipeline_state
+                self._preprocess = cls.load_state_dict(
+                    {k: v
+                     for k, v in preprocess_state_dict.items() if k != '_meta'},
+                    strict=strict,
+                )
+                self._preprocess._state = meta["_state"]
+                self._preprocess._data_pipeline_state = meta["_data_pipeline_state"]
                 del state_dict["preprocess.state_dict"]
+                del preprocess_state_dict["_meta"]
             except (ModuleNotFoundError, KeyError):
+                meta = state_dict["preprocess.state_dict"]["_meta"]
                 raise MisconfigurationException(
-                    f"The `Preprocess` {module}.{class_name} has been moved and couldn't be imported."
+                    f"The `Preprocess` {meta['module']}.{meta['class_name']} has been moved and couldn't be imported."
                 )
 
         super()._load_from_state_dict(

@@ -60,11 +60,11 @@ class NumpyPreprocess(Preprocess):
     def predict_to_tensor_transform(self, sample: ND) -> ND:
         return torch.from_numpy(sample).float()
 
-    def save_state_dict(self) -> Dict[str, Any]:
+    def get_state_dict(self) -> Dict[str, Any]:
         return {}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
         return cls()
 
     @staticmethod

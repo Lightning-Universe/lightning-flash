@@ -133,31 +133,31 @@ class Properties:
             self._running_stage = None
 
 
-class AbstractPreprocess(ABC):
+class BasePreprocess(ABC):
 
     @abstractstaticmethod
-    def version() -> str:
+    def version() -> Optional[str]:
         """
-        Override to versioned to version your preprocess.
+        Override to version your preprocess.
         """
         pass
 
     @abstractmethod
-    def save_state_dict(self) -> Dict[str, Any]:
+    def get_state_dict(self) -> Dict[str, Any]:
         """
         Override this method to return state_dict
         """
         pass
 
     @abstractclassmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], keep_vars: bool = False):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         """
         Override this method to load from state_dict
         """
         pass
 
 
-class Preprocess(AbstractPreprocess, Properties, Module):
+class Preprocess(BasePreprocess, Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -324,22 +324,22 @@ class Preprocess(AbstractPreprocess, Properties, Module):
         self._predict_collate_in_worker_from_transform: Optional[bool] = None
         self._test_collate_in_worker_from_transform: Optional[bool] = None
 
-        self._train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
-        self._val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
-        self._test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
-        self._predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
+        train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
+        val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
+        test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
+        predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
 
-        self.train_transform = convert_to_modules(self._train_transform)
-        self.val_transform = convert_to_modules(self._val_transform)
-        self.test_transform = convert_to_modules(self._test_transform)
-        self.predict_transform = convert_to_modules(self._predict_transform)
+        self.train_transform = convert_to_modules(train_transform)
+        self.val_transform = convert_to_modules(val_transform)
+        self.test_transform = convert_to_modules(test_transform)
+        self.predict_transform = convert_to_modules(predict_transform)
 
         self._callbacks: List[FlashCallback] = []
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
-        preprocess_state_dict = self.save_state_dict()
+        preprocess_state_dict = self.get_state_dict()
         if not isinstance(preprocess_state_dict, Dict):
-            raise MisconfigurationException("save_state_dict should return a dictionary")
+            raise MisconfigurationException("get_state_dict should return a dictionary")
         preprocess_state_dict["_meta"] = {}
         preprocess_state_dict["_meta"]["module"] = self.__module__
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
@@ -517,11 +517,11 @@ class DefaultPreprocess(Preprocess):
     def version() -> str:
         return "0.0.1"
 
-    def save_state_dict(self) -> Dict[str, Any]:
+    def get_state_dict(self) -> Dict[str, Any]:
         return {}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
         return cls(**state_dict)
 
 

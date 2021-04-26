@@ -65,7 +65,7 @@ class TabularPreprocess(Preprocess):
     def version() -> str:
         return "0.0.1"
 
-    def save_state_dict(self, keep_vars: bool = False) -> Dict[str, Any]:
+    def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
         return {
             "cat_cols": self.cat_cols,
             "num_cols": self.num_cols,
