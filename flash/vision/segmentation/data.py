@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 import kornia as K
 import numpy as np
 import torch
+import torch.nn as nn
 import torchvision
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
@@ -11,6 +12,20 @@ from flash.data.auto_dataset import AutoDataset
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
+
+
+class SegmentationSequential(nn.Sequential):
+
+    def __init__(self, *args):
+        super(SegmentationSequential, self).__init__(*args)
+
+    def forward(self, img, mask):
+        img_out = img.float()
+        mask_out = mask.float()
+        for aug in self.children():
+            img_out = aug(img_out)
+            mask_out = aug(mask_out, aug._params)
+        return img_out[0], mask_out[0]
 
 
 def to_tensor(self, x):
@@ -32,13 +47,18 @@ class SemantincSegmentationPreprocess(Preprocess):
         '''train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform
         )'''
-        train_transform = dict(per_batch_transform=to_tensor)
-        val_transform = dict(per_batch_transform=to_tensor)
-        test_transform = dict(per_batch_transform=to_tensor)
-        predict_transform = dict(per_batch_transform=to_tensor)
+        augs = SegmentationSequential(
+            # K.augmentation.RandomResizedCrop((128, 128)),
+            K.augmentation.RandomHorizontalFlip(),
+        )
+        train_transform = dict(to_tensor_transform=augs)
+        val_transform = dict(to_tensor_transform=augs)
+        test_transform = dict(to_tensor_transform=augs)
+        predict_transform = dict(to_tensor_transform=augs)
 
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
+    # TODO: is it a problem to load sample directly in tensor. What happens in to_tensor_tranform
     def load_sample(self, sample: Tuple[str, str]) -> Tuple[torch.Tensor, torch.Tensor]:
         if not isinstance(sample, tuple):
             raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
@@ -52,6 +72,14 @@ class SemantincSegmentationPreprocess(Preprocess):
 
         return img, img_labels
 
+    def to_tensor_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        if not isinstance(sample, tuple):
+            raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
+        img, img_labels = sample
+        img_out, img_labels_out = self.current_transform(img, img_labels)
+        return img_out, img_labels_out
+
+    # TODO: the labels are not clear how to forward to the loss once are transform from this point
     def per_batch_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         if not isinstance(sample, list):
             raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
@@ -62,7 +90,7 @@ class SemantincSegmentationPreprocess(Preprocess):
         # return out1, out2
         return img, img_labels
 
-    # TODO: implement me
+    # TODO: the labels are not clear how to forward to the loss once are transform from this point
     def per_batch_transform_on_device(self, sample: Any) -> Any:
         pass
 

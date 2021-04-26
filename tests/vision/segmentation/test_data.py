@@ -15,7 +15,7 @@ def _rand_image(size: Tuple[int, int]):
 
 # usually labels come as rgb images -> need to map to labels
 def _rand_labels(size: Tuple[int, int]):
-    data: np.ndarray = np.random.randint(0, 255, (*size, 3), dtype="uint8")
+    data: np.ndarray = np.ones((*size, 3), dtype=np.uint8)
     return Image.fromarray(data)
 
 
