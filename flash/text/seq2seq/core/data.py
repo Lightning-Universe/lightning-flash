@@ -57,10 +57,6 @@ class Seq2SeqPreprocess(Preprocess):
             padding=self.padding
         )
 
-    @staticmethod
-    def version() -> str:
-        return "0.0.1"
-
     def get_state_dict(self) -> Dict[str, Any]:
         return {
             "input": self.input,
@@ -72,7 +68,7 @@ class Seq2SeqPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls(**state_dict)
 
     @staticmethod

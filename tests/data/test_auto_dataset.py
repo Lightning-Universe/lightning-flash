@@ -48,15 +48,11 @@ class _AutoDatasetTestPreprocess(Preprocess):
             self.train_load_data = self.train_load_data_no_dset
             self.train_load_sample = self.train_load_sample_no_dset
 
-    @staticmethod
-    def version() -> str:
-        return "0.0.1"
-
     def get_state_dict(self) -> Dict[str, Any]:
         return {"with_dset": self.with_dset}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return _AutoDatasetTestPreprocess(state_dict["with_dset"])
 
     def load_data_no_dset(self, data):

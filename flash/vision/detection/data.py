@@ -135,10 +135,6 @@ class ObjectDetectionPreprocess(DefaultPreprocess):
 
     to_tensor = T.ToTensor()
 
-    @staticmethod
-    def version() -> str:
-        return "0.0.1"
-
     def load_data(self, metadata: Any, dataset: AutoDataset) -> CustomCOCODataset:
         # Extract folder, coco annotation file and the transform to be applied on the images
         folder, ann_file, transform = metadata

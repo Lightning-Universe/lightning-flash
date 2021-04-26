@@ -135,13 +135,6 @@ class Properties:
 
 class BasePreprocess(ABC):
 
-    @abstractstaticmethod
-    def version() -> Optional[str]:
-        """
-        Override to version your preprocess.
-        """
-        pass
-
     @abstractmethod
     def get_state_dict(self) -> Dict[str, Any]:
         """
@@ -324,15 +317,16 @@ class Preprocess(BasePreprocess, Properties, Module):
         self._predict_collate_in_worker_from_transform: Optional[bool] = None
         self._test_collate_in_worker_from_transform: Optional[bool] = None
 
-        train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
-        val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
-        test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
-        predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
+        # store the transform before conversion to modules.
+        self._train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
+        self._val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
+        self._test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
+        self._predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
 
-        self.train_transform = convert_to_modules(train_transform)
-        self.val_transform = convert_to_modules(val_transform)
-        self.test_transform = convert_to_modules(test_transform)
-        self.predict_transform = convert_to_modules(predict_transform)
+        self.train_transform = convert_to_modules(self._train_transform)
+        self.val_transform = convert_to_modules(self._val_transform)
+        self.test_transform = convert_to_modules(self._test_transform)
+        self.predict_transform = convert_to_modules(self._predict_transform)
 
         self._callbacks: List[FlashCallback] = []
 
@@ -343,7 +337,6 @@ class Preprocess(BasePreprocess, Properties, Module):
         preprocess_state_dict["_meta"] = {}
         preprocess_state_dict["_meta"]["module"] = self.__module__
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
-        preprocess_state_dict["_meta"]["version"] = self.version()
         preprocess_state_dict["_meta"]["_state"] = self._state
         preprocess_state_dict["_meta"]["_data_pipeline_state"] = self._data_pipeline_state
         try:
@@ -513,15 +506,11 @@ class Preprocess(BasePreprocess, Properties, Module):
 
 class DefaultPreprocess(Preprocess):
 
-    @staticmethod
-    def version() -> str:
-        return "0.0.1"
-
     def get_state_dict(self) -> Dict[str, Any]:
         return {}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls(**state_dict)
 
 

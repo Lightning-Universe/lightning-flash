@@ -61,10 +61,6 @@ class TabularPreprocess(Preprocess):
         self.num_classes = num_classes
         self.is_regression = is_regression
 
-    @staticmethod
-    def version() -> str:
-        return "0.0.1"
-
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
         return {
             "cat_cols": self.cat_cols,

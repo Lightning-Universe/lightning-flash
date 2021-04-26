@@ -462,14 +462,6 @@ class Task(LightningModule):
                 preprocess_state_dict = state_dict["preprocess.state_dict"]
                 meta = preprocess_state_dict["_meta"]
                 cls = getattr(import_module(meta["module"]), meta["class_name"])
-                current_version = cls.version()
-                if current_version != meta["version"]:
-                    rank_zero_warn(
-                        f"The preprocess `{meta['module']}.{meta['class_name']}` was generated with a different version "
-                        f"current: {current_version} checkpoint: {meta['version']}. "
-                        "The behaviour might not be the one expected."
-                        f"Hint: Check commit: {meta['commit_sha'] if meta['commit_sha'] != 'n/a' else ''}", UserWarning
-                    )
                 self._preprocess = cls.load_state_dict(
                     {k: v
                      for k, v in preprocess_state_dict.items() if k != '_meta'},

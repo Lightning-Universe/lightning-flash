@@ -64,12 +64,8 @@ class NumpyPreprocess(Preprocess):
         return {}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls()
-
-    @staticmethod
-    def version() -> str:
-        return "0.0.1"
 
 
 class NumpyDataModule(flash.DataModule):

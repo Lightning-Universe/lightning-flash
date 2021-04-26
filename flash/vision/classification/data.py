@@ -62,10 +62,6 @@ class ImageClassificationPreprocess(Preprocess):
         self.image_size = image_size
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
-    @staticmethod
-    def version() -> str:
-        return "0.0.1"
-
     def get_state_dict(self) -> Dict[str, Any]:
         return {
             "train_transform": self._train_transform,
@@ -76,7 +72,7 @@ class ImageClassificationPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls(**state_dict)
 
     @staticmethod
