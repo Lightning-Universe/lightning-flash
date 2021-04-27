@@ -79,7 +79,7 @@ class VideoClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
-    backbones: FlashRegistry = _VIDEO_CLASSIFIER_MODELS
+    models: FlashRegistry = _VIDEO_CLASSIFIER_MODELS
 
     def __init__(
         self,

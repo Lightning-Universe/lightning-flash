@@ -21,7 +21,7 @@ from torch.utils.data import SequentialSampler
 import flash
 from flash.core.classification import Labels
 from flash.data.utils import download_data
-from flash.core.finetuning import Freeze
+from flash.core.finetuning import NoFreeze
 from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 
@@ -80,7 +80,8 @@ if __name__ == '__main__':
         decode_audio=False,
         train_transform=make_transform(train_post_tensor_transform),
         val_transform=make_transform(),
-        predict_transform=make_transform()
+        predict_transform=make_transform(),
+        num_workers=4,
     )
 
     # 4. List the available models
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 
     # 6. Finetune the model
     trainer = flash.Trainer(max_epochs=20, gpus=2, accelerator="ddp")
-    trainer.finetune(model, datamodule=datamodule, strategy=Freeze(model))
+    trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze)
 
     #trainer.save_checkpoint("video_classification.pt")
     #model = VideoClassifier.load_from_checkpoint("video_classification.pt")
