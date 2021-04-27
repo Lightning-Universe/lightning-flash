@@ -5,13 +5,21 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 from flash.data.auto_dataset import AutoDataset
+from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
+from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
+
+if _MATPLOTLIB_AVAILABLE:
+    import matplotlib.pyplot as plt
+else:
+    plt = None
 
 
 # container to apply augmentations at both image and mask reusing the same parameters
@@ -116,12 +124,20 @@ class SemantincSegmentationPreprocess(Preprocess):
 class SemanticSegmentationData(DataModule):
     """Data module for semantic segmentation tasks."""
 
+    # TODO: figure out if this needed
+    #def __init__(self, **kwargs) -> None:
+    #    super().__init__(**kwargs)
+
     @staticmethod
     def _check_valid_filepaths(filepaths: List[str]):
         if filepaths is not None and (
             not isinstance(filepaths, list) or not all(isinstance(n, str) for n in filepaths)
         ):
             raise MisconfigurationException(f"`filepaths` must be of type List[str]. Got: {filepaths}.")
+
+    @staticmethod
+    def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
+        return _MatplotlibVisualization(*args, **kwargs)
 
     @classmethod
     def from_filepaths(
@@ -144,8 +160,8 @@ class SemanticSegmentationData(DataModule):
         data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
         # val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
-        #**kwargs,
         map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
+        **kwargs,  # TODO: remove and make explicit params
     ) -> 'SemanticSegmentationData':
 
         # verify input data format
@@ -178,5 +194,73 @@ class SemanticSegmentationData(DataModule):
             preprocess=preprocess,
             #seed=seed, # THIS CRASHES
             #val_split=val_split,  # THIS CRASHES
-            #**kwargs  # THIS CRASHES
+            **kwargs,  # TODO: remove and make explicit params
         )
+
+
+class _MatplotlibVisualization(BaseVisualization):
+    """Process and show the image batch and its associated label using matplotlib.
+    """
+    max_cols: int = 4  # maximum number of columns we accept
+    block_viz_window: bool = True  # parameter to allow user to block visualisation windows
+    '''@staticmethod
+    def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
+        out: np.ndarray
+        if isinstance(img, Image.Image):
+            out = np.array(img)
+        elif isinstance(img, torch.Tensor):
+            out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        else:
+            raise TypeError(f"Unknown image type. Got: {type(img)}.")
+        return out'''
+
+    def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
+        # define the image grid
+        cols: int = min(num_samples, self.max_cols)
+        rows: int = num_samples // cols
+
+        if not _MATPLOTLIB_AVAILABLE:
+            raise MisconfigurationException("You need matplotlib to visualise. Please, pip install matplotlib")
+
+        # create figure and set title
+        fig, axs = plt.subplots(rows, cols)
+        fig.suptitle(title)
+
+        for i, ax in enumerate(axs.ravel()):
+            # unpack images and labels
+            if isinstance(data, list):
+                _img, _label = data[i]
+            elif isinstance(data, tuple):
+                imgs, labels = data
+                _img, _label = imgs[i], labels[i]
+            else:
+                raise TypeError(f"Unknown data type. Got: {type(data)}.")
+            # convert images to numpy
+            _img: np.ndarray = self._to_numpy(_img)
+            if isinstance(_label, torch.Tensor):
+                _label = _label.squeeze().tolist()
+            # show image and set label as subplot title
+            ax.imshow(_img)
+            ax.set_title(str(_label))
+            ax.axis('off')
+        plt.show(block=self.block_viz_window)
+
+    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_load_sample"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_pre_tensor_transform"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_to_tensor_transform"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_post_tensor_transform"
+        self._show_images_and_labels(samples, len(samples), win_title)
+
+    def show_per_batch_transform(self, batch: List[Any], running_stage):
+        win_title: str = f"{running_stage} - show_per_batch_transform"
+        self._show_images_and_labels(batch[0], batch[0][0].shape[0], win_title)

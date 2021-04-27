@@ -147,6 +147,8 @@ class TestSemanticSegmentationData:
         assert dm is not None
         assert dm.train_dataloader() is not None
 
+        dm.show_train_batch()
+
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data
