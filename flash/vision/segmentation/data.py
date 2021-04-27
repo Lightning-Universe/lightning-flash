@@ -31,6 +31,7 @@ class SegmentationSequential(nn.Sequential):
     def __init__(self, *args):
         super(SegmentationSequential, self).__init__(*args)
 
+    @torch.no_grad()
     def forward(self, img, mask):
         img_out = img.float()
         mask_out = mask[None].float()
@@ -48,7 +49,7 @@ def to_tensor(self, x):
     return K.utils.image_to_tensor(np.array(x))
 
 
-class SemantincSegmentationPreprocess(Preprocess):
+class SemanticSegmentationPreprocess(Preprocess):
 
     def __init__(
         self,
@@ -58,21 +59,26 @@ class SemantincSegmentationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
-    ) -> 'SemantincSegmentationPreprocess':
+    ) -> 'SemanticSegmentationPreprocess':
         self._map_labels = map_labels
 
         # TODO: implement me
         '''train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform
         )'''
-        augs = SegmentationSequential(
-            K.geometry.Resize((128, 128), interpolation='nearest'),
+        augs_train = SegmentationSequential(
+            K.geometry.Resize(image_size, interpolation='nearest'),
             K.augmentation.RandomHorizontalFlip(p=0.75),
         )
-        train_transform = dict(to_tensor_transform=augs)
+        augs = SegmentationSequential(
+            K.geometry.Resize(image_size, interpolation='nearest'),
+            K.augmentation.RandomHorizontalFlip(p=0.),
+        )
+        augs_pred = nn.Sequential(K.geometry.Resize(image_size, interpolation='nearest'), )
+        train_transform = dict(to_tensor_transform=augs_train)
         val_transform = dict(to_tensor_transform=augs)
         test_transform = dict(to_tensor_transform=augs)
-        predict_transform = dict(to_tensor_transform=augs)
+        predict_transform = dict(to_tensor_transform=augs_pred)
 
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
@@ -87,9 +93,17 @@ class SemantincSegmentationPreprocess(Preprocess):
         return outs
 
     # TODO: is it a problem to load sample directly in tensor. What happens in to_tensor_tranform
-    def load_sample(self, sample: Tuple[str, str]) -> Tuple[torch.Tensor, torch.Tensor]:
-        if not isinstance(sample, tuple):
+    def load_sample(self, sample: Union[str, Tuple[str,
+                                                   str]]) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        if not isinstance(sample, (
+            str,
+            tuple,
+        )):
             raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
+
+        if isinstance(sample, str):  # case for predict
+            return torchvision.io.read_image(sample)
+
         # unpack data paths
         img_path: str = sample[0]
         img_labels_path: str = sample[1]
@@ -103,6 +117,10 @@ class SemantincSegmentationPreprocess(Preprocess):
         return img, img_labels
 
     def to_tensor_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        if isinstance(sample, torch.Tensor):  # case for predict
+            out = sample.float() / 255.  # TODO: define predict transforms
+            return out
+
         if not isinstance(sample, tuple):
             raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
         img, img_labels = sample
@@ -190,11 +208,12 @@ class SemanticSegmentationData(DataModule):
         SemanticSegmentationData._check_valid_filepaths(predict_filepaths)
 
         # create the preprocess objects
-        preprocess = preprocess or SemantincSegmentationPreprocess(
+        preprocess = preprocess or SemanticSegmentationPreprocess(
             train_transform,
             val_transform,
             test_transform,
             predict_transform,
+            image_size=image_size,
             map_labels=map_labels,
         )
 

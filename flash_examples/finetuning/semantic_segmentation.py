@@ -21,7 +21,7 @@ import flash
 from flash.core.classification import Labels
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
-from flash.vision import SemanticSegmentation, SemanticSegmentationData
+from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 
 # 1. Download the data
 # This is a subset of the movie poster genre prediction data set from the paper
@@ -29,49 +29,45 @@ from flash.vision import SemanticSegmentation, SemanticSegmentationData
 # Please consider citing their paper if you use it. More here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
 #download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
 
+# download from: https://www.kaggle.com/kumaresanmanickavelu/lyft-udacity-challenge
+
 # 2. Load the data
-# TODO: define labels maps
-num_classes = 21
+num_classes: int = 21
 
 labels_map = {}
 for i in range(num_classes):
     labels_map[i] = torch.randint(0, 255, (3, ))
 
-ROOT_DIR = '/home/edgar/data/archive/dataA/dataA'
+root_dir = '/home/edgar/data/archive'
+datasets = ['dataA', 'dataB', 'dataC', 'dataD', 'dataE']
 
 
-def load_data(data: str, root: str = '') -> Tuple[List[str], List[str]]:
+def load_data(data_root: str, datasets: List[str]) -> Tuple[List[str], List[str]]:
     images: List[str] = []
     labels: List[str] = []
-
-    rgb_path = os.path.join(ROOT_DIR, "CameraRGB")
-    seg_path = os.path.join(ROOT_DIR, "CameraSeg")
-
-    for fname in os.listdir(rgb_path):
-        images.append(os.path.join(rgb_path, fname))
-        labels.append(os.path.join(seg_path, fname))
-
+    for data in datasets:
+        data_dir = os.path.join(root_dir, data, data)
+        rgb_path = os.path.join(data_dir, "CameraRGB")
+        seg_path = os.path.join(data_dir, "CameraSeg")
+        for fname in os.listdir(rgb_path):
+            images.append(os.path.join(rgb_path, fname))
+            labels.append(os.path.join(seg_path, fname))
     return images, labels
 
 
-train_filepaths, train_labels = load_data('train')
-val_filepaths, val_labels = load_data('val')
-test_filepaths, test_labels = load_data('test')
+train_filepaths, train_labels = load_data(root_dir, datasets[:3])
+val_filepaths, val_labels = load_data(root_dir, datasets[3:4])
+predict_filepaths, predict_labels = load_data(root_dir, datasets[4:5])
 
 datamodule = SemanticSegmentationData.from_filepaths(
     train_filepaths=train_filepaths,
     train_labels=train_labels,
     val_filepaths=val_filepaths,
     val_labels=val_labels,
-    test_filepaths=test_filepaths,
-    test_labels=test_labels,
-    batch_size=16
-    #preprocess=ImageClassificationPreprocess(),
+    batch_size=4,
+    image_size=(300, 400),  # (600, 800)
 )
 datamodule.set_map_labels(labels_map)
-'''datamodule.set_block_viz_window(False)
-datamodule.show_train_batch("load_sample")
-datamodule.set_block_viz_window(True)'''
 datamodule.show_train_batch("load_sample")
 datamodule.show_train_batch("to_tensor_transform")
 
@@ -82,32 +78,62 @@ model = SemanticSegmentation(
 )
 
 # 4. Create the trainer.
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
-
-# 5. Train the model
-trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
-
-# 6a. Predict what's on a few images!
-
-# Serialize predictions as labels.
-'''model.serializer = Labels(genres, multi_label=True)
-
-predictions = model.predict([
-    "data/movie_posters/val/tt0361500.jpg",
-    "data/movie_posters/val/tt0361748.jpg",
-    "data/movie_posters/val/tt0362478.jpg",
-])
-
-print(predictions)
-
-datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/movie_posters/predict/",
-    preprocess=model.preprocess,
+#trainer = flash.Trainer(max_epochs=5, limit_train_batches=1, limit_val_batches=1)
+trainer = flash.Trainer(
+    max_epochs=20,
+    gpus=1,
+    #precision=16,  # why slower ? :)
 )
 
-# 6b. Or generate predictions with a whole folder!
-predictions = trainer.predict(model, datamodule=datamodule)
-print(predictions)'''
+# 5. Train the model
+trainer.finetune(model, datamodule=datamodule, strategy='freeze')
+# TODO: getting error: BrokenPipeError: [Errno 32] Broken pipe
+
+# 6. Predict what's on a few images!
+
+import kornia as K
+import matplotlib.pyplot as plt
+
+from flash.data.process import ProcessState, Serializer
+
+
+class SegmentationLabels(Serializer):
+
+    def __init__(self, map_labels, visualise):
+        super().__init__()
+        self.map_labels = map_labels
+        self.visualise = visualise
+
+    def _labels_to_image(self, img_labels: torch.Tensor) -> torch.Tensor:
+        assert len(img_labels.shape) == 2, img_labels.shape
+        H, W = img_labels.shape
+        out = torch.empty(3, H, W, dtype=torch.uint8)
+        for label_id, label_val in self.map_labels.items():
+            mask = (img_labels == label_id)
+            for i in range(3):
+                out[i].masked_fill_(mask, label_val[i])
+        return out
+
+    def serialize(self, sample: torch.Tensor) -> torch.Tensor:
+        assert len(sample.shape) == 3, sample.shape
+        labels = torch.argmax(sample, dim=-3)  # HxW
+        if self.visualise:
+            labels_vis = self._labels_to_image(labels)
+            labels_vis = K.utils.tensor_to_image(labels_vis)
+            plt.imshow(labels_vis)
+            plt.show()
+        return labels
+
+
+model.serializer = SegmentationLabels(labels_map, visualise=True)
+
+predictions = model.predict([
+    predict_filepaths[0],
+    predict_filepaths[1],
+    predict_filepaths[2],
+], datamodule.data_pipeline)
+
+#print(predictions)
 
 # 7. Save it!
 trainer.save_checkpoint("semantic_segmentation_model.pt")

@@ -72,7 +72,7 @@ class SemanticSegmentation(ClassificationTask):
             backbone_kwargs = {}
 
         # TODO: pretrained to True causes some issues
-        self.backbone = self.backbones.get(backbone)(pretrained=False, num_classes=num_classes, **backbone_kwargs)
+        self.backbone = self.backbones.get(backbone)(pretrained=True, num_classes=num_classes, **backbone_kwargs)
 
     def forward(self, x) -> torch.Tensor:
         return self.backbone(x)['out']  # TODO: find a proper way to get 'out' from registry
