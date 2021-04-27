@@ -90,7 +90,7 @@ class VideoClassifier(ClassificationTask):
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
-        learning_rate: float = 1e-2,
+        learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
     ):
         super().__init__(
@@ -118,19 +118,16 @@ class VideoClassifier(ClassificationTask):
             raise MisconfigurationException(f"model should be either a string or a nn.Module. Found: {model}")
 
         self.head = head or nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
             nn.Linear(num_features, num_classes),
         )
-
-        self.activation = nn.LeakyReLU()
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         return super().step((batch["video"], batch["label"]), batch_idx)
 
     def forward(self, x: Any) -> Any:
         # AssertionError: input for MultiPathWayWithFuse needs to be a list of tensors
-        return self.activation(self.model(x))
+        return self.head(self.model(x))
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         predictions = self(batch["video"])

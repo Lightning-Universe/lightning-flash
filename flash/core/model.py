@@ -325,6 +325,9 @@ class Task(LightningModule):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
+        self._preprocess.state_dict()
+        if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
+            self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
 
     @property
     def preprocess(self) -> Preprocess:
