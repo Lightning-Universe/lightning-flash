@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
-
+import inspect
 import torch
 import torchmetrics
 from pytorch_lightning import LightningModule
@@ -390,6 +390,13 @@ class Task(LightningModule):
         if registry is None:
             return []
         return registry.available_keys()
+
+    @classmethod
+    def get_model_details(cls, key) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+        if registry is None:
+            return []
+        return [v for v in inspect.signature(registry.get(key)).parameters.items()]
 
     @classmethod
     def available_schedulers(cls) -> List[str]:

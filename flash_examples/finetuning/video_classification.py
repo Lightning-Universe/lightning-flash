@@ -70,7 +70,7 @@ datamodule = VideoClassificationData.from_paths(
     clip_duration=1,
     video_sampler=SequentialSampler,
     decode_audio=False,
-    train_transform=make_transform(train_post_tensor_transform, train_per_batch_transform_on_device),
+    train_transform=make_transform(),
     val_transform=make_transform(),
     predict_transform=make_transform()
 )
@@ -78,9 +78,10 @@ datamodule = VideoClassificationData.from_paths(
 # 4. List the available models
 print(VideoClassifier.available_models())
 # out: ['efficient_x3d_s', 'efficient_x3d_xs', ... ,slowfast_r50', 'x3d_m', 'x3d_s', 'x3d_xs']
+print(VideoClassifier.get_model_details("x3d_xs"))
 
-# 5. Build the model
-model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
+# 5. Build the model - `x3d_xs` comes with `nn.Softmax` by default for their `head_activation`.
+model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes, pretrained=False, model_kwargs={"head_activation": None})
 model.serializer = Labels()
 
 # 6. Finetune the model
