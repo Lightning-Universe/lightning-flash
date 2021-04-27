@@ -24,6 +24,8 @@ else:
 
 
 # container to apply augmentations at both image and mask reusing the same parameters
+# TODO: we have to figure out how to decide what transforms are applied to mask
+# For instance, color transforms cannot be applied to masks
 class SegmentationSequential(nn.Sequential):
 
     def __init__(self, *args):
@@ -31,11 +33,15 @@ class SegmentationSequential(nn.Sequential):
 
     def forward(self, img, mask):
         img_out = img.float()
-        mask_out = mask.float()
+        mask_out = mask[None].float()
         for aug in self.children():
             img_out = aug(img_out)
-            mask_out = aug(mask_out, aug._params)
-        return img_out[0], mask_out[0]
+            # some transforms don't have params
+            if hasattr(aug, "_params"):
+                mask_out = aug(mask_out, aug._params)
+            else:
+                mask_out = aug(mask_out)
+        return img_out[0], mask_out[0, 0].long()
 
 
 def to_tensor(self, x):
@@ -60,8 +66,8 @@ class SemantincSegmentationPreprocess(Preprocess):
             train_transform, val_transform, test_transform, predict_transform
         )'''
         augs = SegmentationSequential(
-            # K.augmentation.RandomResizedCrop((128, 128)),
-            K.augmentation.RandomHorizontalFlip(),
+            K.geometry.Resize((128, 128), interpolation='nearest'),
+            K.augmentation.RandomHorizontalFlip(p=0.75),
         )
         train_transform = dict(to_tensor_transform=augs)
         val_transform = dict(to_tensor_transform=augs)
@@ -91,6 +97,8 @@ class SemantincSegmentationPreprocess(Preprocess):
         # load images directly to torch tensors
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
+        # TODO: need to figure best api for this
+        img_labels = img_labels[0]  # HxW
 
         return img, img_labels
 
@@ -256,9 +264,8 @@ class _MatplotlibVisualization(BaseVisualization):
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images and labels to numpy and stack horizontally
-            img_vis: np.ndarray = self._to_numpy(_img)
-            if len(_img_labels.shape) == 2:
-                _img_labels = self._labels_to_image(_img_labels)
+            img_vis: np.ndarray = self._to_numpy(_img.byte())
+            _img_labels = self._labels_to_image(_img_labels.byte())
             img_labels_vis: np.ndarray = self._to_numpy(_img_labels)
             img_vis = np.hstack((img_vis, img_labels_vis))
             # send to visualiser
