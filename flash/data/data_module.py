@@ -28,7 +28,7 @@ from torch.utils.data.dataset import IterableDataset, Subset
 from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
-from flash.data.data_pipeline import DataPipeline, Postprocess, Preprocess
+from flash.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
 from flash.data.splits import SplitDataset
 from flash.data.utils import _STAGES_PREFIX
 
@@ -48,7 +48,7 @@ class DataModule(pl.LightningDataModule):
             or 0 for Darwin platform.
     """
 
-    preprocess_cls = Preprocess
+    preprocess_cls = DefaultPreprocess
     postprocess_cls = Postprocess
 
     def __init__(
@@ -156,6 +156,9 @@ class DataModule(pl.LightningDataModule):
         """
         This function is used to handle transforms profiling for batch visualization.
         """
+        # don't show in CI
+        if os.getenv("FLASH_TESTING", "0") == "1":
+            return None
         iter_name = f"_{stage}_iter"
 
         if not hasattr(self, iter_name):

@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -64,7 +66,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss, metrics=metrics)
+    task = ClassificationTask(model, loss_fn=F.nll_loss, metrics=metrics)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     result = trainer.fit(task, train_dl, val_dl)
     assert result
@@ -88,6 +90,7 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -122,7 +125,7 @@ def test_classification_task_trainer_predict(tmpdir):
 def test_task_datapipeline_save(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss, postprocess=DummyPostprocess())
+    task = ClassificationTask(model, loss_fn=F.nll_loss, postprocess=DummyPostprocess())
 
     # to check later
     task.postprocess.test = True

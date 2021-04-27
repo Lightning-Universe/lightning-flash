@@ -26,7 +26,7 @@ from torch.utils.data._utils.collate import default_collate, default_convert
 
 from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
-from flash.data.process import Postprocess, Preprocess, ProcessState, Serializer
+from flash.data.process import DefaultPreprocess, Postprocess, Preprocess, ProcessState, Serializer
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
@@ -92,7 +92,7 @@ class DataPipeline:
         postprocess: Optional[Postprocess] = None,
         serializer: Optional[Serializer] = None,
     ) -> None:
-        self._preprocess_pipeline = preprocess or Preprocess()
+        self._preprocess_pipeline = preprocess or DefaultPreprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
 
         self._serializer = serializer or Serializer()

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from unittest import mock
 
@@ -31,7 +32,7 @@ from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor
 from flash.data.data_module import DataModule
 from flash.data.data_pipeline import _StageOrchestrator, DataPipeline
-from flash.data.process import Postprocess, Preprocess
+from flash.data.process import DefaultPreprocess, Postprocess, Preprocess
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -56,7 +57,7 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
         def train_dataloader(self) -> Any:
             return DataLoader(DummyDataset())
 
-    class SubPreprocess(Preprocess):
+    class SubPreprocess(DefaultPreprocess):
         pass
 
     class SubPostprocess(Postprocess):
@@ -85,7 +86,7 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 
 def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
 
-    class CustomPreprocess(Preprocess):
+    class CustomPreprocess(DefaultPreprocess):
 
         def load_data(self, *_, **__):
             pass
@@ -231,7 +232,7 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert predict_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
 
-class CustomPreprocess(Preprocess):
+class CustomPreprocess(DefaultPreprocess):
 
     def train_per_sample_transform(self, *_, **__):
         pass
@@ -306,7 +307,7 @@ def test_detach_preprocessing_from_model(tmpdir):
     assert model.train_dataloader().collate_fn == default_collate
 
 
-class TestPreprocess(Preprocess):
+class TestPreprocess(DefaultPreprocess):
 
     def train_per_sample_transform(self, *_, **__):
         pass
@@ -338,7 +339,7 @@ class TestPreprocess(Preprocess):
 
 def test_attaching_datapipeline_to_model(tmpdir):
 
-    class SubPreprocess(Preprocess):
+    class SubPreprocess(DefaultPreprocess):
         pass
 
     preprocess = SubPreprocess()
@@ -511,7 +512,7 @@ class LamdaDummyDataset(torch.utils.data.Dataset):
         return 5
 
 
-class TestPreprocessTransformations(Preprocess):
+class TestPreprocessTransformations(DefaultPreprocess):
 
     def __init__(self):
         super().__init__()
@@ -718,7 +719,7 @@ def test_datapipeline_transformations(tmpdir):
 
 def test_is_overriden_recursive(tmpdir):
 
-    class TestPreprocess(Preprocess):
+    class TestPreprocess(DefaultPreprocess):
 
         def collate(self, *_):
             pass
@@ -740,7 +741,7 @@ def test_is_overriden_recursive(tmpdir):
 @mock.patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
 
-    class ImageClassificationPreprocess(Preprocess):
+    class ImageClassificationPreprocess(DefaultPreprocess):
 
         def __init__(self, to_tensor_transform, train_per_sample_transform_on_device):
             super().__init__()
@@ -834,12 +835,12 @@ def test_preprocess_transforms(tmpdir):
     """
 
     with pytest.raises(MisconfigurationException, match="Transform should be a dict."):
-        Preprocess(train_transform="choco")
+        DefaultPreprocess(train_transform="choco")
 
     with pytest.raises(MisconfigurationException, match="train_transform contains {'choco'}. Only"):
-        Preprocess(train_transform={"choco": None})
+        DefaultPreprocess(train_transform={"choco": None})
 
-    preprocess = Preprocess(train_transform={"to_tensor_transform": torch.nn.Linear(1, 1)})
+    preprocess = DefaultPreprocess(train_transform={"to_tensor_transform": torch.nn.Linear(1, 1)})
     # keep is None
     assert preprocess._train_collate_in_worker_from_transform is True
     assert preprocess._val_collate_in_worker_from_transform is None
@@ -847,14 +848,14 @@ def test_preprocess_transforms(tmpdir):
     assert preprocess._predict_collate_in_worker_from_transform is None
 
     with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
-        preprocess = Preprocess(
+        preprocess = DefaultPreprocess(
             train_transform={
                 "per_batch_transform": torch.nn.Linear(1, 1),
                 "per_sample_transform_on_device": torch.nn.Linear(1, 1)
             }
         )
 
-    preprocess = Preprocess(
+    preprocess = DefaultPreprocess(
         train_transform={"per_batch_transform": torch.nn.Linear(1, 1)},
         predict_transform={"per_sample_transform_on_device": torch.nn.Linear(1, 1)}
     )
@@ -874,7 +875,7 @@ def test_preprocess_transforms(tmpdir):
     assert test_preprocessor.collate_fn.func == default_collate
     assert predict_preprocessor.collate_fn.func == DataPipeline._identity
 
-    class CustomPreprocess(Preprocess):
+    class CustomPreprocess(DefaultPreprocess):
 
         def per_sample_transform_on_device(self, sample: Any) -> Any:
             return super().per_sample_transform_on_device(sample)
@@ -907,7 +908,7 @@ def test_preprocess_transforms(tmpdir):
 
 def test_iterable_auto_dataset(tmpdir):
 
-    class CustomPreprocess(Preprocess):
+    class CustomPreprocess(DefaultPreprocess):
 
         def load_sample(self, index: int) -> Dict[str, int]:
             return {"index": index}
@@ -918,3 +919,32 @@ def test_iterable_auto_dataset(tmpdir):
 
     for index, v in enumerate(ds):
         assert v == {"index": index}
+
+
+class CustomPreprocessHyperparameters(DefaultPreprocess):
+
+    def __init__(self, token: str, *args, **kwargs):
+        self.token = token
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def load_from_state_dict(cls, state_dict: Dict[str, Any]):
+        return cls(state_dict["token"])
+
+    def state_dict(self) -> Dict[str, Any]:
+        return {"token": self.token}
+
+
+def local_fn(x):
+    return x
+
+
+def test_save_hyperparemeters(tmpdir):
+
+    kwargs = {"train_transform": {"pre_tensor_transform": local_fn}}
+    preprocess = CustomPreprocessHyperparameters("token", **kwargs)
+    state_dict = preprocess.state_dict()
+    torch.save(state_dict, os.path.join(tmpdir, "state_dict.pt"))
+    state_dict = torch.load(os.path.join(tmpdir, "state_dict.pt"))
+    preprocess = CustomPreprocessHyperparameters.load_from_state_dict(state_dict)
+    assert isinstance(preprocess, CustomPreprocessHyperparameters)

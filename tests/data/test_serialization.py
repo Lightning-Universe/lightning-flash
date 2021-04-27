@@ -22,7 +22,7 @@ from torch.utils.data.dataloader import DataLoader
 
 from flash.core import Task
 from flash.data.data_pipeline import DataPipeline
-from flash.data.process import Preprocess
+from flash.data.process import DefaultPreprocess
 
 
 class CustomModel(Task):
@@ -31,7 +31,7 @@ class CustomModel(Task):
         super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
 
-class CustomPreprocess(Preprocess):
+class CustomPreprocess(DefaultPreprocess):
 
     @classmethod
     def load_data(cls, data):
@@ -54,11 +54,18 @@ def test_serialization_data_pipeline(tmpdir):
     assert loaded_model.data_pipeline
 
     model.data_pipeline = DataPipeline(CustomPreprocess())
+    assert isinstance(model.preprocess, CustomPreprocess)
 
     trainer.fit(model, dummy_data)
     assert model.data_pipeline
     assert isinstance(model.preprocess, CustomPreprocess)
     trainer.save_checkpoint(checkpoint_file)
+
+    def fn(*args, **kwargs):
+        return "0.0.2"
+
+    CustomPreprocess.version = fn
+
     loaded_model = CustomModel.load_from_checkpoint(checkpoint_file)
     assert loaded_model.data_pipeline
     assert isinstance(loaded_model.preprocess, CustomPreprocess)
