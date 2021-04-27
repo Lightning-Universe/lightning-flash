@@ -79,7 +79,7 @@ class VideoClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
-    models: FlashRegistry = _VIDEO_CLASSIFIER_MODELS
+    backbones: FlashRegistry = _VIDEO_CLASSIFIER_MODELS
 
     def __init__(
         self,
@@ -127,7 +127,10 @@ class VideoClassifier(ClassificationTask):
 
     def forward(self, x: Any) -> Any:
         # AssertionError: input for MultiPathWayWithFuse needs to be a list of tensors
-        return self.head(self.model(x))
+        x = self.model(x)
+        if  self.head is not None:
+            x = self.head(x)
+        return x
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         predictions = self(batch["video"])
