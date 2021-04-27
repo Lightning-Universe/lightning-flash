@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
@@ -123,6 +122,8 @@ class VideoClassifier(ClassificationTask):
             nn.Flatten(),
             nn.Linear(num_features, num_classes),
         )
+
+        self.activation = nn.LeakyReLU()
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         return super().step((batch["video"], batch["label"]), batch_idx)

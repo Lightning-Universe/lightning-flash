@@ -69,9 +69,9 @@ def make_transform(
 
 # 3. Load the data from directories.
 datamodule = VideoClassificationData.from_paths(
-    train_data_path=os.path.join(_PATH_ROOT, "data/kinetics/train"),
-    val_data_path=os.path.join(_PATH_ROOT, "data/kinetics/val"),
-    predict_data_path=os.path.join(_PATH_ROOT, "data/kinetics/predict"),
+    train_data_path=os.path.join(_PATH_ROOT, "flash_examples/finetuning/data/kinetics/train"),
+    val_data_path=os.path.join(_PATH_ROOT, "flash_examples/finetuning/data/kinetics/val"),
+    predict_data_path=os.path.join(_PATH_ROOT, "flash_examples/finetuning/data/kinetics/predict"),
     clip_sampler="uniform",
     clip_duration=1,
     video_sampler=SequentialSampler,
@@ -91,14 +91,13 @@ model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes)
 model.serializer = Labels()
 
 # 6. Finetune the model
-trainer = flash.Trainer(max_epochs=10, gpus=1, accelerator="ddp")
+trainer = flash.Trainer(max_epochs=1, fast_dev_run=2, gpus=0)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
-
 
 trainer.save_checkpoint("video_classification.pt")
 model = VideoClassifier.load_from_checkpoint("video_classification.pt")
 
 # 7. Make a prediction
-val_folder = os.path.join(_PATH_ROOT, "data/kinetics/predict")
+val_folder = os.path.join(_PATH_ROOT, os.path.join(_PATH_ROOT, "flash_examples/finetuning/data/kinetics/predict"))
 predictions = model.predict([os.path.join(val_folder, f) for f in os.listdir(val_folder)])
 print(predictions)
