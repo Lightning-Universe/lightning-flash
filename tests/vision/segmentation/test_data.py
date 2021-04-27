@@ -10,14 +10,21 @@ from flash import Trainer
 from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemantincSegmentationPreprocess
 
 
+def build_checkboard(n, m, k=8):
+    x = np.zeros((n, m))
+    x[k::k * 2, ::k] = 1
+    x[::k * 2, k::k * 2] = 1
+    return x
+
+
 def _rand_image(size: Tuple[int, int]):
-    data: np.ndarray = np.random.randint(0, 255, (*size, 3), dtype="uint8")
+    data = build_checkboard(*size).astype(np.uint8)[..., None].repeat(3, -1)
     return Image.fromarray(data)
 
 
 # usually labels come as rgb images -> need to map to labels
 def _rand_labels(size: Tuple[int, int], map_labels: Dict[int, Tuple[int, int, int]] = None):
-    data: np.ndarray = np.random.rand(*size, 3)
+    data: np.ndarray = np.random.rand(*size, 3) / .5
     if map_labels is not None:
         data_bin = (data.mean(-1) > 0.5)
         for k, v in map_labels.items():
@@ -147,7 +154,14 @@ class TestSemanticSegmentationData:
         assert dm is not None
         assert dm.train_dataloader() is not None
 
-        dm.show_train_batch()
+        # disable visualisation for testing
+        assert dm.data_fetcher.block_viz_window is True
+        dm.set_block_viz_window(False)
+        assert dm.data_fetcher.block_viz_window is False
+
+        dm.set_map_labels(map_labels)
+        dm.show_train_batch("load_sample")
+        dm.show_train_batch("to_tensor_transform")
 
         # check training data
         data = next(iter(dm.train_dataloader()))
