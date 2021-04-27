@@ -338,11 +338,6 @@ class Preprocess(BasePreprocess, Properties, Module):
         preprocess_state_dict["_meta"]["module"] = self.__module__
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
         preprocess_state_dict["_meta"]["_state"] = self._state
-        try:
-            commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
-        except subprocess.CalledProcessError:
-            commit_sha = "n/a"
-        preprocess_state_dict["_meta"]["commit_sha"] = commit_sha
         destination['preprocess.state_dict'] = preprocess_state_dict
         return super()._save_to_state_dict(destination, prefix, keep_vars)
 
