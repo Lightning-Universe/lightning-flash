@@ -13,21 +13,16 @@
 # limitations under the License.
 import os
 import pathlib
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
-from torch.nn import Module
-from torch.utils.data import Dataset, RandomSampler, Sampler
-from torch.utils.data._utils.collate import default_collate
+from torch.utils.data import RandomSampler, Sampler
 from torch.utils.data.dataset import IterableDataset
-from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
-from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.data_pipeline import DataPipeline
+from flash.core.classification import ClassificationState
 from flash.data.process import Preprocess
 from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
@@ -108,6 +103,8 @@ class VideoClassificationPreprocess(Preprocess):
             decoder=self.decoder,
         )
         if self.training:
+            label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in ds._labeled_videos._paths_and_labels}
+            self.set_state(ClassificationState(label_to_class_mapping))
             dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
         return ds
 

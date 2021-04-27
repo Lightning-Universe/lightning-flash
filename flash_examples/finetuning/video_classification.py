@@ -81,11 +81,10 @@ print(VideoClassifier.available_models())
 
 # 5. Build the model
 model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
-
 model.serializer = Labels()
 
 # 6. Finetune the model
-trainer = flash.Trainer(max_epochs=2, gpus=2, accelerator="ddp", limit_train_batches=4, limit_val_batches=4)
+trainer = flash.Trainer(max_epochs=10, gpus=2, accelerator="ddp")
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
 # 7. Make a prediction
