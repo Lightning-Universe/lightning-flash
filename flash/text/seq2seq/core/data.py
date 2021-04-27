@@ -57,6 +57,20 @@ class Seq2SeqPreprocess(Preprocess):
             padding=self.padding
         )
 
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {
+            "input": self.input,
+            "backbone": self.backbone,
+            "max_length": self.max_length,
+            "target": self.target,
+            "filetype": self.filetype,
+            "label_to_class_mapping": self.label_to_class_mapping,
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
+
     @staticmethod
     def _tokenize_fn(
         ex,

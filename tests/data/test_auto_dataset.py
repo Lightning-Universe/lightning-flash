@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List
+from typing import Any, Dict, List
 
 import pytest
 from pytorch_lightning.trainer.states import RunningStage
@@ -35,6 +35,8 @@ class _AutoDatasetTestPreprocess(Preprocess):
         self.train_load_sample_with_dataset_count = 0
         self.train_load_sample_count = 0
 
+        self.with_dset = with_dset
+
         if with_dset:
             self.load_data = self.load_data_with_dataset
             self.load_sample = self.load_sample_with_dataset
@@ -45,6 +47,13 @@ class _AutoDatasetTestPreprocess(Preprocess):
             self.load_sample = self.load_sample_no_dset
             self.train_load_data = self.train_load_data_no_dset
             self.train_load_sample = self.train_load_sample_no_dset
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {"with_dset": self.with_dset}
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return _AutoDatasetTestPreprocess(state_dict["with_dset"])
 
     def load_data_no_dset(self, data):
         self.load_data_count += 1

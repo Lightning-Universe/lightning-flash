@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 import inspect
 import torch
@@ -19,6 +20,7 @@ import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -171,7 +173,8 @@ class Task(LightningModule):
 
         x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
-        x = self.transfer_batch_to_device(x, self.device)
+        # switch to self.device when #7188 merge in Lightning
+        x = self.transfer_batch_to_device(x, next(self.parameters()).device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(running_stage)(predictions)
@@ -456,4 +459,30 @@ class Task(LightningModule):
         raise MisconfigurationException(
             "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
             f"or a built-in scheduler in {self.available_schedulers()}"
+        )
+
+    def _load_from_state_dict(
+        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
+    ):
+        if 'preprocess.state_dict' in state_dict:
+            try:
+                preprocess_state_dict = state_dict["preprocess.state_dict"]
+                meta = preprocess_state_dict["_meta"]
+                cls = getattr(import_module(meta["module"]), meta["class_name"])
+                self._preprocess = cls.load_state_dict(
+                    {k: v
+                     for k, v in preprocess_state_dict.items() if k != '_meta'},
+                    strict=strict,
+                )
+                self._preprocess._state = meta["_state"]
+                del state_dict["preprocess.state_dict"]
+                del preprocess_state_dict["_meta"]
+            except (ModuleNotFoundError, KeyError):
+                meta = state_dict["preprocess.state_dict"]["_meta"]
+                raise MisconfigurationException(
+                    f"The `Preprocess` {meta['module']}.{meta['class_name']} has been moved and couldn't be imported."
+                )
+
+        super()._load_from_state_dict(
+            state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
         )

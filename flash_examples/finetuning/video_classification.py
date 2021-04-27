@@ -13,15 +13,16 @@
 # limitations under the License.
 import os
 import sys
-from typing import List, Callable
+from typing import Callable, List
+
 import torch
 from torch.utils.data import SequentialSampler
 
 import flash
+from flash.core.classification import Labels
 from flash.data.utils import download_data
 from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
-from flash.core.classification import Labels
 
 if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -39,13 +40,18 @@ download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
 # 2. [Optional] Specify transforms to be used during training.
 # Flash helps you to place your transform exactly where you want.
 # Learn more at https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.data.process.Preprocess
-base_post_tensor_transform = [UniformTemporalSubsample(8), RandomShortSideScale(min_size=256, max_size=320), RandomCrop(244)]
-base_per_batch_transform_on_device = [K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225]))]
+post_tensor_transform = [UniformTemporalSubsample(8), RandomShortSideScale(min_size=256, max_size=320), RandomCrop(244)]
+per_batch_transform_on_device = [K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225]))]
 
-train_post_tensor_transform = base_post_tensor_transform + [RandomHorizontalFlip(p=0.5)]
-train_per_batch_transform_on_device = base_per_batch_transform_on_device + [K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0)]
+train_post_tensor_transform = post_tensor_transform + [RandomHorizontalFlip(p=0.5)]
+train_per_batch_transform_on_device = per_batch_transform_on_device
+train_per_batch_transform_on_device += [K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0)]
 
-def make_transform(post_tensor_transform: List[Callable] = base_post_tensor_transform, per_batch_transform_on_device: List[Callable] = base_per_batch_transform_on_device):
+
+def make_transform(
+    post_tensor_transform: List[Callable] = post_tensor_transform,
+    per_batch_transform_on_device: List[Callable] = per_batch_transform_on_device
+):
     return {
         "post_tensor_transform": Compose([
             ApplyTransformToKey(
@@ -60,6 +66,7 @@ def make_transform(post_tensor_transform: List[Callable] = base_post_tensor_tran
             ),
         ]),
     }
+
 
 # 3. Load the data from directories.
 datamodule = VideoClassificationData.from_paths(
