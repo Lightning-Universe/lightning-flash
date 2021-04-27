@@ -93,6 +93,22 @@ class VideoClassificationPreprocess(Preprocess):
         self.decode_audio = decode_audio
         self.decoder = decoder
 
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {
+            'clip_sampler': self.clip_sampler,
+            'video_sampler': self.video_sampler,
+            'decode_audio': self.decode_audio,
+            'decoder': self.decoder,
+            'train_transform': self._train_transform,
+            'val_transform': self._val_transform,
+            'test_transform': self._test_transform,
+            'predict_transform': self._predict_transform,
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool) -> 'VideoClassificationPreprocess':
+        return cls(**state_dict)
+
     def load_data(self, data: Any, dataset: IterableDataset) -> 'EncodedVideoDataset':
         ds: EncodedVideoDataset = labeled_encoded_video_dataset(
             data,
@@ -168,6 +184,7 @@ class VideoClassificationPreprocess(Preprocess):
 
     def per_batch_transform_on_device(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)
+        
 
 
 class VideoClassificationData(DataModule):

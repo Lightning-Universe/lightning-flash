@@ -45,7 +45,6 @@ per_batch_transform_on_device = [K.Normalize(torch.tensor([0.45, 0.45, 0.45]), t
 
 train_post_tensor_transform = post_tensor_transform + [RandomHorizontalFlip(p=0.5)]
 train_per_batch_transform_on_device = per_batch_transform_on_device
-train_per_batch_transform_on_device += [K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0)]
 
 
 def make_transform(
@@ -77,7 +76,7 @@ datamodule = VideoClassificationData.from_paths(
     clip_duration=1,
     video_sampler=SequentialSampler,
     decode_audio=False,
-    train_transform=make_transform(),
+    train_transform=make_transform(train_post_tensor_transform),
     val_transform=make_transform(),
     predict_transform=make_transform()
 )
@@ -88,12 +87,16 @@ print(VideoClassifier.available_models())
 print(VideoClassifier.get_model_details("x3d_xs"))
 
 # 5. Build the model - `x3d_xs` comes with `nn.Softmax` by default for their `head_activation`.
-model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes, pretrained=False, model_kwargs={"head_activation": None})
+model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes)
 model.serializer = Labels()
 
 # 6. Finetune the model
-trainer = flash.Trainer(max_epochs=10, gpus=2, accelerator="ddp")
-trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
+trainer = flash.Trainer(max_epochs=10, gpus=1, accelerator="ddp")
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+
+
+trainer.save_checkpoint("video_classification.pt")
+model = VideoClassifier.load_from_checkpoint("video_classification.pt")
 
 # 7. Make a prediction
 val_folder = os.path.join(_PATH_ROOT, "data/kinetics/predict")

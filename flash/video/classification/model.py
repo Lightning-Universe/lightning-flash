@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import types
+from types import FunctionType
+
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
@@ -35,7 +36,7 @@ if _PYTORCHVIDEO_AVAILABLE:
     for fn_name in dir(hub):
         if "__" not in fn_name:
             fn = getattr(hub, fn_name)
-            if isinstance(fn, types.FunctionType):
+            if isinstance(fn, FunctionType):
                 _VIDEO_CLASSIFIER_MODELS(fn=fn)
 
 
@@ -91,6 +92,7 @@ class VideoClassifier(ClassificationTask):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-2,
+        head: Optional[Union[FunctionType, nn.Module]] = None,
     ):
         super().__init__(
             model=None,
@@ -106,16 +108,21 @@ class VideoClassifier(ClassificationTask):
             model_kwargs = {}
 
         model_kwargs["pretrained"] = pretrained
-        model_kwargs["model_num_class"] = num_classes
+        model_kwargs["head_activation"] = None
 
         if isinstance(model, nn.Module):
             self.model = model
         elif isinstance(model, str):
             self.model = self.models.get(model)(**model_kwargs)
+            num_features = self.model.blocks[-1].proj.out_features
         else:
             raise MisconfigurationException(f"model should be either a string or a nn.Module. Found: {model}")
 
-        self.activation = nn.LeakyReLU()
+        self.head = head or nn.Sequential(
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(num_features, num_classes),
+        )
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         return super().step((batch["video"], batch["label"]), batch_idx)

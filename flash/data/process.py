@@ -11,14 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
 import os
-import subprocess
-from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod, abstractproperty, abstractstaticmethod
+from abc import ABC, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
-from importlib import import_module
-from operator import truediv
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
