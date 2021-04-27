@@ -21,8 +21,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import RandomSampler, Sampler
 from torch.utils.data.dataset import IterableDataset
 
-from flash.data.data_module import DataModule
 from flash.core.classification import ClassificationState
+from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
@@ -37,7 +37,6 @@ if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
     from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
-    from torchvision.transforms import Compose
 else:
     ClipSampler, EncodedVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
