@@ -59,7 +59,21 @@ class ImageClassificationPreprocess(Preprocess):
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform, image_size
         )
+        self.image_size = image_size
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {
+            "train_transform": self._train_transform,
+            "val_transform": self._val_transform,
+            "test_transform": self._test_transform,
+            "predict_transform": self._predict_transform,
+            "image_size": self.image_size
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
 
     @staticmethod
     def _find_classes(dir: str) -> Tuple:

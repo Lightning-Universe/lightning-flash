@@ -46,9 +46,9 @@ model = ImageClassifier.load_from_checkpoint(
 
 # 4a. Predict the genres of a few movie posters!
 predictions = model.predict([
-    "data/movie_posters/val/tt0086873.jpg",
-    "data/movie_posters/val/tt0088247.jpg",
-    "data/movie_posters/val/tt0088930.jpg",
+    "data/movie_posters/predict/tt0085318.jpg",
+    "data/movie_posters/predict/tt0089461.jpg",
+    "data/movie_posters/predict/tt0097179.jpg",
 ])
 print(predictions)
 
@@ -63,5 +63,4 @@ predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Show some data (unless we're just testing)!
-if os.getenv("FLASH_TESTING", "0") == "0":
-    datamodule.show_predict_batch("per_batch_transform")
+datamodule.show_predict_batch("per_batch_transform")
