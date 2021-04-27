@@ -11,77 +11,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from sklearn.model_selection import train_test_split
+from torch.utils.data import Dataset
 
+from flash.core.classification import ClassificationState
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
-from flash.data.process import Preprocess, PreprocessState
+from flash.data.process import Preprocess
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
-    _dfs_to_samples,
     _generate_codes,
-    _impute,
     _pre_transform,
     _to_cat_vars_numpy,
     _to_num_vars_numpy,
-    PandasDataset,
 )
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class TabularState(PreprocessState):
-    cat_cols: List[str]  # categorical columns used for training
-    num_cols: List[str]  # numerical columns used for training
-    target_col: str  # target column name used for training
-    mean: DataFrame  # mean DataFrame for categorical columsn on train DataFrame
-    std: DataFrame  # std DataFrame for categorical columsn on train DataFrame
-    codes: Dict  # codes for numerical columns used for training
-    target_codes: Dict  # target codes for target used for training
-    num_classes: int  # number of classes used for training
-    is_regression: bool  # whether the task was a is_regression
 
 
 class TabularPreprocess(Preprocess):
 
     def __init__(
         self,
-        cat_cols: List[str],
-        num_cols: List[str],
-        target_col: str,
-        mean: DataFrame,
-        std: DataFrame,
-        codes: Dict,
-        target_codes: Dict,
-        num_classes: int,
-        is_regression: bool = False,
-    ):
-        super().__init__()
-        self.cat_cols = cat_cols
-        self.num_cols = num_cols
-        self.target_col = target_col
-        self.mean = mean
-        self.std = std
-        self.codes = codes
-        self.target_codes = target_codes
-        self.num_classes = num_classes
-        self.is_regression = is_regression
-
-    @property
-    def state(self) -> TabularState:
-        return TabularState(
-            self.cat_cols, self.num_cols, self.target_col, self.mean, self.std, self.codes, self.target_codes,
-            self.num_classes, self.is_regression
-        )
-
-    @staticmethod
-    def generate_state(
         train_df: DataFrame,
         val_df: Optional[DataFrame],
         test_df: Optional[DataFrame],
@@ -90,13 +45,10 @@ class TabularPreprocess(Preprocess):
         num_cols: List[str],
         cat_cols: List[str],
         is_regression: bool,
-        preprocess_state: Optional[TabularState] = None
     ):
-        if preprocess_state is not None:
-            return preprocess_state
-
+        super().__init__()
         if train_df is None:
-            raise MisconfigurationException("train_df is required to compute the preprocess state")
+            raise MisconfigurationException("train_df is required to instantiate the TabularPreprocess")
 
         dfs = [train_df]
 
@@ -110,7 +62,9 @@ class TabularPreprocess(Preprocess):
             dfs += [predict_df]
 
         mean, std = _compute_normalization(dfs[0], num_cols)
-        num_classes = len(dfs[0][target_col].unique())
+        classes = dfs[0][target_col].unique()
+        self.set_state(ClassificationState(classes))
+        num_classes = len(classes)
         if dfs[0][target_col].dtype == object:
             # if the target_col is a category, not an int
             target_codes = _generate_codes(dfs, [target_col])
@@ -118,17 +72,15 @@ class TabularPreprocess(Preprocess):
             target_codes = None
         codes = _generate_codes(dfs, cat_cols)
 
-        return TabularState(
-            cat_cols,
-            num_cols,
-            target_col,
-            mean,
-            std,
-            codes,
-            target_codes,
-            num_classes,
-            is_regression,
-        )
+        self.cat_cols = cat_cols
+        self.num_cols = num_cols
+        self.target_col = target_col
+        self.mean = mean
+        self.std = std
+        self.codes = codes
+        self.target_codes = target_codes
+        self.num_classes = num_classes
+        self.is_regression = is_regression
 
     def common_load_data(self, df: DataFrame, dataset: AutoDataset):
         # impute_data
@@ -162,29 +114,41 @@ class TabularData(DataModule):
 
     preprocess_cls = TabularPreprocess
 
-    @property
-    def preprocess_state(self) -> PreprocessState:
-        return self._preprocess.state
+    def __init__(
+        self,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        batch_size: int = 1,
+        num_workers: Optional[int] = 0,
+    ) -> None:
+        super().__init__(
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
 
-    @preprocess_state.setter
-    def preprocess_state(self, preprocess_state):
-        self._preprocess = self.preprocess_cls.from_state(preprocess_state)
+        self._preprocess: Optional[Preprocess] = None
 
     @property
     def codes(self) -> Dict[str, str]:
-        return self.preprocess_state.codes
+        return self._preprocess.codes
 
     @property
     def num_classes(self) -> int:
-        return self.preprocess_state.num_classes
+        return self._preprocess.num_classes
 
     @property
     def cat_cols(self) -> Optional[List[str]]:
-        return self.preprocess_state.cat_cols
+        return self._preprocess.cat_cols
 
     @property
     def num_cols(self) -> Optional[List[str]]:
-        return self.preprocess_state.num_cols
+        return self._preprocess.num_cols
 
     @property
     def num_features(self) -> int:
@@ -204,8 +168,7 @@ class TabularData(DataModule):
         num_workers: Optional[int] = None,
         val_size: Optional[float] = None,
         test_size: Optional[float] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
-        preprocess_state: Optional[TabularState] = None,
+        preprocess: Optional[Preprocess] = None,
         **pandas_kwargs,
     ):
         """Creates a TextClassificationData object from pandas DataFrames.
@@ -223,8 +186,7 @@ class TabularData(DataModule):
                 or 0 for Darwin platform.
             val_size: Float between 0 and 1 to create a validation dataset from train dataset.
             test_size: Float between 0 and 1 to create a test dataset from train validation.
-            preprocess_cls: Preprocess class to be used within this DataModule DataPipeline.
-            preprocess_state: Used to store the train statistics.
+            preprocess: Preprocess to be used within this DataModule DataPipeline.
 
         Returns:
             TabularData: The constructed data module.
@@ -250,8 +212,7 @@ class TabularData(DataModule):
             num_workers,
             val_size,
             test_size,
-            preprocess_state=preprocess_state,
-            preprocess_cls=preprocess_cls,
+            preprocess=preprocess,
         )
 
     @property
@@ -306,8 +267,7 @@ class TabularData(DataModule):
         val_size: float = None,
         test_size: float = None,
         is_regression: bool = False,
-        preprocess_state: Optional[TabularState] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
+        preprocess: Optional[Preprocess] = None,
     ):
         """Creates a TabularData object from pandas DataFrames.
 
@@ -324,6 +284,7 @@ class TabularData(DataModule):
                 or 0 for Darwin platform.
             val_size: Float between 0 and 1 to create a validation dataset from train dataset.
             test_size: Float between 0 and 1 to create a test dataset from train validation.
+            preprocess: Preprocess to be used within this DataModule DataPipeline.
 
         Returns:
             TabularData: The constructed data module.
@@ -336,9 +297,7 @@ class TabularData(DataModule):
 
         train_df, val_df, test_df = cls._split_dataframe(train_df, val_df, test_df, val_size, test_size)
 
-        preprocess_cls = preprocess_cls or cls.preprocess_cls
-
-        preprocess_state = preprocess_cls.generate_state(
+        preprocess = preprocess or cls.preprocess_cls(
             train_df,
             val_df,
             test_df,
@@ -347,9 +306,7 @@ class TabularData(DataModule):
             numerical_cols,
             categorical_cols,
             is_regression,
-            preprocess_state=preprocess_state
         )
-        preprocess: Preprocess = preprocess_cls.from_state(preprocess_state)
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_df,

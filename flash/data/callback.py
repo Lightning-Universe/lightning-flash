@@ -102,7 +102,7 @@ class BaseDataFetcher(FlashCallback):
                 test_data: Any,
                 predict_data: Any) -> "CustomDataModule":
 
-                preprocess = cls.preprocess_cls()
+                preprocess = CustomPreprocess()
 
                 return cls.from_load_data_inputs(
                     train_load_data_input=train_data,

@@ -1,3 +1,4 @@
+.DS_Store
 .lock
 lightning_logs
 
@@ -150,3 +151,4 @@ coco128
 wmt_en_ro
 action_youtube_naudio
 kinetics
+movie_posters

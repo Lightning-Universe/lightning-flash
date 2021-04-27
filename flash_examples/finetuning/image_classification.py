@@ -16,6 +16,7 @@ from torch import nn
 
 import flash
 from flash import Trainer
+from flash.core.classification import Labels
 from flash.core.finetuning import FreezeUnfreeze
 from flash.data.utils import download_data
 from flash.vision import ImageClassificationData, ImageClassifier
@@ -56,6 +57,10 @@ trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
 
 # 7a. Predict what's on a few images! ants or bees?
+
+# Serialize predictions as lables, automatically inferred from the training data in part 2.
+model.serializer = Labels()
+
 predictions = model.predict([
     "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
     "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
@@ -64,7 +69,10 @@ predictions = model.predict([
 
 print(predictions)
 
-datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
+datamodule = ImageClassificationData.from_folders(
+    predict_folder="data/hymenoptera_data/predict/",
+    preprocess=model.preprocess,
+)
 
 # 7b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)

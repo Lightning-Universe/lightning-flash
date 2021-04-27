@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -26,11 +26,46 @@ from flash.data.batch import default_uncollate
 from flash.data.callback import FlashCallback
 from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules
 
+if TYPE_CHECKING:
+    from flash.data.data_pipeline import DataPipelineState
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class ProcessState:
+    """
+    Base class for all process states
+    """
+    pass
+
+
+STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
+
 
 class Properties:
 
-    _running_stage: Optional[RunningStage] = None
-    _current_fn: Optional[str] = None
+    def __init__(self):
+        super().__init__()
+
+        self._running_stage: Optional[RunningStage] = None
+        self._current_fn: Optional[str] = None
+        self._data_pipeline_state: Optional['DataPipelineState'] = None
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+
+    def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        else:
+            return None
+
+    def set_state(self, state: ProcessState):
+        self._state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        self._data_pipeline_state = data_pipeline_state
+        for state in self._state.values():
+            self._data_pipeline_state.set_state(state)
 
     @property
     def current_fn(self) -> Optional[str]:
@@ -91,14 +126,6 @@ class Properties:
             self._running_stage = RunningStage.VALIDATING
         elif self.validating:
             self._running_stage = None
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class PreprocessState:
-    """
-    Base class for all preprocess states
-    """
-    pass
 
 
 class Preprocess(Properties, Module):
@@ -351,10 +378,6 @@ class Preprocess(Properties, Module):
         else:
             return self._identity
 
-    @classmethod
-    def from_state(cls, state: PreprocessState) -> 'Preprocess':
-        return cls(**vars(state))
-
     @property
     def callbacks(self) -> List['FlashCallback']:
         if not hasattr(self, "_callbacks"):
@@ -483,3 +506,57 @@ class Postprocess(Properties, Module):
 
     def _save_sample(self, sample: Any) -> None:
         self.save_sample(sample, self.format_sample_save_path(self._save_path))
+
+
+class Serializer(Properties):
+    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model ouptut into
+    the desired output format when predicting."""
+
+    def __init__(self):
+        super().__init__()
+        self._is_enabled = True
+
+    def enable(self):
+        """Enable serialization."""
+        self._is_enabled = True
+
+    def disable(self):
+        """Disable serialization."""
+        self._is_enabled = False
+
+    def serialize(self, sample: Any) -> Any:
+        """Serialize the given sample into the desired output format.
+
+        Args:
+            sample: The output from the :class:`.Postprocess`.
+
+        Returns:
+            The serialized output.
+        """
+        return sample
+
+    def __call__(self, sample: Any) -> Any:
+        if self._is_enabled:
+            return self.serialize(sample)
+        else:
+            return sample
+
+
+class SerializerMapping(Serializer):
+    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the dictionary
+    to be passed to it's own :class:`.Serializer`."""
+
+    def __init__(self, serializers: Mapping[str, Serializer]):
+        super().__init__()
+
+        self._serializers = serializers
+
+    def serialize(self, sample: Any) -> Any:
+        if isinstance(sample, Mapping):
+            return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
+        else:
+            raise ValueError("The model output must be a mapping when using a SerializerMapping.")
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        for serializer in self._serializers.values():
+            serializer.attach_data_pipeline_state(data_pipeline_state)

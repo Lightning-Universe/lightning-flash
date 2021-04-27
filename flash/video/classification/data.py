@@ -40,7 +40,8 @@ if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
     from pytorchvideo.data.encoded_video import EncodedVideo
     from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
-    from pytorchvideo.transforms import ApplyTransformToKey
+    from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
+    from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
     from torchvision.transforms import Compose
 else:
     ClipSampler, EncodedVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
@@ -55,6 +56,17 @@ class VideoClassificationPreprocess(Preprocess):
     @staticmethod
     def default_predict_transform() -> Dict[str, 'Compose']:
         return {
+            "post_tensor_transform": Compose([
+                ApplyTransformToKey(
+                    key="video",
+                    transform=Compose([
+                        UniformTemporalSubsample(8),
+                        RandomShortSideScale(min_size=256, max_size=320),
+                        RandomCrop(244),
+                        RandomHorizontalFlip(p=0.5),
+                    ]),
+                ),
+            ]),
             "per_batch_transform_on_device": Compose([
                 ApplyTransformToKey(
                     key="video",
@@ -99,8 +111,10 @@ class VideoClassificationPreprocess(Preprocess):
             dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
         return ds
 
-    def predict_load_data(self, folder_or_file: str) -> List[str]:
-        if os.path.isdir(folder_or_file):
+    def predict_load_data(self, folder_or_file: Union[str, List[str]]) -> List[str]:
+        if isinstance(folder_or_file, list) and all(os.path.exists(p) for p in folder_or_file):
+            return folder_or_file
+        elif os.path.isdir(folder_or_file):
             return [f for f in os.listdir(folder_or_file) if f.lower().endswith(self.EXTENSIONS)]
         elif os.path.exists(folder_or_file) and folder_or_file.lower().endswith(self.EXTENSIONS):
             return [folder_or_file]
@@ -166,28 +180,6 @@ class VideoClassificationData(DataModule):
     preprocess_cls = VideoClassificationPreprocess
 
     @classmethod
-    def instantiate_preprocess(
-        cls,
-        clip_sampler: 'ClipSampler',
-        video_sampler: Type[Sampler],
-        decode_audio: bool,
-        decoder: str,
-        train_transform: Optional[Dict[str, Callable]],
-        val_transform: Optional[Dict[str, Callable]],
-        test_transform: Optional[Dict[str, Callable]],
-        predict_transform: Optional[Dict[str, Callable]],
-        preprocess_cls: Type[Preprocess] = None,
-    ) -> Preprocess:
-        """
-        """
-        preprocess_cls = preprocess_cls or cls.preprocess_cls
-        preprocess: Preprocess = preprocess_cls(
-            clip_sampler, video_sampler, decode_audio, decoder, train_transform, val_transform, test_transform,
-            predict_transform
-        )
-        return preprocess
-
-    @classmethod
     def from_paths(
         cls,
         train_data_path: Optional[Union[str, pathlib.Path]] = None,
@@ -206,7 +198,7 @@ class VideoClassificationData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        preprocess_cls: Optional[Type[Preprocess]] = None,
+        preprocess: Optional[Preprocess] = None,
         **kwargs,
     ) -> 'DataModule':
         """
@@ -239,6 +231,7 @@ class VideoClassificationData(DataModule):
             batch_size: Batch size for data loading.
             num_workers: The number of workers to use for parallelized loading.
                 Defaults to ``None`` which equals the number of available CPU threads.
+            preprocess: VideoClassifierPreprocess to handle the data processing.
 
         Returns:
             VideoClassificationData: the constructed data module
@@ -260,16 +253,9 @@ class VideoClassificationData(DataModule):
 
         clip_sampler = make_clip_sampler(clip_sampler, clip_duration, **clip_sampler_kwargs)
 
-        preprocess = cls.instantiate_preprocess(
-            clip_sampler,
-            video_sampler,
-            decode_audio,
-            decoder,
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
-            preprocess_cls=preprocess_cls,
+        preprocess: Preprocess = preprocess or cls.preprocess_cls(
+            clip_sampler, video_sampler, decode_audio, decoder, train_transform, val_transform, test_transform,
+            predict_transform
         )
 
         return cls.from_load_data_inputs(

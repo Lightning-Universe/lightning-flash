@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import sys
-
+from typing import List, Callable
 import torch
 from torch.utils.data import SequentialSampler
 
@@ -21,6 +21,7 @@ import flash
 from flash.data.utils import download_data
 from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
+from flash.core.classification import Labels
 
 if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -38,30 +39,27 @@ download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
 # 2. [Optional] Specify transforms to be used during training.
 # Flash helps you to place your transform exactly where you want.
 # Learn more at https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.data.process.Preprocess
-train_transform = {
-    "post_tensor_transform": Compose([
-        ApplyTransformToKey(
-            key="video",
-            transform=Compose([
-                UniformTemporalSubsample(8),
-                RandomShortSideScale(min_size=256, max_size=320),
-                RandomCrop(244),
-                RandomHorizontalFlip(p=0.5),
-            ]),
-        ),
-    ]),
-    "per_batch_transform_on_device": Compose([
-        ApplyTransformToKey(
-            key="video",
-            transform=K.VideoSequential(
-                K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
-                K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0),
-                data_format="BCTHW",
-                same_on_frame=False
-            )
-        ),
-    ]),
-}
+base_post_tensor_transform = [UniformTemporalSubsample(8), RandomShortSideScale(min_size=256, max_size=320), RandomCrop(244)]
+base_per_batch_transform_on_device = [K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225]))]
+
+train_post_tensor_transform = base_post_tensor_transform + [RandomHorizontalFlip(p=0.5)]
+train_per_batch_transform_on_device = base_per_batch_transform_on_device + [K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0)]
+
+def make_transform(post_tensor_transform: List[Callable] = base_post_tensor_transform, per_batch_transform_on_device: List[Callable] = base_per_batch_transform_on_device):
+    return {
+        "post_tensor_transform": Compose([
+            ApplyTransformToKey(
+                key="video",
+                transform=Compose(post_tensor_transform),
+            ),
+        ]),
+        "per_batch_transform_on_device": Compose([
+            ApplyTransformToKey(
+                key="video",
+                transform=K.VideoSequential(*per_batch_transform_on_device, data_format="BCTHW", same_on_frame=False)
+            ),
+        ]),
+    }
 
 # 3. Load the data from directories.
 datamodule = VideoClassificationData.from_paths(
@@ -69,10 +67,12 @@ datamodule = VideoClassificationData.from_paths(
     val_data_path=os.path.join(_PATH_ROOT, "data/kinetics/val"),
     predict_data_path=os.path.join(_PATH_ROOT, "data/kinetics/predict"),
     clip_sampler="uniform",
-    clip_duration=2,
+    clip_duration=1,
     video_sampler=SequentialSampler,
     decode_audio=False,
-    train_transform=train_transform
+    train_transform=make_transform(train_post_tensor_transform, train_per_batch_transform_on_device),
+    val_transform=make_transform(),
+    predict_transform=make_transform()
 )
 
 # 4. List the available models
@@ -82,11 +82,13 @@ print(VideoClassifier.available_models())
 # 5. Build the model
 model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
 
-# 6. Train the model
-trainer = flash.Trainer(fast_dev_run=True)
+model.serializer = Labels()
 
 # 6. Finetune the model
-trainer.finetune(model, datamodule=datamodule)
+trainer = flash.Trainer(max_epochs=2, gpus=2, accelerator="ddp", limit_train_batches=4, limit_val_batches=4)
+trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
-predictions = model.predict(os.path.join(_PATH_ROOT, "data/kinetics/train/archery/-1q7jA3DXQM_000005_000015.mp4"))
+# 7. Make a prediction
+val_folder = os.path.join(_PATH_ROOT, "data/kinetics/predict")
+predictions = model.predict([os.path.join(val_folder, f) for f in os.listdir(val_folder)])
 print(predictions)

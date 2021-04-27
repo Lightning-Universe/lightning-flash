@@ -75,7 +75,7 @@ To tailor the object detector to your dataset, you would need to have it in `COC
 .. code-block:: python
 
     import flash
-    from flash.core.data import download_data
+    from flash.data.utils import download_data
     from flash.vision import ObjectDetectionData, ObjectDetector
 
     # 1. Download the data

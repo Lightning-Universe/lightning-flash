@@ -14,7 +14,7 @@
 import torch
 
 import flash
-from flash import download_data
+from flash.data.utils import download_data
 from flash.text import TranslationData, TranslationTask
 
 # 1. Download the data
