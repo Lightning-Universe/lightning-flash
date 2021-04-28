@@ -16,8 +16,8 @@ except (ImportError, AssertionError):
 
 # see https://stackoverflow.com/a/129374
 sys.path.append("flash")
-import __about__ as about
-import setup_tools
+import __about__ as about  # noqa: E402
+import setup_tools  # noqa: E402
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
