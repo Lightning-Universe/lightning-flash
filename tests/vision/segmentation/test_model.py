@@ -48,6 +48,7 @@ def test_forward(num_classes, img_shape):
     "backbone",
     [
         "torchvision/fcn_resnet50",
+        "torchvision/fcn_resnet101",
     ],
 )
 def test_init_train(tmpdir, backbone):

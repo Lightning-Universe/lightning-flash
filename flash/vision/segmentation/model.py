@@ -63,7 +63,7 @@ class SemanticSegmentation(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "torchvision/fcn_resnet50",
         backbone_kwargs: Optional[Dict] = None,
-        pretrained: bool = False,
+        pretrained: bool = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
@@ -104,6 +104,14 @@ class SemanticSegmentation(ClassificationTask):
 
 
 @SemanticSegmentation.backbones(name="torchvision/fcn_resnet50")
-def fn(pretrained: bool, num_classes: int) -> nn.Module:
-    model: nn.Module = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained, num_classes=num_classes)
+def load_torchvision_fcn_resnet50(pretrained: bool, num_classes: int) -> nn.Module:
+    model = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained)
+    model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
+    return model
+
+
+@SemanticSegmentation.backbones(name="torchvision/fcn_resnet101")
+def load_torchvision_fcn_resnet101(pretrained: bool, num_classes: int) -> nn.Module:
+    model = torchvision.models.segmentation.fcn_resnet101(pretrained=pretrained)
+    model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
     return model
