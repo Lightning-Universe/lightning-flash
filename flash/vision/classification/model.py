@@ -12,24 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union, Any
-import torchmetrics
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+
 import torch
+import torchmetrics
 from torch import nn
-from torch.nn import functional as F
-from torchmetrics import Accuracy
 from torch.optim.lr_scheduler import _LRScheduler
 
-from flash.core.classification import Classes, ClassificationTask
+from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
-from flash.data.process import Preprocess, Serializer
+from flash.data.process import Serializer
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.vision.classification.data import ImageClassificationPreprocess
-
-
-def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-    """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
-    return F.binary_cross_entropy_with_logits(x, y.float())
 
 
 class ImageClassifier(ClassificationTask):
@@ -62,10 +55,10 @@ class ImageClassifier(ClassificationTask):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation,
-            defaults to :class:`torchmetrics.Accuracy`.
+        metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        multi_label: Whether the labels are multi labels or not.
+        multi_label: Whether the targets are multi-label or not.
+        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
@@ -87,13 +80,6 @@ class ImageClassifier(ClassificationTask):
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
-
-        if metrics is None:
-            metrics = Accuracy(subset_accuracy=multi_label)
-
-        if loss_fn is None:
-            loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
-
         super().__init__(
             model=None,
             loss_fn=loss_fn,
@@ -103,7 +89,8 @@ class ImageClassifier(ClassificationTask):
             scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer or Classes(multi_label=multi_label),
+            multi_label=multi_label,
+            serializer=serializer,
         )
 
         self.save_hyperparameters()

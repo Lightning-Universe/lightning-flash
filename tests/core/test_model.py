@@ -66,7 +66,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss, metrics=metrics)
+    task = ClassificationTask(model, loss_fn=F.nll_loss, metrics=metrics)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     result = trainer.fit(task, train_dl, val_dl)
     assert result
@@ -125,7 +125,7 @@ def test_classification_task_trainer_predict(tmpdir):
 def test_task_datapipeline_save(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss, postprocess=DummyPostprocess())
+    task = ClassificationTask(model, loss_fn=F.nll_loss, postprocess=DummyPostprocess())
 
     # to check later
     task.postprocess.test = True
