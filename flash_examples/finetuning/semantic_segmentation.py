@@ -57,7 +57,7 @@ datamodule = SemanticSegmentationData.from_filepaths(
 
 # 2.2 Visualise the samples
 labels_map = SegmentationLabels.create_random_labels_map(num_classes=21)
-datamodule.set_map_labels(labels_map)
+datamodule.set_labels_map(labels_map)
 datamodule.show_train_batch("load_sample")
 datamodule.show_train_batch("post_tensor_transform")
 
@@ -69,7 +69,7 @@ model = SemanticSegmentation(
 
 # 4. Create the trainer.
 trainer = flash.Trainer(
-    max_epochs=20,
+    max_epochs=5,
     gpus=1,
     # precision=16,  # why slower ? :)
 )
