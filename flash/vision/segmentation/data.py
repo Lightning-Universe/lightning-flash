@@ -13,7 +13,6 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
-import kornia as K
 import numpy as np
 import torch
 import torch.nn as nn
@@ -29,7 +28,7 @@ from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
-from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 
 from . import transforms as T
 
@@ -65,12 +64,12 @@ class SemanticSegmentationPreprocess(Preprocess):
 
     def _resolve_transforms(
         self,
-        train_transform: Optional[Union[str, Dict]] = 'default',
-        val_transform: Optional[Union[str, Dict]] = 'default',
-        test_transform: Optional[Union[str, Dict]] = 'default',
-        predict_transform: Optional[Union[str, Dict]] = 'default',
+        train_transform: Optional[Union[str, Dict]] = None,
+        val_transform: Optional[Union[str, Dict]] = None,
+        test_transform: Optional[Union[str, Dict]] = None,
+        predict_transform: Optional[Union[str, Dict]] = None,
         image_size: Tuple[int, int] = (196, 196),
-    ):
+    ) -> Tuple[Dict[str, Callable], ...]:
 
         if not train_transform or train_transform == 'default':
             train_transform = T.default_train_transforms(image_size)
@@ -109,22 +108,24 @@ class SemanticSegmentationPreprocess(Preprocess):
         # load images directly to torch tensors
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
-        # TODO: need to figure best api for this
-        img_labels = img_labels[0]  # HxW
 
-        return img, img_labels
+        return {'images': img, 'masks': img_labels}
 
     def post_tensor_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         if isinstance(sample, torch.Tensor):  # case for predict
             out = sample.float() / 255.  # TODO: define predict transforms
             return out
 
-        if not isinstance(sample, tuple):
-            raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
-        img, img_labels = sample
-        img_out, img_labels_out = self.current_transform(img, img_labels)
+        if not isinstance(sample, dict):
+            raise TypeError(f"Invalid type, expected `dict`. Got: {sample}.")
 
-        return img_out, img_labels_out
+        # arrange data as floating point and batch before the augmentations
+        sample['images'] = sample['images'][None].float().contiguous()  # 1xCxHxW
+        sample['masks'] = sample['masks'][None, :1].float().contiguous()  # 1x1xHxW
+
+        out: Dict[str, torch.Tensor] = self.current_transform(sample)
+
+        return out['images'][0], out['masks'][0, 0].long()
 
     # TODO: the labels are not clear how to forward to the loss once are transform from this point
     '''def per_batch_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -156,7 +157,7 @@ class SemanticSegmentationData(DataModule):
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return _MatplotlibVisualization(*args, **kwargs)
 
-    def set_map_labels(self, labels_map: Dict[int, Tuple[int, int, int]]):
+    def set_labels_map(self, labels_map: Dict[int, Tuple[int, int, int]]):
         self.data_fetcher.labels_map = labels_map
 
     def set_block_viz_window(self, value: bool) -> None:
@@ -281,18 +282,20 @@ class _MatplotlibVisualization(BaseVisualization):
 
         for i, ax in enumerate(axs.ravel()):
             # unpack images and labels
-            if isinstance(data, list):
-                _img, _img_labels = data[i]
-            elif isinstance(data, tuple):
-                imgs, imgs_labels = data
-                _img, _img_labels = imgs[i], imgs_labels[i]
+            sample = data[i]
+            if isinstance(sample, dict):
+                image = sample['images']
+                label = sample['masks']
+            elif isinstance(sample, tuple):
+                image = sample[0]
+                label = sample[1]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images and labels to numpy and stack horizontally
-            img_vis: np.ndarray = self._to_numpy(_img.byte())
-            _img_labels = SegmentationLabels.labels_to_image(_img_labels.byte(), self.labels_map)
-            img_labels_vis: np.ndarray = self._to_numpy(_img_labels)
-            img_vis = np.hstack((img_vis, img_labels_vis))
+            image_vis: np.ndarray = self._to_numpy(image.byte())
+            label_tmp: torch.Tensor = SegmentationLabels.labels_to_image(label.squeeze().byte(), self.labels_map)
+            label_vis: np.ndarray = self._to_numpy(label_tmp)
+            img_vis = np.hstack((image_vis, label_vis))
             # send to visualiser
             ax.imshow(img_vis)
             ax.axis('off')
