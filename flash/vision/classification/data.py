@@ -27,11 +27,12 @@ from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
-from flash.core.classification import ClassificationState
+# from flash.core.classification import ClassificationState
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
+from flash.data.data_source import LabelsState
 from flash.data.process import Preprocess
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
@@ -75,21 +76,21 @@ class ImageClassificationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls(**state_dict)
 
-    @staticmethod
-    def _find_classes(dir: str) -> Tuple:
-        """
-        Finds the class folders in a dataset.
-        Args:
-            dir: Root directory path.
-        Returns:
-            tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
-        Ensures:
-            No class is a subdirectory of another.
-        """
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
-        classes.sort()
-        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-        return classes, class_to_idx
+    # @staticmethod
+    # def _find_classes(dir: str) -> Tuple:
+    #     """
+    #     Finds the class folders in a dataset.
+    #     Args:
+    #         dir: Root directory path.
+    #     Returns:
+    #         tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+    #     Ensures:
+    #         No class is a subdirectory of another.
+    #     """
+    #     classes = [d.name for d in os.scandir(dir) if d.is_dir()]
+    #     classes.sort()
+    #     class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+    #     return classes, class_to_idx
 
     @staticmethod
     def _get_predicting_files(samples: Union[Sequence, str]) -> List[str]:
@@ -216,25 +217,26 @@ class ImageClassificationPreprocess(Preprocess):
             dataset.num_classes = len(classes)
             return classes, make_dataset(data, class_to_idx, IMG_EXTENSIONS, None)
 
-    @classmethod
-    def _load_data_files_labels(cls, data: Any, dataset: Optional[AutoDataset] = None) -> Any:
-        _classes = [tmp[1] for tmp in data]
-
-        _classes = torch.stack([
-            torch.tensor(int(_cls)) if not isinstance(_cls, torch.Tensor) else _cls.view(-1) for _cls in _classes
-        ]).unique()
-
-        dataset.num_classes = len(_classes)
-
-        return data
+    # @classmethod
+    # def _load_data_files_labels(cls, data: Any, dataset: Optional[AutoDataset] = None) -> Any:
+    #     print('called')
+    #     _classes = [tmp[1] for tmp in data]
+    #
+    #     _classes = torch.stack([
+    #         torch.tensor(int(_cls)) if not isinstance(_cls, torch.Tensor) else _cls.view(-1) for _cls in _classes
+    #     ]).unique()
+    #
+    #     dataset.num_classes = len(_classes)
+    #
+    #     return data
 
     def load_data(self, data: Any, dataset: Optional[AutoDataset] = None) -> Iterable:
         if isinstance(data, (str, pathlib.Path, list)):
             classes, data = self._load_data_dir(data=data, dataset=dataset)
-            state = ClassificationState(classes)
+            state = LabelsState(classes)
             self.set_state(state)
             return data
-        return self._load_data_files_labels(data=data, dataset=dataset)
+        # return self._load_data_files_labels(data=data, dataset=dataset)
 
     @staticmethod
     def load_sample(sample) -> Union[Image.Image, torch.Tensor, Tuple[Image.Image, torch.Tensor]]:

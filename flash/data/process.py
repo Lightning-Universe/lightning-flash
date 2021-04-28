@@ -427,24 +427,24 @@ class Preprocess(BasePreprocess, Properties, Module):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
-    @classmethod
-    def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
-        """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
-
-        Example::
-
-            # data: "."
-            # output: [("./cat/1.png", 1), ..., ("./dog/10.png", 0)]
-
-            output: Mapping = load_data(data)
-
-        """
-        return data
-
-    @classmethod
-    def load_sample(cls, sample: Any, dataset: Optional[Any] = None) -> Any:
-        """Loads single sample from dataset"""
-        return sample
+    # @classmethod
+    # def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
+    #     """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
+    #
+    #     Example::
+    #
+    #         # data: "."
+    #         # output: [("./cat/1.png", 1), ..., ("./dog/10.png", 0)]
+    #
+    #         output: Mapping = load_data(data)
+    #
+    #     """
+    #     return data
+    #
+    # @classmethod
+    # def load_sample(cls, sample: Any, dataset: Optional[Any] = None) -> Any:
+    #     """Loads single sample from dataset"""
+    #     return sample
 
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""

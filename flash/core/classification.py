@@ -20,18 +20,13 @@ import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.model import Task
-from flash.data.process import ProcessState, Serializer
+from flash.data.data_source import LabelsState
+from flash.data.process import Serializer
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
     return F.binary_cross_entropy_with_logits(x, y.float())
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ClassificationState(ProcessState):
-
-    labels: Optional[List[str]]
 
 
 class ClassificationTask(Task):
@@ -140,7 +135,7 @@ class Labels(Classes):
     def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
         super().__init__(multi_label=multi_label, threshold=threshold)
         self._labels = labels
-        self.set_state(ClassificationState(labels))
+        self.set_state(LabelsState(labels))
 
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
@@ -148,7 +143,7 @@ class Labels(Classes):
         if self._labels is not None:
             labels = self._labels
         else:
-            state = self.get_state(ClassificationState)
+            state = self.get_state(LabelsState)
             if state is not None:
                 labels = state.labels
 
