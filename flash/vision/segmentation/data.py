@@ -10,6 +10,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
+from flash.core.classification import SegmentationLabels
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
@@ -166,8 +167,8 @@ class SemanticSegmentationData(DataModule):
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return _MatplotlibVisualization(*args, **kwargs)
 
-    def set_map_labels(self, map_labels):
-        self.data_fetcher.map_labels = map_labels
+    def set_map_labels(self, labels_map: Dict[int, Tuple[int, int, int]]):
+        self.data_fetcher.labels_map = labels_map
 
     def set_block_viz_window(self, value: bool) -> None:
         """Setter method to switch on/off matplotlib to pop up windows."""
@@ -193,7 +194,7 @@ class SemanticSegmentationData(DataModule):
         #seed: Optional[int] = 42,  # SEED NEVER USED
         data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
-        # val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
+        val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
         map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
         **kwargs,  # TODO: remove and make explicit params
     ) -> 'SemanticSegmentationData':
@@ -238,7 +239,7 @@ class _MatplotlibVisualization(BaseVisualization):
     """
     max_cols: int = 4  # maximum number of columns we accept
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
-    map_labels = {}
+    labels_map: Dict[int, Tuple[int, int, int]] = {}
 
     @staticmethod
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
@@ -249,16 +250,6 @@ class _MatplotlibVisualization(BaseVisualization):
             out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
         else:
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
-        return out
-
-    def _labels_to_image(self, img_labels: torch.Tensor) -> torch.Tensor:
-        assert len(img_labels.shape) == 2, img_labels.shape
-        H, W = img_labels.shape
-        out = torch.empty(3, H, W, dtype=torch.uint8)
-        for label_id, label_val in self.map_labels.items():
-            mask = (img_labels == label_id)
-            for i in range(3):
-                out[i].masked_fill_(mask, label_val[i])
         return out
 
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
@@ -284,7 +275,7 @@ class _MatplotlibVisualization(BaseVisualization):
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images and labels to numpy and stack horizontally
             img_vis: np.ndarray = self._to_numpy(_img.byte())
-            _img_labels = self._labels_to_image(_img_labels.byte())
+            _img_labels = SegmentationLabels.labels_to_image(_img_labels.byte(), self.labels_map)
             img_labels_vis: np.ndarray = self._to_numpy(_img_labels)
             img_vis = np.hstack((img_vis, img_labels_vis))
             # send to visualiser
