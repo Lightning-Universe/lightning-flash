@@ -23,13 +23,13 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 import flash.vision.segmentation.transforms as T
-from flash.core.classification import SegmentationLabels
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
+from flash.vision.segmentation.serialization import SegmentationKeys, SegmentationLabels
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -89,8 +89,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             predict_transform,
         )
 
-    def load_sample(self, sample: Union[str, Tuple[str,
-                                                   str]]) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def load_sample(self, sample: Union[str, Tuple[str, str]]) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
         if not isinstance(sample, (
             str,
             tuple,
@@ -108,9 +107,13 @@ class SemanticSegmentationPreprocess(Preprocess):
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
 
-        return {'images': img, 'masks': img_labels}
+        return {SegmentationKeys.IMAGES: img, SegmentationKeys.MASKS: img_labels}
 
-    def post_tensor_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+    # TODO: this routine should be moved to `per_batch_transform` once we have a way to
+    # forward the labels to the loss function:.
+    def post_tensor_transform(
+        self, sample: Union[torch.Tensor, Dict[str, torch.Tensor]]
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         if isinstance(sample, torch.Tensor):  # case for predict
             out = sample.float() / 255.  # TODO: define predict transforms
             return out
@@ -119,27 +122,15 @@ class SemanticSegmentationPreprocess(Preprocess):
             raise TypeError(f"Invalid type, expected `dict`. Got: {sample}.")
 
         # arrange data as floating point and batch before the augmentations
-        sample['images'] = sample['images'][None].float().contiguous()  # 1xCxHxW
-        sample['masks'] = sample['masks'][None, :1].float().contiguous()  # 1x1xHxW
+        sample[SegmentationKeys.IMAGES] = sample[SegmentationKeys.IMAGES][None].float().contiguous()  # 1xCxHxW
+        sample[SegmentationKeys.MASKS] = sample[SegmentationKeys.MASKS][None, :1].float().contiguous()  # 1x1xHxW
 
         out: Dict[str, torch.Tensor] = self.current_transform(sample)
 
-        return out['images'][0], out['masks'][0, 0].long()
+        return out[SegmentationKeys.IMAGES][0], out[SegmentationKeys.MASKS][0, 0].long()
 
-    # TODO: the labels are not clear how to forward to the loss once are transform from this point
-    '''def per_batch_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
-        if not isinstance(sample, list):
-            raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
-        img, img_labels = sample
-        # THIS IS CRASHING
-        # out1 = self.current_transform(img)  # images
-        # out2 = self.current_transform(img_labels)  # labels
-        # return out1, out2
-        return img, img_labels
-
-    # TODO: the labels are not clear how to forward to the loss once are transform from this point
-    def per_batch_transform_on_device(self, sample: Any) -> Any:
-        pass'''
+    # TODO: implement `per_batch_transform` and `per_batch_transform_on_device`
+    ##
 
 
 class SemanticSegmentationData(DataModule):
@@ -154,7 +145,7 @@ class SemanticSegmentationData(DataModule):
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        return _MatplotlibVisualization(*args, **kwargs)
+        return SegmentationMatplotlibVisualization(*args, **kwargs)
 
     def set_labels_map(self, labels_map: Dict[int, Tuple[int, int, int]]):
         self.data_fetcher.labels_map = labels_map
@@ -249,12 +240,15 @@ class SemanticSegmentationData(DataModule):
         )
 
 
-class _MatplotlibVisualization(BaseVisualization):
+class SegmentationMatplotlibVisualization(BaseVisualization):
     """Process and show the image batch and its associated label using matplotlib.
     """
-    max_cols: int = 4  # maximum number of columns we accept
-    block_viz_window: bool = True  # parameter to allow user to block visualisation windows
-    labels_map: Dict[int, Tuple[int, int, int]] = {}
+
+    def __init__(self):
+        super().__init__(self)
+        self.max_cols: int = 4  # maximum number of columns we accept
+        self.block_viz_window: bool = True  # parameter to allow user to block visualisation windows
+        self.labels_map: Dict[int, Tuple[int, int, int]] = {}
 
     @staticmethod
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:

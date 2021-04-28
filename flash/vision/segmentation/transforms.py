@@ -17,6 +17,8 @@ import kornia as K
 import torch
 import torch.nn as nn
 
+from flash.vision.segmentation.serialization import SegmentationKeys
+
 
 class ApplyTransformToKeys(nn.Sequential):
 
@@ -29,8 +31,10 @@ class ApplyTransformToKeys(nn.Sequential):
         for seq in self.children():
             for aug in seq:
                 for key in self.keys:
-                    # check wether the transform was applied
-                    # and apply transform
+                    # kornia caches the random parameters in `_params` after every
+                    # forward call in the augmentation object. We check whether the
+                    # random parameters have been generated so that we can apply the
+                    # same parameters to images and masks.
                     if hasattr(aug, "_params") and bool(aug._params):
                         params = aug._params
                         x[key] = aug(x[key], params)
@@ -42,13 +46,13 @@ class ApplyTransformToKeys(nn.Sequential):
 def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     return {
         "post_tensor_transform": nn.Sequential(
-            ApplyTransformToKeys(['images', 'masks'],
+            ApplyTransformToKeys([SegmentationKeys.IMAGES, SegmentationKeys.MASKS],
                                  nn.Sequential(
                                      K.geometry.Resize(image_size, interpolation='nearest'),
                                      K.augmentation.RandomHorizontalFlip(p=0.75),
                                  )),
             ApplyTransformToKeys(
-                ['images'],
+                [SegmentationKeys.IMAGES],
                 nn.Sequential(
                     K.enhance.Normalize(0., 255.),
                     K.augmentation.ColorJitter(0.4, p=0.5),
@@ -63,8 +67,8 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
 def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     return {
         "post_tensor_transform": nn.Sequential(
-            ApplyTransformToKeys(['images', 'masks'],
+            ApplyTransformToKeys([SegmentationKeys.IMAGES, SegmentationKeys.MASKS],
                                  nn.Sequential(K.geometry.Resize(image_size, interpolation='nearest'), )),
-            ApplyTransformToKeys(['images'], nn.Sequential(K.enhance.Normalize(0., 255.), )),
+            ApplyTransformToKeys([SegmentationKeys.IMAGES], nn.Sequential(K.enhance.Normalize(0., 255.), )),
         ),
     }

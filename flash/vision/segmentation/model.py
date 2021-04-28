@@ -19,10 +19,11 @@ from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy, IoU
 
-from flash.core.classification import ClassificationTask, SegmentationLabels
+from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
 from flash.data.process import Preprocess, Serializer
 from flash.utils.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.vision.segmentation.serialization import SegmentationLabels
 
 if _TORCHVISION_AVAILABLE:
     import torchvision

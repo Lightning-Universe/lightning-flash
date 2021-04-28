@@ -18,9 +18,9 @@ import pandas as pd
 import torch
 
 import flash
-from flash.core.classification import SegmentationLabels
 from flash.data.utils import download_data
 from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
+from flash.vision.segmentation.serialization import SegmentationLabels
 
 # 1. Download the data
 # This is a Dataset with Semantic Segmentation Labels generated via CARLA self-driving simulator.
@@ -50,7 +50,7 @@ images_filepaths, labels_filepaths = load_data()
 datamodule = SemanticSegmentationData.from_filepaths(
     train_filepaths=images_filepaths,
     train_labels=labels_filepaths,
-    batch_size=4,
+    batch_size=2,
     val_split=0.3,  # TODO: this needs to be implemented
     image_size=(300, 400),  # (600, 800)
     num_workers=0,
@@ -70,7 +70,7 @@ model = SemanticSegmentation(
 
 # 4. Create the trainer.
 trainer = flash.Trainer(
-    max_epochs=1,
+    max_epochs=10,
     gpus=1,
     #precision=16,  # why slower ? :)
 )
@@ -79,7 +79,7 @@ trainer = flash.Trainer(
 trainer.finetune(model, datamodule=datamodule, strategy='freeze')
 
 # 6. Predict what's on a few images!
-model.serializer = SegmentationLabels(labels_map, visualise=True)
+model.serializer = SegmentationLabels(labels_map, visualize=True)
 
 predictions = model.predict([
     'data/CameraRGB/F61-1.png',
