@@ -14,14 +14,10 @@ except (ImportError, AssertionError):
     subprocess.Popen(["pip", "install", "git+https://github.com/PyTorchLightning/pytorch-lightning.git"])
 """
 
-try:
-    import flash.__about__ as about  # noqa: E402
-    import flash.setup_tools  # noqa: E402
-except ImportError:
-    # see https://stackoverflow.com/a/129374
-    sys.path.append("flash")
-    import __about__ as about
-    import setup_tools
+# see https://stackoverflow.com/a/129374
+sys.path.append("flash")
+import __about__ as about
+import setup_tools
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
