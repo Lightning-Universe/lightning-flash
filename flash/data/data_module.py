@@ -435,7 +435,6 @@ class DataModule(pl.LightningDataModule):
             data_pipeline = cls(**kwargs).data_pipeline
 
         data_fetcher: BaseDataFetcher = data_fetcher or cls.configure_data_fetcher()
-        #data_fetcher: BaseDataFetcher = data_fetcher or DataModule.configure_data_fetcher()
 
         data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
 

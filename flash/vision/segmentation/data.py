@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import kornia as K
@@ -18,36 +31,12 @@ from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
+from . import transforms as T
+
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
-
-
-# container to apply augmentations at both image and mask reusing the same parameters
-# TODO: we have to figure out how to decide what transforms are applied to mask
-# For instance, color transforms cannot be applied to masks
-class SegmentationSequential(nn.Sequential):
-
-    def __init__(self, *args):
-        super(SegmentationSequential, self).__init__(*args)
-
-    @torch.no_grad()
-    def forward(self, img, mask):
-        img_out = img.float()
-        mask_out = mask[None].float()
-        for aug in self.children():
-            img_out = aug(img_out)
-            # some transforms don't have params
-            if hasattr(aug, "_params"):
-                mask_out = aug(mask_out, aug._params)
-            else:
-                mask_out = aug(mask_out)
-        return img_out[0], mask_out[0, 0].long()
-
-
-def to_tensor(self, x):
-    return K.utils.image_to_tensor(np.array(x))
 
 
 class SemanticSegmentationPreprocess(Preprocess):
@@ -59,48 +48,56 @@ class SemanticSegmentationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
-        map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
-    ) -> 'SemanticSegmentationPreprocess':
-        self._map_labels = map_labels
+    ) -> None:
+        """Preprocess pipeline for semantic segmentation tasks.
 
-        # TODO: implement me
-        '''train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
-            train_transform, val_transform, test_transform, predict_transform
-        )'''
-        augs_train = SegmentationSequential(
-            K.geometry.Resize(image_size, interpolation='nearest'),
-            K.augmentation.RandomHorizontalFlip(p=0.75),
+        Args:
+            train_transform: Dictionary with the set of transforms to apply during training.
+            val_transform: Dictionary with the set of transforms to apply during validation.
+            test_transform: Dictionary with the set of transforms to apply during testing.
+            predict_transform: Dictionary with the set of transforms to apply during prediction.
+            image_size: A tuple with the expected output image size.
+        """
+        train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
+            train_transform, val_transform, test_transform, predict_transform, image_size
         )
-        augs = SegmentationSequential(
-            K.geometry.Resize(image_size, interpolation='nearest'),
-            K.augmentation.RandomHorizontalFlip(p=0.),
-        )
-        augs_pred = nn.Sequential(K.geometry.Resize(image_size, interpolation='nearest'), )
-        train_transform = dict(to_tensor_transform=augs_train)
-        val_transform = dict(to_tensor_transform=augs)
-        test_transform = dict(to_tensor_transform=augs)
-        predict_transform = dict(to_tensor_transform=augs_pred)
-
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
 
-    def _image_to_labels(self, img) -> torch.Tensor:
-        assert len(img.shape) == 3, img.shape
-        C, H, W = img.shape
-        outs = torch.empty(H, W, dtype=torch.int64)
-        for label, values in self._map_labels.items():
-            vals = torch.tensor(values).view(3, 1, 1)
-            mask = (img == vals).all(-3)
-            outs[mask] = label
-        return outs
+    def _resolve_transforms(
+        self,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+        image_size: Tuple[int, int] = (196, 196),
+    ):
 
-    # TODO: is it a problem to load sample directly in tensor. What happens in to_tensor_tranform
+        if not train_transform or train_transform == 'default':
+            train_transform = T.default_train_transforms(image_size)
+
+        if not val_transform or val_transform == 'default':
+            val_transform = T.default_val_transforms(image_size)
+
+        if not test_transform or test_transform == 'default':
+            test_transform = T.default_val_transforms(image_size)
+
+        if not predict_transform or predict_transform == 'default':
+            predict_transform = T.default_val_transforms(image_size)
+
+        return (
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
+        )
+
     def load_sample(self, sample: Union[str, Tuple[str,
                                                    str]]) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         if not isinstance(sample, (
             str,
             tuple,
         )):
-            raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
+            raise TypeError(f"Invalid type, expected `str` or `tuple`. Got: {sample}.")
 
         if isinstance(sample, str):  # case for predict
             return torchvision.io.read_image(sample)
@@ -117,7 +114,7 @@ class SemanticSegmentationPreprocess(Preprocess):
 
         return img, img_labels
 
-    def to_tensor_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def post_tensor_transform(self, sample: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         if isinstance(sample, torch.Tensor):  # case for predict
             out = sample.float() / 255.  # TODO: define predict transforms
             return out
@@ -126,10 +123,6 @@ class SemanticSegmentationPreprocess(Preprocess):
             raise TypeError(f"Invalid type, expected `tuple`. Got: {sample}.")
         img, img_labels = sample
         img_out, img_labels_out = self.current_transform(img, img_labels)
-
-        # TODO: decide at which point do we apply this
-        if self._map_labels is not None:
-            img_labels_out = self._image_to_labels(img_labels_out)
 
         return img_out, img_labels_out
 
@@ -152,10 +145,6 @@ class SemanticSegmentationPreprocess(Preprocess):
 class SemanticSegmentationData(DataModule):
     """Data module for semantic segmentation tasks."""
 
-    # TODO: figure out if this needed
-    #def __init__(self, **kwargs) -> None:
-    #    super().__init__(**kwargs)
-
     @staticmethod
     def _check_valid_filepaths(filepaths: List[str]):
         if filepaths is not None and (
@@ -177,8 +166,8 @@ class SemanticSegmentationData(DataModule):
     @classmethod
     def from_filepaths(
         cls,
-        train_filepaths: Optional[List[str]] = None,
-        train_labels: Optional[List[str]] = None,
+        train_filepaths: List[str],
+        train_labels: List[str],
         val_filepaths: Optional[List[str]] = None,
         val_labels: Optional[List[str]] = None,
         test_filepaths: Optional[List[str]] = None,
@@ -195,9 +184,36 @@ class SemanticSegmentationData(DataModule):
         data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
-        map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
         **kwargs,  # TODO: remove and make explicit params
     ) -> 'SemanticSegmentationData':
+        """Creates a Semantic SegmentationData object from a given list of paths to images and labels.
+
+        Args:
+            train_filepaths: List of file paths for training images.
+            train_labels: List of file path for the training image labels.
+            val_filepaths: List of file paths for validation images.
+            val_labels: List of file path for the validation image labels.
+            test_filepaths: List of file paths for testing images.
+            test_labels: List of file path for the testing image labels.
+            predict_filepaths: List of file paths for predicting images.
+            train_transform: Image and mask transform to use for the train set.
+            val_transform: Image and mask transform to use for the validation set.
+            test_transform: Image and mask transform to use for the test set.
+            predict_transform: Image transform to use for the predict set.
+            image_size: A tuple with the expected output image size.
+            batch_size: The batch size to use for parallel loading.
+            num_workers: The number of workers to use for parallelized loading.
+                Defaults to ``None`` which equals the number of available CPU threads.
+            data_fetcher: An optional data fetcher object instance.
+            preprocess: An optional `SemanticSegmentationPreprocess` object instance.
+            val_split: Float number to control the percentage of train/validation samples
+                from the ``train_filepaths`` and ``train_labels`` list.
+
+
+        Returns:
+            SemanticSegmentationData: The constructed data module.
+
+        """
 
         # verify input data format
         SemanticSegmentationData._check_valid_filepaths(train_filepaths)
@@ -215,7 +231,6 @@ class SemanticSegmentationData(DataModule):
             test_transform,
             predict_transform,
             image_size=image_size,
-            map_labels=map_labels,
         )
 
         # this functions overrides `DataModule.from_load_data_inputs`
@@ -223,7 +238,7 @@ class SemanticSegmentationData(DataModule):
             train_load_data_input=list(zip(train_filepaths, train_labels)) if train_filepaths else None,
             val_load_data_input=list(zip(val_filepaths, val_labels)) if val_filepaths else None,
             test_load_data_input=list(zip(test_filepaths, test_labels)) if test_filepaths else None,
-            predict_load_data_input=predict_filepaths,
+            # predict_load_data_input=predict_filepaths,  # TODO: is it really used ?
             batch_size=batch_size,
             num_workers=num_workers,
             data_fetcher=data_fetcher,
@@ -287,6 +302,6 @@ class _MatplotlibVisualization(BaseVisualization):
         win_title: str = f"{running_stage} - show_load_sample"
         self._show_images_and_labels(samples, len(samples), win_title)
 
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_to_tensor_transform"
+    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_post_tensor_transform"
         self._show_images_and_labels(samples, len(samples), win_title)
