@@ -7,7 +7,7 @@ import torch
 from PIL import Image
 
 from flash import Trainer
-from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemantincSegmentationPreprocess
+from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 
 
 def build_checkboard(n, m, k=8):

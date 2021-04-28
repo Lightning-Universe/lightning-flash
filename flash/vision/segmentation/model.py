@@ -19,15 +19,41 @@ from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy, IoU
 
-from flash.core.classification import Classes, ClassificationTask
+from flash.core.classification import ClassificationTask, SegmentationLabels
 from flash.core.registry import FlashRegistry
 from flash.data.process import Preprocess, Serializer
+from flash.utils.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
+
+if _TORCHVISION_AVAILABLE:
+    import torchvision
 
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
 
 class SemanticSegmentation(ClassificationTask):
     """Task that performs semantic segmentation on images.
+
+    Use a built in backbone
+
+    Example::
+
+        from flash.vision import SemanticSegmentation
+
+        segmentation = SemanticSegmentation(
+            num_classes=21, backbone="torchvision/fcn_resnet50"
+        )
+
+    Args:
+        num_classes: Number of classes to classify.
+        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"torchvision/fcn_resnet50"``.
+        backbone_kwargs: Additional arguments for the backbone configuration.
+        pretrained: Use a pretrained backbone, defaults to ``False``.
+        loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
+        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
+        metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.IoU`.
+        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        multi_label: Whether the targets are multi-label or not.
+        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
     """
 
     backbones: FlashRegistry = SEMANTIC_SEGMENTATION_BACKBONES
@@ -37,8 +63,7 @@ class SemanticSegmentation(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "torchvision/fcn_resnet50",
         backbone_kwargs: Optional[Dict] = None,
-        head: Optional[Union[FunctionType, nn.Module]] = None,
-        pretrained: bool = True,
+        pretrained: bool = False,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
@@ -63,7 +88,7 @@ class SemanticSegmentation(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer or Classes(multi_label=multi_label),
+            serializer=serializer or SegmentationLabels(),
         )
 
         self.save_hyperparameters()
@@ -72,14 +97,13 @@ class SemanticSegmentation(ClassificationTask):
             backbone_kwargs = {}
 
         # TODO: pretrained to True causes some issues
-        self.backbone = self.backbones.get(backbone)(pretrained=True, num_classes=num_classes, **backbone_kwargs)
+        self.backbone = self.backbones.get(backbone)(pretrained=pretrained, num_classes=num_classes, **backbone_kwargs)
 
     def forward(self, x) -> torch.Tensor:
         return self.backbone(x)['out']  # TODO: find a proper way to get 'out' from registry
 
 
 @SemanticSegmentation.backbones(name="torchvision/fcn_resnet50")
-def fn(pretrained: bool, num_classes: int):
-    import torchvision
+def fn(pretrained: bool, num_classes: int) -> nn.Module:
     model: nn.Module = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained, num_classes=num_classes)
     return model

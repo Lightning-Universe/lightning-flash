@@ -51,7 +51,7 @@ datamodule = SemanticSegmentationData.from_filepaths(
     train_filepaths=images_filepaths,
     train_labels=labels_filepaths,
     batch_size=4,
-    val_split=0.3,
+    val_split=0.3,  # TODO: this needs to be implemented
     image_size=(300, 400),  # (600, 800)
 )
 
