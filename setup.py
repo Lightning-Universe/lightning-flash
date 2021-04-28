@@ -17,7 +17,7 @@ except (ImportError, AssertionError):
 try:
     from flash import __about__ as about
     from flash import setup_tools
-except ImportError:
+except:
     # alternative https://stackoverflow.com/a/67692/4521646
     sys.path.append("flash")
     import __about__ as about
