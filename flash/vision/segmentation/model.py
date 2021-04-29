@@ -22,13 +22,8 @@ from torchmetrics import Accuracy, IoU
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
 from flash.data.process import Preprocess, Serializer
-from flash.utils.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.vision.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.vision.segmentation.serialization import SegmentationLabels
-
-if _TORCHVISION_AVAILABLE:
-    import torchvision
-
-SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
 
 class SemanticSegmentation(ClassificationTask):
@@ -46,7 +41,8 @@ class SemanticSegmentation(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"torchvision/fcn_resnet50"``.
+        backbone: A string or (model, num_features) tuple to use to compute image features,
+            defaults to ``"torchvision/fcn_resnet50"``.
         backbone_kwargs: Additional arguments for the backbone configuration.
         pretrained: Use a pretrained backbone, defaults to ``False``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
@@ -101,18 +97,16 @@ class SemanticSegmentation(ClassificationTask):
         self.backbone = self.backbones.get(backbone)(pretrained=pretrained, num_classes=num_classes, **backbone_kwargs)
 
     def forward(self, x) -> torch.Tensor:
-        return self.backbone(x)['out']  # TODO: find a proper way to get 'out' from registry
+        # infer the image to the model
+        res: Union[torch.Tensor, Dict[str, torch.Tensor]] = self.backbone(x)
 
+        # some frameworks like torchvision return a dict.
+        # In particular, torchvision segmentation models return the output logits
+        # in the key `out`.
+        out: torch.Tensor
+        if isinstance(res, dict):
+            out = res['out']
+        else:
+            raise NotImplementedError(f"Unsupported output type: {type(out)}")
 
-@SemanticSegmentation.backbones(name="torchvision/fcn_resnet50")
-def load_torchvision_fcn_resnet50(pretrained: bool, num_classes: int) -> nn.Module:
-    model = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained)
-    model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-    return model
-
-
-@SemanticSegmentation.backbones(name="torchvision/fcn_resnet101")
-def load_torchvision_fcn_resnet101(pretrained: bool, num_classes: int) -> nn.Module:
-    model = torchvision.models.segmentation.fcn_resnet101(pretrained=pretrained)
-    model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-    return model
+        return out
