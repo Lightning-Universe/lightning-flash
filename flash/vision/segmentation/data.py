@@ -22,13 +22,13 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
-import flash.vision.segmentation.transforms as T
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
+from flash.vision.segmentation import transforms as T
 from flash.vision.segmentation.serialization import SegmentationKeys, SegmentationLabels
 
 if _MATPLOTLIB_AVAILABLE:
