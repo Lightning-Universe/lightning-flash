@@ -23,27 +23,18 @@ def _rand_image(size: Tuple[int, int]):
 
 
 # usually labels come as rgb images -> need to map to labels
-def _rand_labels(size: Tuple[int, int], map_labels: Dict[int, Tuple[int, int, int]] = None):
-    data: np.ndarray = np.random.rand(*size, 3) / .5
-    if map_labels is not None:
-        data_bin = (data.mean(-1) > 0.5)
-        for k, v in map_labels.items():
-            mask = (data_bin == k)
-            data[mask] = v
+def _rand_labels(size: Tuple[int, int], num_classes: int):
+    data: np.ndarray = np.random.randint(0, num_classes, (*size, 1))
+    data = data.repeat(3, axis=-1)
     return Image.fromarray(data.astype(np.uint8))
 
 
-def create_random_data(
-    image_files: List[str],
-    label_files: List[str],
-    size: Tuple[int, int],
-    map_labels: Optional[Dict[int, Tuple[int, int, int]]] = None,
-):
+def create_random_data(image_files: List[str], label_files: List[str], size: Tuple[int, int], num_classes: int):
     for img_file in image_files:
         _rand_image(size).save(img_file)
 
     for label_file in label_files:
-        _rand_labels(size, map_labels).save(label_file)
+        _rand_labels(size, num_classes).save(label_file)
 
 
 class TestSemanticSegmentationPreprocess:
@@ -77,8 +68,9 @@ class TestSemanticSegmentationData:
             str(tmp_dir / "labels_img3.png"),
         ]
 
+        num_classes: int = 2
         img_size: Tuple[int, int] = (196, 196)
-        create_random_data(train_images, train_labels, img_size)
+        create_random_data(train_images, train_labels, img_size, num_classes)
 
         # instantiate the data module
 
@@ -137,8 +129,9 @@ class TestSemanticSegmentationData:
             1: [255, 255, 255],
         }
 
+        num_classes: int = len(labels_map.keys())
         img_size: Tuple[int, int] = (196, 196)
-        create_random_data(train_images, train_labels, img_size, labels_map)
+        create_random_data(train_images, train_labels, img_size, num_classes)
 
         # instantiate the data module
 
@@ -168,10 +161,10 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
         assert labels.min().item() == 0
-        assert labels.max().item() == 255.
+        assert labels.max().item() == 1
         assert labels.dtype == torch.int64
 
         # now train with `fast_dev_run`
         model = SemanticSegmentation(num_classes=2, backbone="torchvision/fcn_resnet50")
         trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-        #trainer.finetune(model, dm, strategy="freeze_unfreeze")
+        trainer.finetune(model, dm, strategy="freeze_unfreeze")

@@ -293,8 +293,8 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             # unpack images and labels
             sample = data[i]
             if isinstance(sample, dict):
-                image = sample['images']
-                label = sample['masks']
+                image = sample[SegmentationKeys.IMAGES]
+                label = sample[SegmentationKeys.MASKS]
             elif isinstance(sample, tuple):
                 image = sample[0]
                 label = sample[1]
