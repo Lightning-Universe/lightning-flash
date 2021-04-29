@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import pathlib
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -22,17 +21,12 @@ from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
-from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
-from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
-# from flash.core.classification import ClassificationState
-from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.data_source import LabelsState
 from flash.data.process import DefaultPreprocess
 from flash.data.transforms import ApplyToKeys
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
@@ -223,13 +217,6 @@ class ImageClassificationData(DataModule):
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return MatplotlibVisualization(*args, **kwargs)
-
-    def _get_num_classes(self, dataset: torch.utils.data.Dataset):
-        num_classes = self.get_dataset_attribute(dataset, "num_classes", None)
-        if num_classes is None:
-            num_classes = torch.tensor([dataset[idx][1] for idx in range(len(dataset))]).unique().numel()
-
-        return num_classes
 
 
 class MatplotlibVisualization(BaseVisualization):
