@@ -50,7 +50,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
                                  nn.Sequential(
                                      K.geometry.Resize(image_size, interpolation='nearest'),
                                      K.augmentation.RandomHorizontalFlip(p=0.75),
-                                 )),
+                                 )),  # noqa: E126
             ApplyTransformToKeys(
                 [SegmentationKeys.IMAGES],
                 nn.Sequential(
