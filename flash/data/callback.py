@@ -190,9 +190,6 @@ class BaseDataFetcher(FlashCallback):
         yield
         self.enabled = False
 
-    def attach_to_datamodule(self, datamodule) -> None:
-        datamodule.data_fetcher = self
-
     def attach_to_preprocess(self, preprocess: 'flash.data.process.Preprocess') -> None:
         preprocess.add_callbacks([self])
         self._preprocess = preprocess

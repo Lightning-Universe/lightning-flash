@@ -30,6 +30,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline
+from flash.data.data_source import DataSource, DefaultDataSource
 from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 
 
@@ -110,7 +111,8 @@ class Task(LightningModule):
         """
         The training/validation/test step. Override for custom behavior.
         """
-        x, y = batch
+        x, y = batch['input'], batch['target']
+        # x, y = batch
         y_hat = self(x)
         output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
@@ -154,6 +156,7 @@ class Task(LightningModule):
     def predict(
         self,
         x: Any,
+        data_source: Union[str, DefaultDataSource, DataSource] = DefaultDataSource.FILES,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -171,7 +174,13 @@ class Task(LightningModule):
 
         data_pipeline = self.build_data_pipeline(data_pipeline)
 
-        x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
+        if str(data_source) == data_source:
+            data_source = DefaultDataSource(data_source)
+
+        if not isinstance(data_source, DataSource):
+            data_source = data_pipeline._preprocess_pipeline.data_source_of_type(data_source.as_type())()
+
+        x = [x for x in data_source.generate_dataset(x, running_stage, data_pipeline)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # switch to self.device when #7188 merge in Lightning
         x = self.transfer_batch_to_device(x, next(self.parameters()).device)
@@ -181,6 +190,7 @@ class Task(LightningModule):
         return predictions
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        batch = batch['input']
         if isinstance(batch, tuple):
             batch = batch[0]
         elif isinstance(batch, list):

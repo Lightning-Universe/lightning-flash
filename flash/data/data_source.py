@@ -15,19 +15,44 @@ import os
 import pathlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
+from enum import Enum
+from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Sized, Tuple, Type, TypeVar, Union
 
 import numpy as np
+from pytorch_lightning.trainer.states import RunningStage
 from torch.nn import Module
 from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
+from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
+from flash.data.data_pipeline import DataPipeline
 from flash.data.process import ProcessState, Properties
+from flash.data.utils import _STAGES_PREFIX, CurrentRunningStageFuncContext
+
+
+def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
+    try:
+        len(data)
+        return True
+    except (TypeError, NotImplementedError):
+        return False
 
 
 @dataclass(unsafe_hash=True, frozen=True)
 class LabelsState(ProcessState):
 
     labels: Optional[Sequence[str]]
+
+
+class MockDataset:
+
+    def __init__(self):
+        self.metadata = {}
+
+    def __setattr__(self, key, value):
+        if key != 'metadata':
+            self.metadata[key] = value
+        else:
+            object.__setattr__(self, key, value)
 
 
 class DataSource(Properties, Module, ABC):
@@ -45,18 +70,6 @@ class DataSource(Properties, Module, ABC):
         self.val_data = val_data
         self.test_data = test_data
         self.predict_data = predict_data
-
-    def train_load_data(self, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        return self.load_data(self.train_data, dataset)
-
-    def val_load_data(self, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        return self.load_data(self.val_data, dataset)
-
-    def test_load_data(self, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        return self.load_data(self.test_data, dataset)
-
-    def predict_load_data(self, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        return self.load_data(self.predict_data, dataset)
 
     @abstractmethod
     def load_data(
@@ -79,6 +92,55 @@ class DataSource(Properties, Module, ABC):
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
         """Loads single sample from dataset"""
 
+    def to_datasets(self, data_pipeline: DataPipeline) -> Tuple[Optional[BaseAutoDataset], ...]:
+        train_dataset = self._generate_dataset_if_possible(RunningStage.TRAINING, data_pipeline)
+        val_dataset = self._generate_dataset_if_possible(RunningStage.VALIDATING, data_pipeline)
+        test_dataset = self._generate_dataset_if_possible(RunningStage.TESTING, data_pipeline)
+        predict_dataset = self._generate_dataset_if_possible(RunningStage.PREDICTING, data_pipeline)
+        return train_dataset, val_dataset, test_dataset, predict_dataset
+
+    def _generate_dataset_if_possible(
+        self,
+        running_stage: RunningStage,
+        data_pipeline: DataPipeline,
+    ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
+        data = getattr(self, f"{_STAGES_PREFIX[running_stage]}_data", None)
+        if data is not None:
+            return self.generate_dataset(data, running_stage, data_pipeline)
+
+    def generate_dataset(
+        self,
+        data,
+        running_stage: RunningStage,
+        data_pipeline: DataPipeline,
+    ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
+        mock_dataset = MockDataset()
+        with CurrentRunningStageFuncContext(running_stage, "load_data", self):
+            data = self.load_data(data, mock_dataset)  # TODO: Should actually resolve this
+
+        if has_len(data):
+            dataset = AutoDataset(data, self, running_stage, data_pipeline)
+        else:
+            dataset = IterableAutoDataset(data, self, running_stage, data_pipeline)
+        dataset.__dict__.update(mock_dataset.metadata)
+        return dataset
+
+
+T = TypeVar("T")
+
+
+class DefaultDataSource(Enum):  # TODO: This could be replaced with a data source registry that the user can add to
+
+    FOLDERS = "folders"
+    FILES = "files"
+
+    def as_type(self) -> Type[DataSource]:
+        _data_source_types = {
+            DefaultDataSource.FOLDERS: FoldersDataSource,
+            DefaultDataSource.FILES: FilesDataSource,
+        }
+        return _data_source_types[self]
+
 
 class SequenceDataSource(DataSource, ABC):
 
@@ -91,14 +153,13 @@ class SequenceDataSource(DataSource, ABC):
         test_inputs: Optional[Sequence[Any]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_inputs: Optional[Sequence[Any]] = None,
-        predict_targets: Optional[Sequence[Any]] = None,
         labels: Optional[Sequence[str]] = None
     ):
         super().__init__(
             train_data=(train_inputs, train_targets),
             val_data=(val_inputs, val_targets),
             test_data=(test_inputs, test_targets),
-            predict_data=(predict_inputs, predict_targets),
+            predict_data=(predict_inputs, None),
         )
 
         self.labels = labels
@@ -113,7 +174,7 @@ class SequenceDataSource(DataSource, ABC):
         return [{'input': input, 'target': target} for input, target in zip(inputs, targets)]
 
 
-class FolderDataSource(DataSource, ABC):
+class FoldersDataSource(DataSource, ABC):
 
     def __init__(
         self,
@@ -150,7 +211,48 @@ class FolderDataSource(DataSource, ABC):
 
     def load_data(self, data: Any, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
         classes, class_to_idx = self.find_classes(data)
+        if not classes:
+            files = [os.path.join(data, file) for file in os.listdir(data)]
+            return [{
+                'input': file
+            } for file in filter(
+                lambda file: has_file_allowed_extension(file, self.extensions),
+                files,
+            )]
         self.set_state(LabelsState(classes))
         dataset.num_classes = len(classes)
         data = make_dataset(data, class_to_idx, extensions=self.extensions)
         return [{'input': input, 'target': target} for input, target in data]
+
+
+class FilesDataSource(DataSource, ABC):
+
+    def __init__(
+        self,
+        train_files: Optional[Union[Sequence[Union[str, pathlib.Path]], Iterable[Union[str, pathlib.Path]]]] = None,
+        train_targets: Optional[Union[Sequence[Any], Iterable[Any]]] = None,
+        val_files: Optional[Union[Sequence[Union[str, pathlib.Path]], Iterable[Union[str, pathlib.Path]]]] = None,
+        val_targets: Optional[Union[Sequence[Any], Iterable[Any]]] = None,
+        test_files: Optional[Union[Sequence[Union[str, pathlib.Path]], Iterable[Union[str, pathlib.Path]]]] = None,
+        test_targets: Optional[Union[Sequence[Any], Iterable[Any]]] = None,
+        predict_files: Optional[Union[Sequence[Union[str, pathlib.Path]], Iterable[Union[str, pathlib.Path]]]] = None,
+        extensions: Optional[Tuple[str, ...]] = None,
+    ):
+        super().__init__(
+            train_data=(train_files, train_targets),
+            val_data=(val_files, val_targets),
+            test_data=(test_files, test_targets),
+            predict_data=(predict_files, None),
+        )
+
+        self.extensions = extensions
+
+    def load_data(self, data: Any, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
+        # TODO: Bring back the code to work out how many classes there are
+        if isinstance(data, tuple):
+            files, targets = data
+        else:
+            files, targets = data, None  # TODO: Sort this out
+        if not targets:
+            return [{'input': input} for input in files]
+        return [{'input': file, 'target': target} for file, target in zip(files, targets)]

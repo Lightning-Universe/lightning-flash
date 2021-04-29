@@ -33,6 +33,7 @@ from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modul
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipelineState
+    from flash.data.data_source import DataSource
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -427,25 +428,6 @@ class Preprocess(BasePreprocess, Properties, Module):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
-    # @classmethod
-    # def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
-    #     """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
-    #
-    #     Example::
-    #
-    #         # data: "."
-    #         # output: [("./cat/1.png", 1), ..., ("./dog/10.png", 0)]
-    #
-    #         output: Mapping = load_data(data)
-    #
-    #     """
-    #     return data
-    #
-    # @classmethod
-    # def load_sample(cls, sample: Any, dataset: Optional[Any] = None) -> Any:
-    #     """Loads single sample from dataset"""
-    #     return sample
-
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
         return sample
@@ -498,7 +480,21 @@ class Preprocess(BasePreprocess, Properties, Module):
         return batch
 
 
+T = TypeVar("T")
+
+
 class DefaultPreprocess(Preprocess):
+
+    data_sources: List[Type['DataSource']] = []  # TODO: Make this a property
+
+    # TODO: Doesn't need to be a classmethod
+    @classmethod
+    def data_source_of_type(cls, data_source_type: Type[T]) -> Optional[Type[T]]:
+        data_sources = cls.data_sources
+        for data_source in data_sources:
+            if issubclass(data_source, data_source_type):
+                return data_source
+        return None
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {}

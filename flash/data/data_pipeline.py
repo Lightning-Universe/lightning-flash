@@ -506,24 +506,24 @@ class DataPipeline:
             # if any other pipeline is attached which may rely on this!
             model.predict_step = model.predict_step._original
 
-    def _generate_callable_auto_dataset(
-        self, data: Union[Iterable, Any], running_stage: RunningStage = None
-    ) -> Callable:
+    # def _generate_callable_auto_dataset(
+    #     self, data: Union[Iterable, Any], running_stage: RunningStage = None
+    # ) -> Callable:
+    #
+    #     def fn():
+    #         return self._generate_auto_dataset(data, running_stage=running_stage)
+    #
+    #     return fn
 
-        def fn():
-            return self._generate_auto_dataset(data, running_stage=running_stage)
-
-        return fn
-
-    def _generate_auto_dataset(
-        self,
-        data: Union[Iterable, Any],
-        running_stage: RunningStage = None,
-        use_iterable_auto_dataset: bool = False
-    ) -> Union[AutoDataset, IterableAutoDataset]:
-        if use_iterable_auto_dataset:
-            return IterableAutoDataset(data, data_pipeline=self, running_stage=running_stage)
-        return AutoDataset(data=data, data_pipeline=self, running_stage=running_stage)
+    # def _generate_auto_dataset(
+    #     self,
+    #     data: Union[Iterable, Any],
+    #     running_stage: RunningStage = None,
+    #     use_iterable_auto_dataset: bool = False
+    # ) -> Union[AutoDataset, IterableAutoDataset]:
+    #     if use_iterable_auto_dataset:
+    #         return IterableAutoDataset(data, data_pipeline=self, running_stage=running_stage)
+    #     return AutoDataset(data=data, data_pipeline=self, running_stage=running_stage)
 
     def to_dataloader(
         self, data: Union[Iterable, Any], auto_collate: Optional[bool] = None, **loader_kwargs
