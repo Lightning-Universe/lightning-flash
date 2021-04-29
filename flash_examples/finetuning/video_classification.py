@@ -16,7 +16,7 @@ import sys
 from typing import Callable, List
 
 import torch
-from torch.utils.data import SequentialSampler
+from torch.utils.data.sampler import RandomSampler
 
 import flash
 from flash.core.classification import Labels
@@ -28,7 +28,7 @@ from flash.video import VideoClassificationData, VideoClassifier
 if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
     import kornia.augmentation as K
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
-    from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
+    from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip, CenterCrop
 else:
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
@@ -43,10 +43,11 @@ if __name__ == '__main__':
     # 2. [Optional] Specify transforms to be used during training.
     # Flash helps you to place your transform exactly where you want.
     # Learn more at https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.data.process.Preprocess
-    post_tensor_transform = [UniformTemporalSubsample(8), RandomShortSideScale(min_size=256, max_size=320), RandomCrop(244)]
+    post_tensor_transform = [UniformTemporalSubsample(8), RandomShortSideScale(min_size=256, max_size=320)]
     per_batch_transform_on_device = [K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225]))]
 
-    train_post_tensor_transform = post_tensor_transform + [RandomHorizontalFlip(p=0.5)]
+    train_post_tensor_transform = post_tensor_transform + [RandomCrop(244), RandomHorizontalFlip(p=0.5)]
+    val_post_tensor_transform = post_tensor_transform + [CenterCrop(244)]
     train_per_batch_transform_on_device = per_batch_transform_on_device
 
 
@@ -75,13 +76,14 @@ if __name__ == '__main__':
         val_data_path=os.path.join(_PATH_ROOT, "data/kinetics/val"),
         predict_data_path=os.path.join(_PATH_ROOT, "data/kinetics/predict"),
         clip_sampler="uniform",
-        clip_duration=1,
-        video_sampler=SequentialSampler,
+        clip_duration=2,
+        video_sampler=RandomSampler,
         decode_audio=False,
         train_transform=make_transform(train_post_tensor_transform),
-        val_transform=make_transform(),
-        predict_transform=make_transform(),
-        num_workers=4,
+        val_transform=make_transform(val_post_tensor_transform),
+        predict_transform=make_transform(val_post_tensor_transform),
+        num_workers=8,
+        batch_size=8,
     )
 
     # 4. List the available models
@@ -94,7 +96,7 @@ if __name__ == '__main__':
     model.serializer = Labels()
 
     # 6. Finetune the model
-    trainer = flash.Trainer(max_epochs=20, gpus=2, accelerator="ddp")
+    trainer = flash.Trainer(max_epochs=20, gpus=1, accelerator="ddp")
     trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze())
 
     #trainer.save_checkpoint("video_classification.pt")

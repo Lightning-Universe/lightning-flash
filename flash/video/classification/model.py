@@ -13,8 +13,10 @@
 # limitations under the License.
 from types import FunctionType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset
 
 import torch
+from torch.utils.data import DistributedSampler
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
@@ -121,6 +123,18 @@ class VideoClassifier(ClassificationTask):
             nn.Flatten(),
             nn.Linear(num_features, num_classes),
         )
+
+    def on_train_start(self) -> None:
+        if self.trainer.accelerator_connector.is_distributed:
+            encoded_dataset: EncodedVideoDataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset._video_sampler = DistributedSampler(encoded_dataset._labeled_videos)
+        super().on_train_start()
+
+    def on_train_epoch_start(self) -> None:
+        if self.trainer.accelerator_connector.is_distributed:
+            encoded_dataset: EncodedVideoDataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
+        super().on_train_epoch_start()
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         return super().step((batch["video"], batch["label"]), batch_idx)
