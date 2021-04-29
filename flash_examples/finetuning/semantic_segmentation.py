@@ -69,7 +69,7 @@ model = SemanticSegmentation(
 
 # 4. Create the trainer.
 trainer = flash.Trainer(
-    max_epochs=2,
+    max_epochs=1,
     gpus=0,
 )
 

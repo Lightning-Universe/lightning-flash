@@ -153,11 +153,8 @@ class BaseDataFetcher(FlashCallback):
         self._preprocess = None
         self.reset()
 
-        self._func_names = []  # store the functions to cache the data
-
     def _store(self, data: Any, fn_name: str, running_stage: RunningStage) -> None:
-        # we check om `func_names` to prevent from memory overflow issues
-        if self.enabled and (fn_name in self._func_names):
+        if self.enabled:
             store = self.batches[_STAGES_PREFIX[running_stage]]
             store.setdefault(fn_name, [])
             store[fn_name].append(data)

@@ -168,11 +168,6 @@ class DataModule(pl.LightningDataModule):
         if isinstance(func_names, str):
             func_names = [func_names]
 
-        # the data fetcher tries to store all the data batches per stage,
-        # we store the function names that we want to visualize/cache to
-        # avoid duplicity in the visualization and reduce the memory footprint.
-        self.data_fetcher._func_names = func_names
-
         iter_dataloader = getattr(self, iter_name)
         with self.data_fetcher.enable():
             try:
