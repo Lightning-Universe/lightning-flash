@@ -60,8 +60,8 @@ class ClassificationTask(Task):
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
         if getattr(self.hparams, "multi_label", False):
-            return F.sigmoid(x)
-        return F.softmax(x, -1)
+            return torch.sigmoid(x)
+        return torch.softmax(x, -1)
 
 
 class ClassificationSerializer(Serializer):
