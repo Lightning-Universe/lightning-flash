@@ -22,13 +22,14 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
-from flash.video import VideoClassificationData, VideoClassifier
 
 if _PYTORCHVIDEO_AVAILABLE:
     import kornia.augmentation as K
     from pytorchvideo.data.utils import thwc_to_cthw
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
     from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
+
+    from flash.video import VideoClassificationData, VideoClassifier
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):

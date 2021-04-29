@@ -137,6 +137,7 @@ docs/notebooks/
 docs/api/
 titanic.csv
 .vscode
+.venv
 data_folder
 *.pt
 *.zip
