@@ -19,7 +19,6 @@ from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset
 from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
@@ -126,13 +125,13 @@ class VideoClassifier(ClassificationTask):
 
     def on_train_start(self) -> None:
         if self.trainer.accelerator_connector.is_distributed:
-            encoded_dataset: EncodedVideoDataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
             encoded_dataset._video_sampler = DistributedSampler(encoded_dataset._labeled_videos)
         super().on_train_start()
 
     def on_train_epoch_start(self) -> None:
         if self.trainer.accelerator_connector.is_distributed:
-            encoded_dataset: EncodedVideoDataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()
 
