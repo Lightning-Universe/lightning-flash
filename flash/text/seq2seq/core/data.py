@@ -59,12 +59,13 @@ class Seq2SeqPreprocess(Preprocess):
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
+            "tokenizer": self.tokenizer,
             "input": self.input,
-            "backbone": self.backbone,
-            "max_length": self.max_length,
-            "target": self.target,
             "filetype": self.filetype,
-            "label_to_class_mapping": self.label_to_class_mapping,
+            "target": self.target,
+            "max_source_length": self.max_source_length,
+            "max_target_length": self.max_target_length,
+            "padding": self.padding,
         }
 
     @classmethod
