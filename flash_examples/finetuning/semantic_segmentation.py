@@ -52,15 +52,14 @@ datamodule = SemanticSegmentationData.from_filepaths(
     train_labels=labels_filepaths,
     batch_size=4,
     val_split=0.3,
-    image_size=(300, 400),  # (600, 800)
+    image_size=(200, 200),  # (600, 800)
     num_workers=4,
 )
 
 # 2.2 Visualise the samples
 labels_map = SegmentationLabels.create_random_labels_map(num_classes=21)
 datamodule.set_labels_map(labels_map)
-datamodule.show_train_batch("load_sample")
-datamodule.show_train_batch("post_tensor_transform")
+datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
 
 # 3. Build the model
 model = SemanticSegmentation(

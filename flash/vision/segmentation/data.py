@@ -107,7 +107,8 @@ class SemanticSegmentationPreprocess(Preprocess):
             predict_transform,
         )
 
-    def load_sample(self, sample: Union[str, Tuple[str, str]]) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
+    def load_sample(self, sample: Union[str, Tuple[str,
+                                                   str]]) -> Union[torch.Tensor, Dict[SegmentationKeys, torch.Tensor]]:
         if not isinstance(sample, (
             str,
             tuple,
@@ -124,13 +125,14 @@ class SemanticSegmentationPreprocess(Preprocess):
         # load images directly to torch tensors
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
+        img_labels = img_labels[0]  # HxW
 
         return {SegmentationKeys.IMAGES: img, SegmentationKeys.MASKS: img_labels}
 
     # TODO: this routine should be moved to `per_batch_transform` once we have a way to
     # forward the labels to the loss function:.
     def post_tensor_transform(
-        self, sample: Union[torch.Tensor, Dict[str, torch.Tensor]]
+        self, sample: Union[torch.Tensor, Dict[SegmentationKeys, torch.Tensor]]
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         if isinstance(sample, torch.Tensor):  # case for predict
             out = sample.float() / 255.  # TODO: define predict transforms
@@ -139,11 +141,16 @@ class SemanticSegmentationPreprocess(Preprocess):
         if not isinstance(sample, dict):
             raise TypeError(f"Invalid type, expected `dict`. Got: {sample}.")
 
-        # arrange data as floating point and batch before the augmentations
-        sample[SegmentationKeys.IMAGES] = sample[SegmentationKeys.IMAGES][None].float().contiguous()  # 1xCxHxW
-        sample[SegmentationKeys.MASKS] = sample[SegmentationKeys.MASKS][None, :1].float().contiguous()  # 1x1xHxW
+        # pass to the transforms a dictionary with copies to handle potential memory leaks
+        sample_in: Dict[SegmentationKeys, torch.Tensor] = {}
+        sample_in[SegmentationKeys.IMAGES] = (
+            sample[SegmentationKeys.IMAGES][None].float().contiguous().clone()  # 1xCxHxW
+        )
+        sample_in[SegmentationKeys.MASKS] = (
+            sample[SegmentationKeys.MASKS][None, None].float().contiguous().clone()  # 1x1xHxW
+        )
 
-        out: Dict[str, torch.Tensor] = self.current_transform(sample)
+        out: Dict[SegmentationKeys, torch.Tensor] = self.current_transform(sample_in)
 
         return out[SegmentationKeys.IMAGES][0], out[SegmentationKeys.MASKS][0, 0].long()
 
