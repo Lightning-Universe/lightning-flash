@@ -184,7 +184,6 @@ class VideoClassificationPreprocess(Preprocess):
 
     def per_batch_transform_on_device(self, sample: _PYTORCHVIDEO_DATA) -> _PYTORCHVIDEO_DATA:
         return self.current_transform(sample)
-        
 
 
 class VideoClassificationData(DataModule):

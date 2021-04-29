@@ -13,17 +13,17 @@
 # limitations under the License.
 from types import FunctionType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
-from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset
 
 import torch
-from torch.utils.data import DistributedSampler
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset
 from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
+from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
@@ -140,9 +140,8 @@ class VideoClassifier(ClassificationTask):
         return super().step((batch["video"], batch["label"]), batch_idx)
 
     def forward(self, x: Any) -> Any:
-        # AssertionError: input for MultiPathWayWithFuse needs to be a list of tensors
         x = self.model(x)
-        if  self.head is not None:
+        if self.head is not None:
             x = self.head(x)
         return x
 

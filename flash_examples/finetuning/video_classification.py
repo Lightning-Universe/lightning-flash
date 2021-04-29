@@ -20,15 +20,15 @@ from torch.utils.data.sampler import RandomSampler
 
 import flash
 from flash.core.classification import Labels
-from flash.data.utils import download_data
 from flash.core.finetuning import NoFreeze
+from flash.data.utils import download_data
 from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 
 if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
     import kornia.augmentation as K
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
-    from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip, CenterCrop
+    from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
 else:
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
@@ -50,7 +50,6 @@ if __name__ == '__main__':
     val_post_tensor_transform = post_tensor_transform + [CenterCrop(244)]
     train_per_batch_transform_on_device = per_batch_transform_on_device
 
-
     def make_transform(
         post_tensor_transform: List[Callable] = post_tensor_transform,
         per_batch_transform_on_device: List[Callable] = per_batch_transform_on_device
@@ -65,7 +64,9 @@ if __name__ == '__main__':
             "per_batch_transform_on_device": Compose([
                 ApplyTransformToKey(
                     key="video",
-                    transform=K.VideoSequential(*per_batch_transform_on_device, data_format="BCTHW", same_on_frame=False)
+                    transform=K.VideoSequential(
+                        *per_batch_transform_on_device, data_format="BCTHW", same_on_frame=False
+                    )
                 ),
             ]),
         }
@@ -98,9 +99,6 @@ if __name__ == '__main__':
     # 6. Finetune the model
     trainer = flash.Trainer(max_epochs=20, gpus=1, accelerator="ddp")
     trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze())
-
-    #trainer.save_checkpoint("video_classification.pt")
-    #model = VideoClassifier.load_from_checkpoint("video_classification.pt")
 
     # 7. Make a prediction
     val_folder = os.path.join(_PATH_ROOT, os.path.join(_PATH_ROOT, "data/kinetics/predict"))
