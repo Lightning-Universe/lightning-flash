@@ -144,10 +144,10 @@ class SemanticSegmentationPreprocess(Preprocess):
         # pass to the transforms a dictionary with copies to handle potential memory leaks
         sample_in: Dict[SegmentationKeys, torch.Tensor] = {}
         sample_in[SegmentationKeys.IMAGES] = (
-            sample[SegmentationKeys.IMAGES][None].float().contiguous().clone()  # 1xCxHxW
+            sample[SegmentationKeys.IMAGES][None].float().contiguous()  # 1xCxHxW
         )
         sample_in[SegmentationKeys.MASKS] = (
-            sample[SegmentationKeys.MASKS][None, None].float().contiguous().clone()  # 1x1xHxW
+            sample[SegmentationKeys.MASKS][None, None].float().contiguous()  # 1x1xHxW
         )
 
         out: Dict[SegmentationKeys, torch.Tensor] = self.current_transform(sample_in)
