@@ -10,6 +10,16 @@ The task
 ********
 Semantic segmentation, or image segmentation, is the task of clustering parts of an image together which belong to the same object class. It is a form of pixel-level prediction because each pixel in an image is classified according to a category
 
+See more: https://paperswithcode.com/task/semantic-segmentation
+
+.. raw:: html
+
+   <p>
+     <a href="https://i2.wp.com/syncedreview.com/wp-content/uploads/2019/12/image-9-1.png" >
+       <img src="https://i2.wp.com/syncedreview.com/wp-content/uploads/2019/12/image-9-1.png"/>
+     </a>
+   </p>
+
 ------
 
 *********

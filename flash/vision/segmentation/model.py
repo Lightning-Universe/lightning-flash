@@ -46,7 +46,7 @@ class SemanticSegmentation(ClassificationTask):
         backbone_kwargs: Additional arguments for the backbone configuration.
         pretrained: Use a pretrained backbone, defaults to ``False``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
+        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.AdamW`.
         metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.IoU`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         multi_label: Whether the targets are multi-label or not.
@@ -62,7 +62,7 @@ class SemanticSegmentation(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Optional[Callable] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
         metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
