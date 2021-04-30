@@ -26,7 +26,7 @@ Use the :class:`~flash.vision.SemanticSegmentation` pretrained model for inferen
     # import our libraries
     from flash import Trainer
     from flash.data.utils import download_data
-    from flash.vision import SemanticSegmentation, SemanticSegmentationData
+    from flash.vision import SemanticSegmentation
     from flash.vision.segmentation.serialization import SegmentationLabels
 
     # 1. Download the data
