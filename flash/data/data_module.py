@@ -14,7 +14,7 @@
 import os
 import pathlib
 import platform
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -28,9 +28,11 @@ from flash.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.data.data_source import DataSource, FoldersDataSource
+from flash.data.data_source import DataSource, FilesDataSource, FoldersDataSource
 from flash.data.splits import SplitDataset
 from flash.data.utils import _STAGES_PREFIX
+
+DATA_SOURCE_TYPE = TypeVar("DATA_SOURCE_TYPE")
 
 
 class DataModule(pl.LightningDataModule):
@@ -48,6 +50,7 @@ class DataModule(pl.LightningDataModule):
             or 0 for Darwin platform.
     """
 
+    data_sources = []
     preprocess_cls = DefaultPreprocess
     postprocess_cls = Postprocess
 
@@ -332,6 +335,46 @@ class DataModule(pl.LightningDataModule):
         return SplitDataset(train_dataset, train_indices), SplitDataset(train_dataset, val_indices)
 
     @classmethod
+    def data_source_of_type(cls, data_source_type: Type[DATA_SOURCE_TYPE]) -> Optional[Type[DATA_SOURCE_TYPE]]:
+        data_sources = cls.data_sources
+        for data_source in data_sources:
+            if issubclass(data_source, data_source_type):
+                return data_source
+        return None
+
+    @classmethod
+    def from_data_source(
+        cls,
+        data_source: DataSource,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **kwargs: Any,
+    ) -> 'DataModule':
+        preprocess = preprocess or cls.preprocess_cls(
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
+            **kwargs,
+        )
+
+        return cls(
+            data_source,
+            preprocess,
+            data_fetcher=data_fetcher,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+
+    @classmethod
     def from_folders(
         cls,
         train_folder: Optional[Union[str, pathlib.Path]] = None,
@@ -349,26 +392,65 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         **kwargs: Any,
     ) -> 'DataModule':
-
-        preprocess = preprocess or cls.preprocess_cls(
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
-            **kwargs,
-        )
-
-        data_source = preprocess.data_source_of_type(FoldersDataSource)(
+        data_source = cls.data_source_of_type(FoldersDataSource)(
             train_folder=train_folder,
             val_folder=val_folder,
             test_folder=test_folder,
             predict_folder=predict_folder,
         )
 
-        return cls(
+        return cls.from_data_source(
             data_source,
-            preprocess,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
             data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        train_targets: Optional[Sequence[Any]] = None,
+        val_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **kwargs: Any,
+    ) -> 'DataModule':
+        data_source = cls.data_source_of_type(FilesDataSource)(
+            train_files=train_files,
+            train_targets=train_targets,
+            val_files=val_files,
+            val_targets=val_targets,
+            test_files=test_files,
+            test_targets=test_targets,
+            predict_files=predict_files,
+        )
+
+        return cls.from_data_source(
+            data_source,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,

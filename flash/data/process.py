@@ -11,13 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
 import os
-import subprocess
-from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod, abstractproperty, abstractstaticmethod
+from abc import ABC, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
-from importlib import import_module
-from operator import truediv
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
 
 import torch
@@ -33,7 +29,6 @@ from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modul
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipelineState
-    from flash.data.data_source import DataSource
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -149,9 +144,6 @@ class BasePreprocess(ABC):
         Override this method to load from state_dict
         """
         pass
-
-
-DATA_SOURCE_TYPE = TypeVar("DATA_SOURCE_TYPE")
 
 
 class Preprocess(BasePreprocess, Properties, Module):
@@ -312,11 +304,8 @@ class Preprocess(BasePreprocess, Properties, Module):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[List[Type['DataSource']]] = None,
     ):
         super().__init__()
-
-        self.data_sources = data_sources or []
 
         # resolve the default transforms
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
@@ -516,13 +505,6 @@ class Preprocess(BasePreprocess, Properties, Module):
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
         return self.current_transform(batch)
-
-    def data_source_of_type(self, data_source_type: Type[DATA_SOURCE_TYPE]) -> Optional[Type[DATA_SOURCE_TYPE]]:
-        data_sources = self.data_sources
-        for data_source in data_sources:
-            if issubclass(data_source, data_source_type):
-                return data_source
-        return None
 
 
 class DefaultPreprocess(Preprocess):

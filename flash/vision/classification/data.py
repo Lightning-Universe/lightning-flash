@@ -64,7 +64,7 @@ class ImageClassificationPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
     def collate(self, samples: Sequence[Dict[str, Any]]) -> Any:
