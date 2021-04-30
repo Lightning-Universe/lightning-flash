@@ -13,7 +13,9 @@
 # limitations under the License.
 import os
 from pathlib import Path
+from typing import Any, List, Tuple
 
+import kornia as K
 import numpy as np
 import torch
 from PIL import Image
@@ -26,74 +28,185 @@ def _dummy_image_loader(_):
     return torch.rand(3, 196, 196)
 
 
-def _rand_image():
-    _size = np.random.choice([196, 244])
-    return Image.fromarray(np.random.randint(0, 255, (_size, _size, 3), dtype="uint8"))
+def _rand_image(size: Tuple[int, int] = None):
+    if size is None:
+        _size = np.random.choice([196, 244])
+        size = (_size, _size)
+    return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
 
 
-def test_from_filepaths(tmpdir):
+def test_from_filepaths_smoke(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a_1.png")
+    _rand_image().save(tmpdir / "b_1.png")
+
+    img_data = ImageClassificationData.from_filepaths(
+        train_filepaths=[tmpdir / "a_1.png", tmpdir / "b_1.png"],
+        train_labels=[1, 2],
+        batch_size=2,
+        num_workers=0,
+    )
+    assert img_data.train_dataloader() is not None
+    assert img_data.val_dataloader() is None
+    assert img_data.test_dataloader() is None
+
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [1, 2]
+
+
+def test_from_filepaths_list_image_paths(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "e").mkdir()
+    _rand_image().save(tmpdir / "e_1.png")
+
+    train_images = [
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+    ]
+
+    img_data = ImageClassificationData.from_filepaths(
+        train_filepaths=train_images,
+        train_labels=[0, 3, 6],
+        val_filepaths=train_images,
+        val_labels=[1, 4, 7],
+        test_filepaths=train_images,
+        test_labels=[2, 5, 8],
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
+    assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
+
+    # check validation data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [1, 4]
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [2, 5]
+
+
+def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
     _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
+    _rand_image().save(tmpdir / "b" / "b_1.png")
 
-    _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
-
-    img_data = ImageClassificationData.from_filepaths(
+    dm = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_transform=None,
         train_labels=[0, 1],
+        val_filepaths=[tmpdir / "b", tmpdir / "a"],
+        val_labels=[0, 2],
+        test_filepaths=[tmpdir / "b", tmpdir / "b"],
+        test_labels=[2, 1],
         batch_size=2,
-        num_workers=0,
     )
-    data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    # disable visualisation for testing
+    assert dm.data_fetcher.block_viz_window is True
+    dm.set_block_viz_window(False)
+    assert dm.data_fetcher.block_viz_window is False
 
-    assert img_data.val_dataloader() is None
-    assert img_data.test_dataloader() is None
+    # call show functions
+    dm.show_train_batch()
+    dm.show_train_batch("pre_tensor_transform")
+    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
 
-    (tmpdir / "c").mkdir()
-    (tmpdir / "d").mkdir()
-    _rand_image().save(tmpdir / "c" / "c_1.png")
-    _rand_image().save(tmpdir / "c" / "c_2.png")
-    _rand_image().save(tmpdir / "d" / "d_1.png")
-    _rand_image().save(tmpdir / "d" / "d_2.png")
 
-    (tmpdir / "e").mkdir()
-    (tmpdir / "f").mkdir()
-    _rand_image().save(tmpdir / "e" / "e_1.png")
-    _rand_image().save(tmpdir / "e" / "e_2.png")
-    _rand_image().save(tmpdir / "f" / "f_1.png")
-    _rand_image().save(tmpdir / "f" / "f_2.png")
+def test_from_filepaths_visualise_multilabel(tmpdir):
+    tmpdir = Path(tmpdir)
 
-    img_data = ImageClassificationData.from_filepaths(
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a" / "a_1.png")
+    _rand_image().save(tmpdir / "b" / "b_1.png")
+
+    dm = ImageClassificationData.from_filepaths(
         train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_labels=[0, 1],
-        train_transform=None,
-        val_filepaths=[tmpdir / "c", tmpdir / "d"],
-        val_labels=[0, 1],
-        val_transform=None,
-        test_transform=None,
-        test_filepaths=[tmpdir / "e", tmpdir / "f"],
-        test_labels=[0, 1],
-        batch_size=1,
-        num_workers=0,
+        train_labels=[[0, 1, 0], [0, 1, 1]],
+        val_filepaths=[tmpdir / "b", tmpdir / "a"],
+        val_labels=[[1, 1, 0], [0, 0, 1]],
+        test_filepaths=[tmpdir / "b", tmpdir / "b"],
+        test_labels=[[0, 0, 1], [1, 1, 0]],
+        batch_size=2,
     )
+    # disable visualisation for testing
+    assert dm.data_fetcher.block_viz_window is True
+    dm.set_block_viz_window(False)
+    assert dm.data_fetcher.block_viz_window is False
 
-    data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    # call show functions
+    dm.show_train_batch()
+    dm.show_train_batch("pre_tensor_transform")
+    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_val_batch("per_batch_transform")
 
-    data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+
+def test_from_filepaths_splits(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    B, _, H, W = 2, 3, 224, 224
+    img_size: Tuple[int, int] = (H, W)
+
+    (tmpdir / "splits").mkdir()
+    _rand_image(img_size).save(tmpdir / "s.png")
+
+    num_samples: int = 10
+    val_split: float = .3
+
+    train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
+
+    train_labels: List[int] = [i for i in range(num_samples)]
+
+    assert len(train_filepaths) == len(train_labels)
+
+    def preprocess(x):
+        out = K.image_to_tensor(np.array(x))
+        return out
+
+    _to_tensor = {
+        "to_tensor_transform": lambda x: preprocess(x),
+    }
+
+    def run(transform: Any = None):
+        img_data = ImageClassificationData.from_filepaths(
+            train_filepaths=train_filepaths,
+            train_labels=train_labels,
+            train_transform=transform,
+            val_transform=transform,
+            batch_size=B,
+            num_workers=0,
+            val_split=val_split,
+            image_size=img_size,
+        )
+        data = next(iter(img_data.train_dataloader()))
+        imgs, labels = data
+        assert imgs.shape == (B, 3, H, W)
+        assert labels.shape == (B, )
+
+    run()
+    run(_to_tensor)
 
 
 def test_categorical_csv_labels(tmpdir):
@@ -143,11 +256,9 @@ def test_categorical_csv_labels(tmpdir):
     test_labels = labels_from_categorical_csv(
         test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
     )
+    B: int = 2  # batch_size
     data = ImageClassificationData.from_filepaths(
-        batch_size=2,
-        train_transform=None,
-        val_transform=None,
-        test_transform=None,
+        batch_size=B,
         train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
         train_labels=train_labels.values(),
         val_filepaths=os.path.join(tmpdir, 'some_dataset', 'valid'),
@@ -158,15 +269,18 @@ def test_categorical_csv_labels(tmpdir):
 
     for (x, y) in data.train_dataloader():
         assert len(x) == 2
+        assert sorted(list(y.numpy())) == sorted(list(train_labels.values())[:B])
 
     for (x, y) in data.val_dataloader():
         assert len(x) == 2
+        assert sorted(list(y.numpy())) == sorted(list(val_labels.values())[:B])
 
     for (x, y) in data.test_dataloader():
         assert len(x) == 2
+        assert sorted(list(y.numpy())) == sorted(list(test_labels.values())[:B])
 
 
-def test_from_folders(tmpdir):
+def test_from_folders_only_train(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
@@ -179,6 +293,7 @@ def test_from_folders(tmpdir):
     _rand_image().save(train_dir / "b" / "2.png")
 
     img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data
     assert imgs.shape == (1, 3, 196, 196)
@@ -187,20 +302,81 @@ def test_from_folders(tmpdir):
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
 
+
+def test_from_folders_train_val(tmpdir):
+
+    train_dir = Path(tmpdir / "train")
+    train_dir.mkdir()
+
+    (train_dir / "a").mkdir()
+    _rand_image().save(train_dir / "a" / "1.png")
+    _rand_image().save(train_dir / "a" / "2.png")
+
+    (train_dir / "b").mkdir()
+    _rand_image().save(train_dir / "b" / "1.png")
+    _rand_image().save(train_dir / "b" / "2.png")
     img_data = ImageClassificationData.from_folders(
         train_dir,
         val_folder=train_dir,
         test_folder=train_dir,
-        batch_size=1,
+        batch_size=2,
         num_workers=0,
     )
 
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [0, 0]
 
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [0, 0]
+
+
+def test_from_filepaths_multilabel(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    _rand_image().save(tmpdir / "a1.png")
+    _rand_image().save(tmpdir / "a2.png")
+
+    train_images = [str(tmpdir / "a1.png"), str(tmpdir / "a2.png")]
+    train_labels = [[1, 0, 1, 0], [0, 0, 1, 1]]
+    valid_labels = [[1, 1, 1, 0], [1, 0, 0, 1]]
+    test_labels = [[1, 0, 1, 0], [1, 1, 0, 1]]
+
+    dm = ImageClassificationData.from_filepaths(
+        train_filepaths=train_images,
+        train_labels=train_labels,
+        val_filepaths=train_images,
+        val_labels=valid_labels,
+        test_filepaths=train_images,
+        test_labels=test_labels,
+        batch_size=2,
+        num_workers=0,
+    )
+
+    data = next(iter(dm.train_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+
+    data = next(iter(dm.val_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+    torch.testing.assert_allclose(labels, torch.tensor(valid_labels))
+
+    data = next(iter(dm.test_dataloader()))
+    imgs, labels = data
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+    torch.testing.assert_allclose(labels, torch.tensor(test_labels))

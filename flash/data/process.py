@@ -13,23 +13,59 @@
 # limitations under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.nn import Module
 from torch.utils.data._utils.collate import default_collate
 
 from flash.data.batch import default_uncollate
 from flash.data.callback import FlashCallback
-from flash.data.utils import convert_to_modules
+from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules
+
+if TYPE_CHECKING:
+    from flash.data.data_pipeline import DataPipelineState
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class ProcessState:
+    """
+    Base class for all process states
+    """
+    pass
+
+
+STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
 
 
 class Properties:
 
-    _running_stage: Optional[RunningStage] = None
-    _current_fn: Optional[str] = None
+    def __init__(self):
+        super().__init__()
+
+        self._running_stage: Optional[RunningStage] = None
+        self._current_fn: Optional[str] = None
+        self._data_pipeline_state: Optional['DataPipelineState'] = None
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+
+    def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        else:
+            return None
+
+    def set_state(self, state: ProcessState):
+        self._state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        self._data_pipeline_state = data_pipeline_state
+        for state in self._state.values():
+            self._data_pipeline_state.set_state(state)
 
     @property
     def current_fn(self) -> Optional[str]:
@@ -92,15 +128,7 @@ class Properties:
             self._running_stage = None
 
 
-@dataclass(unsafe_hash=True, frozen=True)
-class PreprocessState:
-    """
-    Base class for all preprocess states
-    """
-    pass
-
-
-class Preprocess(Properties, torch.nn.Module):
+class Preprocess(Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -254,37 +282,88 @@ class Preprocess(Properties, torch.nn.Module):
 
     def __init__(
         self,
-        train_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
-        predict_transform: Optional[Union[Callable, Module, Dict[str, Callable]]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
     ):
         super().__init__()
-        self.train_transform = convert_to_modules(train_transform)
-        self.val_transform = convert_to_modules(val_transform)
-        self.test_transform = convert_to_modules(test_transform)
-        self.predict_transform = convert_to_modules(predict_transform)
+
+        # used to keep track of provided transforms
+        self._train_collate_in_worker_from_transform: Optional[bool] = None
+        self._val_collate_in_worker_from_transform: Optional[bool] = None
+        self._predict_collate_in_worker_from_transform: Optional[bool] = None
+        self._test_collate_in_worker_from_transform: Optional[bool] = None
+
+        self.train_transform = convert_to_modules(self._check_transforms(train_transform, RunningStage.TRAINING))
+        self.val_transform = convert_to_modules(self._check_transforms(val_transform, RunningStage.VALIDATING))
+        self.test_transform = convert_to_modules(self._check_transforms(test_transform, RunningStage.TESTING))
+        self.predict_transform = convert_to_modules(self._check_transforms(predict_transform, RunningStage.PREDICTING))
 
         if not hasattr(self, "_skip_mutual_check"):
             self._skip_mutual_check = False
 
         self._callbacks: List[FlashCallback] = []
 
-    @property
-    def skip_mutual_check(self) -> bool:
-        return self._skip_mutual_check
+    # todo (tchaton) Add a warning if a transform is provided, but the hook hasn't been overriden !
+    def _check_transforms(self, transform: Optional[Dict[str, Callable]],
+                          stage: RunningStage) -> Optional[Dict[str, Callable]]:
+        if transform is None:
+            return transform
 
-    @skip_mutual_check.setter
-    def skip_mutual_check(self, skip_mutual_check: bool) -> None:
-        self._skip_mutual_check = skip_mutual_check
+        if not isinstance(transform, Dict):
+            raise MisconfigurationException(
+                "Transform should be a dict. "
+                f"Here are the available keys for your transforms: {_PREPROCESS_FUNCS}."
+            )
 
-    def _identify(self, x: Any) -> Any:
+        keys_diff = set(transform.keys()).difference(_PREPROCESS_FUNCS)
+
+        if len(keys_diff) > 0:
+            raise MisconfigurationException(
+                f"{stage}_transform contains {keys_diff}. Only {_PREPROCESS_FUNCS} keys are supported."
+            )
+
+        is_per_batch_transform_in = "per_batch_transform" in transform
+        is_per_sample_transform_on_device_in = "per_sample_transform_on_device" in transform
+
+        if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
+            raise MisconfigurationException(
+                f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
+                f'are mutually exclusive.'
+            )
+
+        collate_in_worker: Optional[bool] = None
+
+        if is_per_batch_transform_in or (not is_per_batch_transform_in and not is_per_sample_transform_on_device_in):
+            collate_in_worker = True
+
+        elif is_per_sample_transform_on_device_in:
+            collate_in_worker = False
+
+        setattr(self, f"_{_STAGES_PREFIX[stage]}_collate_in_worker_from_transform", collate_in_worker)
+        return transform
+
+    @staticmethod
+    def _identity(x: Any) -> Any:
         return x
+
+    # todo (tchaton): Remove when merged. https://github.com/PyTorchLightning/pytorch-lightning/pull/7056
+    def tmp_wrap(self, transform) -> Callable:
+        if "on_device" in self.current_fn:
+
+            def fn(batch: Any):
+                if isinstance(batch, list) and len(batch) == 1 and isinstance(batch[0], dict):
+                    return [transform(batch[0])]
+                return transform(batch)
+
+            return fn
+        return transform
 
     def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
         if self.current_fn in transform:
-            return transform[self.current_fn]
-        return self._identify
+            return self.tmp_wrap(transform[self.current_fn])
+        return self._identity
 
     @property
     def current_transform(self) -> Callable:
@@ -297,11 +376,7 @@ class Preprocess(Properties, torch.nn.Module):
         elif self.predicting and self.predict_transform:
             return self._get_transform(self.predict_transform)
         else:
-            return self._identify
-
-    @classmethod
-    def from_state(cls, state: PreprocessState) -> 'Preprocess':
-        return cls(**vars(state))
+            return self._identity
 
     @property
     def callbacks(self) -> List['FlashCallback']:
@@ -388,7 +463,7 @@ class Preprocess(Properties, torch.nn.Module):
         return batch
 
 
-class Postprocess(Properties, torch.nn.Module):
+class Postprocess(Properties, Module):
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()
@@ -431,3 +506,57 @@ class Postprocess(Properties, torch.nn.Module):
 
     def _save_sample(self, sample: Any) -> None:
         self.save_sample(sample, self.format_sample_save_path(self._save_path))
+
+
+class Serializer(Properties):
+    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model ouptut into
+    the desired output format when predicting."""
+
+    def __init__(self):
+        super().__init__()
+        self._is_enabled = True
+
+    def enable(self):
+        """Enable serialization."""
+        self._is_enabled = True
+
+    def disable(self):
+        """Disable serialization."""
+        self._is_enabled = False
+
+    def serialize(self, sample: Any) -> Any:
+        """Serialize the given sample into the desired output format.
+
+        Args:
+            sample: The output from the :class:`.Postprocess`.
+
+        Returns:
+            The serialized output.
+        """
+        return sample
+
+    def __call__(self, sample: Any) -> Any:
+        if self._is_enabled:
+            return self.serialize(sample)
+        else:
+            return sample
+
+
+class SerializerMapping(Serializer):
+    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the dictionary
+    to be passed to it's own :class:`.Serializer`."""
+
+    def __init__(self, serializers: Mapping[str, Serializer]):
+        super().__init__()
+
+        self._serializers = serializers
+
+    def serialize(self, sample: Any) -> Any:
+        if isinstance(sample, Mapping):
+            return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
+        else:
+            raise ValueError("The model output must be a mapping when using a SerializerMapping.")
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        for serializer in self._serializers.values():
+            serializer.attach_data_pipeline_state(data_pipeline_state)

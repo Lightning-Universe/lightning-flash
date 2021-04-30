@@ -15,10 +15,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Switch to use `torchmetrics` ([#169](https://github.com/PyTorchLightning/lightning-flash/pull/169))
 
+- Better support for `optimizer` and `schedulers` ([#232](https://github.com/PyTorchLightning/lightning-flash/pull/232))
+
+
 
 ### Fixed
 
 - Fixed classification softmax ([#169](https://github.com/PyTorchLightning/lightning-flash/pull/169))
+
+- Fixed a bug where loading from a local checkpoint that had `pretrained=True` without an internet connection would sometimes raise an error ([#237](https://github.com/PyTorchLightning/lightning-flash/pull/237))
 
 ### Removed
 
@@ -28,7 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `RetinaNet` & `backbones` to `ObjectDetector` Task ([#121](https://github.com/PyTorchLightning/lightning-flash/pull/121))
-- Added .csv image loading utils ([#116](https://github.com/PyTorchLightning/lightning-flash/pull/116), 
+- Added .csv image loading utils ([#116](https://github.com/PyTorchLightning/lightning-flash/pull/116),
     [#117](https://github.com/PyTorchLightning/lightning-flash/pull/117),
     [#118](https://github.com/PyTorchLightning/lightning-flash/pull/118))
 

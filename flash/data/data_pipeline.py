@@ -16,20 +16,48 @@ import inspect
 import weakref
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
+import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities import imports
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data import DataLoader, IterableDataset
 from torch.utils.data._utils.collate import default_collate, default_convert
-from torch.utils.data.dataloader import DataLoader
 
-from flash.data.auto_dataset import AutoDataset
+from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
-from flash.data.process import Postprocess, Preprocess
+from flash.data.process import Postprocess, Preprocess, ProcessState, Serializer
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
     from flash.core.model import Task
+
+
+class DataPipelineState:
+    """A class to store and share all process states once a :class:`.DataPipeline` has been initialized."""
+
+    def __init__(self):
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+        self._initialized = False
+
+    def set_state(self, state: ProcessState):
+        """Add the given :class:`.ProcessState` to the :class:`.DataPipelineState`."""
+
+        if not self._initialized:
+            self._state[type(state)] = state
+        else:
+            rank_zero_warn(
+                f"Attempted to add a state ({state}) after the data pipeline has already been initialized. This will"
+                " only have an effect when a new data pipeline is created.", UserWarning
+            )
+
+    def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
+        """Get the :class:`.ProcessState` of the given type from the :class:`.DataPipelineState`."""
+
+        if state_type in self._state:
+            return self._state[state_type]
+        else:
+            return None
 
 
 class DataPipeline:
@@ -56,13 +84,30 @@ class DataPipeline:
     """
 
     PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
-    POSTPROCES_FUNCS: Set[str] = _POSTPROCESS_FUNCS
+    POSTPROCESS_FUNCS: Set[str] = _POSTPROCESS_FUNCS
 
-    def __init__(self, preprocess: Optional[Preprocess] = None, postprocess: Optional[Postprocess] = None) -> None:
+    def __init__(
+        self,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
+        serializer: Optional[Serializer] = None,
+    ) -> None:
         self._preprocess_pipeline = preprocess or Preprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
-        self._postprocessor = None
+
+        self._serializer = serializer or Serializer()
+
         self._running_stage = None
+
+    def initialize(self):
+        """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
+        :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
+        give a warning."""
+        data_pipeline_state = DataPipelineState()
+        self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._serializer.attach_data_pipeline_state(data_pipeline_state)
+        data_pipeline_state._initialized = True
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
@@ -77,11 +122,6 @@ class DataPipeline:
             return False
 
         return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
-
-    @property
-    def preprocess_state(self):
-        if self._preprocess_pipeline:
-            return self._preprocess_pipeline.state
 
     @classmethod
     def _is_overriden_recursive(
@@ -144,52 +184,61 @@ class DataPipeline:
 
         return function_name
 
+    def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
+        if on_device:
+            return self._identity, collate
+        else:
+            return collate, self._identity
+
     def _create_collate_preprocessors(
         self,
         stage: RunningStage,
         collate_fn: Optional[Callable] = None,
     ) -> Tuple[_PreProcessor, _PreProcessor]:
+
         original_collate_fn = collate_fn
+
         if collate_fn is None:
             collate_fn = default_collate
 
         preprocess: Preprocess = self._preprocess_pipeline
+        prefix: str = _STAGES_PREFIX[stage]
 
         func_names: Dict[str, str] = {
             k: self._resolve_function_hierarchy(k, preprocess, stage, Preprocess)
             for k in self.PREPROCESS_FUNCS
         }
 
-        if self._is_overriden_recursive("collate", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]):
+        if self._is_overriden_recursive("collate", preprocess, Preprocess, prefix=prefix):
             collate_fn: Callable = getattr(preprocess, func_names["collate"])
 
         per_batch_transform_overriden: bool = self._is_overriden_recursive(
-            "per_batch_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "per_batch_transform", preprocess, Preprocess, prefix=prefix
         )
 
         per_sample_transform_on_device_overriden: bool = self._is_overriden_recursive(
-            "per_sample_transform_on_device", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "per_sample_transform_on_device", preprocess, Preprocess, prefix=prefix
         )
 
-        skip_mutual_check: bool = getattr(preprocess, "skip_mutual_check", False)
+        collate_in_worker_from_transform: Optional[bool] = getattr(
+            preprocess, f"_{prefix}_collate_in_worker_from_transform", None
+        )
 
-        if (not skip_mutual_check and per_batch_transform_overriden and per_sample_transform_on_device_overriden):
+        if (
+            collate_in_worker_from_transform is None and per_batch_transform_overriden
+            and per_sample_transform_on_device_overriden
+        ):
             raise MisconfigurationException(
                 f'{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` '
                 f'are mutual exclusive for stage {stage}'
             )
 
-        elif per_batch_transform_overriden:
-            worker_collate_fn = collate_fn
-            device_collate_fn = self._identity
-
-        elif per_sample_transform_on_device_overriden:
-            worker_collate_fn = self._identity
-            device_collate_fn = collate_fn
-
+        if isinstance(collate_in_worker_from_transform, bool):
+            worker_collate_fn, device_collate_fn = self._make_collates(not collate_in_worker_from_transform, collate_fn)
         else:
-            worker_collate_fn = collate_fn
-            device_collate_fn = self._identity
+            worker_collate_fn, device_collate_fn = self._make_collates(
+                per_sample_transform_on_device_overriden, collate_fn
+            )
 
         worker_collate_fn = worker_collate_fn.collate_fn if isinstance(
             worker_collate_fn, _PreProcessor
@@ -276,6 +325,8 @@ class DataPipeline:
     def _attach_preprocess_to_model(
         self, model: 'Task', stage: Optional[RunningStage] = None, device_transform_only: bool = False
     ) -> None:
+        device_collate_fn = torch.nn.Identity()
+
         if not stage:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 
@@ -283,9 +334,6 @@ class DataPipeline:
             stages = [stage]
 
         for stage in stages:
-
-            if stage == RunningStage.PREDICTING:
-                pass
 
             loader_name = f'{_STAGES_PREFIX[stage]}_dataloader'
 
@@ -297,7 +345,7 @@ class DataPipeline:
             if isinstance(dataloader, (_PatchDataLoader, Callable)):
                 dataloader = dataloader()
 
-            if not dataloader:
+            if dataloader is None:
                 continue
 
             if isinstance(dataloader, Sequence):
@@ -314,6 +362,9 @@ class DataPipeline:
                     dl_args['collate_fn'], device_collate_fn = self._create_collate_preprocessors(
                         stage=stage, collate_fn=dl_args['collate_fn']
                     )
+
+                    if isinstance(dl_args["dataset"], IterableDataset):
+                        del dl_args["sampler"]
 
                     # don't have to reinstantiate loader if just rewrapping devices (happens during detach)
                     if not device_transform_only:
@@ -344,13 +395,13 @@ class DataPipeline:
 
         func_names: Dict[str, str] = {
             k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=Postprocess)
-            for k in self.POSTPROCES_FUNCS
+            for k in self.POSTPROCESS_FUNCS
         }
 
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
         if postprocess._save_path:
             save_per_sample: bool = self._is_overriden_recursive(
-                "save_sample", postprocess, object_type=Postprocess, prefix=_STAGES_PREFIX[stage]
+                "save_sample", postprocess, Postprocess, prefix=_STAGES_PREFIX[stage]
             )
 
             if save_per_sample:
@@ -362,6 +413,7 @@ class DataPipeline:
             getattr(postprocess, func_names["uncollate"]),
             getattr(postprocess, func_names["per_batch_transform"]),
             getattr(postprocess, func_names["per_sample_transform"]),
+            serializer=self._serializer,
             save_fn=save_fn,
             save_per_sample=save_per_sample
         )
@@ -427,8 +479,13 @@ class DataPipeline:
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
                     if isinstance(dl_args['collate_fn'], _PreProcessor):
-                        dl_args['collate_fn'] = dl_args['collate_fn']._original_collate_fn
+                        dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
+
+                        if isinstance(dl_args["dataset"], IterableAutoDataset):
+                            del dl_args['sampler']
+
                         del dl_args["batch_sampler"]
+
                         loader = type(loader)(**dl_args)
 
                 dataloader[idx] = loader
@@ -458,7 +515,14 @@ class DataPipeline:
 
         return fn
 
-    def _generate_auto_dataset(self, data: Union[Iterable, Any], running_stage: RunningStage = None) -> AutoDataset:
+    def _generate_auto_dataset(
+        self,
+        data: Union[Iterable, Any],
+        running_stage: RunningStage = None,
+        use_iterable_auto_dataset: bool = False
+    ) -> Union[AutoDataset, IterableAutoDataset]:
+        if use_iterable_auto_dataset:
+            return IterableAutoDataset(data, data_pipeline=self, running_stage=running_stage)
         return AutoDataset(data=data, data_pipeline=self, running_stage=running_stage)
 
     def to_dataloader(

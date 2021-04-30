@@ -25,7 +25,8 @@ from torch import tensor
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.utils import _STAGES_PREFIX
+from flash.data.process import Preprocess
+from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.vision import ImageClassificationData
 
 
@@ -57,7 +58,7 @@ def test_base_data_fetcher(tmpdir):
         @classmethod
         def from_inputs(cls, train_data: Any, val_data: Any, test_data: Any, predict_data: Any) -> "CustomDataModule":
 
-            preprocess = cls.preprocess_cls()
+            preprocess = Preprocess()
 
             return cls.from_load_data_inputs(
                 train_load_data_input=train_data,
@@ -84,13 +85,10 @@ def test_base_viz(tmpdir):
     seed_everything(42)
     tmpdir = Path(tmpdir)
 
-    (tmpdir / "a").mkdir()
-    (tmpdir / "b").mkdir()
-    _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
+    train_images = [str(tmpdir / "a1.png"), str(tmpdir / "b1.png")]
 
-    _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
+    _rand_image().save(train_images[0])
+    _rand_image().save(train_images[1])
 
     class CustomBaseVisualization(BaseVisualization):
 
@@ -134,13 +132,13 @@ def test_base_viz(tmpdir):
             return CustomBaseVisualization(*args, **kwargs)
 
     dm = CustomImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
+        train_filepaths=train_images,
         train_labels=[0, 1],
-        val_filepaths=[tmpdir / "a", tmpdir / "b"],
-        val_labels=[0, 1],
-        test_filepaths=[tmpdir / "a", tmpdir / "b"],
-        test_labels=[0, 1],
-        predict_filepaths=[tmpdir / "a", tmpdir / "b"],
+        val_filepaths=train_images,
+        val_labels=[2, 3],
+        test_filepaths=train_images,
+        test_labels=[4, 5],
+        predict_filepaths=train_images,
         batch_size=2,
         num_workers=0,
     )
@@ -148,31 +146,47 @@ def test_base_viz(tmpdir):
     for stage in _STAGES_PREFIX.values():
 
         for _ in range(10):
-            getattr(dm, f"show_{stage}_batch")(reset=False)
+            for fcn_name in _PREPROCESS_FUNCS:
+                fcn = getattr(dm, f"show_{stage}_batch")
+                fcn(fcn_name, reset=False)
 
         is_predict = stage == "predict"
 
-        def extract_data(data):
+        def _extract_data(data):
             if not is_predict:
                 return data[0][0]
             return data[0]
 
-        assert isinstance(extract_data(dm.data_fetcher.batches[stage]["load_sample"]), Image.Image)
-        if not is_predict:
-            assert isinstance(dm.data_fetcher.batches[stage]["load_sample"][0][1], int)
+        def _get_result(function_name: str):
+            return dm.data_fetcher.batches[stage][function_name]
 
-        assert isinstance(extract_data(dm.data_fetcher.batches[stage]["to_tensor_transform"]), torch.Tensor)
-        if not is_predict:
-            assert isinstance(dm.data_fetcher.batches[stage]["to_tensor_transform"][0][1], int)
+        res = _get_result("load_sample")
+        assert isinstance(_extract_data(res), Image.Image)
 
-        assert extract_data(dm.data_fetcher.batches[stage]["collate"]).shape == torch.Size([2, 3, 196, 196])
         if not is_predict:
-            assert dm.data_fetcher.batches[stage]["collate"][0][1].shape == torch.Size([2])
+            res = _get_result("load_sample")
+            assert isinstance(res[0][1], torch.Tensor)
 
-        generated = extract_data(dm.data_fetcher.batches[stage]["per_batch_transform"]).shape
-        assert generated == torch.Size([2, 3, 196, 196])
+        res = _get_result("to_tensor_transform")
+        assert isinstance(_extract_data(res), torch.Tensor)
+
         if not is_predict:
-            assert dm.data_fetcher.batches[stage]["per_batch_transform"][0][1].shape == torch.Size([2])
+            res = _get_result("to_tensor_transform")
+            assert isinstance(res[0][1], torch.Tensor)
+
+        res = _get_result("collate")
+        assert _extract_data(res).shape == (2, 3, 196, 196)
+
+        if not is_predict:
+            res = _get_result("collate")
+            assert res[0][1].shape == torch.Size([2])
+
+        res = _get_result("per_batch_transform")
+        assert _extract_data(res).shape == (2, 3, 196, 196)
+
+        if not is_predict:
+            res = _get_result("per_batch_transform")
+            assert res[0][1].shape == (2, )
 
         assert dm.data_fetcher.show_load_sample_called
         assert dm.data_fetcher.show_pre_tensor_transform_called
@@ -181,3 +195,16 @@ def test_base_viz(tmpdir):
         assert dm.data_fetcher.show_collate_called
         assert dm.data_fetcher.per_batch_transform_called
         dm.data_fetcher.check_reset()
+
+
+def test_data_loaders_num_workers_to_0(tmpdir):
+    """
+    num_workers should be set to `0` internally for visualization and not for training.
+    """
+
+    datamodule = DataModule(train_dataset=range(10), num_workers=3)
+    iterator = datamodule._reset_iterator(RunningStage.TRAINING)
+    assert isinstance(iterator, torch.utils.data.dataloader._SingleProcessDataLoaderIter)
+    iterator = iter(datamodule.train_dataloader())
+    assert isinstance(iterator, torch.utils.data.dataloader._MultiProcessingDataLoaderIter)
+    assert datamodule.num_workers == 3
