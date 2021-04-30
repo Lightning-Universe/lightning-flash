@@ -14,12 +14,11 @@
 import os
 from typing import List, Tuple
 
-import pandas as pd
 import torch
 
 import flash
 from flash.data.utils import download_data
-from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
+from flash.vision import SemanticSegmentation, SemanticSegmentationData
 from flash.vision.segmentation.serialization import SegmentationLabels
 
 # 1. Download the data
@@ -27,7 +26,7 @@ from flash.vision.segmentation.serialization import SegmentationLabels
 # The data was generated as part of the Lyft Udacity Challenge.
 # More info here: https://www.kaggle.com/kumaresanmanickavelu/lyft-udacity-challenge
 download_data(
-    'https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip', "data/"
+    "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip", "data/"
 )
 
 # 2.1 Load the data
