@@ -16,16 +16,14 @@ import pathlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Sized, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
-import numpy as np
 from pytorch_lightning.trainer.states import RunningStage
-from torch.nn import Module
 from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
 from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.data.data_pipeline import DataPipeline
-from flash.data.process import ProcessState, Properties
+from flash.data.process import Preprocess, ProcessState
 from flash.data.utils import _STAGES_PREFIX, CurrentRunningStageFuncContext
 
 
@@ -55,7 +53,7 @@ class MockDataset:
             object.__setattr__(self, key, value)
 
 
-class DataSource(Properties, Module, ABC):
+class DataSource(ABC):
 
     def __init__(
         self,
@@ -70,6 +68,12 @@ class DataSource(Properties, Module, ABC):
         self.val_data = val_data
         self.test_data = test_data
         self.predict_data = predict_data
+
+        self._preprocess: Optional[Preprocess] = None
+
+    @property
+    def preprocess(self) -> Optional[Preprocess]:
+        return self._preprocess
 
     @abstractmethod
     def load_data(
@@ -93,6 +97,9 @@ class DataSource(Properties, Module, ABC):
         """Loads single sample from dataset"""
 
     def to_datasets(self, data_pipeline: DataPipeline) -> Tuple[Optional[BaseAutoDataset], ...]:
+        # attach preprocess
+        self._preprocess = data_pipeline._preprocess_pipeline
+
         train_dataset = self._generate_dataset_if_possible(RunningStage.TRAINING, data_pipeline)
         val_dataset = self._generate_dataset_if_possible(RunningStage.VALIDATING, data_pipeline)
         test_dataset = self._generate_dataset_if_possible(RunningStage.TESTING, data_pipeline)
@@ -124,9 +131,6 @@ class DataSource(Properties, Module, ABC):
             dataset = IterableAutoDataset(data, self, running_stage, data_pipeline)
         dataset.__dict__.update(mock_dataset.metadata)
         return dataset
-
-
-T = TypeVar("T")
 
 
 class DefaultDataSource(Enum):  # TODO: This could be replaced with a data source registry that the user can add to
@@ -165,7 +169,7 @@ class SequenceDataSource(DataSource, ABC):
         self.labels = labels
 
         if self.labels is not None:
-            self.set_state(LabelsState(self.labels))
+            self.preprocess.set_state(LabelsState(self.labels))
 
     def load_data(self, data: Any, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
         inputs, targets = data
@@ -219,7 +223,8 @@ class FoldersDataSource(DataSource, ABC):
                 lambda file: has_file_allowed_extension(file, self.extensions),
                 files,
             )]
-        self.set_state(LabelsState(classes))
+        else:
+            self.preprocess.set_state(LabelsState(classes))
         dataset.num_classes = len(classes)
         data = make_dataset(data, class_to_idx, extensions=self.extensions)
         return [{'input': input, 'target': target} for input, target in data]
