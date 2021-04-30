@@ -37,7 +37,7 @@ class TranslationTask(Seq2SeqTask):
 
     def __init__(
         self,
-        backbone: str = "facebook/mbart-large-en-ro",
+        backbone: str = "Helsinki-NLP/opus-mt-en-ro",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
