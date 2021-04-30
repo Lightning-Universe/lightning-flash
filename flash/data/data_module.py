@@ -67,6 +67,7 @@ class DataModule(pl.LightningDataModule):
 
         super().__init__()
 
+        self._data_source: DataSource = data_source
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._viz: Optional[BaseVisualization] = None
@@ -75,7 +76,7 @@ class DataModule(pl.LightningDataModule):
         # TODO: Preprocess can change
         self.data_fetcher.attach_to_preprocess(self.preprocess)
 
-        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(self.data_pipeline)
+        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets()
 
         self._train_ds = train_dataset
         self._val_ds = val_dataset
@@ -298,6 +299,10 @@ class DataModule(pl.LightningDataModule):
         )
 
     @property
+    def data_source(self) -> DataSource:
+        return self._data_source
+
+    @property
     def preprocess(self) -> Preprocess:
         return self._preprocess or self.preprocess_cls()
 
@@ -307,7 +312,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        return DataPipeline(self.preprocess, self.postprocess)
+        return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     @staticmethod
     def _split_train_val(

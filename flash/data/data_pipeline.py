@@ -24,8 +24,9 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, IterableDataset
 from torch.utils.data._utils.collate import default_collate, default_convert
 
-from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
+from flash.data.auto_dataset import IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
+from flash.data.data_source import DataSource
 from flash.data.process import DefaultPreprocess, Postprocess, Preprocess, ProcessState, Serializer
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
@@ -88,10 +89,13 @@ class DataPipeline:
 
     def __init__(
         self,
+        data_source: Optional[DataSource] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         serializer: Optional[Serializer] = None,
     ) -> None:
+        self._data_source = data_source
+
         self._preprocess_pipeline = preprocess or DefaultPreprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
 
@@ -99,15 +103,18 @@ class DataPipeline:
 
         self._running_stage = None
 
-    def initialize(self):
+    def initialize(self, data_pipeline_state: Optional[DataPipelineState]) -> DataPipelineState:
         """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
         :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
         give a warning."""
-        data_pipeline_state = DataPipelineState()
+        data_pipeline_state = data_pipeline_state or DataPipelineState()
+        if self._data_source is not None:
+            self._data_source.attach_data_pipeline_state(data_pipeline_state)
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._serializer.attach_data_pipeline_state(data_pipeline_state)
-        data_pipeline_state._initialized = True
+        data_pipeline_state._initialized = True  # TODO: Not sure we need this
+        return data_pipeline_state
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
@@ -505,25 +512,6 @@ class DataPipeline:
             # don't delete the predict_step here since we don't know
             # if any other pipeline is attached which may rely on this!
             model.predict_step = model.predict_step._original
-
-    # def _generate_callable_auto_dataset(
-    #     self, data: Union[Iterable, Any], running_stage: RunningStage = None
-    # ) -> Callable:
-    #
-    #     def fn():
-    #         return self._generate_auto_dataset(data, running_stage=running_stage)
-    #
-    #     return fn
-
-    # def _generate_auto_dataset(
-    #     self,
-    #     data: Union[Iterable, Any],
-    #     running_stage: RunningStage = None,
-    #     use_iterable_auto_dataset: bool = False
-    # ) -> Union[AutoDataset, IterableAutoDataset]:
-    #     if use_iterable_auto_dataset:
-    #         return IterableAutoDataset(data, data_pipeline=self, running_stage=running_stage)
-    #     return AutoDataset(data=data, data_pipeline=self, running_stage=running_stage)
 
     def to_dataloader(
         self, data: Union[Iterable, Any], auto_collate: Optional[bool] = None, **loader_kwargs

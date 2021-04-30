@@ -20,7 +20,6 @@ import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -29,7 +28,7 @@ from torch.optim.optimizer import Optimizer
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
-from flash.data.data_pipeline import DataPipeline
+from flash.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.data.data_source import DataSource, DefaultDataSource
 from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 
@@ -104,6 +103,8 @@ class Task(LightningModule):
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
 
+        self._data_pipeline_state: Optional[DataPipelineState] = None
+
         # Explicitly set the serializer to call the setter
         self.serializer = serializer
 
@@ -172,15 +173,9 @@ class Task(LightningModule):
         """
         running_stage = RunningStage.PREDICTING
 
-        data_pipeline = self.build_data_pipeline(data_pipeline)
+        data_pipeline = self.build_data_pipeline(data_source, data_pipeline)
 
-        if str(data_source) == data_source:
-            data_source = DefaultDataSource(data_source)
-
-        if not isinstance(data_source, DataSource):
-            data_source = data_pipeline._preprocess_pipeline.data_source_of_type(data_source.as_type())()
-
-        x = [x for x in data_source.generate_dataset(x, running_stage, data_pipeline)]
+        x = [x for x in data_pipeline._data_source.generate_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # switch to self.device when #7188 merge in Lightning
         x = self.transfer_batch_to_device(x, next(self.parameters()).device)
@@ -262,7 +257,11 @@ class Task(LightningModule):
             serializer = SerializerMapping(serializer)
         self._serializer = serializer
 
-    def build_data_pipeline(self, data_pipeline: Optional[DataPipeline] = None) -> Optional[DataPipeline]:
+    def build_data_pipeline(
+        self,
+        data_source: Optional[Union[str, DefaultDataSource, DataSource]] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+    ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
         :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`
         objects. These will be overridden in the following resolution order (lowest priority first):
@@ -279,10 +278,11 @@ class Task(LightningModule):
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        preprocess, postprocess, serializer = None, None, None
+        old_data_source, preprocess, postprocess, serializer = None, None, None, None
 
         # Datamodule
         if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
+            old_data_source = getattr(self.datamodule.data_pipeline, '_data_source', None)
             preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
@@ -290,6 +290,7 @@ class Task(LightningModule):
         elif self.trainer is not None and hasattr(
             self.trainer, 'datamodule'
         ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+            old_data_source = getattr(self.trainer.datamodule.data_pipeline, '_data_source', None)
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
@@ -315,8 +316,19 @@ class Task(LightningModule):
                 getattr(data_pipeline, '_serializer', None),
             )
 
-        data_pipeline = DataPipeline(preprocess, postprocess, serializer)
-        data_pipeline.initialize()
+        data_source = data_source or old_data_source
+
+        if str(data_source) == data_source:
+            data_source = DefaultDataSource(data_source)
+
+        if not isinstance(data_source, DataSource):
+            data_source = preprocess.data_source_of_type(data_source.as_type())()
+
+        if old_data_source is not None:
+            data_source._state.update(old_data_source._state)  # TODO: This is a hack
+
+        data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
+        self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
     @property

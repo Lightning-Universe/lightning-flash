@@ -13,17 +13,17 @@
 # limitations under the License.
 import os
 import pathlib
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 from pytorch_lightning.trainer.states import RunningStage
+from torch.nn import Module
 from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
 from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
-from flash.data.data_pipeline import DataPipeline
-from flash.data.process import Preprocess, ProcessState
+from flash.data.process import ProcessState, Properties
 from flash.data.utils import _STAGES_PREFIX, CurrentRunningStageFuncContext
 
 
@@ -53,7 +53,7 @@ class MockDataset:
             object.__setattr__(self, key, value)
 
 
-class DataSource(ABC):
+class DataSource(Properties, Module, ABC):
 
     def __init__(
         self,
@@ -69,18 +69,9 @@ class DataSource(ABC):
         self.test_data = test_data
         self.predict_data = predict_data
 
-        self._preprocess: Optional[Preprocess] = None
-
-    @property
-    def preprocess(self) -> Optional[Preprocess]:
-        return self._preprocess
-
-    @abstractmethod
-    def load_data(
-        self,
-        data: Any,
-        dataset: Optional[Any] = None
-    ) -> Iterable[Mapping[str, Any]]:  # TODO: decide what type this should be
+    def load_data(self,
+                  data: Any,
+                  dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
         """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
 
         Example::
@@ -91,44 +82,50 @@ class DataSource(ABC):
             output: Mapping = load_data(data)
 
         """
+        return data
 
-    @abstractmethod
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
         """Loads single sample from dataset"""
+        return sample
 
-    def to_datasets(self, data_pipeline: DataPipeline) -> Tuple[Optional[BaseAutoDataset], ...]:
-        # attach preprocess
-        self._preprocess = data_pipeline._preprocess_pipeline
-
-        train_dataset = self._generate_dataset_if_possible(RunningStage.TRAINING, data_pipeline)
-        val_dataset = self._generate_dataset_if_possible(RunningStage.VALIDATING, data_pipeline)
-        test_dataset = self._generate_dataset_if_possible(RunningStage.TESTING, data_pipeline)
-        predict_dataset = self._generate_dataset_if_possible(RunningStage.PREDICTING, data_pipeline)
+    def to_datasets(self) -> Tuple[Optional[BaseAutoDataset], ...]:
+        train_dataset = self._generate_dataset_if_possible(RunningStage.TRAINING)
+        val_dataset = self._generate_dataset_if_possible(RunningStage.VALIDATING)
+        test_dataset = self._generate_dataset_if_possible(RunningStage.TESTING)
+        predict_dataset = self._generate_dataset_if_possible(RunningStage.PREDICTING)
         return train_dataset, val_dataset, test_dataset, predict_dataset
 
     def _generate_dataset_if_possible(
         self,
         running_stage: RunningStage,
-        data_pipeline: DataPipeline,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
         data = getattr(self, f"{_STAGES_PREFIX[running_stage]}_data", None)
         if data is not None:
-            return self.generate_dataset(data, running_stage, data_pipeline)
+            return self.generate_dataset(data, running_stage)
 
     def generate_dataset(
         self,
         data,
         running_stage: RunningStage,
-        data_pipeline: DataPipeline,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
+        from flash.data.data_pipeline import DataPipeline
+
         mock_dataset = MockDataset()
         with CurrentRunningStageFuncContext(running_stage, "load_data", self):
-            data = self.load_data(data, mock_dataset)  # TODO: Should actually resolve this
+            load_data = getattr(
+                self, DataPipeline._resolve_function_hierarchy(
+                    'load_data',
+                    self,
+                    running_stage,
+                    DataSource,
+                )
+            )
+            data = load_data(data, mock_dataset)
 
         if has_len(data):
-            dataset = AutoDataset(data, self, running_stage, data_pipeline)
+            dataset = AutoDataset(data, self, running_stage)
         else:
-            dataset = IterableAutoDataset(data, self, running_stage, data_pipeline)
+            dataset = IterableAutoDataset(data, self, running_stage)
         dataset.__dict__.update(mock_dataset.metadata)
         return dataset
 
@@ -169,7 +166,7 @@ class SequenceDataSource(DataSource, ABC):
         self.labels = labels
 
         if self.labels is not None:
-            self.preprocess.set_state(LabelsState(self.labels))
+            self.set_state(LabelsState(self.labels))
 
     def load_data(self, data: Any, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
         inputs, targets = data
@@ -224,7 +221,7 @@ class FoldersDataSource(DataSource, ABC):
                 files,
             )]
         else:
-            self.preprocess.set_state(LabelsState(classes))
+            self.set_state(LabelsState(classes))
         dataset.num_classes = len(classes)
         data = make_dataset(data, class_to_idx, extensions=self.extensions)
         return [{'input': input, 'target': target} for input, target in data]

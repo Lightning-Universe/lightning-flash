@@ -57,6 +57,8 @@ class _Sequential(torch.nn.Module):
         self._post_tensor_transform_context = CurrentFuncContext("post_tensor_transform", preprocess)
 
     def forward(self, sample: Any) -> Any:
+        self.callback.on_load_sample(sample, self.stage)
+
         with self._current_stage_context:
             with self._pre_tensor_transform_context:
                 sample = self.pre_tensor_transform(sample)

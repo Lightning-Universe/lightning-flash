@@ -182,17 +182,17 @@ class ImageClassificationPreprocess(DefaultPreprocess):
         return self.common_step(sample)
 
     def to_tensor_transform(self, sample: Any) -> Any:
-        if self.current_transform == self._identity:
-            if isinstance(sample, (list, tuple)):
-                source, target = sample
-                if isinstance(source, torch.Tensor):
-                    return source, target
-                return self.to_tensor(source), target
-            elif isinstance(sample, torch.Tensor):
-                return sample
-            return self.to_tensor(sample)
-        if isinstance(sample, torch.Tensor):
-            return sample
+        # if self.current_transform == self._identity:
+        #     if isinstance(sample, (list, tuple)):
+        #         source, target = sample
+        #         if isinstance(source, torch.Tensor):
+        #             return source, target
+        #         return self.to_tensor(source), target
+        #     elif isinstance(sample, torch.Tensor):
+        #         return sample
+        #     return self.to_tensor(sample)
+        # if isinstance(sample, torch.Tensor):
+        #     return sample
         return self.common_step(sample)
 
     def post_tensor_transform(self, sample: Any) -> Any:
