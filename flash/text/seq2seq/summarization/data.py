@@ -13,10 +13,8 @@
 # limitations under the License.
 from typing import Any, Optional, Union
 
-from transformers import AutoTokenizer
-
 from flash.data.process import Postprocess, Preprocess
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqData
 
 
 class SummarizationData(Seq2SeqData):
