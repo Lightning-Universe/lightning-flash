@@ -11,29 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-import torchvision
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
 from torch.utils.data._utils.collate import default_collate
-from torchvision import transforms as T
 
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.process import DefaultPreprocess
-from flash.data.transforms import ApplyToKeys
-from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.data.process import Preprocess
+from flash.utils.imports import _MATPLOTLIB_AVAILABLE
+from flash.vision.classification.transforms import default_train_transforms, default_val_transforms
 from flash.vision.data import ImageFilesDataSource, ImageFoldersDataSource
-
-if _KORNIA_AVAILABLE:
-    import kornia as K
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -41,10 +34,7 @@ else:
     plt = None
 
 
-class ImageClassificationPreprocess(DefaultPreprocess):
-
-    data_sources = [ImageFoldersDataSource, ImageFilesDataSource]
-    to_tensor = T.ToTensor()
+class ImageClassificationPreprocess(Preprocess):
 
     def __init__(
         self,
@@ -54,11 +44,15 @@ class ImageClassificationPreprocess(DefaultPreprocess):
         predict_transform: Optional[Union[Dict[str, Callable]]] = None,
         image_size: Tuple[int, int] = (196, 196),
     ):
-        train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
-            train_transform, val_transform, test_transform, predict_transform, image_size
-        )
         self.image_size = image_size
-        super().__init__(train_transform, val_transform, test_transform, predict_transform)
+
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources=[ImageFoldersDataSource, ImageFilesDataSource],
+        )
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
@@ -73,97 +67,6 @@ class ImageClassificationPreprocess(DefaultPreprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls(**state_dict)
 
-    def default_train_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
-        if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
-            #  Better approach as all transforms are applied on tensor directly
-            return {
-                "to_tensor_transform": nn.Sequential(
-                    ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                    ApplyToKeys('target', torch.as_tensor),
-                ),
-                "post_tensor_transform": ApplyToKeys(
-                    'input',
-                    # TODO (Edgar): replace with resize once kornia is fixed
-                    K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
-                    K.augmentation.RandomHorizontalFlip(),
-                ),
-                "per_batch_transform_on_device": ApplyToKeys(
-                    'input',
-                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-                )
-            }
-        else:
-            return {
-                "pre_tensor_transform": ApplyToKeys('input', T.Resize(image_size), T.RandomHorizontalFlip()),
-                "to_tensor_transform": nn.Sequential(
-                    ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                    ApplyToKeys('target', torch.as_tensor),
-                ),
-                "post_tensor_transform": ApplyToKeys(
-                    'input',
-                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-                ),
-            }
-
-    def default_val_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
-        if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
-            #  Better approach as all transforms are applied on tensor directly
-            return {
-                "to_tensor_transform": nn.Sequential(
-                    ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                    ApplyToKeys('target', torch.as_tensor),
-                ),
-                "post_tensor_transform": ApplyToKeys(
-                    'input',
-                    # TODO (Edgar): replace with resize once kornia is fixed
-                    K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
-                ),
-                "per_batch_transform_on_device": ApplyToKeys(
-                    'input',
-                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-                )
-            }
-        else:
-            return {
-                "pre_tensor_transform": ApplyToKeys('input', T.Resize(image_size)),
-                "to_tensor_transform": nn.Sequential(
-                    ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                    ApplyToKeys('target', torch.as_tensor),
-                ),
-                "post_tensor_transform": ApplyToKeys(
-                    'input',
-                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-                ),
-            }
-
-    def _resolve_transforms(
-        self,
-        train_transform: Optional[Union[str, Dict]] = 'default',
-        val_transform: Optional[Union[str, Dict]] = 'default',
-        test_transform: Optional[Union[str, Dict]] = 'default',
-        predict_transform: Optional[Union[str, Dict]] = 'default',
-        image_size: Tuple[int, int] = (196, 196),
-    ):
-
-        if not train_transform or train_transform == 'default':
-            train_transform = self.default_train_transforms(image_size)
-
-        if not val_transform or val_transform == 'default':
-            val_transform = self.default_val_transforms(image_size)
-
-        if not test_transform or test_transform == 'default':
-            test_transform = self.default_val_transforms(image_size)
-
-        if not predict_transform or predict_transform == 'default':
-            predict_transform = self.default_val_transforms(image_size)
-
-        return (
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
-        )
-
     def collate(self, samples: Sequence[Dict[str, Any]]) -> Any:
         # todo: Kornia transforms add batch dimension which need to be removed
         for sample in samples:
@@ -172,37 +75,11 @@ class ImageClassificationPreprocess(DefaultPreprocess):
                     sample[key] = sample[key].squeeze(0)
         return default_collate(samples)
 
-    def common_step(self, sample: Any) -> Any:
-        # if isinstance(sample, (list, tuple)):
-        #     source, target = sample
-        #     return self.current_transform(source), target
-        return self.current_transform(sample)
+    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_train_transforms(self.image_size)
 
-    def pre_tensor_transform(self, sample: Any) -> Any:
-        return self.common_step(sample)
-
-    def to_tensor_transform(self, sample: Any) -> Any:
-        # if self.current_transform == self._identity:
-        #     if isinstance(sample, (list, tuple)):
-        #         source, target = sample
-        #         if isinstance(source, torch.Tensor):
-        #             return source, target
-        #         return self.to_tensor(source), target
-        #     elif isinstance(sample, torch.Tensor):
-        #         return sample
-        #     return self.to_tensor(sample)
-        # if isinstance(sample, torch.Tensor):
-        #     return sample
-        return self.common_step(sample)
-
-    def post_tensor_transform(self, sample: Any) -> Any:
-        return self.common_step(sample)
-
-    def per_batch_transform(self, sample: Any) -> Any:
-        return self.common_step(sample)
-
-    def per_batch_transform_on_device(self, sample: Any) -> Any:
-        return self.common_step(sample)
+    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_val_transforms(self.image_size)
 
 
 class ImageClassificationData(DataModule):

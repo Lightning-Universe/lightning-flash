@@ -14,20 +14,17 @@
 import os
 import pathlib
 import platform
-from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from datasets.splits import SplitInfo
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
 
-from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
+from flash.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
@@ -350,6 +347,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        **kwargs: Any,
     ) -> 'DataModule':
 
         preprocess = preprocess or cls.preprocess_cls(
@@ -357,6 +355,7 @@ class DataModule(pl.LightningDataModule):
             val_transform,
             test_transform,
             predict_transform,
+            **kwargs,
         )
 
         data_source = preprocess.data_source_of_type(FoldersDataSource)(

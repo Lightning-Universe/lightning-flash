@@ -151,6 +151,9 @@ class BasePreprocess(ABC):
         pass
 
 
+DATA_SOURCE_TYPE = TypeVar("DATA_SOURCE_TYPE")
+
+
 class Preprocess(BasePreprocess, Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
@@ -309,8 +312,16 @@ class Preprocess(BasePreprocess, Properties, Module):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        data_sources: Optional[List[Type['DataSource']]] = None,
     ):
         super().__init__()
+
+        self.data_sources = data_sources or []
+
+        # resolve the default transforms
+        train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
+            train_transform, val_transform, test_transform, predict_transform
+        )
 
         # used to keep track of provided transforms
         self._train_collate_in_worker_from_transform: Optional[bool] = None
@@ -341,6 +352,33 @@ class Preprocess(BasePreprocess, Properties, Module):
         preprocess_state_dict["_meta"]["_state"] = self._state
         destination['preprocess.state_dict'] = preprocess_state_dict
         return super()._save_to_state_dict(destination, prefix, keep_vars)
+
+    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
+
+    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
+
+    def _resolve_transforms(
+        self,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+    ):
+        if not train_transform or train_transform == 'default':
+            train_transform = self.default_train_transforms()
+
+        if not val_transform or val_transform == 'default':
+            val_transform = self.default_val_transforms()
+
+        if not test_transform or test_transform == 'default':
+            test_transform = self.default_val_transforms()
+
+        if not predict_transform or predict_transform == 'default':
+            predict_transform = self.default_val_transforms()
+
+        return train_transform, val_transform, test_transform, predict_transform
 
     def _check_transforms(self, transform: Optional[Dict[str, Callable]],
                           stage: RunningStage) -> Optional[Dict[str, Callable]]:
@@ -430,15 +468,15 @@ class Preprocess(BasePreprocess, Properties, Module):
 
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        return sample
+        return self.current_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
-        return sample
+        return self.current_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
-        return sample
+        return self.current_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -448,7 +486,7 @@ class Preprocess(BasePreprocess, Properties, Module):
             This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.
         """
-        return batch
+        return self.current_transform(batch)
 
     def collate(self, samples: Sequence) -> Any:
         return default_collate(samples)
@@ -466,7 +504,7 @@ class Preprocess(BasePreprocess, Properties, Module):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return sample
+        return self.current_transform(sample)
 
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """
@@ -477,24 +515,17 @@ class Preprocess(BasePreprocess, Properties, Module):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return batch
+        return self.current_transform(batch)
 
-
-T = TypeVar("T")
-
-
-class DefaultPreprocess(Preprocess):
-
-    data_sources: List[Type['DataSource']] = []  # TODO: Make this a property
-
-    # TODO: Doesn't need to be a classmethod
-    @classmethod
-    def data_source_of_type(cls, data_source_type: Type[T]) -> Optional[Type[T]]:
-        data_sources = cls.data_sources
+    def data_source_of_type(self, data_source_type: Type[DATA_SOURCE_TYPE]) -> Optional[Type[DATA_SOURCE_TYPE]]:
+        data_sources = self.data_sources
         for data_source in data_sources:
             if issubclass(data_source, data_source_type):
                 return data_source
         return None
+
+
+class DefaultPreprocess(Preprocess):
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {}
