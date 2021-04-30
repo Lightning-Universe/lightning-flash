@@ -37,7 +37,7 @@ else:
 download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
 
 model = VideoClassifier.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/video_classification_model.pt", pretrained=False
+    "https://flash-weights.s3.amazonaws.com/video_classification.pt", pretrained=False
 )
 
 # 2. Make a prediction
