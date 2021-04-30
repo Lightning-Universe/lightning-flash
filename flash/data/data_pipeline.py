@@ -14,7 +14,7 @@
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING
 
 import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
@@ -22,7 +22,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, IterableDataset
-from torch.utils.data._utils.collate import default_collate, default_convert
+from torch.utils.data._utils.collate import default_collate
 
 from flash.data.auto_dataset import IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
@@ -108,6 +108,7 @@ class DataPipeline:
         :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
+        data_pipeline_state._initialized = False
         if self._data_source is not None:
             self._data_source.attach_data_pipeline_state(data_pipeline_state)
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
@@ -512,27 +513,6 @@ class DataPipeline:
             # don't delete the predict_step here since we don't know
             # if any other pipeline is attached which may rely on this!
             model.predict_step = model.predict_step._original
-
-    def to_dataloader(
-        self, data: Union[Iterable, Any], auto_collate: Optional[bool] = None, **loader_kwargs
-    ) -> DataLoader:
-        if 'collate_fn' in loader_kwargs:
-            if auto_collate:
-                raise MisconfigurationException('auto_collate and collate_fn are mutually exclusive')
-
-        else:
-            if auto_collate is None:
-                auto_collate = True
-
-            collate_fn = self.worker_collate_fn
-
-            if collate_fn:
-                loader_kwargs['collate_fn'] = collate_fn
-
-            else:
-                loader_kwargs['collate_fn'] = default_collate if auto_collate else default_convert
-
-        return DataLoader(self._generate_auto_dataset(data), **loader_kwargs)
 
     def __str__(self) -> str:
         preprocess: Preprocess = self._preprocess_pipeline
