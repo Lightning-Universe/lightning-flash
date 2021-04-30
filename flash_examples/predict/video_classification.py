@@ -36,7 +36,9 @@ else:
 # 1. Download a video clip dataset. Find more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
 download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
 
-model = VideoClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/video_classification.pt")
+model = VideoClassifier.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/video_classification_model.pt", pretrained=False
+)
 
 # 2. Make a prediction
 predict_folder = "data/kinetics/predict/"
