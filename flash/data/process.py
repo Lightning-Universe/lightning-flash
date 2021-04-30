@@ -29,6 +29,7 @@ from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modul
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipelineState
+    from flash.data.data_source import DataSource
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -144,6 +145,9 @@ class BasePreprocess(ABC):
         Override this method to load from state_dict
         """
         pass
+
+
+DATA_SOURCE_TYPE = TypeVar("DATA_SOURCE_TYPE")
 
 
 class Preprocess(BasePreprocess, Properties, Module):
@@ -297,6 +301,8 @@ class Preprocess(BasePreprocess, Properties, Module):
                 return datasets.MNIST(path_to_data, download=True, transform=transforms.ToTensor())
 
     """
+
+    data_sources: Optional[List[Type['DataSource']]]
 
     def __init__(
         self,
@@ -505,6 +511,14 @@ class Preprocess(BasePreprocess, Properties, Module):
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
         return self.current_transform(batch)
+
+    @classmethod
+    def data_source_of_type(cls, data_source_type: Type[DATA_SOURCE_TYPE]) -> Optional[Type[DATA_SOURCE_TYPE]]:
+        data_sources = cls.data_sources
+        for data_source in data_sources:
+            if issubclass(data_source, data_source_type):
+                return data_source
+        return None
 
 
 class DefaultPreprocess(Preprocess):

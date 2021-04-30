@@ -36,6 +36,8 @@ else:
 
 class ImageClassificationPreprocess(Preprocess):
 
+    data_sources = [ImageFoldersDataSource, ImageFilesDataSource]
+
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
@@ -51,7 +53,6 @@ class ImageClassificationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources=[ImageFoldersDataSource, ImageFilesDataSource],
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

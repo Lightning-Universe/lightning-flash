@@ -14,7 +14,7 @@
 import os
 import pathlib
 import platform
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -32,8 +32,6 @@ from flash.data.data_source import DataSource, FilesDataSource, FoldersDataSourc
 from flash.data.splits import SplitDataset
 from flash.data.utils import _STAGES_PREFIX
 
-DATA_SOURCE_TYPE = TypeVar("DATA_SOURCE_TYPE")
-
 
 class DataModule(pl.LightningDataModule):
     """Basic DataModule class for all Flash tasks
@@ -50,7 +48,6 @@ class DataModule(pl.LightningDataModule):
             or 0 for Darwin platform.
     """
 
-    data_sources = []
     preprocess_cls = DefaultPreprocess
     postprocess_cls = Postprocess
 
@@ -335,14 +332,6 @@ class DataModule(pl.LightningDataModule):
         return SplitDataset(train_dataset, train_indices), SplitDataset(train_dataset, val_indices)
 
     @classmethod
-    def data_source_of_type(cls, data_source_type: Type[DATA_SOURCE_TYPE]) -> Optional[Type[DATA_SOURCE_TYPE]]:
-        data_sources = cls.data_sources
-        for data_source in data_sources:
-            if issubclass(data_source, data_source_type):
-                return data_source
-        return None
-
-    @classmethod
     def from_data_source(
         cls,
         data_source: DataSource,
@@ -392,7 +381,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         **kwargs: Any,
     ) -> 'DataModule':
-        data_source = cls.data_source_of_type(FoldersDataSource)(
+        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(FoldersDataSource)(
             train_folder=train_folder,
             val_folder=val_folder,
             test_folder=test_folder,
@@ -433,7 +422,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         **kwargs: Any,
     ) -> 'DataModule':
-        data_source = cls.data_source_of_type(FilesDataSource)(
+        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(FilesDataSource)(
             train_files=train_files,
             train_targets=train_targets,
             val_files=val_files,
