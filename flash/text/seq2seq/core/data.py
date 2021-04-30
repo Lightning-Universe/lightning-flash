@@ -40,7 +40,6 @@ class Seq2SeqPreprocess(Preprocess):
         use_fast: bool = True,
     ):
         super().__init__()
-
         self.backbone = backbone
         self.use_fast = use_fast
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)

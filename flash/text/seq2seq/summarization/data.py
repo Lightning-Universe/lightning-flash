@@ -19,28 +19,7 @@ from flash.data.process import Postprocess, Preprocess
 from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPreprocess
 
 
-class SummarizationPostprocess(Postprocess):
-
-    def __init__(
-        self,
-        backbone: str,
-        use_fast: bool = True,
-    ):
-        super().__init__()
-        self.backbone = backbone
-        self.use_fast = use_fast
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
-
-    def uncollate(self, generated_tokens: Any) -> Any:
-        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-        pred_str = [str.strip(s) for s in pred_str]
-        return pred_str
-
-
 class SummarizationData(Seq2SeqData):
-
-    preprocess_cls = Seq2SeqPreprocess
-    postprocess_cls = SummarizationPostprocess
 
     @classmethod
     def from_files(

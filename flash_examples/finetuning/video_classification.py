@@ -97,8 +97,10 @@ if __name__ == '__main__':
     model.serializer = Labels()
 
     # 6. Finetune the model
-    trainer = flash.Trainer(max_epochs=20, gpus=1, accelerator="ddp")
+    trainer = flash.Trainer(max_epochs=3, gpus=2, accelerator="ddp")
     trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze())
+
+    trainer.save_checkpoint("video_classification.pt")
 
     # 7. Make a prediction
     val_folder = os.path.join(_PATH_ROOT, os.path.join(_PATH_ROOT, "data/kinetics/predict"))
