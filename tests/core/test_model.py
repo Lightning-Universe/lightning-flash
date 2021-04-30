@@ -69,7 +69,6 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     task = ClassificationTask(model, loss_fn=F.nll_loss, metrics=metrics)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     result = trainer.fit(task, train_dl, val_dl)
-    assert result
     result = trainer.test(task, val_dl)
     assert "test_nll_loss" in result[0]
 

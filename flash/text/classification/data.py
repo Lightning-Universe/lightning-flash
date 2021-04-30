@@ -36,8 +36,8 @@ class TextClassificationPreprocess(Preprocess):
         max_length: int,
         target: str,
         filetype: str,
-        train_file: Optional[str],
-        label_to_class_mapping: Optional[Dict[str, int]],
+        train_file: Optional[str] = None,
+        label_to_class_mapping: Optional[Dict[str, int]] = None,
     ):
         """
         This class contains the preprocessing logic for text classification
