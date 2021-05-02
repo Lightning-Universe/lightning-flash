@@ -104,12 +104,10 @@ class ImageClassifier(ClassificationTask):
             self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Linear(num_features, num_classes),
-        )
+        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
 
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
+        if x.dim() == 4:
+            x = x.mean(-1).mean(-1)
         return self.head(x)
