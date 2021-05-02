@@ -105,7 +105,6 @@ class ImageClassifier(ClassificationTask):
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
         self.head = head or nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
             nn.Linear(num_features, num_classes),
         )
