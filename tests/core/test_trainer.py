@@ -53,17 +53,15 @@ def test_task_fit(tmpdir: str):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss)
+    task = ClassificationTask(model, loss_fn=F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    result = trainer.fit(task, train_dl, val_dl)
-    assert result
+    trainer.fit(task, train_dl, val_dl)
 
 
 def test_task_finetune(tmpdir: str):
     model = DummyClassifier()
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss)
+    task = ClassificationTask(model, loss_fn=F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    result = trainer.finetune(task, train_dl, val_dl, strategy=NoFreeze())
-    assert result
+    trainer.finetune(task, train_dl, val_dl, strategy=NoFreeze())

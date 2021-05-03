@@ -30,24 +30,28 @@ class Seq2SeqPreprocess(Preprocess):
 
     def __init__(
         self,
-        tokenizer,
+        backbone: str,
         input: str,
         filetype: str,
         target: Optional[str] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'longest'
+        padding: Union[str, bool] = 'longest',
+        use_fast: bool = True,
     ):
         super().__init__()
-
-        self.tokenizer = tokenizer
+        self.backbone = backbone
+        self.use_fast = use_fast
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
         self.input = input
         self.filetype = filetype
         self.target = target
         self.max_target_length = max_target_length
         self.max_source_length = max_source_length
+        self.max_target_length = max_target_length
         self.padding = padding
-        self._tokenize_fn = partial(
+
+        self._tokenize_fn_wrapped = partial(
             self._tokenize_fn,
             tokenizer=self.tokenizer,
             input=self.input,
@@ -56,6 +60,22 @@ class Seq2SeqPreprocess(Preprocess):
             max_target_length=self.max_target_length,
             padding=self.padding
         )
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {
+            "backbone": self.backbone,
+            "use_fast": self.use_fast,
+            "input": self.input,
+            "filetype": self.filetype,
+            "target": self.target,
+            "max_source_length": self.max_source_length,
+            "max_target_length": self.max_target_length,
+            "padding": self.padding,
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
 
     @staticmethod
     def _tokenize_fn(
@@ -98,7 +118,7 @@ class Seq2SeqPreprocess(Preprocess):
             except AssertionError:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
-        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
+        dataset_dict = dataset_dict.map(self._tokenize_fn_wrapped, batched=True)
         dataset_dict.set_format(columns=columns)
         return dataset_dict[stage]
 
@@ -107,7 +127,7 @@ class Seq2SeqPreprocess(Preprocess):
             return self.load_data(sample, use_full=True, columns=["input_ids", "attention_mask"])
         else:
             if isinstance(sample, (list, tuple)) and len(sample) > 0 and all(isinstance(s, str) for s in sample):
-                return [self._tokenize_fn({self.input: s, self.target: None}) for s in sample]
+                return [self._tokenize_fn_wrapped({self.input: s, self.target: None}) for s in sample]
             else:
                 raise MisconfigurationException("Currently, we support only list of sentences")
 
@@ -116,10 +136,29 @@ class Seq2SeqPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
+class Seq2SeqPostprocess(Postprocess):
+
+    def __init__(
+        self,
+        backbone: str,
+        use_fast: bool = True,
+    ):
+        super().__init__()
+        self.backbone = backbone
+        self.use_fast = use_fast
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
+
+    def uncollate(self, generated_tokens: Any) -> Any:
+        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+        pred_str = [str.strip(s) for s in pred_str]
+        return pred_str
+
+
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
     preprocess_cls = Seq2SeqPreprocess
+    postprocess_cls = Seq2SeqPostprocess
 
     @classmethod
     def from_files(
@@ -129,6 +168,7 @@ class Seq2SeqData(DataModule):
         target: Optional[str] = None,
         filetype: str = "csv",
         backbone: str = "sshleifer/tiny-mbart",
+        use_fast: bool = True,
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
@@ -165,16 +205,11 @@ class Seq2SeqData(DataModule):
                                            num_cols=["account_value"],
                                            cat_cols=["account_type"])
         """
-        tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         preprocess = preprocess or cls.preprocess_cls(
-            tokenizer,
-            input,
-            filetype,
-            target,
-            max_source_length,
-            max_target_length,
-            padding,
+            backbone, input, filetype, target, max_source_length, max_target_length, padding, use_fast=use_fast
         )
+
+        postprocess = postprocess or cls.postprocess_cls(backbone, use_fast=use_fast)
 
         return cls.from_load_data_inputs(
             train_load_data_input=train_file,
