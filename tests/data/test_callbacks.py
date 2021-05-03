@@ -150,10 +150,10 @@ def test_base_viz(tmpdir):
     for stage in _STAGES_PREFIX.values():
 
         for _ in range(num_tests):
-            # for fcn_name in _PREPROCESS_FUNCS:
-            for fcn_name in ['load_sample']:
+            for fcn_name in _PREPROCESS_FUNCS:
+                #for fcn_name in ['load_sample']:
                 fcn = getattr(dm, f"show_{stage}_batch")
-                fcn(fcn_name, reset=False)
+                fcn(fcn_name, reset=True)
                 # TODO: either True/False makes this crash
                 # fcn(fcn_name, reset=Tru)
 
