@@ -131,7 +131,7 @@ def test_base_viz(tmpdir):
         def configure_data_fetcher(*args, **kwargs) -> CustomBaseVisualization:
             return CustomBaseVisualization(*args, **kwargs)
 
-    batch_size = 2
+    B: int = 2  # batch_size
 
     dm = CustomImageClassificationData.from_filepaths(
         train_filepaths=train_images,
@@ -141,21 +141,18 @@ def test_base_viz(tmpdir):
         test_filepaths=train_images,
         test_labels=[4, 5],
         predict_filepaths=train_images,
-        batch_size=batch_size,
+        batch_size=B,
         num_workers=0,
     )
 
-    num_tests = 2
+    num_tests = 10
 
     for stage in _STAGES_PREFIX.values():
 
         for _ in range(num_tests):
             for fcn_name in _PREPROCESS_FUNCS:
-                #for fcn_name in ['load_sample']:
                 fcn = getattr(dm, f"show_{stage}_batch")
                 fcn(fcn_name, reset=True)
-                # TODO: either True/False makes this crash
-                # fcn(fcn_name, reset=Tru)
 
         is_predict = stage == "predict"
 
@@ -168,7 +165,7 @@ def test_base_viz(tmpdir):
             return dm.data_fetcher.batches[stage][function_name]
 
         res = _get_result("load_sample")
-        assert len(res) == batch_size  # TODO: this test crash
+        assert len(res) == B
         assert isinstance(_extract_data(res), Image.Image)
 
         if not is_predict:
@@ -176,6 +173,7 @@ def test_base_viz(tmpdir):
             assert isinstance(res[0][1], torch.Tensor)
 
         res = _get_result("to_tensor_transform")
+        assert len(res) == B
         assert isinstance(_extract_data(res), torch.Tensor)
 
         if not is_predict:
@@ -183,18 +181,18 @@ def test_base_viz(tmpdir):
             assert isinstance(res[0][1], torch.Tensor)
 
         res = _get_result("collate")
-        assert _extract_data(res).shape == (2, 3, 196, 196)
+        assert _extract_data(res).shape == (B, 3, 196, 196)
 
         if not is_predict:
             res = _get_result("collate")
             assert res[0][1].shape == torch.Size([2])
 
         res = _get_result("per_batch_transform")
-        assert _extract_data(res).shape == (2, 3, 196, 196)
+        assert _extract_data(res).shape == (B, 3, 196, 196)
 
         if not is_predict:
             res = _get_result("per_batch_transform")
-            assert res[0][1].shape == (2, )
+            assert res[0][1].shape == (B, )
 
         assert dm.data_fetcher.show_load_sample_called
         assert dm.data_fetcher.show_pre_tensor_transform_called
