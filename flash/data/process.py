@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from abc import ABC, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -128,7 +129,24 @@ class Properties:
             self._running_stage = None
 
 
-class Preprocess(Properties, Module):
+class BasePreprocess(ABC):
+
+    @abstractmethod
+    def get_state_dict(self) -> Dict[str, Any]:
+        """
+        Override this method to return state_dict
+        """
+        pass
+
+    @abstractclassmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
+        """
+        Override this method to load from state_dict
+        """
+        pass
+
+
+class Preprocess(BasePreprocess, Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
     all the data processing and loading logic that should run before the data is passed to the model.
@@ -295,17 +313,31 @@ class Preprocess(Properties, Module):
         self._predict_collate_in_worker_from_transform: Optional[bool] = None
         self._test_collate_in_worker_from_transform: Optional[bool] = None
 
-        self.train_transform = convert_to_modules(self._check_transforms(train_transform, RunningStage.TRAINING))
-        self.val_transform = convert_to_modules(self._check_transforms(val_transform, RunningStage.VALIDATING))
-        self.test_transform = convert_to_modules(self._check_transforms(test_transform, RunningStage.TESTING))
-        self.predict_transform = convert_to_modules(self._check_transforms(predict_transform, RunningStage.PREDICTING))
+        # store the transform before conversion to modules.
+        self._train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
+        self._val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
+        self._test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
+        self._predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
 
-        if not hasattr(self, "_skip_mutual_check"):
-            self._skip_mutual_check = False
+        self.train_transform = convert_to_modules(self._train_transform)
+        self.val_transform = convert_to_modules(self._val_transform)
+        self.test_transform = convert_to_modules(self._test_transform)
+        self.predict_transform = convert_to_modules(self._predict_transform)
 
         self._callbacks: List[FlashCallback] = []
 
-    # todo (tchaton) Add a warning if a transform is provided, but the hook hasn't been overriden !
+    def _save_to_state_dict(self, destination, prefix, keep_vars):
+        preprocess_state_dict = self.get_state_dict()
+        if not isinstance(preprocess_state_dict, Dict):
+            raise MisconfigurationException("get_state_dict should return a dictionary")
+        preprocess_state_dict["_meta"] = {}
+        preprocess_state_dict["_meta"]["module"] = self.__module__
+        preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
+        preprocess_state_dict["_meta"]["_state"] = self._state
+        destination['preprocess.state_dict'] = preprocess_state_dict
+        self._ddp_params_and_buffers_to_ignore = ['preprocess.state_dict']
+        return super()._save_to_state_dict(destination, prefix, keep_vars)
+
     def _check_transforms(self, transform: Optional[Dict[str, Callable]],
                           stage: RunningStage) -> Optional[Dict[str, Callable]]:
         if transform is None:
@@ -461,6 +493,16 @@ class Preprocess(Properties, Module):
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
         return batch
+
+
+class DefaultPreprocess(Preprocess):
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {}
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
 
 
 class Postprocess(Properties, Module):

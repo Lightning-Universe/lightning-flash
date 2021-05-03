@@ -25,7 +25,7 @@ from torch import tensor
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.process import Preprocess
+from flash.data.process import DefaultPreprocess, Preprocess
 from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.vision import ImageClassificationData
 
@@ -58,7 +58,7 @@ def test_base_data_fetcher(tmpdir):
         @classmethod
         def from_inputs(cls, train_data: Any, val_data: Any, test_data: Any, predict_data: Any) -> "CustomDataModule":
 
-            preprocess = Preprocess()
+            preprocess = DefaultPreprocess()
 
             return cls.from_load_data_inputs(
                 train_load_data_input=train_data,

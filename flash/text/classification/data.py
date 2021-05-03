@@ -36,8 +36,8 @@ class TextClassificationPreprocess(Preprocess):
         max_length: int,
         target: str,
         filetype: str,
-        train_file: Optional[str],
-        label_to_class_mapping: Optional[Dict[str, int]],
+        train_file: Optional[str] = None,
+        label_to_class_mapping: Optional[Dict[str, int]] = None,
     ):
         """
         This class contains the preprocessing logic for text classification
@@ -48,11 +48,7 @@ class TextClassificationPreprocess(Preprocess):
             max_length:  Maximum number of tokens within a single sentence.
             target: The field storing the class id of the associated text.
             filetype: .csv or .json format type.
-            label_to_class_mapping: Dictionnary mapping target labels to class indexes.
-
-        Returns:
-            TextClassificationPreprocess: The constructed preprocess objects.
-
+            label_to_class_mapping: Dictionary mapping target labels to class indexes.
         """
 
         super().__init__()
@@ -65,6 +61,7 @@ class TextClassificationPreprocess(Preprocess):
                     "Either ``label_to_class_mapping`` or ``train_file`` needs to be provided"
                 )
 
+        self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         self.input = input
         self.filetype = filetype
@@ -85,6 +82,20 @@ class TextClassificationPreprocess(Preprocess):
         for label, cls in self.label_to_class_mapping.items():
             class_to_label_mapping[cls] = label
         self.set_state(ClassificationState(class_to_label_mapping))
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {
+            "input": self.input,
+            "backbone": self.backbone,
+            "max_length": self.max_length,
+            "target": self.target,
+            "filetype": self.filetype,
+            "label_to_class_mapping": self.label_to_class_mapping,
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
 
     def per_batch_transform(self, batch: Any) -> Any:
         if "labels" not in batch:

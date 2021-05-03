@@ -28,13 +28,11 @@ from torchvision import transforms as T
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS, make_dataset
 
 from flash.core.classification import ClassificationState
-from flash.core.utils import _is_overriden
 from flash.data.auto_dataset import AutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
-from flash.data.utils import _PREPROCESS_FUNCS
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
 if _KORNIA_AVAILABLE:
@@ -59,22 +57,33 @@ class ImageClassificationPreprocess(Preprocess):
         image_size: Tuple[int, int] = (196, 196),
     ):
         """
-        Preprocess pipeline definition for image classification tasks.
+        Preprocess pipeline for image classification tasks.
 
         Args:
-            train_transform: Dictionary with the set of transform to apply during training. Default: None.
-            val_transform: Dictionary with the set of transform to apply during validation. Default: None.
-            test_transform: Dictionary with the set of transform to apply during testing. Default: None.
-            predict_transform: Dictionary with the set of transform to apply during prediction. Default: None.
-            image_size: A tuple with the expected output image size. Default: (196, 196).
-
-        Returns:
-            ImageClassificationPreprocess: The constructed preprocess module.
+            train_transform: Dictionary with the set of transforms to apply during training.
+            val_transform: Dictionary with the set of transforms to apply during validation.
+            test_transform: Dictionary with the set of transforms to apply during testing.
+            predict_transform: Dictionary with the set of transforms to apply during prediction.
+            image_size: A tuple with the expected output image size.
         """
         train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
             train_transform, val_transform, test_transform, predict_transform, image_size
         )
+        self.image_size = image_size
         super().__init__(train_transform, val_transform, test_transform, predict_transform)
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {
+            "train_transform": self._train_transform,
+            "val_transform": self._val_transform,
+            "test_transform": self._test_transform,
+            "predict_transform": self._predict_transform,
+            "image_size": self.image_size
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
 
     @staticmethod
     def _find_classes(dir: str) -> Tuple:
@@ -114,7 +123,9 @@ class ImageClassificationPreprocess(Preprocess):
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": nn.Sequential(
-                    K.augmentation.RandomResizedCrop(image_size), K.augmentation.RandomHorizontalFlip()
+                    # TODO (Edgar): replace with resize once kornia is fixed
+                    K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
+                    K.augmentation.RandomHorizontalFlip(),
                 ),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -123,7 +134,7 @@ class ImageClassificationPreprocess(Preprocess):
         else:
             from torchvision import transforms as T  # noqa F811
             return {
-                "pre_tensor_transform": nn.Sequential(T.RandomResizedCrop(image_size), T.RandomHorizontalFlip()),
+                "pre_tensor_transform": nn.Sequential(T.Resize(image_size), T.RandomHorizontalFlip()),
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
@@ -133,7 +144,10 @@ class ImageClassificationPreprocess(Preprocess):
             #  Better approach as all transforms are applied on tensor directly
             return {
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
-                "post_tensor_transform": nn.Sequential(K.augmentation.RandomResizedCrop(image_size)),
+                "post_tensor_transform": nn.Sequential(
+                    # TODO (Edgar): replace with resize once kornia is fixed
+                    K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
+                ),
                 "per_batch_transform_on_device": nn.Sequential(
                     K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 )
@@ -141,7 +155,7 @@ class ImageClassificationPreprocess(Preprocess):
         else:
             from torchvision import transforms as T  # noqa F811
             return {
-                "pre_tensor_transform": T.Compose([T.RandomResizedCrop(image_size)]),
+                "pre_tensor_transform": T.Compose([T.Resize(image_size)]),
                 "to_tensor_transform": torchvision.transforms.ToTensor(),
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
