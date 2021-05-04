@@ -187,7 +187,7 @@ class FilesDataSource(DataSource[Tuple[Sequence[str], Optional[Sequence[Any]]]],
         self,
         data: Tuple[Sequence[str], Optional[Sequence[Any]]],
         dataset: Optional[Any] = None,
-    ) -> Iterable[Mapping[str, Any]]:
+    ) -> Sequence[Mapping[str, Any]]:
         # TODO: Bring back the code to work out how many classes there are
         files, targets = data
         if not targets:
@@ -195,6 +195,6 @@ class FilesDataSource(DataSource[Tuple[Sequence[str], Optional[Sequence[Any]]]],
         filtered = filter(lambda file, _: has_file_allowed_extension(file, self.extensions), zip(files, targets))
         return [{'input': file, 'target': target} for file, target in filtered]
 
-    def predict_load_data(self, data: Sequence[str]):
+    def predict_load_data(self, data: Sequence[str]) -> Sequence[Mapping[str, Any]]:
         filtered = filter(lambda file: has_file_allowed_extension(file, self.extensions), data)
         return [{'input': input} for input in filtered]
