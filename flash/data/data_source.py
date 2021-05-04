@@ -143,38 +143,6 @@ class DefaultDataSource(Enum):  # TODO: This could be replaced with a data sourc
         return _data_source_types[self]
 
 
-class SequenceDataSource(DataSource, ABC):
-
-    def __init__(
-        self,
-        train_inputs: Optional[Sequence[Any]] = None,
-        train_targets: Optional[Sequence[Any]] = None,
-        val_inputs: Optional[Sequence[Any]] = None,
-        val_targets: Optional[Sequence[Any]] = None,
-        test_inputs: Optional[Sequence[Any]] = None,
-        test_targets: Optional[Sequence[Any]] = None,
-        predict_inputs: Optional[Sequence[Any]] = None,
-        labels: Optional[Sequence[str]] = None
-    ):
-        super().__init__(
-            train_data=(train_inputs, train_targets),
-            val_data=(val_inputs, val_targets),
-            test_data=(test_inputs, test_targets),
-            predict_data=(predict_inputs, None),
-        )
-
-        self.labels = labels
-
-        if self.labels is not None:
-            self.set_state(LabelsState(self.labels))
-
-    def load_data(self, data: Any, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        inputs, targets = data
-        if targets is None:
-            return [{'input': input} for input in inputs]
-        return [{'input': input, 'target': target} for input, target in zip(inputs, targets)]
-
-
 class FoldersDataSource(DataSource, ABC):
 
     def __init__(
