@@ -324,9 +324,6 @@ class Task(LightningModule):
         if not isinstance(data_source, DataSource):
             data_source = preprocess.data_source_of_type(data_source.as_type())()
 
-        if old_data_source is not None:
-            data_source._state.update(old_data_source._state)  # TODO: This is a hack
-
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
