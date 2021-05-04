@@ -63,13 +63,14 @@ class TranslationData(Seq2SeqData):
             TranslateData: The constructed data module.
 
         Examples::
+
             datamodule = TranslationData.from_files(
                 train_file="data/wmt_en_ro/train.csv",
                 val_file="data/wmt_en_ro/valid.csv",
                 test_file="data/wmt_en_ro/test.csv",
                 input="input",
                 target="target",
-                batch_size=1
+                batch_size=1,
             )
 
         """
