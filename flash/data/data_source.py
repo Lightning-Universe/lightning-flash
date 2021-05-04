@@ -19,6 +19,8 @@ from enum import Enum
 from inspect import signature
 from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
 
+import numpy as np
+import torch
 from pytorch_lightning.trainer.states import RunningStage
 from torch.nn import Module
 from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
@@ -54,7 +56,7 @@ class MockDataset:
             object.__setattr__(self, key, value)
 
 
-DATA_TYPE = TypeVar('DATA_TYPE')
+DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class DataSource(Generic[DATA_TYPE], Properties, Module, ABC):
@@ -176,10 +178,42 @@ class FoldersDataSource(DataSource[str], ABC):
         return [{'input': input, 'target': target} for input, target in data]
 
 
-class FilesDataSource(DataSource[Tuple[Sequence[str], Optional[Sequence[Any]]]], ABC):
+SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
-    def __init__(self, extensions: Optional[Tuple[str, ...]] = None):
+
+class SequenceDataSource(
+    Generic[SEQUENCE_DATA_TYPE],
+    DataSource[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence[Any]]]],
+    ABC,
+):
+
+    def __init__(self, labels: Optional[Sequence[str]] = None):
         super().__init__()
+
+        self.labels = labels
+
+        if self.labels is not None:
+            self.set_state(LabelsState(self.labels))
+
+    def load_data(
+        self,
+        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence[Any]]],
+        dataset: Optional[Any] = None,
+    ) -> Sequence[Mapping[str, Any]]:
+        # TODO: Bring back the code to work out how many classes there are
+        inputs, targets = data
+        if targets is None:
+            return self.predict_load_data(data)
+        return [{'input': input, 'target': target} for input, target in zip(inputs, targets)]
+
+    def predict_load_data(self, data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
+        return [{'input': input} for input in data]
+
+
+class FilesDataSource(SequenceDataSource[str], ABC):
+
+    def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):
+        super().__init__(labels=labels)
 
         self.extensions = extensions
 
@@ -188,13 +222,25 @@ class FilesDataSource(DataSource[Tuple[Sequence[str], Optional[Sequence[Any]]]],
         data: Tuple[Sequence[str], Optional[Sequence[Any]]],
         dataset: Optional[Any] = None,
     ) -> Sequence[Mapping[str, Any]]:
-        # TODO: Bring back the code to work out how many classes there are
-        files, targets = data
-        if not targets:
-            return self.predict_load_data(files)
-        filtered = filter(lambda file, _: has_file_allowed_extension(file, self.extensions), zip(files, targets))
-        return [{'input': file, 'target': target} for file, target in filtered]
+        return list(
+            filter(
+                lambda sample: has_file_allowed_extension(sample["input"], self.extensions),
+                super().load_data(data, dataset),
+            )
+        )
 
     def predict_load_data(self, data: Sequence[str]) -> Sequence[Mapping[str, Any]]:
-        filtered = filter(lambda file: has_file_allowed_extension(file, self.extensions), data)
-        return [{'input': input} for input in filtered]
+        return list(
+            filter(
+                lambda sample: has_file_allowed_extension(sample["input"], self.extensions),
+                super().predict_load_data(data, dataset),
+            )
+        )
+
+
+class TensorDataSource(SequenceDataSource[torch.Tensor], ABC):
+    """"""  # TODO: Some docstring here
+
+
+class NumpyDataSource(SequenceDataSource[np.ndarray], ABC):
+    """"""  # TODO: Some docstring here

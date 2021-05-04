@@ -26,7 +26,7 @@ from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.vision.classification.transforms import default_train_transforms, default_val_transforms
-from flash.vision.data import ImageFilesDataSource, ImageFoldersDataSource
+from flash.vision.data import ImageFilesDataSource, ImageFoldersDataSource, ImageNumpyDataSource, ImageTensorDataSource
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -36,7 +36,7 @@ else:
 
 class ImageClassificationPreprocess(Preprocess):
 
-    data_sources = [ImageFoldersDataSource, ImageFilesDataSource]
+    data_sources = [ImageFoldersDataSource, ImageFilesDataSource, ImageNumpyDataSource, ImageTensorDataSource]
 
     def __init__(
         self,

@@ -28,7 +28,7 @@ from flash.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.data.data_source import DataSource, FilesDataSource, FoldersDataSource
+from flash.data.data_source import DataSource, FilesDataSource, FoldersDataSource, NumpyDataSource, TensorDataSource
 from flash.data.splits import SplitDataset
 from flash.data.utils import _STAGES_PREFIX
 
@@ -446,6 +446,86 @@ class DataModule(pl.LightningDataModule):
             (val_files, val_targets),
             (test_files, test_targets),
             predict_files,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **kwargs: Any,
+    ) -> 'DataModule':
+        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(TensorDataSource)()
+
+        return cls.from_data_source(
+            data_source,
+            (train_data, train_targets),
+            (val_data, val_targets),
+            (test_data, test_targets),
+            predict_data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[np.ndarray]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[np.ndarray]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        train_transform: Optional[Union[str, Dict]] = 'default',
+        val_transform: Optional[Union[str, Dict]] = 'default',
+        test_transform: Optional[Union[str, Dict]] = 'default',
+        predict_transform: Optional[Union[str, Dict]] = 'default',
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **kwargs: Any,
+    ) -> 'DataModule':
+        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(NumpyDataSource)()
+
+        return cls.from_data_source(
+            data_source,
+            (train_data, train_targets),
+            (val_data, val_targets),
+            (test_data, test_targets),
+            predict_data,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
