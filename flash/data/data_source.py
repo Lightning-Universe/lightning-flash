@@ -16,6 +16,7 @@ import pathlib
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
+from inspect import signature
 from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 from pytorch_lightning.trainer.states import RunningStage
@@ -108,7 +109,11 @@ class DataSource(Generic[DATA_TYPE], Properties, Module, ABC):
                         DataSource,
                     )
                 )
-                data = load_data(data, mock_dataset)
+                parameters = signature(load_data).parameters
+                if len(parameters) > 1 and "dataset" in parameters:  # TODO: This was DATASET_KEY before
+                    data = load_data(data, mock_dataset)
+                else:
+                    data = load_data(data)
 
             if has_len(data):
                 dataset = AutoDataset(data, self, running_stage)
@@ -184,10 +189,12 @@ class FilesDataSource(DataSource[Tuple[Sequence[str], Optional[Sequence[Any]]]],
         dataset: Optional[Any] = None,
     ) -> Iterable[Mapping[str, Any]]:
         # TODO: Bring back the code to work out how many classes there are
-        if isinstance(data, tuple):
-            files, targets = data
-        else:
-            files, targets = data, None  # TODO: Sort this out
+        files, targets = data
         if not targets:
-            return [{'input': input} for input in files]
-        return [{'input': file, 'target': target} for file, target in zip(files, targets)]
+            return self.predict_load_data(files)
+        filtered = filter(lambda file, _: has_file_allowed_extension(file, self.extensions), zip(files, targets))
+        return [{'input': file, 'target': target} for file, target in filtered]
+
+    def predict_load_data(self, data: Sequence[str]):
+        filtered = filter(lambda file: has_file_allowed_extension(file, self.extensions), data)
+        return [{'input': input} for input in filtered]

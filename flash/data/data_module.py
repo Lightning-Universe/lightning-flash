@@ -298,7 +298,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     @property
-    def data_source(self) -> DataSource:
+    def data_source(self) -> Optional[DataSource]:
         return self._data_source
 
     @property
