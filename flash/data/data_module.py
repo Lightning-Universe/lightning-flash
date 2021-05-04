@@ -53,7 +53,11 @@ class DataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        data_source: DataSource,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        data_source: Optional[DataSource] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
@@ -72,8 +76,6 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: Preprocess can change
         self.data_fetcher.attach_to_preprocess(self.preprocess)
-
-        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets()
 
         self._train_ds = train_dataset
         self._val_ds = val_dataset
@@ -335,6 +337,10 @@ class DataModule(pl.LightningDataModule):
     def from_data_source(
         cls,
         data_source: DataSource,
+        train_data: Any = None,
+        val_data: Any = None,
+        test_data: Any = None,
+        predict_data: Any = None,
         train_transform: Optional[Union[str, Dict]] = 'default',
         val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
@@ -354,9 +360,20 @@ class DataModule(pl.LightningDataModule):
             **kwargs,
         )
 
+        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(
+            train_data,
+            val_data,
+            test_data,
+            predict_data,
+        )
+
         return cls(
-            data_source,
-            preprocess,
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            data_source=data_source,
+            preprocess=preprocess,
             data_fetcher=data_fetcher,
             val_split=val_split,
             batch_size=batch_size,
@@ -381,15 +398,14 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         **kwargs: Any,
     ) -> 'DataModule':
-        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(FoldersDataSource)(
-            train_folder=train_folder,
-            val_folder=val_folder,
-            test_folder=test_folder,
-            predict_folder=predict_folder,
-        )
+        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(FoldersDataSource)()
 
         return cls.from_data_source(
             data_source,
+            train_folder,
+            val_folder,
+            test_folder,
+            predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
@@ -422,18 +438,14 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         **kwargs: Any,
     ) -> 'DataModule':
-        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(FilesDataSource)(
-            train_files=train_files,
-            train_targets=train_targets,
-            val_files=val_files,
-            val_targets=val_targets,
-            test_files=test_files,
-            test_targets=test_targets,
-            predict_files=predict_files,
-        )
+        data_source = (preprocess or cls.preprocess_cls).data_source_of_type(FilesDataSource)()
 
         return cls.from_data_source(
             data_source,
+            (train_files, train_targets),
+            (val_files, val_targets),
+            (test_files, test_targets),
+            predict_files,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
