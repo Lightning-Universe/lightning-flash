@@ -1,5 +1,5 @@
 import pathlib
-from typing import Any, Iterable, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Union
 
 import torch
 from PIL import Image
@@ -35,13 +35,13 @@ class ImageFilesDataSource(FilesDataSource):
 
 class ImageTensorDataSource(TensorDataSource):
 
-    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        result['input'] = to_pil_image(sample['input'])
-        return result
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Any:
+        sample['input'] = to_pil_image(sample['input'])
+        return sample
 
 
 class ImageNumpyDataSource(NumpyDataSource):
 
-    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        result['input'] = to_pil_image(torch.from_numpy(sample['input']))
-        return result
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Any:
+        sample['input'] = to_pil_image(torch.from_numpy(sample['input']))
+        return sample

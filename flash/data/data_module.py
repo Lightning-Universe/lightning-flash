@@ -14,7 +14,7 @@
 import os
 import pathlib
 import platform
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pytorch_lightning as pl

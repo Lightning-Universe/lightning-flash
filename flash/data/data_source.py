@@ -129,11 +129,15 @@ class DefaultDataSource(Enum):  # TODO: This could be replaced with a data sourc
 
     FOLDERS = "folders"
     FILES = "files"
+    NUMPY = "numpy"
+    TENSOR = "tensor"
 
     def as_type(self) -> Type[DataSource]:
         _data_source_types = {
             DefaultDataSource.FOLDERS: FoldersDataSource,
             DefaultDataSource.FILES: FilesDataSource,
+            DefaultDataSource.NUMPY: NumpyDataSource,
+            DefaultDataSource.TENSOR: TensorDataSource
         }
         return _data_source_types[self]
 
@@ -233,7 +237,7 @@ class FilesDataSource(SequenceDataSource[str], ABC):
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample["input"], self.extensions),
-                super().predict_load_data(data, dataset),
+                super().predict_load_data(data),
             )
         )
 

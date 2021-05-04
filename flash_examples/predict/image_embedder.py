@@ -33,7 +33,7 @@ print(embeddings[0].shape)
 random_image = torch.randn(1, 3, 244, 244)
 
 # 6. Generate an embedding from this random image.
-embeddings = embedder.predict(random_image)
+embeddings = embedder.predict(random_image, data_source="tensor")
 
 # 7. Print embeddings shape
 print(embeddings[0].shape)
