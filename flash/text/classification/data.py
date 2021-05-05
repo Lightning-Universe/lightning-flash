@@ -140,13 +140,34 @@ class TextSentencesDataSource(TextDataSource):
 
 class TextClassificationPreprocess(Preprocess):
 
-    data_sources = {
-        DefaultDataSources.CSV: TextCSVDataSource,
-        "sentences": TextSentencesDataSource,
-    }
+    def __init__(
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        backbone: str = "prajjwal1/bert-tiny",
+        max_length: int = 128,
+    ):
+        self.backbone = backbone
+        self.max_length = max_length
+
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources={
+                DefaultDataSources.CSV: TextCSVDataSource(backbone=backbone, max_length=max_length),
+                "sentences": TextSentencesDataSource(backbone=backbone, max_length=max_length),
+            }
+        )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {}
+        return {
+            "backbone": self.backbone,
+            "max_length": self.max_length,
+        }
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
@@ -209,8 +230,6 @@ class TextClassificationData(DataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            data_source_kwargs=dict(
-                backbone=backbone,
-                max_length=max_length,
-            ),
+            backbone=backbone,
+            max_length=max_length,
         )

@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
-from pytorch_lightning.trainer.states import RunningStage
 from torch.nn import Module
 from torchvision.datasets.folder import default_loader
 
@@ -91,9 +90,22 @@ class COCODataSource(DataSource[Tuple[str, str]]):
 
 class ObjectDetectionPreprocess(Preprocess):
 
-    data_sources = {
-        "coco": COCODataSource,
-    }
+    def __init__(
+        self,
+        train_transform: Optional[Union[Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+    ):
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources={
+                "coco": COCODataSource(),
+            }
+        )
 
     def collate(self, samples: Any) -> Any:
         return {key: [sample[key] for sample in samples] for key in samples[0]}
@@ -136,23 +148,18 @@ class ObjectDetectionData(DataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         preprocess: Preprocess = None,
-        **kwargs
+        val_split: Optional[float] = None,
     ):
-        preprocess = preprocess or cls.preprocess_cls(
-            train_transform,
-            val_transform,
-            test_transform,
-        )
-
-        data_source = preprocess.data_source_of_type(COCODataSource)()
-
         return cls.from_data_source(
-            data_source=data_source,
+            data_source="coco",
             train_data=(train_folder, train_ann_file) if train_folder else None,
             val_data=(val_folder, val_ann_file) if val_folder else None,
             test_data=(test_folder, test_ann_file) if test_folder else None,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            preprocess=preprocess,
+            val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            preprocess=preprocess,
-            **kwargs
         )
