@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
 
 import torch
@@ -125,7 +124,7 @@ class Labels(Classes):
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.ClassificationState`.
+            provided, will attempt to get them from the :class:`.LabelsState`.
 
         multi_label: If true, treats outputs as multi label logits.
 
@@ -155,7 +154,5 @@ class Labels(Classes):
                 return [labels[cls] for cls in classes]
             return labels[classes]
         else:
-            rank_zero_warn(
-                "No ClassificationState was found, this serializer will act as a Classes serializer.", UserWarning
-            )
+            rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
             return classes

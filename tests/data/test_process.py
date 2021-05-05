@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from flash import Task, Trainer
-from flash.core.classification import ClassificationState, Labels
+from flash.core.classification import Labels, LabelsState
 from flash.data.data_pipeline import DataPipeline, DataPipelineState, DefaultPreprocess
 from flash.data.process import ProcessState, Properties, Serializer, SerializerMapping
 
@@ -129,4 +129,4 @@ def test_saving_with_serializers(tmpdir):
     trainer.save_checkpoint(checkpoint_file)
     model = CustomModel.load_from_checkpoint(checkpoint_file)
     assert isinstance(model.preprocess._data_pipeline_state, DataPipelineState)
-    assert model.preprocess._data_pipeline_state._state[ClassificationState] == ClassificationState(['a', 'b'])
+    assert model.preprocess._data_pipeline_state._state[LabelsState] == LabelsState(['a', 'b'])
