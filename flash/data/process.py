@@ -54,6 +54,8 @@ class Properties:
         self._state: Dict[Type[ProcessState], ProcessState] = {}
 
     def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
+        if state_type in self._state:
+            return self._state[state_type]
         if self._data_pipeline_state is not None:
             return self._data_pipeline_state.get_state(state_type)
         else:

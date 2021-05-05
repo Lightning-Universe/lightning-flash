@@ -112,8 +112,7 @@ class Task(LightningModule):
         """
         The training/validation/test step. Override for custom behavior.
         """
-        x, y = batch['input'], batch['target']
-        # x, y = batch
+        x, y = batch
         y_hat = self(x)
         output = {"y_hat": y_hat}
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
@@ -185,7 +184,6 @@ class Task(LightningModule):
         return predictions
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = batch['input']
         if isinstance(batch, tuple):
             batch = batch[0]
         elif isinstance(batch, list):

@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import pathlib
-from abc import ABC
 from dataclasses import dataclass
-from enum import Enum
 from inspect import signature
-from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import torch
@@ -28,7 +25,7 @@ from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
 from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.data.process import ProcessState, Properties
-from flash.data.utils import _STAGES_PREFIX, CurrentRunningStageFuncContext
+from flash.data.utils import CurrentRunningStageFuncContext
 
 
 def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
@@ -60,7 +57,7 @@ class MockDataset:
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
-class DataSource(Generic[DATA_TYPE], Properties, Module, ABC):
+class DataSource(Generic[DATA_TYPE], Properties, Module):
 
     def load_data(self,
                   data: DATA_TYPE,
@@ -99,7 +96,11 @@ class DataSource(Generic[DATA_TYPE], Properties, Module, ABC):
         data: Optional[DATA_TYPE],
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
-        if data is not None:
+        is_none = data is None
+        if isinstance(data, Sequence):
+            is_none = data[0] is None
+
+        if not is_none:
             from flash.data.data_pipeline import DataPipeline
 
             mock_dataset = MockDataset()
@@ -132,6 +133,7 @@ class DefaultDataSources(LightningEnum):
     FILES = "files"
     NUMPY = "numpy"
     TENSOR = "tensor"
+    CSV = "csv"
 
 
 class DefaultDataKeys(LightningEnum):
@@ -144,7 +146,7 @@ class DefaultDataKeys(LightningEnum):
         return hash(self.value)
 
 
-class FoldersDataSource(DataSource[str], ABC):
+class FoldersDataSource(DataSource[str]):
 
     def __init__(self, extensions: Optional[Tuple[str, ...]] = None):
         super().__init__()
@@ -190,7 +192,6 @@ SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 class SequenceDataSource(
     Generic[SEQUENCE_DATA_TYPE],
     DataSource[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence[Any]]]],
-    ABC,
 ):
 
     def __init__(self, labels: Optional[Sequence[str]] = None):
@@ -219,7 +220,7 @@ class SequenceDataSource(
         return [{DefaultDataKeys.INPUT: input} for input in data]
 
 
-class FilesDataSource(SequenceDataSource[str], ABC):
+class FilesDataSource(SequenceDataSource[str]):
 
     def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):
         super().__init__(labels=labels)
@@ -247,9 +248,9 @@ class FilesDataSource(SequenceDataSource[str], ABC):
         )
 
 
-class TensorDataSource(SequenceDataSource[torch.Tensor], ABC):
+class TensorDataSource(SequenceDataSource[torch.Tensor]):
     """"""  # TODO: Some docstring here
 
 
-class NumpyDataSource(SequenceDataSource[np.ndarray], ABC):
+class NumpyDataSource(SequenceDataSource[np.ndarray]):
     """"""  # TODO: Some docstring here

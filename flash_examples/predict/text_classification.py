@@ -21,7 +21,7 @@ from flash.text import TextClassificationData, TextClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
 
 # 2. Load the model from a checkpoint
-model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
+model = TextClassifier.load_from_checkpoint("../finetuning/text_classification_model.pt")
 
 model.serializer = Labels()
 
@@ -32,15 +32,17 @@ predictions = model.predict([
     "I come from Bulgaria where it 's almost impossible to have a tornado.",
     "Very, very afraid.",
     "This guy has done a great job with this movie!",
-])
+],
+                            data_source="sentences")
 print(predictions)
 
 # 2b. Or generate predictions from a sheet file!
-datamodule = TextClassificationData.from_file(
+datamodule = TextClassificationData.from_csv(
+    "review",
     predict_file="data/imdb/predict.csv",
-    input="review",
-    # use the same data pre-processing values we used to predict in 2a
-    preprocess=model.preprocess,
+    # input="review",
+    # # use the same data pre-processing values we used to predict in 2a
+    # preprocess=model.preprocess,
 )
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)
