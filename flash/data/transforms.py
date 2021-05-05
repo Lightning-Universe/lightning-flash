@@ -22,7 +22,7 @@ class ApplyToKeys(nn.Sequential):
 
     def __init__(self, keys: Union[str, Sequence[str]], *args):
         super().__init__(*[convert_to_modules(arg) for arg in args])
-        if str(keys) == keys:
+        if isinstance(keys, str):
             keys = [keys]
         self.keys = keys
 

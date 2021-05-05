@@ -23,6 +23,7 @@ from torch.utils.data._utils.collate import default_collate
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
+from flash.data.data_source import DefaultDataSources
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.vision.classification.transforms import default_train_transforms, default_val_transforms
@@ -36,7 +37,12 @@ else:
 
 class ImageClassificationPreprocess(Preprocess):
 
-    data_sources = [ImageFoldersDataSource, ImageFilesDataSource, ImageNumpyDataSource, ImageTensorDataSource]
+    data_sources = {
+        DefaultDataSources.FOLDERS: ImageFoldersDataSource,
+        DefaultDataSources.FILES: ImageFilesDataSource,
+        DefaultDataSources.NUMPY: ImageNumpyDataSource,
+        DefaultDataSources.TENSOR: ImageTensorDataSource,
+    }
 
     def __init__(
         self,

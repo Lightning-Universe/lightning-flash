@@ -73,6 +73,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
         )
 
     def _call_load_sample(self, sample: Any) -> Any:
+        sample = dict(**sample)
         if self.load_sample:
             with self._load_sample_context:
                 parameters = signature(self.load_sample).parameters

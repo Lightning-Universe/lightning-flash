@@ -19,6 +19,7 @@ import torchvision
 from torch import nn
 from torchvision import transforms as T
 
+from flash.data.data_source import DefaultDataKeys
 from flash.data.transforms import ApplyToKeys
 from flash.utils.imports import _KORNIA_AVAILABLE
 
@@ -31,29 +32,29 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
         #  Better approach as all transforms are applied on tensor directly
         return {
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                ApplyToKeys('target', torch.as_tensor),
+                ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
             ),
             "post_tensor_transform": ApplyToKeys(
-                'input',
+                DefaultDataKeys.INPUT,
                 # TODO (Edgar): replace with resize once kornia is fixed
                 K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
                 K.augmentation.RandomHorizontalFlip(),
             ),
             "per_batch_transform_on_device": ApplyToKeys(
-                'input',
+                DefaultDataKeys.INPUT,
                 K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
             )
         }
     else:
         return {
-            "pre_tensor_transform": ApplyToKeys('input', T.Resize(image_size), T.RandomHorizontalFlip()),
+            "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(image_size), T.RandomHorizontalFlip()),
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                ApplyToKeys('target', torch.as_tensor),
+                ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
             ),
             "post_tensor_transform": ApplyToKeys(
-                'input',
+                DefaultDataKeys.INPUT,
                 T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ),
         }
@@ -64,28 +65,28 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
         #  Better approach as all transforms are applied on tensor directly
         return {
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                ApplyToKeys('target', torch.as_tensor),
+                ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
             ),
             "post_tensor_transform": ApplyToKeys(
-                'input',
+                DefaultDataKeys.INPUT,
                 # TODO (Edgar): replace with resize once kornia is fixed
                 K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
             ),
             "per_batch_transform_on_device": ApplyToKeys(
-                'input',
+                DefaultDataKeys.INPUT,
                 K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
             )
         }
     else:
         return {
-            "pre_tensor_transform": ApplyToKeys('input', T.Resize(image_size)),
+            "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(image_size)),
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys('input', torchvision.transforms.ToTensor()),
-                ApplyToKeys('target', torch.as_tensor),
+                ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
             ),
             "post_tensor_transform": ApplyToKeys(
-                'input',
+                DefaultDataKeys.INPUT,
                 T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ),
         }

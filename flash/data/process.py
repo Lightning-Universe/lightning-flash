@@ -302,7 +302,7 @@ class Preprocess(BasePreprocess, Properties, Module):
 
     """
 
-    data_sources: Optional[List[Type['DataSource']]]
+    data_sources: Optional[Dict[str, Type['DataSource']]]
 
     def __init__(
         self,
@@ -515,9 +515,16 @@ class Preprocess(BasePreprocess, Properties, Module):
     @classmethod
     def data_source_of_type(cls, data_source_type: Type[DATA_SOURCE_TYPE]) -> Optional[Type[DATA_SOURCE_TYPE]]:
         data_sources = cls.data_sources
-        for data_source in data_sources:
+        for data_source in data_sources.values():
             if issubclass(data_source, data_source_type):
                 return data_source
+        return None
+
+    @classmethod
+    def data_source_of_name(cls, data_source_name: str) -> Optional[Type[DATA_SOURCE_TYPE]]:
+        data_sources = cls.data_sources
+        if data_source_name in data_sources:
+            return data_sources[data_source_name]
         return None
 
 

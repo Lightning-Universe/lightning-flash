@@ -156,7 +156,7 @@ class ObjectDetector(Task):
     def training_step(self, batch, batch_idx) -> Any:
         """The training step. Overrides ``Task.training_step``
         """
-        images, targets = batch
+        images, targets = batch['input'], batch['target']
         targets = [{k: v for k, v in t.items()} for t in targets]
 
         # fasterrcnn takes both images and targets for training, returns loss_dict
@@ -166,7 +166,7 @@ class ObjectDetector(Task):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        images, targets = batch
+        images, targets = batch['input'], batch['target']
         # fasterrcnn takes only images for eval() mode
         outs = self.model(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
@@ -178,7 +178,7 @@ class ObjectDetector(Task):
         return {"avg_val_iou": avg_iou, "log": logs}
 
     def test_step(self, batch, batch_idx):
-        images, targets = batch
+        images, targets = batch['input'], batch['target']
         # fasterrcnn takes only images for eval() mode
         outs = self.model(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()

@@ -29,7 +29,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.data.data_source import DataSource, DefaultDataSource
+from flash.data.data_source import DataSource, DefaultDataSources
 from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 
 
@@ -157,7 +157,7 @@ class Task(LightningModule):
     def predict(
         self,
         x: Any,
-        data_source: Union[str, DefaultDataSource, DataSource] = DefaultDataSource.FILES,
+        data_source: Union[str, DataSource] = DefaultDataSources.FILES,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -259,7 +259,7 @@ class Task(LightningModule):
 
     def build_data_pipeline(
         self,
-        data_source: Optional[Union[str, DefaultDataSource, DataSource]] = None,
+        data_source: Optional[Union[str, DataSource]] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
@@ -318,11 +318,8 @@ class Task(LightningModule):
 
         data_source = data_source or old_data_source
 
-        if str(data_source) == data_source:
-            data_source = DefaultDataSource(data_source)
-
-        if not isinstance(data_source, DataSource):
-            data_source = preprocess.data_source_of_type(data_source.as_type())()
+        if isinstance(data_source, str):
+            data_source = preprocess.data_source_of_name(data_source)()
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
@@ -392,12 +389,16 @@ class Task(LightningModule):
         # https://pytorch.org/docs/stable/notes/serialization.html
         if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
             checkpoint['data_pipeline'] = self.data_pipeline
+        if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
+            checkpoint['_data_pipeline_state'] = self._data_pipeline_state
         super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)
         if 'data_pipeline' in checkpoint:
             self.data_pipeline = checkpoint['data_pipeline']
+        if '_data_pipeline_state' in checkpoint:
+            self._data_pipeline_state = checkpoint['_data_pipeline_state']
 
     @classmethod
     def available_backbones(cls) -> List[str]:

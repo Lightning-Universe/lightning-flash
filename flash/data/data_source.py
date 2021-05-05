@@ -22,6 +22,7 @@ from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequen
 import numpy as np
 import torch
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
@@ -125,21 +126,22 @@ class DataSource(Generic[DATA_TYPE], Properties, Module, ABC):
             return dataset
 
 
-class DefaultDataSource(Enum):  # TODO: This could be replaced with a data source registry that the user can add to
+class DefaultDataSources(LightningEnum):
 
     FOLDERS = "folders"
     FILES = "files"
     NUMPY = "numpy"
     TENSOR = "tensor"
 
-    def as_type(self) -> Type[DataSource]:
-        _data_source_types = {
-            DefaultDataSource.FOLDERS: FoldersDataSource,
-            DefaultDataSource.FILES: FilesDataSource,
-            DefaultDataSource.NUMPY: NumpyDataSource,
-            DefaultDataSource.TENSOR: TensorDataSource
-        }
-        return _data_source_types[self]
+
+class DefaultDataKeys(LightningEnum):
+
+    INPUT = "input"
+    TARGET = "target"
+
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
 
 
 class FoldersDataSource(DataSource[str], ABC):
@@ -170,7 +172,7 @@ class FoldersDataSource(DataSource[str], ABC):
         if not classes:
             files = [os.path.join(data, file) for file in os.listdir(data)]
             return [{
-                'input': file
+                DefaultDataKeys.INPUT: file
             } for file in filter(
                 lambda file: has_file_allowed_extension(file, self.extensions),
                 files,
@@ -179,7 +181,7 @@ class FoldersDataSource(DataSource[str], ABC):
             self.set_state(LabelsState(classes))
         dataset.num_classes = len(classes)
         data = make_dataset(data, class_to_idx, extensions=self.extensions)
-        return [{'input': input, 'target': target} for input, target in data]
+        return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
 
 
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
@@ -208,10 +210,13 @@ class SequenceDataSource(
         inputs, targets = data
         if targets is None:
             return self.predict_load_data(data)
-        return [{'input': input, 'target': target} for input, target in zip(inputs, targets)]
+        return [{
+            DefaultDataKeys.INPUT: input,
+            DefaultDataKeys.TARGET: target
+        } for input, target in zip(inputs, targets)]
 
     def predict_load_data(self, data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
-        return [{'input': input} for input in data]
+        return [{DefaultDataKeys.INPUT: input} for input in data]
 
 
 class FilesDataSource(SequenceDataSource[str], ABC):
@@ -228,7 +233,7 @@ class FilesDataSource(SequenceDataSource[str], ABC):
     ) -> Sequence[Mapping[str, Any]]:
         return list(
             filter(
-                lambda sample: has_file_allowed_extension(sample["input"], self.extensions),
+                lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),
                 super().load_data(data, dataset),
             )
         )
@@ -236,7 +241,7 @@ class FilesDataSource(SequenceDataSource[str], ABC):
     def predict_load_data(self, data: Sequence[str]) -> Sequence[Mapping[str, Any]]:
         return list(
             filter(
-                lambda sample: has_file_allowed_extension(sample["input"], self.extensions),
+                lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),
                 super().predict_load_data(data),
             )
         )
