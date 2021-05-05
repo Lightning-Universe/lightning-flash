@@ -19,3 +19,4 @@ pycocotools>=2.0.2 ; python_version >= "3.7"
 kornia==0.5.0
 pytorchvideo
 matplotlib  # used by the visualisation callback
+pystiche>=0.7.1
