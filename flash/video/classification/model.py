@@ -43,6 +43,7 @@ if _PYTORCHVIDEO_AVAILABLE:
 class VideoClassifierFinetuning(BaseFinetuning):
 
     def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
+        super().__init__()
         self.num_layers = num_layers
         self.train_bn = train_bn
         self.unfreeze_epoch = unfreeze_epoch
