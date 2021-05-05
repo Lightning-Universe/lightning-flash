@@ -55,7 +55,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
 
     @running_stage.setter
     def running_stage(self, running_stage: RunningStage) -> None:
-        from flash.data.data_pipeline import DataPipeline
+        from flash.data.data_pipeline import DataPipeline  # noqa F811
         from flash.data.data_source import DataSource  # Hack to avoid circular import TODO: something better than this
 
         self._running_stage = running_stage

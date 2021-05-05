@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 
-from flash.core.classification import ClassificationState
+from flash.core.classification import LabelsState
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.process import Preprocess
@@ -49,7 +49,7 @@ class TabularPreprocess(Preprocess):
         is_regression: bool,
     ):
         super().__init__()
-        self.set_state(ClassificationState(classes))
+        self.set_state(LabelsState(classes))
 
         self.cat_cols = cat_cols
         self.num_cols = num_cols

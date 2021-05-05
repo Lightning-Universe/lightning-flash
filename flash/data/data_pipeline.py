@@ -543,7 +543,13 @@ class _StageOrchestrator:
     def __call__(self, *args, **kwargs):
         outputs = self.func(*args, **kwargs)
 
-        internal_running_state = self.internal_mapping[self.model.trainer._running_stage]
+        # todo (tchaton) Remove this check
+        try:
+            stage = self.model.trainer._running_stage
+        except AttributeError:
+            stage = self.model.trainer.state.stage
+
+        internal_running_state = self.internal_mapping[stage]
         additional_func = self._stage_mapping.get(internal_running_state, None)
 
         if additional_func:

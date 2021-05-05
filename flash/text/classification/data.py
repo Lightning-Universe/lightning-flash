@@ -16,7 +16,6 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from datasets import DatasetDict, load_dataset
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 from transformers.modeling_outputs import SequenceClassifierOutput
@@ -24,7 +23,7 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 from flash.data.auto_dataset import AutoDataset
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
+from flash.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.data.process import Postprocess, Preprocess
 
 
