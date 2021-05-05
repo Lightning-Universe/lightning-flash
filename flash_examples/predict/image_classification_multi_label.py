@@ -33,16 +33,14 @@ download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/
 class CustomViz(BaseVisualization):
 
     def show_per_batch_transform(self, batch: Any, _) -> None:
-        images = batch[0]
+        images = batch[0]["input"]
         image = make_grid(images, nrow=2)
         image = T.to_pil_image(image, 'RGB')
         image.show()
 
 
 # 3. Load the model from a checkpoint
-model = ImageClassifier.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/image_classification_multi_label_model.pt",
-)
+model = ImageClassifier.load_from_checkpoint("../finetuning/image_classification_multi_label_model.pt", )
 
 # 4a. Predict the genres of a few movie posters!
 predictions = model.predict([
@@ -56,7 +54,7 @@ print(predictions)
 datamodule = ImageClassificationData.from_folders(
     predict_folder="data/movie_posters/predict/",
     data_fetcher=CustomViz(),
-    preprocess=model.preprocess,
+    image_size=(128, 128),
 )
 
 predictions = Trainer().predict(model, datamodule=datamodule)
