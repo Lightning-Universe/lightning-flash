@@ -304,14 +304,13 @@ class Preprocess(BasePreprocess, Properties, Module):
 
     """
 
-    data_sources: Optional[Dict[str, Type['DataSource']]]
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        data_sources: Optional[Dict[str, 'DataSource']] = None,
     ):
         super().__init__()
 
@@ -337,6 +336,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         self.test_transform = convert_to_modules(self._test_transform)
         self.predict_transform = convert_to_modules(self._predict_transform)
 
+        self._data_sources = data_sources
         self._callbacks: List[FlashCallback] = []
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
@@ -514,17 +514,8 @@ class Preprocess(BasePreprocess, Properties, Module):
         """
         return self.current_transform(batch)
 
-    @classmethod
-    def data_source_of_type(cls, data_source_type: Type[DATA_SOURCE_TYPE]) -> Optional[Type[DATA_SOURCE_TYPE]]:
-        data_sources = cls.data_sources
-        for data_source in data_sources.values():
-            if issubclass(data_source, data_source_type):
-                return data_source
-        return None
-
-    @classmethod
-    def data_source_of_name(cls, data_source_name: str) -> Optional[Type[DATA_SOURCE_TYPE]]:
-        data_sources = cls.data_sources
+    def data_source_of_name(self, data_source_name: str) -> Optional[DATA_SOURCE_TYPE]:
+        data_sources = self._data_sources
         if data_source_name in data_sources:
             return data_sources[data_source_name]
         return None

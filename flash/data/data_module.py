@@ -350,8 +350,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        data_source_kwargs: Dict[str, Any] = {},
-        preprocess_kwargs: Dict[str, Any] = {},
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         preprocess = preprocess or cls.preprocess_cls(
             train_transform,
@@ -361,7 +360,7 @@ class DataModule(pl.LightningDataModule):
             **preprocess_kwargs,
         )
 
-        data_source = preprocess.data_source_of_name(data_source)(**data_source_kwargs)
+        data_source = preprocess.data_source_of_name(data_source)
 
         train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(
             train_data,
@@ -399,8 +398,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        data_source_kwargs: Dict[str, Any] = {},
-        preprocess_kwargs: Dict[str, Any] = {},
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         return cls.from_data_source(
             DefaultDataSources.FOLDERS,
@@ -417,8 +415,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            data_source_kwargs=data_source_kwargs,
-            preprocess_kwargs=preprocess_kwargs,
+            **preprocess_kwargs,
         )
 
     @classmethod
@@ -440,8 +437,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        data_source_kwargs: Dict[str, Any] = {},
-        preprocess_kwargs: Dict[str, Any] = {},
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         return cls.from_data_source(
             DefaultDataSources.FILES,
@@ -458,8 +454,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            data_source_kwargs=data_source_kwargs,
-            preprocess_kwargs=preprocess_kwargs,
+            **preprocess_kwargs,
         )
 
     @classmethod
@@ -481,8 +476,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        data_source_kwargs: Dict[str, Any] = {},
-        preprocess_kwargs: Dict[str, Any] = {},
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         return cls.from_data_source(
             DefaultDataSources.TENSOR,
@@ -499,8 +493,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            data_source_kwargs=data_source_kwargs,
-            preprocess_kwargs=preprocess_kwargs,
+            **preprocess_kwargs,
         )
 
     @classmethod
@@ -522,8 +515,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        data_source_kwargs: Dict[str, Any] = {},
-        preprocess_kwargs: Dict[str, Any] = {},
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         return cls.from_data_source(
             DefaultDataSources.NUMPY,
@@ -540,8 +532,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            data_source_kwargs=data_source_kwargs,
-            preprocess_kwargs=preprocess_kwargs,
+            **preprocess_kwargs,
         )
 
     @classmethod
@@ -558,8 +549,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        data_source_kwargs: Dict[str, Any] = {},
-        preprocess_kwargs: Dict[str, Any] = {},
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         return cls.from_data_source(
             DefaultDataSources.CSV,
@@ -572,4 +562,5 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            **preprocess_kwargs,
         )

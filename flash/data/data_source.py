@@ -135,6 +135,10 @@ class DefaultDataSources(LightningEnum):
     TENSOR = "tensor"
     CSV = "csv"
 
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
+
 
 class DefaultDataKeys(LightningEnum):
 

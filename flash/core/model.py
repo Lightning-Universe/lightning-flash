@@ -317,7 +317,7 @@ class Task(LightningModule):
         data_source = data_source or old_data_source
 
         if isinstance(data_source, str):
-            data_source = preprocess.data_source_of_name(data_source)()
+            data_source = preprocess.data_source_of_name(data_source)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)

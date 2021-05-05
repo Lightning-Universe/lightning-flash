@@ -18,6 +18,7 @@ from torch.nn import functional as F
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
+from flash.data.data_source import DefaultDataKeys
 from flash.data.process import Serializer
 from flash.utils.imports import _TABNET_AVAILABLE
 
@@ -80,9 +81,22 @@ class TabularClassifier(ClassificationTask):
     def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
-        return F.softmax(self.model(x)[0], -1)
+        return self.model(x)[0]
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().training_step(batch, batch_idx)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().validation_step(batch, batch_idx)
+
+    def test_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT])
         return self(batch)
 
     @classmethod
