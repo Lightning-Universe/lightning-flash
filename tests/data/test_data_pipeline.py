@@ -64,8 +64,8 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
         pass
 
     data_pipeline = DataPipeline(
-        SubPreprocess() if use_preprocess else None,
-        SubPostprocess() if use_postprocess else None,
+        preprocess=SubPreprocess() if use_preprocess else None,
+        postprocess=SubPostprocess() if use_postprocess else None,
     )
     assert isinstance(data_pipeline._preprocess_pipeline, SubPreprocess if use_preprocess else Preprocess)
     assert isinstance(data_pipeline._postprocess_pipeline, SubPostprocess if use_postprocess else Postprocess)
