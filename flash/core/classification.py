@@ -135,6 +135,9 @@ class Labels(Classes):
         super().__init__(multi_label=multi_label, threshold=threshold)
         self._labels = labels
 
+        if labels is not None:
+            self.set_state(LabelsState(labels))
+
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
 

@@ -103,7 +103,7 @@ class DataPipeline:
 
         self._running_stage = None
 
-    def initialize(self, data_pipeline_state: Optional[DataPipelineState]) -> DataPipelineState:
+    def initialize(self, data_pipeline_state: Optional[DataPipelineState] = None) -> DataPipelineState:
         """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
         :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
         give a warning."""
