@@ -293,6 +293,10 @@ class Task(LightningModule):
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
+        else:
+            # TODO: we should log with low severity level that we use defaults to create
+            # `preprocess`, `postprocess` and `serializer`.
+            pass
 
         # Defaults / task attributes
         preprocess, postprocess, serializer = Task._resolve(
@@ -318,6 +322,8 @@ class Task(LightningModule):
         data_source = data_source or old_data_source
 
         if isinstance(data_source, str):
+            assert preprocess is not None, type(preprocess)
+            # TODO: somehow the preprocess is not well generated when is a Default type
             data_source = preprocess.data_source_of_name(data_source)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
