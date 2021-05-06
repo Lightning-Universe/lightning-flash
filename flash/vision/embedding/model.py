@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from pytorch_lightning.utilities.distributed import rank_zero_warn
@@ -21,6 +21,7 @@ from torchmetrics import Accuracy
 
 from flash.core import Task
 from flash.core.registry import FlashRegistry
+from flash.data.data_source import DefaultDataKeys
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
 
@@ -108,3 +109,19 @@ class ImageEmbedder(Task):
 
         x = self.head(x)
         return x
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().training_step(batch, batch_idx)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().validation_step(batch, batch_idx)
+
+    def test_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().test_step(batch, batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT])
+        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)

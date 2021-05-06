@@ -27,7 +27,7 @@ from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.data_source import DefaultDataKeys
 from flash.data.process import DefaultPreprocess
-from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
 from flash.vision import ImageClassificationData
 
 
@@ -154,7 +154,7 @@ def test_base_viz(tmpdir):
     for stage in _STAGES_PREFIX.values():
 
         for _ in range(num_tests):
-            for fcn_name in _PREPROCESS_FUNCS:
+            for fcn_name in _CALLBACK_FUNCS:
                 fcn = getattr(dm, f"show_{stage}_batch")
                 fcn(fcn_name, reset=True)
 
