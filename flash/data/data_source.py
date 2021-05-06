@@ -243,8 +243,10 @@ class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
                           dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
         if self.isdir(data):
             data = [os.path.join(data, file) for file in os.listdir(data)]
-        else:
+
+        if not isinstance(data, list):
             data = [data]
+
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),
