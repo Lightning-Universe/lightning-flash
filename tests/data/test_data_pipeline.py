@@ -849,10 +849,10 @@ def test_preprocess_transforms(tmpdir):
     assert preprocess._test_collate_in_worker_from_transform is None
     assert preprocess._predict_collate_in_worker_from_transform is False
 
-    train_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.TRAINING)
-    val_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.VALIDATING)
-    test_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.TESTING)
-    predict_preprocessor = DataPipeline(preprocess).worker_preprocessor(RunningStage.PREDICTING)
+    train_preprocessor = DataPipeline(preprocess=preprocess).worker_preprocessor(RunningStage.TRAINING)
+    val_preprocessor = DataPipeline(preprocess=preprocess).worker_preprocessor(RunningStage.VALIDATING)
+    test_preprocessor = DataPipeline(preprocess=preprocess).worker_preprocessor(RunningStage.TESTING)
+    predict_preprocessor = DataPipeline(preprocess=preprocess).worker_preprocessor(RunningStage.PREDICTING)
 
     assert train_preprocessor.collate_fn.func == default_collate
     assert val_preprocessor.collate_fn.func == default_collate
@@ -877,7 +877,7 @@ def test_preprocess_transforms(tmpdir):
     assert preprocess._test_collate_in_worker_from_transform is None
     assert preprocess._predict_collate_in_worker_from_transform is False
 
-    data_pipeline = DataPipeline(preprocess)
+    data_pipeline = DataPipeline(preprocess=preprocess)
 
     train_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TRAINING)
     with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
@@ -892,14 +892,12 @@ def test_preprocess_transforms(tmpdir):
 
 def test_iterable_auto_dataset(tmpdir):
 
-    class CustomPreprocess(DefaultPreprocess):
+    class CustomDataSource(DataSource):
 
         def load_sample(self, index: int) -> Dict[str, int]:
             return {"index": index}
 
-    data_pipeline = DataPipeline(CustomPreprocess())
-
-    ds = IterableAutoDataset(range(10), running_stage=RunningStage.TRAINING, data_pipeline=data_pipeline)
+    ds = IterableAutoDataset(range(10), data_source=CustomDataSource(), running_stage=RunningStage.TRAINING)
 
     for index, v in enumerate(ds):
         assert v == {"index": index}
