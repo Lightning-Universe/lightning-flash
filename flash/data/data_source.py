@@ -106,6 +106,9 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         if not is_none:
             from flash.data.data_pipeline import DataPipeline
 
+            if not isinstance(data, Sequence):
+                data = [data]
+
             mock_dataset = MockDataset()
             with CurrentRunningStageFuncContext(running_stage, "load_data", self):
                 load_data = getattr(

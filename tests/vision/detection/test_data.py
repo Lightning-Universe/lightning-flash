@@ -6,6 +6,7 @@ import pytest
 from PIL import Image
 from pytorch_lightning.utilities import _module_available
 
+from flash.data.data_source import DefaultDataKeys
 from flash.utils.imports import _COCO_AVAILABLE
 from flash.vision.detection.data import ObjectDetectionData
 
@@ -83,7 +84,7 @@ def test_image_detector_data_from_coco(tmpdir):
     datamodule = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
 
     data = next(iter(datamodule.train_dataloader()))
-    imgs, labels = data
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
     assert len(imgs) == 1
     assert imgs[0].shape == (3, 1080, 1920)
@@ -101,11 +102,11 @@ def test_image_detector_data_from_coco(tmpdir):
         test_folder=train_folder,
         test_ann_file=coco_ann_path,
         batch_size=1,
-        num_workers=0
+        num_workers=0,
     )
 
     data = next(iter(datamodule.val_dataloader()))
-    imgs, labels = data
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
     assert len(imgs) == 1
     assert imgs[0].shape == (3, 1080, 1920)
@@ -113,7 +114,7 @@ def test_image_detector_data_from_coco(tmpdir):
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
 
     data = next(iter(datamodule.test_dataloader()))
-    imgs, labels = data
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
     assert len(imgs) == 1
     assert imgs[0].shape == (3, 1080, 1920)

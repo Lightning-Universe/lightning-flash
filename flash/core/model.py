@@ -324,9 +324,10 @@ class Task(LightningModule):
         data_source = data_source or old_data_source
 
         if isinstance(data_source, str):
-            assert preprocess is not None, type(preprocess)
-            # TODO: somehow the preprocess is not well generated when is a Default type
-            data_source = preprocess.data_source_of_name(data_source)
+            if preprocess is None:
+                data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
+            else:
+                data_source = preprocess.data_source_of_name(data_source)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)

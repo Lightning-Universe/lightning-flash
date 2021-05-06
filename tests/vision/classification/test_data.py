@@ -169,6 +169,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
         test_files=[image_b, image_b],
         test_targets=[[0, 0, 1], [1, 1, 0]],
         batch_size=2,
+        image_size=(64, 64),
     )
     # disable visualisation for testing
     assert dm.data_fetcher.block_viz_window is True

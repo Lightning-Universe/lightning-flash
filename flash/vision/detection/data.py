@@ -18,9 +18,10 @@ from torch.nn import Module
 from torchvision.datasets.folder import default_loader
 
 from flash.data.data_module import DataModule
-from flash.data.data_source import DataSource
+from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.data.process import Preprocess
 from flash.utils.imports import _COCO_AVAILABLE
+from flash.vision.data import ImagePathsDataSource
 from flash.vision.detection.transforms import default_transforms
 
 if _COCO_AVAILABLE:
@@ -84,7 +85,7 @@ class COCODataSource(DataSource[Tuple[str, str]]):
         return data
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample['input'] = default_loader(sample['input'])
+        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
         return sample
 
 
@@ -103,9 +104,10 @@ class ObjectDetectionPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.PATHS: ImagePathsDataSource(),
                 "coco": COCODataSource(),
             },
-            default_data_source="coco",
+            default_data_source=DefaultDataSources.PATHS,
         )
 
     def collate(self, samples: Any) -> Any:

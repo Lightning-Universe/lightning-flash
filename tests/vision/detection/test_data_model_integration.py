@@ -43,5 +43,5 @@ def test_detection(tmpdir, model, backbone):
     Image.new('RGB', (512, 512)).save(test_image_one)
     Image.new('RGB', (512, 512)).save(test_image_two)
 
-    test_images = [test_image_one, test_image_two]
+    test_images = [str(test_image_one), str(test_image_two)]
     model.predict(test_images)
