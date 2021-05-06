@@ -22,7 +22,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 # 2. Load the model from a checkpoint
 model = TranslationTask.load_from_checkpoint("../finetuning/translation_model_en_ro.pt")
 
-# 2a. Translate a few sentences!
+# 3. Translate a few sentences!
 predictions = model.predict(
     [
         "BBC News went to meet one of the project's first graduates.",
@@ -30,12 +30,4 @@ predictions = model.predict(
     ],
     data_source="sentences",
 )
-print(predictions)
-
-# 2b. Or generate translations from a sheet file!
-datamodule = TranslationData.from_csv(
-    "input",
-    predict_file="data/wmt_en_ro/predict.csv",
-)
-predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)

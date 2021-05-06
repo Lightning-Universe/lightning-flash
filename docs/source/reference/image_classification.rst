@@ -159,6 +159,7 @@ Available backbones:
 * densenet169
 * densenet161
 * swav-imagenet
+* `TIMM <https://rwightman.github.io/pytorch-image-models/>`_ (130+ PyTorch Image Models)
 
 ------
 
@@ -185,3 +186,5 @@ ImageClassificationData
 .. automethod:: flash.vision.ImageClassificationData.from_filepaths
 
 .. automethod:: flash.vision.ImageClassificationData.from_folders
+
+.. autoclass:: flash.vision.ImageClassificationPreprocess

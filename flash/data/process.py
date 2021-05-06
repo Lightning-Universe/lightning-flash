@@ -348,6 +348,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
         preprocess_state_dict["_meta"]["_state"] = self._state
         destination['preprocess.state_dict'] = preprocess_state_dict
+        self._ddp_params_and_buffers_to_ignore = ['preprocess.state_dict']
         return super()._save_to_state_dict(destination, prefix, keep_vars)
 
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:

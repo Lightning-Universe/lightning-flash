@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+import inspect
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
@@ -339,6 +340,9 @@ class Task(LightningModule):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
+        self._preprocess.state_dict()
+        if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
+            self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
 
     @property
     def preprocess(self) -> Preprocess:
@@ -411,6 +415,13 @@ class Task(LightningModule):
         if registry is None:
             return []
         return registry.available_keys()
+
+    @classmethod
+    def get_model_details(cls, key) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+        if registry is None:
+            return []
+        return [v for v in inspect.signature(registry.get(key)).parameters.items()]
 
     @classmethod
     def available_schedulers(cls) -> List[str]:

@@ -543,7 +543,6 @@ class _StageOrchestrator:
     def __call__(self, *args, **kwargs):
         outputs = self.func(*args, **kwargs)
 
-        # todo (tchaton) Remove this check
         try:
             stage = self.model.trainer._running_stage
         except AttributeError:

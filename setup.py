@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import os
-import subprocess
-# Always prefer setuptools over distutils
-import sys
+from importlib.util import module_from_spec, spec_from_file_location
 
 from setuptools import find_packages, setup
 
@@ -14,19 +12,20 @@ except (ImportError, AssertionError):
     subprocess.Popen(["pip", "install", "git+https://github.com/PyTorchLightning/pytorch-lightning.git"])
 """
 
-try:
-    from flash import __about__ as about
-    from flash import setup_tools
-except ImportError:
-    # alternative https://stackoverflow.com/a/67692/4521646
-    sys.path.append("flash")
-    import __about__ as about
-    import setup_tools
-
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
-
 _PATH_ROOT = os.path.dirname(__file__)
+
+
+def _load_py_module(fname, pkg="flash"):
+    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
+    py = module_from_spec(spec)
+    spec.loader.exec_module(py)
+    return py
+
+
+about = _load_py_module('__about__.py')
+setup_tools = _load_py_module('setup_tools.py')
 
 long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__)
 
