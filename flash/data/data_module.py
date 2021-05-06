@@ -536,6 +536,36 @@ class DataModule(pl.LightningDataModule):
         )
 
     @classmethod
+    def from_json(
+        cls,
+        input_fields: Union[str, List[str]],
+        target_fields: Optional[Union[str, List[str]]] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        return cls.from_data_source(
+            DefaultDataSources.JSON,
+            (train_file, input_fields, target_fields),
+            (val_file, input_fields, target_fields),
+            (test_file, input_fields, target_fields),
+            (predict_file, input_fields, target_fields),
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
     def from_csv(
         cls,
         input_fields: Union[str, List[str]],

@@ -159,7 +159,7 @@ class TextClassificationPreprocess(Preprocess):
             predict_transform=predict_transform,
             data_sources={
                 DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer, max_length=max_length),
-                "json": TextJSONDataSource(self.tokenizer, max_length=max_length),
+                DefaultDataSources.JSON: TextJSONDataSource(self.tokenizer, max_length=max_length),
                 "sentences": TextSentencesDataSource(self.tokenizer, max_length=max_length),
             },
             default_data_source="sentences",
@@ -202,68 +202,3 @@ class TextClassificationData(DataModule):
 
     preprocess_cls = TextClassificationPreprocess
     postprocess_cls = TextClassificationPostProcess
-
-    @classmethod
-    def from_json(
-        cls,
-        input_fields: Union[str, List[str]],
-        target_fields: Optional[Union[str, List[str]]] = None,
-        train_file: Optional[str] = None,
-        val_file: Optional[str] = None,
-        test_file: Optional[str] = None,
-        predict_file: Optional[str] = None,
-        backbone: str = "prajjwal1/bert-tiny",
-        max_length: int = 128,
-        data_fetcher: BaseDataFetcher = None,
-        preprocess: Optional[Preprocess] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: Optional[int] = None,
-    ) -> 'DataModule':
-        return super().from_data_source(
-            "json",
-            train_data=(train_file, input_fields, target_fields),
-            val_data=(val_file, input_fields, target_fields),
-            test_data=(test_file, input_fields, target_fields),
-            predict_data=(predict_file, input_fields, target_fields),
-            data_fetcher=data_fetcher,
-            preprocess=preprocess,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            backbone=backbone,
-            max_length=max_length,
-        )
-
-    @classmethod
-    def from_csv(
-        cls,
-        input_fields: Union[str, List[str]],
-        target_fields: Optional[Union[str, List[str]]] = None,
-        train_file: Optional[str] = None,
-        val_file: Optional[str] = None,
-        test_file: Optional[str] = None,
-        predict_file: Optional[str] = None,
-        backbone: str = "prajjwal1/bert-tiny",
-        max_length: int = 128,
-        data_fetcher: BaseDataFetcher = None,
-        preprocess: Optional[Preprocess] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: Optional[int] = None,
-    ) -> 'DataModule':
-        return super().from_csv(
-            input_fields,
-            target_fields,
-            train_file=train_file,
-            val_file=val_file,
-            test_file=test_file,
-            predict_file=predict_file,
-            data_fetcher=data_fetcher,
-            preprocess=preprocess,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            backbone=backbone,
-            max_length=max_length,
-        )

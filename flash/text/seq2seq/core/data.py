@@ -190,6 +190,12 @@ class Seq2SeqPreprocess(Preprocess):
                     max_target_length=max_target_length,
                     padding=padding,
                 ),
+                DefaultDataSources.JSON: Seq2SeqJSONDataSource(
+                    self.tokenizer,
+                    max_source_length=max_source_length,
+                    max_target_length=max_target_length,
+                    padding=padding,
+                ),
                 "sentences": Seq2SeqSentencesDataSource(
                     self.tokenizer,
                     max_source_length=max_source_length,
