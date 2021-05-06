@@ -110,7 +110,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
             with CurrentRunningStageFuncContext(running_stage, "load_data", self):
                 load_data = getattr(
                     self, DataPipeline._resolve_function_hierarchy(
-                        'load_data',
+                        "load_data",
                         self,
                         running_stage,
                         DataSource,

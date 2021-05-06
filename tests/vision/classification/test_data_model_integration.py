@@ -46,6 +46,7 @@ def test_classification(tmpdir):
         train_targets=[0, 1],
         num_workers=0,
         batch_size=2,
+        image_size=(64, 64),
     )
     model = ImageClassifier(num_classes=2, backbone="resnet18")
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)

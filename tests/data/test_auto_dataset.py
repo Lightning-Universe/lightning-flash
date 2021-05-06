@@ -23,7 +23,7 @@ from flash.data.data_source import DataSource
 from flash.data.process import Preprocess
 
 
-class _AutoDatasetTestPreprocess(Preprocess):
+class _AutoDatasetTestDataSource(DataSource):
 
     def __init__(self, with_dset: bool):
         self._callbacks: List[FlashCallback] = []
@@ -48,13 +48,6 @@ class _AutoDatasetTestPreprocess(Preprocess):
             self.load_sample = self.load_sample_no_dset
             self.train_load_data = self.train_load_data_no_dset
             self.train_load_sample = self.train_load_sample_no_dset
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {"with_dset": self.with_dset}
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
-        return _AutoDatasetTestPreprocess(state_dict["with_dset"])
 
     def load_data_no_dset(self, data):
         self.load_data_count += 1
@@ -171,61 +164,6 @@ def test_iterable_autodataset_smoke():
     assert next(itr) == 2
 
 
-# TODO: do we remove ?
-@pytest.mark.parametrize(
-    "with_dataset,with_running_stage",
-    [
-        (True, False),
-        (True, True),
-        (False, False),
-        (False, True),
-    ],
-)
-def test_autodataset_with_functions(
-    with_dataset: bool,
-    with_running_stage: bool,
-):
-
-    functions = _AutoDatasetTestPreprocess(with_dataset)
-
-    load_sample_func = functions.load_sample
-    load_data_func = functions.load_data
-
-    if with_running_stage:
-        running_stage = RunningStage.TRAINING
-    else:
-        running_stage = None
-    dset = AutoDataset(
-        range(10),
-        load_data=load_data_func,
-        load_sample=load_sample_func,
-        running_stage=running_stage,
-    )
-
-    assert len(dset) == 10
-
-    for idx in range(len(dset)):
-        dset[idx]
-
-    if with_dataset:
-        assert dset.load_sample_was_called
-        assert dset.load_data_was_called
-        assert functions.load_sample_with_dataset_count == len(dset)
-        assert functions.load_data_with_dataset_count == 1
-    else:
-        assert functions.load_data_count == 1
-        assert functions.load_sample_count == len(dset)
-
-
-# TODO: do we remove ?
-def test_autodataset_warning():
-    with pytest.warns(
-        UserWarning, match="``datapipeline`` is specified but load_sample and/or load_data are also specified"
-    ):
-        AutoDataset(range(10), load_data=lambda x: x, load_sample=lambda x: x, data_pipeline=DataPipeline())
-
-
-# TODO: do we remove ?
 @pytest.mark.parametrize(
     "with_dataset",
     [
@@ -233,12 +171,11 @@ def test_autodataset_warning():
         False,
     ],
 )
-def test_preprocessing_data_pipeline_with_running_stage(with_dataset):
-    pipe = DataPipeline(_AutoDatasetTestPreprocess(with_dataset))
-
+def test_preprocessing_data_source_with_running_stage(with_dataset):
+    data_source = _AutoDatasetTestDataSource(with_dataset)
     running_stage = RunningStage.TRAINING
 
-    dataset = pipe._generate_auto_dataset(range(10), running_stage=running_stage)
+    dataset = data_source.generate_dataset(range(10), running_stage=running_stage)
 
     assert len(dataset) == 10
 
@@ -248,44 +185,8 @@ def test_preprocessing_data_pipeline_with_running_stage(with_dataset):
     if with_dataset:
         assert dataset.train_load_sample_was_called
         assert dataset.train_load_data_was_called
-        assert pipe._preprocess_pipeline.train_load_sample_with_dataset_count == len(dataset)
-        assert pipe._preprocess_pipeline.train_load_data_with_dataset_count == 1
+        assert data_source.train_load_sample_with_dataset_count == len(dataset)
+        assert data_source.train_load_data_with_dataset_count == 1
     else:
-        assert pipe._preprocess_pipeline.train_load_sample_count == len(dataset)
-        assert pipe._preprocess_pipeline.train_load_data_count == 1
-
-
-# TODO: do we remove ? we are testing DataPipeline here.
-@pytest.mark.parametrize(
-    "with_dataset",
-    [
-        True,
-        False,
-    ],
-)
-def test_preprocessing_data_pipeline_no_running_stage(with_dataset):
-    pipe = DataPipeline(_AutoDatasetTestPreprocess(with_dataset))
-
-    dataset = pipe._generate_auto_dataset(range(10), running_stage=None)
-
-    with pytest.raises(RuntimeError, match='`__len__` for `load_sample`'):
-        for idx in range(len(dataset)):
-            dataset[idx]
-
-    # will be triggered when running stage is set
-    if with_dataset:
-        assert not hasattr(dataset, 'load_sample_was_called')
-        assert not hasattr(dataset, 'load_data_was_called')
-        assert pipe._preprocess_pipeline.load_sample_with_dataset_count == 0
-        assert pipe._preprocess_pipeline.load_data_with_dataset_count == 0
-    else:
-        assert pipe._preprocess_pipeline.load_sample_count == 0
-        assert pipe._preprocess_pipeline.load_data_count == 0
-
-    dataset.running_stage = RunningStage.TRAINING
-
-    if with_dataset:
-        assert pipe._preprocess_pipeline.train_load_data_with_dataset_count == 1
-        assert dataset.train_load_data_was_called
-    else:
-        assert pipe._preprocess_pipeline.train_load_data_count == 1
+        assert data_source.train_load_sample_count == len(dataset)
+        assert data_source.train_load_data_count == 1

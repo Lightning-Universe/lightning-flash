@@ -9,6 +9,7 @@ from torch import nn, Tensor
 
 import flash
 from flash.data.auto_dataset import AutoDataset
+from flash.data.data_source import DataSource
 from flash.data.process import Postprocess, Preprocess
 
 seed_everything(42)
@@ -41,21 +42,27 @@ class RegressionTask(flash.Task):
         return self.model(x)
 
 
-class NumpyPreprocess(Preprocess):
+class NumpyDataSource(DataSource):
 
     def load_data(self, data: Tuple[ND, ND], dataset: AutoDataset) -> List[Tuple[ND, float]]:
         if self.training:
             dataset.num_inputs = data[0].shape[1]
         return [(x, y) for x, y in zip(*data)]
 
+    def predict_load_data(self, data: ND) -> ND:
+        return data
+
+
+class NumpyPreprocess(Preprocess):
+
+    def __init__(self):
+        super().__init__(data_sources={"numpy": NumpyDataSource()}, default_data_source="numpy")
+
     def to_tensor_transform(self, sample: Any) -> Tuple[Tensor, Tensor]:
         x, y = sample
         x = torch.from_numpy(x).float()
         y = torch.tensor(y, dtype=torch.float)
         return x, y
-
-    def predict_load_data(self, data: ND) -> ND:
-        return data
 
     def predict_to_tensor_transform(self, sample: ND) -> ND:
         return torch.from_numpy(sample).float()
@@ -77,12 +84,13 @@ class NumpyDataModule(flash.DataModule):
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.20, random_state=0)
 
-        dm = cls.from_load_data_inputs(
-            train_load_data_input=(x_train, y_train),
-            test_load_data_input=(x_test, y_test),
+        dm = cls.from_data_source(
+            "numpy",
+            train_data=(x_train, y_train),
+            test_data=(x_test, y_test),
             preprocess=preprocess,
             batch_size=batch_size,
-            num_workers=num_workers
+            num_workers=num_workers,
         )
         dm.num_inputs = dm.train_dataset.num_inputs
         return dm
