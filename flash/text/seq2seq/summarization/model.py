@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -37,7 +37,7 @@ class SummarizationTask(Seq2SeqTask):
 
     def __init__(
         self,
-        backbone: str = "t5-small",
+        backbone: str = "sshleifer/tiny-mbart",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,

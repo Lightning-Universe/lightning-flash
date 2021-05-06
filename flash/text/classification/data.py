@@ -29,18 +29,16 @@ from flash.data.process import Postprocess, Preprocess
 
 class TextDataSource(DataSource):
 
-    def __init__(self, backbone: str = "prajjwal1/bert-tiny", max_length: int = 128):
+    def __init__(self, tokenizer, max_length: int = 128):
         super().__init__()
 
-        self.backbone = backbone
+        self.tokenizer = tokenizer
         self.max_length = max_length
-
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
     def _tokenize_fn(
         self,
         ex: Union[Dict[str, str], str],
-        input: str = None,
+        input: Optional[str] = None,
     ) -> Callable:
         """This function is used to tokenize sentences using the provided tokenizer."""
         if isinstance(ex, dict):
@@ -54,8 +52,8 @@ class TextDataSource(DataSource):
 
 class TextFileDataSource(TextDataSource):
 
-    def __init__(self, filetype: str, backbone: str = "prajjwal1/bert-tiny", max_length: int = 128):
-        super().__init__(backbone=backbone, max_length=max_length)
+    def __init__(self, filetype: str, tokenizer, max_length: int = 128):
+        super().__init__(tokenizer, max_length=max_length)
 
         self.filetype = filetype
 
@@ -112,20 +110,20 @@ class TextFileDataSource(TextDataSource):
 
 class TextCSVDataSource(TextFileDataSource):
 
-    def __init__(self, backbone: str = "prajjwal1/bert-tiny", max_length: int = 128):
-        super().__init__("csv", backbone=backbone, max_length=max_length)
+    def __init__(self, tokenizer, max_length: int = 128):
+        super().__init__("csv", tokenizer, max_length=max_length)
 
 
 class TextJSONDataSource(TextFileDataSource):
 
-    def __init__(self, backbone: str = "prajjwal1/bert-tiny", max_length: int = 128):
-        super().__init__("json", backbone=backbone, max_length=max_length)
+    def __init__(self, tokenizer, max_length: int = 128):
+        super().__init__("json", tokenizer, max_length=max_length)
 
 
 class TextSentencesDataSource(TextDataSource):
 
-    def __init__(self, backbone: str = "prajjwal1/bert-tiny", max_length: int = 128):
-        super().__init__(backbone=backbone, max_length=max_length)
+    def __init__(self, tokenizer, max_length: int = 128):
+        super().__init__(tokenizer, max_length=max_length)
 
     def load_data(
         self,
@@ -152,14 +150,16 @@ class TextClassificationPreprocess(Preprocess):
         self.backbone = backbone
         self.max_length = max_length
 
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TextCSVDataSource(backbone=backbone, max_length=max_length),
-                "sentences": TextSentencesDataSource(backbone=backbone, max_length=max_length),
+                DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer, max_length=max_length),
+                "sentences": TextSentencesDataSource(self.tokenizer, max_length=max_length),
             }
         )
 

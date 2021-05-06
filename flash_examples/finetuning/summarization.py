@@ -21,12 +21,12 @@ from flash.text import SummarizationData, SummarizationTask
 download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 
 # 2. Load the data
-datamodule = SummarizationData.from_files(
+datamodule = SummarizationData.from_csv(
+    "input",
+    "target",
     train_file="data/xsum/train.csv",
     val_file="data/xsum/valid.csv",
     test_file="data/xsum/test.csv",
-    input="input",
-    target="target"
 )
 
 # 3. Build the model
