@@ -23,7 +23,7 @@ from torch.utils.data._utils.collate import default_collate
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.data_source import DefaultDataSources
+from flash.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.vision.classification.transforms import default_train_transforms, default_val_transforms
@@ -134,10 +134,9 @@ class MatplotlibVisualization(BaseVisualization):
         for i, ax in enumerate(axs.ravel()):
             # unpack images and labels
             if isinstance(data, list):
-                _img, _label = data[i]
-            elif isinstance(data, tuple):
-                imgs, labels = data
-                _img, _label = imgs[i], labels[i]
+                _img, _label = data[i][DefaultDataKeys.INPUT], data[i][DefaultDataKeys.TARGET]
+            elif isinstance(data, dict):
+                _img, _label = data[DefaultDataKeys.INPUT][i], data[DefaultDataKeys.TARGET][i]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy
@@ -168,4 +167,4 @@ class MatplotlibVisualization(BaseVisualization):
 
     def show_per_batch_transform(self, batch: List[Any], running_stage):
         win_title: str = f"{running_stage} - show_per_batch_transform"
-        self._show_images_and_labels(batch[0], batch[0][0].shape[0], win_title)
+        self._show_images_and_labels(batch[0], batch[0][DefaultDataKeys.INPUT].shape[0], win_title)

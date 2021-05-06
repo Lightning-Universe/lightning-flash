@@ -150,16 +150,20 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
 
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
-    _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "b_1.png")
 
-    dm = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_labels=[[0, 1, 0], [0, 1, 1]],
-        val_filepaths=[tmpdir / "b", tmpdir / "a"],
-        val_labels=[[1, 1, 0], [0, 0, 1]],
-        test_filepaths=[tmpdir / "b", tmpdir / "b"],
-        test_labels=[[0, 0, 1], [1, 1, 0]],
+    image_a = str(tmpdir / "a" / "a_1.png")
+    image_b = str(tmpdir / "b" / "b_1.png")
+
+    _rand_image().save(image_a)
+    _rand_image().save(image_b)
+
+    dm = ImageClassificationData.from_files(
+        train_files=[image_a, image_b],
+        train_targets=[[0, 1, 0], [0, 1, 1]],
+        val_files=[image_b, image_a],
+        val_targets=[[1, 1, 0], [0, 0, 1]],
+        test_files=[image_b, image_b],
+        test_targets=[[0, 0, 1], [1, 1, 0]],
         batch_size=2,
     )
     # disable visualisation for testing

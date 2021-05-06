@@ -48,6 +48,11 @@ _PREPROCESS_FUNCS: Set[str] = {
     "collate",
 }
 
+_CALLBACK_FUNCS: Set[str] = {
+    "load_sample",
+    *_PREPROCESS_FUNCS,
+}
+
 _POSTPROCESS_FUNCS: Set[str] = {
     "per_batch_transform",
     "uncollate",
