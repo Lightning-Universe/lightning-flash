@@ -27,7 +27,7 @@ from flash.data.data_source import DefaultDataSources
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.vision.classification.transforms import default_train_transforms, default_val_transforms
-from flash.vision.data import ImageFilesDataSource, ImageFoldersDataSource, ImageNumpyDataSource, ImageTensorDataSource
+from flash.vision.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -53,8 +53,7 @@ class ImageClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FOLDERS: ImageFoldersDataSource(),
-                DefaultDataSources.FILES: ImageFilesDataSource(),
+                DefaultDataSources.PATHS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
                 DefaultDataSources.TENSOR: ImageTensorDataSource(),
             }

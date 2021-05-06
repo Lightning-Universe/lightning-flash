@@ -129,8 +129,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
 class DefaultDataSources(LightningEnum):
 
-    FOLDERS = "folders"
-    FILES = "files"
+    PATHS = "paths"
     NUMPY = "numpy"
     TENSOR = "tensor"
     CSV = "csv"
@@ -148,46 +147,6 @@ class DefaultDataKeys(LightningEnum):
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
         return hash(self.value)
-
-
-class FoldersDataSource(DataSource[str]):
-
-    def __init__(self, extensions: Optional[Tuple[str, ...]] = None):
-        super().__init__()
-
-        self.extensions = extensions
-
-    @staticmethod
-    def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
-        """
-        Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
-
-        Args:
-            dir: Root directory path.
-
-        Returns:
-            tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
-        """
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
-        classes.sort()
-        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-        return classes, class_to_idx
-
-    def load_data(self, data: str, dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        classes, class_to_idx = self.find_classes(data)
-        if not classes:
-            files = [os.path.join(data, file) for file in os.listdir(data)]
-            return [{
-                DefaultDataKeys.INPUT: file
-            } for file in filter(
-                lambda file: has_file_allowed_extension(file, self.extensions),
-                files,
-            )]
-        else:
-            self.set_state(LabelsState(classes))
-        dataset.num_classes = len(classes)
-        data = make_dataset(data, class_to_idx, extensions=self.extensions)
-        return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
 
 
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
@@ -224,18 +183,44 @@ class SequenceDataSource(
         return [{DefaultDataKeys.INPUT: input} for input in data]
 
 
-class FilesDataSource(SequenceDataSource[str]):
+class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
 
-    def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):
-        super().__init__(labels=labels)
+    def __init__(self, extensions: Optional[Tuple[str, ...]] = None):
+        super().__init__()
 
         self.extensions = extensions
 
-    def load_data(
-        self,
-        data: Tuple[Sequence[str], Optional[Sequence[Any]]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
+    @staticmethod
+    def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
+        """
+        Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
+
+        Args:
+            dir: Root directory path.
+
+        Returns:
+            tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+        """
+        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
+        classes.sort()
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        return classes, class_to_idx
+
+    def load_data(self,
+                  data: Union[str, Tuple[List[str], List[Any]]],
+                  dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
+        if isinstance(data, str) and os.path.isdir(data):
+            classes, class_to_idx = self.find_classes(data)
+            if not classes:
+                return self.predict_load_data(data)
+            else:
+                self.set_state(LabelsState(classes))
+
+            if dataset is not None:
+                dataset.num_classes = len(classes)
+
+            data = make_dataset(data, class_to_idx, extensions=self.extensions)
+            return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),
@@ -243,7 +228,14 @@ class FilesDataSource(SequenceDataSource[str]):
             )
         )
 
-    def predict_load_data(self, data: Sequence[str]) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(self,
+                          data: Union[str, List[str]],
+                          dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
+        if isinstance(data, str):
+            if os.path.isdir(data):
+                data = [os.path.join(data, file) for file in os.listdir(data)]
+            else:
+                data = [data]
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),

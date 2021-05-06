@@ -401,7 +401,7 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+            DefaultDataSources.PATHS,
             train_folder,
             val_folder,
             test_folder,
@@ -440,7 +440,7 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         return cls.from_data_source(
-            DefaultDataSources.FILES,
+            DefaultDataSources.PATHS,
             (train_files, train_targets),
             (val_files, val_targets),
             (test_files, test_targets),

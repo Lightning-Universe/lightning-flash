@@ -157,7 +157,7 @@ class Task(LightningModule):
     def predict(
         self,
         x: Any,
-        data_source: Union[str, DataSource] = DefaultDataSources.FILES,
+        data_source: Union[str, DataSource] = DefaultDataSources.PATHS,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """

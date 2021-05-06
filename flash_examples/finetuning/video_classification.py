@@ -35,7 +35,7 @@ else:
 
 if __name__ == '__main__':
 
-    _PATH_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    _PATH_ROOT = os.path.dirname(os.path.abspath(__file__))
 
     # 1. Download a video clip dataset. Find more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
     download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
@@ -72,19 +72,19 @@ if __name__ == '__main__':
         }
 
     # 3. Load the data from directories.
-    datamodule = VideoClassificationData.from_paths(
-        train_data_path=os.path.join(_PATH_ROOT, "data/kinetics/train"),
-        val_data_path=os.path.join(_PATH_ROOT, "data/kinetics/val"),
-        predict_data_path=os.path.join(_PATH_ROOT, "data/kinetics/predict"),
-        clip_sampler="uniform",
-        clip_duration=2,
-        video_sampler=RandomSampler,
-        decode_audio=False,
+    datamodule = VideoClassificationData.from_folders(
+        train_folder=os.path.join(_PATH_ROOT, "data/kinetics/train"),
+        val_folder=os.path.join(_PATH_ROOT, "data/kinetics/val"),
+        predict_folder=os.path.join(_PATH_ROOT, "data/kinetics/predict"),
         train_transform=make_transform(train_post_tensor_transform),
         val_transform=make_transform(val_post_tensor_transform),
         predict_transform=make_transform(val_post_tensor_transform),
         num_workers=8,
         batch_size=8,
+        clip_sampler="uniform",
+        clip_duration=2,
+        video_sampler=RandomSampler,
+        decode_audio=False,
     )
 
     # 4. List the available models
@@ -97,12 +97,11 @@ if __name__ == '__main__':
     model.serializer = Labels()
 
     # 6. Finetune the model
-    trainer = flash.Trainer(max_epochs=3, gpus=1)
+    trainer = flash.Trainer(max_epochs=3)
     trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze())
 
     trainer.save_checkpoint("video_classification.pt")
 
     # 7. Make a prediction
-    val_folder = os.path.join(_PATH_ROOT, os.path.join(_PATH_ROOT, "data/kinetics/predict"))
-    predictions = model.predict([os.path.join(val_folder, f) for f in os.listdir(val_folder)])
+    predictions = model.predict(os.path.join(_PATH_ROOT, "data/kinetics/predict"))
     print(predictions)
