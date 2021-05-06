@@ -18,9 +18,13 @@ from typing import Any, List, Tuple
 import kornia as K
 import numpy as np
 import torch
+import torch.nn as nn
+import torchvision
 from PIL import Image
 
+from flash.data.data_source import DefaultDataKeys
 from flash.data.data_utils import labels_from_categorical_csv
+from flash.data.transforms import ApplyToKeys
 from flash.vision import ImageClassificationData
 
 
@@ -196,18 +200,17 @@ def test_from_filepaths_splits(tmpdir):
 
     assert len(train_filepaths) == len(train_labels)
 
-    def preprocess(x):
-        out = K.image_to_tensor(np.array(x))
-        return out
-
     _to_tensor = {
-        "to_tensor_transform": lambda x: preprocess(x),
+        "to_tensor_transform": nn.Sequential(
+            ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor)
+        ),
     }
 
     def run(transform: Any = None):
-        img_data = ImageClassificationData.from_filepaths(
-            train_filepaths=train_filepaths,
-            train_labels=train_labels,
+        dm = ImageClassificationData.from_files(
+            train_files=train_filepaths,
+            train_targets=train_labels,
             train_transform=transform,
             val_transform=transform,
             batch_size=B,
@@ -215,12 +218,12 @@ def test_from_filepaths_splits(tmpdir):
             val_split=val_split,
             image_size=img_size,
         )
-        data = next(iter(img_data.train_dataloader()))
-        imgs, labels = data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data['input'], data['target']
         assert imgs.shape == (B, 3, H, W)
         assert labels.shape == (B, )
 
-    run()
+    #run()
     run(_to_tensor)
 
 
