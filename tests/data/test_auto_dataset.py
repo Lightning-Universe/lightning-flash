@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 import pytest
 from pytorch_lightning.trainer.states import RunningStage
 
-from flash.data.auto_dataset import AutoDataset
+from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.data.callback import FlashCallback
 from flash.data.data_pipeline import DataPipeline
 from flash.data.data_source import DataSource
@@ -95,10 +95,10 @@ class _AutoDatasetTestPreprocess(Preprocess):
 
 # TODO: we should test the different data types
 @pytest.mark.parametrize("running_stage", [RunningStage.TRAINING, RunningStage.TESTING, RunningStage.VALIDATING])
-def test_autodataset_smoke(running_stage):
+def test_base_autodataset_smoke(running_stage):
     dt = range(10)
     ds = DataSource()
-    dset = AutoDataset(data=dt, data_source=ds, running_stage=running_stage)
+    dset = BaseAutoDataset(data=dt, data_source=ds, running_stage=running_stage)
     assert dset is not None
     assert dset.running_stage == running_stage
 
@@ -113,9 +113,65 @@ def test_autodataset_smoke(running_stage):
     # check on methods
     assert dset.load_sample is not None
     assert dset.load_sample == ds.load_sample
-    pass
 
 
+def test_autodataset_smoke():
+    num_samples = 20
+    dt = range(num_samples)
+    ds = DataSource()
+
+    dset = AutoDataset(data=dt, data_source=ds, running_stage=RunningStage.TRAINING)
+    assert dset is not None
+    assert dset.running_stage == RunningStage.TRAINING
+
+    # check on members
+    assert dset.data == dt
+    assert dset.data_source == ds
+
+    # test set the running stage
+    dset.running_stage = RunningStage.PREDICTING
+    assert dset.running_stage == RunningStage.PREDICTING
+
+    # check on methods
+    assert dset.load_sample is not None
+    assert dset.load_sample == ds.load_sample
+
+    # check getters
+    assert len(dset) == num_samples
+    assert dset[0] == 0
+    assert dset[9] == 9
+    assert dset[11] == 11
+
+
+def test_iterable_autodataset_smoke():
+    num_samples = 20
+    dt = range(num_samples)
+    ds = DataSource()
+
+    dset = IterableAutoDataset(data=dt, data_source=ds, running_stage=RunningStage.TRAINING)
+    assert dset is not None
+    assert dset.running_stage == RunningStage.TRAINING
+
+    # check on members
+    assert dset.data == dt
+    assert dset.data_source == ds
+
+    # test set the running stage
+    dset.running_stage = RunningStage.PREDICTING
+    assert dset.running_stage == RunningStage.PREDICTING
+
+    # check on methods
+    assert dset.load_sample is not None
+    assert dset.load_sample == ds.load_sample
+
+    # check getters
+    itr = iter(dset)
+    assert next(itr) == 0
+    assert next(itr) == 1
+    assert next(itr) == 2
+
+
+# TODO: do we remove ?
 @pytest.mark.parametrize(
     "with_dataset,with_running_stage",
     [
@@ -161,6 +217,7 @@ def test_autodataset_with_functions(
         assert functions.load_sample_count == len(dset)
 
 
+# TODO: do we remove ?
 def test_autodataset_warning():
     with pytest.warns(
         UserWarning, match="``datapipeline`` is specified but load_sample and/or load_data are also specified"
@@ -168,6 +225,7 @@ def test_autodataset_warning():
         AutoDataset(range(10), load_data=lambda x: x, load_sample=lambda x: x, data_pipeline=DataPipeline())
 
 
+# TODO: do we remove ?
 @pytest.mark.parametrize(
     "with_dataset",
     [
@@ -197,6 +255,7 @@ def test_preprocessing_data_pipeline_with_running_stage(with_dataset):
         assert pipe._preprocess_pipeline.train_load_data_count == 1
 
 
+# TODO: do we remove ? we are testing DataPipeline here.
 @pytest.mark.parametrize(
     "with_dataset",
     [

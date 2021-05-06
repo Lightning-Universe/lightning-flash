@@ -65,15 +65,16 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
         pass
 
     data_pipeline = DataPipeline(
-        None,
-        SubPreprocess() if use_preprocess else None,
-        SubPostprocess() if use_postprocess else None,
+        preprocess=SubPreprocess() if use_preprocess else None,
+        postprocess=SubPostprocess() if use_postprocess else None,
     )
     assert isinstance(data_pipeline._preprocess_pipeline, SubPreprocess if use_preprocess else DefaultPreprocess)
     assert isinstance(data_pipeline._postprocess_pipeline, SubPostprocess if use_postprocess else Postprocess)
 
     model = CustomModel(postprocess=Postprocess())
     model.data_pipeline = data_pipeline
+    # TODO: the line below should make the same effect but it's not
+    # data_pipeline._attach_to_model(model)
 
     if use_preprocess:
         assert isinstance(model._preprocess, SubPreprocess)
@@ -113,6 +114,7 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
 
     preprocess = CustomPreprocess()
     data_pipeline = DataPipeline(preprocess=preprocess)
+
     train_func_names: Dict[str, str] = {
         k: data_pipeline._resolve_function_hierarchy(
             k, data_pipeline._preprocess_pipeline, RunningStage.TRAINING, Preprocess
