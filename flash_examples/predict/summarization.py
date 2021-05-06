@@ -20,7 +20,7 @@ from flash.text import SummarizationData, SummarizationTask
 download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 
 # 2. Load the model from a checkpoint
-model = SummarizationTask.load_from_checkpoint("../finetuning/summarization_model_xsum.pt")
+model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
 
 # 2a. Summarize an article!
 predictions = model.predict([

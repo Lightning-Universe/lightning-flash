@@ -40,7 +40,9 @@ class CustomViz(BaseVisualization):
 
 
 # 3. Load the model from a checkpoint
-model = ImageClassifier.load_from_checkpoint("../finetuning/image_classification_multi_label_model.pt", )
+model = ImageClassifier.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/image_classification_multi_label_model.pt",
+)
 
 # 4a. Predict the genres of a few movie posters!
 predictions = model.predict([

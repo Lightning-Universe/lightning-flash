@@ -19,7 +19,7 @@ from flash.vision import ImageClassificationData, ImageClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Load the model from a checkpoint
-model = ImageClassifier.load_from_checkpoint("../finetuning/image_classification_model.pt")
+model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
 
 # 3a. Predict what's on a few images! ants or bees?
 predictions = model.predict([

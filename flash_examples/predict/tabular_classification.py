@@ -19,7 +19,7 @@ from flash.tabular import TabularClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 
 # 2. Load the model from a checkpoint
-model = TabularClassifier.load_from_checkpoint("../finetuning/tabular_classification_model.pt")
+model = TabularClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt")
 
 model.serializer = Labels(['Did not survive', 'Survived'])
 
