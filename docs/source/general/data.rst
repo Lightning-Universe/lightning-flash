@@ -21,6 +21,8 @@ Here are common terms you need to be familiar with:
      - The :class:`~flash.data.data_module.DataModule` contains the dataset, transforms and dataloaders.
    * - :class:`~flash.data.data_pipeline.DataPipeline`
      - The :class:`~flash.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` objects.
+   * - :class:`~flash.data.data_source.DataSource`
+     - The :class:`~flash.data.data_source.DataSource` provides a hook-based API for creating data sets.
    * - :class:`~flash.data.process.Preprocess`
      - The :class:`~flash.data.process.Preprocess` provides a simple hook-based API to encapsulate your pre-processing logic.
         The :class:`~flash.data.process.Preprocess` provides multiple hooks such as :meth:`~flash.data.process.Preprocess.load_data`
@@ -274,6 +276,17 @@ Example::
 *************
 API reference
 *************
+
+.. _data_source:
+
+DataSource
+__________
+
+.. autoclass:: flash.data.data_source.DataSource
+    :members:
+
+
+----------
 
 .. _preprocess:
 
