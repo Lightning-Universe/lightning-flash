@@ -77,6 +77,8 @@ def test_base_data_fetcher(tmpdir):
     with data_fetcher.enable():
         _ = next(iter(dm.val_dataloader()))
 
+    # TODO: the method below fails because the data fetcher internally doesn't seem to cache
+    # properly the batches at each stage.
     data_fetcher.check()
     data_fetcher.reset()
     assert data_fetcher.batches == {'train': {}, 'test': {}, 'val': {}, 'predict': {}}
