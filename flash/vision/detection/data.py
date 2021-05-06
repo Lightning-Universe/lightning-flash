@@ -104,7 +104,8 @@ class ObjectDetectionPreprocess(Preprocess):
             predict_transform=predict_transform,
             data_sources={
                 "coco": COCODataSource(),
-            }
+            },
+            default_data_source="coco",
         )
 
     def collate(self, samples: Any) -> Any:

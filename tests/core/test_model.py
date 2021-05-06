@@ -29,7 +29,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.classification import ClassificationTask
-from flash.data.process import Postprocess
+from flash.data.process import DefaultPreprocess, Postprocess
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier
 from flash.utils.imports import _TRANSFORMERS_AVAILABLE
@@ -75,7 +75,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
 
 def test_classificationtask_task_predict():
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
-    task = ClassificationTask(model)
+    task = ClassificationTask(model, preprocess=DefaultPreprocess())
     ds = DummyDataset()
     expected = list(range(10))
     # single item

@@ -56,7 +56,8 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.PATHS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
                 DefaultDataSources.TENSOR: ImageTensorDataSource(),
-            }
+            },
+            default_data_source=DefaultDataSources.PATHS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

@@ -152,7 +152,8 @@ class VideoClassificationPreprocess(Preprocess):
                     decode_audio=decode_audio,
                     decoder=decoder,
                 )
-            }
+            },
+            default_data_source=DefaultDataSources.PATHS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

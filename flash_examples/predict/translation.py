@@ -23,11 +23,8 @@ download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 model = TranslationTask.load_from_checkpoint("../finetuning/translation_model_en_ro.pt")
 
 # 3. Translate a few sentences!
-predictions = model.predict(
-    [
-        "BBC News went to meet one of the project's first graduates.",
-        "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
-    ],
-    data_source="sentences",
-)
+predictions = model.predict([
+    "BBC News went to meet one of the project's first graduates.",
+    "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
+])
 print(predictions)

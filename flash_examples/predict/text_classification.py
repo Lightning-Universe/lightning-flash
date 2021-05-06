@@ -26,16 +26,13 @@ model = TextClassifier.load_from_checkpoint("../finetuning/text_classification_m
 model.serializer = Labels()
 
 # 2a. Classify a few sentences! How was the movie?
-predictions = model.predict(
-    [
-        "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-        "The worst movie in the history of cinema.",
-        "I come from Bulgaria where it 's almost impossible to have a tornado.",
-        "Very, very afraid.",
-        "This guy has done a great job with this movie!",
-    ],
-    data_source="sentences",
-)
+predictions = model.predict([
+    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+    "The worst movie in the history of cinema.",
+    "I come from Bulgaria where it 's almost impossible to have a tornado.",
+    "Very, very afraid.",
+    "This guy has done a great job with this movie!",
+])
 print(predictions)
 
 # 2b. Or generate predictions from a sheet file!

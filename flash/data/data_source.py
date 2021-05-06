@@ -209,10 +209,17 @@ class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
         return classes, class_to_idx
 
+    @staticmethod
+    def isdir(data: Union[str, Tuple[List[str], List[Any]]]) -> bool:
+        try:
+            return os.path.isdir(data)
+        except TypeError:
+            return False
+
     def load_data(self,
                   data: Union[str, Tuple[List[str], List[Any]]],
                   dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        if isinstance(data, str) and os.path.isdir(data):
+        if self.isdir(data):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
                 return self.predict_load_data(data)
@@ -234,11 +241,10 @@ class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
     def predict_load_data(self,
                           data: Union[str, List[str]],
                           dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
-        if isinstance(data, str):
-            if os.path.isdir(data):
-                data = [os.path.join(data, file) for file in os.listdir(data)]
-            else:
-                data = [data]
+        if self.isdir(data):
+            data = [os.path.join(data, file) for file in os.listdir(data)]
+        else:
+            data = [data]
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),

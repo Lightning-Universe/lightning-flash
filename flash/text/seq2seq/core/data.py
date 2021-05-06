@@ -197,6 +197,7 @@ class Seq2SeqPreprocess(Preprocess):
                     padding=padding,
                 ),
             },
+            default_data_source="sentences",
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

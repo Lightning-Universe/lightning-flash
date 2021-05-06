@@ -158,7 +158,7 @@ class Task(LightningModule):
     def predict(
         self,
         x: Any,
-        data_source: Union[str, DataSource] = DefaultDataSources.PATHS,
+        data_source: Union[str] = "default",
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -260,7 +260,7 @@ class Task(LightningModule):
 
     def build_data_pipeline(
         self,
-        data_source: Optional[Union[str, DataSource]] = None,
+        data_source: Optional[str] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available

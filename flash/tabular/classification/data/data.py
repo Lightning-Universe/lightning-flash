@@ -143,7 +143,8 @@ class TabularPreprocess(Preprocess):
                 "df": TabularDataFrameDataSource(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
-            }
+            },
+            default_data_source=DefaultDataSources.CSV,
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:

@@ -24,5 +24,5 @@ model = TabularClassifier.load_from_checkpoint("../finetuning/tabular_classifica
 model.serializer = Labels(['Did not survive', 'Survived'])
 
 # 3. Generate predictions from a sheet file! Who would survive?
-predictions = model.predict("data/titanic/titanic.csv", data_source="csv")
+predictions = model.predict("data/titanic/titanic.csv")
 print(predictions)

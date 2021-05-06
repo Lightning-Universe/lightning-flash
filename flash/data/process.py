@@ -311,6 +311,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_sources: Optional[Dict[str, 'DataSource']] = None,
+        default_data_source: Optional[str] = None,
     ):
         super().__init__()
 
@@ -337,6 +338,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         self.predict_transform = convert_to_modules(self._predict_transform)
 
         self._data_sources = data_sources
+        self._default_data_source = default_data_source
         self._callbacks: List[FlashCallback] = []
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
@@ -516,6 +518,8 @@ class Preprocess(BasePreprocess, Properties, Module):
         return self.current_transform(batch)
 
     def data_source_of_name(self, data_source_name: str) -> Optional[DATA_SOURCE_TYPE]:
+        if data_source_name == "default":
+            data_source_name = self._default_data_source
         data_sources = self._data_sources
         if data_source_name in data_sources:
             return data_sources[data_source_name]
@@ -523,6 +527,23 @@ class Preprocess(BasePreprocess, Properties, Module):
 
 
 class DefaultPreprocess(Preprocess):
+
+    def __init__(
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+    ):
+        from flash.data.data_source import DataSource
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources={"default": DataSource()},
+            default_data_source="default",
+        )
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {}

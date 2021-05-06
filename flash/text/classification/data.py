@@ -160,7 +160,8 @@ class TextClassificationPreprocess(Preprocess):
             data_sources={
                 DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer, max_length=max_length),
                 "sentences": TextSentencesDataSource(self.tokenizer, max_length=max_length),
-            }
+            },
+            default_data_source="sentences",
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
