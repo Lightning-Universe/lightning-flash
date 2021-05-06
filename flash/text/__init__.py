@@ -7,3 +7,4 @@ from flash.text.seq2seq import (
     TranslationData,
     TranslationTask,
 )
+from flash.text.token_classification import TokenClassificationData, TokenClassifier
