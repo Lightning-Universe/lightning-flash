@@ -96,13 +96,24 @@ class _AutoDatasetTestPreprocess(Preprocess):
 # TODO: we should test the different data types
 @pytest.mark.parametrize("running_stage", [RunningStage.TRAINING, RunningStage.TESTING, RunningStage.VALIDATING])
 def test_autodataset_smoke(running_stage):
-    dset = AutoDataset(data=range(10), data_source=DataSource(), running_stage=running_stage)
+    dt = range(10)
+    ds = DataSource()
+    dset = AutoDataset(data=dt, data_source=ds, running_stage=running_stage)
     assert dset is not None
     assert dset.running_stage == running_stage
+
+    # check on members
+    assert dset.data == dt
+    assert dset.data_source == ds
 
     # test set the running stage
     dset.running_stage = RunningStage.PREDICTING
     assert dset.running_stage == RunningStage.PREDICTING
+
+    # check on methods
+    assert dset.load_sample is not None
+    assert dset.load_sample == ds.load_sample
+    pass
 
 
 @pytest.mark.parametrize(
