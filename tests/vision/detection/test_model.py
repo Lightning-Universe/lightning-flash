@@ -57,7 +57,7 @@ def test_init():
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
     dl = DataLoader(ds, collate_fn=collate_fn, batch_size=batch_size)
     data = next(iter(dl))
-    img, target = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    img = data[DefaultDataKeys.INPUT]
 
     out = model(img)
 

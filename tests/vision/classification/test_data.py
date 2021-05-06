@@ -224,7 +224,6 @@ def test_from_filepaths_splits(tmpdir):
         assert imgs.shape == (B, 3, H, W)
         assert labels.shape == (B, )
 
-    #run()
     run(_to_tensor)
 
 
