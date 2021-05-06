@@ -97,6 +97,9 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
         is_none = data is None
+        # TODO: we should parse better the possible data types here.
+        # Are `pata_paths` considered as Sequence ? for now it pass
+        # the statement found in below.
         if isinstance(data, Sequence):
             is_none = data[0] is None
 
