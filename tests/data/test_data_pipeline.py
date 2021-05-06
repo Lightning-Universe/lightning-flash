@@ -72,6 +72,8 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 
     model = CustomModel(postprocess=Postprocess())
     model.data_pipeline = data_pipeline
+    # TODO: the line below should make the same effect but it's not
+    # data_pipeline._attach_to_model(model)
 
     if use_preprocess:
         assert isinstance(model._preprocess, SubPreprocess)
@@ -87,21 +89,6 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
 
     class CustomPreprocess(DefaultPreprocess):
-
-        def load_data(self, *_, **__):
-            pass
-
-        def test_load_data(self, *_, **__):
-            pass
-
-        def predict_load_data(self, *_, **__):
-            pass
-
-        def predict_load_sample(self, *_, **__):
-            pass
-
-        def val_load_sample(self, *_, **__):
-            pass
 
         def val_pre_tensor_transform(self, *_, **__):
             pass
@@ -125,7 +112,8 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
             pass
 
     preprocess = CustomPreprocess()
-    data_pipeline = DataPipeline(preprocess)
+    data_pipeline = DataPipeline(preprocess=preprocess)
+
     train_func_names: Dict[str, str] = {
         k: data_pipeline._resolve_function_hierarchy(
             k, data_pipeline._preprocess_pipeline, RunningStage.TRAINING, Preprocess
@@ -150,17 +138,6 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
         )
         for k in data_pipeline.PREPROCESS_FUNCS
     }
-    # load_data
-    assert train_func_names["load_data"] == "load_data"
-    assert val_func_names["load_data"] == "load_data"
-    assert test_func_names["load_data"] == "test_load_data"
-    assert predict_func_names["load_data"] == "predict_load_data"
-
-    # load_sample
-    assert train_func_names["load_sample"] == "load_sample"
-    assert val_func_names["load_sample"] == "val_load_sample"
-    assert test_func_names["load_sample"] == "load_sample"
-    assert predict_func_names["load_sample"] == "predict_load_sample"
 
     # pre_tensor_transform
     assert train_func_names["pre_tensor_transform"] == "pre_tensor_transform"
