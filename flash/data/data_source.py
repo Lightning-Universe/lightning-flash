@@ -97,6 +97,9 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
         is_none = data is None
+        # TODO: we should parse better the possible data types here.
+        # Are `pata_paths` considered as Sequence ? for now it pass
+        # the statement found in below.
         if isinstance(data, Sequence):
             is_none = data[0] is None
 
@@ -177,6 +180,7 @@ class FoldersDataSource(DataSource[str]):
         classes, class_to_idx = self.find_classes(data)
         if not classes:
             files = [os.path.join(data, file) for file in os.listdir(data)]
+            assert len(files) > 0, "Files list shouldn't be empty."
             return [{
                 DefaultDataKeys.INPUT: file
             } for file in filter(

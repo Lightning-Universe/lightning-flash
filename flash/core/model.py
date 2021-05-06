@@ -104,6 +104,7 @@ class Task(LightningModule):
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
 
+        # TODO: create enum values to define what are the exact states
         self._data_pipeline_state: Optional[DataPipelineState] = None
 
         # Explicitly set the serializer to call the setter
@@ -176,6 +177,7 @@ class Task(LightningModule):
         data_pipeline = self.build_data_pipeline(data_source, data_pipeline)
 
         x = [x for x in data_pipeline._data_source.generate_dataset(x, running_stage)]
+        assert len(x) > 0, "List of inputs shouldn't be empty."
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # switch to self.device when #7188 merge in Lightning
         x = self.transfer_batch_to_device(x, next(self.parameters()).device)
