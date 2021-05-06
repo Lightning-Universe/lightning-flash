@@ -534,6 +534,8 @@ class DefaultPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        data_sources: Optional[Dict[str, 'DataSource']] = None,
+        default_data_source: Optional[str] = None,
     ):
         from flash.data.data_source import DataSource
         super().__init__(
@@ -541,8 +543,8 @@ class DefaultPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={"default": DataSource()},
-            default_data_source="default",
+            data_sources=data_sources or {"default": DataSource()},
+            default_data_source=default_data_source or "default",
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

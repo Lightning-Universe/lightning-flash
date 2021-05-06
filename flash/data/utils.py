@@ -33,8 +33,7 @@ _STAGES_PREFIX = {
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
 _PREPROCESS_FUNCS: Set[str] = {
-    "load_data",
-    "load_sample",
+    # "load_sample",  # TODO: This should still be a callback hook
     "pre_tensor_transform",
     "to_tensor_transform",
     "post_tensor_transform",
