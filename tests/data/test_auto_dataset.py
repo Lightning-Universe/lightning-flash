@@ -19,6 +19,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from flash.data.auto_dataset import AutoDataset
 from flash.data.callback import FlashCallback
 from flash.data.data_pipeline import DataPipeline
+from flash.data.data_source import DataSource
 from flash.data.process import Preprocess
 
 
@@ -90,6 +91,18 @@ class _AutoDatasetTestPreprocess(Preprocess):
         self.train_load_data_with_dataset_count += 1
         dataset.train_load_data_was_called = True
         return data
+
+
+# TODO: we should test the different data types
+@pytest.mark.parametrize("running_stage", [RunningStage.TRAINING, RunningStage.TESTING, RunningStage.VALIDATING])
+def test_autodataset_smoke(running_stage):
+    dset = AutoDataset(data=range(10), data_source=DataSource(), running_stage=running_stage)
+    assert dset is not None
+    assert dset.running_stage == running_stage
+
+    # test set the running stage
+    dset.running_stage = RunningStage.PREDICTING
+    assert dset.running_stage == RunningStage.PREDICTING
 
 
 @pytest.mark.parametrize(
