@@ -191,8 +191,8 @@ class ObjectDetector(Task):
         return {"avg_test_iou": avg_iou, "log": logs}
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        images = batch[DefaultDataKeys.INPUT]
+        return self.model(images)
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]
