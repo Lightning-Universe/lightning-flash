@@ -158,16 +158,12 @@ class VideoClassificationPreprocess(Preprocess):
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
-            'train_transform': self._train_transform,
-            'val_transform': self._val_transform,
-            'test_transform': self._test_transform,
-            'predict_transform': self._predict_transform,
-            'clip_sampler': self.clip_sampler,
-            'clip_duration': self.clip_duration,
-            'clip_sampler_kwargs': self.clip_sampler_kwargs,
-            'video_sampler': self.video_sampler,
-            'decode_audio': self.decode_audio,
-            'decoder': self.decoder,
+            "clip_sampler": self.clip_sampler,
+            "clip_duration": self.clip_duration,
+            "clip_sampler_kwargs": self.clip_sampler_kwargs,
+            "video_sampler": self.video_sampler,
+            "decode_audio": self.decode_audio,
+            "decoder": self.decoder,
         }
 
     @classmethod

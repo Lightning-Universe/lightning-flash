@@ -114,12 +114,7 @@ class ObjectDetectionPreprocess(Preprocess):
         return {key: [sample[key] for sample in samples] for key in samples[0]}
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            "train_transform": self._train_transform,
-            "val_transform": self._val_transform,
-            "test_transform": self._test_transform,
-            "predict_transform": self._predict_transform,
-        }
+        return {}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):

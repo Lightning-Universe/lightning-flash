@@ -322,7 +322,7 @@ class Task(LightningModule):
 
         data_source = data_source or old_data_source
 
-        if isinstance(data_source, str):
+        if data_source is None or isinstance(data_source, str):
             if preprocess is None:
                 data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
             else:

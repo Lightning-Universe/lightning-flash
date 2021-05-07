@@ -61,13 +61,7 @@ class ImageClassificationPreprocess(Preprocess):
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            "train_transform": self._train_transform,
-            "val_transform": self._val_transform,
-            "test_transform": self._test_transform,
-            "predict_transform": self._predict_transform,
-            "image_size": self.image_size
-        }
+        return {"image_size": self.image_size}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
