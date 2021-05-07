@@ -157,7 +157,7 @@ SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
 class SequenceDataSource(
     Generic[SEQUENCE_DATA_TYPE],
-    DataSource[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence[Any]]]],
+    DataSource[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
 ):
 
     def __init__(self, labels: Optional[Sequence[str]] = None):
@@ -170,7 +170,7 @@ class SequenceDataSource(
 
     def load_data(
         self,
-        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence[Any]]],
+        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
         dataset: Optional[Any] = None,
     ) -> Sequence[Mapping[str, Any]]:
         # TODO: Bring back the code to work out how many classes there are
@@ -219,7 +219,7 @@ class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
 
     def load_data(self,
                   data: Union[str, Tuple[List[str], List[Any]]],
-                  dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
+                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
@@ -241,7 +241,7 @@ class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
 
     def predict_load_data(self,
                           data: Union[str, List[str]],
-                          dataset: Optional[Any] = None) -> Iterable[Mapping[str, Any]]:
+                          dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             data = [os.path.join(data, file) for file in os.listdir(data)]
 

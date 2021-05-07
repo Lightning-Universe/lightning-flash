@@ -92,7 +92,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
         return sample
 
 
-class AutoDataset(BaseAutoDataset[Sequence[Any]], Dataset):
+class AutoDataset(BaseAutoDataset[Sequence], Dataset):
 
     def __getitem__(self, index: int) -> Any:
         return self._call_load_sample(self.data[index])
@@ -101,7 +101,7 @@ class AutoDataset(BaseAutoDataset[Sequence[Any]], Dataset):
         return len(self.data)
 
 
-class IterableAutoDataset(BaseAutoDataset[Iterable[Any]], IterableDataset):
+class IterableAutoDataset(BaseAutoDataset[Iterable], IterableDataset):
 
     def __iter__(self):
         self.data_iter = iter(self.data)

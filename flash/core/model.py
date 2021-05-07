@@ -174,7 +174,7 @@ class Task(LightningModule):
         """
         running_stage = RunningStage.PREDICTING
 
-        data_pipeline = self.build_data_pipeline(data_source, data_pipeline)
+        data_pipeline = self.build_data_pipeline(data_source or "default", data_pipeline)
 
         x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
@@ -322,7 +322,7 @@ class Task(LightningModule):
 
         data_source = data_source or old_data_source
 
-        if data_source is None or isinstance(data_source, str):
+        if isinstance(data_source, str):
             if preprocess is None:
                 data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
             else:
