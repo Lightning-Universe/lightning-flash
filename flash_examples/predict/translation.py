@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pytorch_lightning import Trainer
-
 from flash.data.utils import download_data
-from flash.text import TranslationData, TranslationTask
+from flash.text import TranslationTask
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")

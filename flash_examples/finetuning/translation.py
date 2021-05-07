@@ -34,7 +34,11 @@ datamodule = TranslationData.from_csv(
 model = TranslationTask()
 
 # 4. Create the trainer
-trainer = flash.Trainer(precision=32, gpus=int(torch.cuda.is_available()), fast_dev_run=True)
+trainer = flash.Trainer(
+    precision=16 if torch.cuda.is_available() else 32,
+    gpus=int(torch.cuda.is_available()),
+    fast_dev_run=True,
+)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)

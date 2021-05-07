@@ -79,7 +79,6 @@ if __name__ == '__main__':
         train_transform=make_transform(train_post_tensor_transform),
         val_transform=make_transform(val_post_tensor_transform),
         predict_transform=make_transform(val_post_tensor_transform),
-        num_workers=8,
         batch_size=8,
         clip_sampler="uniform",
         clip_duration=2,
@@ -97,7 +96,7 @@ if __name__ == '__main__':
     model.serializer = Labels()
 
     # 6. Finetune the model
-    trainer = flash.Trainer(max_epochs=3)
+    trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
     trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze())
 
     trainer.save_checkpoint("video_classification.pt")
