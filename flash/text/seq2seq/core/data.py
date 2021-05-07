@@ -30,14 +30,14 @@ class Seq2SeqDataSource(DataSource):
 
     def __init__(
         self,
-        tokenizer,
+        backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length'
     ):
         super().__init__()
 
-        self.tokenizer = tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
         self.padding = padding
@@ -69,12 +69,12 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
     def __init__(
         self,
         filetype: str,
-        tokenizer,
+        backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',
     ):
-        super().__init__(tokenizer, max_source_length, max_target_length, padding)
+        super().__init__(backbone, max_source_length, max_target_length, padding)
 
         self.filetype = filetype
 
@@ -113,14 +113,14 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
 
     def __init__(
         self,
-        tokenizer,
+        backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',
     ):
         super().__init__(
             "csv",
-            tokenizer,
+            backbone,
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
@@ -131,14 +131,14 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
 
     def __init__(
         self,
-        tokenizer,
+        backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length',
     ):
         super().__init__(
             "json",
-            tokenizer,
+            backbone,
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
@@ -176,8 +176,6 @@ class Seq2SeqPreprocess(Preprocess):
         self.max_source_length = max_source_length
         self.padding = padding
 
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
@@ -185,19 +183,19 @@ class Seq2SeqPreprocess(Preprocess):
             predict_transform=predict_transform,
             data_sources={
                 DefaultDataSources.CSV: Seq2SeqCSVDataSource(
-                    self.tokenizer,
+                    self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
                 ),
                 DefaultDataSources.JSON: Seq2SeqJSONDataSource(
-                    self.tokenizer,
+                    self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
                 ),
                 "sentences": Seq2SeqSentencesDataSource(
-                    self.tokenizer,
+                    self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,

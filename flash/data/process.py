@@ -403,8 +403,8 @@ class Preprocess(BasePreprocess, Properties, Module):
         """
         return self.current_transform(batch)
 
-    def data_source_of_name(self, data_source_name: str) -> Optional[DATA_SOURCE_TYPE]:
-        if data_source_name == "default":
+    def data_source_of_name(self, data_source_name: Optional[str]) -> Optional[DATA_SOURCE_TYPE]:
+        if data_source_name is None:
             data_source_name = self._default_data_source
         data_sources = self._data_sources
         if data_source_name in data_sources:

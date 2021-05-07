@@ -158,7 +158,7 @@ class Task(LightningModule):
     def predict(
         self,
         x: Any,
-        data_source: str = "default",
+        data_source: Optional[str] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -176,7 +176,7 @@ class Task(LightningModule):
 
         data_pipeline = self.build_data_pipeline(data_source, data_pipeline)
 
-        x = [x for x in data_pipeline._data_source.generate_dataset(x, running_stage)]
+        x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # switch to self.device when #7188 merge in Lightning
         x = self.transfer_batch_to_device(x, next(self.parameters()).device)
@@ -282,7 +282,7 @@ class Task(LightningModule):
 
         # Datamodule
         if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
-            old_data_source = getattr(self.datamodule.data_pipeline, '_data_source', None)
+            old_data_source = getattr(self.datamodule.data_pipeline, 'data_source', None)
             preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
@@ -290,7 +290,7 @@ class Task(LightningModule):
         elif self.trainer is not None and hasattr(
             self.trainer, 'datamodule'
         ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
-            old_data_source = getattr(self.trainer.datamodule.data_pipeline, '_data_source', None)
+            old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)

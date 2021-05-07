@@ -95,7 +95,7 @@ class DataPipeline:
         postprocess: Optional[Postprocess] = None,
         serializer: Optional[Serializer] = None,
     ) -> None:
-        self._data_source = data_source
+        self.data_source = data_source
 
         self._preprocess_pipeline = preprocess or DefaultPreprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
@@ -110,8 +110,8 @@ class DataPipeline:
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         data_pipeline_state._initialized = False
-        if self._data_source is not None:
-            self._data_source.attach_data_pipeline_state(data_pipeline_state)
+        if self.data_source is not None:
+            self.data_source.attach_data_pipeline_state(data_pipeline_state)
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._serializer.attach_data_pipeline_state(data_pipeline_state)
