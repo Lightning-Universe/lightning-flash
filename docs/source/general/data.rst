@@ -338,7 +338,6 @@ __________
 
 .. autoclass:: flash.data.data_module.DataModule
     :members:
-        from_load_data_inputs,
         train_dataset,
         val_dataset,
         test_dataset,

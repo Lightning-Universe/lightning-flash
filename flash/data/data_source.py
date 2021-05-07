@@ -24,7 +24,7 @@ from torch.nn import Module
 from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
 from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
-from flash.data.process import ProcessState, Properties
+from flash.data.properties import ProcessState, Properties
 from flash.data.utils import CurrentRunningStageFuncContext
 
 

@@ -21,7 +21,8 @@ from torch.utils.data import DataLoader
 from flash import Task, Trainer
 from flash.core.classification import Labels, LabelsState
 from flash.data.data_pipeline import DataPipeline, DataPipelineState, DefaultPreprocess
-from flash.data.process import ProcessState, Properties, Serializer, SerializerMapping
+from flash.data.process import Serializer, SerializerMapping
+from flash.data.properties import ProcessState, Properties
 
 
 def test_properties_data_pipeline_state():

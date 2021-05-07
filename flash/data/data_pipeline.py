@@ -27,7 +27,8 @@ from torch.utils.data._utils.collate import default_collate
 from flash.data.auto_dataset import IterableAutoDataset
 from flash.data.batch import _PostProcessor, _PreProcessor, _Sequential
 from flash.data.data_source import DataSource
-from flash.data.process import DefaultPreprocess, Postprocess, Preprocess, ProcessState, Serializer
+from flash.data.process import DefaultPreprocess, Postprocess, Preprocess, Serializer
+from flash.data.properties import ProcessState
 from flash.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
 if TYPE_CHECKING:
