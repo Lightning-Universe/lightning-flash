@@ -93,10 +93,10 @@ class ObjectDetectionPreprocess(Preprocess):
 
     def __init__(
         self,
-        train_transform: Optional[Union[Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Dict[str, Callable]]] = None,
-        predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
     ):
         super().__init__(
             train_transform=train_transform,
@@ -147,13 +147,13 @@ class ObjectDetectionData(DataModule):
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
-        train_transform: Optional[Dict[str, Module]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
         val_folder: Optional[str] = None,
         val_ann_file: Optional[str] = None,
-        val_transform: Optional[Dict[str, Module]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
-        test_transform: Optional[Dict[str, Module]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         preprocess: Preprocess = None,

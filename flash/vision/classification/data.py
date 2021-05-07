@@ -39,10 +39,10 @@ class ImageClassificationPreprocess(Preprocess):
 
     def __init__(
         self,
-        train_transform: Optional[Union[Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Dict[str, Callable]]] = None,
-        predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
     ):
         self.image_size = image_size
