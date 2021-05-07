@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from flash.data.data_source import DefaultDataKeys
 from flash.tabular import TabularData
 from flash.tabular.classification.data.dataset import _categorize, _normalize
 
@@ -82,67 +83,73 @@ def test_emb_sizes():
 
 
 def test_tabular_data(tmpdir):
-    train_df = TEST_DF_1.copy()
-    val_df = TEST_DF_2.copy()
-    test_df = TEST_DF_2.copy()
-    dm = TabularData.from_df(
-        train_df,
+    train_data_frame = TEST_DF_1.copy()
+    val_data_frame = TEST_DF_2.copy()
+    test_data_frame = TEST_DF_2.copy()
+    dm = TabularData.from_data_frame(
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        val_df=val_df,
-        test_df=test_df,
+        train_data_frame=train_data_frame,
+        val_data_frame=val_data_frame,
+        test_data_frame=test_data_frame,
         num_workers=0,
         batch_size=1,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        (cat, num), target = next(iter(dl))
+        data = next(iter(dl))
+        (cat, num) = data[DefaultDataKeys.INPUT]
+        target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1, )
 
 
 def test_categorical_target(tmpdir):
-    train_df = TEST_DF_1.copy()
-    val_df = TEST_DF_2.copy()
-    test_df = TEST_DF_2.copy()
-    for df in [train_df, val_df, test_df]:
+    train_data_frame = TEST_DF_1.copy()
+    val_data_frame = TEST_DF_2.copy()
+    test_data_frame = TEST_DF_2.copy()
+    for df in [train_data_frame, val_data_frame, test_data_frame]:
         # change int label to string
         df["label"] = df["label"].astype(str)
 
-    dm = TabularData.from_df(
-        train_df,
+    dm = TabularData.from_data_frame(
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        val_df=val_df,
-        test_df=test_df,
+        train_data_frame=train_data_frame,
+        val_data_frame=val_data_frame,
+        test_data_frame=test_data_frame,
         num_workers=0,
         batch_size=1,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        (cat, num), target = next(iter(dl))
+        data = next(iter(dl))
+        (cat, num) = data[DefaultDataKeys.INPUT]
+        target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1, )
 
 
-def test_from_df(tmpdir):
-    train_df = TEST_DF_1.copy()
-    val_df = TEST_DF_2.copy()
-    test_df = TEST_DF_2.copy()
-    dm = TabularData.from_df(
-        train_df,
+def test_from_data_frame(tmpdir):
+    train_data_frame = TEST_DF_1.copy()
+    val_data_frame = TEST_DF_2.copy()
+    test_data_frame = TEST_DF_2.copy()
+    dm = TabularData.from_data_frame(
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        val_df=val_df,
-        test_df=test_df,
+        train_data_frame=train_data_frame,
+        val_data_frame=val_data_frame,
+        test_data_frame=test_data_frame,
         num_workers=0,
         batch_size=1
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        (cat, num), target = next(iter(dl))
+        data = next(iter(dl))
+        (cat, num) = data[DefaultDataKeys.INPUT]
+        target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1, )
@@ -156,25 +163,32 @@ def test_from_csv(tmpdir):
     TEST_DF_2.to_csv(test_csv)
 
     dm = TabularData.from_csv(
-        train_csv=train_csv,
-        categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
-        target_col="label",
-        val_csv=val_csv,
-        test_csv=test_csv,
+        categorical_fields=["category"],
+        numerical_fields=["scalar_b", "scalar_b"],
+        target_field="label",
+        train_file=str(train_csv),
+        val_file=str(val_csv),
+        test_file=str(test_csv),
         num_workers=0,
         batch_size=1
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        (cat, num), target = next(iter(dl))
+        data = next(iter(dl))
+        (cat, num) = data[DefaultDataKeys.INPUT]
+        target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1, )
 
 
 def test_empty_inputs():
-    train_df = TEST_DF_1.copy()
+    train_data_frame = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
-        TabularData.from_df(
-            train_df, numerical_cols=None, categorical_cols=None, target_col="label", num_workers=0, batch_size=1
+        TabularData.from_data_frame(
+            numerical_cols=None,
+            categorical_cols=None,
+            target_col="label",
+            train_data_frame=train_data_frame,
+            num_workers=0,
+            batch_size=1,
         )

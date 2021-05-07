@@ -12,167 +12,100 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from inspect import signature
-from typing import Any, Callable, Iterable, Iterator, Optional, TYPE_CHECKING
+from typing import Any, Callable, Generic, Iterable, Optional, Sequence, TYPE_CHECKING, TypeVar
 
-import torch
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.warning_utils import rank_zero_warn
 from torch.utils.data import Dataset, IterableDataset
 
-from flash.data.callback import ControlFlow
-from flash.data.process import Preprocess
-from flash.data.utils import _STAGES_PREFIX, _STAGES_PREFIX_VALUES, CurrentRunningStageFuncContext
+from flash.data.utils import CurrentRunningStageFuncContext
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipeline
+    from flash.data.data_source import DataSource
+
+DATA_TYPE = TypeVar('DATA_TYPE')
 
 
-class BaseAutoDataset:
+class BaseAutoDataset(Generic[DATA_TYPE]):
 
     DATASET_KEY = "dataset"
-    """
-        This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions.
-        ``load_data`` will be called within the ``__init__`` function of the AutoDataset if ``running_stage``
-        is provided and ``load_sample`` within ``__getitem__``.
+    """This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions. ``load_data``
+    will be called within the ``__init__`` function of the AutoDataset if ``running_stage`` is provided and
+    ``load_sample`` within ``__getitem__``.
+
+    Args:
+
+        data: The output of a call to :meth:`~flash.data.data_source.load_data`.
+
+        data_source: The :class:`~flash.data.data_source.DataSource` which has the ``load_sample`` method.
+
+        running_stage: The current running stage.
     """
 
     def __init__(
         self,
-        data: Any,
-        load_data: Optional[Callable] = None,
-        load_sample: Optional[Callable] = None,
-        data_pipeline: Optional['DataPipeline'] = None,
-        running_stage: Optional[RunningStage] = None
+        data: DATA_TYPE,
+        data_source: 'DataSource',
+        running_stage: RunningStage,
     ) -> None:
         super().__init__()
 
-        if load_data or load_sample:
-            if data_pipeline:
-                rank_zero_warn(
-                    "``datapipeline`` is specified but load_sample and/or load_data are also specified. "
-                    "Won't use datapipeline"
-                )
-        # initial states
-        self._load_data_called = False
-        self._running_stage = None
-
         self.data = data
-        self.data_pipeline = data_pipeline
-        self.load_data = load_data
-        self.load_sample = load_sample
+        self.data_source = data_source
 
-        # trigger the setup only if `running_stage` is provided
+        self._running_stage = None
         self.running_stage = running_stage
 
     @property
-    def running_stage(self) -> Optional[RunningStage]:
+    def running_stage(self) -> RunningStage:
         return self._running_stage
 
     @running_stage.setter
     def running_stage(self, running_stage: RunningStage) -> None:
-        if self._running_stage != running_stage or (not self._running_stage):
-            self._running_stage = running_stage
-            self._load_data_context = CurrentRunningStageFuncContext(self._running_stage, "load_data", self.preprocess)
-            self._load_sample_context = CurrentRunningStageFuncContext(
-                self._running_stage, "load_sample", self.preprocess
+        from flash.data.data_pipeline import DataPipeline  # noqa F811
+        from flash.data.data_source import DataSource  # noqa F811 # TODO: something better than this
+
+        self._running_stage = running_stage
+
+        self._load_sample_context = CurrentRunningStageFuncContext(self.running_stage, "load_sample", self.data_source)
+
+        self.load_sample: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(
+            self.data_source,
+            DataPipeline._resolve_function_hierarchy(
+                'load_sample',
+                self.data_source,
+                self.running_stage,
+                DataSource,
             )
-            self._setup(running_stage)
-
-    @property
-    def preprocess(self) -> Optional[Preprocess]:
-        if self.data_pipeline is not None:
-            return self.data_pipeline._preprocess_pipeline
-
-    @property
-    def control_flow_callback(self) -> Optional[ControlFlow]:
-        preprocess = self.preprocess
-        if preprocess is not None:
-            return ControlFlow(preprocess.callbacks)
-
-    def _call_load_data(self, data: Any) -> Iterable:
-        parameters = signature(self.load_data).parameters
-        if len(parameters) > 1 and self.DATASET_KEY in parameters:
-            return self.load_data(data, self)
-        else:
-            return self.load_data(data)
+        )
 
     def _call_load_sample(self, sample: Any) -> Any:
-        parameters = signature(self.load_sample).parameters
-        if len(parameters) > 1 and self.DATASET_KEY in parameters:
-            return self.load_sample(sample, self)
-        else:
-            return self.load_sample(sample)
-
-    def _setup(self, stage: Optional[RunningStage]) -> None:
-        assert not stage or _STAGES_PREFIX[stage] in _STAGES_PREFIX_VALUES
-        previous_load_data = self.load_data.__code__ if self.load_data else None
-
-        if self._running_stage and self.data_pipeline and (not self.load_data or not self.load_sample) and stage:
-            self.load_data = getattr(
-                self.preprocess,
-                self.data_pipeline._resolve_function_hierarchy('load_data', self.preprocess, stage, Preprocess)
-            )
-            self.load_sample = getattr(
-                self.preprocess,
-                self.data_pipeline._resolve_function_hierarchy('load_sample', self.preprocess, stage, Preprocess)
-            )
-        if self.load_data and (previous_load_data != self.load_data.__code__ or not self._load_data_called):
-            if previous_load_data:
-                rank_zero_warn(
-                    "The load_data function of the Autogenerated Dataset changed. "
-                    "This is not expected! Preloading Data again to ensure compatibility. This may take some time."
-                )
-            self.setup()
-            self._load_data_called = True
-
-    def setup(self):
-        raise NotImplementedError
+        if self.load_sample:
+            if isinstance(sample, dict):
+                sample = dict(**sample)
+            with self._load_sample_context:
+                parameters = signature(self.load_sample).parameters
+                if len(parameters) > 1 and self.DATASET_KEY in parameters:
+                    sample = self.load_sample(sample, self)
+                else:
+                    sample = self.load_sample(sample)
+        return sample
 
 
-class AutoDataset(BaseAutoDataset, Dataset):
-
-    def setup(self):
-        with self._load_data_context:
-            self.preprocessed_data = self._call_load_data(self.data)
+class AutoDataset(BaseAutoDataset[Sequence], Dataset):
 
     def __getitem__(self, index: int) -> Any:
-        if not self.load_sample and not self.load_data:
-            raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
-        if self.load_sample:
-            with self._load_sample_context:
-                data: Any = self._call_load_sample(self.preprocessed_data[index])
-                if self.control_flow_callback:
-                    self.control_flow_callback.on_load_sample(data, self.running_stage)
-                return data
-        return self.preprocessed_data[index]
+        return self._call_load_sample(self.data[index])
 
     def __len__(self) -> int:
-        if not self.load_sample and not self.load_data:
-            raise RuntimeError("`__len__` for `load_sample` and `load_data` could not be inferred.")
-        return len(self.preprocessed_data)
+        return len(self.data)
 
 
-class IterableAutoDataset(BaseAutoDataset, IterableDataset):
-
-    def setup(self):
-        with self._load_data_context:
-            self.dataset = self._call_load_data(self.data)
-            self.dataset_iter = None
+class IterableAutoDataset(BaseAutoDataset[Iterable], IterableDataset):
 
     def __iter__(self):
-        self.dataset_iter = iter(self.dataset)
+        self.data_iter = iter(self.data)
         return self
 
     def __next__(self) -> Any:
-        if not self.load_sample and not self.load_data:
-            raise RuntimeError("`__getitem__` for `load_sample` and `load_data` could not be inferred.")
-
-        data = next(self.dataset_iter)
-
-        if self.load_sample:
-            with self._load_sample_context:
-                data: Any = self._call_load_sample(data)
-                if self.control_flow_callback:
-                    self.control_flow_callback.on_load_sample(data, self.running_stage)
-                return data
-        return data
+        return self._call_load_sample(next(self.data_iter))

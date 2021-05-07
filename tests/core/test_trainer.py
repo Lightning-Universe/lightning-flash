@@ -55,8 +55,7 @@ def test_task_fit(tmpdir: str):
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, loss_fn=F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    result = trainer.fit(task, train_dl, val_dl)
-    assert result
+    trainer.fit(task, train_dl, val_dl)
 
 
 def test_task_finetune(tmpdir: str):
@@ -65,5 +64,4 @@ def test_task_finetune(tmpdir: str):
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     task = ClassificationTask(model, loss_fn=F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    result = trainer.finetune(task, train_dl, val_dl, strategy=NoFreeze())
-    assert result
+    trainer.finetune(task, train_dl, val_dl, strategy=NoFreeze())

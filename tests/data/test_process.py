@@ -19,9 +19,10 @@ import torch
 from torch.utils.data import DataLoader
 
 from flash import Task, Trainer
-from flash.core.classification import ClassificationState, Labels
+from flash.core.classification import Labels, LabelsState
 from flash.data.data_pipeline import DataPipeline, DataPipelineState, DefaultPreprocess
-from flash.data.process import ProcessState, Properties, Serializer, SerializerMapping
+from flash.data.process import Serializer, SerializerMapping
+from flash.data.properties import ProcessState, Properties
 
 
 def test_properties_data_pipeline_state():
@@ -120,7 +121,7 @@ def test_saving_with_serializers(tmpdir):
     serializer = Labels(["a", "b"])
     model = CustomModel()
     trainer = Trainer(fast_dev_run=True)
-    data_pipeline = DataPipeline(DefaultPreprocess(), serializer=serializer)
+    data_pipeline = DataPipeline(preprocess=DefaultPreprocess(), serializer=serializer)
     data_pipeline.initialize()
     model.data_pipeline = data_pipeline
     assert isinstance(model.preprocess, DefaultPreprocess)
@@ -128,5 +129,5 @@ def test_saving_with_serializers(tmpdir):
     trainer.fit(model, train_dataloader=dummy_data)
     trainer.save_checkpoint(checkpoint_file)
     model = CustomModel.load_from_checkpoint(checkpoint_file)
-    assert isinstance(model.preprocess._data_pipeline_state, DataPipelineState)
-    assert model.preprocess._data_pipeline_state._state[ClassificationState] == ClassificationState(['a', 'b'])
+    assert isinstance(model._data_pipeline_state, DataPipelineState)
+    assert model._data_pipeline_state._state[LabelsState] == LabelsState(["a", "b"])

@@ -11,14 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
 import os
-import subprocess
-from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod, abstractproperty, abstractstaticmethod
-from dataclasses import dataclass
-from importlib import import_module
-from operator import truediv
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, TYPE_CHECKING, TypeVar, Union
+from abc import ABC, abstractclassmethod, abstractmethod
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -29,108 +24,12 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash.data.batch import default_uncollate
 from flash.data.callback import FlashCallback
+from flash.data.data_source import DataSource
+from flash.data.properties import Properties
 from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipelineState
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ProcessState:
-    """
-    Base class for all process states
-    """
-    pass
-
-
-STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
-
-
-class Properties:
-
-    def __init__(self):
-        super().__init__()
-
-        self._running_stage: Optional[RunningStage] = None
-        self._current_fn: Optional[str] = None
-        self._data_pipeline_state: Optional['DataPipelineState'] = None
-        self._state: Dict[Type[ProcessState], ProcessState] = {}
-
-    def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
-        if self._data_pipeline_state is not None:
-            return self._data_pipeline_state.get_state(state_type)
-        else:
-            return None
-
-    def set_state(self, state: ProcessState):
-        self._state[type(state)] = state
-        if self._data_pipeline_state is not None:
-            self._data_pipeline_state.set_state(state)
-
-    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
-        self._data_pipeline_state = data_pipeline_state
-        for state in self._state.values():
-            self._data_pipeline_state.set_state(state)
-
-    @property
-    def current_fn(self) -> Optional[str]:
-        return self._current_fn
-
-    @current_fn.setter
-    def current_fn(self, current_fn: str):
-        self._current_fn = current_fn
-
-    @property
-    def running_stage(self) -> Optional[RunningStage]:
-        return self._running_stage
-
-    @running_stage.setter
-    def running_stage(self, running_stage: RunningStage):
-        self._running_stage = running_stage
-
-    @property
-    def training(self) -> bool:
-        return self._running_stage == RunningStage.TRAINING
-
-    @training.setter
-    def training(self, val: bool) -> None:
-        if val:
-            self._running_stage = RunningStage.TRAINING
-        elif self.training:
-            self._running_stage = None
-
-    @property
-    def testing(self) -> bool:
-        return self._running_stage == RunningStage.TESTING
-
-    @testing.setter
-    def testing(self, val: bool) -> None:
-        if val:
-            self._running_stage = RunningStage.TESTING
-        elif self.testing:
-            self._running_stage = None
-
-    @property
-    def predicting(self) -> bool:
-        return self._running_stage == RunningStage.PREDICTING
-
-    @predicting.setter
-    def predicting(self, val: bool) -> None:
-        if val:
-            self._running_stage = RunningStage.PREDICTING
-        elif self.predicting:
-            self._running_stage = None
-
-    @property
-    def validating(self) -> bool:
-        return self._running_stage == RunningStage.VALIDATING
-
-    @validating.setter
-    def validating(self, val: bool) -> None:
-        if val:
-            self._running_stage = RunningStage.VALIDATING
-        elif self.validating:
-            self._running_stage = None
 
 
 class BasePreprocess(ABC):
@@ -148,6 +47,9 @@ class BasePreprocess(ABC):
         Override this method to load from state_dict
         """
         pass
+
+
+DATA_SOURCE_TYPE = TypeVar("DATA_SOURCE_TYPE")
 
 
 class Preprocess(BasePreprocess, Properties, Module):
@@ -308,8 +210,16 @@ class Preprocess(BasePreprocess, Properties, Module):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        data_sources: Optional[Dict[str, 'DataSource']] = None,
+        default_data_source: Optional[str] = None,
     ):
         super().__init__()
+
+        # resolve the default transforms
+        train_transform = train_transform or self.default_train_transforms
+        val_transform = val_transform or self.default_val_transforms
+        test_transform = test_transform or self.default_test_transforms
+        predict_transform = predict_transform or self.default_predict_transforms
 
         # used to keep track of provided transforms
         self._train_collate_in_worker_from_transform: Optional[bool] = None
@@ -318,17 +228,44 @@ class Preprocess(BasePreprocess, Properties, Module):
         self._test_collate_in_worker_from_transform: Optional[bool] = None
 
         # store the transform before conversion to modules.
-        self._train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
-        self._val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
-        self._test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
-        self._predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
+        self.train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
+        self.val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
+        self.test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
+        self.predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
 
-        self.train_transform = convert_to_modules(self._train_transform)
-        self.val_transform = convert_to_modules(self._val_transform)
-        self.test_transform = convert_to_modules(self._test_transform)
-        self.predict_transform = convert_to_modules(self._predict_transform)
+        self._train_transform = convert_to_modules(self.train_transform)
+        self._val_transform = convert_to_modules(self.val_transform)
+        self._test_transform = convert_to_modules(self.test_transform)
+        self._predict_transform = convert_to_modules(self.predict_transform)
 
+        self._data_sources = data_sources
+        self._default_data_source = default_data_source
         self._callbacks: List[FlashCallback] = []
+
+    @property
+    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
+
+    @property
+    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
+
+    @property
+    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
+
+    @property
+    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
+
+    @property
+    def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
+        return {
+            "train_transform": self.train_transform,
+            "val_transform": self.val_transform,
+            "test_transform": self.test_transform,
+            "predict_transform": self.predict_transform,
+        }
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         preprocess_state_dict = self.get_state_dict()
@@ -339,6 +276,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
         preprocess_state_dict["_meta"]["_state"] = self._state
         destination['preprocess.state_dict'] = preprocess_state_dict
+        self._ddp_params_and_buffers_to_ignore = ['preprocess.state_dict']
         return super()._save_to_state_dict(destination, prefix, keep_vars)
 
     def _check_transforms(self, transform: Optional[Dict[str, Callable]],
@@ -402,14 +340,14 @@ class Preprocess(BasePreprocess, Properties, Module):
 
     @property
     def current_transform(self) -> Callable:
-        if self.training and self.train_transform:
-            return self._get_transform(self.train_transform)
-        elif self.validating and self.val_transform:
-            return self._get_transform(self.val_transform)
-        elif self.testing and self.test_transform:
-            return self._get_transform(self.test_transform)
-        elif self.predicting and self.predict_transform:
-            return self._get_transform(self.predict_transform)
+        if self.training and self._train_transform:
+            return self._get_transform(self._train_transform)
+        elif self.validating and self._val_transform:
+            return self._get_transform(self._val_transform)
+        elif self.testing and self._test_transform:
+            return self._get_transform(self._test_transform)
+        elif self.predicting and self._predict_transform:
+            return self._get_transform(self._predict_transform)
         else:
             return self._identity
 
@@ -427,36 +365,17 @@ class Preprocess(BasePreprocess, Properties, Module):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
-    @classmethod
-    def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
-        """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
-
-        Example::
-
-            # data: "."
-            # output: [("./cat/1.png", 1), ..., ("./dog/10.png", 0)]
-
-            output: Mapping = load_data(data)
-
-        """
-        return data
-
-    @classmethod
-    def load_sample(cls, sample: Any, dataset: Optional[Any] = None) -> Any:
-        """Loads single sample from dataset"""
-        return sample
-
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        return sample
+        return self.current_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
-        return sample
+        return self.current_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
-        return sample
+        return self.current_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -466,7 +385,7 @@ class Preprocess(BasePreprocess, Properties, Module):
             This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.
         """
-        return batch
+        return self.current_transform(batch)
 
     def collate(self, samples: Sequence) -> Any:
         return default_collate(samples)
@@ -484,7 +403,7 @@ class Preprocess(BasePreprocess, Properties, Module):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return sample
+        return self.current_transform(sample)
 
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """
@@ -495,13 +414,40 @@ class Preprocess(BasePreprocess, Properties, Module):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return batch
+        return self.current_transform(batch)
+
+    def data_source_of_name(self, data_source_name: str) -> Optional[DATA_SOURCE_TYPE]:
+        if data_source_name == "default":
+            data_source_name = self._default_data_source
+        data_sources = self._data_sources
+        if data_source_name in data_sources:
+            return data_sources[data_source_name]
+        return None
 
 
 class DefaultPreprocess(Preprocess):
 
+    def __init__(
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_sources: Optional[Dict[str, 'DataSource']] = None,
+        default_data_source: Optional[str] = None,
+    ):
+        from flash.data.data_source import DataSource
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources=data_sources or {"default": DataSource()},
+            default_data_source=default_data_source or "default",
+        )
+
     def get_state_dict(self) -> Dict[str, Any]:
-        return {}
+        return {**self.transforms}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):

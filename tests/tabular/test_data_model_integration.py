@@ -28,16 +28,16 @@ TEST_DF_1 = pd.DataFrame(
 
 def test_classification(tmpdir):
 
-    train_df = TEST_DF_1.copy()
-    val_df = TEST_DF_1.copy()
-    test_df = TEST_DF_1.copy()
-    data = TabularData.from_df(
-        train_df,
+    train_data_frame = TEST_DF_1.copy()
+    val_data_frame = TEST_DF_1.copy()
+    test_data_frame = TEST_DF_1.copy()
+    data = TabularData.from_data_frame(
         categorical_cols=["category"],
         numerical_cols=["scalar_a", "scalar_b"],
         target_col="label",
-        val_df=val_df,
-        test_df=test_df,
+        train_data_frame=train_data_frame,
+        val_data_frame=val_data_frame,
+        test_data_frame=test_data_frame,
         num_workers=0,
         batch_size=2,
     )

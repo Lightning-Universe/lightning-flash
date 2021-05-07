@@ -165,4 +165,4 @@ TabularData
 
 .. automethod:: flash.tabular.TabularData.from_csv
 
-.. automethod:: flash.tabular.TabularData.from_df
+.. automethod:: flash.tabular.TabularData.from_data_frame

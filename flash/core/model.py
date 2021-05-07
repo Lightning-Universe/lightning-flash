@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+import inspect
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
@@ -20,7 +21,6 @@ import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -29,7 +29,8 @@ from torch.optim.optimizer import Optimizer
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
-from flash.data.data_pipeline import DataPipeline
+from flash.data.data_pipeline import DataPipeline, DataPipelineState
+from flash.data.data_source import DataSource, DefaultDataSources
 from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 
 
@@ -103,6 +104,9 @@ class Task(LightningModule):
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
 
+        # TODO: create enum values to define what are the exact states
+        self._data_pipeline_state: Optional[DataPipelineState] = None
+
         # Explicitly set the serializer to call the setter
         self.serializer = serializer
 
@@ -154,6 +158,7 @@ class Task(LightningModule):
     def predict(
         self,
         x: Any,
+        data_source: Optional[str] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -169,9 +174,9 @@ class Task(LightningModule):
         """
         running_stage = RunningStage.PREDICTING
 
-        data_pipeline = self.build_data_pipeline(data_pipeline)
+        data_pipeline = self.build_data_pipeline(data_source or "default", data_pipeline)
 
-        x = [x for x in data_pipeline._generate_auto_dataset(x, running_stage)]
+        x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # switch to self.device when #7188 merge in Lightning
         x = self.transfer_batch_to_device(x, next(self.parameters()).device)
@@ -252,7 +257,11 @@ class Task(LightningModule):
             serializer = SerializerMapping(serializer)
         self._serializer = serializer
 
-    def build_data_pipeline(self, data_pipeline: Optional[DataPipeline] = None) -> Optional[DataPipeline]:
+    def build_data_pipeline(
+        self,
+        data_source: Optional[str] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+    ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
         :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`
         objects. These will be overridden in the following resolution order (lowest priority first):
@@ -269,10 +278,11 @@ class Task(LightningModule):
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        preprocess, postprocess, serializer = None, None, None
+        old_data_source, preprocess, postprocess, serializer = None, None, None, None
 
         # Datamodule
         if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
+            old_data_source = getattr(self.datamodule.data_pipeline, 'data_source', None)
             preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
@@ -280,9 +290,14 @@ class Task(LightningModule):
         elif self.trainer is not None and hasattr(
             self.trainer, 'datamodule'
         ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+            old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
+        else:
+            # TODO: we should log with low severity level that we use defaults to create
+            # `preprocess`, `postprocess` and `serializer`.
+            pass
 
         # Defaults / task attributes
         preprocess, postprocess, serializer = Task._resolve(
@@ -305,8 +320,16 @@ class Task(LightningModule):
                 getattr(data_pipeline, '_serializer', None),
             )
 
-        data_pipeline = DataPipeline(preprocess, postprocess, serializer)
-        data_pipeline.initialize()
+        data_source = data_source or old_data_source
+
+        if isinstance(data_source, str):
+            if preprocess is None:
+                data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
+            else:
+                data_source = preprocess.data_source_of_name(data_source)
+
+        data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
+        self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
     @property
@@ -325,6 +348,9 @@ class Task(LightningModule):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
+        self._preprocess.state_dict()
+        if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
+            self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
 
     @property
     def preprocess(self) -> Preprocess:
@@ -373,12 +399,16 @@ class Task(LightningModule):
         # https://pytorch.org/docs/stable/notes/serialization.html
         if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
             checkpoint['data_pipeline'] = self.data_pipeline
+        if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
+            checkpoint['_data_pipeline_state'] = self._data_pipeline_state
         super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)
         if 'data_pipeline' in checkpoint:
             self.data_pipeline = checkpoint['data_pipeline']
+        if '_data_pipeline_state' in checkpoint:
+            self._data_pipeline_state = checkpoint['_data_pipeline_state']
 
     @classmethod
     def available_backbones(cls) -> List[str]:
@@ -393,6 +423,13 @@ class Task(LightningModule):
         if registry is None:
             return []
         return registry.available_keys()
+
+    @classmethod
+    def get_model_details(cls, key) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+        if registry is None:
+            return []
+        return [v for v in inspect.signature(registry.get(key)).parameters.items()]
 
     @classmethod
     def available_schedulers(cls) -> List[str]:

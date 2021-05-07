@@ -28,6 +28,7 @@ Lightning Flash
    reference/tabular_classification
    reference/translation
    reference/object_detection
+   reference/video_classification
    reference/semantic_segmentation
 
 .. toctree::

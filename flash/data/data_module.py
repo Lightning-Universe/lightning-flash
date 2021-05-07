@@ -13,22 +13,21 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from datasets.splits import SplitInfo
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.nn import Module
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
 
-from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
+from flash.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
+from flash.data.data_source import DataSource, DefaultDataSources
 from flash.data.splits import SplitDataset
 from flash.data.utils import _STAGES_PREFIX
 
@@ -57,15 +56,33 @@ class DataModule(pl.LightningDataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
+        data_source: Optional[DataSource] = None,
+        preprocess: Optional[Preprocess] = None,
+        postprocess: Optional[Postprocess] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        val_split: Optional[float] = None,
         batch_size: int = 1,
-        num_workers: Optional[int] = 0,
+        num_workers: Optional[int] = None,
     ) -> None:
 
         super().__init__()
+
+        self._data_source: DataSource = data_source
+        self._preprocess: Optional[Preprocess] = preprocess
+        self._postprocess: Optional[Postprocess] = postprocess
+        self._viz: Optional[BaseVisualization] = None
+        self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
+
+        # TODO: Preprocess can change
+        self.data_fetcher.attach_to_preprocess(self.preprocess)
+
         self._train_ds = train_dataset
         self._val_ds = val_dataset
         self._test_ds = test_dataset
         self._predict_ds = predict_dataset
+
+        if self._train_ds is not None and (val_split is not None and self._val_ds is None):
+            self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
 
         if self._train_ds:
             self.train_dataloader = self._train_dataloader
@@ -89,12 +106,6 @@ class DataModule(pl.LightningDataModule):
                 num_workers = os.cpu_count()
         self.num_workers = num_workers
 
-        self._preprocess: Optional[Preprocess] = None
-        self._postprocess: Optional[Postprocess] = None
-        self._viz: Optional[BaseVisualization] = None
-        self._data_fetcher: Optional[BaseDataFetcher] = None
-
-        # this may also trigger data preloading
         self.set_running_stages()
 
     @property
@@ -141,7 +152,7 @@ class DataModule(pl.LightningDataModule):
     def data_fetcher(self, data_fetcher: BaseDataFetcher) -> None:
         self._data_fetcher = data_fetcher
 
-    def _reset_iterator(self, stage: RunningStage) -> Iterable[Any]:
+    def _reset_iterator(self, stage: str) -> Iterable[Any]:
         iter_name = f"_{stage}_iter"
         # num_workers has to be set to 0 to work properly
         num_workers = self.num_workers
@@ -152,7 +163,7 @@ class DataModule(pl.LightningDataModule):
         setattr(self, iter_name, iterator)
         return iterator
 
-    def _show_batch(self, stage: RunningStage, func_names: Union[str, List[str]], reset: bool = True) -> None:
+    def _show_batch(self, stage: str, func_names: Union[str, List[str]], reset: bool = True) -> None:
         """
         This function is used to handle transforms profiling for batch visualization.
         """
@@ -170,6 +181,8 @@ class DataModule(pl.LightningDataModule):
 
         iter_dataloader = getattr(self, iter_name)
         with self.data_fetcher.enable():
+            if reset:
+                self.data_fetcher.batches[stage] = {}
             try:
                 _ = next(iter_dataloader)
             except StopIteration:
@@ -278,17 +291,16 @@ class DataModule(pl.LightningDataModule):
             collate_fn=self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
         )
 
-    def generate_auto_dataset(self, *args, **kwargs):
-        if all(a is None for a in args) and len(kwargs) == 0:
-            return None
-        return self.data_pipeline._generate_auto_dataset(*args, **kwargs)
-
     @property
     def num_classes(self) -> Optional[int]:
         return (
             getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None)
             or getattr(self.test_dataset, "num_classes", None)
         )
+
+    @property
+    def data_source(self) -> Optional[DataSource]:
+        return self._data_source
 
     @property
     def preprocess(self) -> Preprocess:
@@ -300,55 +312,11 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        return DataPipeline(self.preprocess, self.postprocess)
+        return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     @staticmethod
-    def _check_transforms(transform: Dict[str, Union[Module, Callable]]) -> Dict[str, Union[Module, Callable]]:
-        if not isinstance(transform, dict):
-            raise MisconfigurationException(
-                "Transform should be a dict. Here are the available keys "
-                f"for your transforms: {DataPipeline.PREPROCESS_FUNCS}."
-            )
-        return transform
-
-    @classmethod
-    def autogenerate_dataset(
-        cls,
-        data: Any,
-        running_stage: RunningStage,
-        whole_data_load_fn: Optional[Callable] = None,
-        per_sample_load_fn: Optional[Callable] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-        use_iterable_auto_dataset: bool = False,
-    ) -> BaseAutoDataset:
-        """
-        This function is used to generate an ``BaseAutoDataset`` from a ``DataPipeline`` if provided
-        or from the provided ``whole_data_load_fn``, ``per_sample_load_fn`` functions directly
-        """
-
-        preprocess = getattr(data_pipeline, '_preprocess_pipeline', None)
-
-        if whole_data_load_fn is None:
-            whole_data_load_fn = getattr(
-                preprocess,
-                DataPipeline._resolve_function_hierarchy('load_data', preprocess, running_stage, Preprocess)
-            )
-
-        if per_sample_load_fn is None:
-            per_sample_load_fn = getattr(
-                preprocess,
-                DataPipeline._resolve_function_hierarchy('load_sample', preprocess, running_stage, Preprocess)
-            )
-        if use_iterable_auto_dataset:
-            return IterableAutoDataset(
-                data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage
-            )
-        return BaseAutoDataset(data, whole_data_load_fn, per_sample_load_fn, data_pipeline, running_stage=running_stage)
-
-    @classmethod
     def _split_train_val(
-        cls,
-        train_dataset: Union[AutoDataset, IterableAutoDataset],
+        train_dataset: Dataset,
         val_split: float,
     ) -> Tuple[Any, Any]:
 
@@ -357,7 +325,7 @@ class DataModule(pl.LightningDataModule):
 
         if isinstance(train_dataset, IterableAutoDataset):
             raise MisconfigurationException(
-                "`val_split` should be `None` when the dataset is built with an IterativeDataset."
+                "`val_split` should be `None` when the dataset is built with an IterableDataset."
             )
 
         train_num_samples = len(train_dataset)
@@ -367,113 +335,279 @@ class DataModule(pl.LightningDataModule):
         return SplitDataset(train_dataset, train_indices), SplitDataset(train_dataset, val_indices)
 
     @classmethod
-    def _generate_dataset_if_possible(
+    def from_data_source(
         cls,
-        data: Optional[Any],
-        running_stage: RunningStage,
-        whole_data_load_fn: Optional[Callable] = None,
-        per_sample_load_fn: Optional[Callable] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-        use_iterable_auto_dataset: bool = False,
-    ) -> Optional[BaseAutoDataset]:
-        if data is None:
-            return
+        data_source: str,
+        train_data: Any = None,
+        val_data: Any = None,
+        test_data: Any = None,
+        predict_data: Any = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        preprocess = preprocess or cls.preprocess_cls(
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
+            **preprocess_kwargs,
+        )
 
-        if data_pipeline:
-            return data_pipeline._generate_auto_dataset(
-                data,
-                running_stage=running_stage,
-                use_iterable_auto_dataset=use_iterable_auto_dataset,
-            )
+        data_source = preprocess.data_source_of_name(data_source)
 
-        return cls.autogenerate_dataset(
-            data,
-            running_stage,
-            whole_data_load_fn,
-            per_sample_load_fn,
-            data_pipeline,
-            use_iterable_auto_dataset=use_iterable_auto_dataset,
+        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(
+            train_data,
+            val_data,
+            test_data,
+            predict_data,
+        )
+
+        return cls(
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            data_source=data_source,
+            preprocess=preprocess,
+            data_fetcher=data_fetcher,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
         )
 
     @classmethod
-    def from_load_data_inputs(
+    def from_folders(
         cls,
-        train_load_data_input: Optional[Any] = None,
-        val_load_data_input: Optional[Any] = None,
-        test_load_data_input: Optional[Any] = None,
-        predict_load_data_input: Optional[Any] = None,
+        train_folder: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: BaseDataFetcher = None,
         preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
-        use_iterable_auto_dataset: bool = False,
-        seed: int = 42,
         val_split: Optional[float] = None,
-        **kwargs,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
-        """
-        This functions is an helper to generate a ``DataModule`` from a ``DataPipeline``.
-
-        Args:
-            cls: ``DataModule`` subclass
-            train_load_data_input: Data to be received by the ``train_load_data`` function
-                from this :class:`~flash.data.process.Preprocess`
-            val_load_data_input: Data to be received by the ``val_load_data`` function
-                from this :class:`~flash.data.process.Preprocess`
-            test_load_data_input: Data to be received by the ``test_load_data`` function
-                from this :class:`~flash.data.process.Preprocess`
-            predict_load_data_input: Data to be received by the ``predict_load_data`` function
-                from this :class:`~flash.data.process.Preprocess`
-            kwargs: Any extra arguments to instantiate the provided ``DataModule``
-        """
-        # trick to get data_pipeline from empty DataModule
-        if preprocess or postprocess:
-            data_pipeline = DataPipeline(
-                preprocess or cls(**kwargs).preprocess,
-                postprocess or cls(**kwargs).postprocess,
-            )
-        else:
-            data_pipeline = cls(**kwargs).data_pipeline
-
-        data_fetcher: BaseDataFetcher = data_fetcher or cls.configure_data_fetcher()
-
-        data_fetcher.attach_to_preprocess(data_pipeline._preprocess_pipeline)
-
-        train_dataset = cls._generate_dataset_if_possible(
-            train_load_data_input,
-            running_stage=RunningStage.TRAINING,
-            data_pipeline=data_pipeline,
-            use_iterable_auto_dataset=use_iterable_auto_dataset,
-        )
-        val_dataset = cls._generate_dataset_if_possible(
-            val_load_data_input,
-            running_stage=RunningStage.VALIDATING,
-            data_pipeline=data_pipeline,
-            use_iterable_auto_dataset=use_iterable_auto_dataset,
-        )
-        test_dataset = cls._generate_dataset_if_possible(
-            test_load_data_input,
-            running_stage=RunningStage.TESTING,
-            data_pipeline=data_pipeline,
-            use_iterable_auto_dataset=use_iterable_auto_dataset,
-        )
-        predict_dataset = cls._generate_dataset_if_possible(
-            predict_load_data_input,
-            running_stage=RunningStage.PREDICTING,
-            data_pipeline=data_pipeline,
-            use_iterable_auto_dataset=use_iterable_auto_dataset,
+        return cls.from_data_source(
+            DefaultDataSources.PATHS,
+            train_folder,
+            val_folder,
+            test_folder,
+            predict_folder,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
         )
 
-        if train_dataset is not None and (val_split is not None and val_dataset is None):
-            train_dataset, val_dataset = cls._split_train_val(train_dataset, val_split)
-
-        datamodule = cls(
-            train_dataset=train_dataset,
-            val_dataset=val_dataset,
-            test_dataset=test_dataset,
-            predict_dataset=predict_dataset,
-            **kwargs
+    @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        train_targets: Optional[Sequence[Any]] = None,
+        val_files: Optional[Sequence[str]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_files: Optional[Sequence[str]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        return cls.from_data_source(
+            DefaultDataSources.PATHS,
+            (train_files, train_targets),
+            (val_files, val_targets),
+            (test_files, test_targets),
+            predict_files,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
         )
-        datamodule._preprocess = data_pipeline._preprocess_pipeline
-        datamodule._postprocess = data_pipeline._postprocess_pipeline
-        data_fetcher.attach_to_datamodule(datamodule)
-        return datamodule
+
+    @classmethod
+    def from_tensors(
+        cls,
+        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        return cls.from_data_source(
+            DefaultDataSources.TENSOR,
+            (train_data, train_targets),
+            (val_data, val_targets),
+            (test_data, test_targets),
+            predict_data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[np.ndarray]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[np.ndarray]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        return cls.from_data_source(
+            DefaultDataSources.NUMPY,
+            (train_data, train_targets),
+            (val_data, val_targets),
+            (test_data, test_targets),
+            predict_data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_json(
+        cls,
+        input_fields: Union[str, Sequence[str]],
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        return cls.from_data_source(
+            DefaultDataSources.JSON,
+            (train_file, input_fields, target_fields),
+            (val_file, input_fields, target_fields),
+            (test_file, input_fields, target_fields),
+            (predict_file, input_fields, target_fields),
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        input_fields: Union[str, Sequence[str]],
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        return cls.from_data_source(
+            DefaultDataSources.CSV,
+            (train_file, input_fields, target_fields),
+            (val_file, input_fields, target_fields),
+            (test_file, input_fields, target_fields),
+            (predict_file, input_fields, target_fields),
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )

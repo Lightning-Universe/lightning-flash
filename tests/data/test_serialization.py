@@ -53,7 +53,7 @@ def test_serialization_data_pipeline(tmpdir):
     loaded_model = CustomModel.load_from_checkpoint(checkpoint_file)
     assert loaded_model.data_pipeline
 
-    model.data_pipeline = DataPipeline(CustomPreprocess())
+    model.data_pipeline = DataPipeline(preprocess=CustomPreprocess())
     assert isinstance(model.preprocess, CustomPreprocess)
 
     trainer.fit(model, dummy_data)

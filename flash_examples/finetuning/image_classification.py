@@ -66,13 +66,9 @@ predictions = model.predict([
     "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
     "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
 ])
-
 print(predictions)
 
-datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/hymenoptera_data/predict/",
-    preprocess=model.preprocess,
-)
+datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
 
 # 7b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)

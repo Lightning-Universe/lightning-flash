@@ -21,6 +21,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
+from flash.data.data_source import DefaultDataKeys
 from flash.data.process import Serializer
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
 
@@ -104,12 +105,26 @@ class ImageClassifier(ClassificationTask):
             self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Linear(num_features, num_classes),
-        )
+        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().training_step(batch, batch_idx)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().validation_step(batch, batch_idx)
+
+    def test_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().test_step(batch, batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT])
+        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
+        if x.dim() == 4:
+            x = x.mean(-1).mean(-1)
         return self.head(x)

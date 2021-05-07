@@ -14,6 +14,7 @@
 import torch
 from pytorch_lightning import Trainer
 
+from flash.data.data_source import DefaultDataKeys
 from flash.tabular import TabularClassifier
 
 # ======== Mock functions ========
@@ -30,7 +31,7 @@ class DummyDataset(torch.utils.data.Dataset):
         target = torch.randint(0, 10, size=(1, )).item()
         cat_vars = torch.randint(0, 10, size=(self.num_cat, ))
         num_vars = torch.rand(self.num_num)
-        return (cat_vars, num_vars), target
+        return {DefaultDataKeys.INPUT: (cat_vars, num_vars), DefaultDataKeys.TARGET: target}
 
     def __len__(self) -> int:
         return 100

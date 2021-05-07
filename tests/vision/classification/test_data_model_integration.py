@@ -34,15 +34,19 @@ def test_classification(tmpdir):
 
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
-    _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_1.png")
 
-    data = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_labels=[0, 1],
-        train_transform={"per_batch_transform": lambda x: x},
+    image_a = str(tmpdir / "a" / "a_1.png")
+    image_b = str(tmpdir / "b" / "b_1.png")
+
+    _rand_image().save(image_a)
+    _rand_image().save(image_b)
+
+    data = ImageClassificationData.from_files(
+        train_files=[image_a, image_b],
+        train_targets=[0, 1],
         num_workers=0,
         batch_size=2,
+        image_size=(64, 64),
     )
     model = ImageClassifier(num_classes=2, backbone="resnet18")
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
