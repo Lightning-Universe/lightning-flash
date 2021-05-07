@@ -19,12 +19,12 @@ from flash.text import TextClassificationData, TextClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
 
 # 2. Load the data
-datamodule = TextClassificationData.from_files(
+datamodule = TextClassificationData.from_csv(
     train_file="data/imdb/train.csv",
     val_file="data/imdb/valid.csv",
     test_file="data/imdb/test.csv",
-    input="review",
-    target="sentiment",
+    input_fields="review",
+    target_fields="sentiment",
     batch_size=16,
 )
 

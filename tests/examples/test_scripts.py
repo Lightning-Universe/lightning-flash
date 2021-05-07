@@ -62,7 +62,7 @@ def run_test(filepath):
         ("finetuning", "tabular_classification.py"),
         # ("finetuning", "video_classification.py"),
         # ("finetuning", "text_classification.py"),  # TODO: takes too long
-        # ("finetuning", "translation.py"),  # TODO: takes too long.
+        ("finetuning", "translation.py"),
         ("predict", "image_classification.py"),
         ("predict", "image_classification_multi_label.py"),
         ("predict", "tabular_classification.py"),
@@ -70,7 +70,7 @@ def run_test(filepath):
         ("predict", "image_embedder.py"),
         ("predict", "video_classification.py"),
         # ("predict", "summarization.py"),  # TODO: takes too long
-        # ("predict", "translate.py"),  # TODO: takes too long
+        ("predict", "translation.py"),
     ]
 )
 def test_example(tmpdir, folder, file):

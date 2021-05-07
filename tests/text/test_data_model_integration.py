@@ -39,11 +39,11 @@ def test_classification(tmpdir):
 
     csv_path = csv_data(tmpdir)
 
-    data = TextClassificationData.from_files(
+    data = TextClassificationData.from_csv(
+        "sentence",
+        "label",
         backbone=TEST_BACKBONE,
         train_file=csv_path,
-        input="sentence",
-        target="label",
         num_workers=0,
         batch_size=2,
     )

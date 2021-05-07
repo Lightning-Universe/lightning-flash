@@ -17,6 +17,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.classification import Probabilities
+from flash.data.data_source import DefaultDataKeys
 from flash.vision import ImageClassifier
 
 # ======== Mock functions ========
@@ -25,7 +26,10 @@ from flash.vision import ImageClassifier
 class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
-        return torch.rand(3, 224, 224), torch.randint(10, size=(1, )).item()
+        return {
+            DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
+            DefaultDataKeys.TARGET: torch.randint(10, size=(1, )).item(),
+        }
 
     def __len__(self) -> int:
         return 100
@@ -37,7 +41,10 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
         self.num_classes = num_classes
 
     def __getitem__(self, index):
-        return torch.rand(3, 224, 224), torch.randint(0, 2, (self.num_classes, ))
+        return {
+            DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
+            DefaultDataKeys.TARGET: torch.randint(0, 2, (self.num_classes, )),
+        }
 
     def __len__(self) -> int:
         return 100
@@ -90,8 +97,8 @@ def test_multilabel(tmpdir):
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
-    image, label = ds[0]
-    predictions = model.predict(image.unsqueeze(0))
+    image, label = ds[0][DefaultDataKeys.INPUT], ds[0][DefaultDataKeys.TARGET]
+    predictions = model.predict([{DefaultDataKeys.INPUT: image}])
     assert (torch.tensor(predictions) > 1).sum() == 0
     assert (torch.tensor(predictions) < 0).sum() == 0
     assert len(predictions[0]) == num_classes == len(label)

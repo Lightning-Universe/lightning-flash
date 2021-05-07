@@ -48,7 +48,7 @@ def fn_resnet(pretrained: bool = True):
 print(ImageClassifier.available_backbones())
 
 # 4. Build the model
-model = ImageClassifier(backbone="dino_vitb16", num_classes=datamodule.num_classes)
+model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
 # 5. Create the trainer.
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
@@ -66,13 +66,9 @@ predictions = model.predict([
     "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
     "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
 ])
-
 print(predictions)
 
-datamodule = ImageClassificationData.from_folders(
-    predict_folder="data/hymenoptera_data/predict/",
-    preprocess=model.preprocess,
-)
+datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
 
 # 7b. Or generate predictions with a whole folder!
 predictions = Trainer().predict(model, datamodule=datamodule)

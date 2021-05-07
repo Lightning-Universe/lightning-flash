@@ -25,8 +25,9 @@ from torch import tensor
 from flash.data.base_viz import BaseVisualization
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.process import DefaultPreprocess, Preprocess
-from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.data.data_source import DefaultDataKeys
+from flash.data.process import DefaultPreprocess
+from flash.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
 from flash.vision import ImageClassificationData
 
 
@@ -60,20 +61,25 @@ def test_base_data_fetcher(tmpdir):
 
             preprocess = DefaultPreprocess()
 
-            return cls.from_load_data_inputs(
-                train_load_data_input=train_data,
-                val_load_data_input=val_data,
-                test_load_data_input=test_data,
-                predict_load_data_input=predict_data,
+            return cls.from_data_source(
+                "default",
+                train_data=train_data,
+                val_data=val_data,
+                test_data=test_data,
+                predict_data=predict_data,
                 preprocess=preprocess,
-                batch_size=5
+                batch_size=5,
             )
 
     dm = CustomDataModule.from_inputs(range(5), range(5), range(5), range(5))
     data_fetcher: CheckData = dm.data_fetcher
 
+    if not hasattr(dm, "_val_iter"):
+        dm._reset_iterator("val")
+
     with data_fetcher.enable():
-        _ = next(iter(dm.val_dataloader()))
+        assert data_fetcher.enabled
+        _ = next(dm._val_iter)
 
     data_fetcher.check()
     data_fetcher.reset()
@@ -133,14 +139,14 @@ def test_base_viz(tmpdir):
 
     B: int = 2  # batch_size
 
-    dm = CustomImageClassificationData.from_filepaths(
-        train_filepaths=train_images,
-        train_labels=[0, 1],
-        val_filepaths=train_images,
-        val_labels=[2, 3],
-        test_filepaths=train_images,
-        test_labels=[4, 5],
-        predict_filepaths=train_images,
+    dm = CustomImageClassificationData.from_files(
+        train_files=train_images,
+        train_targets=[0, 1],
+        val_files=train_images,
+        val_targets=[2, 3],
+        test_files=train_images,
+        test_targets=[4, 5],
+        predict_files=train_images,
         batch_size=B,
         num_workers=0,
     )
@@ -150,16 +156,14 @@ def test_base_viz(tmpdir):
     for stage in _STAGES_PREFIX.values():
 
         for _ in range(num_tests):
-            for fcn_name in _PREPROCESS_FUNCS:
+            for fcn_name in _CALLBACK_FUNCS:
                 fcn = getattr(dm, f"show_{stage}_batch")
                 fcn(fcn_name, reset=True)
 
         is_predict = stage == "predict"
 
         def _extract_data(data):
-            if not is_predict:
-                return data[0][0]
-            return data[0]
+            return data[0][DefaultDataKeys.INPUT]
 
         def _get_result(function_name: str):
             return dm.data_fetcher.batches[stage][function_name]
@@ -170,7 +174,7 @@ def test_base_viz(tmpdir):
 
         if not is_predict:
             res = _get_result("load_sample")
-            assert isinstance(res[0][1], torch.Tensor)
+            assert isinstance(res[0][DefaultDataKeys.TARGET], int)
 
         res = _get_result("to_tensor_transform")
         assert len(res) == B
@@ -178,21 +182,21 @@ def test_base_viz(tmpdir):
 
         if not is_predict:
             res = _get_result("to_tensor_transform")
-            assert isinstance(res[0][1], torch.Tensor)
+            assert isinstance(res[0][DefaultDataKeys.TARGET], torch.Tensor)
 
         res = _get_result("collate")
         assert _extract_data(res).shape == (B, 3, 196, 196)
 
         if not is_predict:
             res = _get_result("collate")
-            assert res[0][1].shape == torch.Size([2])
+            assert res[0][DefaultDataKeys.TARGET].shape == torch.Size([2])
 
         res = _get_result("per_batch_transform")
         assert _extract_data(res).shape == (B, 3, 196, 196)
 
         if not is_predict:
             res = _get_result("per_batch_transform")
-            assert res[0][1].shape == (B, )
+            assert res[0][DefaultDataKeys.TARGET].shape == (B, )
 
         assert dm.data_fetcher.show_load_sample_called
         assert dm.data_fetcher.show_pre_tensor_transform_called

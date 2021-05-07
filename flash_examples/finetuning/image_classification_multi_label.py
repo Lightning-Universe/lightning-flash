@@ -39,16 +39,16 @@ def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], L
             [[int(row[genre]) for genre in genres] for _, row in metadata.iterrows()])
 
 
-train_filepaths, train_labels = load_data('train')
-test_filepaths, test_labels = load_data('test')
+train_files, train_targets = load_data('train')
+test_files, test_targets = load_data('test')
 
-datamodule = ImageClassificationData.from_filepaths(
-    train_filepaths=train_filepaths,
-    train_labels=train_labels,
-    test_filepaths=test_filepaths,
-    test_labels=test_labels,
-    preprocess=ImageClassificationPreprocess(image_size=(128, 128)),
+datamodule = ImageClassificationData.from_files(
+    train_files=train_files,
+    train_targets=train_targets,
+    test_files=test_files,
+    test_targets=test_targets,
     val_split=0.1,  # Use 10 % of the train dataset to generate validation one.
+    image_size=(128, 128),
 )
 
 # 3. Build the model

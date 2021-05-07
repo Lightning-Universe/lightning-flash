@@ -5,7 +5,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.utils import _is_overriden
 from flash.data.callback import BaseDataFetcher
-from flash.data.utils import _PREPROCESS_FUNCS
+from flash.data.utils import _CALLBACK_FUNCS
 
 
 class BaseVisualization(BaseDataFetcher):
@@ -103,7 +103,7 @@ class BaseVisualization(BaseDataFetcher):
         Override this function when you want to visualize a composition.
         """
         # filter out the functions to visualise
-        func_names_set: Set[str] = set(func_names_list) & set(_PREPROCESS_FUNCS)
+        func_names_set: Set[str] = set(func_names_list) & set(_CALLBACK_FUNCS)
         if len(func_names_set) == 0:
             raise MisconfigurationException(f"Invalid function names: {func_names_list}.")
 

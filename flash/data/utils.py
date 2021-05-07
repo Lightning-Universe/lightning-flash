@@ -32,9 +32,12 @@ _STAGES_PREFIX = {
 }
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
-_PREPROCESS_FUNCS: Set[str] = {
+_DATASOURCE_FUNCS: Set[str] = {
     "load_data",
     "load_sample",
+}
+
+_PREPROCESS_FUNCS: Set[str] = {
     "pre_tensor_transform",
     "to_tensor_transform",
     "post_tensor_transform",
@@ -42,6 +45,11 @@ _PREPROCESS_FUNCS: Set[str] = {
     "per_sample_transform_on_device",
     "per_batch_transform_on_device",
     "collate",
+}
+
+_CALLBACK_FUNCS: Set[str] = {
+    "load_sample",
+    *_PREPROCESS_FUNCS,
 }
 
 _POSTPROCESS_FUNCS: Set[str] = {

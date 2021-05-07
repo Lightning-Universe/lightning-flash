@@ -25,7 +25,7 @@ from flash.vision.classification import ImageClassifier
 class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index: int) -> Any:
-        return torch.rand(3, 64, 64), torch.randint(10, size=(1, )).item()
+        return {"input": torch.rand(3, 64, 64), "target": torch.randint(10, size=(1, )).item()}
 
     def __len__(self) -> int:
         return 100

@@ -11,25 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import sys
-from typing import Callable, List
 
-import torch
-from torch.utils.data.sampler import RandomSampler
-
-import flash
-from flash.core.classification import Labels
-from flash.core.finetuning import NoFreeze
 from flash.data.utils import download_data
 from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
-from flash.video import VideoClassificationData, VideoClassifier
+from flash.video import VideoClassifier
 
-if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
-    import kornia.augmentation as K
-    from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
-    from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
-else:
+if not (_PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE):
     print("Please, run `pip install torchvideo kornia`")
     sys.exit(0)
 
@@ -41,6 +29,5 @@ model = VideoClassifier.load_from_checkpoint(
 )
 
 # 2. Make a prediction
-predict_folder = "data/kinetics/predict/"
-predictions = model.predict([os.path.join(predict_folder, f) for f in os.listdir(predict_folder)])
+predictions = model.predict("data/kinetics/predict/")
 print(predictions)

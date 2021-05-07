@@ -24,6 +24,7 @@ from torchvision.ops import box_iou
 
 from flash.core import Task
 from flash.core.registry import FlashRegistry
+from flash.data.data_source import DefaultDataKeys
 from flash.vision.backbones import OBJ_DETECTION_BACKBONES
 from flash.vision.detection.finetuning import ObjectDetectionFineTuning
 
@@ -156,7 +157,7 @@ class ObjectDetector(Task):
     def training_step(self, batch, batch_idx) -> Any:
         """The training step. Overrides ``Task.training_step``
         """
-        images, targets = batch
+        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         targets = [{k: v for k, v in t.items()} for t in targets]
 
         # fasterrcnn takes both images and targets for training, returns loss_dict
@@ -166,7 +167,7 @@ class ObjectDetector(Task):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        images, targets = batch
+        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         # fasterrcnn takes only images for eval() mode
         outs = self.model(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
@@ -178,7 +179,7 @@ class ObjectDetector(Task):
         return {"avg_val_iou": avg_iou, "log": logs}
 
     def test_step(self, batch, batch_idx):
-        images, targets = batch
+        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         # fasterrcnn takes only images for eval() mode
         outs = self.model(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
@@ -188,6 +189,10 @@ class ObjectDetector(Task):
         avg_iou = torch.stack([o["test_iou"] for o in outs]).mean()
         logs = {"test_iou": avg_iou}
         return {"avg_test_iou": avg_iou, "log": logs}
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        images = batch[DefaultDataKeys.INPUT]
+        return self.model(images)
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]

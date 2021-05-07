@@ -183,8 +183,4 @@ ImageClassificationData
 
 .. autoclass:: flash.vision.ImageClassificationData
 
-.. automethod:: flash.vision.ImageClassificationData.from_filepaths
-
-.. automethod:: flash.vision.ImageClassificationData.from_folders
-
 .. autoclass:: flash.vision.ImageClassificationPreprocess
