@@ -216,9 +216,10 @@ class Preprocess(BasePreprocess, Properties, Module):
         super().__init__()
 
         # resolve the default transforms
-        train_transform, val_transform, test_transform, predict_transform = self._resolve_transforms(
-            train_transform, val_transform, test_transform, predict_transform
-        )
+        train_transform = train_transform or self.default_train_transforms()
+        val_transform = val_transform or self.default_val_transforms()
+        test_transform = test_transform or self.default_test_transforms()
+        predict_transform = predict_transform or self.default_predict_transforms()
 
         # used to keep track of provided transforms
         self._train_collate_in_worker_from_transform: Optional[bool] = None
@@ -241,6 +242,18 @@ class Preprocess(BasePreprocess, Properties, Module):
         self._default_data_source = default_data_source
         self._callbacks: List[FlashCallback] = []
 
+    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
+        pass
+
+    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
+        pass
+
+    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
+        pass
+
+    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+        pass
+
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         preprocess_state_dict = self.get_state_dict()
         if not isinstance(preprocess_state_dict, Dict):
@@ -252,33 +265,6 @@ class Preprocess(BasePreprocess, Properties, Module):
         destination['preprocess.state_dict'] = preprocess_state_dict
         self._ddp_params_and_buffers_to_ignore = ['preprocess.state_dict']
         return super()._save_to_state_dict(destination, prefix, keep_vars)
-
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
-    def _resolve_transforms(
-        self,
-        train_transform: Optional[Union[str, Dict]] = 'default',
-        val_transform: Optional[Union[str, Dict]] = 'default',
-        test_transform: Optional[Union[str, Dict]] = 'default',
-        predict_transform: Optional[Union[str, Dict]] = 'default',
-    ):
-        if not train_transform or train_transform == 'default':
-            train_transform = self.default_train_transforms()
-
-        if not val_transform or val_transform == 'default':
-            val_transform = self.default_val_transforms()
-
-        if not test_transform or test_transform == 'default':
-            test_transform = self.default_val_transforms()
-
-        if not predict_transform or predict_transform == 'default':
-            predict_transform = self.default_val_transforms()
-
-        return train_transform, val_transform, test_transform, predict_transform
 
     def _check_transforms(self, transform: Optional[Dict[str, Callable]],
                           stage: RunningStage) -> Optional[Dict[str, Callable]]:

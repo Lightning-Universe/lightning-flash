@@ -131,6 +131,12 @@ class ObjectDetectionPreprocess(Preprocess):
     def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
 
+    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_transforms()
+
+    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_transforms()
+
 
 class ObjectDetectionData(DataModule):
 

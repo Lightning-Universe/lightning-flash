@@ -87,6 +87,12 @@ class ImageClassificationPreprocess(Preprocess):
     def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_val_transforms(self.image_size)
 
+    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_val_transforms(self.image_size)
+
+    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_val_transforms(self.image_size)
+
 
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""

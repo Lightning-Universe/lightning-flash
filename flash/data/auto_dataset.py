@@ -29,10 +29,17 @@ DATA_TYPE = TypeVar('DATA_TYPE')
 class BaseAutoDataset(Generic[DATA_TYPE]):
 
     DATASET_KEY = "dataset"
-    """
-        This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions.
-        ``load_data`` will be called within the ``__init__`` function of the AutoDataset if ``running_stage``
-        is provided and ``load_sample`` within ``__getitem__``.
+    """This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions. ``load_data``
+    will be called within the ``__init__`` function of the AutoDataset if ``running_stage`` is provided and
+    ``load_sample`` within ``__getitem__``.
+
+    Args:
+
+        data: The output of a call to :meth:`~flash.data.data_source.load_data`.
+
+        data_source: The :class:`~flash.data.data_source.DataSource` which has the ``load_sample`` method.
+
+        running_stage: The current running stage.
     """
 
     def __init__(
@@ -56,7 +63,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
     @running_stage.setter
     def running_stage(self, running_stage: RunningStage) -> None:
         from flash.data.data_pipeline import DataPipeline  # noqa F811
-        from flash.data.data_source import DataSource  # Hack to avoid circular import TODO: something better than this
+        from flash.data.data_source import DataSource  # noqa F811 # TODO: something better than this
 
         self._running_stage = running_stage
 
