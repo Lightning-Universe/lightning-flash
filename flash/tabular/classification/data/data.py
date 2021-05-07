@@ -140,7 +140,7 @@ class TabularPreprocess(Preprocess):
                 DefaultDataSources.CSV: TabularCSVDataSource(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
-                "df": TabularDataFrameDataSource(
+                "data_frame": TabularDataFrameDataSource(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
             },
@@ -211,51 +211,53 @@ class TabularData(DataModule):
     @classmethod
     def compute_state(
         cls,
-        train_df: DataFrame,
-        val_df: Optional[DataFrame],
-        test_df: Optional[DataFrame],
-        predict_df: Optional[DataFrame],
+        train_data_frame: DataFrame,
+        val_data_frame: Optional[DataFrame],
+        test_data_frame: Optional[DataFrame],
+        predict_data_frame: Optional[DataFrame],
         target_col: str,
         num_cols: List[str],
         cat_cols: List[str],
     ) -> Tuple[float, float, List[str], Dict[str, Any], Dict[str, Any]]:
 
-        if train_df is None:
-            raise MisconfigurationException("train_df is required to instantiate the TabularDataFrameDataSource")
+        if train_data_frame is None:
+            raise MisconfigurationException(
+                "train_data_frame is required to instantiate the TabularDataFrameDataSource"
+            )
 
-        dfs = [train_df]
+        data_frames = [train_data_frame]
 
-        if val_df is not None:
-            dfs += [val_df]
+        if val_data_frame is not None:
+            data_frames += [val_data_frame]
 
-        if test_df is not None:
-            dfs += [test_df]
+        if test_data_frame is not None:
+            data_frames += [test_data_frame]
 
-        if predict_df is not None:
-            dfs += [predict_df]
+        if predict_data_frame is not None:
+            data_frames += [predict_data_frame]
 
-        mean, std = _compute_normalization(dfs[0], num_cols)
-        classes = list(dfs[0][target_col].unique())
+        mean, std = _compute_normalization(data_frames[0], num_cols)
+        classes = list(data_frames[0][target_col].unique())
 
-        if dfs[0][target_col].dtype == object:
+        if data_frames[0][target_col].dtype == object:
             # if the target_col is a category, not an int
-            target_codes = _generate_codes(dfs, [target_col])
+            target_codes = _generate_codes(data_frames, [target_col])
         else:
             target_codes = None
-        codes = _generate_codes(dfs, cat_cols)
+        codes = _generate_codes(data_frames, cat_cols)
 
         return mean, std, classes, codes, target_codes
 
     @classmethod
-    def from_df(
+    def from_data_frame(
         cls,
         categorical_cols: List,
         numerical_cols: List,
         target_col: str,
-        train_df: DataFrame,
-        val_df: Optional[DataFrame] = None,
-        test_df: Optional[DataFrame] = None,
-        predict_df: Optional[DataFrame] = None,
+        train_data_frame: DataFrame,
+        val_data_frame: Optional[DataFrame] = None,
+        test_data_frame: Optional[DataFrame] = None,
+        predict_data_frame: Optional[DataFrame] = None,
         is_regression: bool = False,
         preprocess: Optional[Preprocess] = None,
         val_split: float = None,
@@ -288,15 +290,21 @@ class TabularData(DataModule):
         categorical_cols, numerical_cols = cls._sanetize_cols(categorical_cols, numerical_cols)
 
         mean, std, classes, codes, target_codes = cls.compute_state(
-            train_df, val_df, test_df, predict_df, target_col, numerical_cols, categorical_cols
+            train_data_frame,
+            val_data_frame,
+            test_data_frame,
+            predict_data_frame,
+            target_col,
+            numerical_cols,
+            categorical_cols,
         )
 
         return cls.from_data_source(
-            data_source="df",
-            train_data=train_df,
-            val_data=val_df,
-            test_data=test_df,
-            predict_data=predict_df,
+            data_source="data_frame",
+            train_data=train_data_frame,
+            val_data=val_data_frame,
+            test_data=test_data_frame,
+            predict_data=predict_data_frame,
             preprocess=preprocess,
             val_split=val_split,
             batch_size=batch_size,
@@ -328,14 +336,14 @@ class TabularData(DataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
     ) -> 'DataModule':
-        return cls.from_df(
+        return cls.from_data_frame(
             categorical_fields,
             numerical_fields,
             target_field,
-            train_df=pd.read_csv(train_file) if train_file is not None else None,
-            val_df=pd.read_csv(val_file) if val_file is not None else None,
-            test_df=pd.read_csv(test_file) if test_file is not None else None,
-            predict_df=pd.read_csv(predict_file) if predict_file is not None else None,
+            train_data_frame=pd.read_csv(train_file) if train_file is not None else None,
+            val_data_frame=pd.read_csv(val_file) if val_file is not None else None,
+            test_data_frame=pd.read_csv(test_file) if test_file is not None else None,
+            predict_data_frame=pd.read_csv(predict_file) if predict_file is not None else None,
             is_regression=is_regression,
             preprocess=preprocess,
             val_split=val_split,

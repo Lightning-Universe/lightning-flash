@@ -158,7 +158,7 @@ class Task(LightningModule):
     def predict(
         self,
         x: Any,
-        data_source: Union[str] = "default",
+        data_source: str = "default",
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -177,7 +177,6 @@ class Task(LightningModule):
         data_pipeline = self.build_data_pipeline(data_source, data_pipeline)
 
         x = [x for x in data_pipeline._data_source.generate_dataset(x, running_stage)]
-        assert len(x) > 0, "List of inputs shouldn't be empty."
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # switch to self.device when #7188 merge in Lightning
         x = self.transfer_batch_to_device(x, next(self.parameters()).device)

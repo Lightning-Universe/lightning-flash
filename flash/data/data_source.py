@@ -14,7 +14,7 @@
 import os
 from dataclasses import dataclass
 from inspect import signature
-from typing import Any, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 import torch
@@ -97,9 +97,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
         is_none = data is None
-        # TODO: we should parse better the possible data types here.
-        # Are `pata_paths` considered as Sequence ? for now it pass
-        # the statement found in below.
+
         if isinstance(data, Sequence):
             is_none = data[0] is None
 
@@ -108,7 +106,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
             mock_dataset = MockDataset()
             with CurrentRunningStageFuncContext(running_stage, "load_data", self):
-                load_data = getattr(
+                load_data: Callable = getattr(
                     self, DataPipeline._resolve_function_hierarchy(
                         "load_data",
                         self,
@@ -215,6 +213,7 @@ class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
         try:
             return os.path.isdir(data)
         except TypeError:
+            # data is not path-like (e.g. it may be a list of paths)
             return False
 
     def load_data(self,

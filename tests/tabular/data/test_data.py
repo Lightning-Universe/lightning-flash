@@ -83,16 +83,16 @@ def test_emb_sizes():
 
 
 def test_tabular_data(tmpdir):
-    train_df = TEST_DF_1.copy()
-    val_df = TEST_DF_2.copy()
-    test_df = TEST_DF_2.copy()
-    dm = TabularData.from_df(
+    train_data_frame = TEST_DF_1.copy()
+    val_data_frame = TEST_DF_2.copy()
+    test_data_frame = TEST_DF_2.copy()
+    dm = TabularData.from_data_frame(
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        train_df=train_df,
-        val_df=val_df,
-        test_df=test_df,
+        train_data_frame=train_data_frame,
+        val_data_frame=val_data_frame,
+        test_data_frame=test_data_frame,
         num_workers=0,
         batch_size=1,
     )
@@ -106,20 +106,20 @@ def test_tabular_data(tmpdir):
 
 
 def test_categorical_target(tmpdir):
-    train_df = TEST_DF_1.copy()
-    val_df = TEST_DF_2.copy()
-    test_df = TEST_DF_2.copy()
-    for df in [train_df, val_df, test_df]:
+    train_data_frame = TEST_DF_1.copy()
+    val_data_frame = TEST_DF_2.copy()
+    test_data_frame = TEST_DF_2.copy()
+    for df in [train_data_frame, val_data_frame, test_data_frame]:
         # change int label to string
         df["label"] = df["label"].astype(str)
 
-    dm = TabularData.from_df(
+    dm = TabularData.from_data_frame(
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        train_df=train_df,
-        val_df=val_df,
-        test_df=test_df,
+        train_data_frame=train_data_frame,
+        val_data_frame=val_data_frame,
+        test_data_frame=test_data_frame,
         num_workers=0,
         batch_size=1,
     )
@@ -132,17 +132,17 @@ def test_categorical_target(tmpdir):
         assert target.shape == (1, )
 
 
-def test_from_df(tmpdir):
-    train_df = TEST_DF_1.copy()
-    val_df = TEST_DF_2.copy()
-    test_df = TEST_DF_2.copy()
-    dm = TabularData.from_df(
+def test_from_data_frame(tmpdir):
+    train_data_frame = TEST_DF_1.copy()
+    val_data_frame = TEST_DF_2.copy()
+    test_data_frame = TEST_DF_2.copy()
+    dm = TabularData.from_data_frame(
         categorical_cols=["category"],
         numerical_cols=["scalar_b", "scalar_b"],
         target_col="label",
-        train_df=train_df,
-        val_df=val_df,
-        test_df=test_df,
+        train_data_frame=train_data_frame,
+        val_data_frame=val_data_frame,
+        test_data_frame=test_data_frame,
         num_workers=0,
         batch_size=1
     )
@@ -166,9 +166,9 @@ def test_from_csv(tmpdir):
         categorical_fields=["category"],
         numerical_fields=["scalar_b", "scalar_b"],
         target_field="label",
-        train_file=train_csv,
-        val_file=val_csv,
-        test_file=test_csv,
+        train_file=str(train_csv),
+        val_file=str(val_csv),
+        test_file=str(test_csv),
         num_workers=0,
         batch_size=1
     )
@@ -182,13 +182,13 @@ def test_from_csv(tmpdir):
 
 
 def test_empty_inputs():
-    train_df = TEST_DF_1.copy()
+    train_data_frame = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
-        TabularData.from_df(
+        TabularData.from_data_frame(
             numerical_cols=None,
             categorical_cols=None,
             target_col="label",
-            train_df=train_df,
+            train_data_frame=train_data_frame,
             num_workers=0,
             batch_size=1,
         )

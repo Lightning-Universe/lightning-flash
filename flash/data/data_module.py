@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import pathlib
 import platform
 from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
@@ -63,7 +62,7 @@ class DataModule(pl.LightningDataModule):
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: int = 1,
-        num_workers: Optional[int] = 0,
+        num_workers: Optional[int] = None,
     ) -> None:
 
         super().__init__()
@@ -385,10 +384,10 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def from_folders(
         cls,
-        train_folder: Optional[Union[str, pathlib.Path]] = None,
-        val_folder: Optional[Union[str, pathlib.Path]] = None,
-        test_folder: Optional[Union[str, pathlib.Path]] = None,
-        predict_folder: Union[str, pathlib.Path] = None,
+        train_folder: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        predict_folder: Optional[str] = None,
         train_transform: Optional[Union[str, Dict]] = 'default',
         val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
@@ -421,13 +420,13 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def from_files(
         cls,
-        train_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        train_files: Optional[Sequence[str]] = None,
         train_targets: Optional[Sequence[Any]] = None,
-        val_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        val_files: Optional[Sequence[str]] = None,
         val_targets: Optional[Sequence[Any]] = None,
-        test_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
-        predict_files: Optional[Sequence[Union[str, pathlib.Path]]] = None,
+        predict_files: Optional[Sequence[str]] = None,
         train_transform: Optional[Union[str, Dict]] = 'default',
         val_transform: Optional[Union[str, Dict]] = 'default',
         test_transform: Optional[Union[str, Dict]] = 'default',
@@ -538,8 +537,8 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def from_json(
         cls,
-        input_fields: Union[str, List[str]],
-        target_fields: Optional[Union[str, List[str]]] = None,
+        input_fields: Union[str, Sequence[str]],
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
         train_file: Optional[str] = None,
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
@@ -568,8 +567,8 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def from_csv(
         cls,
-        input_fields: Union[str, List[str]],
-        target_fields: Optional[Union[str, List[str]]] = None,
+        input_fields: Union[str, Sequence[str]],
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
         train_file: Optional[str] = None,
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
