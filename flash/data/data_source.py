@@ -107,7 +107,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
             mock_dataset = typing.cast(AutoDataset, MockDataset())
             with CurrentRunningStageFuncContext(running_stage, "load_data", self):
-                load_data: Callable = getattr(
+                load_data: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(
                     self, DataPipeline._resolve_function_hierarchy(
                         "load_data",
                         self,

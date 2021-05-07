@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from inspect import signature
-from typing import Any, Callable, Generic, Iterable, Sequence, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, Generic, Iterable, Optional, Sequence, TYPE_CHECKING, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data import Dataset, IterableDataset
@@ -69,7 +69,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
 
         self._load_sample_context = CurrentRunningStageFuncContext(self.running_stage, "load_sample", self.data_source)
 
-        self.load_sample: Callable = getattr(
+        self.load_sample: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(
             self.data_source,
             DataPipeline._resolve_function_hierarchy(
                 'load_sample',
