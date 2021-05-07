@@ -40,7 +40,6 @@ def test_base_data_fetcher(tmpdir):
     class CheckData(BaseDataFetcher):
 
         def check(self):
-            print(self.batches["val"])
             assert self.batches["val"]["load_sample"] == [0, 1, 2, 3, 4]
             assert self.batches["val"]["pre_tensor_transform"] == [0, 1, 2, 3, 4]
             assert self.batches["val"]["to_tensor_transform"] == [0, 1, 2, 3, 4]
@@ -75,9 +74,12 @@ def test_base_data_fetcher(tmpdir):
     dm = CustomDataModule.from_inputs(range(5), range(5), range(5), range(5))
     data_fetcher: CheckData = dm.data_fetcher
 
+    if not hasattr(dm, "_val_iter"):
+        dm._reset_iterator("val")
+
     with data_fetcher.enable():
         assert data_fetcher.enabled
-        _ = next(iter(dm.val_dataloader()))
+        _ = next(dm._val_iter())
 
     data_fetcher.check()
     data_fetcher.reset()
