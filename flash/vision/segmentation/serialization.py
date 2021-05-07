@@ -16,7 +16,7 @@ from typing import Dict, Optional, Tuple
 
 import torch
 
-from flash.data.process import ProcessState, Serializer
+from flash.data.process import Serializer
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
 if _MATPLOTLIB_AVAILABLE:
