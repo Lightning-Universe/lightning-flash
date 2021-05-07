@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from enum import Enum
 from typing import Dict, Optional, Tuple
 
 import torch
@@ -28,11 +27,6 @@ if _KORNIA_AVAILABLE:
     import kornia as K
 else:
     K = None
-
-
-class SegmentationKeys(Enum):
-    IMAGES = 'images'
-    MASKS = 'masks'
 
 
 class SegmentationLabels(Serializer):
