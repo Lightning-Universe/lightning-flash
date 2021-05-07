@@ -156,7 +156,8 @@ class BaseDataFetcher(FlashCallback):
     def _store(self, data: Any, fn_name: str, running_stage: RunningStage) -> None:
         if self.enabled:
             store = self.batches[_STAGES_PREFIX[running_stage]]
-            store.setdefault(fn_name, [])
+            if fn_name not in store:
+                store[fn_name] = []
             store[fn_name].append(data)
 
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:

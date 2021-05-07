@@ -40,7 +40,7 @@ def test_base_data_fetcher(tmpdir):
     class CheckData(BaseDataFetcher):
 
         def check(self):
-            # assert self.batches["val"]["load_sample"] == [0, 1, 2, 3, 4]  # TODO: This fails only on some CI
+            assert self.batches["val"]["load_sample"] == [0, 1, 2, 3, 4]
             assert self.batches["val"]["pre_tensor_transform"] == [0, 1, 2, 3, 4]
             assert self.batches["val"]["to_tensor_transform"] == [0, 1, 2, 3, 4]
             assert self.batches["val"]["post_tensor_transform"] == [0, 1, 2, 3, 4]
