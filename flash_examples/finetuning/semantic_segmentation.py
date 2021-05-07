@@ -46,13 +46,12 @@ def load_data(data_root: str = 'data/') -> Tuple[List[str], List[str]]:
 images_filepaths, labels_filepaths = load_data()
 
 # create the data module
-datamodule = SemanticSegmentationData.from_filepaths(
-    train_filepaths=images_filepaths,
-    train_labels=labels_filepaths,
+datamodule = SemanticSegmentationData.from_files(
+    train_files=images_filepaths,
+    train_targets=labels_filepaths,
     batch_size=4,
     val_split=0.3,
     image_size=(200, 200),  # (600, 800)
-    num_workers=4,
 )
 
 # 2.2 Visualise the samples

@@ -14,15 +14,20 @@
 from typing import Any, Callable, Dict, Tuple
 
 import kornia as K
+import torch
 import torch.nn as nn
 
 from flash.data.data_source import DefaultDataKeys
 from flash.data.transforms import ApplyToKeys
+from flash.data.utils import convert_to_modules
 
 
 class KorniaParallelTransforms(nn.Sequential):
 
-    def forward(self, *inputs: Any):
+    def __init__(self, *args):
+        super().__init__(*[convert_to_modules(arg) for arg in args])
+
+    def forward(self, inputs: Any):
         result = list(inputs)
         for transform in self.children():
             inputs = result
@@ -37,6 +42,10 @@ class KorniaParallelTransforms(nn.Sequential):
         return result
 
 
+def to_long(tensor: torch.Tensor) -> torch.Tensor:
+    return tensor.long()
+
+
 def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     return {
         "post_tensor_transform": ApplyToKeys(
@@ -46,10 +55,13 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
                 K.augmentation.RandomHorizontalFlip(p=0.75),
             ),
         ),
-        "per_batch_transform_on_device": ApplyToKeys(
-            DefaultDataKeys.INPUT,
-            K.enhance.Normalize(0., 255.),
-            K.augmentation.ColorJitter(0.4, p=0.5),
+        "per_batch_transform_on_device": nn.Sequential(
+            ApplyToKeys(
+                DefaultDataKeys.INPUT,
+                K.enhance.Normalize(0., 255.),
+                K.augmentation.ColorJitter(0.4, p=0.5),
+            ),
+            ApplyToKeys(DefaultDataKeys.TARGET, to_long),
         ),
     }
 
@@ -58,7 +70,10 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     return {
         "post_tensor_transform": ApplyToKeys(
             [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-            K.geometry.Resize(image_size, interpolation='nearest'),
+            KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest'), ),
         ),
-        "per_batch_transform_on_device": ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
+        "per_batch_transform_on_device": nn.Sequential(
+            ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
+            ApplyToKeys(DefaultDataKeys.TARGET, to_long),
+        ),
     }

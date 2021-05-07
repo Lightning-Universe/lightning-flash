@@ -29,7 +29,8 @@ from flash.data.data_module import DataModule
 from flash.data.data_source import DefaultDataKeys, DefaultDataSources, PathsDataSource
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
-from flash.vision.segmentation.serialization import SegmentationKeys, SegmentationLabels
+from flash.vision.segmentation.serialization import SegmentationLabels
+from flash.vision.segmentation.transforms import default_train_transforms, default_val_transforms
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -68,9 +69,9 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             target_data = [target_data]
 
         data = filter(
-            lambda input, target: (
-                has_file_allowed_extension(input, self.extensions) and
-                has_file_allowed_extension(target, self.extensions)
+            lambda sample: (
+                has_file_allowed_extension(sample[0], self.extensions) and
+                has_file_allowed_extension(sample[1], self.extensions)
             ),
             zip(input_data, target_data),
         )
@@ -90,10 +91,10 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
-        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.TARGET: img_labels}
+        return {DefaultDataKeys.INPUT: img.float(), DefaultDataKeys.TARGET: img_labels.float()}
 
     def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        return {DefaultDataKeys.INPUT: torchvision.io.read_image(sample[DefaultDataKeys.INPUT])}
+        return {DefaultDataKeys.INPUT: torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()}
 
 
 class SemanticSegmentationPreprocess(Preprocess):
@@ -135,30 +136,46 @@ class SemanticSegmentationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    # TODO: this routine should be moved to `per_batch_transform` once we have a way to
-    # forward the labels to the loss function:.
-    def post_tensor_transform(
-        self, sample: Union[torch.Tensor, Dict[SegmentationKeys, torch.Tensor]]
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        if isinstance(sample, torch.Tensor):  # case for predict
-            out = sample.float() / 255.  # TODO: define predict transforms
-            return out
+    @property
+    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_train_transforms(self.image_size)
 
-        if not isinstance(sample, dict):
-            raise TypeError(f"Invalid type, expected `dict`. Got: {sample}.")
+    @property
+    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_val_transforms(self.image_size)
 
-        # pass to the transforms a dictionary with copies to handle potential memory leaks
-        sample_in: Dict[SegmentationKeys, torch.Tensor] = {}
-        sample_in[SegmentationKeys.IMAGES] = (
-            sample[SegmentationKeys.IMAGES][None].float().contiguous()  # 1xCxHxW
-        )
-        sample_in[SegmentationKeys.MASKS] = (
-            sample[SegmentationKeys.MASKS][None, None].float().contiguous()  # 1x1xHxW
-        )
+    @property
+    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_val_transforms(self.image_size)
 
-        out: Dict[SegmentationKeys, torch.Tensor] = self.current_transform(sample_in)
+    @property
+    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_val_transforms(self.image_size)
 
-        return out[SegmentationKeys.IMAGES][0], out[SegmentationKeys.MASKS][0, 0].long()
+    # # TODO: this routine should be moved to `per_batch_transform` once we have a way to
+    # # forward the labels to the loss function:.
+    # def post_tensor_transform(
+    #     self, sample: Union[torch.Tensor, Dict[SegmentationKeys, torch.Tensor]]
+    # ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    #     if isinstance(sample, torch.Tensor):  # case for predict
+    #         out = sample.float() / 255.  # TODO: define predict transforms
+    #         return out
+    #
+    #     if not isinstance(sample, dict):
+    #         raise TypeError(f"Invalid type, expected `dict`. Got: {sample}.")
+    #
+    #     # pass to the transforms a dictionary with copies to handle potential memory leaks
+    #     sample_in: Dict[SegmentationKeys, torch.Tensor] = {}
+    #     sample_in[SegmentationKeys.IMAGES] = (
+    #         sample[SegmentationKeys.IMAGES][None].float().contiguous()  # 1xCxHxW
+    #     )
+    #     sample_in[SegmentationKeys.MASKS] = (
+    #         sample[SegmentationKeys.MASKS][None, None].float().contiguous()  # 1x1xHxW
+    #     )
+    #
+    #     out: Dict[SegmentationKeys, torch.Tensor] = self.current_transform(sample_in)
+    #
+    #     return out[SegmentationKeys.IMAGES][0], out[SegmentationKeys.MASKS][0, 0].long()
 
     # TODO: implement `per_batch_transform` and `per_batch_transform_on_device`
     ##
@@ -186,6 +203,45 @@ class SemanticSegmentationData(DataModule):
     def set_block_viz_window(self, value: bool) -> None:
         """Setter method to switch on/off matplotlib to pop up windows."""
         self.data_fetcher.block_viz_window = value
+
+    @classmethod
+    def from_folders(
+        cls,
+        train_folder: Optional[str] = None,
+        train_target_folder: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        val_target_folder: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        test_target_folder: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: BaseDataFetcher = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        return cls.from_data_source(
+            DefaultDataSources.PATHS,
+            (train_folder, train_target_folder),
+            (val_folder, val_target_folder),
+            (test_folder, test_target_folder),
+            predict_folder,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
 
     # @classmethod
     # def from_filepaths(
@@ -308,8 +364,8 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             # unpack images and labels
             sample = data[i]
             if isinstance(sample, dict):
-                image = sample[SegmentationKeys.IMAGES]
-                label = sample[SegmentationKeys.MASKS]
+                image = sample[DefaultDataKeys.INPUT]
+                label = sample[DefaultDataKeys.TARGET]
             elif isinstance(sample, tuple):
                 image = sample[0]
                 label = sample[1]

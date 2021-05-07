@@ -29,8 +29,10 @@ class ApplyToKeys(nn.Sequential):
     def forward(self, x: Mapping[str, Any]) -> Mapping[str, Any]:
         inputs = [x[key] for key in filter(lambda key: key in x, self.keys)]
         if len(inputs) > 0:
-            outputs = super().forward(*inputs)
-            if not isinstance(outputs, tuple):
+            if len(inputs) == 1:
+                inputs = inputs[0]
+            outputs = super().forward(inputs)
+            if not isinstance(outputs, Sequence):
                 outputs = (outputs, )
 
             result = {}

@@ -11,17 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from types import FunctionType
-from typing import Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torchmetrics import Accuracy, IoU
+from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
-from flash.data.process import Preprocess, Serializer
+from flash.data.data_source import DefaultDataKeys
+from flash.data.process import Serializer
 from flash.vision.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.vision.segmentation.serialization import SegmentationLabels
 
@@ -95,6 +95,22 @@ class SemanticSegmentation(ClassificationTask):
 
         # TODO: pretrained to True causes some issues
         self.backbone = self.backbones.get(backbone)(num_classes, pretrained=pretrained, **backbone_kwargs)
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().training_step(batch, batch_idx)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().validation_step(batch, batch_idx)
+
+    def test_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().test_step(batch, batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT])
+        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
     def forward(self, x) -> torch.Tensor:
         # infer the image to the model
