@@ -94,7 +94,7 @@ class SemanticSegmentation(ClassificationTask):
             backbone_kwargs = {}
 
         # TODO: pretrained to True causes some issues
-        self.backbone = self.backbones.get(backbone)(pretrained=pretrained, num_classes=num_classes, **backbone_kwargs)
+        self.backbone = self.backbones.get(backbone)(num_classes, pretrained=pretrained, **backbone_kwargs)
 
     def forward(self, x) -> torch.Tensor:
         # infer the image to the model
