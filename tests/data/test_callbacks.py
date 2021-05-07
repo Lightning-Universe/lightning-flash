@@ -75,6 +75,7 @@ def test_base_data_fetcher(tmpdir):
     data_fetcher: CheckData = dm.data_fetcher
 
     with data_fetcher.enable():
+        assert data_fetcher.enabled
         _ = next(iter(dm.val_dataloader()))
 
     data_fetcher.check()
