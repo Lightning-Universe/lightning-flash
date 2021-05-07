@@ -96,7 +96,7 @@ if __name__ == '__main__':
     model.serializer = Labels()
 
     # 6. Finetune the model
-    trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
+    trainer = flash.Trainer(max_epochs=3)
     trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze())
 
     trainer.save_checkpoint("video_classification.pt")

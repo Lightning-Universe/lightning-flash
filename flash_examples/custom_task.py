@@ -10,7 +10,7 @@ from torch import nn, Tensor
 import flash
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_source import DataSource
-from flash.data.process import Postprocess, Preprocess
+from flash.data.process import Preprocess
 
 seed_everything(42)
 

@@ -24,7 +24,7 @@ class TranslationPreprocess(Seq2SeqPreprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "Helsinki-NLP/opus-mt-en-ro",
+        backbone: str = "t5-small",
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length'
