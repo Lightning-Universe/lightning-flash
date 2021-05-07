@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import typing
 from dataclasses import dataclass
 from inspect import signature
 from typing import Any, Callable, Dict, Generic, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar, Union
@@ -104,7 +105,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         if not is_none:
             from flash.data.data_pipeline import DataPipeline
 
-            mock_dataset = MockDataset()
+            mock_dataset = typing.cast(AutoDataset, MockDataset())
             with CurrentRunningStageFuncContext(running_stage, "load_data", self):
                 load_data: Callable = getattr(
                     self, DataPipeline._resolve_function_hierarchy(
