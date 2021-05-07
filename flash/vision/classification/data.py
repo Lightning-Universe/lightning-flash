@@ -61,7 +61,7 @@ class ImageClassificationPreprocess(Preprocess):
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {"image_size": self.image_size}
+        return {**self.transforms, "image_size": self.image_size}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
@@ -75,15 +75,19 @@ class ImageClassificationPreprocess(Preprocess):
                     sample[key] = sample[key].squeeze(0)
         return default_collate(samples)
 
+    @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_train_transforms(self.image_size)
 
+    @property
     def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_val_transforms(self.image_size)
 
+    @property
     def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_val_transforms(self.image_size)
 
+    @property
     def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_val_transforms(self.image_size)
 

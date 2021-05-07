@@ -114,21 +114,25 @@ class ObjectDetectionPreprocess(Preprocess):
         return {key: [sample[key] for sample in samples] for key in samples[0]}
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {}
+        return {**self.transforms}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
+    @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
 
+    @property
     def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
 
+    @property
     def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
 
+    @property
     def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
 

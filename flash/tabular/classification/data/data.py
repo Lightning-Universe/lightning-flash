@@ -149,6 +149,7 @@ class TabularPreprocess(Preprocess):
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
         return {
+            **self.transforms,
             "cat_cols": self.cat_cols,
             "num_cols": self.num_cols,
             "target_col": self.target_col,

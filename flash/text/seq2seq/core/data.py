@@ -206,6 +206,7 @@ class Seq2SeqPreprocess(Preprocess):
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
+            **self.transforms,
             "backbone": self.backbone,
             "max_source_length": self.max_source_length,
             "max_target_length": self.max_target_length,

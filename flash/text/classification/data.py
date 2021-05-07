@@ -164,6 +164,7 @@ class TextClassificationPreprocess(Preprocess):
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
+            **self.transforms,
             "backbone": self.backbone,
             "max_length": self.max_length,
         }

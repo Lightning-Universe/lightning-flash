@@ -216,10 +216,10 @@ class Preprocess(BasePreprocess, Properties, Module):
         super().__init__()
 
         # resolve the default transforms
-        train_transform = train_transform or self.default_train_transforms()
-        val_transform = val_transform or self.default_val_transforms()
-        test_transform = test_transform or self.default_test_transforms()
-        predict_transform = predict_transform or self.default_predict_transforms()
+        train_transform = train_transform or self.default_train_transforms
+        val_transform = val_transform or self.default_val_transforms
+        test_transform = test_transform or self.default_test_transforms
+        predict_transform = predict_transform or self.default_predict_transforms
 
         # used to keep track of provided transforms
         self._train_collate_in_worker_from_transform: Optional[bool] = None
@@ -228,31 +228,44 @@ class Preprocess(BasePreprocess, Properties, Module):
         self._test_collate_in_worker_from_transform: Optional[bool] = None
 
         # store the transform before conversion to modules.
-        self._train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
-        self._val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
-        self._test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
-        self._predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
+        self.train_transform = self._check_transforms(train_transform, RunningStage.TRAINING)
+        self.val_transform = self._check_transforms(val_transform, RunningStage.VALIDATING)
+        self.test_transform = self._check_transforms(test_transform, RunningStage.TESTING)
+        self.predict_transform = self._check_transforms(predict_transform, RunningStage.PREDICTING)
 
-        self.train_transform = convert_to_modules(self._train_transform)
-        self.val_transform = convert_to_modules(self._val_transform)
-        self.test_transform = convert_to_modules(self._test_transform)
-        self.predict_transform = convert_to_modules(self._predict_transform)
+        self._train_transform = convert_to_modules(self.train_transform)
+        self._val_transform = convert_to_modules(self.val_transform)
+        self._test_transform = convert_to_modules(self.test_transform)
+        self._predict_transform = convert_to_modules(self.predict_transform)
 
         self._data_sources = data_sources
         self._default_data_source = default_data_source
         self._callbacks: List[FlashCallback] = []
 
+    @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        pass
+        return None
 
+    @property
     def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        pass
+        return None
 
+    @property
     def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-        pass
+        return None
 
+    @property
     def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
-        pass
+        return None
+
+    @property
+    def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
+        return {
+            "train_transform": self.train_transform,
+            "val_transform": self.val_transform,
+            "test_transform": self.test_transform,
+            "predict_transform": self.predict_transform,
+        }
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         preprocess_state_dict = self.get_state_dict()
@@ -327,14 +340,14 @@ class Preprocess(BasePreprocess, Properties, Module):
 
     @property
     def current_transform(self) -> Callable:
-        if self.training and self.train_transform:
-            return self._get_transform(self.train_transform)
-        elif self.validating and self.val_transform:
-            return self._get_transform(self.val_transform)
-        elif self.testing and self.test_transform:
-            return self._get_transform(self.test_transform)
-        elif self.predicting and self.predict_transform:
-            return self._get_transform(self.predict_transform)
+        if self.training and self._train_transform:
+            return self._get_transform(self._train_transform)
+        elif self.validating and self._val_transform:
+            return self._get_transform(self._val_transform)
+        elif self.testing and self._test_transform:
+            return self._get_transform(self._test_transform)
+        elif self.predicting and self._predict_transform:
+            return self._get_transform(self._predict_transform)
         else:
             return self._identity
 
@@ -434,7 +447,7 @@ class DefaultPreprocess(Preprocess):
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {}
+        return {**self.transforms}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
