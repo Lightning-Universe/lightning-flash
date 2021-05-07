@@ -37,8 +37,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
             ),
             "post_tensor_transform": ApplyToKeys(
                 DefaultDataKeys.INPUT,
-                # TODO (Edgar): replace with resize once kornia is fixed
-                K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
+                K.geometry.Resize(image_size),
                 K.augmentation.RandomHorizontalFlip(),
             ),
             "per_batch_transform_on_device": ApplyToKeys(
@@ -70,8 +69,7 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             ),
             "post_tensor_transform": ApplyToKeys(
                 DefaultDataKeys.INPUT,
-                # TODO (Edgar): replace with resize once kornia is fixed
-                K.augmentation.RandomResizedCrop(image_size, scale=(1.0, 1.0), ratio=(1.0, 1.0)),
+                K.geometry.Resize(image_size),
             ),
             "per_batch_transform_on_device": ApplyToKeys(
                 DefaultDataKeys.INPUT,
