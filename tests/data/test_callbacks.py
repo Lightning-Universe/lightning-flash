@@ -79,7 +79,7 @@ def test_base_data_fetcher(tmpdir):
 
     with data_fetcher.enable():
         assert data_fetcher.enabled
-        _ = next(dm._val_iter())
+        _ = next(dm._val_iter)
 
     data_fetcher.check()
     data_fetcher.reset()
