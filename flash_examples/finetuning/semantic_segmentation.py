@@ -11,11 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-from typing import List, Tuple
-
-import torch
-
 import flash
 from flash.data.utils import download_data
 from flash.vision import SemanticSegmentation, SemanticSegmentationData
@@ -30,25 +25,9 @@ download_data(
 )
 
 # 2.1 Load the data
-
-
-def load_data(data_root: str = 'data/') -> Tuple[List[str], List[str]]:
-    images: List[str] = []
-    labels: List[str] = []
-    rgb_path = os.path.join(data_root, "CameraRGB")
-    seg_path = os.path.join(data_root, "CameraSeg")
-    for fname in os.listdir(rgb_path):
-        images.append(os.path.join(rgb_path, fname))
-        labels.append(os.path.join(seg_path, fname))
-    return images, labels
-
-
-images_filepaths, labels_filepaths = load_data()
-
-# create the data module
-datamodule = SemanticSegmentationData.from_files(
-    train_files=images_filepaths,
-    train_targets=labels_filepaths,
+datamodule = SemanticSegmentationData.from_folders(
+    train_folder="data/CameraRGB",
+    train_target_folder="data/CameraSeg",
     batch_size=4,
     val_split=0.3,
     image_size=(200, 200),  # (600, 800)
@@ -68,20 +47,20 @@ model = SemanticSegmentation(
 # 4. Create the trainer.
 trainer = flash.Trainer(
     max_epochs=1,
-    gpus=0,
+    fast_dev_run=1,
 )
 
 # 5. Train the model
-trainer.finetune(model, datamodule=datamodule, strategy='freeze')
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 6. Predict what's on a few images!
 model.serializer = SegmentationLabels(labels_map, visualize=True)
 
 predictions = model.predict([
-    'data/CameraRGB/F61-1.png',
-    'data/CameraRGB/F62-1.png',
-    'data/CameraRGB/F63-1.png',
-], datamodule.data_pipeline)
+    "data/CameraRGB/F61-1.png",
+    "data/CameraRGB/F62-1.png",
+    "data/CameraRGB/F63-1.png",
+])
 
 # 7. Save it!
 trainer.save_checkpoint("semantic_segmentation_model.pt")

@@ -32,7 +32,7 @@ model.serializer = SegmentationLabels(visualize=True)
 
 # 3. Predict what's on a few images and visualize!
 predictions = model.predict([
-    'data/CameraRGB/F61-1.png',
-    'data/CameraRGB/F62-1.png',
-    'data/CameraRGB/F63-1.png',
+    "data/CameraRGB/F61-1.png",
+    "data/CameraRGB/F62-1.png",
+    "data/CameraRGB/F63-1.png",
 ])

@@ -27,7 +27,8 @@ class ApplyToKeys(nn.Sequential):
         self.keys = keys
 
     def forward(self, x: Mapping[str, Any]) -> Mapping[str, Any]:
-        inputs = [x[key] for key in filter(lambda key: key in x, self.keys)]
+        keys = list(filter(lambda key: key in x, self.keys))
+        inputs = [x[key] for key in keys]
         if len(inputs) > 0:
             if len(inputs) == 1:
                 inputs = inputs[0]
@@ -37,7 +38,7 @@ class ApplyToKeys(nn.Sequential):
 
             result = {}
             result.update(x)
-            for i, key in enumerate(self.keys):
+            for i, key in enumerate(keys):
                 result[key] = outputs[i]
             return result
         return x

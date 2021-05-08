@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Sequence, Tuple
 
 import kornia as K
 import torch
@@ -28,7 +28,7 @@ class KorniaParallelTransforms(nn.Sequential):
         super().__init__(*[convert_to_modules(arg) for arg in args])
 
     def forward(self, inputs: Any):
-        result = list(inputs)
+        result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
         for transform in self.children():
             inputs = result
             for i, input in enumerate(inputs):
@@ -42,8 +42,8 @@ class KorniaParallelTransforms(nn.Sequential):
         return result
 
 
-def to_long(tensor: torch.Tensor) -> torch.Tensor:
-    return tensor.long()
+def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
+    return tensor.long().squeeze()
 
 
 def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
@@ -61,7 +61,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
                 K.enhance.Normalize(0., 255.),
                 K.augmentation.ColorJitter(0.4, p=0.5),
             ),
-            ApplyToKeys(DefaultDataKeys.TARGET, to_long),
+            ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
     }
 
@@ -74,6 +74,6 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
         ),
         "per_batch_transform_on_device": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
-            ApplyToKeys(DefaultDataKeys.TARGET, to_long),
+            ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
     }

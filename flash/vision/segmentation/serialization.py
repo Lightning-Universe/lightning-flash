@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from typing import Dict, Optional, Tuple
 
 import torch
@@ -67,7 +68,7 @@ class SegmentationLabels(Serializer):
     def serialize(self, sample: torch.Tensor) -> torch.Tensor:
         assert len(sample.shape) == 3, sample.shape
         labels = torch.argmax(sample, dim=-3)  # HxW
-        if self.visualize:
+        if self.visualize and os.getenv("FLASH_TESTING", "0") == "0":
             if self.labels_map is None:
                 # create random colors map
                 num_classes = sample.shape[-3]

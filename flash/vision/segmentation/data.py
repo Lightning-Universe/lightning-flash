@@ -123,7 +123,8 @@ class SemanticSegmentationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource()}
+            data_sources={DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource()},
+            default_data_source=DefaultDataSources.PATHS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -135,6 +136,14 @@ class SemanticSegmentationPreprocess(Preprocess):
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
+
+    def collate(self, samples: Sequence[Dict[str, Any]]) -> Any:
+        # todo: Kornia transforms add batch dimension which need to be removed
+        for sample in samples:
+            for key in sample.keys():
+                if torch.is_tensor(sample[key]):
+                    sample[key] = sample[key].squeeze(0)
+        return super().collate(samples)
 
     @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
@@ -152,46 +161,11 @@ class SemanticSegmentationPreprocess(Preprocess):
     def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_val_transforms(self.image_size)
 
-    # # TODO: this routine should be moved to `per_batch_transform` once we have a way to
-    # # forward the labels to the loss function:.
-    # def post_tensor_transform(
-    #     self, sample: Union[torch.Tensor, Dict[SegmentationKeys, torch.Tensor]]
-    # ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-    #     if isinstance(sample, torch.Tensor):  # case for predict
-    #         out = sample.float() / 255.  # TODO: define predict transforms
-    #         return out
-    #
-    #     if not isinstance(sample, dict):
-    #         raise TypeError(f"Invalid type, expected `dict`. Got: {sample}.")
-    #
-    #     # pass to the transforms a dictionary with copies to handle potential memory leaks
-    #     sample_in: Dict[SegmentationKeys, torch.Tensor] = {}
-    #     sample_in[SegmentationKeys.IMAGES] = (
-    #         sample[SegmentationKeys.IMAGES][None].float().contiguous()  # 1xCxHxW
-    #     )
-    #     sample_in[SegmentationKeys.MASKS] = (
-    #         sample[SegmentationKeys.MASKS][None, None].float().contiguous()  # 1x1xHxW
-    #     )
-    #
-    #     out: Dict[SegmentationKeys, torch.Tensor] = self.current_transform(sample_in)
-    #
-    #     return out[SegmentationKeys.IMAGES][0], out[SegmentationKeys.MASKS][0, 0].long()
-
-    # TODO: implement `per_batch_transform` and `per_batch_transform_on_device`
-    ##
-
 
 class SemanticSegmentationData(DataModule):
     """Data module for semantic segmentation tasks."""
 
     preprocess_cls = SemanticSegmentationPreprocess
-
-    # @staticmethod
-    # def _check_valid_filepaths(filepaths: List[str]):
-    #     if filepaths is not None and (
-    #         not isinstance(filepaths, list) or not all(isinstance(n, str) for n in filepaths)
-    #     ):
-    #         raise MisconfigurationException(f"`filepaths` must be of type List[str]. Got: {filepaths}.")
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
@@ -242,89 +216,6 @@ class SemanticSegmentationData(DataModule):
             num_workers=num_workers,
             **preprocess_kwargs,
         )
-
-    # @classmethod
-    # def from_filepaths(
-    #     cls,
-    #     train_filepaths: List[str],
-    #     train_labels: List[str],
-    #     val_filepaths: Optional[List[str]] = None,
-    #     val_labels: Optional[List[str]] = None,
-    #     test_filepaths: Optional[List[str]] = None,
-    #     test_labels: Optional[List[str]] = None,
-    #     predict_filepaths: Optional[List[str]] = None,
-    #     train_transform: Union[str, Dict] = 'default',
-    #     val_transform: Union[str, Dict] = 'default',
-    #     test_transform: Union[str, Dict] = 'default',
-    #     predict_transform: Union[str, Dict] = 'default',
-    #     image_size: Tuple[int, int] = (196, 196),
-    #     batch_size: int = 64,
-    #     num_workers: Optional[int] = None,
-    #     data_fetcher: BaseDataFetcher = None,
-    #     preprocess: Optional[Preprocess] = None,
-    #     val_split: Optional[float] = None,  # MAKES IT CRASH. NEED TO BE FIXED
-    #     **kwargs,  # TODO: remove and make explicit params
-    # ) -> 'SemanticSegmentationData':
-    #     """Creates a Semantic SegmentationData object from a given list of paths to images and labels.
-    #
-    #     Args:
-    #         train_filepaths: List of file paths for training images.
-    #         train_labels: List of file path for the training image labels.
-    #         val_filepaths: List of file paths for validation images.
-    #         val_labels: List of file path for the validation image labels.
-    #         test_filepaths: List of file paths for testing images.
-    #         test_labels: List of file path for the testing image labels.
-    #         predict_filepaths: List of file paths for predicting images.
-    #         train_transform: Image and mask transform to use for the train set.
-    #         val_transform: Image and mask transform to use for the validation set.
-    #         test_transform: Image and mask transform to use for the test set.
-    #         predict_transform: Image transform to use for the predict set.
-    #         image_size: A tuple with the expected output image size.
-    #         batch_size: The batch size to use for parallel loading.
-    #         num_workers: The number of workers to use for parallelized loading.
-    #             Defaults to ``None`` which equals the number of available CPU threads.
-    #         data_fetcher: An optional data fetcher object instance.
-    #         preprocess: An optional `SemanticSegmentationPreprocess` object instance.
-    #         val_split: Float number to control the percentage of train/validation samples
-    #             from the ``train_filepaths`` and ``train_labels`` list.
-    #
-    #
-    #     Returns:
-    #         SemanticSegmentationData: The constructed data module.
-    #
-    #     """
-    #
-    #     # verify input data format
-    #     SemanticSegmentationData._check_valid_filepaths(train_filepaths)
-    #     SemanticSegmentationData._check_valid_filepaths(train_labels)
-    #     SemanticSegmentationData._check_valid_filepaths(val_filepaths)
-    #     SemanticSegmentationData._check_valid_filepaths(val_labels)
-    #     SemanticSegmentationData._check_valid_filepaths(test_filepaths)
-    #     SemanticSegmentationData._check_valid_filepaths(test_labels)
-    #     SemanticSegmentationData._check_valid_filepaths(predict_filepaths)
-    #
-    #     # create the preprocess objects
-    #     preprocess = preprocess or SemanticSegmentationPreprocess(
-    #         train_transform,
-    #         val_transform,
-    #         test_transform,
-    #         predict_transform,
-    #         image_size=image_size,
-    #     )
-    #
-    #     # this functions overrides `DataModule.from_load_data_inputs`
-    #     return cls.from_load_data_inputs(
-    #         train_load_data_input=list(zip(train_filepaths, train_labels)) if train_filepaths else None,
-    #         val_load_data_input=list(zip(val_filepaths, val_labels)) if val_filepaths else None,
-    #         test_load_data_input=list(zip(test_filepaths, test_labels)) if test_filepaths else None,
-    #         predict_load_data_input=predict_filepaths,  # TODO: is it really used ?
-    #         batch_size=batch_size,
-    #         num_workers=num_workers,
-    #         data_fetcher=data_fetcher,
-    #         preprocess=preprocess,
-    #         val_split=val_split,
-    #         **kwargs,  # TODO: remove and make explicit params
-    #     )
 
 
 class SegmentationMatplotlibVisualization(BaseVisualization):
