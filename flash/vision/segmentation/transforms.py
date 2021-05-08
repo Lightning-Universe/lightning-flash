@@ -48,32 +48,32 @@ def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
 
 def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     return {
-        "post_tensor_transform": ApplyToKeys(
-            [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-            KorniaParallelTransforms(
-                K.geometry.Resize(image_size, interpolation='nearest'),
-                K.augmentation.RandomHorizontalFlip(p=0.75),
-            ),
-        ),
-        "per_batch_transform_on_device": nn.Sequential(
+        "post_tensor_transform": nn.Sequential(
             ApplyToKeys(
-                DefaultDataKeys.INPUT,
-                K.enhance.Normalize(0., 255.),
-                K.augmentation.ColorJitter(0.4, p=0.5),
+                [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
+                KorniaParallelTransforms(
+                    K.geometry.Resize(image_size, interpolation='nearest'),
+                    K.augmentation.RandomHorizontalFlip(p=0.75),
+                ),
             ),
             ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
+        ),
+        "per_batch_transform_on_device": ApplyToKeys(
+            DefaultDataKeys.INPUT,
+            K.enhance.Normalize(0., 255.),
+            K.augmentation.ColorJitter(0.4, p=0.5),
         ),
     }
 
 
 def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     return {
-        "post_tensor_transform": ApplyToKeys(
-            [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-            KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest'), ),
-        ),
-        "per_batch_transform_on_device": nn.Sequential(
-            ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
+        "post_tensor_transform": nn.Sequential(
+            ApplyToKeys(
+                [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
+                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest')),
+            ),
             ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
+        "per_batch_transform_on_device": ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
     }

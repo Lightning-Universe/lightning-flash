@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pytest
@@ -7,6 +7,7 @@ import torch
 from PIL import Image
 
 from flash import Trainer
+from flash.data.data_source import DefaultDataKeys
 from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 
 
@@ -51,18 +52,18 @@ class TestSemanticSegmentationData:
         dm = SemanticSegmentationData()
         assert dm is not None
 
-    def test_from_filepaths(self, tmpdir):
+    def test_from_files(self, tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
 
-        train_images = [
+        images = [
             str(tmp_dir / "img1.png"),
             str(tmp_dir / "img2.png"),
             str(tmp_dir / "img3.png"),
         ]
 
-        train_labels = [
+        targets = [
             str(tmp_dir / "labels_img1.png"),
             str(tmp_dir / "labels_img2.png"),
             str(tmp_dir / "labels_img3.png"),
@@ -70,17 +71,17 @@ class TestSemanticSegmentationData:
 
         num_classes: int = 2
         img_size: Tuple[int, int] = (196, 196)
-        create_random_data(train_images, train_labels, img_size, num_classes)
+        create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
 
-        dm = SemanticSegmentationData.from_filepaths(
-            train_filepaths=train_images,
-            train_labels=train_labels,
-            val_filepaths=train_images,
-            val_labels=train_labels,
-            test_filepaths=train_images,
-            test_labels=train_labels,
+        dm = SemanticSegmentationData.from_files(
+            train_files=images,
+            train_targets=targets,
+            val_files=images,
+            val_targets=targets,
+            test_files=images,
+            test_targets=targets,
             batch_size=2,
             num_workers=0,
         )
@@ -91,19 +92,13 @@ class TestSemanticSegmentationData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
 
-        # check training data
+        # check val data
         data = next(iter(dm.val_dataloader()))
-        imgs, labels = data
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
-
-        # check training data
-        data = next(iter(dm.val_dataloader()))
-        imgs, labels = data
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
 
@@ -112,13 +107,13 @@ class TestSemanticSegmentationData:
 
         # create random dummy data
 
-        train_images = [
+        images = [
             str(tmp_dir / "img1.png"),
             str(tmp_dir / "img2.png"),
             str(tmp_dir / "img3.png"),
         ]
 
-        train_labels = [
+        targets = [
             str(tmp_dir / "labels_img1.png"),
             str(tmp_dir / "labels_img2.png"),
             str(tmp_dir / "labels_img3.png"),
@@ -131,15 +126,15 @@ class TestSemanticSegmentationData:
 
         num_classes: int = len(labels_map.keys())
         img_size: Tuple[int, int] = (196, 196)
-        create_random_data(train_images, train_labels, img_size, num_classes)
+        create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
 
-        dm = SemanticSegmentationData.from_filepaths(
-            train_filepaths=train_images,
-            train_labels=train_labels,
-            val_filepaths=train_images,
-            val_labels=train_labels,
+        dm = SemanticSegmentationData.from_files(
+            train_files=images,
+            train_targets=targets,
+            val_files=images,
+            val_targets=targets,
             batch_size=2,
             num_workers=0,
         )
@@ -157,7 +152,7 @@ class TestSemanticSegmentationData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
         assert labels.min().item() == 0

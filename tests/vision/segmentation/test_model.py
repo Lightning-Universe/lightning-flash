@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.data.data_source import DefaultDataKeys
 from flash.vision import SemanticSegmentation
 
 # ======== Mock functions ========
@@ -14,8 +15,10 @@ class DummyDataset(torch.utils.data.Dataset):
     num_classes: int = 8
 
     def __getitem__(self, index):
-        return torch.rand(3, *self.size), \
-            torch.randint(self.num_classes - 1, self.size)
+        return {
+            DefaultDataKeys.INPUT: torch.rand(3, *self.size),
+            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
+        }
 
     def __len__(self) -> int:
         return 10
