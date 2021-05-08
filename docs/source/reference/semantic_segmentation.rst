@@ -146,6 +146,6 @@ SemanticSegmentationData
 
 .. autoclass:: flash.vision.SemanticSegmentationData
 
-.. automethod:: flash.vision.SemanticSegmentationData.from_filepaths
+.. automethod:: flash.vision.SemanticSegmentationData.from_folders
 
 .. autoclass:: flash.vision.SemanticSegmentationPreprocess
