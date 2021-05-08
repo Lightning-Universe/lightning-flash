@@ -34,7 +34,6 @@ Use the :class:`~flash.vision.SemanticSegmentation` pretrained model for inferen
 .. code-block:: python
 
     # import our libraries
-    from flash import Trainer
     from flash.data.utils import download_data
     from flash.vision import SemanticSegmentation
     from flash.vision.segmentation.serialization import SegmentationLabels
@@ -88,10 +87,10 @@ Now all we need is three lines of code to build to train our task!
 
 .. code-block:: python
 
-    import os
     import flash
     from flash.data.utils import download_data
     from flash.vision import SemanticSegmentation, SemanticSegmentationData
+    from flash.vision.segmentation.serialization import SegmentationLabels
 
     # 1. Download the data
     download_data(
@@ -100,26 +99,18 @@ Now all we need is three lines of code to build to train our task!
     )
 
     # 2.1 Load the data
-
-
-    def load_data(data_root: str = 'data/'):
-        images = []
-        labels = []
-        rgb_path = os.path.join(data_root, "CameraRGB")
-        seg_path = os.path.join(data_root, "CameraSeg")
-        for fname in os.listdir(rgb_path):
-            images.append(os.path.join(rgb_path, fname))
-            labels.append(os.path.join(seg_path, fname))
-        return images, labels
-
-
-    images_filepaths, labels_filepaths = load_data()
-
-    # create the data module
-    datamodule = SemanticSegmentationData.from_filepaths(
-        train_filepaths=images_filepaths,
-        train_labels=labels_filepaths,
+    datamodule = SemanticSegmentationData.from_folders(
+        train_folder="data/CameraRGB",
+        train_target_folder="data/CameraSeg",
+        batch_size=4,
+        val_split=0.3,
+        image_size=(200, 200),  # (600, 800)
     )
+
+    # 2.2 Visualise the samples
+    labels_map = SegmentationLabels.create_random_labels_map(num_classes=21)
+    datamodule.set_labels_map(labels_map)
+    datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
 
     # 3. Build the model
     model = SemanticSegmentation(backbone="torchvision/fcn_resnet50", num_classes=21)
