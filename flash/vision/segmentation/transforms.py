@@ -11,35 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Sequence, Tuple
+from typing import Callable, Dict, Tuple
 
 import kornia as K
 import torch
 import torch.nn as nn
 
 from flash.data.data_source import DefaultDataKeys
-from flash.data.transforms import ApplyToKeys
-from flash.data.utils import convert_to_modules
-
-
-class KorniaParallelTransforms(nn.Sequential):
-
-    def __init__(self, *args):
-        super().__init__(*[convert_to_modules(arg) for arg in args])
-
-    def forward(self, inputs: Any):
-        result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
-        for transform in self.children():
-            inputs = result
-            for i, input in enumerate(inputs):
-                if hasattr(transform, "_params") and bool(transform._params):
-                    params = transform._params
-                    result[i] = transform(input, params)
-                else:  # case for non random transforms
-                    result[i] = transform(input)
-            if hasattr(transform, "_params") and bool(transform._params):
-                transform._params = None
-        return result
+from flash.data.transforms import ApplyToKeys, KorniaParallelTransforms
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
