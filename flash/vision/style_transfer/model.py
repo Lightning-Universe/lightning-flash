@@ -106,7 +106,7 @@ class StyleTransfer(Task):
         self,
         style_image: torch.Tensor,
         model: Optional[nn.Module] = None,
-        multi_layer_encoder: Optional = None,
+        multi_layer_encoder: Optional[enc.MultiLayerEncoder] = None,
         content_loss: Optional[Union[ops.ComparisonOperator, ops.OperatorContainer]] = None,
         style_loss: Optional[Union[ops.ComparisonOperator, ops.OperatorContainer]] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
