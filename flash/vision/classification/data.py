@@ -73,7 +73,7 @@ class ImageClassificationPreprocess(Preprocess):
             for key in sample.keys():
                 if torch.is_tensor(sample[key]):
                     sample[key] = sample[key].squeeze(0)
-        return default_collate(samples)
+        return super().collate(samples)
 
     @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
