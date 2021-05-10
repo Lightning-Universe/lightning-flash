@@ -38,7 +38,7 @@ class TextClassifier(ClassificationTask):
 
     def __init__(
         self,
-        num_classes: int,
+        num_classes: int = None,
         backbone: str = "prajjwal1/bert-tiny",
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
@@ -46,8 +46,6 @@ class TextClassifier(ClassificationTask):
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
-        self.save_hyperparameters()
-
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
@@ -64,6 +62,8 @@ class TextClassifier(ClassificationTask):
             serializer=serializer,
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
+
+        self.save_hyperparameters()
 
     @property
     def backbone(self):
@@ -84,3 +84,6 @@ class TextClassifier(ClassificationTask):
         probs = torch.softmax(logits, 1)
         output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
         return output
+
+    def predict_step(self, batch, batch_idx) -> dict:
+        return self.forward(batch)

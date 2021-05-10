@@ -23,7 +23,17 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 from flash.data.auto_dataset import AutoDataset
 from flash.data.data_module import DataModule
 from flash.data.data_source import DataSource, DefaultDataSources, LabelsState
-from flash.data.process import Postprocess, Preprocess
+from flash.data.process import Deserializer, Postprocess, Preprocess
+
+
+class TextDeserializer(Deserializer):
+
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
+        self.max_length = max_length
+
+    def deserialize(self, text: str) -> Tensor:
+        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
 
 
 class TextDataSource(DataSource):
@@ -160,6 +170,7 @@ class TextClassificationPreprocess(Preprocess):
                 "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
             },
             default_data_source="sentences",
+            deserializer=TextDeserializer(backbone, max_length),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
