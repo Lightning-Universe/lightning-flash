@@ -464,14 +464,10 @@ class DataModule(pl.LightningDataModule):
         from the passed or constructed :class:`~flash.data.process.Preprocess`.
 
         Args:
-            train_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use when creating the train
-                dataset.
-            val_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use when creating the
-                validation dataset.
-            test_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use when creating the test
-                dataset.
-            predict_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use when creating the
-                predict dataset.
+            train_folder: The folder containing the train data.
+            val_folder: The folder containing the validation data.
+            test_folder: The folder containing the test data.
+            predict_folder: The folder containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -496,9 +492,8 @@ class DataModule(pl.LightningDataModule):
 
         Examples::
 
-            data_module = DataModule.from_data_source(
-                DefaultDataSources.PATHS,
-                train_data="train_folder",
+            data_module = DataModule.from_folders(
+                train_folder="train_folder",
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,
                 })
@@ -542,6 +537,49 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
+        """Creates a :class:`~flash.data.data_module.DataModule` object from the given sequences of files using the
+        :class:`~flash.data.data_source.DataSource` of name :attr:`~flash.data.data_source.DefaultDataSources.PATHS`
+        from the passed or constructed :class:`~flash.data.process.Preprocess`.
+
+        Args:
+            train_files: A sequence of files to use as the train inputs.
+            train_targets: A sequence of targets (one per train file) to use as the train targets.
+            val_files: A sequence of files to use as the validation inputs.
+            val_targets: A sequence of targets (one per validation file) to use as the validation targets.
+            test_files: A sequence of files to use as the test inputs.
+            test_targets: A sequence of targets (one per test file) to use as the test targets.
+            predict_files: A sequence of files to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.data.data.Preprocess` to pass to the
+                :class:`~flash.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
+                and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_files(
+                train_files=["image_1.png", "image_2.png", "image_3.png"],
+                train_targets=[1, 0, 1],
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                })
+        """
         return cls.from_data_source(
             DefaultDataSources.PATHS,
             (train_files, train_targets),
