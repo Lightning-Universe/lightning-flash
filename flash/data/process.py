@@ -49,9 +49,6 @@ class BasePreprocess(ABC):
         pass
 
 
-DATA_SOURCE_TYPE = TypeVar("DATA_SOURCE_TYPE")
-
-
 class Preprocess(BasePreprocess, Properties, Module):
     """
     The :class:`~flash.data.process.Preprocess` encapsulates
@@ -210,7 +207,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, 'DataSource']] = None,
+        data_sources: Optional[Dict[str, DataSource]] = None,
         default_data_source: Optional[str] = None,
     ):
         super().__init__()
@@ -416,7 +413,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         """
         return self.current_transform(batch)
 
-    def data_source_of_name(self, data_source_name: str) -> Optional[DATA_SOURCE_TYPE]:
+    def data_source_of_name(self, data_source_name: str) -> Optional[DataSource]:
         if data_source_name == "default":
             data_source_name = self._default_data_source
         data_sources = self._data_sources
