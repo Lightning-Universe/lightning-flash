@@ -50,36 +50,11 @@ class BasePreprocess(ABC):
 
 
 class Preprocess(BasePreprocess, Properties, Module):
-    """
-    The :class:`~flash.data.process.Preprocess` encapsulates
-    all the data processing and loading logic that should run before the data is passed to the model.
-
-    It is particularly relevant when you want to provide an end to end implementation which works
-    with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
-
-    You can override any of the preprocessing hooks to provide custom functionality.
-    All hooks default to no-op (except the collate which is PyTorch default
-    `collate <https://pytorch.org/docs/stable/data.html#dataloader-collate-fn>`_)
+    """The :class:`~flash.data.process.Preprocess` encapsulates all the data processing logic that should run before
+    the data is passed to the model. It is particularly useful when you want to provide an end to end implementation
+    which works with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
 
     The :class:`~flash.data.process.Preprocess` supports the following hooks:
-
-        - ``load_data``: Function to receiving some metadata to generate a Mapping from.
-            Example::
-
-                * Input: Receive a folder path:
-
-                * Action: Walk the folder path to find image paths and their associated labels.
-
-                * Output: Return a list of image paths and their associated labels.
-
-        - ``load_sample``: Function to load a sample from metadata sample.
-            Example::
-
-                * Input: Receive an image path and its label.
-
-                * Action: Load a PIL Image from received image_path.
-
-                * Output: Return the PIL Image and its label.
 
         - ``pre_tensor_transform``: Performs transforms on a single data sample.
             Example::
@@ -141,63 +116,59 @@ class Preprocess(BasePreprocess, Properties, Module):
 
     .. note::
 
-        By default, each hook will be no-op execpt the collate which is PyTorch default
-        `collate <https://pytorch.org/docs/stable/data.html#dataloader-collate-fn>`_.
-        To customize them, just override the hooks and ``Flash`` will take care of calling them at the right moment.
-
-    .. note::
-
         The ``per_sample_transform_on_device`` and ``per_batch_transform`` are mutually exclusive
         as it will impact performances.
 
-    To change the processing behavior only on specific stages,
-    you can prefix all the above hooks adding ``train``, ``val``, ``test`` or ``predict``.
-
-    For example, is useful to encapsulate ``predict`` logic as labels aren't availabled at inference time.
-
-    Example::
-
-        class CustomPreprocess(Preprocess):
-
-            def predict_load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
-                # logic for predict data only.
-
-    Each hook is aware of the Trainer ``running stage`` through booleans as follow.
-
-    This is useful to adapt a hook internals for a stage without duplicating code.
+    Data processing can be configured by overriding hooks or through transforms. The preprocess transforms are given as
+    a mapping from hook names to callables. Default transforms can be configured by overriding the
+    `default_{train,val,test,predict}_transforms` methods. These can then be overridden by the user with the
+    `{train,val,test,predict}_transform` arguments to the ``Preprocess``. All of the hooks can be used in the transform
+    mappings, with the exception of ``collate``.
 
     Example::
 
         class CustomPreprocess(Preprocess):
 
-            def load_data(cls, data: Any, dataset: Optional[Any] = None) -> Mapping:
+            def default_train_transforms() -> Mapping[str, Callable]:
+                return {
+                    "pre_tensor_transform": transforms.RandomHorizontalFlip(),
+                    "to_tensor_transform": transforms.ToTensor(),
+                }
+
+    When overriding hooks for particular stages, you can prefix with ``train``, ``val``, ``test`` or ``predict``. For
+    example, you can achieve the same as the above example by implementing ```train_pre_tensor_transform`` and
+    ``train_to_tensor_transform``.
+
+    Example::
+
+        class CustomPreprocess(Preprocess):
+
+            def train_pre_tensor_transform(self, sample: PIL.Image) -> PIL.Image:
+                return transforms.RandomHorizontalFlip()(sample)
+
+            def train_to_tensor_transform(self, sample: PIL.Image) -> torch.Tensor:
+                return transforms.ToTensor()(sample)
+
+    Each hook is aware of the Trainer ``running stage`` through booleans. These are useful for adapting functionality
+    for a stage without duplicating code.
+
+    Example::
+
+        class CustomPreprocess(Preprocess):
+
+            def pre_tensor_transform(self, sample: PIL.Image) -> PIL.Image:
 
                 if self.training:
-                    # logic for train
+                    # logic for training
 
                 elif self.validating:
-                    # logic from validation
+                    # logic for validation
 
                 elif self.testing:
-                    # logic for test
+                    # logic for testing
 
                 elif self.predicting:
-                    # logic for predict
-
-    .. note::
-
-        It is possible to wrap a ``Dataset`` within a :meth:`~flash.data.process.Preprocess.load_data` function.
-        However, we don't recommend to do as such as it is better to rely entirely on the hooks.
-
-    Example::
-
-        from torchvision import datasets
-
-        class CustomPreprocess(Preprocess):
-
-            def load_data(cls, path_to_data: str) -> Iterable:
-
-                return datasets.MNIST(path_to_data, download=True, transform=transforms.ToTensor())
+                    # logic for predicting
 
     """
 
