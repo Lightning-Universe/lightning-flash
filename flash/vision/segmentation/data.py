@@ -55,9 +55,8 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
             if len(input_files) != len(target_files):
                 rank_zero_warn(
-                    f"Found inconsistent files in input_dir: {input_data} and target_dir: {target_data}. "
-                    f"The following files have been dropped: "
-                    f"{list(set(input_files).difference(set(target_files)))}",
+                    f"Found inconsistent files in input_dir: {input_data} and target_dir: {target_data}. Some files"
+                    " have been dropped.",
                     UserWarning,
                 )
 

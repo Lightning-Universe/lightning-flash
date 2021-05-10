@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -52,6 +53,123 @@ class TestSemanticSegmentationData:
         dm = SemanticSegmentationData()
         assert dm is not None
 
+    def test_from_folders(self, tmpdir):
+        tmp_dir = Path(tmpdir)
+
+        # create random dummy data
+
+        os.makedirs(str(tmp_dir / "images"))
+        os.makedirs(str(tmp_dir / "targets"))
+
+        images = [
+            str(tmp_dir / "images" / "img1.png"),
+            str(tmp_dir / "images" / "img2.png"),
+            str(tmp_dir / "images" / "img3.png"),
+        ]
+
+        targets = [
+            str(tmp_dir / "targets" / "img1.png"),
+            str(tmp_dir / "targets" / "img2.png"),
+            str(tmp_dir / "targets" / "img3.png"),
+        ]
+
+        num_classes: int = 2
+        img_size: Tuple[int, int] = (196, 196)
+        create_random_data(images, targets, img_size, num_classes)
+
+        # instantiate the data module
+
+        dm = SemanticSegmentationData.from_folders(
+            train_folder=str(tmp_dir / "images"),
+            train_target_folder=str(tmp_dir / "targets"),
+            val_folder=str(tmp_dir / "images"),
+            val_target_folder=str(tmp_dir / "targets"),
+            test_folder=str(tmp_dir / "images"),
+            test_target_folder=str(tmp_dir / "targets"),
+            batch_size=2,
+            num_workers=0,
+        )
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+        assert dm.val_dataloader() is not None
+        assert dm.test_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check val data
+        data = next(iter(dm.val_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check test data
+        data = next(iter(dm.test_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+    def test_from_folders_warning(self, tmpdir):
+        tmp_dir = Path(tmpdir)
+
+        # create random dummy data
+
+        os.makedirs(str(tmp_dir / "images"))
+        os.makedirs(str(tmp_dir / "targets"))
+
+        images = [
+            str(tmp_dir / "images" / "img1.png"),
+            str(tmp_dir / "images" / "img3.png"),
+        ]
+
+        targets = [
+            str(tmp_dir / "targets" / "img1.png"),
+            str(tmp_dir / "targets" / "img2.png"),
+        ]
+
+        num_classes: int = 2
+        img_size: Tuple[int, int] = (196, 196)
+        create_random_data(images, targets, img_size, num_classes)
+
+        # instantiate the data module
+
+        with pytest.warns(UserWarning, match="Found inconsistent files"):
+            dm = SemanticSegmentationData.from_folders(
+                train_folder=str(tmp_dir / "images"),
+                train_target_folder=str(tmp_dir / "targets"),
+                val_folder=str(tmp_dir / "images"),
+                val_target_folder=str(tmp_dir / "targets"),
+                test_folder=str(tmp_dir / "images"),
+                test_target_folder=str(tmp_dir / "targets"),
+                batch_size=1,
+                num_workers=0,
+            )
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+        assert dm.val_dataloader() is not None
+        assert dm.test_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (1, 3, 196, 196)
+        assert labels.shape == (1, 196, 196)
+
+        # check val data
+        data = next(iter(dm.val_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (1, 3, 196, 196)
+        assert labels.shape == (1, 196, 196)
+
+        # check test data
+        data = next(iter(dm.test_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (1, 3, 196, 196)
+        assert labels.shape == (1, 196, 196)
+
     def test_from_files(self, tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -98,6 +216,12 @@ class TestSemanticSegmentationData:
 
         # check val data
         data = next(iter(dm.val_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check test data
+        data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
