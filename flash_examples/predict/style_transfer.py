@@ -13,7 +13,7 @@ else:
 
 download_data("http://images.cocodataset.org/zips/train2014.zip", "data")
 
-data_module = ImageUnsupervisedData.from_folder("data")
+data_module = ImageUnsupervisedData.from_folder("data", batch_size=4)
 
 style_image = pystiche.demo.images()["paint"].read(size=256, edge="long")
 
