@@ -233,7 +233,7 @@ class TestSemanticSegmentationData:
         # instantiate the data module
 
         with pytest.raises(MisconfigurationException, match="The number of input files"):
-            dm = SemanticSegmentationData.from_files(
+            SemanticSegmentationData.from_files(
                 train_files=images,
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],
                 batch_size=2,
