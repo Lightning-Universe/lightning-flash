@@ -404,7 +404,12 @@ class DataModule(pl.LightningDataModule):
 
         Examples::
 
-            text_data = TextClassificationData.from_files("train.csv", label_field="class", text_field="sentence")
+            data_module = DataModule.from_data_source(
+                DefaultDataSources.PATHS,
+                train_data="train_folder",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                })
         """
         preprocess = preprocess or cls.preprocess_cls(
             train_transform,
