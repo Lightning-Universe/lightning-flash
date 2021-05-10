@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import torch
 from PIL import Image
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.data.data_source import DefaultDataKeys
@@ -231,21 +232,13 @@ class TestSemanticSegmentationData:
 
         # instantiate the data module
 
-        with pytest.warns(UserWarning, match="The number of input files"):
+        with pytest.raises(MisconfigurationException, match="The number of input files"):
             dm = SemanticSegmentationData.from_files(
                 train_files=images,
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],
                 batch_size=2,
                 num_workers=0,
             )
-        assert dm is not None
-        assert dm.train_dataloader() is not None
-
-        # check training data
-        data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
 
     def test_map_labels(self, tmpdir):
         tmp_dir = Path(tmpdir)
