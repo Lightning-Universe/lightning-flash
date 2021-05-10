@@ -140,32 +140,14 @@ class TestSemanticSegmentationData:
             dm = SemanticSegmentationData.from_folders(
                 train_folder=str(tmp_dir / "images"),
                 train_target_folder=str(tmp_dir / "targets"),
-                val_folder=str(tmp_dir / "images"),
-                val_target_folder=str(tmp_dir / "targets"),
-                test_folder=str(tmp_dir / "images"),
-                test_target_folder=str(tmp_dir / "targets"),
                 batch_size=1,
                 num_workers=0,
             )
         assert dm is not None
         assert dm.train_dataloader() is not None
-        assert dm.val_dataloader() is not None
-        assert dm.test_dataloader() is not None
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (1, 3, 196, 196)
-        assert labels.shape == (1, 196, 196)
-
-        # check val data
-        data = next(iter(dm.val_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (1, 3, 196, 196)
-        assert labels.shape == (1, 196, 196)
-
-        # check test data
-        data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert imgs.shape == (1, 3, 196, 196)
         assert labels.shape == (1, 196, 196)
@@ -222,6 +204,45 @@ class TestSemanticSegmentationData:
 
         # check test data
         data = next(iter(dm.test_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+    def test_from_files_warning(self, tmpdir):
+        tmp_dir = Path(tmpdir)
+
+        # create random dummy data
+
+        images = [
+            str(tmp_dir / "img1.png"),
+            str(tmp_dir / "img2.png"),
+            str(tmp_dir / "img3.png"),
+        ]
+
+        targets = [
+            str(tmp_dir / "labels_img1.png"),
+            str(tmp_dir / "labels_img2.png"),
+            str(tmp_dir / "labels_img3.png"),
+        ]
+
+        num_classes: int = 2
+        img_size: Tuple[int, int] = (196, 196)
+        create_random_data(images, targets, img_size, num_classes)
+
+        # instantiate the data module
+
+        with pytest.warns(UserWarning, match="The number of input files"):
+            dm = SemanticSegmentationData.from_files(
+                train_files=images,
+                train_targets=targets + [str(tmp_dir / "labels_img4.png")],
+                batch_size=2,
+                num_workers=0,
+            )
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)

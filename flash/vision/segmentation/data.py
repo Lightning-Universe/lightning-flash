@@ -62,10 +62,20 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
             input_data = input_files
             target_data = target_files
+        else:
+            if not isinstance(input_data, list) and not isinstance(target_data, list):
+                input_data = [input_data]
+                target_data = [target_data]
 
-        if not isinstance(input_data, list) and not isinstance(target_data, list):
-            input_data = [input_data]
-            target_data = [target_data]
+            if len(input_data) != len(target_data):
+                rank_zero_warn(
+                    f"The number of input files ({len(input_data)}) and number of target files ({len(target_data)}) are"
+                    " different. Some files have been dropped.",
+                    UserWarning,
+                )
+                length = min(len(input_data), len(target_data))
+                input_data = input_data[:length]
+                target_data = target_data[:length]
 
         data = filter(
             lambda sample: (
