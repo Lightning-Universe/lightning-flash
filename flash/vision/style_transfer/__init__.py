@@ -1,2 +1,1 @@
-from .data import *
-from .model import *
+from flash.vision.style_transfer.model import StyleTransfer

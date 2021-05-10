@@ -1,22 +1,29 @@
+from typing import Any, Dict, Mapping, Optional, Sequence, Type, Union
+
+import torch
+import torchmetrics
+from pystiche import enc, loss, ops
 from torch import nn
 from torch.nn.functional import interpolate
+from torch.optim.lr_scheduler import _LRScheduler
 
-__all__ = ["Transformer"]
+from flash.core import Task
+from flash.data.process import Serializer
+
+__all__ = ["StyleTransfer"]
 
 
 class Interpolate(nn.Module):
-    def __init__(self, scale_factor=1.0, mode="nearest"):
+    def __init__(self, scale_factor: float = 1.0, mode: str = "nearest") -> None:
         super().__init__()
         self.scale_factor = scale_factor
         self.mode = mode
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         return interpolate(input, scale_factor=self.scale_factor, mode=self.mode)
 
-    def extra_repr(self):
-        extras = []
-        if self.scale_factor:
-            extras.append(f"scale_factor={self.scale_factor}")
+    def extra_repr(self) -> str:
+        extras = [f"scale_factor={self.scale_factor}"]
         if self.mode != "nearest":
             extras.append(f"mode={self.mode}")
         return ", ".join(extras)
@@ -25,24 +32,23 @@ class Interpolate(nn.Module):
 class Conv(nn.Module):
     def __init__(
         self,
-        in_channels,
-        out_channels,
-        kernel_size,
-        stride=1,
-        upsample=False,
-        norm=True,
-        activation=True,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        *,
+        stride: int = 1,
+        upsample: bool = False,
+        norm: bool = True,
+        activation: bool = True,
     ):
         super().__init__()
         self.upsample = Interpolate(scale_factor=stride) if upsample else None
         self.pad = nn.ReflectionPad2d(kernel_size // 2)
-        self.conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size, stride=1 if upsample else stride
-        )
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=1 if upsample else stride)
         self.norm = nn.InstanceNorm2d(out_channels, affine=True) if norm else None
         self.activation = nn.ReLU() if activation else None
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         if self.upsample:
             input = self.upsample(input)
 
@@ -57,18 +63,18 @@ class Conv(nn.Module):
 
 
 class Residual(nn.Module):
-    def __init__(self, channels):
+    def __init__(self, channels: int) -> None:
         super().__init__()
         self.conv1 = Conv(channels, channels, kernel_size=3)
         self.conv2 = Conv(channels, channels, kernel_size=3, activation=False)
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         output = self.conv2(self.conv1(input))
         return output + input
 
 
 class Transformer(nn.Module):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.encoder = nn.Sequential(
             Conv(3, 32, kernel_size=9),
@@ -86,5 +92,87 @@ class Transformer(nn.Module):
             Conv(32, 3, kernel_size=9, norm=False, activation=False),
         )
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         return self.decoder(self.encoder(input))
+
+
+class StyleTransfer(Task):
+    def __init__(
+        self,
+        style_image: torch.Tensor,
+        model: Optional[nn.Module] = None,
+        multi_layer_encoder: Optional = None,
+        content_loss: Optional[Union[ops.ComparisonOperator, ops.OperatorContainer]] = None,
+        style_loss: Optional[Union[ops.ComparisonOperator, ops.OperatorContainer]] = None,
+        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        learning_rate: float = 1e-3,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+    ):
+        if multi_layer_encoder is None:
+            multi_layer_encoder = self.default_multi_layer_encoder()
+
+        if content_loss is None:
+            content_loss = self.default_content_loss(multi_layer_encoder)
+
+        if style_loss is None:
+            style_loss = self.default_style_loss(multi_layer_encoder)
+
+        self.perceptual_loss = loss.PerceptualLoss(content_loss, style_loss)
+        self.perceptual_loss.set_style_image(style_image)
+
+        self.save_hyperparameters()
+
+        super().__init__(
+            model=model,
+            loss_fn=self.perceptual_loss,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            serializer=serializer,
+        )
+
+    def default_multi_layer_encoder(self) -> enc.MultiLayerEncoder:
+        return enc.vgg16_multi_layer_encoder()
+
+    def default_content_loss(
+        self, multi_layer_encoder: Optional[enc.MultiLayerEncoder] = None
+    ) -> ops.FeatureReconstructionOperator:
+        if multi_layer_encoder is None:
+            multi_layer_encoder = self.default_multi_layer_encoder()
+        content_layer = "relu2_2"
+        content_encoder = multi_layer_encoder.extract_encoder(content_layer)
+        content_weight = 1e5
+        return ops.FeatureReconstructionOperator(content_encoder, score_weight=content_weight)
+
+    def default_style_loss(
+        self, multi_layer_encoder: Optional[enc.MultiLayerEncoder] = None
+    ) -> ops.MultiLayerEncodingOperator:
+        class GramOperator(ops.GramOperator):
+            def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
+                repr = super().enc_to_repr(enc)
+                num_channels = repr.size()[1]
+                return repr / num_channels
+
+        if multi_layer_encoder is None:
+            multi_layer_encoder = self.default_multi_layer_encoder()
+
+        style_layers = ("relu1_2", "relu2_2", "relu3_3", "relu4_3")
+        style_weight = 1e10
+        return ops.MultiLayerEncodingOperator(
+            multi_layer_encoder,
+            style_layers,
+            lambda encoder, layer_weight: GramOperator(encoder, score_weight=layer_weight),
+            layer_weights="sum",
+            score_weight=style_weight,
+        )
+
+    def forward(self, content_image: torch.Tensor) -> torch.Tensor:
+        self.perceptual_loss.set_content_image(content_image)
+        return self.model(content_image)
