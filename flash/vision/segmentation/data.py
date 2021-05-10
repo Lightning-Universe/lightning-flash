@@ -47,21 +47,20 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         input_data, target_data = data
 
         if self.isdir(input_data) and self.isdir(target_data):
-            files = os.listdir(input_data)
-            input_files = [os.path.join(input_data, file) for file in files]
-            target_files = [os.path.join(target_data, file) for file in files]
+            input_files = os.listdir(input_data)
+            target_files = os.listdir(target_data)
 
-            target_files = list(filter(os.path.isfile, target_files))
+            all_files = set(input_files).intersection(set(target_files))
 
-            if len(input_files) != len(target_files):
+            if len(all_files) != len(input_files) or len(all_files) != len(target_files):
                 rank_zero_warn(
                     f"Found inconsistent files in input_dir: {input_data} and target_dir: {target_data}. Some files"
                     " have been dropped.",
                     UserWarning,
                 )
 
-            input_data = input_files
-            target_data = target_files
+            input_data = [os.path.join(input_data, file) for file in all_files]
+            target_data = [os.path.join(target_data, file) for file in all_files]
 
         if not isinstance(input_data, list) and not isinstance(target_data, list):
             input_data = [input_data]
