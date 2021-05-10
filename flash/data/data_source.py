@@ -39,11 +39,14 @@ def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
 
 @dataclass(unsafe_hash=True, frozen=True)
 class LabelsState(ProcessState):
+    """ A :class:`~flash.data.properties.ProcessState` containing ``labels``, a mapping from class index to label. """
 
     labels: Optional[Sequence[str]]
 
 
 class MockDataset:
+    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``. This is passed to
+    :meth:`~flash.data.data_source.DataSource.load_data` so that attributes can be set on the generated data set."""
 
     def __init__(self):
         self.metadata = {}
@@ -51,32 +54,61 @@ class MockDataset:
     def __setattr__(self, key, value):
         if key != 'metadata':
             self.metadata[key] = value
-        else:
-            object.__setattr__(self, key, value)
+        object.__setattr__(self, key, value)
 
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class DataSource(Generic[DATA_TYPE], Properties, Module):
+    """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``. The
+    :meth:`~flash.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data sets
+    from the hooks."""
 
     def load_data(self,
                   data: DATA_TYPE,
                   dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
-        """Loads entire data from Dataset. The input ``data`` can be anything, but you need to return a Mapping.
+        """Given the ``data`` argument, the ``load_data`` hook produces a sequence or iterable of samples or
+        sample metadata. The ``data`` argument can be anything, but this method should return a sequence or iterable of
+        mappings from string (e.g. 'input', 'target', 'bbox', etc.) to data (e.g. a target value) or metadata (e.g. a
+        filename). Where possible, any heavy data loading should be performed in
+        :meth:`~flash.data.data_source.DataSource.load_sample`. If the output is an iterable rather than a sequence
+        (that is, it doesn't have length) then the generated dataset will be an ``IterableDataset``.
+
+        Args:
+            data: The data required to load the sequence or iterable of samples or sample_metadata.
+            dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
+            (e.g. ``num_classes``) will also be set on the generated dataset.
 
         Example::
 
             # data: "."
-            # output: [("./cat/1.png", 1), ..., ("./dog/10.png", 0)]
+            # output: [{"input": "./cat/1.png", "target": 1}, ..., {"input": "./dog/10.png", "target": 0}]
 
-            output: Mapping = load_data(data)
+            output: Sequence[Mapping[str, Any]] = load_data(data)
 
         """
         return data
 
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        """Loads single sample from dataset"""
+        """Given an element from the output of a call to :meth:`~flash.data.data_source.DataSource.load_data`, this hook
+        should load a single data sample. The keys and values in the ``sample`` argument will be same as the keys and
+        values in the outputs of :meth:`~flash.data.data_source.DataSource.load_data`.
+
+        Args:
+            sample: An element (sample or sample metadata) from the output of a call to
+                :meth:`~flash.data.data_source.DataSource.load_data`.
+            dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
+            (e.g. ``num_classes``) will also be set on the generated dataset.
+
+        Example::
+
+            # sample: {"input": "./cat/1.png", "target": 1}
+            # output: {"input": PIL.Image, "target": 1}
+
+            output: Mapping[str, Any] = load_sample(sample)
+
+        """
         return sample
 
     def to_datasets(
@@ -130,6 +162,8 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
 
 class DefaultDataSources(LightningEnum):
+    """The ``DefaultDataSources`` enum contains the data source names used by all of the default ``from_*`` methods in
+    :class:`~flash.data.data_module.DataModule`."""
 
     PATHS = "paths"
     NUMPY = "numpy"
@@ -143,6 +177,8 @@ class DefaultDataSources(LightningEnum):
 
 
 class DefaultDataKeys(LightningEnum):
+    """The ``DefaultDataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
+    targets."""
 
     INPUT = "input"
     TARGET = "target"
