@@ -287,9 +287,9 @@ class Task(LightningModule):
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
 
-        elif self.trainer is not None and hasattr(
-            self.trainer, 'datamodule'
-        ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
+            self.trainer.datamodule, 'data_pipeline', None
+        ) is not None:
             old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
