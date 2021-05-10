@@ -27,15 +27,41 @@ class ApplyToKeys(nn.Sequential):
         self.keys = keys
 
     def forward(self, x: Mapping[str, Any]) -> Mapping[str, Any]:
-        inputs = [x[key] for key in filter(lambda key: key in x, self.keys)]
+        keys = list(filter(lambda key: key in x, self.keys))
+        inputs = [x[key] for key in keys]
         if len(inputs) > 0:
-            outputs = super().forward(*inputs)
-            if not isinstance(outputs, tuple):
+            if len(inputs) == 1:
+                inputs = inputs[0]
+            outputs = super().forward(inputs)
+            if not isinstance(outputs, Sequence):
                 outputs = (outputs, )
 
             result = {}
             result.update(x)
-            for i, key in enumerate(self.keys):
+            for i, key in enumerate(keys):
                 result[key] = outputs[i]
             return result
         return x
+
+
+class KorniaParallelTransforms(nn.Sequential):
+    """The ``KorniaParallelTransforms`` class is an ``nn.Sequential`` which will apply the given transforms to each
+    input (to ``.forward``) in parallel, whilst sharing the random state (``._params``). This should be used when
+    multiple elements need to be augmented in the same way (e.g. an image and corresponding segmentation mask)."""
+
+    def __init__(self, *args):
+        super().__init__(*[convert_to_modules(arg) for arg in args])
+
+    def forward(self, inputs: Any):
+        result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
+        for transform in self.children():
+            inputs = result
+            for i, input in enumerate(inputs):
+                if hasattr(transform, "_params") and bool(transform._params):
+                    params = transform._params
+                    result[i] = transform(input, params)
+                else:  # case for non random transforms
+                    result[i] = transform(input)
+            if hasattr(transform, "_params") and bool(transform._params):
+                transform._params = None
+        return result
