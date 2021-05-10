@@ -12,6 +12,17 @@ class TestSemanticSegmentationLabels:
         assert serial.labels_map is None
         assert serial.visualize is False
 
+    def test_exception(self):
+        serial = SegmentationLabels()
+
+        with pytest.raises(Exception):
+            sample = torch.zeros(1, 5, 2, 3)
+            serial.serialize(sample)
+
+        with pytest.raises(Exception):
+            sample = torch.zeros(2, 3)
+            serial.serialize(sample)
+
     def test_serialize(self):
         serial = SegmentationLabels()
 
