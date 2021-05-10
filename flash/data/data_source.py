@@ -44,6 +44,33 @@ class LabelsState(ProcessState):
     labels: Optional[Sequence[str]]
 
 
+class DefaultDataSources(LightningEnum):
+    """The ``DefaultDataSources`` enum contains the data source names used by all of the default ``from_*`` methods in
+    :class:`~flash.data.data_module.DataModule`."""
+
+    PATHS = "paths"
+    NUMPY = "numpy"
+    TENSOR = "tensor"
+    CSV = "csv"
+    JSON = "json"
+
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+
+class DefaultDataKeys(LightningEnum):
+    """The ``DefaultDataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
+    targets."""
+
+    INPUT = "input"
+    TARGET = "target"
+
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+
 class MockDataset:
     """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``. This is passed to
     :meth:`~flash.data.data_source.DataSource.load_data` so that attributes can be set on the generated data set."""
@@ -70,15 +97,19 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
                   dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
         """Given the ``data`` argument, the ``load_data`` hook produces a sequence or iterable of samples or
         sample metadata. The ``data`` argument can be anything, but this method should return a sequence or iterable of
-        mappings from string (e.g. 'input', 'target', 'bbox', etc.) to data (e.g. a target value) or metadata (e.g. a
+        mappings from string (e.g. "input", "target", "bbox", etc.) to data (e.g. a target value) or metadata (e.g. a
         filename). Where possible, any heavy data loading should be performed in
         :meth:`~flash.data.data_source.DataSource.load_sample`. If the output is an iterable rather than a sequence
         (that is, it doesn't have length) then the generated dataset will be an ``IterableDataset``.
 
         Args:
-            data: The data required to load the sequence or iterable of samples or sample_metadata.
+            data: The data required to load the sequence or iterable of samples or sample metadata.
             dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
             (e.g. ``num_classes``) will also be set on the generated dataset.
+
+        Returns:
+            A sequence or iterable of samples or sample metadata to be used as inputs to
+            :meth:`~flash.data.data_source.DataSource.load_sample`.
 
         Example::
 
@@ -101,6 +132,10 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
             dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
             (e.g. ``num_classes``) will also be set on the generated dataset.
 
+        Returns:
+            The loaded sample as a mapping with string keys (e.g. "input", "target") that can be processed by the
+            :meth:`~flash.data.process.Preprocess.pre_tensor_transform`.
+
         Example::
 
             # sample: {"input": "./cat/1.png", "target": 1}
@@ -118,6 +153,25 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         test_data: Optional[DATA_TYPE] = None,
         predict_data: Optional[DATA_TYPE] = None,
     ) -> Tuple[Optional[BaseAutoDataset], ...]:
+        """Construct data sets (of type :class:`~flash.data.auto_dataset.BaseAutoDataset`) from this data source by
+        calling :meth:`~flash.data.data_source.DataSource.load_data` with each of the ``*_data`` arguments. If an
+        argument is given as ``None`` then no dataset will be created for that stage (``train``, ``val``, ``test``,
+        ``predict``).
+
+        Args:
+            train_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use to create the train
+                dataset.
+            val_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use to create the validation
+                dataset.
+            test_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use to create the test
+                dataset.
+            predict_data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use to create the
+                predict dataset.
+
+        Returns:
+            A tuple of ``train_dataset``, ``val_dataset``, ``test_dataset``, ``predict_dataset``. If any ``*_data``
+            argument is not passed to this method then the corresponding ``*_dataset`` will be ``None``.
+        """
         train_dataset = self.generate_dataset(train_data, RunningStage.TRAINING)
         val_dataset = self.generate_dataset(val_data, RunningStage.VALIDATING)
         test_dataset = self.generate_dataset(test_data, RunningStage.TESTING)
@@ -129,6 +183,16 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         data: Optional[DATA_TYPE],
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
+        """Generate a single dataset with the given input to :meth:`~flash.data.data_source.DataSource.load_data` for
+        the given ``running_stage``.
+
+        Args:
+            data: The input to :meth:`~flash.data.data_source.DataSource.load_data` to use to create the dataset.
+            running_stage: The running_stage for this dataset.
+
+        Returns:
+            The constructed :class:`~flash.data.auto_dataset.BaseAutoDataset`.
+        """
         is_none = data is None
 
         if isinstance(data, Sequence):
@@ -161,33 +225,6 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
             return dataset
 
 
-class DefaultDataSources(LightningEnum):
-    """The ``DefaultDataSources`` enum contains the data source names used by all of the default ``from_*`` methods in
-    :class:`~flash.data.data_module.DataModule`."""
-
-    PATHS = "paths"
-    NUMPY = "numpy"
-    TENSOR = "tensor"
-    CSV = "csv"
-    JSON = "json"
-
-    # TODO: Create a FlashEnum class???
-    def __hash__(self) -> int:
-        return hash(self.value)
-
-
-class DefaultDataKeys(LightningEnum):
-    """The ``DefaultDataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
-    targets."""
-
-    INPUT = "input"
-    TARGET = "target"
-
-    # TODO: Create a FlashEnum class???
-    def __hash__(self) -> int:
-        return hash(self.value)
-
-
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
 
@@ -195,6 +232,14 @@ class SequenceDataSource(
     Generic[SEQUENCE_DATA_TYPE],
     DataSource[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
 ):
+    """The ``SequenceDataSource`` implements default behaviours for data sources which expect the input to
+    :meth:`~flash.data.data_source.DataSource.load_data` to be a sequence of tuples (``(input, target)`` where target
+    can be ``None``).
+
+    Args:
+        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
+        :class:`~flash.data.data_source.LabelsState`.
+    """
 
     def __init__(self, labels: Optional[Sequence[str]] = None):
         super().__init__()
@@ -222,17 +267,25 @@ class SequenceDataSource(
         return [{DefaultDataKeys.INPUT: input} for input in data]
 
 
-class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
+class PathsDataSource(SequenceDataSource):
+    """The ``PathsDataSource`` implements default behaviours for data sources which expect the input to
+    :meth:`~flash.data.data_source.DataSource.load_data` to be either a directory with a subdirectory for each class or
+    a tuple containing list of files and corresponding list of targets.
 
-    def __init__(self, extensions: Optional[Tuple[str, ...]] = None):
-        super().__init__()
+    Args:
+        extensions: The file extensions supported by this data source (e.g. ``(".jpg", ".png")``).
+        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
+        :class:`~flash.data.data_source.LabelsState`.
+    """
+
+    def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):
+        super().__init__(labels=labels)
 
         self.extensions = extensions
 
     @staticmethod
     def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
-        """
-        Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
+        """Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
 
         Args:
             dir: Root directory path.
@@ -293,8 +346,10 @@ class PathsDataSource(SequenceDataSource):  # TODO: Sort out the typing here
 
 
 class TensorDataSource(SequenceDataSource[torch.Tensor]):
-    """"""  # TODO: Some docstring here
+    """The ``TensorDataSource`` is a ``SequenceDataSource`` which expects the input to
+    :meth:`~flash.data.data_source.DataSource.load_data` to be a sequence of ``torch.Tensor`` objects."""
 
 
 class NumpyDataSource(SequenceDataSource[np.ndarray]):
-    """"""  # TODO: Some docstring here
+    """The ``NumpyDataSource`` is a ``SequenceDataSource`` which expects the input to
+    :meth:`~flash.data.data_source.DataSource.load_data` to be a sequence of ``np.ndarray`` objects."""
