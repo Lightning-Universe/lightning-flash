@@ -26,7 +26,7 @@ See more: https://paperswithcode.com/task/semantic-segmentation
 Inference
 *********
 
-The :class:`~flash.vision.SemanticSegmentation` is already pre-trained on a generated dataset from `CARLA <http://carla.org/>`_ simulator.
+A :class:`~flash.vision.SemanticSegmentation` `fcn_resnet50` pre-trained on `CARLA <http://carla.org/>`_ simulator is provided for the inference example.
 
 
 Use the :class:`~flash.vision.SemanticSegmentation` pretrained model for inference on any string sequence using :func:`~flash.vision.SemanticSegmentation.predict`:
