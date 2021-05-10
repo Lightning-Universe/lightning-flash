@@ -3,6 +3,7 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Type, Union
 import torch
 import torchmetrics
 from pystiche import enc, loss, ops
+from pystiche.image import read_image
 from torch import nn
 from torch.nn.functional import interpolate
 from torch.optim.lr_scheduler import _LRScheduler
@@ -104,7 +105,7 @@ class StyleTransfer(Task):
 
     def __init__(
         self,
-        style_image: torch.Tensor,
+        style_image: Union[str, torch.Tensor],
         model: Optional[nn.Module] = None,
         multi_layer_encoder: Optional[enc.MultiLayerEncoder] = None,
         content_loss: Optional[Union[ops.ComparisonOperator, ops.OperatorContainer]] = None,
@@ -117,6 +118,9 @@ class StyleTransfer(Task):
         learning_rate: float = 1e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+        if isinstance(style_image, str):
+            style_image = read_image(style_image)
+
         if multi_layer_encoder is None:
             multi_layer_encoder = self.default_multi_layer_encoder()
 
