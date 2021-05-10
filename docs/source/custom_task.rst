@@ -21,18 +21,19 @@ which is stored as numpy arrays.
 
 .. testcode:: python
 
-    from typing import Any, List, Tuple
+    from typing import Any, Dict, List, Tuple
 
     import numpy as np
     import torch
     from pytorch_lightning import seed_everything
     from sklearn import datasets
     from sklearn.model_selection import train_test_split
-    from torch import nn
+    from torch import nn, Tensor
 
     import flash
     from flash.data.auto_dataset import AutoDataset
-    from flash.data.process import Postprocess, Preprocess
+    from flash.data.data_source import DataSource, DefaultDataKeys
+    from flash.data.process import Preprocess
 
     # set the random seeds.
     seed_everything(42)
@@ -41,9 +42,11 @@ which is stored as numpy arrays.
 2. The Task: Linear regression
 -------------------------------
 
-Here we create a basic linear regression task by subclassing
-:class:`~flash.core.model.Task`. For the majority of tasks, you will likely only need to
-override the ``__init__`` and ``forward`` methods.
+Here we create a basic linear regression task by subclassing :class:`~flash.core.model.Task`. For the majority of tasks,
+you will likely need to override the ``__init__``, ``forward``, and the ``{train,val,test,predict}_step`` methods. The
+``__init__`` should be overridden to configure the model and any additional arguments to be passed to the base
+:class:`~flash.core.model.Task`. ``forward`` may need to be overridden to apply the model forward pass to the inputs.
+The ``{train,val,test,predict}_step`` methods need to be overridden to extract the data from the input dictionary.
 
 .. testcode::
 
@@ -66,6 +69,8 @@ override the ``__init__`` and ``forward`` methods.
                 metrics=metrics,
                 learning_rate=learning_rate,
             )
+
+        def t
 
         def forward(self, x):
             # we don't actually need to override this method for this example
