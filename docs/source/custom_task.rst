@@ -21,22 +21,23 @@ which is stored as numpy arrays.
 
 .. testcode:: python
 
-    from typing import Any, Dict, List, Tuple
+    from typing import Any, Callable, Dict, List, Optional, Tuple
 
     import numpy as np
     import torch
     from pytorch_lightning import seed_everything
     from sklearn import datasets
-    from sklearn.model_selection import train_test_split
     from torch import nn, Tensor
 
     import flash
-    from flash.data.auto_dataset import AutoDataset
-    from flash.data.data_source import DataSource, DefaultDataKeys
+    from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
     from flash.data.process import Preprocess
+    from flash.data.transforms import ApplyToKeys
 
     # set the random seeds.
     seed_everything(42)
+
+    ND = np.ndarray
 
 
 2. The Task: Linear regression
@@ -46,13 +47,14 @@ Here we create a basic linear regression task by subclassing :class:`~flash.core
 you will likely need to override the ``__init__``, ``forward``, and the ``{train,val,test,predict}_step`` methods. The
 ``__init__`` should be overridden to configure the model and any additional arguments to be passed to the base
 :class:`~flash.core.model.Task`. ``forward`` may need to be overridden to apply the model forward pass to the inputs.
-The ``{train,val,test,predict}_step`` methods need to be overridden to extract the data from the input dictionary.
+It's best practice in flash for the data to be provide as a dictionary which maps string keys to their values. The
+``{train,val,test,predict}_step`` methods need to be overridden to extract the data from the input dictionary.
 
 .. testcode::
 
     class RegressionTask(flash.Task):
 
-        def __init__(self, num_inputs, learning_rate=0.001, metrics=None):
+        def __init__(self, num_inputs, learning_rate=0.2, metrics=None):
             # what kind of model do we want?
             model = nn.Linear(num_inputs, 1)
 
@@ -60,7 +62,7 @@ The ``{train,val,test,predict}_step`` methods need to be overridden to extract t
             loss_fn = torch.nn.functional.mse_loss
 
             # what optimizer to do we want?
-            optimizer = torch.optim.SGD
+            optimizer = torch.optim.Adam
 
             super().__init__(
                 model=model,
@@ -70,7 +72,30 @@ The ``{train,val,test,predict}_step`` methods need to be overridden to extract t
                 learning_rate=learning_rate,
             )
 
-        def t
+        def training_step(self, batch: Any, batch_idx: int) -> Any:
+            return super().training_step(
+                (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]),
+                batch_idx,
+            )
+
+        def validation_step(self, batch: Any, batch_idx: int) -> None:
+            return super().validation_step(
+                (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]),
+                batch_idx,
+            )
+
+        def test_step(self, batch: Any, batch_idx: int) -> None:
+            return super().test_step(
+                (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]),
+                batch_idx,
+            )
+
+        def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+            return super().predict_step(
+                batch[DefaultDataKeys.INPUT],
+                batch_idx,
+                dataloader_idx,
+            )
 
         def forward(self, x):
             # we don't actually need to override this method for this example
@@ -82,19 +107,16 @@ The ``{train,val,test,predict}_step`` methods need to be overridden to extract t
     Registries are Flash internal key-value database to store a mapping between a name and a function.
     In simple words, they are just advanced dictionary storing a function from a key string.
     They are useful to store list of backbones and make them available for a :class:`~flash.core.model.Task`.
-    Check out to learn more :ref:`registry`.
+    Check out :ref:`registry` to learn more.
 
 
 Where is the training step?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Most models can be trained simply by passing the output of ``forward``
-to the supplied ``loss_fn``, and then passing the resulting loss to the
-supplied ``optimizer``. If you need a more custom configuration, you can
-override ``step`` (which is called for training, validation, and
-testing) or override ``training_step``, ``validation_step``, and
-``test_step`` individually. These methods behave identically to PyTorch
-Lightning’s
+Most models can be trained simply by passing the output of ``forward`` to the supplied ``loss_fn``, and then passing the
+resulting loss to the supplied ``optimizer``. If you need a more custom configuration, you can override ``step`` (which
+is called for training, validation, and testing) or override ``training_step``, ``validation_step``, and ``test_step``
+individually. These methods behave identically to PyTorch Lightning’s
 `methods <https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#methods>`__.
 
 Here is the pseudo code behind :class:`~flash.core.model.Task` step.
@@ -112,75 +134,37 @@ Example::
         return output
 
 
-3.a The DataModule API
+3.a The DataSource API
 ----------------------
 
-Now that we have defined our ``RegressionTask``, we need to load our data.
-We will define a custom ``NumpyDataModule`` class subclassing :class:`~flash.data.data_module.DataModule`.
-This ``NumpyDataModule`` class will provide a ``from_xy_dataset`` helper ``classmethod`` to instantiate
-:class:`~flash.data.data_module.DataModule` from x, y numpy arrays.
+Now that we have defined our ``RegressionTask``, we need to load our data. We will define a custom ``NumpyDataSource``
+which extends :class:`~flash.data.data_source.DataSource`. The ``NumpyDataSource`` contains a ``load_data`` and
+``predict_load_data`` methods which handle the loading of a sequence of dictionaries from the input numpy arrays. When
+loading the train data (``if self.training:``), the ``NumpyDataSource`` sets the ``num_inputs`` attribute of the
+optional ``dataset`` argument. Any attributes that are set on the optional ``dataset`` argument will also be set on the
+generated ``dataset``.
 
-Here is how it would look:
-
-Example::
-
-    x, y = ...
-    preprocess = ...
-    datamodule = NumpyDataModule.from_xy_dataset(x, y, preprocess)
-
-Here is the ``NumpyDataModule`` implementation:
+Here is the ``NumpyDataSource`` implementation:
 
 Example::
 
-    from flash import DataModule
-    from flash.data.process import Preprocess
-    import numpy as np
+    class NumpyDataSource(DataSource[Tuple[ND, ND]]):
 
-    ND = np.ndarray
+    def load_data(self, data: Tuple[ND, ND], dataset: Optional[Any] = None) -> List[Dict[str, Any]]:
+        if self.training:
+            dataset.num_inputs = data[0].shape[1]
+        return [{DefaultDataKeys.INPUT: x, DefaultDataKeys.TARGET: y} for x, y in zip(*data)]
 
-    class NumpyDataModule(DataModule):
+    def predict_load_data(self, data: ND) -> List[Dict[str, Any]]:
+        return [{DefaultDataKeys.INPUT: x} for x in data]
 
-        @classmethod
-        def from_xy_dataset(
-            cls,
-            x: ND,
-            y: ND,
-            preprocess: Preprocess = None,
-            batch_size: int = 64,
-            num_workers: int = 0
-        ):
-
-            preprocess = preprocess or NumpyPreprocess()
-
-            x_train, x_test, y_train, y_test = train_test_split(
-                x, y, test_size=.20, random_state=0)
-
-            # Make sure to call ``from_load_data_inputs``.
-            # The ``train_load_data_input`` value will be given to ``Preprocess``
-            # ``train_load_data`` function.
-            dm = cls.from_load_data_inputs(
-                train_load_data_input=(x_train, y_train),
-                test_load_data_input=(x_test, y_test),
-                preprocess=preprocess,  # DON'T FORGET TO PROVIDE THE PREPROCESS
-                batch_size=batch_size,
-                num_workers=num_workers
-            )
-            # Some metatada can be accessed from ``train_ds`` directly.
-            dm.num_inputs = dm.train_dataset.num_inputs
-            return dm
-
-
-.. note::
-
-    The :class:`~flash.data.data_module.DataModule` provides a ``from_load_data_inputs`` helper function. This function will take care
-    of connecting the provided :class:`~flash.data.process.Preprocess` with the :class:`~flash.data.data_module.DataModule`.
-    Make sure to instantiate your :class:`~flash.data.data_module.DataModule` with this helper if you rely on :class:`~flash.data.process.Preprocess`
-    objects.
 
 3.b The Preprocess API
 ----------------------
 
-A :class:`~flash.data.process.Preprocess` object provides a series of hooks that can be overridden with custom data processing logic.
+Now that we have a :class:`~flash.data.data_source.DataSource` implementation, we can define our
+:class:`~flash.data.process.Preprocess`. The :class:`~flash.data.process.Preprocess` object provides a series of hooks
+that can be overridden with custom data processing logic and to which transforms can be attached.
 It allows the user much more granular control over their data processing flow.
 
 .. note::
@@ -195,35 +179,86 @@ It allows the user much more granular control over their data processing flow.
 
 Example::
 
-    import torch
-    from torch import Tensor
-    import numpy as np
-
-    ND = np.ndarray
-
     class NumpyPreprocess(Preprocess):
 
-        def load_data(self, data: Tuple[ND, ND], dataset: AutoDataset) -> List[Tuple[ND, float]]:
-            if self.training:
-                dataset.num_inputs = data[0].shape[1]
-            return [(x, y) for x, y in zip(*data)]
+        def __init__(
+            self,
+            train_transform: Optional[Dict[str, Callable]] = None,
+            val_transform: Optional[Dict[str, Callable]] = None,
+            test_transform: Optional[Dict[str, Callable]] = None,
+            predict_transform: Optional[Dict[str, Callable]] = None,
+        ):
+            super().__init__(
+                train_transform=train_transform,
+                val_transform=val_transform,
+                test_transform=test_transform,
+                predict_transform=predict_transform,
+                data_sources={DefaultDataSources.NUMPY: NumpyDataSource()},
+                default_data_source=DefaultDataSources.NUMPY,
+            )
 
-        def to_tensor_transform(self, sample: Any) -> Tuple[Tensor, Tensor]:
-            x, y = sample
-            x = torch.from_numpy(x).float()
-            y = torch.tensor(y, dtype=torch.float)
-            return x, y
+        @staticmethod
+        def to_float(x: Tensor):
+            return x.float()
 
-        def predict_load_data(self, data: ND) -> ND:
-            return data
+        @staticmethod
+        def format_targets(x: Tensor):
+            return x.unsqueeze(0)
 
-        def predict_to_tensor_transform(self, sample: ND) -> ND:
-            return torch.from_numpy(sample).float()
+        @property
+        def to_tensor(self) -> Dict[str, Callable]:
+            return {
+                "to_tensor_transform": nn.Sequential(
+                    ApplyToKeys(
+                        DefaultDataKeys.INPUT,
+                        torch.from_numpy,
+                        self.to_float,
+                    ),
+                    ApplyToKeys(
+                        DefaultDataKeys.TARGET,
+                        torch.as_tensor,
+                        self.to_float,
+                        self.format_targets,
+                    ),
+                ),
+            }
+
+        @property
+        def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
+            return self.to_tensor
+
+        @property
+        def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
+            return self.to_tensor
+
+        @property
+        def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
+            return self.to_tensor
+
+        @property
+        def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+            return self.to_tensor
+
+        def get_state_dict(self) -> Dict[str, Any]:
+            return self.transforms
+
+        @classmethod
+        def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
+            return cls(*state_dict)
 
 
 You now have a new customized Flash Task! Congratulations !
 
 You can fit, finetune, validate and predict directly with those objects.
+
+3.b The DataModule API
+----------------------
+
+Example::
+
+    class NumpyDataModule(flash.DataModule):
+
+        preprocess_cls = NumpyPreprocess
 
 4. Fitting
 ----------

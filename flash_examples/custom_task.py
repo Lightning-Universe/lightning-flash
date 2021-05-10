@@ -138,11 +138,11 @@ class NumpyPreprocess(Preprocess):
         return self.to_tensor
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {}
+        return self.transforms
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        return cls()
+        return cls(*state_dict)
 
 
 class NumpyDataModule(flash.DataModule):
