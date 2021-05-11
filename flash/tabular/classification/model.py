@@ -17,7 +17,7 @@ import torch
 from torch.nn import functional as F
 from torchmetrics import Metric
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationTask, Labels, Probabilities
 from flash.data.data_source import DefaultDataKeys
 from flash.data.process import Serializer
 from flash.utils.imports import _TABNET_AVAILABLE
@@ -73,7 +73,7 @@ class TabularClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            serializer=serializer or Probabilities(),
         )
 
         self.save_hyperparameters()
@@ -96,8 +96,6 @@ class TabularClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        import pdb
-        pdb.set_trace()
         batch = (batch[DefaultDataKeys.INPUT])
         return self(batch)
 

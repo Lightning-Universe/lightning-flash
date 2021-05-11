@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.classification import LabelsState
 from flash.data.data_module import DataModule
 from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.data.process import Deserializer, Preprocess
+from flash.data.process import Deserializer, Postprocess, Preprocess
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
     _generate_codes,
@@ -151,7 +151,7 @@ class TabularDeserializer(Deserializer):
         cat_vars = np.stack(cat_vars, 1)
         num_vars = np.stack(num_vars, 1)
 
-        return [{DefaultDataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+        return [{DefaultDataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
 
 
 class TabularPreprocess(Preprocess):
@@ -229,10 +229,17 @@ class TabularPreprocess(Preprocess):
         return cls(**state_dict)
 
 
+class TabularPostprocess(Postprocess):
+
+    def uncollate(self, batch: Any) -> Any:
+        return batch
+
+
 class TabularData(DataModule):
     """Data module for tabular tasks"""
 
     preprocess_cls = TabularPreprocess
+    postprocess_cls = TabularPostprocess
 
     @property
     def codes(self) -> Dict[str, str]:

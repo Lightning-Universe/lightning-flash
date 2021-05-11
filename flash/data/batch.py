@@ -200,6 +200,10 @@ class _PreProcessor(torch.nn.Module):
             if self.apply_per_sample_transform:
                 with self._per_sample_transform_context:
                     _samples = []
+
+                    if isinstance(samples, Mapping):
+                        samples = [samples]
+
                     for sample in samples:
                         sample = self.per_sample_transform(sample)
                         if self.on_device:
@@ -268,7 +272,10 @@ class _PostProcessor(torch.nn.Module):
         if self.serializer is not None:
             final_preds = [self.serializer(sample) for sample in final_preds]
 
-        final_preds = type(uncollated)(final_preds)
+        if isinstance(uncollated, Tensor):
+            final_preds = torch.stack(final_preds)
+        else:
+            final_preds = type(final_preds)(final_preds)
 
         if self.save_fn:
             if self.save_per_sample:
@@ -277,6 +284,8 @@ class _PostProcessor(torch.nn.Module):
             else:
                 self.save_fn(final_preds)
         else:
+            if len(final_preds) == 1:
+                return final_preds[0]
             return final_preds
 
     def __str__(self) -> str:
