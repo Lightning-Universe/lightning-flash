@@ -17,6 +17,7 @@ __all__ = ["StyleTransfer"]
 
 
 class Interpolate(nn.Module):
+
     def __init__(self, scale_factor: float = 1.0, mode: str = "nearest") -> None:
         super().__init__()
         self.scale_factor = scale_factor
@@ -33,6 +34,7 @@ class Interpolate(nn.Module):
 
 
 class Conv(nn.Module):
+
     def __init__(
         self,
         in_channels: int,
@@ -66,6 +68,7 @@ class Conv(nn.Module):
 
 
 class Residual(nn.Module):
+
     def __init__(self, channels: int) -> None:
         super().__init__()
         self.conv1 = Conv(channels, channels, kernel_size=3)
@@ -77,16 +80,19 @@ class Residual(nn.Module):
 
 
 class FloatToUint8Range(nn.Module):
+
     def forward(self, input):
         return input * 255.0
 
 
 class Uint8ToFloatRange(nn.Module):
+
     def forward(self, input):
         return input / 255.0
 
 
 class Transformer(nn.Module):
+
     def __init__(self) -> None:
         super().__init__()
         self.encoder = nn.Sequential(
@@ -115,6 +121,7 @@ class Transformer(nn.Module):
 
 
 class StyleTransfer(Task):
+
     def __init__(
         self,
         style_image: Union[str, torch.Tensor],
@@ -180,7 +187,9 @@ class StyleTransfer(Task):
     def default_style_loss(
         self, multi_layer_encoder: Optional[enc.MultiLayerEncoder] = None
     ) -> ops.MultiLayerEncodingOperator:
+
         class GramOperator(ops.GramOperator):
+
             def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
                 repr = super().enc_to_repr(enc)
                 num_channels = repr.size()[1]

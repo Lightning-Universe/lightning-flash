@@ -16,6 +16,7 @@ __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
 class StyleTransferPreprocess(ImageClassificationPreprocess):
+
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
