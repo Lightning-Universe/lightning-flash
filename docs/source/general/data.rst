@@ -285,6 +285,14 @@ __________
 .. autoclass:: flash.data.data_source.DataSource
     :members:
 
+.. autoclass:: flash.data.data_source.DefaultDataSources
+    :members:
+    :undoc-members:
+
+.. autoclass:: flash.data.data_source.DefaultDataKeys
+    :members:
+    :undoc-members:
+
 
 ----------
 
