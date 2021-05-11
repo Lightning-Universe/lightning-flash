@@ -117,7 +117,7 @@ def test_image_classifier_finetune(tmpdir):
             expected_t_shape = 5
             assert sample["video"].shape[1] == expected_t_shape
 
-        assert len(VideoClassifier.available_models()) > 5
+        assert len(VideoClassifier.available_backbones()) > 5
 
         train_transform = {
             "post_tensor_transform": Compose([
