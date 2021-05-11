@@ -77,6 +77,16 @@ class Residual(nn.Module):
         return output + input
 
 
+class FloatToUint8Range(nn.Module):
+    def forward(self, input):
+        return input * 255.0
+
+
+class Uint8ToFloatRange(nn.Module):
+    def forward(self, input):
+        return input / 255.0
+
+
 class Transformer(nn.Module):
 
     def __init__(self) -> None:
@@ -97,8 +107,13 @@ class Transformer(nn.Module):
             Conv(32, 3, kernel_size=9, norm=False, activation=False),
         )
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        return self.decoder(self.encoder(input))
+        self.preprocessor = FloatToUint8Range()
+        self.postprocessor = Uint8ToFloatRange()
+
+    def forward(self, input):
+        input = self.preprocessor(input)
+        output = self.decoder(self.encoder(input))
+        return self.postprocessor(output)
 
 
 class StyleTransfer(Task):
