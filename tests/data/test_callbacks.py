@@ -157,8 +157,9 @@ def test_base_viz(tmpdir):
 
         for _ in range(num_tests):
             for fcn_name in _CALLBACK_FUNCS:
+                dm.data_fetcher.reset()
                 fcn = getattr(dm, f"show_{stage}_batch")
-                fcn(fcn_name, reset=True)
+                fcn(fcn_name, reset=False)
 
         is_predict = stage == "predict"
 

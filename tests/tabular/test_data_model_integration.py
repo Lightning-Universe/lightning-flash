@@ -32,9 +32,9 @@ def test_classification(tmpdir):
     val_data_frame = TEST_DF_1.copy()
     test_data_frame = TEST_DF_1.copy()
     data = TabularData.from_data_frame(
-        categorical_cols=["category"],
-        numerical_cols=["scalar_a", "scalar_b"],
-        target_col="label",
+        categorical_fields=["category"],
+        numerical_fields=["scalar_a", "scalar_b"],
+        target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
         test_data_frame=test_data_frame,
