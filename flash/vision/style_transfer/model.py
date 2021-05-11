@@ -1,7 +1,6 @@
-from typing import Any, Dict, Mapping, NoReturn, Optional, Sequence, Type, Union
+from typing import Any, Dict, Mapping, NoReturn, Optional, Type, Union
 
 import torch
-import torchmetrics
 from _utils import raise_not_supported
 from pystiche import enc, loss, ops
 from pystiche.image import read_image
