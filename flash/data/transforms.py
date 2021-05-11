@@ -19,6 +19,14 @@ from flash.data.utils import convert_to_modules
 
 
 class ApplyToKeys(nn.Sequential):
+    """The ``ApplyToKeys`` class is an ``nn.Sequential`` which applies the given transforms to the given keys from the
+    input. When a single key is given, a single value will be passed to the transforms. When multiple keys are given,
+    the corresponding values will be passed to the transforms as a list.
+
+    Args:
+        keys: The key (``str``) or sequence of keys (``Sequence[str]``) to extract and forward to the transforms.
+        args: The transforms, passed to the ``nn.Sequential`` super constructor.
+    """
 
     def __init__(self, keys: Union[str, Sequence[str]], *args):
         super().__init__(*[convert_to_modules(arg) for arg in args])
@@ -47,7 +55,11 @@ class ApplyToKeys(nn.Sequential):
 class KorniaParallelTransforms(nn.Sequential):
     """The ``KorniaParallelTransforms`` class is an ``nn.Sequential`` which will apply the given transforms to each
     input (to ``.forward``) in parallel, whilst sharing the random state (``._params``). This should be used when
-    multiple elements need to be augmented in the same way (e.g. an image and corresponding segmentation mask)."""
+    multiple elements need to be augmented in the same way (e.g. an image and corresponding segmentation mask).
+
+    Args:
+        args: The transforms, passed to the ``nn.Sequential`` super constructor.
+    """
 
     def __init__(self, *args):
         super().__init__(*[convert_to_modules(arg) for arg in args])

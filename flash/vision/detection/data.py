@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
-from torch.nn import Module
 from torchvision.datasets.folder import default_loader
 
+from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.data.process import Preprocess
@@ -146,28 +146,69 @@ class ObjectDetectionData(DataModule):
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
         val_folder: Optional[str] = None,
         val_ann_file: Optional[str] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        preprocess: Preprocess = None,
-        val_split: Optional[float] = None,
+        **preprocess_kwargs: Any,
     ):
+        """Creates a :class:`~flash.vision.detection.data.ObjectDetectionData` object from the given data
+        folders and corresponding target folders.
+
+        Args:
+            train_folder: The folder containing the train data.
+            train_ann_file: The COCO format annotation file.
+            val_folder: The folder containing the validation data.
+            val_ann_file: The COCO format annotation file.
+            test_folder: The folder containing the test data.
+            test_ann_file: The COCO format annotation file.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.data.data.Preprocess` to pass to the
+                :class:`~flash.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
+                and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = SemanticSegmentationData.from_coco(
+                train_folder="train_folder",
+                train_ann_file="annotations.json",
+            )
+        """
         return cls.from_data_source(
-            data_source="coco",
-            train_data=(train_folder, train_ann_file) if train_folder else None,
-            val_data=(val_folder, val_ann_file) if val_folder else None,
-            test_data=(test_folder, test_ann_file) if test_folder else None,
+            "coco",
+            (train_folder, train_ann_file) if train_folder else None,
+            (val_folder, val_ann_file) if val_folder else None,
+            (test_folder, test_ann_file) if test_folder else None,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
+            data_fetcher=data_fetcher,
             preprocess=preprocess,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            **preprocess_kwargs,
         )

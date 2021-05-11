@@ -87,9 +87,9 @@ def test_tabular_data(tmpdir):
     val_data_frame = TEST_DF_2.copy()
     test_data_frame = TEST_DF_2.copy()
     dm = TabularData.from_data_frame(
-        categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
-        target_col="label",
+        categorical_fields=["category"],
+        numerical_fields=["scalar_b", "scalar_b"],
+        target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
         test_data_frame=test_data_frame,
@@ -114,9 +114,9 @@ def test_categorical_target(tmpdir):
         df["label"] = df["label"].astype(str)
 
     dm = TabularData.from_data_frame(
-        categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
-        target_col="label",
+        categorical_fields=["category"],
+        numerical_fields=["scalar_b", "scalar_b"],
+        target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
         test_data_frame=test_data_frame,
@@ -137,9 +137,9 @@ def test_from_data_frame(tmpdir):
     val_data_frame = TEST_DF_2.copy()
     test_data_frame = TEST_DF_2.copy()
     dm = TabularData.from_data_frame(
-        categorical_cols=["category"],
-        numerical_cols=["scalar_b", "scalar_b"],
-        target_col="label",
+        categorical_fields=["category"],
+        numerical_fields=["scalar_b", "scalar_b"],
+        target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
         test_data_frame=test_data_frame,
@@ -165,7 +165,7 @@ def test_from_csv(tmpdir):
     dm = TabularData.from_csv(
         categorical_fields=["category"],
         numerical_fields=["scalar_b", "scalar_b"],
-        target_field="label",
+        target_fields="label",
         train_file=str(train_csv),
         val_file=str(val_csv),
         test_file=str(test_csv),
@@ -185,9 +185,9 @@ def test_empty_inputs():
     train_data_frame = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
         TabularData.from_data_frame(
-            numerical_cols=None,
-            categorical_cols=None,
-            target_col="label",
+            numerical_fields=None,
+            categorical_fields=None,
+            target_fields="label",
             train_data_frame=train_data_frame,
             num_workers=0,
             batch_size=1,
