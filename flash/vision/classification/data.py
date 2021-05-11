@@ -160,6 +160,12 @@ class ImageClassificationPreprocess(Preprocess):
                 "post_tensor_transform": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
+    def default_test_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
+        return self.default_val_transforms(image_size)
+
+    def default_predict_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
+        return self.default_val_transforms(image_size)
+
     def _resolve_transforms(
         self,
         train_transform: Optional[Union[str, Dict]] = 'default',
@@ -176,10 +182,10 @@ class ImageClassificationPreprocess(Preprocess):
             val_transform = self.default_val_transforms(image_size)
 
         if not test_transform or test_transform == 'default':
-            test_transform = self.default_val_transforms(image_size)
+            test_transform = self.default_test_transforms(image_size)
 
         if not predict_transform or predict_transform == 'default':
-            predict_transform = self.default_val_transforms(image_size)
+            predict_transform = self.default_predict_transforms(image_size)
 
         return (
             train_transform,
