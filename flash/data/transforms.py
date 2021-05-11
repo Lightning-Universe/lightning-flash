@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Dict, Mapping, Sequence, Union
 
+import torch
 from torch import nn
+from torch.utils.data._utils.collate import default_collate
 
 from flash.data.utils import convert_to_modules
 
@@ -77,3 +79,13 @@ class KorniaParallelTransforms(nn.Sequential):
             if hasattr(transform, "_params") and bool(transform._params):
                 transform._params = None
         return result
+
+
+def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """Kornia transforms add batch dimension which need to be removed. This function removes that dimension and then
+    applies ``torch.utils.data._utils.collate.default_collate``."""
+    for sample in samples:
+        for key in sample.keys():
+            if torch.is_tensor(sample[key]):
+                sample[key] = sample[key].squeeze(0)
+    return default_collate(samples)
