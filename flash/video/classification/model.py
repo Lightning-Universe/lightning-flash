@@ -27,9 +27,10 @@ from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
+from flash.data.process import Serializer
 from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
 
-_VIDEO_CLASSIFIER_MODELS = FlashRegistry("backbones")
+_VIDEO_CLASSIFIER_BACKBONESS = FlashRegistry("backbones")
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.models import hub
@@ -37,7 +38,7 @@ if _PYTORCHVIDEO_AVAILABLE:
         if "__" not in fn_name:
             fn = getattr(hub, fn_name)
             if isinstance(fn, FunctionType):
-                _VIDEO_CLASSIFIER_MODELS(fn=fn)
+                _VIDEO_CLASSIFIER_BACKBONESS(fn=fn)
 
 
 class VideoClassifierFinetuning(BaseFinetuning):
@@ -81,19 +82,20 @@ class VideoClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
-    models: FlashRegistry = _VIDEO_CLASSIFIER_MODELS
+    backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONESS
 
     def __init__(
         self,
         num_classes: int,
-        model: Union[str, nn.Module] = "slow_r50",
-        model_kwargs: Optional[Dict] = None,
+        backbone: Union[str, nn.Module] = "slow_r50",
+        backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
+        serializer: Optional[Serializer] = None
     ):
         super().__init__(
             model=None,
@@ -101,23 +103,24 @@ class VideoClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            serializer=serializer,
         )
 
         self.save_hyperparameters()
 
-        if not model_kwargs:
-            model_kwargs = {}
+        if not backbone_kwargs:
+            backbone_kwargs = {}
 
-        model_kwargs["pretrained"] = pretrained
-        model_kwargs["head_activation"] = None
+        backbone_kwargs["pretrained"] = pretrained
+        backbone_kwargs["head_activation"] = None
 
-        if isinstance(model, nn.Module):
-            self.model = model
-        elif isinstance(model, str):
-            self.model = self.models.get(model)(**model_kwargs)
-            num_features = self.model.blocks[-1].proj.out_features
+        if isinstance(backbone, nn.Module):
+            self.backbone = backbone
+        elif isinstance(backbone, str):
+            self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
+            num_features = self.backbone.blocks[-1].proj.out_features
         else:
-            raise MisconfigurationException(f"model should be either a string or a nn.Module. Found: {model}")
+            raise MisconfigurationException(f"backbone should be either a string or a nn.Module. Found: {backbone}")
 
         self.head = head or nn.Sequential(
             nn.Flatten(),
@@ -140,7 +143,7 @@ class VideoClassifier(ClassificationTask):
         return super().step((batch["video"], batch["label"]), batch_idx)
 
     def forward(self, x: Any) -> Any:
-        x = self.model(x)
+        x = self.backbone(x)
         if self.head is not None:
             x = self.head(x)
         return x

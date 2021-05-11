@@ -19,6 +19,7 @@ import torch
 from torch.utils.data.sampler import RandomSampler
 
 import flash
+from flash import _PROJECT_ROOT
 from flash.core.classification import Labels
 from flash.core.finetuning import NoFreeze
 from flash.data.utils import download_data
@@ -34,8 +35,6 @@ else:
     sys.exit(0)
 
 if __name__ == '__main__':
-
-    _PATH_ROOT = os.path.dirname(os.path.abspath(__file__))
 
     # 1. Download a video clip dataset. Find more dataset at https://pytorchvideo.readthedocs.io/en/latest/data.html
     download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
@@ -73,9 +72,9 @@ if __name__ == '__main__':
 
     # 3. Load the data from directories.
     datamodule = VideoClassificationData.from_folders(
-        train_folder=os.path.join(_PATH_ROOT, "data/kinetics/train"),
-        val_folder=os.path.join(_PATH_ROOT, "data/kinetics/val"),
-        predict_folder=os.path.join(_PATH_ROOT, "data/kinetics/predict"),
+        train_folder=os.path.join(_PROJECT_ROOT, "data/kinetics/train"),
+        val_folder=os.path.join(_PROJECT_ROOT, "data/kinetics/val"),
+        predict_folder=os.path.join(_PROJECT_ROOT, "data/kinetics/predict"),
         train_transform=make_transform(train_post_tensor_transform),
         val_transform=make_transform(val_post_tensor_transform),
         predict_transform=make_transform(val_post_tensor_transform),
@@ -91,16 +90,17 @@ if __name__ == '__main__':
     # out: ['efficient_x3d_s', 'efficient_x3d_xs', ... ,slowfast_r50', 'x3d_m', 'x3d_s', 'x3d_xs']
     print(VideoClassifier.get_model_details("x3d_xs"))
 
-    # 5. Build the model - `x3d_xs` comes with `nn.Softmax` by default for their `head_activation`.
-    model = VideoClassifier(model="x3d_xs", num_classes=datamodule.num_classes)
-    model.serializer = Labels()
+    # 5. Build the backbone.
+    model = VideoClassifier(
+        backbone="x3d_xs", num_classes=datamodule.num_classes, serializer=Labels(), pretrained=False
+    )
 
     # 6. Finetune the model
-    trainer = flash.Trainer(max_epochs=3)
+    trainer = flash.Trainer(fast_dev_run=True)
     trainer.finetune(model, datamodule=datamodule, strategy=NoFreeze())
 
     trainer.save_checkpoint("video_classification.pt")
 
     # 7. Make a prediction
-    predictions = model.predict(os.path.join(_PATH_ROOT, "data/kinetics/predict"))
+    predictions = model.predict(os.path.join(_PROJECT_ROOT, "data/kinetics/predict"))
     print(predictions)
