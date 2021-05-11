@@ -21,7 +21,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.classification import LabelsState
 from flash.data.data_module import DataModule
 from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.data.process import Preprocess
+from flash.data.process import Deserializer, Preprocess
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
     _generate_codes,
@@ -103,6 +103,57 @@ class TabularCSVDataSource(TabularDataFrameDataSource):
         return super().predict_load_data(pd.read_csv(data), dataset=dataset)
 
 
+class TabularDeserializer(Deserializer):
+
+    def __init__(
+        self,
+        cat_cols: Optional[List[str]] = None,
+        num_cols: Optional[List[str]] = None,
+        target_col: Optional[str] = None,
+        mean: Optional[DataFrame] = None,
+        std: Optional[DataFrame] = None,
+        codes: Optional[Dict[str, Any]] = None,
+        target_codes: Optional[Dict[str, Any]] = None,
+        classes: Optional[List[str]] = None,
+        is_regression: bool = True
+    ):
+
+        self.cat_cols = cat_cols
+        self.num_cols = num_cols
+        self.target_col = target_col
+        self.mean = mean
+        self.std = std
+        self.codes = codes
+        self.target_codes = target_codes
+        self.classes = classes
+        self.is_regression = is_regression
+
+    @staticmethod
+    def _convert_row(row):
+        _row = []
+        for c in row:
+            try:
+                _row.append(float(c))
+            except Exception:
+                _row.append(c)
+        return _row
+
+    def deserialize(self, data: str) -> Any:
+        columns = data.split("\n")[0].split(',')
+        df = pd.DataFrame([TabularDeserializer._convert_row(x.split(',')[1:]) for x in data.split('\n')[1:-1]],
+                          columns=columns)
+        df = _pre_transform([df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col,
+                            self.target_codes)[0]
+
+        cat_vars = _to_cat_vars_numpy(df, self.cat_cols)
+        num_vars = _to_num_vars_numpy(df, self.num_cols)
+
+        cat_vars = np.stack(cat_vars, 1)
+        num_vars = np.stack(num_vars, 1)
+
+        return [{DefaultDataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+
+
 class TabularPreprocess(Preprocess):
 
     def __init__(
@@ -120,6 +171,7 @@ class TabularPreprocess(Preprocess):
         target_codes: Optional[Dict[str, Any]] = None,
         classes: Optional[List[str]] = None,
         is_regression: bool = True,
+        deserializer: Optional[Deserializer] = None
     ):
         self.cat_cols = cat_cols
         self.num_cols = num_cols
@@ -145,6 +197,17 @@ class TabularPreprocess(Preprocess):
                 ),
             },
             default_data_source=DefaultDataSources.CSV,
+            deserializer=deserializer or TabularDeserializer(
+                cat_cols=cat_cols,
+                num_cols=num_cols,
+                target_col=target_col,
+                mean=mean,
+                std=std,
+                codes=codes,
+                target_codes=target_codes,
+                classes=classes,
+                is_regression=is_regression
+            )
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:

@@ -56,8 +56,6 @@ class TabularClassifier(ClassificationTask):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **tabnet_kwargs,
     ):
-        self.save_hyperparameters()
-
         cat_dims, cat_emb_dim = zip(*embedding_sizes) if len(embedding_sizes) else ([], [])
         model = TabNet(
             input_dim=num_features,
@@ -78,6 +76,8 @@ class TabularClassifier(ClassificationTask):
             serializer=serializer,
         )
 
+        self.save_hyperparameters()
+
     def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         x = torch.cat([x for x in x_in if x.numel()], dim=1)
@@ -96,6 +96,8 @@ class TabularClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        import pdb
+        pdb.set_trace()
         batch = (batch[DefaultDataKeys.INPUT])
         return self(batch)
 
