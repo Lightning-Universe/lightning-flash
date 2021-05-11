@@ -185,31 +185,6 @@ Example::
         # Set ``preprocess_cls`` with your custom ``preprocess``.
         preprocess_cls = ImageClassificationPreprocess
 
-        @classmethod
-        def from_folders(
-            cls,
-            train_folder: Optional[str],
-            val_folder: Optional[str],
-            test_folder: Optional[str],
-            predict_folder: Optional[str],
-            preprocess: Optional[Preprocess] = None,
-            **kwargs
-        ):
-
-            # Set a custom ``Preprocess`` if none was provided
-            preprocess = preprocess or cls.preprocess_cls()
-
-            # {stage}_load_data_input will be given to your
-            # ``Preprocess`` ``{stage}_load_data`` function.
-            return cls.from_load_data_inputs(
-                    train_load_data_input=train_folder,
-                    val_load_data_input=val_folder,
-                    test_load_data_input=test_folder,
-                    predict_load_data_input=predict_folder,
-                    preprocess=preprocess,  # DON'T FORGET TO PASS THE CREATED PREPROCESS
-                    **kwargs,
-            )
-
 
 3. The Preprocess
 __________________
@@ -218,9 +193,12 @@ Finally, implement your custom ``ImageClassificationPreprocess``.
 
 Example::
 
+    from typing import Any, Callable, Dict, Optional, Tuple, Union
     import os
     import numpy as np
+    from flash.data.data_source import DefaultDataSources
     from flash.data.process import Preprocess
+    from flash.vision.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
     from PIL import Image
     import torchvision.transforms as T
     from torch import Tensor
@@ -231,29 +209,32 @@ Example::
 
         to_tensor = T.ToTensor()
 
-        def load_data(self, folder: str, dataset: AutoDataset) -> Iterable:
-            # The AutoDataset is optional but can be useful to save some metadata.
+        def __init__(
+            self,
+            train_transform: Optional[Dict[str, Callable]] = None,
+            val_transform: Optional[Dict[str, Callable]] = None,
+            test_transform: Optional[Dict[str, Callable]] = None,
+            predict_transform: Optional[Dict[str, Callable]] = None,
+        ):
+            super().__init__(
+                train_transform=train_transform,
+                val_transform=val_transform,
+                test_transform=test_transform,
+                predict_transform=predict_transform,
+                data_sources={
+                    DefaultDataSources.PATHS: ImagePathsDataSource(),
+                    DefaultDataSources.NUMPY: ImageNumpyDataSource(),
+                    DefaultDataSources.TENSOR: ImageTensorDataSource(),
+                },
+                default_data_source=DefaultDataSources.PATHS,
+            )
 
-            # metadata contains the image path and its corresponding label with the following structure:
-            # [(image_path_1, label_1), ... (image_path_n, label_n)].
-            metadata = make_dataset(folder)
+        def get_state_dict(self) -> Dict[str, Any]:
+            return {**self.transforms}
 
-            # for the train ``AutoDataset``, we want to store the ``num_classes``.
-            if self.training:
-                dataset.num_classes = len(np.unique([m[1] for m in metadata]))
-
-            return metadata
-
-        def predict_load_data(self, predict_folder: str) -> Iterable:
-            # This returns [image_path_1, ... image_path_m].
-            return os.listdir(folder)
-
-        def load_sample(self, sample: Union[str, Tuple[str, int]]) -> Tuple[Image, int]
-            if self.predicting:
-                return Image.open(image_path)
-            else:
-                image_path, label = sample
-                return Image.open(image_path), label
+        @classmethod
+        def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
+            return cls(**state_dict)
 
         def to_tensor_transform(
             self,
