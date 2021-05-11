@@ -252,9 +252,9 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
     data_pipeline = DataPipeline(preprocess=preprocess)
 
     data_pipeline.worker_preprocessor(RunningStage.TRAINING)
-    with pytest.raises(MisconfigurationException, match="are mutual exclusive"):
+    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
         data_pipeline.worker_preprocessor(RunningStage.VALIDATING)
-    with pytest.raises(MisconfigurationException, match="are mutual exclusive"):
+    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
         data_pipeline.worker_preprocessor(RunningStage.TESTING)
     data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
