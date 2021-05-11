@@ -425,8 +425,8 @@ class Task(LightningModule):
         return registry.available_keys()
 
     @classmethod
-    def get_model_details(cls, key) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+    def get_backbone_details(cls, key) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
         if registry is None:
             return []
         return [v for v in inspect.signature(registry.get(key)).parameters.items()]

@@ -11,14 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Mapping, Sequence, Union
+from typing import Any, Dict, Mapping, Sequence, Union
 
+import torch
 from torch import nn
+from torch.utils.data._utils.collate import default_collate
 
 from flash.data.utils import convert_to_modules
 
 
 class ApplyToKeys(nn.Sequential):
+    """The ``ApplyToKeys`` class is an ``nn.Sequential`` which applies the given transforms to the given keys from the
+    input. When a single key is given, a single value will be passed to the transforms. When multiple keys are given,
+    the corresponding values will be passed to the transforms as a list.
+
+    Args:
+        keys: The key (``str``) or sequence of keys (``Sequence[str]``) to extract and forward to the transforms.
+        args: The transforms, passed to the ``nn.Sequential`` super constructor.
+    """
 
     def __init__(self, keys: Union[str, Sequence[str]], *args):
         super().__init__(*[convert_to_modules(arg) for arg in args])
@@ -47,7 +57,11 @@ class ApplyToKeys(nn.Sequential):
 class KorniaParallelTransforms(nn.Sequential):
     """The ``KorniaParallelTransforms`` class is an ``nn.Sequential`` which will apply the given transforms to each
     input (to ``.forward``) in parallel, whilst sharing the random state (``._params``). This should be used when
-    multiple elements need to be augmented in the same way (e.g. an image and corresponding segmentation mask)."""
+    multiple elements need to be augmented in the same way (e.g. an image and corresponding segmentation mask).
+
+    Args:
+        args: The transforms, passed to the ``nn.Sequential`` super constructor.
+    """
 
     def __init__(self, *args):
         super().__init__(*[convert_to_modules(arg) for arg in args])
@@ -65,3 +79,13 @@ class KorniaParallelTransforms(nn.Sequential):
             if hasattr(transform, "_params") and bool(transform._params):
                 transform._params = None
         return result
+
+
+def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """Kornia transforms add batch dimension which need to be removed. This function removes that dimension and then
+    applies ``torch.utils.data._utils.collate.default_collate``."""
+    for sample in samples:
+        for key in sample.keys():
+            if torch.is_tensor(sample[key]):
+                sample[key] = sample[key].squeeze(0)
+    return default_collate(samples)

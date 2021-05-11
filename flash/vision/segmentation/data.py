@@ -141,14 +141,6 @@ class SemanticSegmentationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    def collate(self, samples: Sequence[Dict[str, Any]]) -> Any:
-        # todo: Kornia transforms add batch dimension which need to be removed
-        for sample in samples:
-            for key in sample.keys():
-                if torch.is_tensor(sample[key]):
-                    sample[key] = sample[key].squeeze(0)
-        return super().collate(samples)
-
     @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_train_transforms(self.image_size)
@@ -196,13 +188,56 @@ class SemanticSegmentationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: BaseDataFetcher = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
+        """Creates a :class:`~flash.vision.segmentation.data.SemanticSegmentationData` object from the given data
+        folders and corresponding target folders.
+
+        Args:
+            train_folder: The folder containing the train data.
+            train_target_folder: The folder containing the train targets (targets must have the same file name as their
+                corresponding inputs).
+            val_folder: The folder containing the validation data.
+            val_target_folder: The folder containing the validation targets (targets must have the same file name as
+                their corresponding inputs).
+            test_folder: The folder containing the test data.
+            test_target_folder: The folder containing the test targets (targets must have the same file name as their
+                corresponding inputs).
+            predict_folder: The folder containing the predict data.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.data.data.Preprocess` to pass to the
+                :class:`~flash.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
+                and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = SemanticSegmentationData.from_folders(
+                train_folder="train_folder",
+                train_target_folder="train_masks",
+            )
+        """
         return cls.from_data_source(
             DefaultDataSources.PATHS,
             (train_folder, train_target_folder),

@@ -11,13 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict
+from typing import Any, Callable, Dict, Sequence
 
 import torch
 import torchvision
 from torch import nn
 
 from flash.data.transforms import ApplyToKeys
+
+
+def collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence[Any]]:
+    return {key: [sample[key] for sample in samples] for key in samples[0]}
 
 
 def default_transforms() -> Dict[str, Callable]:
@@ -35,4 +39,5 @@ def default_transforms() -> Dict[str, Callable]:
                 )
             ),
         ),
+        "collate": collate,
     }

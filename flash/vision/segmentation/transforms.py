@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 
 from flash.data.data_source import DefaultDataKeys
-from flash.data.transforms import ApplyToKeys, KorniaParallelTransforms
+from flash.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
@@ -37,6 +37,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
             ),
             ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
+        "collate": kornia_collate,
         "per_batch_transform_on_device": ApplyToKeys(
             DefaultDataKeys.INPUT,
             K.enhance.Normalize(0., 255.),
@@ -54,5 +55,6 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             ),
             ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
+        "collate": kornia_collate,
         "per_batch_transform_on_device": ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
     }

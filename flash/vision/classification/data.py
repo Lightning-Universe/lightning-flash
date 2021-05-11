@@ -18,7 +18,6 @@ import torch
 from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data._utils.collate import default_collate
 
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
@@ -66,14 +65,6 @@ class ImageClassificationPreprocess(Preprocess):
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
-
-    def collate(self, samples: Sequence[Dict[str, Any]]) -> Any:
-        # todo: Kornia transforms add batch dimension which need to be removed
-        for sample in samples:
-            for key in sample.keys():
-                if torch.is_tensor(sample[key]):
-                    sample[key] = sample[key].squeeze(0)
-        return super().collate(samples)
 
     @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:

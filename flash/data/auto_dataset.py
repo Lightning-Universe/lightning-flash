@@ -27,20 +27,19 @@ DATA_TYPE = TypeVar('DATA_TYPE')
 
 
 class BaseAutoDataset(Generic[DATA_TYPE]):
-
-    DATASET_KEY = "dataset"
-    """This class is used to encapsulate a Preprocess Object ``load_data`` and ``load_sample`` functions. ``load_data``
-    will be called within the ``__init__`` function of the AutoDataset if ``running_stage`` is provided and
-    ``load_sample`` within ``__getitem__``.
+    """The ``BaseAutoDataset`` class wraps the output of a call to :meth:`~flash.data.data_source.DataSource.load_data`
+    and a :class:`~fash.data.data_source.DataSource` and provides the ``_call_load_sample`` method to call
+    :meth:`~flash.data.data_source.DataSource.load_sample` with the correct
+    :class:`~flash.data.utils.CurrentRunningStageFuncContext` for the current ``running_stage``. Inheriting classes are
+    responsible for extracting samples from ``data`` to be given to ``_call_load_sample``.
 
     Args:
-
-        data: The output of a call to :meth:`~flash.data.data_source.load_data`.
-
+        data: The output of a call to :meth:`~flash.data.data_source.DataSource.load_data`.
         data_source: The :class:`~flash.data.data_source.DataSource` which has the ``load_sample`` method.
-
         running_stage: The current running stage.
     """
+
+    DATASET_KEY = "dataset"
 
     def __init__(
         self,
@@ -93,6 +92,8 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
 
 
 class AutoDataset(BaseAutoDataset[Sequence], Dataset):
+    """The ``AutoDataset`` is a ``BaseAutoDataset`` and a :class:`~torch.utils.data.Dataset`. The `data` argument
+    must be a ``Sequence`` (it must have a length)."""
 
     def __getitem__(self, index: int) -> Any:
         return self._call_load_sample(self.data[index])
@@ -102,6 +103,8 @@ class AutoDataset(BaseAutoDataset[Sequence], Dataset):
 
 
 class IterableAutoDataset(BaseAutoDataset[Iterable], IterableDataset):
+    """The ``IterableAutoDataset`` is a ``BaseAutoDataset`` and a :class:`~torch.utils.data.IterableDataset`. The `data`
+    argument must be an ``Iterable``."""
 
     def __iter__(self):
         self.data_iter = iter(self.data)
