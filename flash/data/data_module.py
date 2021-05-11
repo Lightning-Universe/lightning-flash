@@ -328,6 +328,11 @@ class DataModule(pl.LightningDataModule):
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     def available_data_sources(self) -> Sequence[str]:
+        """Get the list of available data source names for use with this :class:`~flash.data.data_module.DataModule`.
+
+        Returns:
+            The list of data source names.
+        """
         return self.preprocess.available_data_sources()
 
     @staticmethod
