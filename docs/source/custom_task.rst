@@ -12,7 +12,7 @@ which is stored as numpy arrays.
 .. note::
 
     Find the complete tutorial example at
-    `flash_examples/custom_task.py <https://github.com/PyTorchLightning/lightning-flash/blob/revamp_doc/flash_examples/custom_task.py>`_.
+    `flash_examples/custom_task.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/custom_task.py>`_.
 
 
 1. Imports
