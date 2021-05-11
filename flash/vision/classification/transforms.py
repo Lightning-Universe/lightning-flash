@@ -12,29 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, Sequence, Tuple
+from typing import Callable, Dict, Tuple
 
 import torch
 import torchvision
 from torch import nn
-from torch.utils.data._utils.collate import default_collate
 from torchvision import transforms as T
 
 from flash.data.data_source import DefaultDataKeys
-from flash.data.transforms import ApplyToKeys
+from flash.data.transforms import ApplyToKeys, kornia_collate
 from flash.utils.imports import _KORNIA_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
-
-
-def collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    # todo: Kornia transforms add batch dimension which need to be removed
-    for sample in samples:
-        for key in sample.keys():
-            if torch.is_tensor(sample[key]):
-                sample[key] = sample[key].squeeze(0)
-    return default_collate(samples)
 
 
 def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
@@ -50,7 +40,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
                 K.geometry.Resize(image_size),
                 K.augmentation.RandomHorizontalFlip(),
             ),
-            "collate": collate,
+            "collate": kornia_collate,
             "per_batch_transform_on_device": ApplyToKeys(
                 DefaultDataKeys.INPUT,
                 K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -67,7 +57,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
                 DefaultDataKeys.INPUT,
                 T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ),
-            "collate": collate,
+            "collate": kornia_collate,
         }
 
 
@@ -83,7 +73,7 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
                 DefaultDataKeys.INPUT,
                 K.geometry.Resize(image_size),
             ),
-            "collate": collate,
+            "collate": kornia_collate,
             "per_batch_transform_on_device": ApplyToKeys(
                 DefaultDataKeys.INPUT,
                 K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -100,5 +90,5 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
                 DefaultDataKeys.INPUT,
                 T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ),
-            "collate": collate,
+            "collate": kornia_collate,
         }

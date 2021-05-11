@@ -11,24 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Sequence, Tuple
+from typing import Callable, Dict, Tuple
 
 import kornia as K
 import torch
 import torch.nn as nn
-from torch.utils.data._utils.collate import default_collate
 
 from flash.data.data_source import DefaultDataKeys
-from flash.data.transforms import ApplyToKeys, KorniaParallelTransforms
-
-
-def collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    # todo: Kornia transforms add batch dimension which need to be removed
-    for sample in samples:
-        for key in sample.keys():
-            if torch.is_tensor(sample[key]):
-                sample[key] = sample[key].squeeze(0)
-    return default_collate(samples)
+from flash.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
@@ -47,7 +37,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
             ),
             ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
-        "collate": collate,
+        "collate": kornia_collate,
         "per_batch_transform_on_device": ApplyToKeys(
             DefaultDataKeys.INPUT,
             K.enhance.Normalize(0., 255.),
@@ -65,6 +55,6 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             ),
             ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
-        "collate": collate,
+        "collate": kornia_collate,
         "per_batch_transform_on_device": ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
     }
