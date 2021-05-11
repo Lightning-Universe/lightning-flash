@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_CHECKING
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -96,6 +96,7 @@ class Preprocess(BasePreprocess, Properties, Module):
                 * Output: Return an augmented tensored image on device and its label.
 
         - ``collate``: Converts a sequence of data samples into a batch.
+            Defaults to ``torch.utils.data._utils.collate.default_collate``.
             Example::
 
                 * Input: Receive a list of augmented tensored images and their respective labels.
@@ -109,7 +110,7 @@ class Preprocess(BasePreprocess, Properties, Module):
 
                 * Input: Receive a batch of images and their labels.
 
-                * Action: Apply normalization on the batch by substracting the mean
+                * Action: Apply normalization on the batch by subtracting the mean
                     and dividing by the standard deviation from ImageNet.
 
                 * Output: Return a normalized augmented batch of images and their labels.
@@ -123,7 +124,7 @@ class Preprocess(BasePreprocess, Properties, Module):
     a mapping from hook names to callables. Default transforms can be configured by overriding the
     `default_{train,val,test,predict}_transforms` methods. These can then be overridden by the user with the
     `{train,val,test,predict}_transform` arguments to the ``Preprocess``. All of the hooks can be used in the transform
-    mappings, with the exception of ``collate``.
+    mappings.
 
     Example::
 
@@ -133,6 +134,7 @@ class Preprocess(BasePreprocess, Properties, Module):
                 return {
                     "pre_tensor_transform": transforms.RandomHorizontalFlip(),
                     "to_tensor_transform": transforms.ToTensor(),
+                    "collate": torch.utils.data._utils.collate.default_collate,
                 }
 
     When overriding hooks for particular stages, you can prefix with ``train``, ``val``, ``test`` or ``predict``. For
@@ -146,8 +148,11 @@ class Preprocess(BasePreprocess, Properties, Module):
             def train_pre_tensor_transform(self, sample: PIL.Image) -> PIL.Image:
                 return transforms.RandomHorizontalFlip()(sample)
 
-            def train_to_tensor_transform(self, sample: PIL.Image) -> torch.Tensor:
+            def to_tensor_transform(self, sample: PIL.Image) -> torch.Tensor:
                 return transforms.ToTensor()(sample)
+
+            def collate(self, samples: List[torch.Tensor]) -> torch.Tensor:
+                return torch.utils.data._utils.collate.default_collate(samples)
 
     Each hook is aware of the Trainer ``running stage`` through booleans. These are useful for adapting functionality
     for a stage without duplicating code.
@@ -208,7 +213,9 @@ class Preprocess(BasePreprocess, Properties, Module):
 
         self._data_sources = data_sources
         self._default_data_source = default_data_source
+
         self._callbacks: List[FlashCallback] = []
+        self._default_collate: Callable = default_collate
 
     @property
     def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
@@ -356,7 +363,11 @@ class Preprocess(BasePreprocess, Properties, Module):
         return self.current_transform(batch)
 
     def collate(self, samples: Sequence) -> Any:
-        return default_collate(samples)
+        """Transform to convert a sequence of samples to a collated batch."""
+        current_transform = self.current_transform
+        if current_transform is self._identity:
+            return self._default_collate(samples)
+        return self.current_transform(samples)
 
     def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
