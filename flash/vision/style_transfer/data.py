@@ -5,7 +5,9 @@ import torchvision
 from torch import nn
 from torchvision import transforms
 
+from flash.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.data.process import Preprocess
+from flash.data.transforms import ApplyToKeys
 from flash.vision.classification import ImageClassificationData, ImageClassificationPreprocess
 
 from ._utils import raise_not_supported
@@ -14,7 +16,6 @@ __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
 class StyleTransferPreprocess(ImageClassificationPreprocess):
-
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
@@ -29,13 +30,18 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
             image_size=image_size,
         )
 
+    def _apply_to_input(self, transform: Callable) -> ApplyToKeys:
+        return ApplyToKeys(DefaultDataKeys.INPUT, transform)
+
     @property
     def default_train_transforms(self) -> Dict[str, Callable]:
         return dict(
-            to_tensor_transform=torchvision.transforms.ToTensor(),
-            per_batch_transform_on_device=nn.Sequential(
-                transforms.Resize(min(self.image_size)),
-                transforms.CenterCrop(self.image_size),
+            to_tensor_transform=self._apply_to_input(torchvision.transforms.ToTensor()),
+            per_batch_transform_on_device=self._apply_to_input(
+                nn.Sequential(
+                    transforms.Resize(min(self.image_size)),
+                    transforms.CenterCrop(self.image_size),
+                )
             ),
         )
 
@@ -51,9 +57,10 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
 
     @property
     def default_predict_transforms(self) -> Dict[str, Callable]:
+
         return dict(
-            to_tensor_transform=torchvision.transforms.ToTensor(),
-            per_batch_transform_on_device=nn.Sequential(transforms.Resize(min(self.image_size)), ),
+            to_tensor_transform=self._apply_to_input(torchvision.transforms.ToTensor()),
+            per_batch_transform_on_device=self._apply_to_input(nn.Sequential(transforms.Resize(min(self.image_size)))),
         )
 
 
@@ -65,8 +72,8 @@ class StyleTransferData(ImageClassificationData):
         cls,
         train_folder: Optional[Union[str, pathlib.Path]] = None,
         predict_folder: Optional[Union[str, pathlib.Path]] = None,
-        train_transform: Optional[Union[str, Dict]] = "default",
-        predict_transform: Optional[Union[str, Dict]] = "default",
+        train_transform: Optional[Union[str, Dict]] = None,
+        predict_transform: Optional[Union[str, Dict]] = None,
         preprocess: Optional[Preprocess] = None,
         **kwargs: Any,
     ) -> "StyleTransferData":
@@ -77,9 +84,10 @@ class StyleTransferData(ImageClassificationData):
 
         preprocess = preprocess or cls.preprocess_cls(train_transform, predict_transform)
 
-        return cls.from_load_data_inputs(
-            train_load_data_input=train_folder,
-            predict_load_data_input=predict_folder,
+        return cls.from_data_source(
+            DefaultDataSources.PATHS,
+            train_data=train_folder,
+            predict_data=predict_folder,
             preprocess=preprocess,
             **kwargs,
         )

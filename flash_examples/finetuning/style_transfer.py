@@ -21,3 +21,5 @@ model = StyleTransfer(style_image)
 
 trainer = flash.Trainer(max_epochs=2)
 trainer.fit(model, data_module)
+
+trainer.save_checkpoint("style_transfer_model.pt")
