@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
 
 import torch
@@ -20,18 +19,13 @@ import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.model import Task
-from flash.data.process import ProcessState, Serializer
+from flash.data.data_source import LabelsState
+from flash.data.process import Serializer
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
     return F.binary_cross_entropy_with_logits(x, y.float())
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ClassificationState(ProcessState):
-
-    labels: Optional[List[str]]
 
 
 class ClassificationTask(Task):
@@ -61,7 +55,8 @@ class ClassificationTask(Task):
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
         if getattr(self.hparams, "multi_label", False):
             return torch.sigmoid(x)
-        return torch.softmax(x, -1)
+        # we'll assume that the data always comes as `(B, C, ...)`
+        return torch.softmax(x, dim=1)
 
 
 class ClassificationSerializer(Serializer):
@@ -130,7 +125,7 @@ class Labels(Classes):
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.ClassificationState`.
+            provided, will attempt to get them from the :class:`.LabelsState`.
 
         multi_label: If true, treats outputs as multi label logits.
 
@@ -141,13 +136,16 @@ class Labels(Classes):
         super().__init__(multi_label=multi_label, threshold=threshold)
         self._labels = labels
 
+        if labels is not None:
+            self.set_state(LabelsState(labels))
+
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
 
         if self._labels is not None:
             labels = self._labels
         else:
-            state = self.get_state(ClassificationState)
+            state = self.get_state(LabelsState)
             if state is not None:
                 labels = state.labels
 
@@ -158,7 +156,5 @@ class Labels(Classes):
                 return [labels[cls] for cls in classes]
             return labels[classes]
         else:
-            rank_zero_warn(
-                "No ClassificationState was found, this serializer will act as a Classes serializer.", UserWarning
-            )
+            rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
             return classes

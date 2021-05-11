@@ -57,6 +57,8 @@ class _Sequential(torch.nn.Module):
         self._post_tensor_transform_context = CurrentFuncContext("post_tensor_transform", preprocess)
 
     def forward(self, sample: Any) -> Any:
+        self.callback.on_load_sample(sample, self.stage)
+
         with self._current_stage_context:
             with self._pre_tensor_transform_context:
                 sample = self.pre_tensor_transform(sample)
@@ -136,6 +138,12 @@ class _PreProcessor(torch.nn.Module):
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
     def forward(self, samples: Sequence[Any]) -> Any:
+        # we create a new dict to prevent from potential memory leaks
+        # assuming that the dictionary samples are stored in between and
+        # potentially modified before the transforms are applied.
+        if isinstance(samples, dict):
+            samples = dict(samples.items())
+
         with self._current_stage_context:
 
             if self.apply_per_sample_transform:

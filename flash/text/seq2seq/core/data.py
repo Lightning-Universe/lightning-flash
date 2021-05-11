@@ -18,90 +18,73 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import datasets
 import torch
 from datasets import DatasetDict, load_dataset
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from transformers import AutoTokenizer, default_data_collator
 
 from flash.data.data_module import DataModule
-from flash.data.process import Postprocess, Preprocess
+from flash.data.data_source import DataSource, DefaultDataSources
+from flash.data.process import Preprocess
 
 
-class Seq2SeqPreprocess(Preprocess):
+class Seq2SeqDataSource(DataSource):
 
     def __init__(
         self,
         backbone: str,
-        input: str,
-        filetype: str,
-        target: Optional[str] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'longest',
-        use_fast: bool = True,
+        padding: Union[str, bool] = 'max_length'
     ):
         super().__init__()
-        self.backbone = backbone
-        self.use_fast = use_fast
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
-        self.input = input
-        self.filetype = filetype
-        self.target = target
-        self.max_target_length = max_target_length
+
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
         self.padding = padding
 
-        self._tokenize_fn_wrapped = partial(
-            self._tokenize_fn,
-            tokenizer=self.tokenizer,
-            input=self.input,
-            target=self.target,
-            max_source_length=self.max_source_length,
-            max_target_length=self.max_target_length,
-            padding=self.padding
-        )
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            "backbone": self.backbone,
-            "use_fast": self.use_fast,
-            "input": self.input,
-            "filetype": self.filetype,
-            "target": self.target,
-            "max_source_length": self.max_source_length,
-            "max_target_length": self.max_target_length,
-            "padding": self.padding,
-        }
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
-        return cls(**state_dict)
-
-    @staticmethod
     def _tokenize_fn(
-        ex,
-        tokenizer,
-        input: str,
-        target: Optional[str],
-        max_source_length: int,
-        max_target_length: int,
-        padding: Union[str, bool],
+        self,
+        ex: Union[Dict[str, str], str],
+        input: Optional[str] = None,
+        target: Optional[str] = None,
     ) -> Callable:
-        output = tokenizer.prepare_seq2seq_batch(
-            src_texts=ex[input],
-            tgt_texts=ex[target] if target else None,
-            max_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
+        if isinstance(ex, dict):
+            ex_input = ex[input]
+            ex_target = ex[target] if target else None
+        else:
+            ex_input = ex
+            ex_target = None
+
+        return self.tokenizer.prepare_seq2seq_batch(
+            src_texts=ex_input,
+            tgt_texts=ex_target,
+            max_length=self.max_source_length,
+            max_target_length=self.max_target_length,
+            padding=self.padding,
         )
-        return output
+
+
+class Seq2SeqFileDataSource(Seq2SeqDataSource):
+
+    def __init__(
+        self,
+        filetype: str,
+        backbone: str,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = 'max_length',
+    ):
+        super().__init__(backbone, max_source_length, max_target_length, padding)
+
+        self.filetype = filetype
 
     def load_data(
         self,
-        file: str,
-        use_full: bool = True,
+        data: Any,
+        use_full: bool = False,
         columns: List[str] = ["input_ids", "attention_mask", "labels"]
     ) -> 'datasets.Dataset':
+        file, input, target = data
         data_files = {}
         stage = self._running_stage.value
         data_files[stage] = str(file)
@@ -118,155 +101,128 @@ class Seq2SeqPreprocess(Preprocess):
             except AssertionError:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
-        dataset_dict = dataset_dict.map(self._tokenize_fn_wrapped, batched=True)
+        dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input, target=target), batched=True)
         dataset_dict.set_format(columns=columns)
         return dataset_dict[stage]
 
-    def predict_load_data(self, sample: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
-        if isinstance(sample, str) and os.path.isfile(sample) and sample.endswith(".csv"):
-            return self.load_data(sample, use_full=True, columns=["input_ids", "attention_mask"])
-        else:
-            if isinstance(sample, (list, tuple)) and len(sample) > 0 and all(isinstance(s, str) for s in sample):
-                return [self._tokenize_fn_wrapped({self.input: s, self.target: None}) for s in sample]
-            else:
-                raise MisconfigurationException("Currently, we support only list of sentences")
+    def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
+        return self.load_data(data, use_full=False, columns=["input_ids", "attention_mask"])
+
+
+class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
+
+    def __init__(
+        self,
+        backbone: str,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = 'max_length',
+    ):
+        super().__init__(
+            "csv",
+            backbone,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+        )
+
+
+class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
+
+    def __init__(
+        self,
+        backbone: str,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = 'max_length',
+    ):
+        super().__init__(
+            "json",
+            backbone,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+        )
+
+
+class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
+
+    def load_data(
+        self,
+        data: Union[str, List[str]],
+        dataset: Optional[Any] = None,
+    ) -> List[Any]:
+
+        if isinstance(data, str):
+            data = [data]
+        return [self._tokenize_fn(s) for s in data]
+
+
+class Seq2SeqPreprocess(Preprocess):
+
+    def __init__(
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        backbone: str = "sshleifer/tiny-mbart",
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = 'max_length'
+    ):
+        self.backbone = backbone
+        self.max_target_length = max_target_length
+        self.max_source_length = max_source_length
+        self.padding = padding
+
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources={
+                DefaultDataSources.CSV: Seq2SeqCSVDataSource(
+                    self.backbone,
+                    max_source_length=max_source_length,
+                    max_target_length=max_target_length,
+                    padding=padding,
+                ),
+                DefaultDataSources.JSON: Seq2SeqJSONDataSource(
+                    self.backbone,
+                    max_source_length=max_source_length,
+                    max_target_length=max_target_length,
+                    padding=padding,
+                ),
+                "sentences": Seq2SeqSentencesDataSource(
+                    self.backbone,
+                    max_source_length=max_source_length,
+                    max_target_length=max_target_length,
+                    padding=padding,
+                ),
+            },
+            default_data_source="sentences",
+        )
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {
+            **self.transforms,
+            "backbone": self.backbone,
+            "max_source_length": self.max_source_length,
+            "max_target_length": self.max_target_length,
+            "padding": self.padding,
+        }
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
+        return cls(**state_dict)
 
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
         return default_data_collator(samples)
 
 
-class Seq2SeqPostprocess(Postprocess):
-
-    def __init__(
-        self,
-        backbone: str,
-        use_fast: bool = True,
-    ):
-        super().__init__()
-        self.backbone = backbone
-        self.use_fast = use_fast
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
-
-    def uncollate(self, generated_tokens: Any) -> Any:
-        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-        pred_str = [str.strip(s) for s in pred_str]
-        return pred_str
-
-
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
     preprocess_cls = Seq2SeqPreprocess
-    postprocess_cls = Seq2SeqPostprocess
-
-    @classmethod
-    def from_files(
-        cls,
-        train_file: Optional[str],
-        input: str = 'input',
-        target: Optional[str] = None,
-        filetype: str = "csv",
-        backbone: str = "sshleifer/tiny-mbart",
-        use_fast: bool = True,
-        val_file: Optional[str] = None,
-        test_file: Optional[str] = None,
-        predict_file: Optional[str] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length',
-        batch_size: int = 32,
-        num_workers: Optional[int] = None,
-        preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
-    ):
-        """Creates a Seq2SeqData object from files.
-        Args:
-            train_file: Path to training data.
-            input: The field storing the source translation text.
-            target: The field storing the target translation text.
-            filetype: ``csv`` or ``json`` File
-            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
-            val_file: Path to validation data.
-            test_file: Path to test data.
-            max_source_length: Maximum length of the source text. Any text longer will be truncated.
-            max_target_length: Maximum length of the target text. Any text longer will be truncated.
-            padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: The batchsize to use for parallel loading. Defaults to 32.
-            num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads,
-                or 0 for Darwin platform.
-        Returns:
-            Seq2SeqData: The constructed data module.
-        Examples::
-            train_df = pd.read_csv("train_data.csv")
-            tab_data = TabularData.from_df(train_df,
-                                           target="fraud",
-                                           num_cols=["account_value"],
-                                           cat_cols=["account_type"])
-        """
-        preprocess = preprocess or cls.preprocess_cls(
-            backbone, input, filetype, target, max_source_length, max_target_length, padding, use_fast=use_fast
-        )
-
-        postprocess = postprocess or cls.postprocess_cls(backbone, use_fast=use_fast)
-
-        return cls.from_load_data_inputs(
-            train_load_data_input=train_file,
-            val_load_data_input=val_file,
-            test_load_data_input=test_file,
-            predict_load_data_input=predict_file,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            preprocess=preprocess,
-            postprocess=postprocess,
-        )
-
-    @classmethod
-    def from_file(
-        cls,
-        predict_file: str,
-        input: str = 'input',
-        target: Optional[str] = None,
-        backbone: str = "sshleifer/tiny-mbart",
-        filetype: str = "csv",
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length',
-        batch_size: int = 32,
-        num_workers: Optional[int] = None,
-        preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
-    ):
-        """Creates a TextClassificationData object from files.
-        Args:
-            predict_file: Path to prediction input file.
-            input: The field storing the source translation text.
-            target: The field storing the target translation text.
-            backbone: Tokenizer backbone to use, can use any HuggingFace tokenizer.
-            filetype: Csv or json.
-            max_source_length: Maximum length of the source text. Any text longer will be truncated.
-            max_target_length: Maximum length of the target text. Any text longer will be truncated.
-            padding: Padding strategy for batches. Default is pad to maximum length.
-            batch_size: The batchsize to use for parallel loading. Defaults to 32.
-            num_workers: The number of workers to use for parallelized loading.
-                Defaults to None which equals the number of available CPU threads,
-                or 0 for Darwin platform.
-        Returns:
-            Seq2SeqData: The constructed data module.
-        """
-        return cls.from_files(
-            train_file=None,
-            input=input,
-            target=target,
-            filetype=filetype,
-            backbone=backbone,
-            predict_file=predict_file,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            preprocess=preprocess,
-            postprocess=postprocess,
-        )

@@ -11,19 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Sequence, Tuple
 from unittest import mock
-from unittest.mock import ANY, call, MagicMock, Mock
+from unittest.mock import ANY, call, MagicMock
 
 import torch
-from pytorch_lightning.callbacks.base import Callback
 from pytorch_lightning.trainer.states import RunningStage
-from torch import Tensor
 
 from flash.core.model import Task
 from flash.core.trainer import Trainer
 from flash.data.data_module import DataModule
-from flash.data.process import Preprocess
+from flash.data.process import DefaultPreprocess
 
 
 @mock.patch("torch.save")  # need to mock torch.save or we get pickle error
@@ -33,7 +30,9 @@ def test_flash_callback(_, tmpdir):
     callback_mock = MagicMock()
 
     inputs = [[torch.rand(1), torch.rand(1)]]
-    dm = DataModule.from_load_data_inputs(inputs, inputs, inputs, None, num_workers=0)
+    dm = DataModule.from_data_source(
+        "default", inputs, inputs, inputs, None, preprocess=DefaultPreprocess(), batch_size=1, num_workers=0
+    )
     dm.preprocess.callbacks += [callback_mock]
 
     _ = next(iter(dm.train_dataloader()))
@@ -59,7 +58,9 @@ def test_flash_callback(_, tmpdir):
         limit_train_batches=1,
         progress_bar_refresh_rate=0,
     )
-    dm = DataModule.from_load_data_inputs(inputs, inputs, inputs, None, num_workers=0)
+    dm = DataModule.from_data_source(
+        "default", inputs, inputs, inputs, None, preprocess=DefaultPreprocess(), batch_size=1, num_workers=0
+    )
     dm.preprocess.callbacks += [callback_mock]
     trainer.fit(CustomModel(), datamodule=dm)
 

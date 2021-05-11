@@ -36,11 +36,9 @@ predictions = model.predict([
 print(predictions)
 
 # 2b. Or generate predictions from a sheet file!
-datamodule = TextClassificationData.from_file(
+datamodule = TextClassificationData.from_csv(
+    "review",
     predict_file="data/imdb/predict.csv",
-    input="review",
-    # use the same data pre-processing values we used to predict in 2a
-    preprocess=model.preprocess,
 )
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)

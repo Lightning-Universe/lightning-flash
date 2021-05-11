@@ -21,20 +21,24 @@ from flash.text import TranslationData, TranslationTask
 download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 
 # 2. Load the data
-datamodule = TranslationData.from_files(
+datamodule = TranslationData.from_csv(
+    "input",
+    "target",
     train_file="data/wmt_en_ro/train.csv",
     val_file="data/wmt_en_ro/valid.csv",
     test_file="data/wmt_en_ro/test.csv",
-    input="input",
-    target="target",
-    batch_size=1
+    batch_size=1,
 )
 
 # 3. Build the model
 model = TranslationTask()
 
 # 4. Create the trainer
-trainer = flash.Trainer(precision=32, gpus=int(torch.cuda.is_available()), fast_dev_run=True)
+trainer = flash.Trainer(
+    precision=16 if torch.cuda.is_available() else 32,
+    gpus=int(torch.cuda.is_available()),
+    fast_dev_run=True,
+)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)

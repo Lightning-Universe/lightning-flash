@@ -48,9 +48,7 @@ def json_data(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = TextClassificationData.from_files(
-        backbone=TEST_BACKBONE, train_file=csv_path, input="sentence", target="label", batch_size=1
-    )
+    dm = TextClassificationData.from_csv("sentence", "label", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
     batch = next(iter(dm.train_dataloader()))
     assert batch["labels"].item() in [0, 1]
     assert "input_ids" in batch
@@ -59,13 +57,13 @@ def test_from_csv(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_test_valid(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = TextClassificationData.from_files(
+    dm = TextClassificationData.from_csv(
+        "sentence",
+        "label",
         backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
-        input="sentence",
-        target="label",
         batch_size=1
     )
     batch = next(iter(dm.val_dataloader()))
@@ -80,9 +78,7 @@ def test_test_valid(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
-    dm = TextClassificationData.from_files(
-        backbone=TEST_BACKBONE, train_file=json_path, input="sentence", target="lab", filetype="json", batch_size=1
-    )
+    dm = TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
     batch = next(iter(dm.train_dataloader()))
     assert batch["labels"].item() in [0, 1]
     assert "input_ids" in batch

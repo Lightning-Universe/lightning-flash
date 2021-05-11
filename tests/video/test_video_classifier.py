@@ -105,15 +105,15 @@ def test_image_classifier_finetune(tmpdir):
 
         half_duration = total_duration / 2 - 1e-9
 
-        datamodule = VideoClassificationData.from_paths(
-            train_data_path=mock_csv,
+        datamodule = VideoClassificationData.from_folders(
+            train_folder=mock_csv,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
         )
 
-        for sample in datamodule.train_dataset.dataset:
+        for sample in datamodule.train_dataset.data:
             expected_t_shape = 5
             assert sample["video"].shape[1] == expected_t_shape
 
@@ -144,8 +144,8 @@ def test_image_classifier_finetune(tmpdir):
             ]),
         }
 
-        datamodule = VideoClassificationData.from_paths(
-            train_data_path=mock_csv,
+        datamodule = VideoClassificationData.from_folders(
+            train_folder=mock_csv,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,

@@ -152,5 +152,3 @@ VideoClassificationData
 -----------------------
 
 .. autoclass:: flash.video.VideoClassificationData
-
-.. automethod:: flash.video.VideoClassificationData.from_paths

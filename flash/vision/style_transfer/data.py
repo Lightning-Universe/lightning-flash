@@ -37,7 +37,8 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
             image_size=image_size,
         )
 
-    def default_train_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    @property
+    def default_train_transforms(self) -> Dict[str, Callable]:
         return dict(
             to_tensor_transform=torchvision.transforms.ToTensor(),
             # Some datasets, such as the one used in flash_examples/finetuning/style_transfer.py contain some rogue
@@ -45,24 +46,27 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
             # repeating the values for three channels, mimicking an RGB image.
             post_tensor_transform=OptionalGrayscaleToFakeGrayscale(),
             per_batch_transform_on_device=nn.Sequential(
-                transforms.Resize(min(image_size)),
-                transforms.CenterCrop(image_size),
+                transforms.Resize(min(self.image_size)),
+                transforms.CenterCrop(self.image_size),
             ),
         )
 
-    def default_val_transforms(self, image_size: Any) -> Dict[str, Callable]:
+    @property
+    def default_val_transforms(self) -> None:
         # Style transfer doesn't support a validation phase, so we return nothing here
-        return {}
+        return None
 
-    def default_test_transforms(self, image_size: Any) -> Dict[str, Callable]:
+    @property
+    def default_test_transforms(self) -> None:
         # Style transfer doesn't support a test phase, so we return nothing here
-        return {}
+        return None
 
-    def default_predict_transforms(self, image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    @property
+    def default_predict_transforms(self) -> Dict[str, Callable]:
         return dict(
             to_tensor_transform=torchvision.transforms.ToTensor(),
             per_batch_transform_on_device=nn.Sequential(
-                transforms.Resize(min(image_size)),
+                transforms.Resize(min(self.image_size)),
             ),
         )
 
