@@ -144,19 +144,19 @@ loading the train data (``if self.training:``), the ``NumpyDataSource`` sets the
 optional ``dataset`` argument. Any attributes that are set on the optional ``dataset`` argument will also be set on the
 generated ``dataset``.
 
-Here is the ``NumpyDataSource`` implementation:
+Here is our ``NumpyDataSource`` implementation:
 
 Example::
 
     class NumpyDataSource(DataSource[Tuple[ND, ND]]):
 
-    def load_data(self, data: Tuple[ND, ND], dataset: Optional[Any] = None) -> List[Dict[str, Any]]:
-        if self.training:
-            dataset.num_inputs = data[0].shape[1]
-        return [{DefaultDataKeys.INPUT: x, DefaultDataKeys.TARGET: y} for x, y in zip(*data)]
+        def load_data(self, data: Tuple[ND, ND], dataset: Optional[Any] = None) -> List[Dict[str, Any]]:
+            if self.training:
+                dataset.num_inputs = data[0].shape[1]
+            return [{DefaultDataKeys.INPUT: x, DefaultDataKeys.TARGET: y} for x, y in zip(*data)]
 
-    def predict_load_data(self, data: ND) -> List[Dict[str, Any]]:
-        return [{DefaultDataKeys.INPUT: x} for x in data]
+        def predict_load_data(self, data: ND) -> List[Dict[str, Any]]:
+            return [{DefaultDataKeys.INPUT: x} for x in data]
 
 
 3.b The Preprocess API
@@ -172,7 +172,7 @@ It allows the user much more granular control over their data processing flow.
     Why introduce :class:`~flash.data.process.Preprocess` ?
 
     The :class:`~flash.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
-    to deploy the model in production environnement compared to traditional
+    to deploy the model in production environnement compared to a traditional
     `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_.
 
     You can override ``predict_{hook_name}`` hooks to handle data processing logic specific for inference.
