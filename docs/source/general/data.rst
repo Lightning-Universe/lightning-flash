@@ -336,6 +336,7 @@ __________
         show_val_batch,
         show_test_batch,
         show_predict_batch,
+        available_data_sources,
     :exclude-members:
         autogenerate_dataset,
 
