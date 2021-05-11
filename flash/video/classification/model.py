@@ -50,7 +50,7 @@ class VideoClassifierFinetuning(BaseFinetuning):
         self.unfreeze_epoch = unfreeze_epoch
 
     def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.model.children())[:-self.num_layers], train_bn=self.train_bn)
+        self.freeze(modules=list(pl_module.backbone.children())[:-self.num_layers], train_bn=self.train_bn)
 
     def finetune_function(
         self,
@@ -62,7 +62,7 @@ class VideoClassifierFinetuning(BaseFinetuning):
         if epoch != self.unfreeze_epoch:
             return
         self.unfreeze_and_add_param_group(
-            modules=list(pl_module.model.children())[-self.num_layers:],
+            modules=list(pl_module.backbone.children())[-self.num_layers:],
             optimizer=optimizer,
             train_bn=self.train_bn,
         )
