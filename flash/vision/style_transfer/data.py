@@ -13,16 +13,6 @@ from ._utils import raise_not_supported
 __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
-class OptionalGrayscaleToFakeGrayscale(nn.Module):
-
-    def forward(self, input):
-        num_channels = input.size()[0]
-        if num_channels > 1:
-            return input
-
-        return input.repeat(3, 1, 1)
-
-
 class StyleTransferPreprocess(ImageClassificationPreprocess):
 
     def __init__(
@@ -43,10 +33,6 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
     def default_train_transforms(self) -> Dict[str, Callable]:
         return dict(
             to_tensor_transform=torchvision.transforms.ToTensor(),
-            # Some datasets, such as the one used in flash_examples/finetuning/style_transfer.py contain some rogue
-            # grayscale images. To not interrupt the training flow, we simply convert them to fake grayscale, by
-            # repeating the values for three channels, mimicking an RGB image.
-            post_tensor_transform=OptionalGrayscaleToFakeGrayscale(),
             per_batch_transform_on_device=nn.Sequential(
                 transforms.Resize(min(self.image_size)),
                 transforms.CenterCrop(self.image_size),
