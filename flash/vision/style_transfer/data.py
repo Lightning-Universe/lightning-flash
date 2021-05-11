@@ -14,6 +14,7 @@ __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
 class OptionalGrayscaleToFakeGrayscale(nn.Module):
+
     def forward(self, input):
         num_channels = input.size()[0]
         if num_channels > 1:
@@ -23,6 +24,7 @@ class OptionalGrayscaleToFakeGrayscale(nn.Module):
 
 
 class StyleTransferPreprocess(ImageClassificationPreprocess):
+
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
@@ -65,9 +67,7 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
     def default_predict_transforms(self) -> Dict[str, Callable]:
         return dict(
             to_tensor_transform=torchvision.transforms.ToTensor(),
-            per_batch_transform_on_device=nn.Sequential(
-                transforms.Resize(min(self.image_size)),
-            ),
+            per_batch_transform_on_device=nn.Sequential(transforms.Resize(min(self.image_size)), ),
         )
 
 

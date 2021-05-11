@@ -3,4 +3,4 @@ from flash.vision.classification import ImageClassificationData, ImageClassifica
 from flash.vision.detection import ObjectDetectionData, ObjectDetector
 from flash.vision.embedding import ImageEmbedder
 from flash.vision.segmentation import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
-from flash.vision.style_transfer import StyleTransferPreprocess, StyleTransferData, StyleTransfer
+from flash.vision.style_transfer import StyleTransfer, StyleTransferData, StyleTransferPreprocess
