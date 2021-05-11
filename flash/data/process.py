@@ -395,13 +395,37 @@ class Preprocess(BasePreprocess, Properties, Module):
         """
         return self.current_transform(batch)
 
-    def data_source_of_name(self, data_source_name: str) -> Optional[DataSource]:
+    def available_data_sources(self) -> Sequence[str]:
+        """Get the list of available data source names for use with this :class:`~flash.data.process.Preprocess`.
+
+        Returns:
+            The list of data source names.
+        """
+        return list(self._data_sources.keys())
+
+    def data_source_of_name(self, data_source_name: str) -> DataSource:
+        """Get the :class:`~flash.data.data_source.DataSource` of the given name from the
+        :class:`~flash.data.process.Preprocess`.
+
+        Args:
+            data_source_name: The name of the data source to look up.
+
+        Returns:
+            The :class:`~flash.data.data_source.DataSource` of the given name.
+
+        Raises:
+            MisconfigurationException: If the requested data source is not configured by this
+                :class:`~flash.data.process.Preprocess`.
+        """
         if data_source_name == "default":
             data_source_name = self._default_data_source
         data_sources = self._data_sources
         if data_source_name in data_sources:
             return data_sources[data_source_name]
-        return None
+        raise MisconfigurationException(
+            f"No '{data_source_name}' data source is available for use with the {type(self)}. The available data "
+            f"sources are: {', '.join(self.available_data_sources())}."
+        )
 
 
 class DefaultPreprocess(Preprocess):

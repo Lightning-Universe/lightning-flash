@@ -327,6 +327,9 @@ class DataModule(pl.LightningDataModule):
     def data_pipeline(self) -> DataPipeline:
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
+    def available_data_sources(self) -> Sequence[str]:
+        return self.preprocess.available_data_sources()
+
     @staticmethod
     def _split_train_val(
         train_dataset: Dataset,
