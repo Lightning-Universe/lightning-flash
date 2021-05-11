@@ -144,8 +144,6 @@ loading the train data (``if self.training:``), the ``NumpyDataSource`` sets the
 optional ``dataset`` argument. Any attributes that are set on the optional ``dataset`` argument will also be set on the
 generated ``dataset``.
 
-Here is our ``NumpyDataSource`` implementation:
-
 Example::
 
     class NumpyDataSource(DataSource[Tuple[ND, ND]]):
@@ -182,18 +180,11 @@ The recommended way to define a custom :class:`~flash.data.process.Preprocess` i
 
 - Define an ``__init__`` which accepts transform arguments.
 - Pass these arguments through to ``super().__init__`` and specify the ``data_sources`` and the ``default_data_source``.
-    - ``data_sources`` gives the :class:`~flash.data.data_source.DataSource` objects that work with your
-        :class:`~flash.data.process.Preprocess` as a mapping from data source name to
-        :class:`~flash.data.data_source.DataSource`. The data source name can be any string, but for our purposes, we
-        can use :attr:`~flash.data.data_source.DefaultDataSources.NUMPY`.
+    - ``data_sources`` gives the :class:`~flash.data.data_source.DataSource` objects that work with your :class:`~flash.data.process.Preprocess` as a mapping from data source name to :class:`~flash.data.data_source.DataSource`. The data source name can be any string, but for our purposes we can use ``NUMPY`` from :class:`~flash.data.data_source.DefaultDataSources`.
     - ``default_data_source`` is the name of the data source to use by default when predicting.
-- Override the ``get_state_dict`` and ``load_state_dict`` methods. These methods are used to save and load your
-    :class:`~flash.data.process.Preprocess` from a checkpoint.
-- Override the ``default_{train,val,test,predict}_transforms`` methods to specify the default transforms to use in each
-    stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
-    - Transforms are given as a mapping from hook name to callable transforms. You should use
-        :class:`~flash.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data
-        dictionary.
+- Override the ``get_state_dict`` and ``load_state_dict`` methods. These methods are used to save and load your :class:`~flash.data.process.Preprocess` from a checkpoint.
+- Override the ``default_{train,val,test,predict}_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
+    - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
 Example::
 
