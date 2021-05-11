@@ -19,7 +19,7 @@ which is stored as numpy arrays.
 ----------
 
 
-.. testcode:: python
+.. code:: python
 
     from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -50,7 +50,7 @@ you will likely need to override the ``__init__``, ``forward``, and the ``{train
 It's best practice in flash for the data to be provide as a dictionary which maps string keys to their values. The
 ``{train,val,test,predict}_step`` methods need to be overridden to extract the data from the input dictionary.
 
-.. testcode::
+Example::
 
     class RegressionTask(flash.Task):
 
