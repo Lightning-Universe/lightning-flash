@@ -1,7 +1,8 @@
-from typing import Any, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, Mapping, NoReturn, Optional, Sequence, Type, Union
 
 import torch
 import torchmetrics
+from _utils import raise_not_supported
 from pystiche import enc, loss, ops
 from pystiche.image import read_image
 from torch import nn
@@ -202,3 +203,9 @@ class StyleTransfer(Task):
     def forward(self, content_image: torch.Tensor) -> torch.Tensor:
         self.perceptual_loss.set_content_image(content_image)
         return self.model(content_image)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> NoReturn:
+        raise_not_supported("validation")
+
+    def test_step(self, batch: Any, batch_idx: int) -> NoReturn:
+        raise_not_supported("test")
