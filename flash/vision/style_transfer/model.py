@@ -208,9 +208,15 @@ class StyleTransfer(Task):
             score_weight=style_weight,
         )
 
-    def forward(self, content_image: torch.Tensor) -> torch.Tensor:
-        self.perceptual_loss.set_content_image(content_image)
-        return self.model(content_image)
+    def step(self, batch: Any, batch_idx: int) -> Any:
+        input_image = batch
+        self.perceptual_loss.set_content_image(input_image)
+
+        output_image = self(batch)
+        loss = self.perceptual_loss(output_image).total()
+
+        logs = dict(perceptual_loss=loss)
+        return dict(loss=loss, logs=logs)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         return super().training_step(batch[DefaultDataKeys.INPUT], batch_idx)
