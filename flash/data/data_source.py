@@ -54,9 +54,10 @@ class DefaultDataSources(LightningEnum):
     """The ``DefaultDataSources`` enum contains the data source names used by all of the default ``from_*`` methods in
     :class:`~flash.data.data_module.DataModule`."""
 
-    PATHS = "paths"
+    FOLDERS = "folders"
+    FILES = "files"
     NUMPY = "numpy"
-    TENSOR = "tensor"
+    TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
 
