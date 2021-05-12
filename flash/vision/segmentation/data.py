@@ -156,11 +156,12 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource(),
-                DefaultDataSources.TENSOR: TensorDataSource(),
+                DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
+                DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
+                DefaultDataSources.TENSORS: TensorDataSource(),
                 DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
             },
-            default_data_source=DefaultDataSources.PATHS,
+            default_data_source=DefaultDataSources.FILES,
         )
 
         if labels_map:
@@ -334,7 +335,7 @@ class SemanticSegmentationData(DataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.PATHS,
+            DefaultDataSources.FOLDERS,
             (train_folder, train_target_folder),
             (val_folder, val_target_folder),
             (test_folder, test_target_folder),

@@ -1,14 +1,14 @@
 
-.. _semantinc_segmentation:
+.. _semantic_segmentation:
 
 ######################
-Semantinc Segmentation
+Semantic Segmentation
 ######################
 
 ********
 The task
 ********
-Semantic segmentation, or image segmentation, is the task of performing classification at a pixel-level, meaning each pixel will associated to a given class. The model output shape is ``(batch_size, num_classes, heigh, width)``.
+Semantic Segmentation, or image segmentation, is the task of performing classification at a pixel-level, meaning each pixel will associated to a given class. The model output shape is ``(batch_size, num_classes, heigh, width)``.
 
 See more: https://paperswithcode.com/task/semantic-segmentation
 
