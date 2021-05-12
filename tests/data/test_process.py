@@ -142,7 +142,7 @@ class CustomPreprocess(DefaultPreprocess):
         super().__init__(
             data_sources={
                 "test": Mock(return_value="test"),
-                DefaultDataSources.TENSOR: Mock(return_value="tensor"),
+                DefaultDataSources.TENSORS: Mock(return_value="tensor"),
             },
             default_data_source="test",
         )
@@ -153,7 +153,7 @@ def test_data_source_of_name():
     preprocess = CustomPreprocess()
 
     assert preprocess.data_source_of_name("test")() == "test"
-    assert preprocess.data_source_of_name(DefaultDataSources.TENSOR)() == "tensor"
+    assert preprocess.data_source_of_name(DefaultDataSources.TENSORS)() == "tensor"
     assert preprocess.data_source_of_name("tensor")() == "tensor"
     assert preprocess.data_source_of_name("default")() == "test"
 
@@ -165,12 +165,12 @@ def test_available_data_sources():
 
     preprocess = CustomPreprocess()
 
-    assert DefaultDataSources.TENSOR in preprocess.available_data_sources()
+    assert DefaultDataSources.TENSORS in preprocess.available_data_sources()
     assert "test" in preprocess.available_data_sources()
     assert len(preprocess.available_data_sources()) == 2
 
     data_module = DataModule(preprocess=preprocess)
 
-    assert DefaultDataSources.TENSOR in data_module.available_data_sources()
+    assert DefaultDataSources.TENSORS in data_module.available_data_sources()
     assert "test" in data_module.available_data_sources()
     assert len(data_module.available_data_sources()) == 2
