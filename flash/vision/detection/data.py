@@ -110,9 +110,6 @@ class ObjectDetectionPreprocess(Preprocess):
             default_data_source=DefaultDataSources.PATHS,
         )
 
-    def collate(self, samples: Any) -> Any:
-        return {key: [sample[key] for sample in samples] for key in samples[0]}
-
     def get_state_dict(self) -> Dict[str, Any]:
         return {**self.transforms}
 

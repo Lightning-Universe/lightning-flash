@@ -207,19 +207,18 @@ class DataPipeline:
 
         original_collate_fn = collate_fn
 
-        if collate_fn is None:
-            collate_fn = default_collate
-
         preprocess: Preprocess = self._preprocess_pipeline
         prefix: str = _STAGES_PREFIX[stage]
+
+        if collate_fn is not None:
+            preprocess._default_collate = collate_fn
 
         func_names: Dict[str, str] = {
             k: self._resolve_function_hierarchy(k, preprocess, stage, Preprocess)
             for k in self.PREPROCESS_FUNCS
         }
 
-        if self._is_overriden_recursive("collate", preprocess, Preprocess, prefix=prefix):
-            collate_fn: Callable = getattr(preprocess, func_names["collate"])
+        collate_fn: Callable = getattr(preprocess, func_names["collate"])
 
         per_batch_transform_overriden: bool = self._is_overriden_recursive(
             "per_batch_transform", preprocess, Preprocess, prefix=prefix
@@ -239,7 +238,7 @@ class DataPipeline:
         ):
             raise MisconfigurationException(
                 f'{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutual exclusive for stage {stage}'
+                f'are mutually exclusive for stage {stage}'
             )
 
         if isinstance(collate_in_worker_from_transform, bool):
