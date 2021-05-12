@@ -142,7 +142,7 @@ class _PreProcessor(torch.nn.Module):
         self,
         samples: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
-        metadata = [s.pop(DefaultDataKeys.METADATA, None) for s in samples]
+        metadata = [s.pop(DefaultDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
         return samples, metadata if any(m is not None for m in metadata) else None
 
     def forward(self, samples: Sequence[Any]) -> Any:
