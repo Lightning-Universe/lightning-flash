@@ -57,7 +57,7 @@ jobs:
       displayName: 'Install dependencies'
 
     - bash: |
-        python -m pytest pl_bolts tests -v --cov=pl_bolts --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
+        python -m pytest flash tests -v --cov=flash --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
       displayName: 'Testing'
 
     - bash: |
