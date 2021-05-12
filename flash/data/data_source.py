@@ -112,7 +112,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         Args:
             data: The data required to load the sequence or iterable of samples or sample metadata.
             dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
-            (e.g. ``num_classes``) will also be set on the generated dataset.
+                (e.g. ``num_classes``) will also be set on the generated dataset.
 
         Returns:
             A sequence or iterable of samples or sample metadata to be used as inputs to
@@ -137,7 +137,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
             sample: An element (sample or sample metadata) from the output of a call to
                 :meth:`~flash.data.data_source.DataSource.load_data`.
             dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
-            (e.g. ``num_classes``) will also be set on the generated dataset.
+                (e.g. ``num_classes``) will also be set on the generated dataset.
 
         Returns:
             The loaded sample as a mapping with string keys (e.g. "input", "target") that can be processed by the
