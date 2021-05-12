@@ -52,7 +52,18 @@ else:
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
+        img = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = img.shape
+        return sample
+
+
+class SemanticSegmentationTensorDataSource(TensorDataSource):
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        img = sample[DefaultDataKeys.INPUT].float()
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = img.shape
         return sample
 
 
@@ -162,7 +173,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             data_sources={
                 DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
                 DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
-                DefaultDataSources.TENSORS: TensorDataSource(),
+                DefaultDataSources.TENSORS: SemanticSegmentationTensorDataSource(),
                 DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
             },
             default_data_source=DefaultDataSources.FILES,
