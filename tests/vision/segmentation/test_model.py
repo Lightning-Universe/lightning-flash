@@ -1,11 +1,14 @@
 from typing import Tuple
 
+import numpy as np
 import pytest
 import torch
 
 from flash import Trainer
+from flash.data.data_pipeline import DataPipeline
 from flash.data.data_source import DefaultDataKeys
 from flash.vision import SemanticSegmentation
+from flash.vision.segmentation.data import SemanticSegmentationPreprocess
 
 # ======== Mock functions ========
 
@@ -78,3 +81,21 @@ def test_unfreeze():
     model.unfreeze()
     for p in model.backbone.parameters():
         assert p.requires_grad is True
+
+
+def test_predict_tensor():
+    img = torch.rand(1, 3, 10, 20)
+    model = SemanticSegmentation(2)
+    data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess())
+    out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
+    assert isinstance(out[0], torch.Tensor)
+    assert out[0].shape == (196, 196)
+
+
+def test_predict_numpy():
+    img = np.ones((1, 3, 10, 20))
+    model = SemanticSegmentation(2)
+    data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess())
+    out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
+    assert isinstance(out[0], torch.Tensor)
+    assert out[0].shape == (196, 196)
