@@ -57,8 +57,7 @@ jobs:
       displayName: 'Install dependencies'
 
     - bash: |
-        # todo: inclide test folder, this is teml skip to get it running
-        python -m pytest flash -v --cov=flash --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
+        python -m pytest flash tests -v --cov=flash --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
       displayName: 'Testing'
 
     - bash: |
