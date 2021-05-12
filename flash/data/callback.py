@@ -81,7 +81,16 @@ class BaseDataFetcher(FlashCallback):
 
         from flash.data.callback import BaseDataFetcher
         from flash.data.data_module import DataModule
+        from flash.data.data_source import DataSource
+        from flash.data.process import Preprocess
 
+        class CustomPreprocess(Preprocess):
+
+            def __init__(**kwargs):
+                super().__init__(
+                    data_sources = {"inputs": DataSource()},
+                    **kwargs,
+                )
 
         class PrintData(BaseDataFetcher):
 
@@ -89,6 +98,8 @@ class BaseDataFetcher(FlashCallback):
                 print(self.batches)
 
         class CustomDataModule(DataModule):
+
+            preprocess_cls = CustomPreprocess
 
             @staticmethod
             def configure_data_fetcher():
@@ -100,17 +111,16 @@ class BaseDataFetcher(FlashCallback):
                 train_data: Any,
                 val_data: Any,
                 test_data: Any,
-                predict_data: Any) -> "CustomDataModule":
-
-                preprocess = CustomPreprocess()
-
-                return cls.from_load_data_inputs(
-                    train_load_data_input=train_data,
-                    val_load_data_input=val_data,
-                    test_load_data_input=test_data,
-                    predict_load_data_input=predict_data,
-                    preprocess=preprocess,
-                    batch_size=5)
+                predict_data: Any,
+            ) -> "CustomDataModule":
+                return cls.from_data_source(
+                    "inputs",
+                    train_data=train_data,
+                    val_data=val_data,
+                    test_data=test_data,
+                    predict_data=predict_data,
+                    batch_size=5,
+                )
 
         dm = CustomDataModule.from_inputs(range(5), range(5), range(5), range(5))
         data_fetcher = dm.data_fetcher

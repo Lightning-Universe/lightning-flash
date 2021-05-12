@@ -20,7 +20,7 @@ from torch import nn
 from torchvision import transforms as T
 
 from flash.data.data_source import DefaultDataKeys
-from flash.data.transforms import ApplyToKeys
+from flash.data.transforms import ApplyToKeys, kornia_collate
 from flash.utils.imports import _KORNIA_AVAILABLE
 
 if _KORNIA_AVAILABLE:
@@ -40,6 +40,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
                 K.geometry.Resize(image_size),
                 K.augmentation.RandomHorizontalFlip(),
             ),
+            "collate": kornia_collate,
             "per_batch_transform_on_device": ApplyToKeys(
                 DefaultDataKeys.INPUT,
                 K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -56,6 +57,7 @@ def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
                 DefaultDataKeys.INPUT,
                 T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ),
+            "collate": kornia_collate,
         }
 
 
@@ -71,6 +73,7 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
                 DefaultDataKeys.INPUT,
                 K.geometry.Resize(image_size),
             ),
+            "collate": kornia_collate,
             "per_batch_transform_on_device": ApplyToKeys(
                 DefaultDataKeys.INPUT,
                 K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
@@ -87,4 +90,5 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
                 DefaultDataKeys.INPUT,
                 T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ),
+            "collate": kornia_collate,
         }

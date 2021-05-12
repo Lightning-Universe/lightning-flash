@@ -17,7 +17,7 @@ import os
 from flash.__about__ import *  # noqa: F401 F403
 
 _PACKAGE_ROOT = os.path.dirname(__file__)
-_PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
+PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
 
 from flash.core.model import Task  # noqa: E402
 from flash.core.trainer import Trainer  # noqa: E402

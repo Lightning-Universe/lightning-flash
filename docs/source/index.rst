@@ -29,7 +29,7 @@ Lightning Flash
    reference/translation
    reference/object_detection
    reference/video_classification
-
+   reference/semantic_segmentation
 
 .. toctree::
    :maxdepth: 1

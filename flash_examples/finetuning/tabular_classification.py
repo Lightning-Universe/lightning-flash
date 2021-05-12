@@ -23,8 +23,8 @@ download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 # 2. Load the data
 datamodule = TabularData.from_csv(
     ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-    ["Fare"],
-    target_field="Survived",
+    "Fare",
+    target_fields="Survived",
     train_file="./data/titanic/titanic.csv",
     test_file="./data/titanic/test.csv",
     val_split=0.25,

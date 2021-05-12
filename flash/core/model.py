@@ -287,9 +287,9 @@ class Task(LightningModule):
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
 
-        elif self.trainer is not None and hasattr(
-            self.trainer, 'datamodule'
-        ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
+            self.trainer.datamodule, 'data_pipeline', None
+        ) is not None:
             old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
@@ -425,8 +425,8 @@ class Task(LightningModule):
         return registry.available_keys()
 
     @classmethod
-    def get_model_details(cls, key) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+    def get_backbone_details(cls, key) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
         if registry is None:
             return []
         return [v for v in inspect.signature(registry.get(key)).parameters.items()]

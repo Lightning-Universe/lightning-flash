@@ -185,7 +185,7 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert _seq.pre_tensor_transform.func == preprocess.pre_tensor_transform
     assert _seq.to_tensor_transform.func == preprocess.to_tensor_transform
     assert _seq.post_tensor_transform.func == preprocess.train_post_tensor_transform
-    assert train_worker_preprocessor.collate_fn.func == default_collate
+    assert train_worker_preprocessor.collate_fn.func == preprocess.collate
     assert train_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
     _seq = val_worker_preprocessor.per_sample_transform
@@ -206,7 +206,7 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert _seq.pre_tensor_transform.func == preprocess.pre_tensor_transform
     assert _seq.to_tensor_transform.func == preprocess.predict_to_tensor_transform
     assert _seq.post_tensor_transform.func == preprocess.post_tensor_transform
-    assert predict_worker_preprocessor.collate_fn.func == default_collate
+    assert predict_worker_preprocessor.collate_fn.func == preprocess.collate
     assert predict_worker_preprocessor.per_batch_transform.func == preprocess.per_batch_transform
 
 
@@ -252,9 +252,9 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
     data_pipeline = DataPipeline(preprocess=preprocess)
 
     data_pipeline.worker_preprocessor(RunningStage.TRAINING)
-    with pytest.raises(MisconfigurationException, match="are mutual exclusive"):
+    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
         data_pipeline.worker_preprocessor(RunningStage.VALIDATING)
-    with pytest.raises(MisconfigurationException, match="are mutual exclusive"):
+    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
         data_pipeline.worker_preprocessor(RunningStage.TESTING)
     data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
@@ -854,9 +854,9 @@ def test_preprocess_transforms(tmpdir):
     test_preprocessor = DataPipeline(preprocess=preprocess).worker_preprocessor(RunningStage.TESTING)
     predict_preprocessor = DataPipeline(preprocess=preprocess).worker_preprocessor(RunningStage.PREDICTING)
 
-    assert train_preprocessor.collate_fn.func == default_collate
-    assert val_preprocessor.collate_fn.func == default_collate
-    assert test_preprocessor.collate_fn.func == default_collate
+    assert train_preprocessor.collate_fn.func == preprocess.collate
+    assert val_preprocessor.collate_fn.func == preprocess.collate
+    assert test_preprocessor.collate_fn.func == preprocess.collate
     assert predict_preprocessor.collate_fn.func == DataPipeline._identity
 
     class CustomPreprocess(DefaultPreprocess):
@@ -886,7 +886,7 @@ def test_preprocess_transforms(tmpdir):
         test_preprocessor = data_pipeline.worker_preprocessor(RunningStage.TESTING)
     predict_preprocessor = data_pipeline.worker_preprocessor(RunningStage.PREDICTING)
 
-    assert train_preprocessor.collate_fn.func == default_collate
+    assert train_preprocessor.collate_fn.func == preprocess.collate
     assert predict_preprocessor.collate_fn.func == DataPipeline._identity
 
 
