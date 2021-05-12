@@ -81,6 +81,7 @@ class KorniaParallelTransforms(nn.Sequential):
         return result
 
 
+@convert_to_modules
 def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     """Kornia transforms add batch dimension which need to be removed. This function removes that dimension and then
     applies ``torch.utils.data._utils.collate.default_collate``."""
