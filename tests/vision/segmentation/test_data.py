@@ -44,7 +44,7 @@ class TestSemanticSegmentationPreprocess:
 
     @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     def test_smoke(self):
-        prep = SemanticSegmentationPreprocess()
+        prep = SemanticSegmentationPreprocess(num_classes=1)
         assert prep is not None
 
 
@@ -89,6 +89,7 @@ class TestSemanticSegmentationData:
             test_target_folder=str(tmp_dir / "targets"),
             batch_size=2,
             num_workers=0,
+            num_classes=num_classes,
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -143,6 +144,7 @@ class TestSemanticSegmentationData:
                 train_target_folder=str(tmp_dir / "targets"),
                 batch_size=1,
                 num_workers=0,
+                num_classes=num_classes,
             )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -185,6 +187,7 @@ class TestSemanticSegmentationData:
             test_targets=targets,
             batch_size=2,
             num_workers=0,
+            num_classes=num_classes
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -238,6 +241,7 @@ class TestSemanticSegmentationData:
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],
                 batch_size=2,
                 num_workers=0,
+                num_classes=num_classes
             )
 
     def test_map_labels(self, tmpdir):
@@ -275,6 +279,7 @@ class TestSemanticSegmentationData:
             val_targets=targets,
             batch_size=2,
             num_workers=0,
+            num_classes=num_classes
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -284,7 +289,6 @@ class TestSemanticSegmentationData:
         dm.set_block_viz_window(False)
         assert dm.data_fetcher.block_viz_window is False
 
-        dm.set_labels_map(labels_map)
         dm.show_train_batch("load_sample")
         dm.show_train_batch("to_tensor_transform")
 

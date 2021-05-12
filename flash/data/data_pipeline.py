@@ -61,6 +61,9 @@ class DataPipelineState:
         else:
             return None
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(initialized={self._initialized}, state={self._state})"
+
 
 class DataPipeline:
     """

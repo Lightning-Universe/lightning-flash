@@ -23,6 +23,8 @@ class SplitDataset(Dataset):
 
     """
 
+    _INTERNAL_KEYS = ("dataset", "indices", "data")
+
     def __init__(self, dataset: Any, indices: List[int] = [], use_duplicated_indices: bool = False) -> None:
         if not isinstance(indices, list):
             raise MisconfigurationException("indices should be a list")
@@ -37,6 +39,17 @@ class SplitDataset(Dataset):
 
         self.dataset = dataset
         self.indices = indices
+
+    def __getattr__(self, key: str):
+        if key in self._INTERNAL_KEYS:
+            return getattr(self, key)
+        return getattr(self.dataset, key)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name in self._INTERNAL_KEYS:
+            self.__dict__[name] = value
+        else:
+            setattr(self.dataset, name, value)
 
     def __getitem__(self, index: int) -> Any:
         return self.dataset[self.indices[index]]
