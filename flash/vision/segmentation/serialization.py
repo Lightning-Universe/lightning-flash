@@ -60,6 +60,13 @@ class SegmentationLabels(Serializer):
                 out[i].masked_fill_(mask, label_val[i])
         return out
 
+    @staticmethod
+    def create_random_labels_map(num_classes: int) -> Dict[int, Tuple[int, int, int]]:
+        labels_map: Dict[int, Tuple[int, int, int]] = {}
+        for i in range(num_classes):
+            labels_map[i] = torch.randint(0, 255, (3, ))
+        return labels_map
+
     def serialize(self, sample: torch.Tensor) -> torch.Tensor:
         assert len(sample.shape) == 3, sample.shape
         labels = torch.argmax(sample, dim=-3)  # HxW

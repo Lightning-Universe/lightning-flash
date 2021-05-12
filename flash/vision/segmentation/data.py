@@ -49,13 +49,6 @@ else:
     plt = None
 
 
-def create_random_labels_map(num_classes: int) -> Dict[int, Tuple[int, int, int]]:
-    labels_map: Dict[int, Tuple[int, int, int]] = {}
-    for i in range(num_classes):
-        labels_map[i] = torch.randint(0, 255, (3, ))
-    return labels_map
-
-
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
@@ -111,7 +104,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
     def predict_load_data(self, data: Union[str, List[str]]):
         return super().predict_load_data(data)
 
-    def load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, torch.Tensor]:
+    def load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         # unpack data paths
         img_path = sample[DefaultDataKeys.INPUT]
         img_labels_path = sample[DefaultDataKeys.TARGET]
@@ -124,7 +117,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         return {
             DefaultDataKeys.INPUT: img.float(),
             DefaultDataKeys.TARGET: img_labels.float(),
-            DefaultDataKeys.TARGET: img_labels.float()
+            DefaultDataKeys.METADATA: img.shape,
         }
 
     def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -152,12 +145,10 @@ class SemanticSegmentationPreprocess(Preprocess):
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
         """
-        if not num_classes or not isinstance(num_classes, int):
-            raise MisconfigurationException("`num_classes` should be provided for instantiation.")
-
         self.image_size = image_size
         self.num_classes = num_classes
-        self.labels_map = labels_map
+        if num_classes:
+            labels_map = labels_map or SegmentationLabels.create_random_labels_map(num_classes)
 
         super().__init__(
             train_transform=train_transform,
@@ -174,6 +165,8 @@ class SemanticSegmentationPreprocess(Preprocess):
 
         if labels_map:
             self.set_state(ImageLabelsMap(labels_map))
+
+        self.labels_map = labels_map
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
@@ -209,12 +202,68 @@ class SemanticSegmentationData(DataModule):
     preprocess_cls = SemanticSegmentationPreprocess
 
     @staticmethod
-    def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        return SegmentationMatplotlibVisualization(*args, **kwargs)
+    def configure_data_fetcher(
+        labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None
+    ) -> 'SegmentationMatplotlibVisualization':
+        return SegmentationMatplotlibVisualization(labels_map=labels_map)
 
     def set_block_viz_window(self, value: bool) -> None:
         """Setter method to switch on/off matplotlib to pop up windows."""
         self.data_fetcher.block_viz_window = value
+
+    @classmethod
+    def from_data_source(
+        cls,
+        data_source: str,
+        train_data: Any = None,
+        val_data: Any = None,
+        test_data: Any = None,
+        predict_data: Any = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+
+        if 'num_classes' not in preprocess_kwargs:
+            raise MisconfigurationException("`num_classes` should be provided during instantiation.")
+
+        num_classes = preprocess_kwargs["num_classes"]
+
+        labels_map = getattr(preprocess_kwargs, "labels_map",
+                             None) or SegmentationLabels.create_random_labels_map(num_classes)
+
+        data_fetcher = data_fetcher or cls.configure_data_fetcher(labels_map)
+
+        if flash._IS_TESTING:
+            data_fetcher.block_viz_window = True
+
+        dm = super(SemanticSegmentationData, cls).from_data_source(
+            data_source=data_source,
+            train_data=train_data,
+            val_data=val_data,
+            test_data=test_data,
+            predict_data=predict_data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs
+        )
+
+        dm.train_dataset.num_classes = num_classes
+        return dm
 
     @classmethod
     def from_folders(
@@ -284,18 +333,7 @@ class SemanticSegmentationData(DataModule):
                 train_target_folder="train_masks",
             )
         """
-
-        if not num_classes or not isinstance(num_classes, int):
-            raise MisconfigurationException("`num_classes` should be provided during instantiation.")
-
-        labels_map = labels_map or create_random_labels_map(num_classes)
-
-        data_fetcher = data_fetcher or cls.configure_data_fetcher(labels_map)
-
-        if flash._IS_TESTING:
-            data_fetcher.block_viz_window = True
-
-        dm = cls.from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.PATHS,
             (train_folder, train_target_folder),
             (val_folder, val_target_folder),
@@ -314,9 +352,6 @@ class SemanticSegmentationData(DataModule):
             labels_map=labels_map,
             **preprocess_kwargs,
         )
-
-        dm.train_dataset.num_classes = num_classes
-        return dm
 
 
 class SegmentationMatplotlibVisualization(BaseVisualization):
