@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from flash.data.data_source import DefaultDataKeys
 from flash.vision.segmentation.serialization import SegmentationLabels
 
 
@@ -30,7 +31,7 @@ class TestSemanticSegmentationLabels:
         sample[1, 1, 2] = 1  # add peak in class 2
         sample[3, 0, 1] = 1  # add peak in class 4
 
-        classes = serial.serialize(sample)
+        classes = serial.serialize({DefaultDataKeys.PREDS: sample})
         assert classes[1, 2] == 1
         assert classes[0, 1] == 3
 

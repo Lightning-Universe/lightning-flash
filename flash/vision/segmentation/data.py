@@ -35,6 +35,7 @@ from flash.data.data_source import (
     ImageLabelsMap,
     NumpyDataSource,
     PathsDataSource,
+    SEQUENCE_DATA_TYPE,
     TensorDataSource,
 )
 from flash.data.process import Preprocess
@@ -51,7 +52,18 @@ else:
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
+        img = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = img.shape
+        return sample
+
+
+class SemanticSegmentationTensorDataSource(TensorDataSource):
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        img = sample[DefaultDataKeys.INPUT].float()
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = img.shape
         return sample
 
 
@@ -120,7 +132,11 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         }
 
     def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        return {DefaultDataKeys.INPUT: torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()}
+        img = torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()
+        return {
+            DefaultDataKeys.INPUT: img,
+            DefaultDataKeys.METADATA: img.shape,
+        }
 
 
 class SemanticSegmentationPreprocess(Preprocess):
@@ -157,7 +173,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             data_sources={
                 DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
                 DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
-                DefaultDataSources.TENSORS: TensorDataSource(),
+                DefaultDataSources.TENSORS: SemanticSegmentationTensorDataSource(),
                 DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
             },
             default_data_source=DefaultDataSources.FILES,
