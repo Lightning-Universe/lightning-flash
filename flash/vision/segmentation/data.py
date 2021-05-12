@@ -155,9 +155,6 @@ class SemanticSegmentationPreprocess(Preprocess):
         if not num_classes or not isinstance(num_classes, int):
             raise MisconfigurationException("`num_classes` should be provided for instantiation.")
 
-        if not labels_map:
-            raise MisconfigurationException("`labels_map` should be provided for instantiation.")
-
         self.image_size = image_size
         self.num_classes = num_classes
         self.labels_map = labels_map
@@ -175,7 +172,8 @@ class SemanticSegmentationPreprocess(Preprocess):
             default_data_source=DefaultDataSources.PATHS,
         )
 
-        self.set_state(ImageLabelsMap(labels_map))
+        if labels_map:
+            self.set_state(ImageLabelsMap(labels_map))
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {

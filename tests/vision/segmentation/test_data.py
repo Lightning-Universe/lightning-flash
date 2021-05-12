@@ -44,7 +44,7 @@ class TestSemanticSegmentationPreprocess:
 
     @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     def test_smoke(self):
-        prep = SemanticSegmentationPreprocess()
+        prep = SemanticSegmentationPreprocess(num_classes=1)
         assert prep is not None
 
 
