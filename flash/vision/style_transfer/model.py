@@ -167,7 +167,6 @@ class StyleTransfer(Task):
             serializer=serializer,
         )
 
-        # can't assign modules before super init call
         self.perceptual_loss = perceptual_loss
         self.perceptual_loss.set_style_image(style_image)
 
