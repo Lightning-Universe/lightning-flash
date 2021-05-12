@@ -19,9 +19,9 @@ which is stored as numpy arrays.
 ----------
 
 
-.. testsetup:: *
+.. testcode:: *
 
-    from typing import Any, Callable, Dict, List, Optional, Tuple
+    #  from typing import Any, Callable, Dict, List, Optional, Tuple
 
     import numpy as np
     import torch
