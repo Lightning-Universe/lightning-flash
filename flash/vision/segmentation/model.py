@@ -22,16 +22,21 @@ from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
 from flash.data.data_source import DefaultDataKeys
 from flash.data.process import Postprocess, Serializer
+from flash.utils.imports import _KORNIA_AVAILABLE
 from flash.vision.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.vision.segmentation.serialization import SegmentationLabels
+
+if _KORNIA_AVAILABLE:
+    import kornia as K
 
 
 class SemanticSegmentationPostprocess(Postprocess):
 
-    def per_batch_transform(self, batch: Any) -> Any:
-        import pdb
-        pdb.set_trace()
-        return super().per_batch_transform(batch)
+    def per_sample_transform(self, sample: Any) -> Any:
+        resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA][-2:], interpolation='bilinear')
+        sample[DefaultDataKeys.PREDS] = resize(torch.stack(sample[DefaultDataKeys.PREDS]))
+        sample[DefaultDataKeys.INPUT] = resize(torch.stack(sample[DefaultDataKeys.INPUT]))
+        return super().per_sample_transform(sample)
 
 
 class SemanticSegmentation(ClassificationTask):
