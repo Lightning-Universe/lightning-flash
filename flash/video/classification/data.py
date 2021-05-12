@@ -146,14 +146,20 @@ class VideoClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.PATHS: VideoClassificationPathsDataSource(
+                DefaultDataSources.FILES: VideoClassificationPathsDataSource(
                     clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
-                )
+                ),
+                DefaultDataSources.FOLDERS: VideoClassificationPathsDataSource(
+                    clip_sampler,
+                    video_sampler=video_sampler,
+                    decode_audio=decode_audio,
+                    decoder=decoder,
+                ),
             },
-            default_data_source=DefaultDataSources.PATHS,
+            default_data_source=DefaultDataSources.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
