@@ -17,6 +17,7 @@ __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
 def _apply_to_input(default_transforms_fn) -> Callable[..., Dict[str, ApplyToKeys]]:
+
     @functools.wraps(default_transforms_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Dict[str, ApplyToKeys]:
         default_transforms = default_transforms_fn(*args, **kwargs)
@@ -26,6 +27,7 @@ def _apply_to_input(default_transforms_fn) -> Callable[..., Dict[str, ApplyToKey
 
 
 class StyleTransferPreprocess(ImageClassificationPreprocess):
+
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
