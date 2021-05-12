@@ -321,4 +321,4 @@ We get the following output:
 
 .. testoutput:: custom_task
 
-    [tensor([188.9760]), tensor([196.1777]), tensor([161.3590]), tensor([130.7312]), tensor([149.0340])]
+    [tensor([189.1198]), tensor([196.0839]), tensor([161.2461]), tensor([130.7591]), tensor([149.1780])]
