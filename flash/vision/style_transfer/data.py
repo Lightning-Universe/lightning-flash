@@ -1,3 +1,4 @@
+import functools
 import pathlib
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
@@ -15,8 +16,16 @@ from ._utils import raise_not_supported
 __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
-class StyleTransferPreprocess(ImageClassificationPreprocess):
+def _apply_to_input(default_transforms_fn) -> Callable[..., Dict[str, ApplyToKeys]]:
+    @functools.wraps(default_transforms_fn)
+    def wrapper(*args: Any, **kwargs: Any) -> Dict[str, ApplyToKeys]:
+        default_transforms = default_transforms_fn(*args, **kwargs)
+        return {hook: ApplyToKeys(DefaultDataKeys.INPUT, transform) for hook, transform in default_transforms.items()}
 
+    return wrapper
+
+
+class StyleTransferPreprocess(ImageClassificationPreprocess):
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
@@ -31,18 +40,14 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
             image_size=image_size,
         )
 
-    def _apply_to_input(self, transform: Callable) -> ApplyToKeys:
-        return ApplyToKeys(DefaultDataKeys.INPUT, transform)
-
     @property
+    @_apply_to_input
     def default_train_transforms(self) -> Dict[str, Callable]:
         return dict(
-            to_tensor_transform=self._apply_to_input(torchvision.transforms.ToTensor()),
-            per_batch_transform_on_device=self._apply_to_input(
-                nn.Sequential(
-                    transforms.Resize(min(self.image_size)),
-                    transforms.CenterCrop(self.image_size),
-                )
+            to_tensor_transform=torchvision.transforms.ToTensor(),
+            per_sample_transform_on_device=nn.Sequential(
+                transforms.Resize(min(self.image_size)),
+                transforms.CenterCrop(self.image_size),
             ),
         )
 
@@ -57,11 +62,12 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
         return None
 
     @property
+    @_apply_to_input
     def default_predict_transforms(self) -> Dict[str, Callable]:
 
         return dict(
-            to_tensor_transform=self._apply_to_input(torchvision.transforms.ToTensor()),
-            per_batch_transform_on_device=self._apply_to_input(nn.Sequential(transforms.Resize(min(self.image_size)))),
+            to_tensor_transform=torchvision.transforms.ToTensor(),
+            per_sample_transform_on_device=transforms.Resize(min(self.image_size)),
         )
 
 
