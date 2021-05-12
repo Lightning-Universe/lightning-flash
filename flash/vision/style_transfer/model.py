@@ -136,6 +136,8 @@ class StyleTransfer(Task):
         learning_rate: float = 1e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+        self.save_hyperparameters(ignore="style_image")
+
         if isinstance(style_image, str):
             style_image = read_image(style_image)
 
@@ -153,8 +155,6 @@ class StyleTransfer(Task):
             style_loss = self.default_style_loss(multi_layer_encoder)
 
         perceptual_loss = loss.PerceptualLoss(content_loss, style_loss)
-
-        self.save_hyperparameters()
 
         super().__init__(
             model=model,
