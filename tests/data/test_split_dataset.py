@@ -52,3 +52,8 @@ def test_split_dataset(tmpdir):
 
     split_dataset = SplitDataset(Dataset(), indices=[0])
     assert split_dataset.name == "something"
+
+    assert split_dataset._INTERNAL_KEYS == ("dataset", "indices", "data")
+
+    split_dataset.is_passed_down = True
+    assert split_dataset.dataset.is_passed_down
