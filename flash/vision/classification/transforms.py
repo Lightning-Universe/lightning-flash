@@ -20,48 +20,16 @@ from torch import nn
 from torchvision import transforms as T
 
 from flash.data.data_source import DefaultDataKeys
-from flash.data.transforms import ApplyToKeys, kornia_collate
+from flash.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
 from flash.utils.imports import _KORNIA_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
 
 
-def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
-        #  Better approach as all transforms are applied on tensor directly
-        return {
-            "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
-            ),
-            "post_tensor_transform": ApplyToKeys(
-                DefaultDataKeys.INPUT,
-                K.geometry.Resize(image_size),
-                K.augmentation.RandomHorizontalFlip(),
-            ),
-            "collate": kornia_collate,
-            "per_batch_transform_on_device": ApplyToKeys(
-                DefaultDataKeys.INPUT,
-                K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-            )
-        }
-    else:
-        return {
-            "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(image_size), T.RandomHorizontalFlip()),
-            "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
-            ),
-            "post_tensor_transform": ApplyToKeys(
-                DefaultDataKeys.INPUT,
-                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ),
-            "collate": kornia_collate,
-        }
-
-
-def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    """The default transforms for image classification: resize the image, convert the image and target to a tensor,
+    collate the batch, and apply normalization."""
     if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
         #  Better approach as all transforms are applied on tensor directly
         return {
@@ -92,3 +60,15 @@ def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             ),
             "collate": kornia_collate,
         }
+
+
+def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    """During training, we apply the default transforms with additional ``RandomHorizontalFlip``."""
+    if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
+        #  Better approach as all transforms are applied on tensor directly
+        transforms = {
+            "post_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),
+        }
+    else:
+        transforms = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.RandomHorizontalFlip())}
+    return merge_transforms(default_transforms(image_size), transforms)

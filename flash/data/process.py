@@ -121,8 +121,8 @@ class Preprocess(BasePreprocess, Properties, Module):
         as it will impact performances.
 
     Data processing can be configured by overriding hooks or through transforms. The preprocess transforms are given as
-    a mapping from hook names to callables. Default transforms can be configured by overriding the
-    `default_{train,val,test,predict}_transforms` methods. These can then be overridden by the user with the
+    a mapping from hook names to callables. Default transforms can be configured by overriding the `default_transforms`
+    or `{train,val,test,predict}_default_transforms` methods. These can then be overridden by the user with the
     `{train,val,test,predict}_transform` arguments to the ``Preprocess``. All of the hooks can be used in the transform
     mappings.
 
@@ -130,7 +130,13 @@ class Preprocess(BasePreprocess, Properties, Module):
 
         class CustomPreprocess(Preprocess):
 
-            def default_train_transforms() -> Mapping[str, Callable]:
+            def default_transforms() -> Mapping[str, Callable]:
+                return {
+                    "to_tensor_transform": transforms.ToTensor(),
+                    "collate": torch.utils.data._utils.collate.default_collate,
+                }
+
+            def train_default_transforms() -> Mapping[str, Callable]:
                 return {
                     "pre_tensor_transform": transforms.RandomHorizontalFlip(),
                     "to_tensor_transform": transforms.ToTensor(),

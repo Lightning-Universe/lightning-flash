@@ -95,6 +95,16 @@ def merge_transforms(
     base_transforms: Dict[str, Callable],
     additional_transforms: Dict[str, Callable],
 ) -> Dict[str, Callable]:
+    """Utility function to merge two transform dictionaries. For each hook, the ``additional_transforms`` will be be
+    called after the ``base_transforms``.
+
+    Args:
+        base_transforms: The base transforms dictionary.
+        additional_transforms: The dictionary of additional transforms to be appended to the ``base_transforms``.
+
+    Returns:
+        The new dictionary of transforms.
+    """
     transforms = {}
     for hook in _PREPROCESS_FUNCS:
         if hook in base_transforms and hook in additional_transforms:
