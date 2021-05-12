@@ -154,7 +154,7 @@ x, y = datasets.load_diabetes(return_X_y=True)
 datamodule = NumpyDataModule.from_numpy(x, y)
 model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
 
-trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20)
+trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
 trainer.fit(model, datamodule=datamodule)
 
 predict_data = np.array([

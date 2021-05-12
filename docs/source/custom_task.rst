@@ -18,10 +18,9 @@ which is stored as numpy arrays.
 1. Imports
 ----------
 
+.. testcode:: custom_task
 
-.. testcode:: *
-
-    #  from typing import Any, Callable, Dict, List, Optional, Tuple
+    from typing import Any, Callable, Dict, List, Optional, Tuple
 
     import numpy as np
     import torch
@@ -50,7 +49,7 @@ you will likely need to override the ``__init__``, ``forward``, and the ``{train
 It's best practice in flash for the data to be provide as a dictionary which maps string keys to their values. The
 ``{train,val,test,predict}_step`` methods need to be overridden to extract the data from the input dictionary.
 
-.. testcode:: *
+.. testcode:: custom_task
 
     class RegressionTask(flash.Task):
 
@@ -144,7 +143,7 @@ loading the train data (``if self.training:``), the ``NumpyDataSource`` sets the
 optional ``dataset`` argument. Any attributes that are set on the optional ``dataset`` argument will also be set on the
 generated ``dataset``.
 
-.. testcode:: *
+.. testcode:: custom_task
 
     class NumpyDataSource(DataSource[Tuple[ND, ND]]):
 
@@ -186,7 +185,7 @@ The recommended way to define a custom :class:`~flash.data.process.Preprocess` i
 - Override the ``default_{train,val,test,predict}_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
     - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
-.. testcode:: *
+.. testcode:: custom_task
 
     class NumpyPreprocess(Preprocess):
 
@@ -266,7 +265,7 @@ data source whose name is in :class:`~flash.data.data_source.DefaultDataSources`
 ``DataModule.from_*`` method that provides the expected inputs. So in this case, there is the
 :meth:`~flash.data.data_module.DataModule.from_numpy` that will use our numpy data source.
 
-.. testcode:: *
+.. testcode:: custom_task
 
     class NumpyDataModule(flash.DataModule):
 
@@ -286,14 +285,18 @@ dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-data
 Like any Flash Task, we can fit our model using the ``flash.Trainer`` by
 supplying the task itself, and the associated data:
 
-.. testcode:: *
+.. testcode:: custom_task
 
     x, y = datasets.load_diabetes(return_X_y=True)
     datamodule = NumpyDataModule.from_numpy(x, y)
     model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
 
-    trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20)
+    trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
     trainer.fit(model, datamodule=datamodule)
+
+.. testoutput:: custom_task
+
+    ...
 
 
 5. Predicting
@@ -301,9 +304,9 @@ supplying the task itself, and the associated data:
 
 With a trained model we can now perform inference. Here we will use a few examples from the test set of our data:
 
-.. testcode:: *
+.. testcode:: custom_task
 
-    predict_data = torch.tensor([
+    predict_data = np.array([
         [ 0.0199,  0.0507,  0.1048,  0.0701, -0.0360, -0.0267, -0.0250, -0.0026,  0.0037,  0.0403],
         [-0.0128, -0.0446,  0.0606,  0.0529,  0.0480,  0.0294, -0.0176,  0.0343,  0.0702,  0.0072],
         [ 0.0381,  0.0507,  0.0089,  0.0425, -0.0428, -0.0210, -0.0397, -0.0026, -0.0181,  0.0072],
@@ -316,6 +319,6 @@ With a trained model we can now perform inference. Here we will use a few exampl
 
 We get the following output:
 
-.. testoutput:: *
+.. testoutput:: custom_task
 
     [tensor([188.9760]), tensor([196.1777]), tensor([161.3590]), tensor([130.7312]), tensor([149.0340])]
