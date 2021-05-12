@@ -26,7 +26,13 @@ from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIO
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
-from flash.data.data_source import DefaultDataKeys, DefaultDataSources, PathsDataSource
+from flash.data.data_source import (
+    DefaultDataKeys,
+    DefaultDataSources,
+    NumpyDataSource,
+    PathsDataSource,
+    TensorDataSource,
+)
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.vision.segmentation.serialization import SegmentationLabels
@@ -36,6 +42,13 @@ if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
+
+
+class SemanticSegmentationNumpyDataSource(NumpyDataSource):
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        sample[DefaultDataKeys.INPUT] = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
+        return sample
 
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
@@ -127,8 +140,13 @@ class SemanticSegmentationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource()},
-            default_data_source=DefaultDataSources.PATHS,
+            data_sources={
+                DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
+                DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
+                DefaultDataSources.TENSORS: TensorDataSource(),
+                DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
+            },
+            default_data_source=DefaultDataSources.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -239,7 +257,7 @@ class SemanticSegmentationData(DataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.PATHS,
+            DefaultDataSources.FOLDERS,
             (train_folder, train_target_folder),
             (val_folder, val_target_folder),
             (test_folder, test_target_folder),
