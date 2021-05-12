@@ -16,6 +16,7 @@ from typing import List, Optional, Union
 
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
@@ -132,3 +133,7 @@ class Trainer(Trainer):
         override_types = new_callbacks_types.intersection(old_callbacks_types)
         new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
         return new_callbacks
+
+
+class FlashTrainerFn(TrainerFn):
+    finetune = 'finetune'

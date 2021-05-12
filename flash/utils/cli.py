@@ -1,9 +1,10 @@
 from typing import Any, Callable, Optional, Type, Union
 
 import pytorch_lightning as pl
-from pytorch_lightning.utilities.cli import LightningArgumentParser, LightningCLI
+from pytorch_lightning.utilities.cli import LightningCLI
 
 import flash
+from flash.core.trainer import FlashTrainerFn
 from flash.data.data_source import DefaultDataSources
 
 
@@ -12,8 +13,9 @@ class FlashCLI(LightningCLI):
     def __init__(
         self,
         model_class: Type[pl.LightningModule],
-        datamodule_class: Type[flash.DataModule],
+        datamodule_class: Type['flash.DataModule'],
         trainer_class: Type[pl.Trainer] = flash.Trainer,
+        trainer_fn: str = FlashTrainerFn.finetune.value,
         datasource: Optional[Union[str, Callable]] = None,
         **kwargs: Any,
     ) -> None:
@@ -24,6 +26,7 @@ class FlashCLI(LightningCLI):
             model_class: The :class:`pytorch_lightning.LightningModule` class to train on.
             datamodule_class: The :class:`~flash.data.data_module.DataModule` class.
             trainer_class: An optional extension of the :class:`pytorch_lightning.Trainer` class.
+            trainer_fn: The trainer function to run.
             datasource: Use this if your ``DataModule`` is created using a classmethod. Any of:
                 - ``None``. The ``datamodule_class.__init__`` signature will be used.
                 - ``str``. One of :class:`~flash.data.data_source.DefaultDataSources`. This will use the signature of
@@ -31,13 +34,22 @@ class FlashCLI(LightningCLI):
                 - ``Callable``. A custom method.
             kwargs: See the parent arguments
         """
-        super().__init__(model_class, datamodule_class=datamodule_class, trainer_class=trainer_class, **kwargs)
+        super().__init__(
+            model_class,
+            datamodule_class=datamodule_class,
+            trainer_class=trainer_class,
+            trainer_fn=trainer_fn,
+            **kwargs
+        )
         if isinstance(datasource, str):
             self.datasource = DefaultDataSources(datasource)
         self.datasource_fn: Optional[Callable] = None
 
     def add_core_arguments_to_parser(self):
         """Adds arguments from the core classes to the parser"""
+        self.parser.add_argument(
+            'trainer_fn', type=FlashTrainerFn, default=self.trainer_fn, help='Trainer function to run'
+        )
         self.parser.add_argument(
             '--seed_everything',
             type=Optional[int],

@@ -50,20 +50,19 @@ class ImageClassificationCLI(FlashCLI):
         })
 
     def parse_arguments(self):
-        # ignore the fact that this is needed - might be a bug
+        # TODO: ignore this - needs a fix in jsonargparse
+        # The model has a required `num_classes` argument but it is not defined in the configuration
+        # because it will be set later. Skip the check
         self.config = self.parser.parse_args(_skip_check=True)
 
     def instantiate_datamodule(self):
         # Link the num_classes for the model
         self.config_init["model"]["num_classes"] = self.datamodule.num_classes
 
-    def prepare_fit_kwargs(self):
+    def prepare_run_kwargs(self):
         super().prepare_fit_kwargs()
         # TODO: expose the strategy arguments?
-        self.fit_kwargs["strategy"] = FreezeUnfreeze(unfreeze_epoch=1)
-
-    def fit(self):
-        self.trainer.finetune(**self.fit_kwargs)
+        self.run_kwargs["strategy"] = FreezeUnfreeze(unfreeze_epoch=1)
 
 
 # 3. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
