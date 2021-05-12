@@ -191,7 +191,6 @@ class Task(LightningModule):
         elif isinstance(batch, list):
             # Todo: Understand why stack is needed
             batch = torch.stack(batch)
-        self(batch)
         return self(batch)
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:

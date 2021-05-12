@@ -138,8 +138,10 @@ class _PreProcessor(torch.nn.Module):
         self._collate_context = CurrentFuncContext("collate", preprocess)
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
-    def _extract_metadata(self,
-                          samples: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
+    def _extract_metadata(
+        self,
+        samples: List[Dict[str, Any]],
+    ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
         metadata = [s.pop(DefaultDataKeys.METADATA, None) for s in samples]
         return samples, metadata if any(m is not None for m in metadata) else None
 
