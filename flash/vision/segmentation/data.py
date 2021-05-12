@@ -58,16 +58,6 @@ def create_random_labels_map(num_classes: int) -> Dict[int, Tuple[int, int, int]
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
 
-    def __init__(self, num_classes: int):
-        self.num_classes = num_classes
-
-    def load_data(self, data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
-                  dataset: Optional[Any]) -> Sequence[Mapping[str, Any]]:
-        data = super().load_data(data, dataset=dataset)
-        if self.training:
-            dataset.num_classes = self.num_classes
-        return data
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample[DefaultDataKeys.INPUT] = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
         return sample
@@ -75,9 +65,8 @@ class SemanticSegmentationNumpyDataSource(NumpyDataSource):
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
 
-    def __init__(self, num_classes: int):
+    def __init__(self):
         super().__init__(IMG_EXTENSIONS)
-        self.num_classes = num_classes
 
     def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
                   dataset: BaseAutoDataset) -> Sequence[Mapping[str, Any]]:
@@ -116,9 +105,6 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             ),
             zip(input_data, target_data),
         )
-
-        if self.training:
-            dataset.num_classes = self.num_classes
 
         return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
 
@@ -182,9 +168,9 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource(num_classes),
+                DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource(),
                 DefaultDataSources.TENSOR: TensorDataSource(),
-                DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(num_classes),
+                DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
             },
             default_data_source=DefaultDataSources.PATHS,
         )
@@ -311,7 +297,7 @@ class SemanticSegmentationData(DataModule):
         if flash._IS_TESTING:
             data_fetcher.block_viz_window = True
 
-        return cls.from_data_source(
+        dm = cls.from_data_source(
             DefaultDataSources.PATHS,
             (train_folder, train_target_folder),
             (val_folder, val_target_folder),
@@ -330,6 +316,9 @@ class SemanticSegmentationData(DataModule):
             labels_map=labels_map,
             **preprocess_kwargs,
         )
+
+        dm.train_dataset.num_classes = num_classes
+        return dm
 
 
 class SegmentationMatplotlibVisualization(BaseVisualization):
