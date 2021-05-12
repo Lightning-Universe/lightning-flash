@@ -19,7 +19,7 @@ which is stored as numpy arrays.
 ----------
 
 
-.. code:: python
+.. testsetup:: *
 
     from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -40,7 +40,7 @@ which is stored as numpy arrays.
     ND = np.ndarray
 
 
-2. The Task: Linear regression
+1. The Task: Linear regression
 -------------------------------
 
 Here we create a basic linear regression task by subclassing :class:`~flash.core.model.Task`. For the majority of tasks,
@@ -50,13 +50,13 @@ you will likely need to override the ``__init__``, ``forward``, and the ``{train
 It's best practice in flash for the data to be provide as a dictionary which maps string keys to their values. The
 ``{train,val,test,predict}_step`` methods need to be overridden to extract the data from the input dictionary.
 
-Example::
+.. testcode:: *
 
     class RegressionTask(flash.Task):
 
         def __init__(self, num_inputs, learning_rate=0.2, metrics=None):
             # what kind of model do we want?
-            model = nn.Linear(num_inputs, 1)
+            model = torch.nn.Linear(num_inputs, 1)
 
             # what loss function do we want?
             loss_fn = torch.nn.functional.mse_loss
@@ -119,9 +119,9 @@ is called for training, validation, and testing) or override ``training_step``, 
 individually. These methods behave identically to PyTorch Lightning’s
 `methods <https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#methods>`__.
 
-Here is the pseudo code behind :class:`~flash.core.model.Task` step.
+Here is the pseudo code behind :class:`~flash.core.model.Task` step:
 
-Example::
+.. code:: python
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -144,7 +144,7 @@ loading the train data (``if self.training:``), the ``NumpyDataSource`` sets the
 optional ``dataset`` argument. Any attributes that are set on the optional ``dataset`` argument will also be set on the
 generated ``dataset``.
 
-Example::
+.. testcode:: *
 
     class NumpyDataSource(DataSource[Tuple[ND, ND]]):
 
@@ -186,7 +186,7 @@ The recommended way to define a custom :class:`~flash.data.process.Preprocess` i
 - Override the ``default_{train,val,test,predict}_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
     - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
-Example::
+.. testcode:: *
 
     class NumpyPreprocess(Preprocess):
 
@@ -266,7 +266,7 @@ data source whose name is in :class:`~flash.data.data_source.DefaultDataSources`
 ``DataModule.from_*`` method that provides the expected inputs. So in this case, there is the
 :meth:`~flash.data.data_module.DataModule.from_numpy` that will use our numpy data source.
 
-Example::
+.. testcode:: *
 
     class NumpyDataModule(flash.DataModule):
 
@@ -286,7 +286,7 @@ dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-data
 Like any Flash Task, we can fit our model using the ``flash.Trainer`` by
 supplying the task itself, and the associated data:
 
-.. code:: python
+.. testcode:: *
 
     x, y = datasets.load_diabetes(return_X_y=True)
     datamodule = NumpyDataModule.from_numpy(x, y)
@@ -299,10 +299,9 @@ supplying the task itself, and the associated data:
 5. Predicting
 -------------
 
-With a trained model we can now perform inference. Here we will use a
-few examples from the test set of our data:
+With a trained model we can now perform inference. Here we will use a few examples from the test set of our data:
 
-.. code:: python
+.. testcode:: *
 
     predict_data = torch.tensor([
         [ 0.0199,  0.0507,  0.1048,  0.0701, -0.0360, -0.0267, -0.0250, -0.0026,  0.0037,  0.0403],
@@ -314,4 +313,9 @@ few examples from the test set of our data:
 
     predictions = model.predict(predict_data)
     print(predictions)
-    # out: [tensor([188.9760]), tensor([196.1777]), tensor([161.3590]), tensor([130.7312]), tensor([149.0340])]
+
+We get the following output:
+
+.. testoutput:: *
+
+    [tensor([188.9760]), tensor([196.1777]), tensor([161.3590]), tensor([130.7312]), tensor([149.0340])]
