@@ -70,6 +70,7 @@ class DefaultDataKeys(LightningEnum):
     targets."""
 
     INPUT = "input"
+    PREDS = "preds"
     TARGET = "target"
     METADATA = "metadata"
 

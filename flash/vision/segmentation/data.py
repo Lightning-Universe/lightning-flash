@@ -121,7 +121,11 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         }
 
     def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        return {DefaultDataKeys.INPUT: torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()}
+        img = torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()
+        return {
+            DefaultDataKeys.INPUT: img,
+            DefaultDataKeys.METADATA: img.shape,
+        }
 
 
 class SemanticSegmentationPreprocess(Preprocess):

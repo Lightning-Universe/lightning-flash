@@ -30,7 +30,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utils import get_callable_dict
 from flash.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.data.data_source import DataSource, DefaultDataSources
+from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 
 
@@ -191,6 +191,7 @@ class Task(LightningModule):
         elif isinstance(batch, list):
             # Todo: Understand why stack is needed
             batch = torch.stack(batch)
+        self(batch)
         return self(batch)
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
