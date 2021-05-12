@@ -166,10 +166,10 @@ class _PreProcessor(torch.nn.Module):
                 samples = type(_samples)(_samples)
 
                 with self._collate_context:
-                    samples, metada = self._extract_metadata(samples)
+                    samples, metadata = self._extract_metadata(samples)
                     samples = self.collate_fn(samples)
-                    if metada:
-                        samples[DefaultDataKeys.METADATA] = metada
+                    if metadata:
+                        samples[DefaultDataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
 
             with self._per_batch_transform_context:
