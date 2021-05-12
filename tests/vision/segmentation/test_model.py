@@ -89,7 +89,7 @@ def test_predict_tensor():
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
     assert isinstance(out[0], torch.Tensor)
-    assert out[0].shape == (196, 196)
+    assert out[0].shape == (10, 20)
 
 
 def test_predict_numpy():
@@ -98,4 +98,4 @@ def test_predict_numpy():
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], torch.Tensor)
-    assert out[0].shape == (196, 196)
+    assert out[0].shape == (10, 20)

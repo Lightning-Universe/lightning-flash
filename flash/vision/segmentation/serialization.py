@@ -17,7 +17,7 @@ from typing import Dict, Optional, Tuple
 import torch
 
 import flash
-from flash.data.data_source import ImageLabelsMap
+from flash.data.data_source import DefaultDataKeys, ImageLabelsMap
 from flash.data.process import Serializer
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
@@ -67,9 +67,10 @@ class SegmentationLabels(Serializer):
             labels_map[i] = torch.randint(0, 255, (3, ))
         return labels_map
 
-    def serialize(self, sample: torch.Tensor) -> torch.Tensor:
-        assert len(sample.shape) == 3, sample.shape
-        labels = torch.argmax(sample, dim=-3)  # HxW
+    def serialize(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
+        preds = sample[DefaultDataKeys.PREDS]
+        assert len(preds.shape) == 3, preds.shape
+        labels = torch.argmax(preds, dim=-3)  # HxW
 
         if self.visualize and not flash._IS_TESTING:
             if self.labels_map is None:
