@@ -16,11 +16,14 @@ from unittest.mock import Mock
 
 import pytest
 import torch
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
 from flash import Task, Trainer
 from flash.core.classification import Labels, LabelsState
+from flash.data.data_module import DataModule
 from flash.data.data_pipeline import DataPipeline, DataPipelineState, DefaultPreprocess
+from flash.data.data_source import DefaultDataSources
 from flash.data.process import Serializer, SerializerMapping
 from flash.data.properties import ProcessState, Properties
 
@@ -131,3 +134,43 @@ def test_saving_with_serializers(tmpdir):
     model = CustomModel.load_from_checkpoint(checkpoint_file)
     assert isinstance(model._data_pipeline_state, DataPipelineState)
     assert model._data_pipeline_state._state[LabelsState] == LabelsState(["a", "b"])
+
+
+class CustomPreprocess(DefaultPreprocess):
+
+    def __init__(self):
+        super().__init__(
+            data_sources={
+                "test": Mock(return_value="test"),
+                DefaultDataSources.TENSOR: Mock(return_value="tensor"),
+            },
+            default_data_source="test",
+        )
+
+
+def test_data_source_of_name():
+
+    preprocess = CustomPreprocess()
+
+    assert preprocess.data_source_of_name("test")() == "test"
+    assert preprocess.data_source_of_name(DefaultDataSources.TENSOR)() == "tensor"
+    assert preprocess.data_source_of_name("tensor")() == "tensor"
+    assert preprocess.data_source_of_name("default")() == "test"
+
+    with pytest.raises(MisconfigurationException, match="available data sources are: test, tensor"):
+        preprocess.data_source_of_name("not available")
+
+
+def test_available_data_sources():
+
+    preprocess = CustomPreprocess()
+
+    assert DefaultDataSources.TENSOR in preprocess.available_data_sources()
+    assert "test" in preprocess.available_data_sources()
+    assert len(preprocess.available_data_sources()) == 2
+
+    data_module = DataModule(preprocess=preprocess)
+
+    assert DefaultDataSources.TENSOR in data_module.available_data_sources()
+    assert "test" in data_module.available_data_sources()
+    assert len(data_module.available_data_sources()) == 2
