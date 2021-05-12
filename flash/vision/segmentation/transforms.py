@@ -16,6 +16,7 @@ from typing import Callable, Dict, Tuple
 import kornia as K
 import torch
 import torch.nn as nn
+from torchvision.transforms import Compose
 
 from flash.data.data_source import DefaultDataKeys
 from flash.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
@@ -36,7 +37,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
                 KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest')),
             ),
         ),
-        "collate": nn.Sequential(kornia_collate, ApplyToKeys(DefaultDataKeys.TARGET, prepare_target)),
+        "collate": Compose([kornia_collate, ApplyToKeys(DefaultDataKeys.TARGET, prepare_target)]),
         "per_batch_transform_on_device": ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
     }
 
