@@ -243,6 +243,8 @@ def default_uncollate(batch: Any):
     batch_type = type(batch)
 
     if isinstance(batch, Tensor):
+        if len(batch.shape) == 0:  # 0 shape tensors
+            return batch
         return list(torch.unbind(batch, 0))
 
     elif isinstance(batch, Mapping):
