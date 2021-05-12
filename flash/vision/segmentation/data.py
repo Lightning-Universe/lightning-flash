@@ -35,7 +35,6 @@ from flash.data.data_source import (
     ImageLabelsMap,
     NumpyDataSource,
     PathsDataSource,
-    SEQUENCE_DATA_TYPE,
     TensorDataSource,
 )
 from flash.data.process import Preprocess
