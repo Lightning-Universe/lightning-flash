@@ -142,7 +142,7 @@ class CustomPreprocess(DefaultPreprocess):
         super().__init__(
             data_sources={
                 "test": Mock(return_value="test"),
-                DefaultDataSources.TENSORS: Mock(return_value="tensor"),
+                DefaultDataSources.TENSORS: Mock(return_value="tensors"),
             },
             default_data_source="test",
         )
@@ -153,8 +153,8 @@ def test_data_source_of_name():
     preprocess = CustomPreprocess()
 
     assert preprocess.data_source_of_name("test")() == "test"
-    assert preprocess.data_source_of_name(DefaultDataSources.TENSORS)() == "tensor"
-    assert preprocess.data_source_of_name("tensor")() == "tensor"
+    assert preprocess.data_source_of_name(DefaultDataSources.TENSORS)() == "tensors"
+    assert preprocess.data_source_of_name("tensors")() == "tensors"
     assert preprocess.data_source_of_name("default")() == "test"
 
     with pytest.raises(MisconfigurationException, match="available data sources are: test, tensor"):
