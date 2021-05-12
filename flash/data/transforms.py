@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Mapping, Sequence, Union
+from typing import Any, Callable, Dict, Mapping, Sequence, Union
 
 import torch
 from torch import nn
 from torch.utils.data._utils.collate import default_collate
 
-from flash.data.utils import convert_to_modules
+from flash.data.utils import _PREPROCESS_FUNCS, convert_to_modules
 
 
 class ApplyToKeys(nn.Sequential):
@@ -89,3 +89,21 @@ def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
             if torch.is_tensor(sample[key]):
                 sample[key] = sample[key].squeeze(0)
     return default_collate(samples)
+
+
+def merge_transforms(
+    base_transforms: Dict[str, Callable],
+    additional_transforms: Dict[str, Callable],
+) -> Dict[str, Callable]:
+    transforms = {}
+    for hook in _PREPROCESS_FUNCS:
+        if hook in base_transforms and hook in additional_transforms:
+            transforms[hook] = nn.Sequential(
+                convert_to_modules(base_transforms[hook]),
+                convert_to_modules(additional_transforms[hook]),
+            )
+        elif hook in base_transforms:
+            transforms[hook] = base_transforms[hook]
+        elif hook in additional_transforms:
+            transforms[hook] = additional_transforms[hook]
+    return transforms
