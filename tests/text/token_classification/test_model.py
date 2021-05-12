@@ -13,10 +13,11 @@ NUM_LABELS = 10
 
 
 class DummyDataset(torch.utils.data.Dataset):
+
     def __getitem__(self, index):
         return {
-            "input_ids": torch.randint(1000, size=(100,)),
-            "labels": torch.randint(NUM_LABELS, size=(100,)),
+            "input_ids": torch.randint(1000, size=(100, )),
+            "labels": torch.randint(NUM_LABELS, size=(100, )),
         }
 
     def __len__(self) -> int:

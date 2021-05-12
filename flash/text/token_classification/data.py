@@ -18,6 +18,7 @@ LABEL_IGNORE = -100
 
 
 class TokenDataSource(DataSource):
+
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
 
@@ -39,9 +40,7 @@ class TokenDataSource(DataSource):
             padding="max_length",
             is_split_into_words=True,
         )
-        tokenized["word_ids"] = [
-            tokenized.word_ids(i) for i, _ in enumerate(tokenized.input_ids)
-        ]
+        tokenized["word_ids"] = [tokenized.word_ids(i) for i, _ in enumerate(tokenized.input_ids)]
 
         return tokenized
 
@@ -84,15 +83,13 @@ class TokenDataSource(DataSource):
         target: str,
         ex: Dict[str, Union[int, str]],
     ):
-        ex[target] = [
-            LABEL_IGNORE if lbl is None else label_to_class_mapping[lbl]
-            for lbl in ex[target]
-        ]
+        ex[target] = [LABEL_IGNORE if lbl is None else label_to_class_mapping[lbl] for lbl in ex[target]]
 
         return ex
 
 
 class TokenFileDataSource(TokenDataSource):
+
     def __init__(self, filetype: str, backbone: str, max_length: int = 128):
         super().__init__(backbone, max_length=max_length)
 
@@ -121,25 +118,17 @@ class TokenFileDataSource(TokenDataSource):
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             # used for debugging. Avoid processing the entire dataset   # noqa E265
-            dataset_dict = DatasetDict(
-                {
-                    stage: load_dataset(
-                        self.filetype, data_files=data_files, split=[f"{stage}[:20]"]
-                    )[0]
-                }
-            )
+            dataset_dict = DatasetDict({
+                stage: load_dataset(self.filetype, data_files=data_files, split=[f"{stage}[:20]"])[0]
+            })
 
         if self.training:
-            labels = sorted(
-                set(chain.from_iterable(map(str.split, dataset_dict["train"][target])))
-            )
+            labels = sorted(set(chain.from_iterable(map(str.split, dataset_dict["train"][target]))))
             dataset.num_classes = len(labels)
             self.set_state(LabelsState(labels))
 
         dataset_dict = dataset_dict.map(partial(self._pre_tokenize_fn, input=input))
-        dataset_dict = dataset_dict.map(
-            partial(self._tokenize_fn, input=input), batched=True
-        )
+        dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input), batched=True)
         dataset_dict = dataset_dict.map(
             partial(self._align_labels_fn, target=target),
             batched=True,
@@ -149,9 +138,7 @@ class TokenFileDataSource(TokenDataSource):
         if labels is not None:
             labels = labels.labels
             label_to_class_mapping = {lbl: idx for idx, lbl in enumerate(labels)}
-            dataset_dict = dataset_dict.map(
-                partial(self._transform_labels, label_to_class_mapping, target)
-            )
+            dataset_dict = dataset_dict.map(partial(self._transform_labels, label_to_class_mapping, target))
 
         # Hugging Face models expect target to be named ``labels``.
         if not self.predicting and target != "labels":
@@ -166,16 +153,19 @@ class TokenFileDataSource(TokenDataSource):
 
 
 class TokenCSVDataSource(TokenFileDataSource):
+
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__("csv", backbone, max_length=max_length)
 
 
 class TokenJSONDataSource(TokenFileDataSource):
+
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__("json", backbone, max_length=max_length)
 
 
 class TokenClassificationPreprocess(Preprocess):
+
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -194,12 +184,8 @@ class TokenClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TokenCSVDataSource(
-                    self.backbone, max_length=max_length
-                ),
-                DefaultDataSources.JSON: TokenJSONDataSource(
-                    self.backbone, max_length=max_length
-                ),
+                DefaultDataSources.CSV: TokenCSVDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.JSON: TokenJSONDataSource(self.backbone, max_length=max_length),
             },
             default_data_source=DefaultDataSources.CSV,
         )
@@ -230,6 +216,7 @@ class TokenClassificationPreprocess(Preprocess):
 
 
 class TokenClassificationPostprocess(Postprocess):
+
     def per_batch_transform(self, batch: Any) -> Any:
         if isinstance(batch, TokenClassifierOutput):
             batch = batch.logits

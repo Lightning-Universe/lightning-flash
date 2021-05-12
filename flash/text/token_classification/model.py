@@ -57,9 +57,7 @@ class TokenClassifier(ClassificationTask):
             multi_label=multi_label,
             serializer=serializer,
         )
-        self.model = AutoModelForTokenClassification.from_pretrained(
-            backbone, num_labels=num_classes
-        )
+        self.model = AutoModelForTokenClassification.from_pretrained(backbone, num_labels=num_classes)
 
     @property
     def backbone(self):
@@ -84,10 +82,8 @@ class TokenClassifier(ClassificationTask):
         output = {
             "loss": loss,
             "y_hat": logits,
-            "logs": {
-                name: metric(preds_metric, labels_metric)
-                for name, metric in self.metrics.items()
-            },
+            "logs": {name: metric(preds_metric, labels_metric)
+                     for name, metric in self.metrics.items()},
         }
 
         return output
