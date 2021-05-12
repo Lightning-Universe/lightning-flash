@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 
@@ -65,7 +65,7 @@ class SegmentationLabels(Serializer):
             labels_map[i] = torch.randint(0, 255, (3, ))
         return labels_map
 
-    def serialize(self, sample: torch.Tensor) -> torch.Tensor:
+    def serialize(self, sample: torch.Tensor) -> List:
         assert len(sample.shape) == 3, sample.shape
         labels = torch.argmax(sample, dim=-3)  # HxW
         if self.visualize and os.getenv("FLASH_TESTING", "0") == "0":
@@ -79,4 +79,4 @@ class SegmentationLabels(Serializer):
             labels_vis = K.utils.tensor_to_image(labels_vis)
             plt.imshow(labels_vis)
             plt.show()
-        return labels
+        return labels.tolist()

@@ -11,23 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import base64
 import os
+from io import BytesIO
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 import torchvision
 from PIL import Image
+from PIL import Image as PILImage
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 
+from flash.data.auto_dataset import BaseAutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.data_source import DefaultDataKeys, DefaultDataSources, PathsDataSource
-from flash.data.process import Preprocess
+from flash.data.process import Deserializer, Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.vision.segmentation.serialization import SegmentationLabels
 from flash.vision.segmentation.transforms import default_train_transforms, default_val_transforms
@@ -43,7 +47,8 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
     def __init__(self):
         super().__init__(IMG_EXTENSIONS)
 
-    def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]]) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
+                  dataset: BaseAutoDataset) -> Sequence[Mapping[str, Any]]:
         input_data, target_data = data
 
         if self.isdir(input_data) and self.isdir(target_data):
@@ -80,7 +85,9 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             zip(input_data, target_data),
         )
 
-        return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+        data = [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+
+        return data
 
     def predict_load_data(self, data: Union[str, List[str]]):
         return super().predict_load_data(data)
@@ -101,6 +108,18 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         return {DefaultDataKeys.INPUT: torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()}
 
 
+class SemanticSegmentationDeserializer(Deserializer):
+
+    to_tensor = torchvision.transforms.ToTensor()
+
+    def deserialize(self, data: str) -> torch.Tensor:
+        encoded_with_padding = (data + "===").encode("ascii")
+        img = base64.b64decode(encoded_with_padding)
+        buffer = BytesIO(img)
+        img = PILImage.open(buffer, mode="r")
+        return {DefaultDataKeys.INPUT: self.to_tensor(img)}
+
+
 class SemanticSegmentationPreprocess(Preprocess):
 
     def __init__(
@@ -110,6 +129,7 @@ class SemanticSegmentationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
+        deserializer: Optional[Deserializer] = None,
     ) -> None:
         """Preprocess pipeline for semantic segmentation tasks.
 
@@ -129,6 +149,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             predict_transform=predict_transform,
             data_sources={DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource()},
             default_data_source=DefaultDataSources.PATHS,
+            deserializer=deserializer or SemanticSegmentationDeserializer()
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
