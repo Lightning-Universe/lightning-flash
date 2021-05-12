@@ -38,6 +38,11 @@ class SplitDataset(Dataset):
         self.dataset = dataset
         self.indices = indices
 
+    def __getattr__(self, key: str):
+        if key in ("dataset", "indices", "data"):
+            return getattr(self, key)
+        return getattr(self.dataset, key)
+
     def __getitem__(self, index: int) -> Any:
         return self.dataset[self.indices[index]]
 

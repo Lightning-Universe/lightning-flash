@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -23,14 +24,18 @@ from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 
+import flash
+from flash.data.auto_dataset import BaseAutoDataset
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.data_source import (
     DefaultDataKeys,
     DefaultDataSources,
+    ImageLabelsMap,
     NumpyDataSource,
     PathsDataSource,
+    SEQUENCE_DATA_TYPE,
     TensorDataSource,
 )
 from flash.data.process import Preprocess
@@ -44,7 +49,24 @@ else:
     plt = None
 
 
+def create_random_labels_map(num_classes: int) -> Dict[int, Tuple[int, int, int]]:
+    labels_map: Dict[int, Tuple[int, int, int]] = {}
+    for i in range(num_classes):
+        labels_map[i] = torch.randint(0, 255, (3, ))
+    return labels_map
+
+
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
+
+    def __init__(self, num_classes: int):
+        self.num_classes = num_classes
+
+    def load_data(self, data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
+                  dataset: Optional[Any]) -> Sequence[Mapping[str, Any]]:
+        data = super().load_data(data, dataset=dataset)
+        if self.training:
+            dataset.num_classes = self.num_classes
+        return data
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample[DefaultDataKeys.INPUT] = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
@@ -53,10 +75,12 @@ class SemanticSegmentationNumpyDataSource(NumpyDataSource):
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
 
-    def __init__(self):
+    def __init__(self, num_classes: int):
         super().__init__(IMG_EXTENSIONS)
+        self.num_classes = num_classes
 
-    def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]]) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
+                  dataset: BaseAutoDataset) -> Sequence[Mapping[str, Any]]:
         input_data, target_data = data
 
         if self.isdir(input_data) and self.isdir(target_data):
@@ -93,6 +117,9 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             zip(input_data, target_data),
         )
 
+        if self.training:
+            dataset.num_classes = self.num_classes
+
         return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
 
     def predict_load_data(self, data: Union[str, List[str]]):
@@ -108,7 +135,11 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
-        return {DefaultDataKeys.INPUT: img.float(), DefaultDataKeys.TARGET: img_labels.float()}
+        return {
+            DefaultDataKeys.INPUT: img.float(),
+            DefaultDataKeys.TARGET: img_labels.float(),
+            DefaultDataKeys.TARGET: img_labels.float()
+        }
 
     def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
         return {DefaultDataKeys.INPUT: torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()}
@@ -123,6 +154,8 @@ class SemanticSegmentationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
+        num_classes: int = None,
+        labels_map: Dict[int, Tuple[int, int, int]] = None,
     ) -> None:
         """Preprocess pipeline for semantic segmentation tasks.
 
@@ -133,7 +166,15 @@ class SemanticSegmentationPreprocess(Preprocess):
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
         """
+        if not num_classes or not isinstance(num_classes, int):
+            raise MisconfigurationException("`num_classes` should be provided for instantiation.")
+
+        if not labels_map:
+            raise MisconfigurationException("`labels_map` should be provided for instantiation.")
+
         self.image_size = image_size
+        self.num_classes = num_classes
+        self.labels_map = labels_map
 
         super().__init__(
             train_transform=train_transform,
@@ -141,17 +182,20 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource(),
+                DefaultDataSources.PATHS: SemanticSegmentationPathsDataSource(num_classes),
                 DefaultDataSources.TENSOR: TensorDataSource(),
-                DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
+                DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(num_classes),
             },
             default_data_source=DefaultDataSources.PATHS,
         )
 
+        self.set_state(ImageLabelsMap(labels_map))
+
     def get_state_dict(self) -> Dict[str, Any]:
         return {
-            **self.transforms,
-            "image_size": self.image_size,
+            **self.transforms, "image_size": self.image_size,
+            "num_classes": self.num_classes,
+            "labels_map": self.labels_map
         }
 
     @classmethod
@@ -184,9 +228,6 @@ class SemanticSegmentationData(DataModule):
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return SegmentationMatplotlibVisualization(*args, **kwargs)
 
-    def set_labels_map(self, labels_map: Dict[int, Tuple[int, int, int]]):
-        self.data_fetcher.labels_map = labels_map
-
     def set_block_viz_window(self, value: bool) -> None:
         """Setter method to switch on/off matplotlib to pop up windows."""
         self.data_fetcher.block_viz_window = value
@@ -210,7 +251,9 @@ class SemanticSegmentationData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        **preprocess_kwargs: Any,
+        num_classes: Optional[int] = None,
+        labels_map: Dict[int, Tuple[int, int, int]] = None,
+        **preprocess_kwargs,
     ) -> 'DataModule':
         """Creates a :class:`~flash.vision.segmentation.data.SemanticSegmentationData` object from the given data
         folders and corresponding target folders.
@@ -242,6 +285,8 @@ class SemanticSegmentationData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            num_classes: Number of classes within the segmentation mask.
+            labels_map: Mapping between a class_id and its corresponding color.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -255,6 +300,17 @@ class SemanticSegmentationData(DataModule):
                 train_target_folder="train_masks",
             )
         """
+
+        if not num_classes or not isinstance(num_classes, int):
+            raise MisconfigurationException("`num_classes` should be provided during instantiation.")
+
+        labels_map = labels_map or create_random_labels_map(num_classes)
+
+        data_fetcher = data_fetcher or cls.configure_data_fetcher(labels_map)
+
+        if flash._IS_TESTING:
+            data_fetcher.block_viz_window = True
+
         return cls.from_data_source(
             DefaultDataSources.PATHS,
             (train_folder, train_target_folder),
@@ -270,6 +326,8 @@ class SemanticSegmentationData(DataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            num_classes=num_classes,
+            labels_map=labels_map,
             **preprocess_kwargs,
         )
 
@@ -278,11 +336,12 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
     """Process and show the image batch and its associated label using matplotlib.
     """
 
-    def __init__(self):
-        super().__init__(self)
+    def __init__(self, labels_map: Dict[int, Tuple[int, int, int]]):
+        super().__init__()
+
         self.max_cols: int = 4  # maximum number of columns we accept
         self.block_viz_window: bool = True  # parameter to allow user to block visualisation windows
-        self.labels_map: Dict[int, Tuple[int, int, int]] = {}
+        self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
     @staticmethod
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:

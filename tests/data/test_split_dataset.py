@@ -37,3 +37,18 @@ def test_split_dataset(tmpdir):
 
     with pytest.raises(MisconfigurationException, match="[0, 99]"):
         SplitDataset(list(range(50)) + list(range(50)), indices=[-1], use_duplicated_indices=True)
+
+    class Dataset:
+
+        def __init__(self):
+            self.data = [0, 1, 2]
+            self.name = "something"
+
+        def __getitem__(self, index):
+            return self.data[index]
+
+        def __len__(self):
+            return len(self.data)
+
+    split_dataset = SplitDataset(Dataset(), indices=[0])
+    assert split_dataset.name == "something"
