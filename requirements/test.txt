@@ -1,6 +1,7 @@
 codecov>=2.1
 pytest>=5.0
 pytest-flake8
+pytest-cov
 flake8
 
 # install pkg
