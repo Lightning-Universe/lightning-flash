@@ -118,7 +118,6 @@ class ObjectDetectionPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @property
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
 

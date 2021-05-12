@@ -159,11 +159,9 @@ class SemanticSegmentationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @property
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms(self.image_size)
 
-    @property
     def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
         return train_default_transforms(self.image_size)
 
