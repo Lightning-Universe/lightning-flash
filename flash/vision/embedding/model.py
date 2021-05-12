@@ -23,7 +23,7 @@ from flash.core import Task
 from flash.core.registry import FlashRegistry
 from flash.data.data_source import DefaultDataKeys
 from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.vision.classification.data import ImageClassificationData, ImageClassificationPreprocess
+from flash.vision.classification.data import ImageClassificationPreprocess
 
 
 class ImageEmbedder(Task):
