@@ -88,6 +88,11 @@ By default, we use the `bert-base-uncased <https://arxiv.org/abs/1810.04805>`_ m
 
     task = TextClassifier(backbone="bert-base-chinese", num_classes=datamodule.num_classes)
 
+.. testoutput::
+    :hide:
+
+    ...
+
 ------
 
 *************

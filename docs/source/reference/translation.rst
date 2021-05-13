@@ -89,6 +89,11 @@ You can change the model run by passing in the backbone parameter.
 
     model = TranslationTask(backbone="t5-small")
 
+.. testoutput::
+    :hide:
+
+    ...
+
 ------
 
 *************

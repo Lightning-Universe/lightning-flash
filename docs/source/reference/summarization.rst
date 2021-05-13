@@ -87,6 +87,11 @@ By default, we use the `t5 <https://arxiv.org/abs/1910.10683>`_ model for summar
 
     model = SummarizationTask(backbone="google/mt5-small")
 
+.. testoutput::
+    :hide:
+
+    ...
+
 ------
 
 *************
