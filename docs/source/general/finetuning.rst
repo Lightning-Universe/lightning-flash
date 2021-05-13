@@ -48,6 +48,24 @@ From the :ref:`quick_start` guide.
 Finetune strategies
 ===================
 
+.. testsetup:: strategies
+
+    import flash
+    from flash.data.utils import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
+
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+
+    datamodule = ImageClassificationData.from_files(
+        train_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
+        train_targets=[0],
+        batch_size=1,
+        num_workers=0,
+    )
+
+    model = ImageClassifier(backbone="resnet18", num_classes=2)
+    trainer = flash.Trainer(max_epochs=1)
+
 Finetuning is very task specific. Each task encodes the best finetuning practices for that task.
 However, Flash gives you a few default strategies for finetuning.
 
@@ -59,9 +77,14 @@ no_freeze
 ---------
 In this strategy, the backbone and the head are unfrozen from the beginning.
 
-.. code-block:: python
+.. testcode:: strategies
 
-    trainer.finetune(task, data, strategy='no_freeze')
+    trainer.finetune(model, datamodule, strategy='no_freeze')
+
+.. testoutput:: strategies
+    :hide:
+
+    ...
 
 In pseudocode, this looks like:
 
@@ -79,11 +102,16 @@ freeze
 ------
 The freeze strategy keeps the backbone frozen throughout.
 
-.. code-block:: python
+.. testcode:: strategies
 
-    trainer.finetune(task, data, strategy='freeze')
+    trainer.finetune(model, datamodule, strategy='freeze')
 
-The psedocode looks like:
+.. testoutput:: strategies
+    :hide:
+
+    ...
+
+The pseudocode looks like:
 
 .. code-block:: python
 
@@ -96,21 +124,31 @@ The psedocode looks like:
 
     train(backbone, head)
 
+-------
+
+Advanced strategies
+===================
+
+Every finetune strategy can also be customized.
+
+
 freeze_unfreeze
 ---------------
-In this strategy, the backbone is frozen for 10 epochs then unfrozen.
+In this strategy, the backbone is frozen for x epochs then unfrozen.
 
-.. code-block:: python
+Here we unfreeze the backbone at epoch 5.
 
-    trainer.finetune(model, data, strategy='freeze_unfreeze')
-
-.. code-block:: python
+.. testcode:: strategies
 
     from flash.core.finetuning import FreezeUnfreeze
 
-    # finetune for 10 epochs. Backbone will be frozen for 5 epochs.
     trainer = flash.Trainer(max_epochs=10)
-    trainer.finetune(model, data, strategy=FreezeUnfreeze(unfreeze_epoch=5))
+    trainer.finetune(model, datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=5))
+
+.. testoutput:: strategies
+    :hide:
+
+    ...
 
 Under the hood, the pseudocode looks like:
 
@@ -130,27 +168,6 @@ Under the hood, the pseudocode looks like:
 
     train(backbone, head)
 
--------
-
-Advanced strategies
-===================
-
-Every finetune strategy can also be customized.
-
-
-freeze_unfreeze
----------------
-In this strategy, the backbone is frozen for x epochs then unfrozen.
-
-Here we unfreeze the backbone at epoch 11.
-
-.. code-block:: python
-
-    from flash.core.finetuning import FreezeUnfreeze
-
-    trainer = flash.Trainer(max_epochs=10)
-    trainer.finetune(model, data, strategy=FreezeUnfreeze(unfreeze_epoch=11))
-
 unfreeze_milestones
 -------------------
 This strategy allows you to unfreeze part of the backbone at predetermined intervals
@@ -162,13 +179,18 @@ Here's an example where:
 
 |
 
-.. code-block:: python
+.. testcode:: strategies
 
     from flash.core.finetuning import UnfreezeMilestones
 
     # finetune for 10 epochs.
     trainer = flash.Trainer(max_epochs=10)
-    trainer.finetune(model, data, strategy=UnfreezeMilestones(unfreeze_milestones=(3, 8), num_layers=2))
+    trainer.finetune(model, datamodule, strategy=UnfreezeMilestones(unfreeze_milestones=(3, 8), num_layers=2))
+
+.. testoutput:: strategies
+    :hide:
+
+    ...
 
 Under the hood, the pseudocode looks like:
 
@@ -197,31 +219,35 @@ Custom Strategy
 ===============
 For even more customization, create your own finetuning callback. Learn more about callbacks `here <https://pytorch-lightning.readthedocs.io/en/stable/callbacks.html>`_.
 
-.. code-block:: python
+.. testcode:: strategies
 
     from flash.core.finetuning import FlashBaseFinetuning
 
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
 
-        def __init__(self, unfreeze_at_epoch: int = 5, train_bn: bool = True):
-            # this will set self.attr_names as ["feature_extractor"]
-            super().__init__("feature_extractor", train_bn)
-            self._unfreeze_at_epoch = unfreeze_at_epoch
+        def __init__(self, unfreeze_epoch: int = 5, train_bn: bool = True):
+            # this will set self.attr_names as ["backbone"]
+            super().__init__("backbone", train_bn)
+            self._unfreeze_epoch = unfreeze_epoch
 
         def finetune_function(self, pl_module, current_epoch, optimizer, opt_idx):
             # unfreeze any module you want by overriding this function
 
-            # When ``current_epoch`` is 5, feature_extractor will start to be trained.
-            if current_epoch == self._unfreeze_at_epoch:
+            # When ``current_epoch`` is 5, backbone will start to be trained.
+            if current_epoch == self._unfreeze_epoch:
                 self.unfreeze_and_add_param_group(
-                    module=pl_module.feature_extractor,
-                    optimizer=optimizer,
-                    train_bn=True,
+                    pl_module.backbone,
+                    optimizer,
                 )
 
     # Init the trainer
     trainer = flash.Trainer(max_epochs=10)
 
     # pass the callback to trainer.finetune
-    trainer.finetune(model, data, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
+    trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
+
+.. testoutput:: strategies
+    :hide:
+
+    ...
