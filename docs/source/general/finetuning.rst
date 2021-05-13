@@ -39,7 +39,7 @@ Finetuning in Flash
 
 From the :ref:`quick_start` guide.
 
-.. include:: common/finetuning_example.rst
+.. include:: ../common/finetuning_example.rst
 
 ------
 
