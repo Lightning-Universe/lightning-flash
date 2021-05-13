@@ -79,7 +79,7 @@ In this strategy, the backbone and the head are unfrozen from the beginning.
 
 .. testcode:: strategies
 
-    trainer.finetune(model, datamodule, strategy='no_freeze')
+    trainer.finetune(model, datamodule, strategy="no_freeze")
 
 .. testoutput:: strategies
     :hide:
@@ -104,7 +104,7 @@ The freeze strategy keeps the backbone frozen throughout.
 
 .. testcode:: strategies
 
-    trainer.finetune(model, datamodule, strategy='freeze')
+    trainer.finetune(model, datamodule, strategy="freeze")
 
 .. testoutput:: strategies
     :hide:
@@ -139,7 +139,7 @@ By default, in this strategy the backbone is frozen for 5 epochs then unfrozen:
 
 .. testcode:: strategies
 
-    trainer.finetune(model, datamodule, strategy='freeze_unfreeze')
+    trainer.finetune(model, datamodule, strategy="freeze_unfreeze")
 
 .. testoutput:: strategies
     :hide:
