@@ -250,7 +250,7 @@ For even more customization, create your own finetuning callback. Learn more abo
                 )
 
     # Pass the callback to trainer.finetune
-    trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
+    trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5), checkpoint_callback=False)
 
 .. testoutput:: strategies
     :hide:
