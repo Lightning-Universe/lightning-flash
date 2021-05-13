@@ -74,6 +74,13 @@ Changing the backbone
 *********************
 By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image classification. You can change the model run by the task by passing in a different backbone.
 
+.. testsetup::
+
+    from flash.data.utils import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
+
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
+
 .. testcode::
 
     # 1. organize the data
@@ -85,25 +92,7 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
     # 2. build the task
     task = ImageClassifier(num_classes=2, backbone="resnet34")
 
-Available backbones:
-
-* resnet18 (default)
-* resnet34
-* resnet50
-* resnet101
-* resnet152
-* resnext50_32x4d
-* resnext101_32x8d
-* mobilenet_v2
-* vgg11
-* vgg13
-* vgg16
-* vgg19
-* densenet121
-* densenet169
-* densenet161
-* swav-imagenet
-* `TIMM <https://rwightman.github.io/pytorch-image-models/>`_ (130+ PyTorch Image Models)
+.. include:: ../common/image_backbones.rst
 
 ------
 
