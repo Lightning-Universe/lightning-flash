@@ -64,7 +64,7 @@ def test_from_files(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
-        batch_size=1
+        batch_size=1,
     )
     batch = next(iter(dm.val_dataloader()))
     assert "labels" in batch
@@ -73,6 +73,24 @@ def test_from_files(tmpdir):
     batch = next(iter(dm.test_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
+
+
+def test_postprocess_tokenizer(tmpdir):
+    """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different backbone is
+    used.
+    """
+    backbone = "sshleifer/bart-tiny-random"
+    csv_path = csv_data(tmpdir)
+    dm = SummarizationData.from_csv(
+        "input",
+        "target",
+        backbone=backbone,
+        train_file=csv_path,
+        batch_size=1,
+    )
+    pipeline = dm.data_pipeline
+    pipeline.initialize()
+    assert pipeline._postprocess_pipeline.backbone == backbone
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
