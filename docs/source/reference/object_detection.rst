@@ -103,15 +103,7 @@ By default, we use a ResNet-50 FPN backbone. You can change the backbone for the
 
     ...
 
-Available backbones:
-
-* resnet18
-* resnet34
-* resnet50
-* resnet101
-* resnet152
-* resnext50_32x4d
-* resnext101_32x8d
+.. include:: ../common/object_detection_backbones.rst
 
 ------
 
