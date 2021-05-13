@@ -297,6 +297,7 @@ supplying the task itself, and the associated data:
     trainer.fit(model, datamodule=datamodule)
 
 .. testoutput:: custom_task
+    :hide:
 
     ...
 

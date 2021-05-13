@@ -1,3 +1,5 @@
+.. _quick_start:
+
 ***********
 Quick Start
 ***********
@@ -122,17 +124,21 @@ We get the following output:
 
 -------
 
-Finetune
-========
+Finetuning
+==========
 
 Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset.
+All Flash tasks have pre-trained backbones that are already trained on large datasets such as ImageNet. Finetuning on pretrained models decreases training time significantly.
+
+.. finetuning_start
+
 To use a Task for finetuning:
 
-1. Download and set up your own data (:class:`~torch.utils.data.DataLoader` or `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/lightning_module.html>`_ work).
-2. Init your task.
-3. Init a :class:`flash.core.trainer.Trainer` (or a `Lightning Trainer <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_).
-4. Call :func:`flash.core.trainer.Trainer.finetune` with your data set.
-5. Use your finetuned model for predictions
+1. Load your data and organize it using a DataModule customized for the task (example: :class:`~flash.vision.ImageClassificationData`).
+2. Choose and initialize your Task which has state-of-the-art backbones built in (example: :class:`~flash.vision.ImageClassifier`).
+3. Init a :class:`flash.core.trainer.Trainer`.
+4. Choose a finetune strategy (example: "freeze") and call :func:`flash.core.trainer.Trainer.finetune` with your data.
+5. Save your finetuned model
 
 |
 
@@ -150,37 +156,37 @@ Here's an example of finetuning.
     # set the random seeds.
     seed_everything(42)
 
-    # 1. Download the data
+    # 1. Download and organize the data
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
-    # 2. Load the data from folders
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
         val_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
     )
 
-    # 3. Build the model using desired Task
+    # 2. Build the model using desired Task
     model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
-    # 4. Create the trainer (run one epoch for demo)
+    # 3. Create the trainer (run one epoch for demo)
     trainer = flash.Trainer(max_epochs=1)
 
-    # 5. Finetune the model
+    # 4. Finetune the model
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-    # 6. Save the new model!
+    # 5. Save the new model!
     trainer.save_checkpoint("image_classification_model.pt")
 
 .. testoutput:: finetune
+    :hide:
 
     ...
 
-Once your model is finetuned, you can use it for prediction:
+Using a finetuned model
+=======================
+Once you've finetuned, use the model to predict:
 
 .. testcode:: finetune
-
-    # 7. Use the model for predictions
 
     # Serialize predictions as labels, automatically inferred from the training data in part 2.
     model.serializer = Labels()
@@ -203,10 +209,12 @@ Or you can use the saved model for prediction anywhere you want!
 
     predictions = model.predict('path/to/your/own/image.png')
 
+.. finetuning_end
+
 ----
 
-Train
-=====
+Training
+========
 
 When you have enough data, you're likely better off training from scratch instead of finetuning.
 Steps here are similar to finetune:

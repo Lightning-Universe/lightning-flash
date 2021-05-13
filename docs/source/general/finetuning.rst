@@ -34,68 +34,14 @@ Here are common terms you need to be familiar with:
 
 ------
 
-3 steps to finetune in Flash
-============================
+Finetuning in Flash
+===================
 
-All Flash tasks have a pre-trained backbone that was already trained on large datasets such as ImageNet. Finetuning on already pretrained models decrease training time significantly.
+From the :ref:`quick_start` guide.
 
-To finetune using Flash, follow these 3 steps:
-
-1. Load your data and organize it using a DataModule customized for the task.
-2. Pick a Task which has all the state-of-the-art built in (example: :class:`~flash.vision.ImageClassifier`).
-3. Choose a Finetune strategy and call the :func:`~flash.core.trainer.Trainer.finetune` method
-
-|
-
-Here are the steps in code
-
-.. code-block:: python
-
-    import flash
-    from flash.data.utils import download_data
-    from flash.vision import ImageClassificationData, ImageClassifier
-
-    # 1. download and organize the data
-    download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
-
-    data = ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/",
-        valid_folder="data/hymenoptera_data/val/"
-    )
-
-    # 2. build the model
-    model = ImageClassifier(num_classes=2)
-
-    # 3. Build the trainer and finetune! In this case, using the no_freeze strategy
-    trainer = flash.Trainer()
-    trainer.finetune(task, data, strategy="no_freeze")
-
-.. tip:: If you have a large dataset and prefer to train from scratch, see the :ref:`training` guide.
-
-----
-
-Using a finetuned model
-=======================
-Once you've finetuned, use the model to predict.
-
-.. code-block:: python
-
-    predictions = task.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
-    print(predictions)
-
-Or use a different checkpoint for prediction
-
-.. code-block:: python
-
-    # Save the checkpoint while training.
-    trainer.save_checkpoint("image_classification_model.pt")
-
-    # load the finetuned model
-    classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
-
-    # predict!
-    predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
-    print(predictions)
+.. include:: ../quickstart.rst
+    :start-after: finetuning_start
+    :end-before: finetuning_end
 
 ------
 
