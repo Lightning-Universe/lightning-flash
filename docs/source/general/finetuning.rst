@@ -134,16 +134,26 @@ Every finetune strategy can also be customized.
 
 freeze_unfreeze
 ---------------
-In this strategy, the backbone is frozen for x epochs then unfrozen.
+By default, in this strategy the backbone is frozen for 5 epochs then unfrozen:
 
-Here we unfreeze the backbone at epoch 5.
+
+.. testcode:: strategies
+
+    trainer.finetune(model, datamodule, strategy='freeze_unfreeze')
+
+.. testoutput:: strategies
+    :hide:
+
+    ...
+
+Or we can customize it unfreeze the backbone after a different epoch.
+For example, to unfreeze after epoch 7:
 
 .. testcode:: strategies
 
     from flash.core.finetuning import FreezeUnfreeze
 
-    trainer = flash.Trainer(max_epochs=10)
-    trainer.finetune(model, datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=5))
+    trainer.finetune(model, datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=7))
 
 .. testoutput:: strategies
     :hide:
@@ -183,8 +193,6 @@ Here's an example where:
 
     from flash.core.finetuning import UnfreezeMilestones
 
-    # finetune for 10 epochs.
-    trainer = flash.Trainer(max_epochs=10)
     trainer.finetune(model, datamodule, strategy=UnfreezeMilestones(unfreeze_milestones=(3, 8), num_layers=2))
 
 .. testoutput:: strategies
@@ -241,10 +249,7 @@ For even more customization, create your own finetuning callback. Learn more abo
                     optimizer,
                 )
 
-    # Init the trainer
-    trainer = flash.Trainer(max_epochs=10)
-
-    # pass the callback to trainer.finetune
+    # Pass the callback to trainer.finetune
     trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
 
 .. testoutput:: strategies
