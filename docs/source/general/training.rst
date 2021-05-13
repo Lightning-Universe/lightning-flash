@@ -10,9 +10,7 @@ To accelerate your training, calling the :func:`~flash.core.trainer.Trainer.fine
 
 From the :ref:`quick_start` guide.
 
-.. include:: ../quickstart.rst
-    :start-after: training_start
-    :end-before: training_end
+.. include:: common/training_example.rst
 
 
 Training options
