@@ -138,7 +138,7 @@ To use a Task for finetuning:
 2. Choose and initialize your Task which has state-of-the-art backbones built in (example: :class:`~flash.vision.ImageClassifier`).
 3. Init a :class:`flash.core.trainer.Trainer`.
 4. Choose a finetune strategy (example: "freeze") and call :func:`flash.core.trainer.Trainer.finetune` with your data.
-5. Save your finetuned model
+5. Save your finetuned model.
 
 |
 
@@ -174,7 +174,7 @@ Here's an example of finetuning.
     # 4. Finetune the model
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-    # 5. Save the new model!
+    # 5. Save the model!
     trainer.save_checkpoint("image_classification_model.pt")
 
 .. testoutput:: finetune
@@ -183,7 +183,7 @@ Here's an example of finetuning.
     ...
 
 Using a finetuned model
-=======================
+-----------------------
 Once you've finetuned, use the model to predict:
 
 .. testcode:: finetune
@@ -211,20 +211,66 @@ Or you can use the saved model for prediction anywhere you want!
 
 .. finetuning_end
 
-----
+-----
 
 Training
 ========
 
 When you have enough data, you're likely better off training from scratch instead of finetuning.
-Steps here are similar to finetune:
 
+.. training_start
 
-1. Download and set up your own data (:class:`~torch.utils.data.DataLoader` or `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/lightning_module.html>`_ work).
-2. Init your task.
-3. Init a :class:`flash.core.trainer.Trainer` (or a `Lightning Trainer <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_).
+To train a task from scratch:
+
+1. Load your data and organize it using a DataModule customized for the task (example: :class:`~flash.vision.ImageClassificationData`).
+2. Choose and initialize your Task (setting ``pretrained=False``) which has state-of-the-art backbones built in (example: :class:`~flash.vision.ImageClassifier`).
+3. Init a :class:`flash.core.trainer.Trainer` or a :class:`pytorch_lightning.trainer.Trainer`.
 4. Call :func:`flash.core.trainer.Trainer.fit` with your data set.
-5. Use your trained model for predictions
+5. Save your trained model.
+
+|
+
+Here's an example:
+
+.. testcode:: training
+
+    from pytorch_lightning import seed_everything
+
+    import flash
+    from flash.core.classification import Labels
+    from flash.data.utils import download_data
+    from flash.vision import ImageClassificationData, ImageClassifier
+
+    # set the random seeds.
+    seed_everything(42)
+
+    # 1. Download and organize the data
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+
+    datamodule = ImageClassificationData.from_folders(
+        train_folder="data/hymenoptera_data/train/",
+        val_folder="data/hymenoptera_data/val/",
+        test_folder="data/hymenoptera_data/test/",
+    )
+
+    # 2. Build the model using desired Task
+    model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, pretrained=False)
+
+    # 3. Create the trainer (run one epoch for demo)
+    trainer = flash.Trainer(max_epochs=1)
+
+    # 4. Train the model
+    trainer.fit(model, datamodule=datamodule)
+
+    # 5. Save the model!
+    trainer.save_checkpoint("image_classification_model.pt")
+
+.. testoutput:: training
+    :hide:
+
+    ...
+
+.. training_end
 
 -----
 
