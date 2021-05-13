@@ -121,20 +121,7 @@ class NumpyPreprocess(Preprocess):
             ),
         }
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return self.to_tensor
-
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return self.to_tensor
-
-    @property
-    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-        return self.to_tensor
-
-    @property
-    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
         return self.to_tensor
 
     def get_state_dict(self) -> Dict[str, Any]:
