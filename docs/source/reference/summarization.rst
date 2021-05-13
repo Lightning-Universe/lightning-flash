@@ -67,12 +67,13 @@ By default, we use the `t5 <https://arxiv.org/abs/1910.10683>`_ model for summar
 .. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object! Since this is a Seq2Seq task, make sure you use a Seq2Seq model.
 
 .. testsetup::
+
     from flash.data.utils import download_data
     from flash.text import SummarizationData, SummarizationTask
 
     download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 
-.. code-block:: python
+.. testcode::
 
     # use google/mt5-small, covering 101 languages
     datamodule = SummarizationData.from_csv(
