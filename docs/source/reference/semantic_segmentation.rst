@@ -31,31 +31,9 @@ A :class:`~flash.vision.SemanticSegmentation` `fcn_resnet50` pre-trained on `CAR
 
 Use the :class:`~flash.vision.SemanticSegmentation` pretrained model for inference on any string sequence using :func:`~flash.vision.SemanticSegmentation.predict`:
 
-.. code-block:: python
-
-    # import our libraries
-    from flash.data.utils import download_data
-    from flash.vision import SemanticSegmentation
-    from flash.vision.segmentation.serialization import SegmentationLabels
-
-    # 1. Download the data
-    download_data(
-        "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
-        "data/"
-    )
-
-    # 2. Load the model from a checkpoint
-    model = SemanticSegmentation.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/semantic_segmentation_model.pt"
-    )
-    model.serializer = SegmentationLabels(visualize=True)
-
-    # 3. Predict what's on a few images and visualize!
-    predictions = model.predict([
-        'data/CameraRGB/F61-1.png',
-        'data/CameraRGB/F62-1.png',
-        'data/CameraRGB/F63-1.png',
-    ])
+.. literalinclude:: ../../../flash_examples/predict/semantic_segmentation.py
+    :language: python
+    :lines: 14-
 
 For more advanced inference options, see :ref:`predictions`.
 
@@ -83,46 +61,11 @@ Once we download the data using :func:`~flash.data.download_data`, all we need i
             ...
 
 
-Now all we need is three lines of code to build to train our task!
+Now all we need is to train our task!
 
-.. code-block:: python
-
-    import flash
-    from flash.data.utils import download_data
-    from flash.vision import SemanticSegmentation, SemanticSegmentationData
-    from flash.vision.segmentation.serialization import SegmentationLabels
-
-    # 1. Download the data
-    download_data(
-        "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
-        "data/"
-    )
-
-    # 2.1 Load the data
-    datamodule = SemanticSegmentationData.from_folders(
-        train_folder="data/CameraRGB",
-        train_target_folder="data/CameraSeg",
-        batch_size=4,
-        val_split=0.3,
-        image_size=(200, 200),  # (600, 800)
-    )
-
-    # 2.2 Visualise the samples
-    labels_map = SegmentationLabels.create_random_labels_map(num_classes=21)
-    datamodule.set_labels_map(labels_map)
-    datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
-
-    # 3. Build the model
-    model = SemanticSegmentation(backbone="torchvision/fcn_resnet50", num_classes=21)
-
-    # 4. Create the trainer.
-    trainer = flash.Trainer(max_epochs=1)
-
-    # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, strategy='freeze')
-
-    # 7. Save it!
-    trainer.save_checkpoint("semantic_segmentation_model.pt")
+.. literalinclude:: ../../../flash_examples/finetuning/semantic_segmentation.py
+    :language: python
+    :lines: 14-
 
 ------
 
