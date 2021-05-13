@@ -83,7 +83,7 @@ You can change the model run by passing in the backbone parameter.
         "target",
         backbone="t5-small",
         train_file="data/wmt_en_ro/train.csv",
-        valid_file="data/wmt_en_ro/valid.csv",
+        val_file="data/wmt_en_ro/valid.csv",
         test_file="data/wmt_en_ro/test.csv",
     )
 

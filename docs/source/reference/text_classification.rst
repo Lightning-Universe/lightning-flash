@@ -82,7 +82,7 @@ By default, we use the `bert-base-uncased <https://arxiv.org/abs/1810.04805>`_ m
         "sentiment",
     	backbone="bert-base-chinese",
         train_file="data/imdb/train.csv",
-        valid_file="data/imdb/valid.csv",
+        val_file="data/imdb/valid.csv",
         batch_size=512
     )
 
