@@ -96,9 +96,9 @@ Inference is the process of generating predictions from trained models. To use a
 
 |
 
-Here's an example of inference.
+Here's an example of inference:
 
-.. code-block:: python
+.. testcode::
 
     # import our libraries
     from flash.text import TextClassifier
@@ -112,9 +112,13 @@ Here's an example of inference.
         "The worst movie in the history of cinema.",
         "This guy has done a great job with this movie!",
     ])
-
-    # Expect [0,0, 1] which means [negative, negative, positive]
     print(predictions)
+
+We get the following output:
+
+.. testoutput::
+
+    [1, 1, 0]
 
 -------
 
@@ -134,25 +138,30 @@ To use a Task for finetuning:
 
 Here's an example of finetuning.
 
-.. code-block:: python
+.. testcode:: finetune
+
+    from pytorch_lightning import seed_everything
 
     import flash
+    from flash.core.classification import Labels
     from flash.data.utils import download_data
     from flash.vision import ImageClassificationData, ImageClassifier
+
+    # set the random seeds.
+    seed_everything(42)
 
     # 1. Download the data
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 
     # 2. Load the data from folders
     datamodule = ImageClassificationData.from_folders(
-        backbone="resnet18",
         train_folder="data/hymenoptera_data/train/",
-        valid_folder="data/hymenoptera_data/val/",
+        val_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
     )
 
     # 3. Build the model using desired Task
-    model = ImageClassifier(num_classes=datamodule.num_classes)
+    model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
     # 4. Create the trainer (run one epoch for demo)
     trainer = flash.Trainer(max_epochs=1)
@@ -160,19 +169,30 @@ Here's an example of finetuning.
     # 5. Finetune the model
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-    # 6. Use the model for predictions
-    predictions = model.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
-    # Expact 1 -> bee
-    print(predictions)
-
-    predictions = model.predict('data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg')
-    # Expact 0 -> ant
-    print(predictions)
-
-    # 7. Save the new model!
+    # 6. Save the new model!
     trainer.save_checkpoint("image_classification_model.pt")
 
-Once your model is finetuned, use it for prediction anywhere you want!
+.. testoutput:: finetune
+
+    ...
+
+Once your model is finetuned, you can use it for prediction:
+
+.. testcode:: finetune
+
+    # 7. Use the model for predictions
+
+    # Serialize predictions as labels, automatically inferred from the training data in part 2.
+    model.serializer = Labels()
+
+    predictions = model.predict(["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg"])
+    print(predictions)
+
+.. testoutput:: finetune
+
+    ['bees', 'ants']
+
+Or you can use the saved model for prediction anywhere you want!
 
 .. code-block:: python
 
@@ -196,7 +216,7 @@ Steps here are similar to finetune:
 2. Init your task.
 3. Init a :class:`flash.core.trainer.Trainer` (or a `Lightning Trainer <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_).
 4. Call :func:`flash.core.trainer.Trainer.fit` with your data set.
-5. Use your finetuned model for predictions
+5. Use your trained model for predictions
 
 -----
 
