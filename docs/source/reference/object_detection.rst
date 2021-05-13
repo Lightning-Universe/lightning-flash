@@ -86,7 +86,6 @@ By default, we use a ResNet-50 FPN backbone. You can change the backbone for the
 
     download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
 
-
 .. testcode::
 
     # 1. Organize the data
@@ -98,6 +97,11 @@ By default, we use a ResNet-50 FPN backbone. You can change the backbone for the
 
     # 2. Build the Task
     model = ObjectDetector(model="retinanet", backbone="resnet101", num_classes=datamodule.num_classes)
+
+.. testoutput::
+    :hide:
+
+    ...
 
 Available backbones:
 
