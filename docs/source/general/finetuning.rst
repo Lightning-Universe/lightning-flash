@@ -64,7 +64,7 @@ Finetune strategies
     )
 
     model = ImageClassifier(backbone="resnet18", num_classes=2)
-    trainer = flash.Trainer(max_epochs=1)
+    trainer = flash.Trainer(max_epochs=1, checkpoint_callback=False)
 
 Finetuning is very task specific. Each task encodes the best finetuning practices for that task.
 However, Flash gives you a few default strategies for finetuning.
@@ -250,7 +250,7 @@ For even more customization, create your own finetuning callback. Learn more abo
                 )
 
     # Pass the callback to trainer.finetune
-    trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5), checkpoint_callback=False)
+    trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
 
 .. testoutput:: strategies
     :hide:

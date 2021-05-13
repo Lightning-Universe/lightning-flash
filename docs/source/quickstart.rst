@@ -29,9 +29,9 @@ Easy to upskill
 ^^^^^^^^^^^^^^^
 If you want create more complex and custmoized models, you can refactor any part of flash with PyTorch or `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ components to get all the flexibility you need. Lightning is just
-organized PyTorch with the unecessary engineering details abstracted away.
+organized PyTorch with the unnecessary engineering details abstracted away.
 
-- Flash (high level)
+- Flash (high-level)
 - Lightning (mid-level)
 - PyTorch (low-level)
 
