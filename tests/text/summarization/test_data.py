@@ -91,6 +91,7 @@ def test_postprocess_tokenizer(tmpdir):
     pipeline = dm.data_pipeline
     pipeline.initialize()
     assert pipeline._postprocess_pipeline.backbone == backbone
+    assert pipeline._postprocess_pipeline.tokenizer is not None
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
