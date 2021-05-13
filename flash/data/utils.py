@@ -21,7 +21,6 @@ import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
-from torch.nn import Module
 from tqdm.auto import tqdm as tq
 
 _STAGES_PREFIX = {
