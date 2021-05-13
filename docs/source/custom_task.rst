@@ -18,6 +18,8 @@ which is stored as numpy arrays.
 1. Imports
 ----------
 
+We first import everything we're going to use and set the random seed using :func:`pytorch_lightning.utilities.seed.seed_everything`.
+
 .. testcode:: custom_task
 
     from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -39,7 +41,7 @@ which is stored as numpy arrays.
     ND = np.ndarray
 
 
-1. The Task: Linear regression
+2. The Task: Linear regression
 -------------------------------
 
 Here we create a basic linear regression task by subclassing :class:`~flash.core.model.Task`. For the majority of tasks,
