@@ -41,7 +41,7 @@ from flash.data.data_source import (
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.vision.segmentation.serialization import SegmentationLabels
-from flash.vision.segmentation.transforms import default_train_transforms, default_val_transforms
+from flash.vision.segmentation.transforms import default_transforms, train_default_transforms
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -195,21 +195,11 @@ class SemanticSegmentationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_train_transforms(self.image_size)
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_transforms(self.image_size)
 
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_val_transforms(self.image_size)
-
-    @property
-    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_val_transforms(self.image_size)
-
-    @property
-    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_val_transforms(self.image_size)
+    def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return train_default_transforms(self.image_size)
 
 
 class SemanticSegmentationData(DataModule):

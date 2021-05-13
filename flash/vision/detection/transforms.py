@@ -25,6 +25,7 @@ def collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence[Any]]:
 
 
 def default_transforms() -> Dict[str, Callable]:
+    """The default transforms for object detection: convert the image and targets to a tensor, collate the batch."""
     return {
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys('input', torchvision.transforms.ToTensor()),
