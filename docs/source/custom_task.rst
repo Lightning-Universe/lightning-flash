@@ -18,7 +18,7 @@ which is stored as numpy arrays.
 1. Imports
 ----------
 
-We first import everything we're going to use and set the random seed using :func:`pytorch_lightning.utilities.seed.seed_everything`.
+We first import everything we're going to use and set the random seed using :func:`~pytorch_lightning.utilities.seed.seed_everything`.
 
 .. testcode:: custom_task
 
