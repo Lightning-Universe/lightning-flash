@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -25,7 +25,7 @@ from flash.data.data_module import DataModule
 from flash.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.data.process import Preprocess
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
-from flash.vision.classification.transforms import default_train_transforms, default_val_transforms
+from flash.vision.classification.transforms import default_transforms, train_default_transforms
 from flash.vision.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
 
 if _MATPLOTLIB_AVAILABLE:
@@ -67,21 +67,11 @@ class ImageClassificationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_train_transforms(self.image_size)
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_transforms(self.image_size)
 
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_val_transforms(self.image_size)
-
-    @property
-    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_val_transforms(self.image_size)
-
-    @property
-    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_val_transforms(self.image_size)
+    def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return train_default_transforms(self.image_size)
 
 
 class ImageClassificationData(DataModule):

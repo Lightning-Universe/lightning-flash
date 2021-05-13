@@ -16,45 +16,45 @@ from typing import Callable, Dict, Tuple
 import kornia as K
 import torch
 import torch.nn as nn
+from torchvision.transforms import Compose
 
 from flash.data.data_source import DefaultDataKeys
-from flash.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
+from flash.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
-    return tensor.long().squeeze()
+    """ Convert the target mask to long and remove the channel dimension. """
+    return tensor.long().squeeze(1)
 
 
-def default_train_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    return {
-        "post_tensor_transform": nn.Sequential(
-            ApplyToKeys(
-                [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-                KorniaParallelTransforms(
-                    K.geometry.Resize(image_size, interpolation='nearest'),
-                    K.augmentation.RandomHorizontalFlip(p=0.75),
-                ),
-            ),
-            ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
-        ),
-        "collate": kornia_collate,
-        "per_batch_transform_on_device": ApplyToKeys(
-            DefaultDataKeys.INPUT,
-            K.enhance.Normalize(0., 255.),
-            K.augmentation.ColorJitter(0.4, p=0.5),
-        ),
-    }
-
-
-def default_val_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    """The default transforms for semantic segmentation: resize the image and mask, collate the batch, and apply
+    normalization."""
     return {
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(
                 [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
                 KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest')),
             ),
-            ApplyToKeys(DefaultDataKeys.TARGET, prepare_target),
         ),
-        "collate": kornia_collate,
+        "collate": Compose([kornia_collate, ApplyToKeys(DefaultDataKeys.TARGET, prepare_target)]),
         "per_batch_transform_on_device": ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
     }
+
+
+def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    """During training, we apply the default transforms with additional ``RandomHorizontalFlip`` and ``ColorJitter``."""
+    return merge_transforms(
+        default_transforms(image_size), {
+            "post_tensor_transform": nn.Sequential(
+                ApplyToKeys(
+                    [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
+                    KorniaParallelTransforms(K.augmentation.RandomHorizontalFlip(p=0.75)),
+                ),
+            ),
+            "per_batch_transform_on_device": ApplyToKeys(
+                DefaultDataKeys.INPUT,
+                K.augmentation.ColorJitter(0.4, p=0.5),
+            ),
+        }
+    )

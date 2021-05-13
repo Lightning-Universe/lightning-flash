@@ -183,7 +183,7 @@ The recommended way to define a custom :class:`~flash.data.process.Preprocess` i
     - ``data_sources`` gives the :class:`~flash.data.data_source.DataSource` objects that work with your :class:`~flash.data.process.Preprocess` as a mapping from data source name to :class:`~flash.data.data_source.DataSource`. The data source name can be any string, but for our purposes we can use ``NUMPY`` from :class:`~flash.data.data_source.DefaultDataSources`.
     - ``default_data_source`` is the name of the data source to use by default when predicting.
 - Override the ``get_state_dict`` and ``load_state_dict`` methods. These methods are used to save and load your :class:`~flash.data.process.Preprocess` from a checkpoint.
-- Override the ``default_{train,val,test,predict}_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
+- Override the ``{train,val,test,predict}_default_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
     - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
 Example::
@@ -232,20 +232,7 @@ Example::
                 ),
             }
 
-        @property
-        def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-            return self.to_tensor
-
-        @property
-        def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-            return self.to_tensor
-
-        @property
-        def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-            return self.to_tensor
-
-        @property
-        def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+        def default_transforms(self) -> Optional[Dict[str, Callable]]:
             return self.to_tensor
 
         def get_state_dict(self) -> Dict[str, Any]:

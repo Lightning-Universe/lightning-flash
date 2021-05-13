@@ -21,9 +21,22 @@ from torchmetrics import IoU
 from flash.core.classification import ClassificationTask
 from flash.core.registry import FlashRegistry
 from flash.data.data_source import DefaultDataKeys
-from flash.data.process import Serializer
+from flash.data.process import Postprocess, Serializer
+from flash.utils.imports import _KORNIA_AVAILABLE
 from flash.vision.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.vision.segmentation.serialization import SegmentationLabels
+
+if _KORNIA_AVAILABLE:
+    import kornia as K
+
+
+class SemanticSegmentationPostprocess(Postprocess):
+
+    def per_sample_transform(self, sample: Any) -> Any:
+        resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA][-2:], interpolation='bilinear')
+        sample[DefaultDataKeys.PREDS] = resize(torch.stack(sample[DefaultDataKeys.PREDS]))
+        sample[DefaultDataKeys.INPUT] = resize(torch.stack(sample[DefaultDataKeys.INPUT]))
+        return super().per_sample_transform(sample)
 
 
 class SemanticSegmentation(ClassificationTask):
@@ -53,6 +66,8 @@ class SemanticSegmentation(ClassificationTask):
         serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
     """
 
+    postprocess_cls = SemanticSegmentationPostprocess
+
     backbones: FlashRegistry = SEMANTIC_SEGMENTATION_BACKBONES
 
     def __init__(
@@ -67,6 +82,7 @@ class SemanticSegmentation(ClassificationTask):
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        postprocess: Optional[Postprocess] = None,
     ) -> None:
 
         if metrics is None:
@@ -86,6 +102,7 @@ class SemanticSegmentation(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             serializer=serializer or SegmentationLabels(),
+            postprocess=postprocess or self.postprocess_cls()
         )
 
         self.save_hyperparameters()
@@ -109,8 +126,10 @@ class SemanticSegmentation(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        batch_input = (batch[DefaultDataKeys.INPUT])
+        preds = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
+        batch[DefaultDataKeys.PREDS] = preds
+        return batch
 
     def forward(self, x) -> torch.Tensor:
         # infer the image to the model

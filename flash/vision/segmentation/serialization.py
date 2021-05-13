@@ -16,6 +16,8 @@ from typing import Dict, Optional, Tuple
 
 import torch
 
+import flash
+from flash.data.data_source import DefaultDataKeys, ImageLabelsMap
 from flash.data.process import Serializer
 from flash.utils.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
 
@@ -65,17 +67,15 @@ class SegmentationLabels(Serializer):
             labels_map[i] = torch.randint(0, 255, (3, ))
         return labels_map
 
-    def serialize(self, sample: torch.Tensor) -> torch.Tensor:
-        assert len(sample.shape) == 3, sample.shape
-        labels = torch.argmax(sample, dim=-3)  # HxW
-        if self.visualize and os.getenv("FLASH_TESTING", "0") == "0":
+    def serialize(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
+        preds = sample[DefaultDataKeys.PREDS]
+        assert len(preds.shape) == 3, preds.shape
+        labels = torch.argmax(preds, dim=-3)  # HxW
+
+        if self.visualize and not flash._IS_TESTING:
             if self.labels_map is None:
-                # create random colors map
-                num_classes = sample.shape[-3]
-                labels_map = self.create_random_labels_map(num_classes)
-            else:
-                labels_map = self.labels_map
-            labels_vis = self.labels_to_image(labels, labels_map)
+                self.labels_map = self.get_state(ImageLabelsMap).labels_map
+            labels_vis = self.labels_to_image(labels, self.labels_map)
             labels_vis = K.utils.tensor_to_image(labels_vis)
             plt.imshow(labels_vis)
             plt.show()

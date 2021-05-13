@@ -44,6 +44,12 @@ class LabelsState(ProcessState):
     labels: Optional[Sequence[str]]
 
 
+@dataclass(unsafe_hash=True, frozen=True)
+class ImageLabelsMap(ProcessState):
+
+    labels_map: Optional[Dict[int, Tuple[int, int, int]]]
+
+
 class DefaultDataSources(LightningEnum):
     """The ``DefaultDataSources`` enum contains the data source names used by all of the default ``from_*`` methods in
     :class:`~flash.data.data_module.DataModule`."""
@@ -65,7 +71,9 @@ class DefaultDataKeys(LightningEnum):
     targets."""
 
     INPUT = "input"
+    PREDS = "preds"
     TARGET = "target"
+    METADATA = "metadata"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:

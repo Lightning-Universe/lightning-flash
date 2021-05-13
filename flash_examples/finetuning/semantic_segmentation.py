@@ -31,17 +31,17 @@ datamodule = SemanticSegmentationData.from_folders(
     batch_size=4,
     val_split=0.3,
     image_size=(200, 200),  # (600, 800)
+    num_classes=21,
 )
 
 # 2.2 Visualise the samples
-labels_map = SegmentationLabels.create_random_labels_map(num_classes=21)
-datamodule.set_labels_map(labels_map)
 datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
 
 # 3. Build the model
 model = SemanticSegmentation(
     backbone="torchvision/fcn_resnet50",
-    num_classes=21,
+    num_classes=datamodule.num_classes,
+    serializer=SegmentationLabels(visualize=True)
 )
 
 # 4. Create the trainer.
@@ -52,9 +52,6 @@ trainer = flash.Trainer(
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
-
-# 6. Predict what's on a few images!
-model.serializer = SegmentationLabels(labels_map, visualize=True)
 
 predictions = model.predict([
     "data/CameraRGB/F61-1.png",
