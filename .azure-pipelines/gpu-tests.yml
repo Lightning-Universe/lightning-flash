@@ -79,7 +79,7 @@ jobs:
       displayName: 'Publish coverage report'
       inputs:
         codeCoverageTool: 'cobertura'
-        summaryFileLocation: '$(Build.SourcesDirectory)/coverage.xml'
+        summaryFileLocation: 'coverage.xml'
         reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
         testRunTitle: '$(Agent.OS) - $(Build.BuildNumber)[$(Agent.JobName)] - Python $(python.version)'
       condition: succeededOrFailed()
