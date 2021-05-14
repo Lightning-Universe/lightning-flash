@@ -14,6 +14,7 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
+import sklearn.utils
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from sklearn.utils import Bunch
@@ -46,11 +47,6 @@ class TemplateNumpyDataSource(NumpyDataSource):
 
         Returns:
             A sequence of samples / sample metadata.
-
-        Source
-            .. literalinclude:: ../../flash/template/data.py
-                :language: python
-                :lines: 34, 55-58
         """
         dataset.num_features = data[0].shape[1]
 
@@ -75,11 +71,6 @@ class TemplateSKLearnDataSource(TemplateNumpyDataSource):
 
         Returns:
             A sequence of samples / sample metadata.
-
-        Source
-            .. literalinclude:: ../../flash/template/data.py
-                :language: python
-                :lines: 64, 84-92
         """
         dataset.num_classes = len(data.target_names)
 
@@ -113,11 +104,6 @@ class TemplatePreprocess(Preprocess):
         val_transform: The user-specified transforms to apply during validation.
         test_transform: The user-specified transforms to apply during testing.
         predict_transform: The user-specified transforms to apply during prediction.
-
-    Source
-        .. literalinclude:: ../../flash/template/data.py
-            :language: python
-            :lines: 123-140
     """
 
     def __init__(
@@ -143,11 +129,6 @@ class TemplatePreprocess(Preprocess):
         """For serialization, you have control over what to save with the ``get_state_dict`` method. It's usually a good
         idea to save the transforms. So we just return them here. If you had any other attributes you wanted to save,
         this is where you would return them.
-
-        Source
-            .. literalinclude:: ../../flash/template/data.py
-                :language: python
-                :lines: 142, 152
         """
         return self.transforms
 
@@ -155,11 +136,6 @@ class TemplatePreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         """This methods gets whatever we returned from ``get_state_dict`` as an input. Now we re-create the class with
         the transforms we saved.
-
-        Source
-            .. literalinclude:: ../../flash/template/data.py
-                :language: python
-                :lines: 154, 155, 164
         """
         return cls(**state_dict)
 
@@ -174,11 +150,6 @@ class TemplatePreprocess(Preprocess):
 
         Returns:
             Our dictionary of transforms.
-
-        Source
-            .. literalinclude:: ../../flash/template/data.py
-                :language: python
-                :lines: 166, 183-188
         """
         return {
             "to_tensor_transform": nn.Sequential(
@@ -194,9 +165,80 @@ class TemplatePreprocess(Preprocess):
 
 class TemplateData(DataModule):
     """Creating our :class:`~flash.data.data_module.DataModule` is as easy as setting the ``preprocess_cls`` attribute.
-    We'll also add the ``num_features`` property for convenience."""
+    We get the ``from_numpy`` method for free as we've configured a ``DefaultDataSources.NUMPY`` data source. We'll also
+    add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnDataSource. Finally, we define the
+    ``num_features`` property for convenience.
+    """
 
     preprocess_cls = TemplatePreprocess
+
+    @classmethod
+    def from_sklearn(
+        cls,
+        train_bunch: Optional[Bunch] = None,
+        val_bunch: Optional[Bunch] = None,
+        test_bunch: Optional[Bunch] = None,
+        predict_bunch: Optional[Bunch] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ):
+        """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them
+        through to the :meth:`~flash.data.data_module.DataModule.from_data_source` method underneath. It's really just
+        a convenience method to save the user from needing to call
+        :meth:`~flash.data.data_module.DataModule.from_data_source` directly.
+
+        Args:
+            train_bunch: The scikit-learn ``Bunch`` containing the train data.
+            val_bunch: The scikit-learn ``Bunch`` containing the validation data.
+            test_bunch: The scikit-learn ``Bunch`` containing the test data.
+            predict_bunch: The scikit-learn ``Bunch`` containing the predict data.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.data.data.Preprocess` to pass to the
+                :class:`~flash.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
+                and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+        """
+        return super().from_data_source(
+            "sklearn",
+            train_bunch,
+            val_bunch,
+            test_bunch,
+            predict_bunch,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
 
     @property
     def num_features(self) -> Optional[int]:
@@ -210,7 +252,7 @@ class TemplateData(DataModule):
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        """We can also optionally provide a data visualization callback using the ``configure_data_fetcher`` method."""
+        """We can, *optionally*, provide a data visualization callback using the ``configure_data_fetcher`` method."""
         return TemplateVisualization(*args, **kwargs)
 
 
