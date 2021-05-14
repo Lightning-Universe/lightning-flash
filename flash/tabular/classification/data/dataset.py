@@ -23,12 +23,11 @@ from flash.core.utilities.imports import _PANDAS_AVAILABLE, _SKLEARN_AVAILABLE, 
 if _PANDAS_AVAILABLE:
     import pandas as pd
     from pandas.core.frame import DataFrame
+else:
+    DataFrame = None
 
 if _SKLEARN_AVAILABLE:
     from sklearn.model_selection import train_test_split
-
-else:
-    DataFrame = None
 
 
 def _impute(dfs: List, num_cols: List) -> list:
