@@ -22,8 +22,14 @@ from torchmetrics import Accuracy
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
 from flash.image.classification.data import ImageClassificationPreprocess
+
+if _IMAGE_AVAILABLE:
+    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+else:
+    IMAGE_CLASSIFIER_BACKBONES = None
 
 
 class ImageEmbedder(Task):
@@ -38,13 +44,6 @@ class ImageEmbedder(Task):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
-
-    Example:
-        >>> import torch
-        >>> from flash.image.embedding import ImageEmbedder
-        >>> embedder = ImageEmbedder(backbone='resnet18')
-        >>> image = torch.rand(32, 3, 32, 32)
-        >>> embeddings = embedder(image)
 
     """
 
@@ -61,6 +60,9 @@ class ImageEmbedder(Task):
         learning_rate: float = 1e-3,
         pooling_fn: Callable = torch.max
     ):
+        if not _IMAGE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
+
         super().__init__(
             model=None,
             loss_fn=loss_fn,
