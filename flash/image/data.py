@@ -21,6 +21,8 @@ from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
+else:
+    IMG_EXTENSIONS = []
 
 
 class ImagePathsDataSource(PathsDataSource):

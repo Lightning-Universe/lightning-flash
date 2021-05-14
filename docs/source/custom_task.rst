@@ -276,6 +276,8 @@ supplying the task itself, and the associated data:
 
 .. testcode:: custom_task
 
+    from sklearn import datasets
+
     x, y = datasets.load_diabetes(return_X_y=True)
     datamodule = NumpyDataModule.from_numpy(x, y)
     model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
@@ -295,6 +297,8 @@ supplying the task itself, and the associated data:
 With a trained model we can now perform inference. Here we will use a few examples from the test set of our data:
 
 .. testcode:: custom_task
+
+    model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
 
     predict_data = np.array([
         [ 0.0199,  0.0507,  0.1048,  0.0701, -0.0360, -0.0267, -0.0250, -0.0026,  0.0037,  0.0403],
