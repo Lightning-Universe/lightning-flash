@@ -132,7 +132,7 @@ class NumpyPreprocess(Preprocess):
         return cls(*state_dict)
 
 
-class NumpyDataModule(flash.core.dataModule):
+class NumpyDataModule(flash.DataModule):
 
     preprocess_cls = NumpyPreprocess
 
