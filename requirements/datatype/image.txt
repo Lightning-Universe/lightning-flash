@@ -5,3 +5,4 @@ Pillow>=7.2
 kornia>=0.5.1
 matplotlib
 pycocotools>=2.0.2 ; python_version >= "3.7"
+pandas
