@@ -44,6 +44,7 @@ jobs:
         python --version
         pip --version
         pip list
+        du -kh /dev/shm
       displayName: 'Image info & NVIDIA'
 
     - bash: |
