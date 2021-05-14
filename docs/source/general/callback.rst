@@ -8,7 +8,7 @@ Callback
 Flash Callback
 **************
 
-:class:`~flash.data.callback.FlashCallback` is an extension of the PyTorch Lightning `Callback <https://pytorch-lightning.readthedocs.io/en/latest/extensions/callbacks.html>`__.
+:class:`~flash.data.callback.FlashCallback` is an extension of :class:`pytorch_lightning.callbacks.Callback`.
 
 A callback is a self-contained program that can be reused across projects.
 
