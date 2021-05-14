@@ -256,7 +256,7 @@ data source whose name is in :class:`~flash.core.data.data_source.DefaultDataSou
 
 .. testcode:: custom_task
 
-    class NumpyDataModule(flash.core.dataModule):
+    class NumpyDataModule(flash.DataModule):
 
         preprocess_cls = NumpyPreprocess
 
