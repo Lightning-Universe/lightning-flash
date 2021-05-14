@@ -17,12 +17,12 @@ import importlib
 import operator
 from importlib.util import find_spec
 
+from pkg_resources import DistributionNotFound
+
 try:
     from packaging.version import Version
 except (ModuleNotFoundError, DistributionNotFound):
     Version = None
-
-from pkg_resources import DistributionNotFound
 
 
 def _module_available(module_path: str) -> bool:
