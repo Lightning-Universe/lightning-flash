@@ -31,7 +31,7 @@ if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
     from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
 else:
     print("Please, run `pip install torchvideo kornia`")
-    sys.exit(0)
+    sys.exit(1)
 
 if __name__ == '__main__':
 
