@@ -96,21 +96,21 @@ def run_test(filepath):
             "predict",
             "image_classification.py",
             marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
             )
         ),
         pytest.param(
             "predict",
             "image_classification_multi_label.py",
             marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
             )
         ),
         pytest.param(
             "predict",
             "semantic_segmentation.py",
             marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
             )
         ),
         pytest.param(
@@ -123,7 +123,7 @@ def run_test(filepath):
             "predict",
             "image_embedder.py",
             marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
             )
         ),
         pytest.param(
