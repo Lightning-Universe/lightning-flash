@@ -8,7 +8,7 @@ import flash.__about__ as about
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
-_PATH_ROOT = os.path.dirname(__file__)
+_PATH_ROOT = os.path.dirname(os.path.dirname(flash.__file__))
 
 
 def _load_py_module(fname, pkg="flash"):
