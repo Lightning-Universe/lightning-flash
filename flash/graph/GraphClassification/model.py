@@ -11,20 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Optional, Tuple, Type, Union, Mapping, Sequence, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
-import torch
 import pytorch_lightning as pl
+import torch
 from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import Linear
-from torch_geometric.nn import GCNConv
-from torch_geometric.nn import global_mean_pool
-
+from torch_geometric.nn import GCNConv, global_mean_pool
 
 from flash.core.classification import ClassificationTask
 from flash.core.data import DataPipeline
+
 
 class GraphClassifier(ClassificationTask):
     """Task that classifies graphs.
@@ -57,10 +56,10 @@ class GraphClassifier(ClassificationTask):
 
         #sizes = [input_size] + hidden + [num_classes]
         if model == None:
-            self.model = GCN(in_features = num_features, hidden_channels=hidden, out_features = num_classes)
+            self.model = GCN(in_features=num_features, hidden_channels=hidden, out_features=num_classes)
 
         super().__init__(
-            model = model,
+            model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
@@ -75,8 +74,10 @@ class GraphClassifier(ClassificationTask):
     def default_pipeline() -> ClassificationDataPipeline:
         return GraphClassificationData.default_pipeline()
 
+
 #Taken from https://colab.research.google.com/drive/1I8a0DfQ3fI7Njc62__mVXUlcAleUclnb?usp=sharing#scrollTo=CN3sRVuaQ88l
 class GCN(pl.LightningModule):
+
     def __init__(self, num_features, hidden_channels, num_classes):
         super(GCN, self).__init__()
         torch.manual_seed(12345)
@@ -86,7 +87,7 @@ class GCN(pl.LightningModule):
         self.lin = Linear(hidden_channels, num_classes)
 
     def forward(self, x, edge_index, batch):
-        # 1. Obtain node embeddings 
+        # 1. Obtain node embeddings
         x = self.conv1(x, edge_index)
         x = x.relu()
         x = self.conv2(x, edge_index)
@@ -102,11 +103,11 @@ class GCN(pl.LightningModule):
 
         return x
 
-    def training_step(self, batch, batch_idx): #todo: is this needed?
+    def training_step(self, batch, batch_idx):  #todo: is this needed?
         x, y = batch
         y_hat = self(x)
         loss = F.cross_entropy(y_hat, y)
         return loss
-    
-    def configure_optimizers(self): #todo: is this needed?
+
+    def configure_optimizers(self):  #todo: is this needed?
         return torch.optim.Adam(self.parameters(), lr=0.02)

@@ -15,28 +15,27 @@ import os
 import pathlib
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
+import networkx as nx
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-
-import networkx as nx
-from torch_geometric.data import Dataset, DataLoader
-
+from torch_geometric.data import DataLoader, Dataset
 
 from flash.core.classification import ClassificationDataPipeline
 from flash.core.data.datamodule import DataModule
 from flash.core.data.utils import _contains_any_tensor
-
 '''
 The structure we follow is DataSet -> DataLoader -> DataModule -> DataPipeline
 '''
 
-class BasicGraphDataset(Dataset):
 
+class BasicGraphDataset(Dataset):
     '''
     #todo: Probably unnecessary having the following class.
     '''
 
-    def __init__(self, root = None, processed_dir = 'processed', raw_dir = 'raw',  transform=None, pre_transform=None, pre_filter=None):
+    def __init__(
+        self, root=None, processed_dir='processed', raw_dir='raw', transform=None, pre_transform=None, pre_filter=None
+    ):
 
         super(BasicGraphDataset, self).__init__(root, transform, pre_transform, pre_filter)
 
@@ -66,9 +65,11 @@ class BasicGraphDataset(Dataset):
 
     def get(self, idx):
         data = torch.load(os.path.join(self.processed_dir, 'data_{}.pt'.format(idx)))
-        #TODO: Is data.pt the best way/file type to load the data? 
+        #TODO: Is data.pt the best way/file type to load the data?
         #TODO: Interface with networkx would probably go here with some option to say how to load it
         return data
+
+
 class FilepathDataset(torch.utils.data.Dataset):
     """Dataset that takes in filepaths and labels. Taken from image"""
 
@@ -117,6 +118,7 @@ class FilepathDataset(torch.utils.data.Dataset):
             label = self.label_to_class_mapping[filename]
         return graph, label
 
+
 class FlashDatasetFolder(torch.utils.data.Dataset):
     """A generic data loader where the samples are arranged in this way: ::
 
@@ -155,7 +157,8 @@ class FlashDatasetFolder(torch.utils.data.Dataset):
         self,
         root: str,
         loader: Callable,
-        extensions: Tuple[str] = Graph_EXTENSIONS, #todo: Graph_EXTENSIONS is not defined. In PyG the extension .pt is used
+        extensions: Tuple[
+            str] = Graph_EXTENSIONS,  #todo: Graph_EXTENSIONS is not defined. In PyG the extension .pt is used
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         is_valid_file: Optional[Callable] = None,
@@ -247,6 +250,7 @@ class FlashDatasetFolder(torch.utils.data.Dataset):
     def _is_graph_file(self, filename):
         return any(filename.endswith(extension) for extension in self.extensions)
 
+
 class GraphClassificationData(DataModule):
     """Data module for graph classification tasks."""
 
@@ -297,7 +301,6 @@ class GraphClassificationData(DataModule):
             valid_filepaths = [os.path.join(valid_filepaths, x) for x in os.listdir(valid_filepaths)]
         if isinstance(test_filepaths, str):
             test_filepaths = [os.path.join(test_filepaths, x) for x in os.listdir(test_filepaths)]
-
 
         train_ds = FilepathDataset(
             filepaths=train_filepaths,
@@ -396,6 +399,7 @@ class GraphClassificationData(DataModule):
             train_transform=train_transform, valid_transform=valid_transform, loader=loader
         )
         return datamodule
+
 
 class GraphClassificationDataPipeline(ClassificationDataPipeline):
 
