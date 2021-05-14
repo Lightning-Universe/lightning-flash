@@ -2,6 +2,7 @@ from pytorch_lightning.utilities.imports import _module_available
 
 _TORCH_AVAILABLE = _module_available("torch")
 _PANDAS_AVAILABLE = _module_available("pandas")
+_SKLEARN_AVAILABLE = _module_available("sklearn")
 _TABNET_AVAILABLE = _module_available("pytorch_tabnet")
 _KORNIA_AVAILABLE = _module_available("kornia")
 _COCO_AVAILABLE = _module_available("pycocotools")

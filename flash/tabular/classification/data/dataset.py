@@ -18,11 +18,13 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from flash.core.data.utils import download_data
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _SKLEARN_AVAILABLE, _TABULAR_AVAILABLE
 
-if _TABULAR_AVAILABLE:
+if _PANDAS_AVAILABLE:
     import pandas as pd
     from pandas.core.frame import DataFrame
+
+if _SKLEARN_AVAILABLE:
     from sklearn.model_selection import train_test_split
 
 else:

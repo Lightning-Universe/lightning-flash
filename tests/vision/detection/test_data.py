@@ -77,7 +77,7 @@ def _create_synth_coco_dataset(tmpdir):
     return train_folder, coco_ann_path
 
 
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
 def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
