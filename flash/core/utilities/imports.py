@@ -17,7 +17,11 @@ import importlib
 import operator
 from importlib.util import find_spec
 
-from packaging.version import Version
+try:
+    from packaging.version import Version
+except (ModuleNotFoundError, DistributionNotFound):
+    Version = None
+
 from pkg_resources import DistributionNotFound
 
 
@@ -71,7 +75,8 @@ _PYTORCHVIDEO_AVAILABLE = _module_available("pytorchvideo")
 _MATPLOTLIB_AVAILABLE = _module_available("matplotlib")
 _TRANSFORMERS_AVAILABLE = _module_available("transformers")
 
-_TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
+if Version:
+    _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
 
 _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
