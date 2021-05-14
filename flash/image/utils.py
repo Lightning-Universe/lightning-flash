@@ -1,6 +1,9 @@
 from typing import List, Tuple, Union
 
-from PIL import Image
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def pil_loader(sample: Union[List, Tuple, str]) -> Union[Image.Image, list]:
