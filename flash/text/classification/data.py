@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from torch import Tensor
 
+import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
@@ -78,7 +79,7 @@ class TextFileDataSource(TextDataSource):
         data_files[stage] = str(csv_file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
+        if use_full and flash._IS_TESTING:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             # used for debugging. Avoid processing the entire dataset   # noqa E265

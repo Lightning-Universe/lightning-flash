@@ -78,6 +78,7 @@ def test_from_files(tmpdir):
     assert "input_ids" in batch
 
 
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_postprocess_tokenizer(tmpdir):
     """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different backbone is
     used.

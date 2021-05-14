@@ -14,10 +14,13 @@
 from typing import Any, Callable, Dict, Sequence
 
 import torch
-import torchvision
 from torch import nn
 
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+
+if _TORCHVISION_AVAILABLE:
+    import torchvision
 
 
 def collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence[Any]]:

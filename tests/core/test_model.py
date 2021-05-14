@@ -21,8 +21,6 @@ import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
-from _pytest.outcomes import skip
-from PIL import Image
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
@@ -43,6 +41,14 @@ if _TEXT_AVAILABLE:
     from flash.text import TextClassifier
 else:
     TextClassifier = None
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
+else:
+
+    class Image:
+        Image = None
+
 
 # ======== Mock functions ========
 
@@ -99,6 +105,7 @@ def test_classificationtask_task_predict():
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -181,6 +188,7 @@ def test_model_download(tmpdir, cls, filename):
         assert isinstance(task, cls)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_available_backbones():
     backbones = ImageClassifier.available_backbones()
     assert "resnet152" in backbones

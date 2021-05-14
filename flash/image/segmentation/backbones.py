@@ -16,21 +16,19 @@ import torch.nn as nn
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
+SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
+
 if _TORCHVISION_AVAILABLE:
     import torchvision
 
-SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
+    @SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet50")
+    def load_torchvision_fcn_resnet50(num_classes: int, pretrained: bool = True) -> nn.Module:
+        model = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained)
+        model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
+        return model
 
-
-@SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet50")
-def load_torchvision_fcn_resnet50(num_classes: int, pretrained: bool = True) -> nn.Module:
-    model = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained)
-    model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-    return model
-
-
-@SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet101")
-def load_torchvision_fcn_resnet101(num_classes: int, pretrained: bool = True) -> nn.Module:
-    model = torchvision.models.segmentation.fcn_resnet101(pretrained=pretrained)
-    model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-    return model
+    @SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet101")
+    def load_torchvision_fcn_resnet101(num_classes: int, pretrained: bool = True) -> nn.Module:
+        model = torchvision.models.segmentation.fcn_resnet101(pretrained=pretrained)
+        model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
+        return model

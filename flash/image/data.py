@@ -14,10 +14,13 @@
 from typing import Any, Dict, Optional
 
 import torch
-from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
-from torchvision.transforms.functional import to_pil_image
 
 from flash.core.data.data_source import DefaultDataKeys, NumpyDataSource, PathsDataSource, TensorDataSource
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
+    from torchvision.transforms.functional import to_pil_image
 
 
 class ImagePathsDataSource(PathsDataSource):

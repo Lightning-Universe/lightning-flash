@@ -7,6 +7,7 @@ import torch
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationPreprocess
 
@@ -30,11 +31,13 @@ class DummyDataset(torch.utils.data.Dataset):
 # ==============================
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_smoke():
     model = SemanticSegmentation(num_classes=1)
     assert model is not None
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.parametrize("num_classes", [8, 256])
 @pytest.mark.parametrize("img_shape", [(1, 3, 224, 192), (2, 3, 127, 212)])
 def test_forward(num_classes, img_shape):
@@ -50,6 +53,7 @@ def test_forward(num_classes, img_shape):
     assert out.shape == (B, num_classes, H, W)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone",
     [
@@ -64,11 +68,13 @@ def test_init_train(tmpdir, backbone):
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_non_existent_backbone():
     with pytest.raises(KeyError):
         SemanticSegmentation(2, "i am never going to implement this lol")
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_freeze():
     model = SemanticSegmentation(2)
     model.freeze()
@@ -76,6 +82,7 @@ def test_freeze():
         assert p.requires_grad is False
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_unfreeze():
     model = SemanticSegmentation(2)
     model.unfreeze()
@@ -83,6 +90,7 @@ def test_unfreeze():
         assert p.requires_grad is True
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_predict_tensor():
     img = torch.rand(1, 3, 10, 20)
     model = SemanticSegmentation(2)
@@ -92,6 +100,7 @@ def test_predict_tensor():
     assert out[0].shape == (10, 20)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_predict_numpy():
     img = np.ones((1, 3, 10, 20))
     model = SemanticSegmentation(2)

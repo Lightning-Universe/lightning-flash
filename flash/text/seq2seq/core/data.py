@@ -19,11 +19,12 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import torch
 from torch import Tensor
 
+import flash
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.process import Preprocess
+from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE
-from flash.data.data_module import DataModule
-from flash.data.data_source import DataSource, DefaultDataSources
-from flash.data.process import Preprocess
-from flash.data.properties import ProcessState
 
 if _TEXT_AVAILABLE:
     import datasets
@@ -98,7 +99,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
+        if use_full and flash._IS_TESTING:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             # used for debugging. Avoid processing the entire dataset   # noqa E265

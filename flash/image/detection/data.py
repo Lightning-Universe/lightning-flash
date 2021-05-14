@@ -14,18 +14,19 @@
 import os
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
-from torchvision.datasets.folder import default_loader
-
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _COCO_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
 from flash.image.detection.transforms import default_transforms
 
 if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.datasets.folder import default_loader
 
 
 class COCODataSource(DataSource[Tuple[str, str]]):

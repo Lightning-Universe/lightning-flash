@@ -13,11 +13,11 @@
 # limitations under the License.
 import pytest
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ImageClassifier
 
 # ======== Mock functions ========
@@ -53,6 +53,7 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
 # ==============================
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone",
     [
@@ -70,11 +71,13 @@ def test_init_train(tmpdir, backbone):
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_non_existent_backbone():
     with pytest.raises(KeyError):
         ImageClassifier(2, "i am never going to implement this lol")
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_freeze():
     model = ImageClassifier(2)
     model.freeze()
@@ -82,6 +85,7 @@ def test_freeze():
         assert p.requires_grad is False
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_unfreeze():
     model = ImageClassifier(2)
     model.unfreeze()
@@ -89,6 +93,7 @@ def test_unfreeze():
         assert p.requires_grad is True
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_multilabel(tmpdir):
 
     num_classes = 4

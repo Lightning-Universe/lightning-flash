@@ -15,16 +15,18 @@ import os
 from typing import Callable, Dict, Tuple
 
 import torch
-import torchvision
 from torch import nn
-from torchvision import transforms as T
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
-from flash.core.utilities.imports import _KORNIA_AVAILABLE
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
+
+if _TORCHVISION_AVAILABLE:
+    import torchvision
+    from torchvision import transforms as T
 
 
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:

@@ -14,14 +14,19 @@
 import os
 
 import pytest
-from PIL import Image
-from pytorch_lightning.utilities import _module_available
 
 import flash
-from flash.core.utilities.imports import _COCO_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from flash.image.detection import ObjectDetectionData
-from tests.vision.detection.test_data import _create_synth_coco_dataset
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
+else:
+    Image = None
+
+if _COCO_AVAILABLE:
+    from tests.vision.detection.test_data import _create_synth_coco_dataset
 
 
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")

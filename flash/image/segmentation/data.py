@@ -17,12 +17,9 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-import torchvision
-from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
@@ -39,7 +36,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
@@ -47,6 +44,18 @@ if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
+
+if _IMAGE_AVAILABLE:
+    import torchvision
+    from PIL import Image
+    from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
+
+else:
+
+    class Image:
+        Image = None
+
+    IMG_EXTENSIONS = None
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
@@ -70,6 +79,8 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
 class SemanticSegmentationPathsDataSource(PathsDataSource):
 
     def __init__(self):
+        if not _IMAGE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
         super().__init__(IMG_EXTENSIONS)
 
     def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
@@ -160,6 +171,8 @@ class SemanticSegmentationPreprocess(Preprocess):
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
         """
+        if not _IMAGE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
         self.image_size = image_size
         self.num_classes = num_classes
         if num_classes:

@@ -13,13 +13,17 @@
 # limitations under the License.
 from typing import Callable, Dict, Tuple
 
-import kornia as K
 import torch
 import torch.nn as nn
-from torchvision.transforms import Compose
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+
+if _IMAGE_AVAILABLE:
+    import kornia as K
+    from torchvision.transforms import Compose
+
+    from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:

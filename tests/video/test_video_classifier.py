@@ -17,14 +17,14 @@ import tempfile
 
 import pytest
 import torch
-import torchvision.io as io
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _VIDEO_AVAILABLE
 
-if _PYTORCHVIDEO_AVAILABLE:
+if _VIDEO_AVAILABLE:
     import kornia.augmentation as K
+    import torchvision.io as io
     from pytorchvideo.data.utils import thwc_to_cthw
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
     from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
@@ -94,7 +94,7 @@ def mock_encoded_video_dataset_file():
             yield f.name, label_videos, video_duration
 
 
-@pytest.mark.skipif(not _PYTORCHVIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_image_classifier_finetune(tmpdir):
 
     with mock_encoded_video_dataset_file() as (

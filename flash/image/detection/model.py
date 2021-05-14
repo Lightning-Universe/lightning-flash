@@ -14,24 +14,30 @@
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-import torchvision
 from torch import nn, tensor
 from torch.optim import Optimizer
-from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
-from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead
-from torchvision.models.detection.rpn import AnchorGenerator
-from torchvision.ops import box_iou
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image.backbones import OBJ_DETECTION_BACKBONES
 from flash.image.detection.finetuning import ObjectDetectionFineTuning
 
-_models = {
-    "fasterrcnn": torchvision.models.detection.fasterrcnn_resnet50_fpn,
-    "retinanet": torchvision.models.detection.retinanet_resnet50_fpn,
-}
+if _IMAGE_AVAILABLE:
+    import torchvision
+    from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
+    from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead
+    from torchvision.models.detection.rpn import AnchorGenerator
+    from torchvision.ops import box_iou
+
+    _models = {
+        "fasterrcnn": torchvision.models.detection.fasterrcnn_resnet50_fpn,
+        "retinanet": torchvision.models.detection.retinanet_resnet50_fpn,
+    }
+
+else:
+    AnchorGenerator = None
 
 
 def _evaluate_iou(target, pred):
@@ -79,13 +85,16 @@ class ObjectDetector(Task):
         pretrained: bool = True,
         pretrained_backbone: bool = True,
         trainable_backbone_layers: int = 3,
-        anchor_generator: Optional[Type[AnchorGenerator]] = None,
+        anchor_generator: Optional[Type['AnchorGenerator']] = None,
         loss=None,
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.Adam,
         learning_rate: float = 1e-3,
         **kwargs: Any,
     ):
+
+        if not _IMAGE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install . '[image]'")
 
         self.save_hyperparameters()
 

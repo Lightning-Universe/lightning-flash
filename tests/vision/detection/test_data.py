@@ -3,12 +3,13 @@ import os
 from pathlib import Path
 
 import pytest
-from PIL import Image
-from pytorch_lightning.utilities import _module_available
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _COCO_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def _create_dummy_coco_json(dummy_json_path):

@@ -22,11 +22,14 @@ import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
-from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+
+if _IMAGE_AVAILABLE:
+    from torchvision.datasets.folder import has_file_allowed_extension, make_dataset
 
 
 def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:

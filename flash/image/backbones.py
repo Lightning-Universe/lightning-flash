@@ -22,16 +22,16 @@ import torch
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
 from torch import nn as nn
-from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TIMM_AVAILABLE:
     import timm
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
+    from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 if _BOLTS_AVAILABLE:
     if os.getenv("WARN_MISSING_PACKAGE") == "0":

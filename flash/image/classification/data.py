@@ -15,7 +15,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
@@ -24,7 +23,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
 
@@ -32,6 +31,13 @@ if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
+else:
+
+    class Image:
+        Image = None
 
 
 class ImageClassificationPreprocess(Preprocess):
