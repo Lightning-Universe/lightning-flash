@@ -19,17 +19,18 @@ import networkx as nx
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch_geometric.data import DataLoader, Dataset
+from torch_geometric.transforms import default_transforms, train_default_transforms
 
 from flash.data.base_viz import BaseVisualization  # for viz
 from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.data.process import Preprocess
-from torch_geometric.transforms import default_transforms, train_default_transforms
 from flash.graph.data import GraphPathsDataSource
 from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 
 # See https://1176-333857397-gh.circle-artifacts.com/0/html/task_template.html
+
 
 class GraphClassificationPreprocess(Preprocess):
 
@@ -41,7 +42,7 @@ class GraphClassificationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         num_features: int = 128
     ):
-        self.num_features = num_features #todo: probably wrong
+        self.num_features = num_features  #todo: probably wrong
 
         super().__init__(
             train_transform=train_transform,
@@ -61,10 +62,10 @@ class GraphClassificationPreprocess(Preprocess):
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
+
     # Seems like there are no default. Also importantly transforms are called on DataSet.
     # For example see https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/data/dataset.html#Dataset.__getitem__
     #todo: do we want to implement transforms here?
-    
     '''
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
