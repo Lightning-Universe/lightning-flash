@@ -40,7 +40,8 @@ if __name__ == '__main__':
 
     # 2. [Optional] Specify transforms to be used during training.
     # Flash helps you to place your transform exactly where you want.
-    # Learn more at https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.core.data.process.Preprocess
+    # Learn more at:
+    # https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.core.data.process.Preprocess
     post_tensor_transform = [UniformTemporalSubsample(8), RandomShortSideScale(min_size=256, max_size=320)]
     per_batch_transform_on_device = [K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225]))]
 

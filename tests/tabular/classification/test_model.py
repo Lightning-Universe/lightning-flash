@@ -68,4 +68,4 @@ def test_init_train_no_cat(tmpdir):
 
 def test_module_import_error(tmpdir):
     with pytest.raises(ModuleNotFoundError, match="[tabular]"):
-        model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])
+        TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])

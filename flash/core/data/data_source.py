@@ -39,7 +39,10 @@ def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
 
 @dataclass(unsafe_hash=True, frozen=True)
 class LabelsState(ProcessState):
-    """ A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to label. """
+    """
+    A :class:`~flash.core.data.properties.ProcessState` containing ``labels``,
+    a mapping from class index to label.
+    """
 
     labels: Optional[Sequence[str]]
 
@@ -82,7 +85,8 @@ class DefaultDataKeys(LightningEnum):
 
 class MockDataset:
     """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``. This is passed to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` so that attributes can be set on the generated data set."""
+    :meth:`~flash.core.data.data_source.DataSource.load_data` so that attributes can be set on the generated
+    data set."""
 
     def __init__(self):
         self.metadata = {}
@@ -98,8 +102,8 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 
 class DataSource(Generic[DATA_TYPE], Properties, Module):
     """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``. The
-    :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data sets
-    from the hooks."""
+    :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
+    sets from the hooks."""
 
     def load_data(self,
                   data: DATA_TYPE,
@@ -168,14 +172,14 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         ``predict``).
 
         Args:
-            train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the train
-                dataset.
-            val_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the validation
-                dataset.
-            test_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the test
-                dataset.
-            predict_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the
-                predict dataset.
+            train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the
+                train dataset.
+            val_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the
+                validation dataset.
+            test_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the
+                test dataset.
+            predict_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create
+                the predict dataset.
 
         Returns:
             A tuple of ``train_dataset``, ``val_dataset``, ``test_dataset``, ``predict_dataset``. If any ``*_data``
@@ -242,8 +246,8 @@ class SequenceDataSource(
     DataSource[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
 ):
     """The ``SequenceDataSource`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of tuples (``(input, target)`` where target
-    can be ``None``).
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of tuples (``(input, target)``
+        where target can be ``None``).
 
     Args:
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
@@ -278,8 +282,8 @@ class SequenceDataSource(
 
 class PathsDataSource(SequenceDataSource):
     """The ``PathsDataSource`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be either a directory with a subdirectory for each class or
-    a tuple containing list of files and corresponding list of targets.
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be either a directory with a subdirectory for
+    each class or a tuple containing list of files and corresponding list of targets.
 
     Args:
         extensions: The file extensions supported by this data source (e.g. ``(".jpg", ".png")``).

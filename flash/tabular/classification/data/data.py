@@ -298,8 +298,8 @@ class TabularData(DataModule):
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
             preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
-                and used.
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
@@ -408,8 +408,8 @@ class TabularData(DataModule):
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
             preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
-                and used.
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.

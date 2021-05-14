@@ -228,8 +228,8 @@ class Task(LightningModule):
             new_serializer: :class:`~flash.core.data.process.Serializer` to override with.
 
         Returns:
-            The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
-            :class:`~flash.core.data.process.Serializer`.
+            The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`,
+            and :class:`~flash.core.data.process.Serializer`.
         """
         preprocess = old_preprocess
         if new_preprocess is not None and type(new_preprocess) != Preprocess:

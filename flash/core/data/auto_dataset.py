@@ -30,8 +30,8 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
     """The ``BaseAutoDataset`` class wraps the output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`
     and a :class:`~fash.data.data_source.DataSource` and provides the ``_call_load_sample`` method to call
     :meth:`~flash.core.data.data_source.DataSource.load_sample` with the correct
-    :class:`~flash.core.data.utils.CurrentRunningStageFuncContext` for the current ``running_stage``. Inheriting classes are
-    responsible for extracting samples from ``data`` to be given to ``_call_load_sample``.
+    :class:`~flash.core.data.utils.CurrentRunningStageFuncContext` for the current ``running_stage``.
+    Inheriting classes are responsible for extracting samples from ``data`` to be given to ``_call_load_sample``.
 
     Args:
         data: The output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`.

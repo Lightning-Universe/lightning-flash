@@ -24,19 +24,19 @@ jobs:
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'datatype/image'
+            topic: 'image'
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'datatype/video'
+            topic: 'video'
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'datatype/tabular'
+            topic: 'tabular'
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'datatype/text'
+            topic: 'text'
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35

@@ -90,4 +90,4 @@ def test_from_json(tmpdir):
 
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
-        dm = TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)
+        TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)
