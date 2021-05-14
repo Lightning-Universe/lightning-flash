@@ -4,6 +4,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 
 from setuptools import find_packages, setup
 
+import flash
 import flash.__about__ as about
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
