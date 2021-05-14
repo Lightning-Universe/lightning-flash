@@ -14,11 +14,15 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
-from PIL import Image
 
 from flash import Trainer
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import ImageClassificationData, ImageClassifier
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def _dummy_image_loader(_):
@@ -29,23 +33,26 @@ def _rand_image():
     return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_classification(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
-    _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
 
-    _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
-    data = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_labels=[0, 1],
-        train_transform={"per_sample_per_batch_transform": lambda x: x},
+    image_a = str(tmpdir / "a" / "a_1.png")
+    image_b = str(tmpdir / "b" / "b_1.png")
+
+    _rand_image().save(image_a)
+    _rand_image().save(image_b)
+
+    data = ImageClassificationData.from_files(
+        train_files=[image_a, image_b],
+        train_targets=[0, 1],
         num_workers=0,
         batch_size=2,
+        image_size=(64, 64),
     )
-    model = ImageClassifier(2, backbone="resnet18")
+    model = ImageClassifier(num_classes=2, backbone="resnet18")
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, datamodule=data, strategy="freeze")

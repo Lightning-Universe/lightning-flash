@@ -16,11 +16,13 @@ import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
 
-from flash.vision import ObjectDetector
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import ObjectDetector
 
 
-def collate_fn(batch):
-    return tuple(zip(*batch))
+def collate_fn(samples):
+    return {key: [sample[key] for sample in samples] for key in samples[0]}
 
 
 class DummyDetectionDataset(Dataset):
@@ -45,9 +47,10 @@ class DummyDetectionDataset(Dataset):
         img = torch.rand(self.img_shape)
         boxes = torch.tensor([self._random_bbox() for _ in range(self.num_boxes)])
         labels = torch.randint(self.num_classes, (self.num_boxes, ))
-        return img, {"boxes": boxes, "labels": labels}
+        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.TARGET: {"boxes": boxes, "labels": labels}}
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_init():
     model = ObjectDetector(num_classes=2)
     model.eval()
@@ -55,7 +58,8 @@ def test_init():
     batch_size = 2
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
     dl = DataLoader(ds, collate_fn=collate_fn, batch_size=batch_size)
-    img, target = next(iter(dl))
+    data = next(iter(dl))
+    img = data[DefaultDataKeys.INPUT]
 
     out = model(img)
 
@@ -64,6 +68,7 @@ def test_init():
 
 
 @pytest.mark.parametrize("model", ["fasterrcnn", "retinanet"])
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_training(tmpdir, model):
     model = ObjectDetector(num_classes=2, model=model, pretrained=False, pretrained_backbone=False)
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)

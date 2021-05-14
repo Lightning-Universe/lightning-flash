@@ -4,23 +4,64 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-
-## [0.2.2] - 2021-MM-DD
+## [0.3.0] - 2021-MM-DD
 
 ### Added
 
+- Added DataPipeline API ([#188](https://github.com/PyTorchLightning/lightning-flash/pull/188) [#141](https://github.com/PyTorchLightning/lightning-flash/pull/141) [#207](https://github.com/PyTorchLightning/lightning-flash/pull/207))
+- Added timm integration ([#196](https://github.com/PyTorchLightning/lightning-flash/pull/196))
+- Added BaseViz Callback ([#201](https://github.com/PyTorchLightning/lightning-flash/pull/201))
+- Added backbone API ([#204](https://github.com/PyTorchLightning/lightning-flash/pull/204))
+- Added support for Iterable auto dataset ([#227](https://github.com/PyTorchLightning/lightning-flash/pull/227))
+- Added multi label support ([#230](https://github.com/PyTorchLightning/lightning-flash/pull/230))
+- Added support for schedulers ([#232](https://github.com/PyTorchLightning/lightning-flash/pull/232))
+- Added visualisation callback for image classification ([#228](https://github.com/PyTorchLightning/lightning-flash/pull/228))
+- Added Video Classification task ([#216](https://github.com/PyTorchLightning/lightning-flash/pull/216))
+- Added Dino backbone for image classification ([#259](https://github.com/PyTorchLightning/lightning-flash/pull/259))
+- Added Data Sources API ([#256](https://github.com/PyTorchLightning/lightning-flash/pull/256) [#264](https://github.com/PyTorchLightning/lightning-flash/pull/264) [#272](https://github.com/PyTorchLightning/lightning-flash/pull/272))
+- Refactor preprocess_cls to preprocess, add Serializer, add DataPipelineState ([#229](https://github.com/PyTorchLightning/lightning-flash/pull/229))
+- Added Semantic Segmentation task ([#239](https://github.com/PyTorchLightning/lightning-flash/pull/239) [#287](https://github.com/PyTorchLightning/lightning-flash/pull/287) [#290](https://github.com/PyTorchLightning/lightning-flash/pull/290))
+- Added Object detection prediction example ([#283](https://github.com/PyTorchLightning/lightning-flash/pull/283))
 
+### Changed
+
+- Rename valid_ to val_ ([#197](https://github.com/PyTorchLightning/lightning-flash/pull/197))
+- Refactor preprocess_cls to preprocess, add Serializer, add DataPipelineState ([#229](https://github.com/PyTorchLightning/lightning-flash/pull/229))
+
+### Fixed
+
+- Fix DataPipeline resolution in Task ([#212](https://github.com/PyTorchLightning/lightning-flash/pull/212))
+- Fixed a bug where the backbone used in summarization was not correctly passed to the postprocess ([#296](https://github.com/PyTorchLightning/lightning-flash/pull/296))
+
+
+## [0.2.3] - 2021-04-17
+
+### Added
+
+- Added TIMM integration as backbones ([#196](https://github.com/PyTorchLightning/lightning-flash/pull/196))
+
+### Fixed
+
+- Fixed nltk.download ([#210](https://github.com/PyTorchLightning/lightning-flash/pull/196))
+
+
+## [0.2.2] - 2021-04-05
 
 ### Changed
 
 - Switch to use `torchmetrics` ([#169](https://github.com/PyTorchLightning/lightning-flash/pull/169))
 
+- Better support for `optimizer` and `schedulers` ([#232](https://github.com/PyTorchLightning/lightning-flash/pull/232))
+
+- Update lightning version to v1.2 ([#133](https://github.com/PyTorchLightning/lightning-flash/pull/133))
 
 ### Fixed
 
 - Fixed classification softmax ([#169](https://github.com/PyTorchLightning/lightning-flash/pull/169))
 
-### Removed
+- Fixed a bug where loading from a local checkpoint that had `pretrained=True` without an internet connection would sometimes raise an error ([#237](https://github.com/PyTorchLightning/lightning-flash/pull/237))
+
+- Don't download data if exists ([#157](https://github.com/PyTorchLightning/lightning-flash/pull/157))
 
 
 ## [0.2.1] - 2021-3-06
@@ -28,7 +69,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `RetinaNet` & `backbones` to `ObjectDetector` Task ([#121](https://github.com/PyTorchLightning/lightning-flash/pull/121))
-- Added .csv image loading utils ([#116](https://github.com/PyTorchLightning/lightning-flash/pull/116), 
+- Added .csv image loading utils ([#116](https://github.com/PyTorchLightning/lightning-flash/pull/116),
     [#117](https://github.com/PyTorchLightning/lightning-flash/pull/117),
     [#118](https://github.com/PyTorchLightning/lightning-flash/pull/118))
 

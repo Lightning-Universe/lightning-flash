@@ -14,12 +14,17 @@
 from typing import Dict, List, Tuple
 
 import numpy as np
-from rouge_score import rouge_scorer, scoring
-from rouge_score.scoring import AggregateScore, Score
 from torch import tensor
 from torchmetrics import Metric
 
-from flash.text.seq2seq import summarization
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_sentence
+
+if _TEXT_AVAILABLE:
+    from rouge_score import rouge_scorer, scoring
+    from rouge_score.scoring import AggregateScore, BootstrapAggregator, Score
+else:
+    AggregateScore, Score, BootstrapAggregator = None, None, object
 
 
 class RougeMetric(Metric):
@@ -30,9 +35,9 @@ class RougeMetric(Metric):
 
         >>> target = "Is your name John".split()
         >>> preds = "My name is John".split()
-        >>> rouge = RougeMetric()
+        >>> rouge = RougeMetric()   # doctest: +SKIP
         >>> from pprint import pprint
-        >>> pprint(rouge(preds, target))  # doctest: +NORMALIZE_WHITESPACE
+        >>> pprint(rouge(preds, target))  # doctest: +NORMALIZE_WHITESPACE +SKIP
         {'rouge1_fmeasure': 0.25,
          'rouge1_precision': 0.25,
          'rouge1_recall': 0.25,
@@ -54,6 +59,9 @@ class RougeMetric(Metric):
         rouge_keys: Tuple[str] = ("rouge1", "rouge2", "rougeL", "rougeLsum"),
     ):
         super().__init__()
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+
         self.rouge_newline_sep = rouge_newline_sep
         self.rouge_keys = rouge_keys
         self.use_stemmer = use_stemmer
@@ -67,8 +75,8 @@ class RougeMetric(Metric):
         for pred, tgt in zip(pred_lns, tgt_lns):
             # rougeLsum expects "\n" separated sentences within a summary
             if self.rouge_newline_sep:
-                pred = summarization.utils.add_newline_to_end_of_each_sentence(pred)
-                tgt = summarization.utils.add_newline_to_end_of_each_sentence(tgt)
+                pred = add_newline_to_end_of_each_sentence(pred)
+                tgt = add_newline_to_end_of_each_sentence(tgt)
             results = self.scorer.score(pred, tgt)
             for key, score in results.items():
                 score = tensor([score.precision, score.recall, score.fmeasure])
@@ -94,7 +102,7 @@ class RougeMetric(Metric):
         return hash(tuple(hash_vals))
 
 
-class RougeBatchAggregator(scoring.BootstrapAggregator):
+class RougeBatchAggregator(BootstrapAggregator):
     """
     Aggregates rouge scores and provides confidence intervals.
     """

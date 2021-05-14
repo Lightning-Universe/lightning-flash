@@ -11,162 +11,231 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from pathlib import Path
+from typing import Any, List, Tuple
 
 import numpy as np
+import pytest
 import torch
-from PIL import Image
+import torch.nn as nn
 
-from flash.data.data_utils import labels_from_categorical_csv
-from flash.vision import ImageClassificationData
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.transforms import ApplyToKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import ImageClassificationData
+
+if _IMAGE_AVAILABLE:
+    import kornia as K
+    import torchvision
+    from PIL import Image
 
 
 def _dummy_image_loader(_):
     return torch.rand(3, 196, 196)
 
 
-def _rand_image():
-    _size = np.random.choice([196, 244])
-    return Image.fromarray(np.random.randint(0, 255, (_size, _size, 3), dtype="uint8"))
+def _rand_image(size: Tuple[int, int] = None):
+    if size is None:
+        _size = np.random.choice([196, 244])
+        size = (_size, _size)
+    return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
 
 
-def test_from_filepaths(tmpdir):
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_filepaths_smoke(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "a").mkdir()
     (tmpdir / "b").mkdir()
-    _rand_image().save(tmpdir / "a" / "a_1.png")
-    _rand_image().save(tmpdir / "a" / "a_2.png")
+    _rand_image().save(tmpdir / "a_1.png")
+    _rand_image().save(tmpdir / "b_1.png")
 
-    _rand_image().save(tmpdir / "b" / "a_1.png")
-    _rand_image().save(tmpdir / "b" / "a_2.png")
+    train_images = [
+        str(tmpdir / "a_1.png"),
+        str(tmpdir / "b_1.png"),
+    ]
 
-    img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_transform=None,
-        train_labels=[0, 1],
+    img_data = ImageClassificationData.from_files(
+        train_files=train_images,
+        train_targets=[1, 2],
         batch_size=2,
         num_workers=0,
     )
-    data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
-
+    assert img_data.train_dataloader() is not None
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
 
-    (tmpdir / "c").mkdir()
-    (tmpdir / "d").mkdir()
-    _rand_image().save(tmpdir / "c" / "c_1.png")
-    _rand_image().save(tmpdir / "c" / "c_2.png")
-    _rand_image().save(tmpdir / "d" / "d_1.png")
-    _rand_image().save(tmpdir / "d" / "d_2.png")
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [1, 2]
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_filepaths_list_image_paths(tmpdir):
+    tmpdir = Path(tmpdir)
 
     (tmpdir / "e").mkdir()
-    (tmpdir / "f").mkdir()
-    _rand_image().save(tmpdir / "e" / "e_1.png")
-    _rand_image().save(tmpdir / "e" / "e_2.png")
-    _rand_image().save(tmpdir / "f" / "f_1.png")
-    _rand_image().save(tmpdir / "f" / "f_2.png")
+    _rand_image().save(tmpdir / "e_1.png")
 
-    img_data = ImageClassificationData.from_filepaths(
-        train_filepaths=[tmpdir / "a", tmpdir / "b"],
-        train_labels=[0, 1],
-        train_transform=None,
-        val_filepaths=[tmpdir / "c", tmpdir / "d"],
-        val_labels=[0, 1],
-        val_transform=None,
-        test_transform=None,
-        test_filepaths=[tmpdir / "e", tmpdir / "f"],
-        test_labels=[0, 1],
-        batch_size=1,
+    train_images = [
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+    ]
+
+    img_data = ImageClassificationData.from_files(
+        train_files=train_images,
+        train_targets=[0, 3, 6],
+        val_files=train_images,
+        val_targets=[1, 4, 7],
+        test_files=train_images,
+        test_targets=[2, 5, 8],
+        batch_size=2,
         num_workers=0,
     )
 
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
+    assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
+
+    # check validation data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [1, 4]
 
+    # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [2, 5]
 
 
-def test_categorical_csv_labels(tmpdir):
-    train_dir = Path(tmpdir / "some_dataset")
-    train_dir.mkdir()
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_filepaths_visualise(tmpdir):
+    tmpdir = Path(tmpdir)
 
-    (train_dir / "train").mkdir()
-    _rand_image().save(train_dir / "train" / "train_1.png")
-    _rand_image().save(train_dir / "train" / "train_2.png")
+    (tmpdir / "e").mkdir()
+    _rand_image().save(tmpdir / "e_1.png")
 
-    (train_dir / "valid").mkdir()
-    _rand_image().save(train_dir / "valid" / "val_1.png")
-    _rand_image().save(train_dir / "valid" / "val_2.png")
+    train_images = [
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+        str(tmpdir / "e_1.png"),
+    ]
 
-    (train_dir / "test").mkdir()
-    _rand_image().save(train_dir / "test" / "test_1.png")
-    _rand_image().save(train_dir / "test" / "test_2.png")
-
-    train_csv = os.path.join(tmpdir, 'some_dataset', 'train.csv')
-    text_file = open(train_csv, 'w')
-    text_file.write(
-        'my_id,label_a,label_b,label_c\n"train_1.png", 0, 1, 0\n"train_2.png", 0, 0, 1\n"train_2.png", 1, 0, 0\n'
-    )
-    text_file.close()
-
-    val_csv = os.path.join(tmpdir, 'some_dataset', 'valid.csv')
-    text_file = open(val_csv, 'w')
-    text_file.write('my_id,label_a,label_b,label_c\n"val_1.png", 0, 1, 0\n"val_2.png", 0, 0, 1\n"val_3.png", 1, 0, 0\n')
-    text_file.close()
-
-    test_csv = os.path.join(tmpdir, 'some_dataset', 'test.csv')
-    text_file = open(test_csv, 'w')
-    text_file.write(
-        'my_id,label_a,label_b,label_c\n"test_1.png", 0, 1, 0\n"test_2.png", 0, 0, 1\n"test_3.png", 1, 0, 0\n'
-    )
-    text_file.close()
-
-    def index_col_collate_fn(x):
-        return os.path.splitext(x)[0]
-
-    train_labels = labels_from_categorical_csv(
-        train_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
-    )
-    val_labels = labels_from_categorical_csv(
-        val_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
-    )
-    test_labels = labels_from_categorical_csv(
-        test_csv, 'my_id', feature_cols=['label_a', 'label_b', 'label_c'], index_col_collate_fn=index_col_collate_fn
-    )
-    data = ImageClassificationData.from_filepaths(
+    dm = ImageClassificationData.from_files(
+        train_files=train_images,
+        train_targets=[0, 3, 6],
+        val_files=train_images,
+        val_targets=[1, 4, 7],
+        test_files=train_images,
+        test_targets=[2, 5, 8],
         batch_size=2,
-        train_transform=None,
-        val_transform=None,
-        test_transform=None,
-        train_filepaths=os.path.join(tmpdir, 'some_dataset', 'train'),
-        train_labels=train_labels.values(),
-        val_filepaths=os.path.join(tmpdir, 'some_dataset', 'valid'),
-        val_labels=val_labels.values(),
-        test_filepaths=os.path.join(tmpdir, 'some_dataset', 'test'),
-        test_labels=test_labels.values(),
+        num_workers=0,
     )
 
-    for (x, y) in data.train_dataloader():
-        assert len(x) == 2
+    # disable visualisation for testing
+    assert dm.data_fetcher.block_viz_window is True
+    dm.set_block_viz_window(False)
+    assert dm.data_fetcher.block_viz_window is False
 
-    for (x, y) in data.val_dataloader():
-        assert len(x) == 2
+    # call show functions
+    # dm.show_train_batch()
+    dm.show_train_batch("pre_tensor_transform")
+    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
 
-    for (x, y) in data.test_dataloader():
-        assert len(x) == 2
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_filepaths_visualise_multilabel(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+
+    image_a = str(tmpdir / "a" / "a_1.png")
+    image_b = str(tmpdir / "b" / "b_1.png")
+
+    _rand_image().save(image_a)
+    _rand_image().save(image_b)
+
+    dm = ImageClassificationData.from_files(
+        train_files=[image_a, image_b],
+        train_targets=[[0, 1, 0], [0, 1, 1]],
+        val_files=[image_b, image_a],
+        val_targets=[[1, 1, 0], [0, 0, 1]],
+        test_files=[image_b, image_b],
+        test_targets=[[0, 0, 1], [1, 1, 0]],
+        batch_size=2,
+        image_size=(64, 64),
+    )
+    # disable visualisation for testing
+    assert dm.data_fetcher.block_viz_window is True
+    dm.set_block_viz_window(False)
+    assert dm.data_fetcher.block_viz_window is False
+
+    # call show functions
+    dm.show_train_batch()
+    dm.show_train_batch("pre_tensor_transform")
+    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_val_batch("per_batch_transform")
 
 
-def test_from_folders(tmpdir):
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_filepaths_splits(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    B, _, H, W = 2, 3, 224, 224
+    img_size: Tuple[int, int] = (H, W)
+
+    (tmpdir / "splits").mkdir()
+    _rand_image(img_size).save(tmpdir / "s.png")
+
+    num_samples: int = 10
+    val_split: float = .3
+
+    train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
+
+    train_labels: List[int] = [i for i in range(num_samples)]
+
+    assert len(train_filepaths) == len(train_labels)
+
+    _to_tensor = {
+        "to_tensor_transform": nn.Sequential(
+            ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor)
+        ),
+    }
+
+    def run(transform: Any = None):
+        dm = ImageClassificationData.from_files(
+            train_files=train_filepaths,
+            train_targets=train_labels,
+            train_transform=transform,
+            val_transform=transform,
+            batch_size=B,
+            num_workers=0,
+            val_split=val_split,
+            image_size=img_size,
+        )
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data['input'], data['target']
+        assert imgs.shape == (B, 3, H, W)
+        assert labels.shape == (B, )
+
+    run(_to_tensor)
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_folders_only_train(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
@@ -179,28 +248,92 @@ def test_from_folders(tmpdir):
     _rand_image().save(train_dir / "b" / "2.png")
 
     img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data
+    imgs, labels = data['input'], data['target']
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1, )
 
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
 
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_folders_train_val(tmpdir):
+
+    train_dir = Path(tmpdir / "train")
+    train_dir.mkdir()
+
+    (train_dir / "a").mkdir()
+    _rand_image().save(train_dir / "a" / "1.png")
+    _rand_image().save(train_dir / "a" / "2.png")
+
+    (train_dir / "b").mkdir()
+    _rand_image().save(train_dir / "b" / "1.png")
+    _rand_image().save(train_dir / "b" / "2.png")
     img_data = ImageClassificationData.from_folders(
         train_dir,
         val_folder=train_dir,
         test_folder=train_dir,
-        batch_size=1,
+        batch_size=2,
         num_workers=0,
     )
 
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [0, 0]
 
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert list(labels.numpy()) == [0, 0]
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_from_filepaths_multilabel(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    _rand_image().save(tmpdir / "a1.png")
+    _rand_image().save(tmpdir / "a2.png")
+
+    train_images = [str(tmpdir / "a1.png"), str(tmpdir / "a2.png")]
+    train_labels = [[1, 0, 1, 0], [0, 0, 1, 1]]
+    valid_labels = [[1, 1, 1, 0], [1, 0, 0, 1]]
+    test_labels = [[1, 0, 1, 0], [1, 1, 0, 1]]
+
+    dm = ImageClassificationData.from_files(
+        train_files=train_images,
+        train_targets=train_labels,
+        val_files=train_images,
+        val_targets=valid_labels,
+        test_files=train_images,
+        test_targets=test_labels,
+        batch_size=2,
+        num_workers=0,
+    )
+
+    data = next(iter(dm.train_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+
+    data = next(iter(dm.val_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+    torch.testing.assert_allclose(labels, torch.tensor(valid_labels))
+
+    data = next(iter(dm.test_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 4)
+    torch.testing.assert_allclose(labels, torch.tensor(test_labels))

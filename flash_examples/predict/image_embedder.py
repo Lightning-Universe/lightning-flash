@@ -13,8 +13,8 @@
 # limitations under the License.
 import torch
 
-from flash.data.utils import download_data
-from flash.vision import ImageEmbedder
+from flash.core.data.utils import download_data
+from flash.image import ImageEmbedder
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
@@ -33,7 +33,7 @@ print(embeddings[0].shape)
 random_image = torch.randn(1, 3, 244, 244)
 
 # 6. Generate an embedding from this random image.
-embeddings = embedder.predict(random_image)
+embeddings = embedder.predict(random_image, data_source="tensors")
 
 # 7. Print embeddings shape
 print(embeddings[0].shape)

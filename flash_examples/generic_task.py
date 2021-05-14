@@ -18,8 +18,8 @@ from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 
-from flash import ClassificationTask
-from flash.data.utils import download_data
+from flash.core.classification import ClassificationTask
+from flash.core.data.utils import download_data
 
 _PATH_ROOT = os.path.dirname(os.path.dirname(__file__))
 
@@ -32,7 +32,6 @@ model = nn.Sequential(
     nn.Linear(28 * 28, 128),
     nn.ReLU(),
     nn.Linear(128, 10),
-    nn.Softmax(),
 )
 
 # 3. Load a dataset

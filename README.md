@@ -25,7 +25,7 @@
 [![Stable API](https://img.shields.io/static/v1.svg?label=API&message=stable&color=green)](https://img.shields.io/static/v1.svg?label=API&message=stable&color=green)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/lightning-flash)](https://pypi.org/project/lightning-flash/)
 [![PyPI Status](https://badge.fury.io/py/lightning-flash.svg)](https://badge.fury.io/py/lightning-flash)
-[![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A)
+[![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)
 [![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fforums.pytorchlightning.ai)](https://forums.pytorchlightning.ai/)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PytorchLightning/pytorch-lightning/blob/master/LICENSE)
 
@@ -120,8 +120,8 @@ First, finetune:
 ```python
 # import our libraries
 import flash
-from flash import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.data.utils import download_data
+from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -149,7 +149,7 @@ trainer.save_checkpoint("image_classification_model.pt")
 Then use the finetuned model
 
 ```python
-from flash.vision import ImageClassifier
+from flash.image import ImageClassifier
 # load the finetuned model
 classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
 
@@ -170,8 +170,8 @@ Flash has an Image embedding task to encodes an image into a vector of image fea
   <summary>View example</summary>
 
 ```python
-from flash.core.data import download_data
-from flash.vision import ImageEmbedder
+from flash.core.data.utils import download_data
+from flash.image import ImageEmbedder
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -197,7 +197,7 @@ Flash has a Summarization task to sum up text from a larger article into a short
 ```python
 # import our libraries
 import flash
-from flash import download_data
+from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
@@ -244,7 +244,7 @@ To illustrate, say we want to build a model to predict if a passenger survived o
 # import our libraries
 from torchmetrics.classification import Accuracy, Precision, Recall
 import flash
-from flash import download_data
+from flash.core.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data
@@ -295,8 +295,8 @@ To illustrate, say we want to build a model on a tiny coco dataset.
 ```python
 # import our libraries
 import flash
-from flash.core.data import download_data
-from flash.vision import ObjectDetectionData, ObjectDetector
+from flash.core.data.utils import download_data
+from flash.image import ObjectDetectionData, ObjectDetector
 
 # 1. Download the data
 # Dataset Credit: https://www.kaggle.com/ultralytics/coco128
@@ -403,15 +403,15 @@ gives you the most flexibility because it is simply organized PyTorch.
 ## Contribute!
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases. But we're looking for incredible contributors like you to submit new tasks!
 
-Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A) and/or read our [CONTRIBUTING](https://github.com/PyTorchLightning/lightning-flash/blob/master/.github/CONTRIBUTING.md) guidelines to get help becoming a contributor!
+Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ) and/or read our [CONTRIBUTING](https://github.com/PyTorchLightning/lightning-flash/blob/master/.github/CONTRIBUTING.md) guidelines to get help becoming a contributor!
 
 ## Community
-For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A)!
+For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)!
 
 ## Citations
 We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffee, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
 
-Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), and [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/) for the `vision`, `text`, and `tabular` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
+Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), [timm](https://github.com/rwightman/pytorch-image-models), and [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/) for the `vision`, `text`, and `tabular` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
 
 ## License
 Please observe the Apache 2.0 license that is listed in this repository. In addition

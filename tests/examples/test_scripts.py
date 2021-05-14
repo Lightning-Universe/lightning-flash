@@ -20,6 +20,16 @@ from unittest import mock
 
 import pytest
 
+from flash.core.utilities.imports import (
+    _IMAGE_AVAILABLE,
+    _TABULAR_AVAILABLE,
+    _TEXT_AVAILABLE,
+    _TORCHVISION_GREATER_EQUAL_0_9,
+    _VIDEO_AVAILABLE,
+)
+
+_IMAGE_AVAILABLE = _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9
+
 root = Path(__file__).parent.parent.parent
 
 
@@ -55,18 +65,72 @@ def run_test(filepath):
 @pytest.mark.parametrize(
     "folder, file",
     [
-        ("finetuning", "image_classification.py"),
-        # ("finetuning", "object_detection.py"),  # TODO: takes too long.
-        # ("finetuning", "summarization.py"),  # TODO: takes too long.
-        ("finetuning", "tabular_classification.py"),
-        # ("finetuning", "text_classification.py"),  # TODO: takes too long
-        # ("finetuning", "translation.py"),  # TODO: takes too long.
-        ("predict", "image_classification.py"),
-        ("predict", "tabular_classification.py"),
-        # ("predict", "text_classification.py"),
-        ("predict", "image_embedder.py"),
-        # ("predict", "summarization.py"),  # TODO: takes too long
-        # ("predict", "translate.py"),  # TODO: takes too long
+        pytest.param(
+            "finetuning",
+            "image_classification.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "finetuning",
+            "image_classification_multi_label.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+        ),
+        # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
+        pytest.param(
+            "finetuning",
+            "semantic_segmentation.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+        ),
+        # pytest.param("finetuning", "summarization.py"),  # TODO: takes too long.
+        pytest.param(
+            "finetuning",
+            "tabular_classification.py",
+            marks=pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed")
+        ),
+        # pytest.param("finetuning", "video_classification.py"),
+        # pytest.param("finetuning", "text_classification.py"),  # TODO: takes too long
+        pytest.param(
+            "finetuning",
+            "translation.py",
+            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+        ),
+        pytest.param(
+            "predict",
+            "image_classification.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "predict",
+            "image_classification_multi_label.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "predict",
+            "semantic_segmentation.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "predict",
+            "tabular_classification.py",
+            marks=pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed")
+        ),
+        # pytest.param("predict", "text_classification.py"),
+        pytest.param(
+            "predict",
+            "image_embedder.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "predict",
+            "video_classification.py",
+            marks=pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="video libraries aren't installed")
+        ),
+        # pytest.param("predict", "summarization.py"),  # TODO: takes too long
+        pytest.param(
+            "predict",
+            "translation.py",
+            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+        ),
     ]
 )
 def test_example(tmpdir, folder, file):

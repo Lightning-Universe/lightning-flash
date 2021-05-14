@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash import Trainer
-from flash.data.utils import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.data.utils import download_data
+from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
@@ -31,5 +31,6 @@ print(predictions)
 
 # 3b. Or generate predictions with a whole folder!
 datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
+
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)

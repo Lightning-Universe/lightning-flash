@@ -12,23 +12,16 @@
 #
 import os
 import sys
-from importlib.util import module_from_spec, spec_from_file_location
 
 import pt_lightning_sphinx_theme
+
+import flash.__about__ as about
 
 _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
-
-try:
-    from flash import info
-except (ImportError, ModuleNotFoundError):
-    # alternative https://stackoverflow.com/a/67692/4521646
-    spec = spec_from_file_location("flash/info.py", os.path.join(_PATH_ROOT, "flash", "info.py"))
-    info = module_from_spec(spec)
-    spec.loader.exec_module(info)
 
 html_favicon = '_static/images/icon.svg'
 
@@ -85,6 +78,7 @@ intersphinx_mapping = {
     "torch": ("https://pytorch.org/docs/stable/", None),
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
     "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
+    "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -101,7 +95,7 @@ html_theme_path = [pt_lightning_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
     'pytorch_project': 'https://pytorchlightning.ai',
-    'canonical_url': info.__docs_url__,
+    'canonical_url': about.__docs_url__,
     "collapse_navigation": False,
     "display_version": True,
     "logo_only": False,

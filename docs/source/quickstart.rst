@@ -1,3 +1,5 @@
+.. _quick_start:
+
 ***********
 Quick Start
 ***********
@@ -15,7 +17,7 @@ For getting started with Deep Learning
 
 Easy to learn
 ^^^^^^^^^^^^^
-If you are just getting started with deep learning, Flash offers common deep learning tasks you can use out-of-the-box in a few lines of code, no math, fancy nn.Modules or research experience required! 
+If you are just getting started with deep learning, Flash offers common deep learning tasks you can use out-of-the-box in a few lines of code, no math, fancy nn.Modules or research experience required!
 
 Easy to scale
 ^^^^^^^^^^^^^
@@ -27,9 +29,9 @@ Easy to upskill
 ^^^^^^^^^^^^^^^
 If you want create more complex and custmoized models, you can refactor any part of flash with PyTorch or `Pytorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ components to get all the flexibility you need. Lightning is just
-organized PyTorch with the unecessary engineering details abstracted away.
+organized PyTorch with the unnecessary engineering details abstracted away.
 
-- Flash (high level)
+- Flash (high-level)
 - Lightning (mid-level)
 - PyTorch (low-level)
 
@@ -70,7 +72,7 @@ You can install flash using pip or conda:
 Tasks
 =====
 
-Flash is comprised of a collection of Tasks. The Flash tasks are laser-focused objects designed to solve a well-defined type of problem, using state-of-the-art methods. 
+Flash is comprised of a collection of Tasks. The Flash tasks are laser-focused objects designed to solve a well-defined type of problem, using state-of-the-art methods.
 
 The Flash tasks contain all the relevant information to solve the task at hand- the number of class labels you want to predict, number of columns in your dataset, as well as details on the model architecture used such as loss function, optimizers, etc.
 
@@ -79,7 +81,7 @@ Here are examples of tasks:
 .. testcode::
 
     from flash.text import TextClassifier
-    from flash.vision import ImageClassifier
+    from flash.image import ImageClassifier
     from flash.tabular import TabularClassifier
 
 .. note:: Tasks are inflexible by definition! To get more flexibility, you can simply use :class:`~pytorch_lightning.core.lightning.LightningModule` directly or modify and existing task in just a few lines.
@@ -96,9 +98,9 @@ Inference is the process of generating predictions from trained models. To use a
 
 |
 
-Here's an example of inference.
+Here's an example of inference:
 
-.. code-block:: python
+.. testcode::
 
     # import our libraries
     from flash.text import TextClassifier
@@ -112,91 +114,28 @@ Here's an example of inference.
         "The worst movie in the history of cinema.",
         "This guy has done a great job with this movie!",
     ])
-
-    # Expect [0,0, 1] which means [negative, negative, positive]
     print(predictions)
+
+We get the following output:
 
 -------
 
-Finetune
-========
+Finetuning
+==========
 
 Finetuning (or transfer-learning) is the process of tweaking a model trained on a large dataset, to your particular (likely much smaller) dataset.
-To use a Task for finetuning:
+All Flash tasks have pre-trained backbones that are already trained on large datasets such as ImageNet. Finetuning on pretrained models decreases training time significantly.
 
-1. Download and set up your own data (:class:`~torch.utils.data.DataLoader` or `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/lightning_module.html>`_ work).
-2. Init your task.
-3. Init a :class:`flash.core.trainer.Trainer` (or a `Lightning Trainer <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_).
-4. Call :func:`flash.core.trainer.Trainer.finetune` with your data set.
-5. Use your finetuned model for predictions
+.. include:: common/finetuning_example.rst
 
-|
+-----
 
-Here's an example of finetuning.
-
-.. code-block:: python
-
-    import flash
-    from flash import download_data
-    from flash.vision import ImageClassificationData, ImageClassifier
-
-    # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
-
-    # 2. Load the data from folders
-    datamodule = ImageClassificationData.from_folders(
-        backbone="resnet18",
-        train_folder="data/hymenoptera_data/train/",
-        valid_folder="data/hymenoptera_data/val/",
-        test_folder="data/hymenoptera_data/test/",
-    )
-
-    # 3. Build the model using desired Task
-    model = ImageClassifier(num_classes=datamodule.num_classes)
-
-    # 4. Create the trainer (run one epoch for demo)
-    trainer = flash.Trainer(max_epochs=1)
-
-    # 5. Finetune the model
-    trainer.finetune(model, datamodule=datamodule, strategy="freeze")
-
-    # 6. Use the model for predictions
-    predictions = model.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
-    # Expact 1 -> bee
-    print(predictions)
-
-    predictions = model.predict('data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg')
-    # Expact 0 -> ant
-    print(predictions)
-
-    # 7. Save the new model!
-    trainer.save_checkpoint("image_classification_model.pt")
-
-Once your model is finetuned, use it for prediction anywhere you want!
-
-.. code-block:: python
-
-    from flash.vision import ImageClassifier
-
-    # load finetuned checkpoint
-    model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
-
-    predictions = model.predict('path/to/your/own/image.png')
-
-----
-
-Train
-=====
+Training
+========
 
 When you have enough data, you're likely better off training from scratch instead of finetuning.
-Steps here are similar to finetune:
 
-
-1. Download and set up your own data (:class:`~torch.utils.data.DataLoader` or `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/lightning_module.html>`_ work).
-2. Init your task.
-3. Init a :class:`flash.core.trainer.Trainer` (or a `Lightning Trainer <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_).
-4. Call :func:`flash.core.trainer.Trainer.fit` with your data set.
-5. Use your finetuned model for predictions
+.. include:: common/training_example.rst
 
 -----
 
@@ -218,4 +157,4 @@ Contribute a task
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases.
 But we're looking for incredible contributors like you to submit new tasks!
 
-Join our `Slack <https://join.slack.com/t/pytorch-lightning/shared_invite/zt-f6bl2l0l-JYMK3tbAgAmGRrlNr00f1A>`_ to get help becoming a contributor!
+Join our `Slack <https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ>`_ to get help becoming a contributor!

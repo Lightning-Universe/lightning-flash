@@ -11,22 +11,44 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
+from unittest import mock
 
 import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
-from PIL import Image
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
+from torch.utils.data import DataLoader
 
+import flash
 from flash.core.classification import ClassificationTask
-from flash.tabular import TabularClassifier
-from flash.text import SummarizationTask, TextClassifier
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.data.process import DefaultPreprocess, Postprocess
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
+from flash.image import ImageClassificationData, ImageClassifier
+
+if _TABULAR_AVAILABLE:
+    from flash.tabular import TabularClassifier
+else:
+    TabularClassifier = None
+
+if _TEXT_AVAILABLE:
+    from flash.text import TextClassifier
+else:
+    TextClassifier = None
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
+else:
+
+    class Image:
+        Image = None
+
 
 # ======== Mock functions ========
 
@@ -46,6 +68,11 @@ class PredictDummyDataset(DummyDataset):
         return torch.rand(1, 28, 28)
 
 
+class DummyPostprocess(Postprocess):
+
+    pass
+
+
 # ================================
 
 
@@ -54,17 +81,16 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss, metrics=metrics)
+    task = ClassificationTask(model, loss_fn=F.nll_loss, metrics=metrics)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     result = trainer.fit(task, train_dl, val_dl)
-    assert result
     result = trainer.test(task, val_dl)
     assert "test_nll_loss" in result[0]
 
 
 def test_classificationtask_task_predict():
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
-    task = ClassificationTask(model)
+    task = ClassificationTask(model, preprocess=DefaultPreprocess())
     ds = DummyDataset()
     expected = list(range(10))
     # single item
@@ -78,6 +104,8 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -112,10 +140,10 @@ def test_classification_task_trainer_predict(tmpdir):
 def test_task_datapipeline_save(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, F.nll_loss)
+    task = ClassificationTask(model, loss_fn=F.nll_loss, postprocess=DummyPostprocess())
 
     # to check later
-    task._postprocess.test = True
+    task.postprocess.test = True
 
     # generate a checkpoint
     trainer = pl.Trainer(
@@ -132,19 +160,27 @@ def test_task_datapipeline_save(tmpdir):
 
     # load from file
     task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task._postprocess.test
+    assert task.postprocess.test
 
 
-@pytest.mark.parametrize(
-    ["cls", "filename"],
-    [
-        (ImageClassifier, "image_classification_model.pt"),
-        (TabularClassifier, "tabular_classification_model.pt"),
-        (TextClassifier, "text_classification_model.pt"),
-        (SummarizationTask, "summarization_model_xsum.pt"),
-        # (TranslationTask, "translation_model_en_ro.pt"), todo: reduce model size or create CI friendly file size
-    ]
-)
+@pytest.mark.parametrize(["cls", "filename"], [
+    pytest.param(
+        ImageClassifier,
+        "image_classification_model.pt",
+        marks=pytest.mark.skipif(
+            not _IMAGE_AVAILABLE,
+            reason="image packages aren't installed",
+        )
+    ),
+    pytest.param(
+        TabularClassifier,
+        "tabular_classification_model.pt",
+        marks=pytest.mark.skipif(
+            not _TABULAR_AVAILABLE,
+            reason="tabular packages aren't installed",
+        )
+    ),
+])
 def test_model_download(tmpdir, cls, filename):
     url = "https://flash-weights.s3.amazonaws.com/"
     with tmpdir.as_cwd():
@@ -152,6 +188,7 @@ def test_model_download(tmpdir, cls, filename):
         assert isinstance(task, cls)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_available_backbones():
     backbones = ImageClassifier.available_backbones()
     assert "resnet152" in backbones
@@ -160,3 +197,64 @@ def test_available_backbones():
         backbones = None
 
     assert Foo.available_backbones() == []
+
+
+def test_optimization(tmpdir):
+
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+    optim = torch.optim.Adam(model.parameters())
+    task = ClassificationTask(model, optimizer=optim, scheduler=None)
+
+    optimizer = task.configure_optimizers()
+    assert optimizer == optim
+
+    task = ClassificationTask(model, optimizer=torch.optim.Adadelta, optimizer_kwargs={"eps": 0.5}, scheduler=None)
+    optimizer = task.configure_optimizers()
+    assert isinstance(optimizer, torch.optim.Adadelta)
+    assert optimizer.defaults["eps"] == 0.5
+
+    task = ClassificationTask(
+        model,
+        optimizer=torch.optim.Adadelta,
+        scheduler=torch.optim.lr_scheduler.StepLR,
+        scheduler_kwargs={"step_size": 1}
+    )
+    optimizer, scheduler = task.configure_optimizers()
+    assert isinstance(optimizer[0], torch.optim.Adadelta)
+    assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
+
+    optim = torch.optim.Adadelta(model.parameters())
+    task = ClassificationTask(model, optimizer=optim, scheduler=torch.optim.lr_scheduler.StepLR(optim, step_size=1))
+    optimizer, scheduler = task.configure_optimizers()
+    assert isinstance(optimizer[0], torch.optim.Adadelta)
+    assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
+
+    if _TEXT_AVAILABLE:
+        from transformers.optimization import get_linear_schedule_with_warmup
+
+        assert task.available_schedulers() == [
+            'constant_schedule', 'constant_schedule_with_warmup', 'cosine_schedule_with_warmup',
+            'cosine_with_hard_restarts_schedule_with_warmup', 'linear_schedule_with_warmup',
+            'polynomial_decay_schedule_with_warmup'
+        ]
+
+        optim = torch.optim.Adadelta(model.parameters())
+        with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
+            task = ClassificationTask(model, optimizer=optim, scheduler="linear_schedule_with_warmup")
+            optimizer, scheduler = task.configure_optimizers()
+
+        task = ClassificationTask(
+            model,
+            optimizer=optim,
+            scheduler="linear_schedule_with_warmup",
+            scheduler_kwargs={"num_warmup_steps": 0.1},
+            loss_fn=F.nll_loss,
+        )
+        trainer = flash.Trainer(max_epochs=1, limit_train_batches=2)
+        ds = DummyDataset()
+        trainer.fit(task, train_dataloader=DataLoader(ds))
+        optimizer, scheduler = task.configure_optimizers()
+        assert isinstance(optimizer[0], torch.optim.Adadelta)
+        assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
+        expected = get_linear_schedule_with_warmup.__name__
+        assert scheduler[0].lr_lambdas[0].__qualname__.split('.')[0] == expected

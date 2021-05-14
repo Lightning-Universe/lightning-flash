@@ -1,47 +1,44 @@
 #!/usr/bin/env python
 import os
-import subprocess
-# Always prefer setuptools over distutils
-import sys
+from importlib.util import module_from_spec, spec_from_file_location
 
 from setuptools import find_packages, setup
 
-# Used to install Lightning Master
-"""
-try:
-    import pytorch_lightning
-except (ImportError, AssertionError):
-    subprocess.Popen(["pip", "install", "git+https://github.com/PyTorchLightning/pytorch-lightning.git"])
-"""
-
-try:
-    from flash import info, setup_tools
-except ImportError:
-    # alternative https://stackoverflow.com/a/67692/4521646
-    sys.path.append("flash")
-    import info
-    import setup_tools
+import flash
+import flash.__about__ as about
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
+_PATH_ROOT = os.path.dirname(os.path.dirname(flash.__file__))
 
-_PATH_ROOT = os.path.dirname(__file__)
+
+def _load_py_module(fname, pkg="flash"):
+    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
+    py = module_from_spec(spec)
+    spec.loader.exec_module(py)
+    return py
+
+
+setup_tools = _load_py_module('setup_tools.py')
+
+long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__)
+
 _PATH_REQUIRE = os.path.join(_PATH_ROOT, "requirements")
 
 extras = {
     "docs": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="docs.txt"),
+    "notebooks": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="notebooks.txt"),
     "test": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="test.txt"),
-    "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="image.txt"),
-    "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="video.txt"),
-    "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="tabular.txt"),
-    "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="text.txt"),
+    "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_text.txt"),
+    "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_tabular.txt"),
+    "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image.txt"),
+    "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
 }
 
-extras["vision"] = extras["image"] + extras["video"]
-extras["dev"] = extras["vision"] + extras["tabular"] + extras["text"] + extras["test"]
-extras["all"] = extras["dev"] + extras["docs"]
-
-long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=info.__homepage__, ver=info.__version__)
+# removes possible duplicate.
+extras["vision"] = list(set(extras["image"] + extras["video"]))
+extras["all"] = list(set(extras["vision"] + extras["text"] + extras["tabular"]))
+extras["dev"] = list(set(extras["all"] + extras["docs"] + extras["test"]))
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
@@ -50,21 +47,21 @@ long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=inf
 # engineer specific practices
 setup(
     name="lightning-flash",
-    version=info.__version__,
-    description=info.__docs__,
-    author=info.__author__,
-    author_email=info.__author_email__,
-    url=info.__homepage__,
+    version=about.__version__,
+    description=about.__docs__,
+    author=about.__author__,
+    author_email=about.__author_email__,
+    url=about.__homepage__,
     download_url="https://github.com/PyTorchLightning/lightning-flash",
-    license=info.__license__,
+    license=about.__license__,
     packages=find_packages(exclude=["tests", "docs"]),
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
+    extras_require=extras,
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
-    setup_requires=[],
     install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name='requirements.txt'),
     extras_require=extras,
     project_urls={

@@ -3,11 +3,13 @@ import os
 from pathlib import Path
 
 import pytest
-from PIL import Image
-from pytorch_lightning.utilities import _module_available
 
-from flash.utils.imports import _COCO_AVAILABLE
-from flash.vision.detection.data import ObjectDetectionData
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
+from flash.image.detection.data import ObjectDetectionData
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def _create_dummy_coco_json(dummy_json_path):
@@ -75,7 +77,7 @@ def _create_synth_coco_dataset(tmpdir):
     return train_folder, coco_ann_path
 
 
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
 def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
@@ -83,7 +85,7 @@ def test_image_detector_data_from_coco(tmpdir):
     datamodule = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
 
     data = next(iter(datamodule.train_dataloader()))
-    imgs, labels = data
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
     assert len(imgs) == 1
     assert imgs[0].shape == (3, 1080, 1920)
@@ -101,11 +103,11 @@ def test_image_detector_data_from_coco(tmpdir):
         test_folder=train_folder,
         test_ann_file=coco_ann_path,
         batch_size=1,
-        num_workers=0
+        num_workers=0,
     )
 
     data = next(iter(datamodule.val_dataloader()))
-    imgs, labels = data
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
     assert len(imgs) == 1
     assert imgs[0].shape == (3, 1080, 1920)
@@ -113,7 +115,7 @@ def test_image_detector_data_from_coco(tmpdir):
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
 
     data = next(iter(datamodule.test_dataloader()))
-    imgs, labels = data
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
     assert len(imgs) == 1
     assert imgs[0].shape == (3, 1080, 1920)

@@ -55,7 +55,7 @@ def test_dataloaders():
 def test_cpu_count_none():
     train_ds = DummyDataset()
     dm = DataModule(train_ds, num_workers=None)
-    if platform.system() == "Darwin":
+    if platform.system() == "Darwin" or platform.system() == "Windows":
         assert dm.num_workers == 0
     else:
         assert dm.num_workers > 0

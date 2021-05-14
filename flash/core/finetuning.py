@@ -50,6 +50,7 @@ class FlashBaseFinetuning(BaseFinetuning):
             train_bn: Whether to train Batch Norm layer
 
         """
+        super().__init__()
 
         self.attr_names = [attr_names] if isinstance(attr_names, str) else attr_names
         self.train_bn = train_bn

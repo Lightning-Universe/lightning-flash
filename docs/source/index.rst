@@ -22,11 +22,14 @@ Lightning Flash
    reference/task
    reference/image_classification
    reference/image_embedder
+   reference/multi_label_classification
    reference/summarization
    reference/text_classification
    reference/tabular_classification
    reference/translation
    reference/object_detection
+   reference/video_classification
+   reference/semantic_segmentation
 
 .. toctree::
    :maxdepth: 1
