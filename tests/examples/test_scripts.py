@@ -28,6 +28,8 @@ from flash.core.utilities.imports import (
     _VIDEO_AVAILABLE,
 )
 
+_IMAGE_AVAILABLE = _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9
+
 root = Path(__file__).parent.parent.parent
 
 
@@ -95,39 +97,28 @@ def run_test(filepath):
         pytest.param(
             "predict",
             "image_classification.py",
-            marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
-            )
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "image_classification_multi_label.py",
-            marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
-            )
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "semantic_segmentation.py",
-            marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
-            )
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "tabular_classification.py",
-            marks=pytest.mark.skipif(
-                not _TABULAR_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9,
-                reason="tabular libraries aren't installed"
-            )
+            marks=pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed")
         ),
         # pytest.param("predict", "text_classification.py"),
         pytest.param(
             "predict",
             "image_embedder.py",
-            marks=pytest.mark.skipif(
-                not _IMAGE_AVAILABLE and not _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
-            )
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
