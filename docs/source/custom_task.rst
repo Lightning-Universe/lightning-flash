@@ -122,7 +122,7 @@ individually. These methods behave identically to PyTorch Lightning’s
 
 Here is the pseudo code behind :class:`~flash.core.model.Task` step:
 
-.. testcode:: custom_task
+.. code:: python
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -188,8 +188,6 @@ The recommended way to define a custom :class:`~flash.core.data.process.Preproce
     - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.core.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
 .. testcode:: custom_task
-
-    from flash import Preprocess
 
     class NumpyPreprocess(Preprocess):
 
@@ -258,8 +256,6 @@ data source whose name is in :class:`~flash.core.data.data_source.DefaultDataSou
 
 .. testcode:: custom_task
 
-    import flash
-
     class NumpyDataModule(flash.DataModule):
 
         preprocess_cls = NumpyPreprocess
@@ -280,12 +276,8 @@ supplying the task itself, and the associated data:
 
 .. testcode:: custom_task
 
-    from sklearn import datasets
-
     x, y = datasets.load_diabetes(return_X_y=True)
     datamodule = NumpyDataModule.from_numpy(x, y)
-    model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
-
     trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
     trainer.fit(model, datamodule=datamodule)
 
