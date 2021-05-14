@@ -17,6 +17,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
 
 # ======== Mock functions ========
@@ -40,6 +41,7 @@ TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_init_train(tmpdir):
     model = TextClassifier(2, TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())

@@ -1,7 +1,7 @@
 To train a task from scratch:
 
-1. Load your data and organize it using a DataModule customized for the task (example: :class:`~flash.vision.ImageClassificationData`).
-2. Choose and initialize your Task (setting ``pretrained=False``) which has state-of-the-art backbones built in (example: :class:`~flash.vision.ImageClassifier`).
+1. Load your data and organize it using a DataModule customized for the task (example: :class:`~flash.image.ImageClassificationData`).
+2. Choose and initialize your Task (setting ``pretrained=False``) which has state-of-the-art backbones built in (example: :class:`~flash.image.ImageClassifier`).
 3. Init a :class:`flash.core.trainer.Trainer` or a :class:`pytorch_lightning.trainer.Trainer`.
 4. Call :func:`flash.core.trainer.Trainer.fit` with your data set.
 5. Save your trained model.
@@ -16,8 +16,8 @@ Here's an example:
 
     import flash
     from flash.core.classification import Labels
-    from flash.data.utils import download_data
-    from flash.vision import ImageClassificationData, ImageClassifier
+    from flash.core.data.utils import download_data
+    from flash.image import ImageClassificationData, ImageClassifier
 
     # set the random seeds.
     seed_everything(42)
@@ -42,8 +42,3 @@ Here's an example:
 
     # 5. Save the model!
     trainer.save_checkpoint("image_classification_model.pt")
-
-.. testoutput:: training
-    :hide:
-
-    ...

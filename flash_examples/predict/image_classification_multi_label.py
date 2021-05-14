@@ -18,9 +18,9 @@ import torchvision.transforms.functional as T
 from torchvision.utils import make_grid
 
 from flash import Trainer
-from flash.data.base_viz import BaseVisualization
-from flash.data.utils import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.data.base_viz import BaseVisualization
+from flash.core.data.utils import download_data
+from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 # This is a subset of the movie poster genre prediction data set from the paper

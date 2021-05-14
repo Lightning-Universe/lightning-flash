@@ -12,19 +12,16 @@
 #
 import os
 import sys
-from importlib.util import module_from_spec, spec_from_file_location
 
 import pt_lightning_sphinx_theme
+
+import flash.__about__ as about
 
 _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
-
-spec = spec_from_file_location("flash/__about__.py", os.path.join(_PATH_ROOT, "flash", "__about__.py"))
-about = module_from_spec(spec)
-spec.loader.exec_module(about)
 
 html_favicon = '_static/images/icon.svg'
 

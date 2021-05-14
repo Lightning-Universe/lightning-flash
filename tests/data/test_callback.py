@@ -17,10 +17,10 @@ from unittest.mock import ANY, call, MagicMock
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 
+from flash.core.data.data_module import DataModule
+from flash.core.data.process import DefaultPreprocess
 from flash.core.model import Task
 from flash.core.trainer import Trainer
-from flash.data.data_module import DataModule
-from flash.data.process import DefaultPreprocess
 
 
 @mock.patch("torch.save")  # need to mock torch.save or we get pickle error

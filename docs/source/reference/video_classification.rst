@@ -32,7 +32,7 @@ Finetuning
 
 Let's say you wanted to develop a model that could determine whether a video clip contains a human **swimming** or **playing piano**,
 using the `Kinetics dataset <https://deepmind.com/research/open-source/kinetics>`_.
-Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.video.VideoClassificationData`.
+Once we download the data using :func:`~flash.core.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.video.VideoClassificationData`.
 
 .. code-block::
 
