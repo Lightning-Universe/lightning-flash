@@ -1,8 +1,10 @@
 documentation:
   - docs/**/*
+  - README.md
 
 examples:
   - flash_examples/**/*
+  - flash_notebooks/**/*
 
 data:
   - flash/data/**/*
