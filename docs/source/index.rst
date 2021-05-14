@@ -13,7 +13,6 @@ Lightning Flash
    quickstart
    installation
    custom_task
-   task_template
    reference/flash_to_pl
 
 .. toctree::
@@ -49,6 +48,18 @@ Lightning Flash
    general/training
    general/finetuning
    general/predictions
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contributing a Task
+
+   template/intro
+   template/data
+   template/model
+   template/optional
+   template/examples
+   template/tests
 
 Indices and tables
 ==================

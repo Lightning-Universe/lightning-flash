@@ -1,20 +1,11 @@
-Task Template
-=============
+.. _contributing_data:
 
-This template is designed to guide you through implementing your own task in flash.
-You should copy the files in ``flash/template`` and adapt them to your custom task.
+********
+The Data
+********
 
-.. contents:: Contents:
-    :local:
-    :depth: 3
-
-Required Files
---------------
-
-``data.py``
-~~~~~~~~~~~
-
-Inside ``data.py`` you should implement:
+The first step to contributing a task is to implement the classes we need to load some data.
+Inside ``data.py`` you we implement:
 
 #. one or more :class:`~flash.data.data_source.DataSource` classes
 #. a :class:`~flash.data.process.Preprocess`
@@ -22,8 +13,8 @@ Inside ``data.py`` you should implement:
 #. a :class:`~flash.data.callbacks.BaseVisualization` *(optional)*
 #. a :class:`~flash.data.process.Postprocess` *(optional)*
 
-``DataSource``
-^^^^^^^^^^^^^^
+DataSource
+^^^^^^^^^^
 
 The :class:`~flash.data.data_source.DataSource` implementations describe how data from particular sources (like folders, files, tensors, etc.) should be loaded.
 At a minimum you will require one :class:`~flash.data.data_source.DataSource` implementation, but if you want to support a few different ways of loading data for your task, the more the merrier!
@@ -38,7 +29,7 @@ Take a look at our ``TemplateNumpyDataSource`` to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/data.py
     :language: python
     :pyobject: TemplateNumpyDataSource
 
@@ -58,7 +49,7 @@ And have a look at our ``TemplateSKLearnDataSource`` for another example:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/data.py
     :language: python
     :pyobject: TemplateSKLearnDataSource
 
@@ -66,8 +57,8 @@ And have a look at our ``TemplateSKLearnDataSource`` for another example:
 
     </details>
 
-``Preprocess``
-^^^^^^^^^^^^^^
+Preprocess
+^^^^^^^^^^
 
 The :class:`~flash.data.process.Preprocess` is how all transforms are defined in Flash.
 Internally we inject the :class:`~flash.data.process.Preprocess` transforms into the right places so that we can address the batch at several points along the pipeline.
@@ -84,7 +75,7 @@ Take a look at our ``TemplatePreprocess`` to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/data.py
     :language: python
     :pyobject: TemplatePreprocess
 
@@ -92,8 +83,8 @@ Take a look at our ``TemplatePreprocess`` to get started:
 
     </details>
 
-``DataModule``
-^^^^^^^^^^^^^^
+DataModule
+^^^^^^^^^^
 
 The :class:`~flash.data.data_module.DataModule` is where the hard work of our :class:`~flash.data.data_source.DataSource` and :class:`~flash.data.process.Preprocess` implementations pays off.
 If your :class:`~flash.data.data_source.DataSource` implementation(s) conform to our :class:`~flash.data.data_source.DefaultDataSources` (e.g. ``DefaultDataSources.FOLDERS``) then your :class:`~flash.data.data_module.DataModule` implementation simply needs a ``preprocess_cls`` attribute.
@@ -114,7 +105,7 @@ Take a look at our ``TemplateData`` to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/data.py
     :language: python
     :pyobject: TemplateData
 
@@ -122,8 +113,8 @@ Take a look at our ``TemplateData`` to get started:
 
     </details>
 
-``BaseVisualization``
-^^^^^^^^^^^^^^^^^^^^^
+BaseVisualization
+^^^^^^^^^^^^^^^^^
 
 An optional step is to implement a ``BaseVisualization``. The ``BaseVisualization`` lets you control how data at various points in the pipeline can be visualized.
 This is extremely useful for debugging purposes, allowing users to view their data and understand the impact of their transforms.
@@ -141,7 +132,7 @@ Take a look at our ``TemplateVisualization`` to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/data.py
     :language: python
     :pyobject: TemplateVisualization
 
@@ -149,15 +140,12 @@ Take a look at our ``TemplateVisualization`` to get started:
 
     </details>
 
-``Postprocess``
-^^^^^^^^^^^^^^^
+Postprocess
+^^^^^^^^^^^
 
 Sometimes you have some transforms that need to be applied _after_ your model.
 For this you can optionally implement a :class:`~flash.data.process.Postprocess`.
 The :class:`~flash.data.process.Postprocess` is applied to the model outputs during inference.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
 
-`model.py`
-~~~~~~~~~~
-
-Inside `model.py` you just need to implement your `Task`.
+:ref:`Now that you've got some data, it's time to implement your task! <contributing_task>`
