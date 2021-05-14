@@ -7,3 +7,7 @@
 -r ./datatype_image.txt
 
 -r ./datatype_tabular.txt
+
+-r ./datatype_text.txt
+
+-r ./datatype_video.txt
