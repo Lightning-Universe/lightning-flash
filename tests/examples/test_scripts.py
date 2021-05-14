@@ -20,7 +20,13 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE, _VIDEO_AVAILABLE
+from flash.core.utilities.imports import (
+    _IMAGE_AVAILABLE,
+    _TABULAR_AVAILABLE,
+    _TEXT_AVAILABLE,
+    _TORCHVISION_GREATER_EQUAL_0_9,
+    _VIDEO_AVAILABLE,
+)
 
 root = Path(__file__).parent.parent.parent
 
@@ -89,17 +95,23 @@ def run_test(filepath):
         pytest.param(
             "predict",
             "image_classification.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(
+                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+            )
         ),
         pytest.param(
             "predict",
             "image_classification_multi_label.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(
+                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+            )
         ),
         pytest.param(
             "predict",
             "semantic_segmentation.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(
+                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+            )
         ),
         pytest.param(
             "predict",
@@ -110,7 +122,9 @@ def run_test(filepath):
         pytest.param(
             "predict",
             "image_embedder.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(
+                not _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9, reason="image libraries aren't installed"
+            )
         ),
         pytest.param(
             "predict",
