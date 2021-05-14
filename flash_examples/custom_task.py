@@ -3,13 +3,18 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import torch
 from pytorch_lightning import seed_everything
-from sklearn import datasets
 from torch import nn, Tensor
 
 import flash
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+
+if _SKLEARN_AVAILABLE:
+    from sklearn import datasets
+else:
+    raise ModuleNotFoundError("Please, pip install scikit-learn")
 
 seed_everything(42)
 

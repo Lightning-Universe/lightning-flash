@@ -29,6 +29,7 @@ if _COCO_AVAILABLE:
     from tests.vision.detection.test_data import _create_synth_coco_dataset
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
 @pytest.mark.parametrize(["model", "backbone"], [("fasterrcnn", "resnet18")])
 def test_detection(tmpdir, model, backbone):

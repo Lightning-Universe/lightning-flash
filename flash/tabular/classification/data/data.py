@@ -21,7 +21,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
     _generate_codes,
@@ -30,7 +30,7 @@ from flash.tabular.classification.data.dataset import (
     _to_num_vars_numpy,
 )
 
-if _TABULAR_AVAILABLE:
+if _PANDAS_AVAILABLE:
     import pandas as pd
     from pandas.core.frame import DataFrame
 else:
