@@ -31,13 +31,22 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Dict[str, Callable]]] = None,
         image_size: Union[int, Tuple[int, int]] = 256,
     ):
+        if val_transform:
+            raise_not_supported("validation")
+        if test_transform:
+            raise_not_supported("test")
+
         if isinstance(image_size, int):
             image_size = (image_size, image_size)
         super().__init__(
             train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
             predict_transform=predict_transform,
             image_size=image_size,
         )
