@@ -88,6 +88,7 @@ def test_from_json(tmpdir):
     assert "input_ids" in batch
 
 
+@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
         TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)

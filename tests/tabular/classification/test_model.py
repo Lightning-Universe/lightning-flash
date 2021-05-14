@@ -66,6 +66,7 @@ def test_init_train_no_cat(tmpdir):
     trainer.fit(model, train_dl)
 
 
+@pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
 def test_module_import_error(tmpdir):
     with pytest.raises(ModuleNotFoundError, match="[tabular]"):
         TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])
