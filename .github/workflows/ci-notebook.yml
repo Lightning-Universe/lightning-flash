@@ -39,7 +39,6 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -U pip wheel
-        pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install --requirement requirements/notebooks.txt --quiet --upgrade-strategy only-if-needed
 
     - name: Cache datasets
