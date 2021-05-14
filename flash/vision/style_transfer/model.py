@@ -78,6 +78,7 @@ class StyleTransfer(Task):
         # oversight: they normalize the representation twice by the number of channels. To be compatible with them, we
         # do the same here.
         class GramOperator(ops.GramOperator):
+
             def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
                 repr = super().enc_to_repr(enc)
                 num_channels = repr.size()[1]
