@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.text import TranslationTask
 
 # 1. Download the data

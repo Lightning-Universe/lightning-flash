@@ -14,11 +14,15 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
-from PIL import Image
 
 from flash import Trainer
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import ImageClassificationData, ImageClassifier
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def _dummy_image_loader(_):
@@ -29,6 +33,7 @@ def _rand_image():
     return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_classification(tmpdir):
     tmpdir = Path(tmpdir)
 

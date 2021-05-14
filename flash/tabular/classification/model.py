@@ -18,11 +18,11 @@ from torch.nn import functional as F
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask
-from flash.data.data_source import DefaultDataKeys
-from flash.data.process import Serializer
-from flash.utils.imports import _TABNET_AVAILABLE
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
+from flash.core.utilities.imports import _TABULAR_AVAILABLE
 
-if _TABNET_AVAILABLE:
+if _TABULAR_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet
 
 
@@ -38,7 +38,7 @@ class TabularClassifier(ClassificationTask):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
+        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
         **tabnet_kwargs: Optional additional arguments for the TabNet model, see
             `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
     """
@@ -56,6 +56,9 @@ class TabularClassifier(ClassificationTask):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **tabnet_kwargs,
     ):
+        if not _TABULAR_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[tabular]'")
+
         self.save_hyperparameters()
 
         cat_dims, cat_emb_dim = zip(*embedding_sizes) if len(embedding_sizes) else ([], [])

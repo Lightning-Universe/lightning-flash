@@ -16,10 +16,10 @@ The task of identifying what is in an image is called image classification. Typi
 Inference
 *********
 
-The :class:`~flash.vision.ImageClassifier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
+The :class:`~flash.image.ImageClassifier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
 
 
-Use the :class:`~flash.vision.ImageClassifier` pretrained model for inference on any string sequence using :func:`~flash.vision.ImageClassifier.predict`:
+Use the :class:`~flash.image.ImageClassifier` pretrained model for inference on any string sequence using :func:`~flash.image.ImageClassifier.predict`:
 
 .. literalinclude:: ../../../flash_examples/predict/image_classification.py
     :language: python
@@ -34,7 +34,7 @@ Finetuning
 **********
 
 Lets say you wanted to develope a model that could determine whether an image contains **ants** or **bees**, using the hymenoptera dataset.
-Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.ImageClassificationData`.
+Once we download the data using :func:`~flash.core.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.image.ImageClassificationData`.
 
 .. note:: The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
 
@@ -76,8 +76,8 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
 
 .. testsetup::
 
-    from flash.data.utils import download_data
-    from flash.vision import ImageClassificationData, ImageClassifier
+    from flash.core.data.utils import download_data
+    from flash.image import ImageClassificationData, ImageClassifier
 
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
@@ -105,7 +105,7 @@ API reference
 ImageClassifier
 ---------------
 
-.. autoclass:: flash.vision.ImageClassifier
+.. autoclass:: flash.image.ImageClassifier
     :members:
     :exclude-members: forward
 
@@ -114,6 +114,6 @@ ImageClassifier
 ImageClassificationData
 -----------------------
 
-.. autoclass:: flash.vision.ImageClassificationData
+.. autoclass:: flash.image.ImageClassificationData
 
-.. autoclass:: flash.vision.ImageClassificationPreprocess
+.. autoclass:: flash.image.ImageClassificationPreprocess

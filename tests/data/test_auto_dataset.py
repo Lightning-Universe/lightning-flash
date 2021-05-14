@@ -16,11 +16,11 @@ from typing import Any, Dict, List
 import pytest
 from pytorch_lightning.trainer.states import RunningStage
 
-from flash.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
-from flash.data.callback import FlashCallback
-from flash.data.data_pipeline import DataPipeline
-from flash.data.data_source import DataSource
-from flash.data.process import Preprocess
+from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
+from flash.core.data.callback import FlashCallback
+from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.data_source import DataSource
+from flash.core.data.process import Preprocess
 
 
 class _AutoDatasetTestDataSource(DataSource):

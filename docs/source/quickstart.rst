@@ -81,7 +81,7 @@ Here are examples of tasks:
 .. testcode::
 
     from flash.text import TextClassifier
-    from flash.vision import ImageClassifier
+    from flash.image import ImageClassifier
     from flash.tabular import TabularClassifier
 
 .. note:: Tasks are inflexible by definition! To get more flexibility, you can simply use :class:`~pytorch_lightning.core.lightning.LightningModule` directly or modify and existing task in just a few lines.
@@ -117,10 +117,6 @@ Here's an example of inference:
     print(predictions)
 
 We get the following output:
-
-.. testoutput::
-
-    [1, 1, 0]
 
 -------
 

@@ -18,9 +18,9 @@ import torch.nn.functional as F
 import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
+from flash.core.data.data_source import LabelsState
+from flash.core.data.process import Serializer
 from flash.core.model import Task
-from flash.data.data_source import LabelsState
-from flash.data.process import Serializer
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:

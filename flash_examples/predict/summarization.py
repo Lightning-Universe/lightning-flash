@@ -13,7 +13,7 @@
 # limitations under the License.
 from pytorch_lightning import Trainer
 
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data

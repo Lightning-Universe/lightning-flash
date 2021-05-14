@@ -14,7 +14,7 @@
 from pytorch_lightning import Trainer
 
 from flash.core.classification import Labels
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Download the data

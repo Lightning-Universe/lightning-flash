@@ -3,3 +3,11 @@
 
  # extended list of dependencies for development and run lint and tests
  -r ./test.txt
+
+-r ./datatype_image.txt
+
+-r ./datatype_tabular.txt
+
+-r ./datatype_text.txt
+
+-r ./datatype_video.txt

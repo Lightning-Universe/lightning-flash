@@ -1,7 +1,7 @@
 To use a Task for finetuning:
 
-1. Load your data and organize it using a DataModule customized for the task (example: :class:`~flash.vision.ImageClassificationData`).
-2. Choose and initialize your Task which has state-of-the-art backbones built in (example: :class:`~flash.vision.ImageClassifier`).
+1. Load your data and organize it using a DataModule customized for the task (example: :class:`~flash.image.ImageClassificationData`).
+2. Choose and initialize your Task which has state-of-the-art backbones built in (example: :class:`~flash.image.ImageClassifier`).
 3. Init a :class:`flash.core.trainer.Trainer`.
 4. Choose a finetune strategy (example: "freeze") and call :func:`flash.core.trainer.Trainer.finetune` with your data.
 5. Save your finetuned model.
@@ -16,8 +16,8 @@ Here's an example of finetuning.
 
     import flash
     from flash.core.classification import Labels
-    from flash.data.utils import download_data
-    from flash.vision import ImageClassificationData, ImageClassifier
+    from flash.core.data.utils import download_data
+    from flash.image import ImageClassificationData, ImageClassifier
 
     # set the random seeds.
     seed_everything(42)
@@ -43,16 +43,12 @@ Here's an example of finetuning.
     # 5. Save the model!
     trainer.save_checkpoint("image_classification_model.pt")
 
-.. testoutput:: finetune
-    :hide:
-
-    ...
 
 Using a finetuned model
 -----------------------
 Once you've finetuned, use the model to predict:
 
-.. testcode:: finetune
+.. code-block:: python
 
     # Serialize predictions as labels, automatically inferred from the training data in part 2.
     model.serializer = Labels()
@@ -60,15 +56,12 @@ Once you've finetuned, use the model to predict:
     predictions = model.predict(["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg"])
     print(predictions)
 
-.. testoutput:: finetune
-
-    ['bees', 'ants']
 
 Or you can use the saved model for prediction anywhere you want!
 
 .. code-block:: python
 
-    from flash.vision import ImageClassifier
+    from flash.image import ImageClassifier
 
     # load finetuned checkpoint
     model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
