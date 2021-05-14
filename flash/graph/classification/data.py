@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 import pathlib
-
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
@@ -26,13 +25,13 @@ from flash.data.callback import BaseDataFetcher
 from flash.data.data_module import DataModule
 from flash.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.data.process import Preprocess
-from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 from flash.graph.classification.transforms import default_transforms, train_default_transforms
 from flash.graph.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
-
+from flash.utils.imports import _MATPLOTLIB_AVAILABLE
 '''
 [Deprecated]: The structure we follow is DataSet -> DataLoader -> DataModule -> DataPipeline
 '''
+
 
 class GraphClassificationPreprocess(Preprocess):
 
@@ -80,27 +79,7 @@ class GraphClassificationData(DataModule):
     preprocess_cls = GraphClassificationPreprocess
 
 
-
-
-
-
 # [DEPRECATED FROM HERE]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class BasicGraphDataset(Dataset):

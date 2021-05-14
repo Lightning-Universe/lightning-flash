@@ -27,6 +27,7 @@ from flash.core.registry import FlashRegistry
 from flash.data.data_source import DefaultDataKeys
 from flash.data.process import Serializer
 
+
 class GraphClassifier(ClassificationTask):
     """Task that classifies graphs.
 
@@ -58,7 +59,7 @@ class GraphClassifier(ClassificationTask):
             hidden = [hidden]
 
         #sizes = [input_size] + hidden + [num_classes]
-        if model == None: #todo: the main difference with Image classification is selection of backbone. How to do this?
+        if model == None:  #todo: the main difference with Image classification is selection of backbone. How to do this?
             self.model = GCN(in_features=num_features, hidden_channels=hidden, out_features=num_classes)
 
         super().__init__(

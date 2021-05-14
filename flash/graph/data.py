@@ -19,6 +19,7 @@ from flash.data.data_source import DefaultDataKeys, NumpyDataSource, PathsDataSo
 
 #todo: how to get default_loader and GRAPH_EXTENSIONS? These were provided by torchvision in the case of vision
 
+
 class GraphPathsDataSource(PathsDataSource):
 
     def __init__(self):
@@ -37,7 +38,7 @@ class ImageTensorDataSource(TensorDataSource):
         return sample
 
 
-class ImageNumpyDataSource(NumpyDataSource): #todo: is this needed?
+class ImageNumpyDataSource(NumpyDataSource):  #todo: is this needed?
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         #todo
