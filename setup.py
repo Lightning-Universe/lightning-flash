@@ -38,6 +38,7 @@ extras = {
 # remove possible duplicate.
 extras["vision"] = list(set(extras["image"] + extras["video"]))
 extras["dev"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["image"]))
+extras["dev-test"] = list(set(extras["test"] + extras["dev"]))
 extras["all"] = list(set(extras["dev"] + extras["docs"]))
 
 print(extras)
