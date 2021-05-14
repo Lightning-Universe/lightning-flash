@@ -43,10 +43,6 @@ Here's an example of finetuning.
     # 5. Save the model!
     trainer.save_checkpoint("image_classification_model.pt")
 
-.. testoutput:: finetune
-    :hide:
-
-    ...
 
 Using a finetuned model
 -----------------------

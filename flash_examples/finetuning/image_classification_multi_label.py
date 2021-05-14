@@ -60,13 +60,12 @@ model = ImageClassifier(
 )
 
 # 4. Create the trainer. Train on 2 gpus for 10 epochs.
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
+trainer = flash.Trainer(max_epochs=10)
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 6. Predict what's on a few images!
-
 # Serialize predictions as labels, low threshold to see more predictions.
 model.serializer = Labels(genres, multi_label=True, threshold=0.25)
 

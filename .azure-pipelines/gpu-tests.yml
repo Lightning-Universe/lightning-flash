@@ -58,7 +58,7 @@ jobs:
       displayName: 'Install dependencies'
 
     - bash: |
-        python -m coverage run --source flash -m pytest flash tests -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
+        python -m coverage run --source flash -m pytest flash tests/examples/test_scripts.py -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
       displayName: 'Testing'
 
     - bash: |

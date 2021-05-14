@@ -14,6 +14,7 @@
 import warnings
 from typing import List, Optional, Union
 
+import torch
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.trainer.connectors.env_vars_connector import _defaults_from_env_vars
@@ -30,7 +31,10 @@ class Trainer(Trainer):
     @_defaults_from_env_vars
     def __init__(self, *args, **kwargs):
         if flash._IS_TESTING:
-            kwargs["fast_dev_run"] = True
+            if torch.cuda.is_available():
+                kwargs["gpus"] = 1
+            else:
+                kwargs["fast_dev_run"] = True
         super().__init__(*args, **kwargs)
 
     def fit(
