@@ -74,7 +74,9 @@ class StyleTransfer(Task):
 
     @staticmethod
     def _modified_gram_loss(encoder: enc.Encoder, *, score_weight: float) -> ops.EncodingComparisonOperator:
-        # TODO
+        # The official PyTorch examples as well as the reference implementation of the original author contain an
+        # oversight: they normalize the representation twice by the number of channels. To be compatible with them, we
+        # do the same here.
         class GramOperator(ops.GramOperator):
             def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
                 repr = super().enc_to_repr(enc)
