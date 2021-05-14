@@ -13,19 +13,94 @@
 # limitations under the License.
 import os
 import pathlib
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch_geometric.data import DataLoader, Dataset
 
-from flash.core.classification import ClassificationDataPipeline
-from flash.core.data.datamodule import DataModule
-from flash.core.data.utils import _contains_any_tensor
+from flash.data.base_viz import BaseVisualization  # for viz
+from flash.data.callback import BaseDataFetcher
+from flash.data.data_module import DataModule
+from flash.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.data.process import Preprocess
+from flash.utils.imports import _MATPLOTLIB_AVAILABLE
+from flash.graph.classification.transforms import default_transforms, train_default_transforms
+from flash.graph.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+
 '''
-The structure we follow is DataSet -> DataLoader -> DataModule -> DataPipeline
+[Deprecated]: The structure we follow is DataSet -> DataLoader -> DataModule -> DataPipeline
 '''
+
+class GraphClassificationPreprocess(Preprocess):
+
+    def __init__(
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        num_features: int = 128
+    ):
+        self.num_features = num_features
+
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources={
+                DefaultDataSources.FILES: GraphPathsDataSource(),
+                DefaultDataSources.FOLDERS: GraphPathsDataSource(),
+                DefaultDataSources.NUMPY: GraphNumpyDataSource(),
+                DefaultDataSources.TENSORS: GraphTensorDataSource(),
+            },
+            default_data_source=DefaultDataSources.FILES,
+        )
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {**self.transforms, "num_features": self.num_features}
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
+        return cls(**state_dict)
+
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_transforms(self.num_features)
+
+    def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return train_default_transforms(self.num_features)
+
+
+class GraphClassificationData(DataModule):
+    """Data module for graph classification tasks."""
+
+    preprocess_cls = GraphClassificationPreprocess
+
+
+
+
+
+
+# [DEPRECATED FROM HERE]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class BasicGraphDataset(Dataset):

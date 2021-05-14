@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from types import FunctionType
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import pytorch_lightning as pl
@@ -22,16 +23,17 @@ from torch.nn import Linear
 from torch_geometric.nn import GCNConv, global_mean_pool
 
 from flash.core.classification import ClassificationTask
-from flash.core.data import DataPipeline
-
+from flash.core.registry import FlashRegistry
+from flash.data.data_source import DefaultDataKeys
+from flash.data.process import Serializer
 
 class GraphClassifier(ClassificationTask):
     """Task that classifies graphs.
 
     Args:
-            num_features: Number of columns in table (not including target column).
+        num_features: Number of columns in table (not including target column).
         num_classes: Number of classes to classify.
-            embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
+        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         hidden: Hidden dimension sizes.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
@@ -43,6 +45,7 @@ class GraphClassifier(ClassificationTask):
         self,
         num_features: int,
         num_classes: int,
+        head: Optional[Union[FunctionType, nn.Module]] = None,
         hidden: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
@@ -55,7 +58,7 @@ class GraphClassifier(ClassificationTask):
             hidden = [hidden]
 
         #sizes = [input_size] + hidden + [num_classes]
-        if model == None:
+        if model == None: #todo: the main difference with Image classification is selection of backbone. How to do this?
             self.model = GCN(in_features=num_features, hidden_channels=hidden, out_features=num_classes)
 
         super().__init__(
@@ -66,13 +69,30 @@ class GraphClassifier(ClassificationTask):
             learning_rate=learning_rate,
         )
 
+        self.save_hyperparameters()
+
+        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
+        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().training_step(batch, batch_idx)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().validation_step(batch, batch_idx)
+
+    def test_step(self, batch: Any, batch_idx: int) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        return super().test_step(batch, batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        batch = (batch[DefaultDataKeys.INPUT])
+        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+
     def forward(self, data) -> Any:
         x = self.model(data.x, data.edge_index, data.batch)
         return self.head(x)
-
-    @staticmethod
-    def default_pipeline() -> ClassificationDataPipeline:
-        return GraphClassificationData.default_pipeline()
 
 
 #Taken from https://colab.research.google.com/drive/1I8a0DfQ3fI7Njc62__mVXUlcAleUclnb?usp=sharing#scrollTo=CN3sRVuaQ88l
