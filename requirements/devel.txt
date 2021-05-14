@@ -3,3 +3,5 @@
 
  # extended list of dependencies for development and run lint and tests
  -r ./test.txt
+
+  -r ./datatype/image.txt

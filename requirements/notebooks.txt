@@ -1,10 +1,2 @@
-# install all mandatory dependencies
- -r ../requirements.txt
-
- # extended list of dependencies for development and run lint and tests
- -r ./test.txt
-
-  -r ./datatype/image.txt
-
 treon
 opencv-python
