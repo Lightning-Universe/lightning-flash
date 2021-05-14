@@ -5,3 +5,5 @@
  -r ./test.txt
 
   -r ./datatype/image.txt
+
+-r ./datatype/tabular.txt
