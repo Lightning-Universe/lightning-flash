@@ -90,7 +90,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install . --find-links https://download.pytorch.org/whl/cpu/torch_stable.html --quiet
+          pip install -e '.[dev]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html --quiet
           pip install --requirement requirements/docs.txt --upgrade-strategy only-if-needed
           python --version
           pip --version

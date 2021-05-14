@@ -122,7 +122,7 @@ individually. These methods behave identically to PyTorch Lightning’s
 
 Here is the pseudo code behind :class:`~flash.core.model.Task` step:
 
-.. code:: python
+.. testcode:: custom_task
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -188,6 +188,8 @@ The recommended way to define a custom :class:`~flash.core.data.process.Preproce
     - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.core.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
 .. testcode:: custom_task
+
+    from flash import Preprocess
 
     class NumpyPreprocess(Preprocess):
 
@@ -255,6 +257,8 @@ data source whose name is in :class:`~flash.core.data.data_source.DefaultDataSou
 :meth:`~flash.core.data.data_module.DataModule.from_numpy` that will use our numpy data source.
 
 .. testcode:: custom_task
+
+    import flash
 
     class NumpyDataModule(flash.DataModule):
 
