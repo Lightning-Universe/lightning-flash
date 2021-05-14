@@ -19,11 +19,11 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import torch
 from torch import Tensor
 
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.data.data_module import DataModule
 from flash.data.data_source import DataSource, DefaultDataSources
 from flash.data.process import Preprocess
 from flash.data.properties import ProcessState
-from flash.core.utilities.imports import _TEXT_AVAILABLE
 
 if _TEXT_AVAILABLE:
     import datasets
