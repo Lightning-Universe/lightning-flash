@@ -284,10 +284,6 @@ supplying the task itself, and the associated data:
     trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
     trainer.fit(model, datamodule=datamodule)
 
-.. testoutput:: custom_task
-    :hide:
-
-    ...
 
 
 5. Predicting

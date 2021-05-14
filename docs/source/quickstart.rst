@@ -118,10 +118,6 @@ Here's an example of inference:
 
 We get the following output:
 
-.. testoutput::
-
-    [1, 1, 1]
-
 -------
 
 Finetuning
