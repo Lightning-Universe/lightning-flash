@@ -10,7 +10,8 @@ data:
 task:
   - flash/tabular/**/*
   - flash/text/**/*
-  - flash/vision/**/*
+  - flash/image/**/*
+  - flash/video/**/*
 
 tabular:
   - flash/tabular/**/*
@@ -19,4 +20,5 @@ text:
   - flash/text/**/*
 
 vision:
-  - flash/vision/**/*
+  - flash/image/**/*
+  - flash/video/**/*
