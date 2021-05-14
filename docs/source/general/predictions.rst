@@ -15,8 +15,8 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
 
 .. code-block:: python
 
-	from flash.data.utils import download_data
-	from flash.vision import ImageClassifier
+	from flash.core.data.utils import download_data
+	from flash.image import ImageClassifier
 
 
 	# 1. Download the data set
@@ -36,7 +36,7 @@ Predict on a csv file
 
 .. code-block:: python
 
-	from flash.data.utils import download_data
+	from flash.core.data.utils import download_data
 	from flash.tabular import TabularClassifier
 
 	# 1. Download the data
@@ -55,7 +55,7 @@ Predict on a csv file
 Serializing predictions
 =======================
 
-To change how predictions are serialized you can attach a :class:`~flash.data.process.Serializer` to your
+To change how predictions are serialized you can attach a :class:`~flash.core.data.process.Serializer` to your
 :class:`~flash.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
 reference below).
 
@@ -63,8 +63,8 @@ reference below).
 .. code-block:: python
 
 	from flash.core.classification import Probabilities
-	from flash.data.utils import download_data
-	from flash.vision import ImageClassifier
+	from flash.core.data.utils import download_data
+	from flash.image import ImageClassifier
 
 
 	# 1. Download the data set

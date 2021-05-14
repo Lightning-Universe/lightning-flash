@@ -17,9 +17,9 @@ search or classification.
 Inference
 *********
 
-The :class:`~flash.vision.ImageEmbedder` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
+The :class:`~flash.image.ImageEmbedder` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
 
-Use the :class:`~flash.vision.ImageEmbedder` pretrained model for inference on any image tensor or image path using :meth:`~flash.core.model.Task.predict`:
+Use the :class:`~flash.image.ImageEmbedder` pretrained model for inference on any image tensor or image path using :meth:`~flash.core.model.Task.predict`:
 
 .. literalinclude:: ../../../flash_examples/predict/image_embedder.py
     :language: python
@@ -36,8 +36,8 @@ By default, we use the encoder from `SwAV <https://arxiv.org/pdf/2006.09882.pdf>
 
 .. testsetup::
 
-    from flash.data.utils import download_data
-    from flash.vision import ImageClassificationData, ImageEmbedder
+    from flash.core.data.utils import download_data
+    from flash.image import ImageClassificationData, ImageEmbedder
 
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
@@ -65,7 +65,7 @@ API reference
 ImageEmbedder
 ---------------
 
-.. autoclass:: flash.vision.ImageEmbedder
+.. autoclass:: flash.image.ImageEmbedder
     :members:
     :exclude-members: forward
 

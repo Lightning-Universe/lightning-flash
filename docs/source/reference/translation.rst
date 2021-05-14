@@ -70,7 +70,7 @@ You can change the model run by passing in the backbone parameter.
 
 .. testsetup::
 
-    from flash.data.utils import download_data
+    from flash.core.data.utils import download_data
     from flash.text import TranslationData, TranslationTask
 
     download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")

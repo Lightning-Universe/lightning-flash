@@ -2,7 +2,7 @@ Tutorial: Creating a Custom Task
 ================================
 
 In this tutorial we will go over the process of creating a custom :class:`~flash.core.model.Task`,
-along with a custom :class:`~flash.data.data_module.DataModule`.
+along with a custom :class:`~flash.core.data.data_module.DataModule`.
 
 
 The tutorial objective is to create a ``RegressionTask`` to learn to predict if someone has ``diabetes`` or not.
@@ -31,9 +31,9 @@ We first import everything we're going to use and set the random seed using :fun
     from torch import nn, Tensor
 
     import flash
-    from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-    from flash.data.process import Preprocess
-    from flash.data.transforms import ApplyToKeys
+    from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+    from flash.core.data.process import Preprocess
+    from flash.core.data.transforms import ApplyToKeys
 
     # set the random seeds.
     seed_everything(42)
@@ -139,7 +139,7 @@ Here is the pseudo code behind :class:`~flash.core.model.Task` step:
 ----------------------
 
 Now that we have defined our ``RegressionTask``, we need to load our data. We will define a custom ``NumpyDataSource``
-which extends :class:`~flash.data.data_source.DataSource`. The ``NumpyDataSource`` contains a ``load_data`` and
+which extends :class:`~flash.core.data.data_source.DataSource`. The ``NumpyDataSource`` contains a ``load_data`` and
 ``predict_load_data`` methods which handle the loading of a sequence of dictionaries from the input numpy arrays. When
 loading the train data (``if self.training:``), the ``NumpyDataSource`` sets the ``num_inputs`` attribute of the
 optional ``dataset`` argument. Any attributes that are set on the optional ``dataset`` argument will also be set on the
@@ -161,31 +161,31 @@ generated ``dataset``.
 3.b The Preprocess API
 ----------------------
 
-Now that we have a :class:`~flash.data.data_source.DataSource` implementation, we can define our
-:class:`~flash.data.process.Preprocess`. The :class:`~flash.data.process.Preprocess` object provides a series of hooks
+Now that we have a :class:`~flash.core.data.data_source.DataSource` implementation, we can define our
+:class:`~flash.core.data.process.Preprocess`. The :class:`~flash.core.data.process.Preprocess` object provides a series of hooks
 that can be overridden with custom data processing logic and to which transforms can be attached.
 It allows the user much more granular control over their data processing flow.
 
 .. note::
 
-    Why introduce :class:`~flash.data.process.Preprocess` ?
+    Why introduce :class:`~flash.core.data.process.Preprocess` ?
 
-    The :class:`~flash.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
+    The :class:`~flash.core.data.process.Preprocess` object reduces the engineering overhead to make inference on raw data or
     to deploy the model in production environnement compared to a traditional
     `Dataset <https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset>`_.
 
     You can override ``predict_{hook_name}`` hooks or the ``default_predict_transforms`` to handle data processing logic
     specific for inference.
 
-The recommended way to define a custom :class:`~flash.data.process.Preprocess` is as follows:
+The recommended way to define a custom :class:`~flash.core.data.process.Preprocess` is as follows:
 
 - Define an ``__init__`` which accepts transform arguments.
 - Pass these arguments through to ``super().__init__`` and specify the ``data_sources`` and the ``default_data_source``.
-    - ``data_sources`` gives the :class:`~flash.data.data_source.DataSource` objects that work with your :class:`~flash.data.process.Preprocess` as a mapping from data source name to :class:`~flash.data.data_source.DataSource`. The data source name can be any string, but for our purposes we can use ``NUMPY`` from :class:`~flash.data.data_source.DefaultDataSources`.
+    - ``data_sources`` gives the :class:`~flash.core.data.data_source.DataSource` objects that work with your :class:`~flash.core.data.process.Preprocess` as a mapping from data source name to :class:`~flash.core.data.data_source.DataSource`. The data source name can be any string, but for our purposes we can use ``NUMPY`` from :class:`~flash.core.data.data_source.DefaultDataSources`.
     - ``default_data_source`` is the name of the data source to use by default when predicting.
-- Override the ``get_state_dict`` and ``load_state_dict`` methods. These methods are used to save and load your :class:`~flash.data.process.Preprocess` from a checkpoint.
+- Override the ``get_state_dict`` and ``load_state_dict`` methods. These methods are used to save and load your :class:`~flash.core.data.process.Preprocess` from a checkpoint.
 - Override the ``{train,val,test,predict}_default_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
-    - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
+    - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.core.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
 .. testcode:: custom_task
 
@@ -247,12 +247,12 @@ The recommended way to define a custom :class:`~flash.data.process.Preprocess` i
 3.c The DataModule API
 ----------------------
 
-Now that we have a :class:`~flash.data.process.Preprocess` which knows about the
-:class:`~flash.data.data_source.DataSource` objects it supports, we just need to create a
-:class:`~flash.data.data_module.DataModule` which has a reference to the ``preprocess_cls`` we want it to use. For any
-data source whose name is in :class:`~flash.data.data_source.DefaultDataSources`, there is a standard
+Now that we have a :class:`~flash.core.data.process.Preprocess` which knows about the
+:class:`~flash.core.data.data_source.DataSource` objects it supports, we just need to create a
+:class:`~flash.core.data.data_module.DataModule` which has a reference to the ``preprocess_cls`` we want it to use. For any
+data source whose name is in :class:`~flash.core.data.data_source.DefaultDataSources`, there is a standard
 ``DataModule.from_*`` method that provides the expected inputs. So in this case, there is the
-:meth:`~flash.data.data_module.DataModule.from_numpy` that will use our numpy data source.
+:meth:`~flash.core.data.data_module.DataModule.from_numpy` that will use our numpy data source.
 
 .. testcode:: custom_task
 
@@ -278,15 +278,12 @@ supplying the task itself, and the associated data:
 
     x, y = datasets.load_diabetes(return_X_y=True)
     datamodule = NumpyDataModule.from_numpy(x, y)
+
     model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
 
     trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
     trainer.fit(model, datamodule=datamodule)
 
-.. testoutput:: custom_task
-    :hide:
-
-    ...
 
 
 5. Predicting

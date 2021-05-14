@@ -15,7 +15,7 @@ import torch
 from torch.tensor import Tensor
 from torch.testing import assert_allclose
 
-from flash.data.batch import default_uncollate
+from flash.core.data.batch import default_uncollate
 
 
 class TestDefaultUncollate:

@@ -15,8 +15,8 @@ import numpy as np
 import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.data.data_module import DataModule
-from flash.data.splits import SplitDataset
+from flash.core.data.data_module import DataModule
+from flash.core.data.splits import SplitDataset
 
 
 def test_split_dataset(tmpdir):

@@ -19,9 +19,9 @@ from torchmetrics import F1
 
 import flash
 from flash.core.classification import Labels
-from flash.data.utils import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
-from flash.vision.classification.data import ImageClassificationPreprocess
+from flash.core.data.utils import download_data
+from flash.image import ImageClassificationData, ImageClassifier
+from flash.image.classification.data import ImageClassificationPreprocess
 
 # 1. Download the data
 # This is a subset of the movie poster genre prediction data set from the paper
@@ -60,13 +60,12 @@ model = ImageClassifier(
 )
 
 # 4. Create the trainer. Train on 2 gpus for 10 epochs.
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
+trainer = flash.Trainer(max_epochs=10)
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 6. Predict what's on a few images!
-
 # Serialize predictions as labels, low threshold to see more predictions.
 model.serializer = Labels(genres, multi_label=True, threshold=0.25)
 

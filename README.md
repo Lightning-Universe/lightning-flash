@@ -120,8 +120,8 @@ First, finetune:
 ```python
 # import our libraries
 import flash
-from flash.data.utils import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.data.utils import download_data
+from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -149,7 +149,7 @@ trainer.save_checkpoint("image_classification_model.pt")
 Then use the finetuned model
 
 ```python
-from flash.vision import ImageClassifier
+from flash.image import ImageClassifier
 # load the finetuned model
 classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
 
@@ -170,8 +170,8 @@ Flash has an Image embedding task to encodes an image into a vector of image fea
   <summary>View example</summary>
 
 ```python
-from flash.data.utils import download_data
-from flash.vision import ImageEmbedder
+from flash.core.data.utils import download_data
+from flash.image import ImageEmbedder
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
@@ -197,7 +197,7 @@ Flash has a Summarization task to sum up text from a larger article into a short
 ```python
 # import our libraries
 import flash
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
@@ -244,7 +244,7 @@ To illustrate, say we want to build a model to predict if a passenger survived o
 # import our libraries
 from torchmetrics.classification import Accuracy, Precision, Recall
 import flash
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data
@@ -295,8 +295,8 @@ To illustrate, say we want to build a model on a tiny coco dataset.
 ```python
 # import our libraries
 import flash
-from flash.data.utils import download_data
-from flash.vision import ObjectDetectionData, ObjectDetector
+from flash.core.data.utils import download_data
+from flash.image import ObjectDetectionData, ObjectDetector
 
 # 1. Download the data
 # Dataset Credit: https://www.kaggle.com/ultralytics/coco128

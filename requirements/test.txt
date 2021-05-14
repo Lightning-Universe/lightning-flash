@@ -13,3 +13,4 @@ pre-commit
 isort
 yapf
 #mypy
+scikit-learn
