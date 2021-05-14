@@ -7,7 +7,7 @@ examples:
   - flash_notebooks/**/*
 
 data:
-  - flash/data/**/*
+  - flash/core/data/**/*
 
 task:
   - flash/tabular/**/*
