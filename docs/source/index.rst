@@ -13,6 +13,7 @@ Lightning Flash
    quickstart
    installation
    custom_task
+   task_template
    reference/flash_to_pl
 
 .. toctree::
