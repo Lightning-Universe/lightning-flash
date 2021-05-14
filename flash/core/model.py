@@ -26,12 +26,12 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
+from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
-from flash.core.utils import get_callable_dict
-from flash.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
+from flash.core.utilities.apply_func import get_callable_dict
 
 
 def predict_context(func: Callable) -> Callable:
@@ -66,8 +66,8 @@ class Task(LightningModule):
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `5e-5`.
-        preprocess: :class:`~flash.data.process.Preprocess` to use as the default for this task.
-        postprocess: :class:`~flash.data.process.Postprocess` to use as the default for this task.
+        preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
+        postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
     """
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
@@ -214,22 +214,22 @@ class Task(LightningModule):
         new_postprocess: Optional[Postprocess],
         new_serializer: Optional[Serializer],
     ) -> Tuple[Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
-        """Resolves the correct :class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, and
-        :class:`~flash.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
-        (:class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, or
-        :class:`~flash.data.process.Serializer`) and ``old_*`` otherwise.
+        """Resolves the correct :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
+        :class:`~flash.core.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
+        (:class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, or
+        :class:`~flash.core.data.process.Serializer`) and ``old_*`` otherwise.
 
         Args:
-            old_preprocess: :class:`~flash.data.process.Preprocess` to be overridden.
-            old_postprocess: :class:`~flash.data.process.Postprocess` to be overridden.
-            old_serializer: :class:`~flash.data.process.Serializer` to be overridden.
-            new_preprocess: :class:`~flash.data.process.Preprocess` to override with.
-            new_postprocess: :class:`~flash.data.process.Postprocess` to override with.
-            new_serializer: :class:`~flash.data.process.Serializer` to override with.
+            old_preprocess: :class:`~flash.core.data.process.Preprocess` to be overridden.
+            old_postprocess: :class:`~flash.core.data.process.Postprocess` to be overridden.
+            old_serializer: :class:`~flash.core.data.process.Serializer` to be overridden.
+            new_preprocess: :class:`~flash.core.data.process.Preprocess` to override with.
+            new_postprocess: :class:`~flash.core.data.process.Postprocess` to override with.
+            new_serializer: :class:`~flash.core.data.process.Serializer` to override with.
 
         Returns:
-            The resolved :class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, and
-            :class:`~flash.data.process.Serializer`.
+            The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
+            :class:`~flash.core.data.process.Serializer`.
         """
         preprocess = old_preprocess
         if new_preprocess is not None and type(new_preprocess) != Preprocess:
@@ -263,7 +263,7 @@ class Task(LightningModule):
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
-        :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`
+        :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`
         objects. These will be overridden in the following resolution order (lowest priority first):
 
         - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
@@ -273,7 +273,7 @@ class Task(LightningModule):
 
         Args:
             data_pipeline: Optional highest priority source of
-                :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
+                :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`.
 
         Returns:
             The fully resolved :class:`.DataPipeline`.

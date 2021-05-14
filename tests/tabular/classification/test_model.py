@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
 import torch
 from pytorch_lightning import Trainer
 
-from flash.data.data_source import DefaultDataKeys
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular import TabularClassifier
 
 # ======== Mock functions ========
@@ -40,6 +42,7 @@ class DummyDataset(torch.utils.data.Dataset):
 # ==============================
 
 
+@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 def test_init_train(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
     model = TabularClassifier(num_classes=10, num_features=16 + 16, embedding_sizes=16 * [(10, 32)])
@@ -47,6 +50,7 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
+@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 def test_init_train_no_num(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_num=0), batch_size=16)
     model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=16 * [(10, 32)])
@@ -54,8 +58,14 @@ def test_init_train_no_num(tmpdir):
     trainer.fit(model, train_dl)
 
 
+@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 def test_init_train_no_cat(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
     model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
+
+
+def test_module_import_error(tmpdir):
+    with pytest.raises(ModuleNotFoundError, match="[tabular]"):
+        model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])

@@ -17,23 +17,23 @@ Here are common terms you need to be familiar with:
 
    * - Term
      - Definition
-   * - :class:`~flash.data.data_module.DataModule`
-     - The :class:`~flash.data.data_module.DataModule` contains the dataset, transforms and dataloaders.
-   * - :class:`~flash.data.data_pipeline.DataPipeline`
-     - The :class:`~flash.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` objects.
-   * - :class:`~flash.data.data_source.DataSource`
-     - The :class:`~flash.data.data_source.DataSource` provides a hook-based API for creating data sets.
-   * - :class:`~flash.data.process.Preprocess`
-     - The :class:`~flash.data.process.Preprocess` provides a simple hook-based API to encapsulate your pre-processing logic.
-        The :class:`~flash.data.process.Preprocess` provides multiple hooks such as :meth:`~flash.data.process.Preprocess.load_data`
-        and :meth:`~flash.data.process.Preprocess.load_sample` which are used to replace a traditional `Dataset` logic.
+   * - :class:`~flash.core.data.data_module.DataModule`
+     - The :class:`~flash.core.data.data_module.DataModule` contains the dataset, transforms and dataloaders.
+   * - :class:`~flash.core.data.data_pipeline.DataPipeline`
+     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess` objects.
+   * - :class:`~flash.core.data.data_source.DataSource`
+     - The :class:`~flash.core.data.data_source.DataSource` provides a hook-based API for creating data sets.
+   * - :class:`~flash.core.data.process.Preprocess`
+     - The :class:`~flash.core.data.process.Preprocess` provides a simple hook-based API to encapsulate your pre-processing logic.
+        The :class:`~flash.core.data.process.Preprocess` provides multiple hooks such as :meth:`~flash.core.data.process.Preprocess.load_data`
+        and :meth:`~flash.core.data.process.Preprocess.load_sample` which are used to replace a traditional `Dataset` logic.
         Flash DataPipeline contains a system to call the right hooks when needed.
-        The :class:`~flash.data.process.Preprocess` hooks covers from data-loading to model forwarding.
-   * - :class:`~flash.data.process.Postprocess`
-     - The :class:`~flash.data.process.Postprocess` provides a simple hook-based API to encapsulate your post-processing logic.
-        The :class:`~flash.data.process.Postprocess` hooks cover from model outputs to predictions export.
-   * - :class:`~flash.data.process.Serializer`
-     - The :class:`~flash.data.process.Serializer` provides a single ``serialize`` method that is used to convert model outputs (after the :class:`~flash.data.process.Postprocess`) to the desired output format during prediction.
+        The :class:`~flash.core.data.process.Preprocess` hooks covers from data-loading to model forwarding.
+   * - :class:`~flash.core.data.process.Postprocess`
+     - The :class:`~flash.core.data.process.Postprocess` provides a simple hook-based API to encapsulate your post-processing logic.
+        The :class:`~flash.core.data.process.Postprocess` hooks cover from model outputs to predictions export.
+   * - :class:`~flash.core.data.process.Serializer`
+     - The :class:`~flash.core.data.process.Serializer` provides a single ``serialize`` method that is used to convert model outputs (after the :class:`~flash.core.data.process.Postprocess`) to the desired output format during prediction.
 
 *******************************************
 How to use out-of-the-box flashdatamodules
@@ -52,9 +52,9 @@ and provide them to a `DataLoader <https://pytorch.org/docs/stable/data.html#tor
 However, after model training, it requires a lot of engineering overhead to make inference on raw data and deploy the model in production environnement.
 Usually, extra processing logic should be added to bridge the gap between training data and raw data.
 
-The :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` classes can be used to
-store the data as well as the preprocessing and postprocessing transforms. The :class:`~flash.data.process.Serializer`
-class provides the logic for converting :class:`~flash.data.process.Postprocess` outputs to the desired predict format
+The :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess` classes can be used to
+store the data as well as the preprocessing and postprocessing transforms. The :class:`~flash.core.data.process.Serializer`
+class provides the logic for converting :class:`~flash.core.data.process.Postprocess` outputs to the desired predict format
 (e.g. classes, labels, probabilites, etc.).
 
 By providing a series of hooks that can be overridden with custom data processing logic,
@@ -68,16 +68,16 @@ Here are the primary advantages:
 
 
 To change the processing behavior only on specific stages for a given hook,
-you can prefix each of the :class:`~flash.data.process.Preprocess` and  :class:`~flash.data.process.Postprocess`
+you can prefix each of the :class:`~flash.core.data.process.Preprocess` and  :class:`~flash.core.data.process.Postprocess`
 hooks by adding ``train``, ``val``, ``test`` or ``predict``.
 
-Check out :class:`~flash.data.process.Preprocess` for some examples.
+Check out :class:`~flash.core.data.process.Preprocess` for some examples.
 
 .. note::
 
-    ``[WIP]`` We are currently working on a new feature to make :class:`~flash.data.process.Preprocess`
+    ``[WIP]`` We are currently working on a new feature to make :class:`~flash.core.data.process.Preprocess`
 
-    and :class:`~flash.data.process.Postprocess` automatically deployable from checkpoints as
+    and :class:`~flash.core.data.process.Postprocess` automatically deployable from checkpoints as
 
     ``Endpoints`` or ``BatchTransformJob``. Stay tuned !
 
@@ -89,29 +89,29 @@ Flash DataModule can receive directly dataset as follow:
 
 Example::
 
-    from flash.data.data_module import DataModule
+    from flash.core.data.data_module import DataModule
 
     dm = DataModule(train_dataset=MyDataset(train=True))
     trainer = Trainer(fast_dev_run=True)
     trainer.fit(model, data_module=dm)
 
-In order to customize Flash to your need, you need to know what are :class:`~flash.data.data_module.DataModule`
-and :class:`~flash.data.process.Preprocess` responsibilities.
+In order to customize Flash to your need, you need to know what are :class:`~flash.core.data.data_module.DataModule`
+and :class:`~flash.core.data.process.Preprocess` responsibilities.
 
 .. note::
 
-    At this point, we strongly encourage the readers to quickly check the :class:`~flash.data.process.Preprocess` API before getting further.
+    At this point, we strongly encourage the readers to quickly check the :class:`~flash.core.data.process.Preprocess` API before getting further.
 
-The :class:`~flash.data.data_module.DataModule` provides ``classmethod`` helpers to build
-:class:`~flash.data.process.Preprocess` and :class:`~flash.data.data_pipeline.DataPipeline`,
-generate Flash Internal :class:`~flash.data.auto_dataset.AutoDataset` and populate DataLoaders with them.
+The :class:`~flash.core.data.data_module.DataModule` provides ``classmethod`` helpers to build
+:class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.data_pipeline.DataPipeline`,
+generate Flash Internal :class:`~flash.core.data.auto_dataset.AutoDataset` and populate DataLoaders with them.
 
-The :class:`~flash.data.process.Preprocess` contains the processing logic related to a given task. Users can easily override hooks
-to customize a built-in :class:`~flash.data.process.Preprocess` for their needs.
+The :class:`~flash.core.data.process.Preprocess` contains the processing logic related to a given task. Users can easily override hooks
+to customize a built-in :class:`~flash.core.data.process.Preprocess` for their needs.
 
 Example::
 
-    from flash.vision import ImageClassificationData, ImageClassifier, ImageClassificationPreprocess
+    from flash.image import ImageClassificationData, ImageClassifier, ImageClassificationPreprocess
 
     class CustomImageClassificationPreprocess(ImageClassificationPreprocess):
 
@@ -178,7 +178,7 @@ Secondly, let's implement the ``ImageClassificationDataModule`` from_folders cla
 
 Example::
 
-    from flash.data.data_module import DataModule
+    from flash.core.data.data_module import DataModule
 
     class ImageClassificationDataModule(DataModule):
 
@@ -196,9 +196,9 @@ Example::
     from typing import Any, Callable, Dict, Optional, Tuple, Union
     import os
     import numpy as np
-    from flash.data.data_source import DefaultDataSources
-    from flash.data.process import Preprocess
-    from flash.vision.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+    from flash.core.data.data_source import DefaultDataSources
+    from flash.core.data.process import Preprocess
+    from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
     from PIL import Image
     import torchvision.transforms as T
     from torch import Tensor
@@ -250,9 +250,9 @@ Example::
 
 .. note::
 
-    Currently, Flash Tasks are implemented using :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
+    Currently, Flash Tasks are implemented using :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`.
     However, it is not a hard requirement and one can still use :class:`~torch.data.utils.Dataset`, but we highly recommend
-    using :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess` instead.
+    using :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess` instead.
 
 
 *************
@@ -264,14 +264,14 @@ API reference
 DataSource
 __________
 
-.. autoclass:: flash.data.data_source.DataSource
+.. autoclass:: flash.core.data.data_source.DataSource
     :members:
 
-.. autoclass:: flash.data.data_source.DefaultDataSources
+.. autoclass:: flash.core.data.data_source.DefaultDataSources
     :members:
     :undoc-members:
 
-.. autoclass:: flash.data.data_source.DefaultDataKeys
+.. autoclass:: flash.core.data.data_source.DefaultDataKeys
     :members:
     :undoc-members:
 
@@ -283,7 +283,7 @@ __________
 Preprocess
 __________
 
-.. autoclass:: flash.data.process.Preprocess
+.. autoclass:: flash.core.data.process.Preprocess
     :members:
 
 
@@ -295,7 +295,7 @@ Postprocess
 ___________
 
 
-.. autoclass:: flash.data.process.Postprocess
+.. autoclass:: flash.core.data.process.Postprocess
     :members:
 
 
@@ -307,7 +307,7 @@ Serializer
 ___________
 
 
-.. autoclass:: flash.data.process.Serializer
+.. autoclass:: flash.core.data.process.Serializer
     :members:
 
 
@@ -318,7 +318,7 @@ ___________
 DataPipeline
 ____________
 
-.. autoclass:: flash.data.data_pipeline.DataPipeline
+.. autoclass:: flash.core.data.data_pipeline.DataPipeline
     :members:
 
 ----------
@@ -326,7 +326,7 @@ ____________
 DataModule
 __________
 
-.. autoclass:: flash.data.data_module.DataModule
+.. autoclass:: flash.core.data.data_module.DataModule
     :members:
         train_dataset,
         val_dataset,
@@ -386,10 +386,10 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.data.batch._PreProcessor`.
+    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`.
     def collate_fn(samples: Sequence[Any]) -> Any:
 
-        # This will be wrapped into a :class:`~flash.data.batch._Sequential`
+        # This will be wrapped into a :class:`~flash.core.data.batch._Sequential`
         for sample in samples:
             sample = pre_tensor_transform(sample)
             sample = to_tensor_transform(sample)
@@ -397,7 +397,7 @@ Example::
 
         samples = type(samples)(samples)
 
-        # if :func:`flash.data.process.Preprocess.per_sample_transform_on_device` hook is overridden,
+        # if :func:`flash.core.data.process.Preprocess.per_sample_transform_on_device` hook is overridden,
         # those functions below will be no-ops
 
         samples = collate(samples)
@@ -416,7 +416,7 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.data.batch._PreProcessor`
+    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`
     def collate_fn(samples: Sequence[Any]) -> Any:
 
         # if ``per_batch_transform`` hook is overridden, those functions below will be no-ops
@@ -438,13 +438,13 @@ __________________________
 
 
 Once the predictions have been generated by the Flash :class:`~flash.core.model.Task`, the Flash
-:class:`~flash.data.data_pipeline.DataPipeline` will execute the :class:`~flash.data.process.Postprocess` hooks and the
-:class:`~flash.data.process.Serializer` behind the scenes.
+:class:`~flash.core.data.data_pipeline.DataPipeline` will execute the :class:`~flash.core.data.process.Postprocess` hooks and the
+:class:`~flash.core.data.process.Serializer` behind the scenes.
 
-First, the :meth:`~flash.data.process.Postprocess.per_batch_transform` hooks will be applied on the batch predictions.
-Then, the :meth:`~flash.data.process.Postprocess.uncollate` will split the batch into individual predictions.
-Next, the :meth:`~flash.data.process.Postprocess.per_sample_transform` will be applied on each prediction.
-Finally, the :meth:`~flash.data.process.Serializer.serialize` method will be called to serialize the predictions.
+First, the :meth:`~flash.core.data.process.Postprocess.per_batch_transform` hooks will be applied on the batch predictions.
+Then, the :meth:`~flash.core.data.process.Postprocess.uncollate` will split the batch into individual predictions.
+Next, the :meth:`~flash.core.data.process.Postprocess.per_sample_transform` will be applied on each prediction.
+Finally, the :meth:`~flash.core.data.process.Serializer.serialize` method will be called to serialize the predictions.
 
 .. note:: The transform can be applied either on device or ``CPU``.
 
@@ -452,7 +452,7 @@ Here is the pseudo-code:
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.data.batch._PreProcessor`
+    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`
     def uncollate_fn(batch: Any) -> Any:
 
         batch = per_batch_transform(batch)

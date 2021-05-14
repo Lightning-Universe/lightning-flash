@@ -15,12 +15,17 @@ import os
 from typing import Dict, List, Tuple
 
 import numpy as np
-import pandas as pd
-from pandas.core.frame import DataFrame
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
+from flash.core.utilities.imports import _TABULAR_AVAILABLE
+
+if _TABULAR_AVAILABLE:
+    import pandas as pd
+    from pandas.core.frame import DataFrame
+else:
+    DataFrame = None
 
 
 def _impute(dfs: List, num_cols: List) -> list:

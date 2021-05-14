@@ -5,10 +5,10 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.data.data_pipeline import DataPipeline
-from flash.data.data_source import DefaultDataKeys
-from flash.vision import SemanticSegmentation
-from flash.vision.segmentation.data import SemanticSegmentationPreprocess
+from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.data_source import DefaultDataKeys
+from flash.image import SemanticSegmentation
+from flash.image.segmentation.data import SemanticSegmentationPreprocess
 
 # ======== Mock functions ========
 

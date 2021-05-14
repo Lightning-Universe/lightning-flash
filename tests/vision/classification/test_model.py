@@ -17,8 +17,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.classification import Probabilities
-from flash.data.data_source import DefaultDataKeys
-from flash.vision import ImageClassifier
+from flash.core.data.data_source import DefaultDataKeys
+from flash.image import ImageClassifier
 
 # ======== Mock functions ========
 

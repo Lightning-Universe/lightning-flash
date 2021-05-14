@@ -4,13 +4,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 
 from setuptools import find_packages, setup
 
-# Used to install Lightning Master
-"""
-try:
-    import pytorch_lightning
-except (ImportError, AssertionError):
-    subprocess.Popen(["pip", "install", "git+https://github.com/PyTorchLightning/pytorch-lightning.git"])
-"""
+import __about__ as about
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
@@ -24,10 +18,29 @@ def _load_py_module(fname, pkg="flash"):
     return py
 
 
-about = _load_py_module('__about__.py')
 setup_tools = _load_py_module('setup_tools.py')
 
 long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__)
+
+_PATH_REQUIRE = os.path.join(_PATH_ROOT, "requirements")
+
+extras = {
+    "docs": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="docs.txt"),
+    #"devel": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="devel.txt"),
+    "notebooks": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="notebooks.txt"),
+    "test": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="test.txt"),
+    "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype/text.txt"),
+    "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype/tabular.txt"),
+    "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype/image.txt"),
+    "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype/video.txt"),
+}
+
+# remove possible duplicate.
+extras["vision"] = list(set(extras["image"] + extras["video"]))
+extras["dev"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["image"]))
+extras["all"] = list(set(extras["dev"] + extras["docs"]))
+
+print(extras)
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
@@ -47,10 +60,10 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
+    extras_require=extras,
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
-    setup_requires=[],
     install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name='requirements.txt'),
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",

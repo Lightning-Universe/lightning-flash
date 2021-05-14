@@ -13,10 +13,12 @@
 # limitations under the License.
 from typing import Any
 
-from transformers import AutoTokenizer
-
-from flash.data.process import Postprocess
+from flash.core.data.process import Postprocess
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPreprocess
+
+if _TEXT_AVAILABLE:
+    from transformers import AutoTokenizer
 
 
 class SummarizationPostprocess(Postprocess):
@@ -26,6 +28,9 @@ class SummarizationPostprocess(Postprocess):
         backbone: str = "sshleifer/tiny-mbart",
     ):
         super().__init__()
+
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
 
         # TODO: Should share the backbone or tokenizer over state
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)

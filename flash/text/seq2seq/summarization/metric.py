@@ -14,12 +14,17 @@
 from typing import Dict, List, Tuple
 
 import numpy as np
-from rouge_score import rouge_scorer, scoring
-from rouge_score.scoring import AggregateScore, Score
 from torch import tensor
 from torchmetrics import Metric
 
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_sentence
+
+if _TEXT_AVAILABLE:
+    from rouge_score import rouge_scorer, scoring
+    from rouge_score.scoring import AggregateScore, BootstrapAggregator, Score
+else:
+    AggregateScore, Score, BootstrapAggregator = None, None, object
 
 
 class RougeMetric(Metric):
@@ -54,6 +59,9 @@ class RougeMetric(Metric):
         rouge_keys: Tuple[str] = ("rouge1", "rouge2", "rougeL", "rougeLsum"),
     ):
         super().__init__()
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+
         self.rouge_newline_sep = rouge_newline_sep
         self.rouge_keys = rouge_keys
         self.use_stemmer = use_stemmer
@@ -94,7 +102,7 @@ class RougeMetric(Metric):
         return hash(tuple(hash_vals))
 
 
-class RougeBatchAggregator(scoring.BootstrapAggregator):
+class RougeBatchAggregator(BootstrapAggregator):
     """
     Aggregates rouge scores and provides confidence intervals.
     """

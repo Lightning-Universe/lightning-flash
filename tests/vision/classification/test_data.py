@@ -22,10 +22,10 @@ import torch.nn as nn
 import torchvision
 from PIL import Image
 
-from flash.data.data_source import DefaultDataKeys
-from flash.data.data_utils import labels_from_categorical_csv
-from flash.data.transforms import ApplyToKeys
-from flash.vision import ImageClassificationData
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.data_utils import labels_from_categorical_csv
+from flash.core.data.transforms import ApplyToKeys
+from flash.image import ImageClassificationData
 
 
 def _dummy_image_loader(_):

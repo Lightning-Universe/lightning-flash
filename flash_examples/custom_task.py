@@ -7,9 +7,9 @@ from sklearn import datasets
 from torch import nn, Tensor
 
 import flash
-from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.data.process import Preprocess
-from flash.data.transforms import ApplyToKeys
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.process import Preprocess
+from flash.core.data.transforms import ApplyToKeys
 
 seed_everything(42)
 
@@ -132,7 +132,7 @@ class NumpyPreprocess(Preprocess):
         return cls(*state_dict)
 
 
-class NumpyDataModule(flash.DataModule):
+class NumpyDataModule(flash.core.dataModule):
 
     preprocess_cls = NumpyPreprocess
 

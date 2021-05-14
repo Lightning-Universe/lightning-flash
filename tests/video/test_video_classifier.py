@@ -21,7 +21,7 @@ import torchvision.io as io
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 
 if _PYTORCHVIDEO_AVAILABLE:
     import kornia.augmentation as K

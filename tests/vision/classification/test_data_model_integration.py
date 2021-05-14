@@ -18,7 +18,7 @@ import torch
 from PIL import Image
 
 from flash import Trainer
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.image import ImageClassificationData, ImageClassifier
 
 
 def _dummy_image_loader(_):

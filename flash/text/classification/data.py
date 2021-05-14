@@ -13,23 +13,30 @@
 # limitations under the License.
 import os
 from functools import partial
+from logging import logMultiprocessing
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-from datasets import DatasetDict, load_dataset
 from torch import Tensor
-from transformers import AutoTokenizer, default_data_collator
-from transformers.modeling_outputs import SequenceClassifierOutput
 
-from flash.data.auto_dataset import AutoDataset
-from flash.data.data_module import DataModule
-from flash.data.data_source import DataSource, DefaultDataSources, LabelsState
-from flash.data.process import Postprocess, Preprocess
+from flash.core.data.auto_dataset import AutoDataset
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
+from flash.core.data.process import Postprocess, Preprocess
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+
+if _TEXT_AVAILABLE:
+    from datasets import DatasetDict, load_dataset
+    from transformers import AutoTokenizer, default_data_collator
+    from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class TextDataSource(DataSource):
 
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
+
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
 
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         self.max_length = max_length
@@ -146,6 +153,10 @@ class TextClassificationPreprocess(Preprocess):
         backbone: str = "prajjwal1/bert-tiny",
         max_length: int = 128,
     ):
+
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+
         self.backbone = backbone
         self.max_length = max_length
 

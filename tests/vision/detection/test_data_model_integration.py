@@ -18,9 +18,9 @@ from PIL import Image
 from pytorch_lightning.utilities import _module_available
 
 import flash
-from flash.utils.imports import _COCO_AVAILABLE
-from flash.vision import ObjectDetector
-from flash.vision.detection import ObjectDetectionData
+from flash.core.utilities.imports import _COCO_AVAILABLE
+from flash.image import ObjectDetector
+from flash.image.detection import ObjectDetectionData
 from tests.vision.detection.test_data import _create_synth_coco_dataset
 
 

@@ -17,7 +17,7 @@ The object detection task identifies instances of objects of a certain class wit
 Inference
 *********
 
-The :class:`~flash.vision.ObjectDetector` is already pre-trained on `COCO train2017 <https://cocodataset.org/>`_, a dataset with `91 classes <https://cocodataset.org/#explore>`_ (123,287 images, 886,284 instances).
+The :class:`~flash.image.ObjectDetector` is already pre-trained on `COCO train2017 <https://cocodataset.org/>`_, a dataset with `91 classes <https://cocodataset.org/#explore>`_ (123,287 images, 886,284 instances).
 
 .. code-block::
 
@@ -37,7 +37,7 @@ The :class:`~flash.vision.ObjectDetector` is already pre-trained on `COCO train2
         "supercategory": str,
     }]
 
-Use the :class:`~flash.vision.ObjectDetector` pretrained model for inference on any image tensor or image path using :func:`~flash.vision.ObjectDetector.predict`:
+Use the :class:`~flash.image.ObjectDetector` pretrained model for inference on any image tensor or image path using :func:`~flash.image.ObjectDetector.predict`:
 
 .. literalinclude:: ../../../flash_examples/predict/object_detection.py
     :language: python
@@ -53,7 +53,7 @@ Finetuning
 
 To tailor the object detector to your dataset, you would need to have it in `COCO Format <https://cocodataset.org/#format-data>`_, and then finetune the model.
 
-.. tip:: You could also pass `trainable_backbone_layers` to :class:`~flash.vision.ObjectDetector` and train the model.
+.. tip:: You could also pass `trainable_backbone_layers` to :class:`~flash.image.ObjectDetector` and train the model.
 
 .. literalinclude:: ../../../flash_examples/finetuning/object_detection.py
     :language: python
@@ -81,8 +81,8 @@ By default, we use a ResNet-50 FPN backbone. You can change the backbone for the
 
 .. testsetup::
 
-    from flash.data.utils import download_data
-    from flash.vision import ObjectDetectionData, ObjectDetector
+    from flash.core.data.utils import download_data
+    from flash.image import ObjectDetectionData, ObjectDetector
 
     download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
 
@@ -116,7 +116,7 @@ API reference
 ObjectDetector
 --------------
 
-.. autoclass:: flash.vision.ObjectDetector
+.. autoclass:: flash.image.ObjectDetector
     :members:
     :exclude-members: forward
 
@@ -125,6 +125,6 @@ ObjectDetector
 ObjectDetectionData
 -------------------
 
-.. autoclass:: flash.vision.ObjectDetectionData
+.. autoclass:: flash.image.ObjectDetectionData
 
-.. automethod:: flash.vision.ObjectDetectionData.from_coco
+.. automethod:: flash.image.ObjectDetectionData.from_coco

@@ -27,13 +27,13 @@ from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core import Task
-from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
-from flash.data.batch import _PostProcessor, _PreProcessor
-from flash.data.data_module import DataModule
-from flash.data.data_pipeline import _StageOrchestrator, DataPipeline
-from flash.data.data_source import DataSource
-from flash.data.process import DefaultPreprocess, Postprocess, Preprocess
+from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
+from flash.core.data.batch import _PostProcessor, _PreProcessor
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline
+from flash.core.data.data_source import DataSource
+from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess
+from flash.core.model import Task
 
 
 class DummyDataset(torch.utils.data.Dataset):

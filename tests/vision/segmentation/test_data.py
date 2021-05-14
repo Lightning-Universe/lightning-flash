@@ -9,8 +9,8 @@ from PIL import Image
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
-from flash.data.data_source import DefaultDataKeys
-from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
+from flash.core.data.data_source import DefaultDataKeys
+from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 
 
 def build_checkboard(n, m, k=8):

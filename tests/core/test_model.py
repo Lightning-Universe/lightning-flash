@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
+from _pytest.outcomes import skip
 from PIL import Image
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
@@ -29,11 +30,19 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.classification import ClassificationTask
-from flash.data.process import DefaultPreprocess, Postprocess
-from flash.tabular import TabularClassifier
-from flash.text import SummarizationTask, TextClassifier
-from flash.utils.imports import _TRANSFORMERS_AVAILABLE
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.data.process import DefaultPreprocess, Postprocess
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
+from flash.image import ImageClassificationData, ImageClassifier
+
+if _TABULAR_AVAILABLE:
+    from flash.tabular import TabularClassifier
+else:
+    TabularClassifier = None
+
+if _TEXT_AVAILABLE:
+    from flash.text import TextClassifier
+else:
+    TextClassifier = None
 
 # ======== Mock functions ========
 
@@ -147,16 +156,24 @@ def test_task_datapipeline_save(tmpdir):
     assert task.postprocess.test
 
 
-@pytest.mark.parametrize(
-    ["cls", "filename"],
-    [
-        (ImageClassifier, "image_classification_model.pt"),
-        (TabularClassifier, "tabular_classification_model.pt"),
-        (TextClassifier, "text_classification_model.pt"),
-        # (SummarizationTask, "summarization_model_xsum.pt"), # (tchaton) bug with some tokenizers version.
-        # (TranslationTask, "translation_model_en_ro.pt"), todo: reduce model size or create CI friendly file size
-    ]
-)
+@pytest.mark.parametrize(["cls", "filename"], [
+    pytest.param(
+        ImageClassifier,
+        "image_classification_model.pt",
+        marks=pytest.mark.skipif(
+            not _IMAGE_AVAILABLE,
+            reason="image packages aren't installed",
+        )
+    ),
+    pytest.param(
+        TabularClassifier,
+        "tabular_classification_model.pt",
+        marks=pytest.mark.skipif(
+            not _TABULAR_AVAILABLE,
+            reason="tabular packages aren't installed",
+        )
+    ),
+])
 def test_model_download(tmpdir, cls, filename):
     url = "https://flash-weights.s3.amazonaws.com/"
     with tmpdir.as_cwd():
@@ -204,7 +221,7 @@ def test_optimization(tmpdir):
     assert isinstance(optimizer[0], torch.optim.Adadelta)
     assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
 
-    if _TRANSFORMERS_AVAILABLE:
+    if _TEXT_AVAILABLE:
         from transformers.optimization import get_linear_schedule_with_warmup
 
         assert task.available_schedulers() == [

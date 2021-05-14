@@ -17,9 +17,9 @@ from torch import nn
 import flash
 from flash import Trainer
 from flash.core.classification import Labels
+from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
-from flash.data.utils import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")

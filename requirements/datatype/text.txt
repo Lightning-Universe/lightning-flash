@@ -1,0 +1,5 @@
+rouge-score>=0.0.4
+sentencepiece>=0.1.95
+filelock
+transformers>=4.5
+datasets>=1.2, <1.3

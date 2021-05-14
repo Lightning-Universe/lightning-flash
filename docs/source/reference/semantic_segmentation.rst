@@ -26,10 +26,10 @@ See more: https://paperswithcode.com/task/semantic-segmentation
 Inference
 *********
 
-A :class:`~flash.vision.SemanticSegmentation` `fcn_resnet50` pre-trained on `CARLA <http://carla.org/>`_ simulator is provided for the inference example.
+A :class:`~flash.image.SemanticSegmentation` `fcn_resnet50` pre-trained on `CARLA <http://carla.org/>`_ simulator is provided for the inference example.
 
 
-Use the :class:`~flash.vision.SemanticSegmentation` pretrained model for inference on any string sequence using :func:`~flash.vision.SemanticSegmentation.predict`:
+Use the :class:`~flash.image.SemanticSegmentation` pretrained model for inference on any string sequence using :func:`~flash.image.SemanticSegmentation.predict`:
 
 .. literalinclude:: ../../../flash_examples/predict/semantic_segmentation.py
     :language: python
@@ -44,7 +44,7 @@ Finetuning
 **********
 
 you now want to customise your model with new data using the same dataset.
-Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.SemanticSegmentationData`.
+Once we download the data using :func:`~flash.core.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.image.SemanticSegmentationData`.
 
 .. note:: the dataset is structured in a way that each sample (an image and its corresponding labels) is stored in separated directories but keeping the same filename.
 
@@ -78,7 +78,7 @@ API reference
 SemanticSegmentation
 --------------------
 
-.. autoclass:: flash.vision.SemanticSegmentation
+.. autoclass:: flash.image.SemanticSegmentation
     :members:
     :exclude-members: forward
 
@@ -87,8 +87,8 @@ SemanticSegmentation
 SemanticSegmentationData
 ------------------------
 
-.. autoclass:: flash.vision.SemanticSegmentationData
+.. autoclass:: flash.image.SemanticSegmentationData
 
-.. automethod:: flash.vision.SemanticSegmentationData.from_folders
+.. automethod:: flash.image.SemanticSegmentationData.from_folders
 
-.. autoclass:: flash.vision.SemanticSegmentationPreprocess
+.. autoclass:: flash.image.SemanticSegmentationPreprocess

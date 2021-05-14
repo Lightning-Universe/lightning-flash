@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash.core.classification import Labels
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.tabular import TabularClassifier
 
 # 1. Download the data

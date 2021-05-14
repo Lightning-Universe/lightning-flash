@@ -6,9 +6,9 @@ import pytest
 from PIL import Image
 from pytorch_lightning.utilities import _module_available
 
-from flash.data.data_source import DefaultDataKeys
-from flash.utils.imports import _COCO_AVAILABLE
-from flash.vision.detection.data import ObjectDetectionData
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _COCO_AVAILABLE
+from flash.image.detection.data import ObjectDetectionData
 
 
 def _create_dummy_coco_json(dummy_json_path):

@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.finetuning import NoFreeze
-from flash.vision.classification import ImageClassifier
+from flash.image.classification import ImageClassifier
 
 
 class DummyDataset(torch.utils.data.Dataset):
