@@ -26,7 +26,7 @@ from flash.data.batch import default_uncollate
 from flash.data.callback import FlashCallback
 from flash.data.data_source import DataSource
 from flash.data.properties import Properties
-from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules
+from flash.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 
 if TYPE_CHECKING:
     from flash.data.data_pipeline import DataPipelineState
@@ -121,8 +121,8 @@ class Preprocess(BasePreprocess, Properties, Module):
         as it will impact performances.
 
     Data processing can be configured by overriding hooks or through transforms. The preprocess transforms are given as
-    a mapping from hook names to callables. Default transforms can be configured by overriding the
-    `default_{train,val,test,predict}_transforms` methods. These can then be overridden by the user with the
+    a mapping from hook names to callables. Default transforms can be configured by overriding the `default_transforms`
+    or `{train,val,test,predict}_default_transforms` methods. These can then be overridden by the user with the
     `{train,val,test,predict}_transform` arguments to the ``Preprocess``. All of the hooks can be used in the transform
     mappings.
 
@@ -130,7 +130,13 @@ class Preprocess(BasePreprocess, Properties, Module):
 
         class CustomPreprocess(Preprocess):
 
-            def default_train_transforms() -> Mapping[str, Callable]:
+            def default_transforms() -> Mapping[str, Callable]:
+                return {
+                    "to_tensor_transform": transforms.ToTensor(),
+                    "collate": torch.utils.data._utils.collate.default_collate,
+                }
+
+            def train_default_transforms() -> Mapping[str, Callable]:
                 return {
                     "pre_tensor_transform": transforms.RandomHorizontalFlip(),
                     "to_tensor_transform": transforms.ToTensor(),
@@ -189,10 +195,10 @@ class Preprocess(BasePreprocess, Properties, Module):
         super().__init__()
 
         # resolve the default transforms
-        train_transform = train_transform or self.default_train_transforms
-        val_transform = val_transform or self.default_val_transforms
-        test_transform = test_transform or self.default_test_transforms
-        predict_transform = predict_transform or self.default_predict_transforms
+        train_transform = train_transform or self._resolve_transforms(RunningStage.TRAINING)
+        val_transform = val_transform or self._resolve_transforms(RunningStage.VALIDATING)
+        test_transform = test_transform or self._resolve_transforms(RunningStage.TESTING)
+        predict_transform = predict_transform or self._resolve_transforms(RunningStage.PREDICTING)
 
         # used to keep track of provided transforms
         self._train_collate_in_worker_from_transform: Optional[bool] = None
@@ -217,30 +223,16 @@ class Preprocess(BasePreprocess, Properties, Module):
         self._callbacks: List[FlashCallback] = []
         self._default_collate: Callable = default_collate
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
+    def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
+        from flash.data.data_pipeline import DataPipeline
 
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
+        resolved_function = getattr(
+            self, DataPipeline._resolve_function_hierarchy("default_transforms", self, running_stage, Preprocess)
+        )
 
-    @property
-    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
-    @property
-    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
-    @property
-    def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
-        return {
-            "train_transform": self.train_transform,
-            "val_transform": self.val_transform,
-            "test_transform": self.test_transform,
-            "predict_transform": self.predict_transform,
-        }
+        with CurrentRunningStageFuncContext(running_stage, "default_transforms", self):
+            transforms: Optional[Dict[str, Callable]] = resolved_function()
+        return transforms
 
     def _save_to_state_dict(self, destination, prefix, keep_vars):
         preprocess_state_dict = self.get_state_dict()
@@ -327,6 +319,16 @@ class Preprocess(BasePreprocess, Properties, Module):
             return self._identity
 
     @property
+    def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
+        """ The transforms currently being used by this :class:`~flash.data.process.Preprocess`. """
+        return {
+            "train_transform": self.train_transform,
+            "val_transform": self.val_transform,
+            "test_transform": self.test_transform,
+            "predict_transform": self.predict_transform,
+        }
+
+    @property
     def callbacks(self) -> List['FlashCallback']:
         if not hasattr(self, "_callbacks"):
             self._callbacks: List[FlashCallback] = []
@@ -340,16 +342,20 @@ class Preprocess(BasePreprocess, Properties, Module):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
+        """ The default transforms to use. Will be overridden by transforms passed to the ``__init__``. """
+        return None
+
     def pre_tensor_transform(self, sample: Any) -> Any:
-        """Transforms to apply on a single object."""
+        """ Transforms to apply on a single object. """
         return self.current_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
-        """Transforms to convert single object to a tensor."""
+        """ Transforms to convert single object to a tensor. """
         return self.current_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
-        """Transforms to apply on a tensor."""
+        """ Transforms to apply on a tensor. """
         return self.current_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
@@ -363,7 +369,7 @@ class Preprocess(BasePreprocess, Properties, Module):
         return self.current_transform(batch)
 
     def collate(self, samples: Sequence) -> Any:
-        """Transform to convert a sequence of samples to a collated batch."""
+        """ Transform to convert a sequence of samples to a collated batch. """
         current_transform = self.current_transform
         if current_transform is self._identity:
             return self._default_collate(samples)
@@ -395,13 +401,37 @@ class Preprocess(BasePreprocess, Properties, Module):
         """
         return self.current_transform(batch)
 
-    def data_source_of_name(self, data_source_name: str) -> Optional[DataSource]:
+    def available_data_sources(self) -> Sequence[str]:
+        """Get the list of available data source names for use with this :class:`~flash.data.process.Preprocess`.
+
+        Returns:
+            The list of data source names.
+        """
+        return list(self._data_sources.keys())
+
+    def data_source_of_name(self, data_source_name: str) -> DataSource:
+        """Get the :class:`~flash.data.data_source.DataSource` of the given name from the
+        :class:`~flash.data.process.Preprocess`.
+
+        Args:
+            data_source_name: The name of the data source to look up.
+
+        Returns:
+            The :class:`~flash.data.data_source.DataSource` of the given name.
+
+        Raises:
+            MisconfigurationException: If the requested data source is not configured by this
+                :class:`~flash.data.process.Preprocess`.
+        """
         if data_source_name == "default":
             data_source_name = self._default_data_source
         data_sources = self._data_sources
         if data_source_name in data_sources:
             return data_sources[data_source_name]
-        return None
+        raise MisconfigurationException(
+            f"No '{data_source_name}' data source is available for use with the {type(self)}. The available data "
+            f"sources are: {', '.join(self.available_data_sources())}."
+        )
 
 
 class DefaultPreprocess(Preprocess):

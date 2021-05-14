@@ -18,8 +18,9 @@ which is stored as numpy arrays.
 1. Imports
 ----------
 
+We first import everything we're going to use and set the random seed using :func:`~pytorch_lightning.utilities.seed.seed_everything`.
 
-.. code:: python
+.. testcode:: custom_task
 
     from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -50,13 +51,13 @@ you will likely need to override the ``__init__``, ``forward``, and the ``{train
 It's best practice in flash for the data to be provide as a dictionary which maps string keys to their values. The
 ``{train,val,test,predict}_step`` methods need to be overridden to extract the data from the input dictionary.
 
-Example::
+.. testcode:: custom_task
 
     class RegressionTask(flash.Task):
 
         def __init__(self, num_inputs, learning_rate=0.2, metrics=None):
             # what kind of model do we want?
-            model = nn.Linear(num_inputs, 1)
+            model = torch.nn.Linear(num_inputs, 1)
 
             # what loss function do we want?
             loss_fn = torch.nn.functional.mse_loss
@@ -119,9 +120,9 @@ is called for training, validation, and testing) or override ``training_step``, 
 individually. These methods behave identically to PyTorch Lightning’s
 `methods <https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#methods>`__.
 
-Here is the pseudo code behind :class:`~flash.core.model.Task` step.
+Here is the pseudo code behind :class:`~flash.core.model.Task` step:
 
-Example::
+.. code:: python
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
@@ -144,7 +145,7 @@ loading the train data (``if self.training:``), the ``NumpyDataSource`` sets the
 optional ``dataset`` argument. Any attributes that are set on the optional ``dataset`` argument will also be set on the
 generated ``dataset``.
 
-Example::
+.. testcode:: custom_task
 
     class NumpyDataSource(DataSource[Tuple[ND, ND]]):
 
@@ -183,10 +184,10 @@ The recommended way to define a custom :class:`~flash.data.process.Preprocess` i
     - ``data_sources`` gives the :class:`~flash.data.data_source.DataSource` objects that work with your :class:`~flash.data.process.Preprocess` as a mapping from data source name to :class:`~flash.data.data_source.DataSource`. The data source name can be any string, but for our purposes we can use ``NUMPY`` from :class:`~flash.data.data_source.DefaultDataSources`.
     - ``default_data_source`` is the name of the data source to use by default when predicting.
 - Override the ``get_state_dict`` and ``load_state_dict`` methods. These methods are used to save and load your :class:`~flash.data.process.Preprocess` from a checkpoint.
-- Override the ``default_{train,val,test,predict}_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
+- Override the ``{train,val,test,predict}_default_transforms`` methods to specify the default transforms to use in each stage (these will be used if the transforms passed in the ``__init__`` are ``None``).
     - Transforms are given as a mapping from hook name to callable transforms. You should use :class:`~flash.data.transforms.ApplyToKeys` to apply each transform only to specific keys in the data dictionary.
 
-Example::
+.. testcode:: custom_task
 
     class NumpyPreprocess(Preprocess):
 
@@ -232,20 +233,7 @@ Example::
                 ),
             }
 
-        @property
-        def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-            return self.to_tensor
-
-        @property
-        def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-            return self.to_tensor
-
-        @property
-        def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-            return self.to_tensor
-
-        @property
-        def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+        def default_transforms(self) -> Optional[Dict[str, Callable]]:
             return self.to_tensor
 
         def get_state_dict(self) -> Dict[str, Any]:
@@ -266,7 +254,7 @@ data source whose name is in :class:`~flash.data.data_source.DefaultDataSources`
 ``DataModule.from_*`` method that provides the expected inputs. So in this case, there is the
 :meth:`~flash.data.data_module.DataModule.from_numpy` that will use our numpy data source.
 
-Example::
+.. testcode:: custom_task
 
     class NumpyDataModule(flash.DataModule):
 
@@ -286,25 +274,29 @@ dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-data
 Like any Flash Task, we can fit our model using the ``flash.Trainer`` by
 supplying the task itself, and the associated data:
 
-.. code:: python
+.. testcode:: custom_task
 
     x, y = datasets.load_diabetes(return_X_y=True)
     datamodule = NumpyDataModule.from_numpy(x, y)
     model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
 
-    trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20)
+    trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
     trainer.fit(model, datamodule=datamodule)
+
+.. testoutput:: custom_task
+    :hide:
+
+    ...
 
 
 5. Predicting
 -------------
 
-With a trained model we can now perform inference. Here we will use a
-few examples from the test set of our data:
+With a trained model we can now perform inference. Here we will use a few examples from the test set of our data:
 
-.. code:: python
+.. testcode:: custom_task
 
-    predict_data = torch.tensor([
+    predict_data = np.array([
         [ 0.0199,  0.0507,  0.1048,  0.0701, -0.0360, -0.0267, -0.0250, -0.0026,  0.0037,  0.0403],
         [-0.0128, -0.0446,  0.0606,  0.0529,  0.0480,  0.0294, -0.0176,  0.0343,  0.0702,  0.0072],
         [ 0.0381,  0.0507,  0.0089,  0.0425, -0.0428, -0.0210, -0.0397, -0.0026, -0.0181,  0.0072],
@@ -314,4 +306,9 @@ few examples from the test set of our data:
 
     predictions = model.predict(predict_data)
     print(predictions)
-    # out: [tensor([188.9760]), tensor([196.1777]), tensor([161.3590]), tensor([130.7312]), tensor([149.0340])]
+
+We get the following output:
+
+.. testoutput:: custom_task
+
+    [tensor([189.1198]), tensor([196.0839]), tensor([161.2461]), tensor([130.7591]), tensor([149.1780])]

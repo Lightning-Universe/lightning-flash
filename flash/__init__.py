@@ -18,6 +18,7 @@ from flash.__about__ import *  # noqa: F401 F403
 
 _PACKAGE_ROOT = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
+_IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
 
 from flash.core.model import Task  # noqa: E402
 from flash.core.trainer import Trainer  # noqa: E402

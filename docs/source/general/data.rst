@@ -222,11 +222,12 @@ Example::
                 test_transform=test_transform,
                 predict_transform=predict_transform,
                 data_sources={
-                    DefaultDataSources.PATHS: ImagePathsDataSource(),
+                    DefaultDataSources.FILES: ImagePathsDataSource(),
+                    DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                     DefaultDataSources.NUMPY: ImageNumpyDataSource(),
-                    DefaultDataSources.TENSOR: ImageTensorDataSource(),
+                    DefaultDataSources.TENSORS: ImageTensorDataSource(),
                 },
-                default_data_source=DefaultDataSources.PATHS,
+                default_data_source=DefaultDataSources.FILES,
             )
 
         def get_state_dict(self) -> Dict[str, Any]:
@@ -336,6 +337,7 @@ __________
         show_val_batch,
         show_test_batch,
         show_predict_batch,
+        available_data_sources,
     :exclude-members:
         autogenerate_dataset,
 

@@ -104,10 +104,11 @@ class ObjectDetectionPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.PATHS: ImagePathsDataSource(),
+                DefaultDataSources.FILES: ImagePathsDataSource(),
+                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 "coco": COCODataSource(),
             },
-            default_data_source=DefaultDataSources.PATHS,
+            default_data_source=DefaultDataSources.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -117,20 +118,7 @@ class ObjectDetectionPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_transforms()
-
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_transforms()
-
-    @property
-    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_transforms()
-
-    @property
-    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
         return default_transforms()
 
 

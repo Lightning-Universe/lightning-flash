@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -19,6 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
 from flash.data.callback import ControlFlow
+from flash.data.data_source import DefaultDataKeys
 from flash.data.utils import _contains_any_tensor, convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
 
 if TYPE_CHECKING:
@@ -137,6 +138,13 @@ class _PreProcessor(torch.nn.Module):
         self._collate_context = CurrentFuncContext("collate", preprocess)
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
+    def _extract_metadata(
+        self,
+        samples: List[Dict[str, Any]],
+    ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
+        metadata = [s.pop(DefaultDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
+        return samples, metadata if any(m is not None for m in metadata) else None
+
     def forward(self, samples: Sequence[Any]) -> Any:
         # we create a new dict to prevent from potential memory leaks
         # assuming that the dictionary samples are stored in between and
@@ -158,7 +166,10 @@ class _PreProcessor(torch.nn.Module):
                 samples = type(_samples)(_samples)
 
                 with self._collate_context:
+                    samples, metadata = self._extract_metadata(samples)
                     samples = self.collate_fn(samples)
+                    if metadata:
+                        samples[DefaultDataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
 
             with self._per_batch_transform_context:
@@ -243,6 +254,8 @@ def default_uncollate(batch: Any):
     batch_type = type(batch)
 
     if isinstance(batch, Tensor):
+        if len(batch.shape) == 0:  # 0 shape tensors
+            return batch
         return list(torch.unbind(batch, 0))
 
     elif isinstance(batch, Mapping):

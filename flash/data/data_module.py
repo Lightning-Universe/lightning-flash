@@ -327,6 +327,14 @@ class DataModule(pl.LightningDataModule):
     def data_pipeline(self) -> DataPipeline:
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
+    def available_data_sources(self) -> Sequence[str]:
+        """Get the list of available data source names for use with this :class:`~flash.data.data_module.DataModule`.
+
+        Returns:
+            The list of data source names.
+        """
+        return self.preprocess.available_data_sources()
+
     @staticmethod
     def _split_train_val(
         train_dataset: Dataset,
@@ -407,7 +415,7 @@ class DataModule(pl.LightningDataModule):
         Examples::
 
             data_module = DataModule.from_data_source(
-                DefaultDataSources.PATHS,
+                DefaultDataSources.FOLDERS,
                 train_data="train_folder",
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,
@@ -463,7 +471,7 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.data.data_module.DataModule` object from the given folders using the
-        :class:`~flash.data.data_source.DataSource` of name :attr:`~flash.data.data_source.DefaultDataSources.PATHS`
+        :class:`~flash.data.data_source.DataSource` of name :attr:`~flash.data.data_source.DefaultDataSources.FOLDERS`
         from the passed or constructed :class:`~flash.data.process.Preprocess`.
 
         Args:
@@ -503,7 +511,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.PATHS,
+            DefaultDataSources.FOLDERS,
             train_folder,
             val_folder,
             test_folder,
@@ -542,7 +550,7 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.data.data_module.DataModule` object from the given sequences of files using the
-        :class:`~flash.data.data_source.DataSource` of name :attr:`~flash.data.data_source.DefaultDataSources.PATHS`
+        :class:`~flash.data.data_source.DataSource` of name :attr:`~flash.data.data_source.DefaultDataSources.FILES`
         from the passed or constructed :class:`~flash.data.process.Preprocess`.
 
         Args:
@@ -586,7 +594,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.PATHS,
+            DefaultDataSources.FILES,
             (train_files, train_targets),
             (val_files, val_targets),
             (test_files, test_targets),
@@ -669,7 +677,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.TENSOR,
+            DefaultDataSources.TENSORS,
             (train_data, train_targets),
             (val_data, val_targets),
             (test_data, test_targets),

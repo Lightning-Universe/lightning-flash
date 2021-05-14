@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -24,6 +25,7 @@ from transformers import AutoTokenizer, default_data_collator
 from flash.data.data_module import DataModule
 from flash.data.data_source import DataSource, DefaultDataSources
 from flash.data.process import Preprocess
+from flash.data.properties import ProcessState
 
 
 class Seq2SeqDataSource(DataSource):
@@ -158,6 +160,15 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
         return [self._tokenize_fn(s) for s in data]
 
 
+@dataclass(unsafe_hash=True, frozen=True)
+class Seq2SeqBackboneState(ProcessState):
+    """The ``Seq2SeqBackboneState`` stores the backbone in use by the
+    :class:`~flash.text.seq2seq.core.data.Seq2SeqPreprocess`
+    """
+
+    backbone: str
+
+
 class Seq2SeqPreprocess(Preprocess):
 
     def __init__(
@@ -203,6 +214,8 @@ class Seq2SeqPreprocess(Preprocess):
             },
             default_data_source="sentences",
         )
+
+        self.set_state(Seq2SeqBackboneState(self.backbone))
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
