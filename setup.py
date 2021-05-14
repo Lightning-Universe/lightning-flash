@@ -35,7 +35,7 @@ extras = {
     "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
 }
 
-# removes possible duplicate.
+# remove possible duplicate.
 extras["vision"] = list(set(extras["image"] + extras["video"]))
 extras["all"] = list(set(extras["vision"] + extras["text"] + extras["tabular"]))
 extras["dev"] = list(set(extras["all"] + extras["docs"] + extras["test"]))
@@ -57,12 +57,12 @@ setup(
     packages=find_packages(exclude=["tests", "docs"]),
     long_description=long_description,
     long_description_content_type="text/markdown",
+    extras_require=extras,
     include_package_data=True,
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
     install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name='requirements.txt'),
-    extras_require=extras,
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
