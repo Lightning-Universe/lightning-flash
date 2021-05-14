@@ -1,3 +1,3 @@
-torchvision==0.8
+torchvision
 Pillow>=7.2
 kornia>=0.5.1

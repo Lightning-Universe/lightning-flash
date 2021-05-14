@@ -35,9 +35,9 @@ class RougeMetric(Metric):
 
         >>> target = "Is your name John".split()
         >>> preds = "My name is John".split()
-        >>> rouge = RougeMetric()
+        >>> rouge = RougeMetric()   # doctest: +SKIP
         >>> from pprint import pprint
-        >>> pprint(rouge(preds, target))  # doctest: +NORMALIZE_WHITESPACE
+        >>> pprint(rouge(preds, target))  # doctest: +NORMALIZE_WHITESPACE +SKIP
         {'rouge1_fmeasure': 0.25,
          'rouge1_precision': 0.25,
          'rouge1_recall': 0.25,

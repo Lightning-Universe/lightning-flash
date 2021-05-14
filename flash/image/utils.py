@@ -4,6 +4,10 @@ from flash.core.utilities.imports import _IMAGE_AVAILABLE
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
+else:
+
+    class Image:
+        Image = None
 
 
 def pil_loader(sample: Union[List, Tuple, str]) -> Union[Image.Image, list]:

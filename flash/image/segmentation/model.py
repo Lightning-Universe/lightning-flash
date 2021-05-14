@@ -85,7 +85,7 @@ class SemanticSegmentation(ClassificationTask):
         postprocess: Optional[Postprocess] = None,
     ) -> None:
 
-        if isinstance(backbone, str) and not (not _TORCHVISION_AVAILABLE or not _TIMM_AVAILABLE):
+        if isinstance(backbone, str) and (not _TORCHVISION_AVAILABLE or not _TIMM_AVAILABLE):
             raise ModuleNotFoundError("Please, pip install -e '.[image]'")
 
         if metrics is None:
