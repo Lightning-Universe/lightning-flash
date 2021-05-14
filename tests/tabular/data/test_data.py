@@ -15,32 +15,37 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
-import pandas as pd
 import pytest
 
-from flash.data.data_source import DefaultDataKeys
-from flash.tabular import TabularData
-from flash.tabular.classification.data.dataset import _categorize, _normalize
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _PANDAS_AVAILABLE
 
-TEST_DF_1 = pd.DataFrame(
-    data={
-        "category": ["a", "b", "c", "a", None, "c"],
-        "scalar_a": [0.0, 1.0, 2.0, 3.0, None, 5.0],
-        "scalar_b": [5.0, 4.0, 3.0, 2.0, None, 1.0],
-        "label": [0, 1, 0, 1, 0, 1],
-    }
-)
+if _PANDAS_AVAILABLE:
+    import pandas as pd
 
-TEST_DF_2 = pd.DataFrame(
-    data={
-        "category": ["d", "e", "f"],
-        "scalar_a": [0.0, 1.0, 2.0],
-        "scalar_b": [0.0, 4.0, 2.0],
-        "label": [0, 1, 0],
-    }
-)
+    from flash.tabular import TabularData
+    from flash.tabular.classification.data.dataset import _categorize, _normalize
+
+    TEST_DF_1 = pd.DataFrame(
+        data={
+            "category": ["a", "b", "c", "a", None, "c"],
+            "scalar_a": [0.0, 1.0, 2.0, 3.0, None, 5.0],
+            "scalar_b": [5.0, 4.0, 3.0, 2.0, None, 1.0],
+            "label": [0, 1, 0, 1, 0, 1],
+        }
+    )
+
+    TEST_DF_2 = pd.DataFrame(
+        data={
+            "category": ["d", "e", "f"],
+            "scalar_a": [0.0, 1.0, 2.0],
+            "scalar_b": [0.0, 4.0, 2.0],
+            "label": [0, 1, 0],
+        }
+    )
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_categorize():
     dfs, codes = _categorize([TEST_DF_1], ["category"])
     assert list(dfs[0]["category"]) == [1, 2, 3, 1, 0, 3]
@@ -51,6 +56,7 @@ def test_categorize():
     assert codes == {"category": [None, "a", "b", "c", "d", "e", "f"]}
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_normalize():
     num_input = ["scalar_a", "scalar_b"]
     dfs, mean_one, std_one = _normalize([TEST_DF_1], num_input)
@@ -61,6 +67,7 @@ def test_normalize():
     assert np.allclose(std_one, std_two)
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_emb_sizes():
     self = Mock()
     self.codes = {"category": [None, "a", "b", "c"]}
@@ -82,6 +89,7 @@ def test_emb_sizes():
     assert es == [(100_000, 17), (1_000_000, 31)]
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_tabular_data(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
@@ -105,6 +113,7 @@ def test_tabular_data(tmpdir):
         assert target.shape == (1, )
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_categorical_target(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
@@ -132,6 +141,7 @@ def test_categorical_target(tmpdir):
         assert target.shape == (1, )
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_from_data_frame(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
@@ -155,6 +165,7 @@ def test_from_data_frame(tmpdir):
         assert target.shape == (1, )
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_from_csv(tmpdir):
     train_csv = Path(tmpdir) / "train.csv"
     val_csv = test_csv = Path(tmpdir) / "valid.csv"
@@ -181,6 +192,7 @@ def test_from_csv(tmpdir):
         assert target.shape == (1, )
 
 
+@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_empty_inputs():
     train_data_frame = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):

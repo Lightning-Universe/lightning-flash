@@ -19,6 +19,24 @@ jobs:
         os: [ubuntu-20.04, macOS-10.15, windows-2019]
         python-version: [3.6, 3.8]
         requires: ['minimal', 'latest']
+        topic: ['devel']
+        include:
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: 'image'
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: 'video'
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: 'tabular'
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: 'text'
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
@@ -62,16 +80,16 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
+        key: ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.topic }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}-pip-
+          ${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.topic }}-${{ matrix.requires }}-pip-
 
     - name: Install dependencies
       run: |
         python --version
         pip --version
-        pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install -e . --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install -e '.[${{ matrix.topic }}]' --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install --requirement requirements/test.txt --upgrade
         pip list
       shell: bash
 

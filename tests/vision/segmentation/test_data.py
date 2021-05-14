@@ -5,12 +5,15 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pytest
 import torch
-from PIL import Image
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
-from flash.data.data_source import DefaultDataKeys
-from flash.vision import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def build_checkboard(n, m, k=8):
@@ -48,6 +51,7 @@ class TestSemanticSegmentationPreprocess:
         assert prep is not None
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 class TestSemanticSegmentationData:
 
     def test_smoke(self):

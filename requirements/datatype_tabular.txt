@@ -1,0 +1,2 @@
+pytorch-tabnet==3.1
+scikit-learn

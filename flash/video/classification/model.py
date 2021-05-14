@@ -26,9 +26,9 @@ from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy
 
 from flash.core.classification import ClassificationTask, Labels
+from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.data.process import Serializer
-from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 
 _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
