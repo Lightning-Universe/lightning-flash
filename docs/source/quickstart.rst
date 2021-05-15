@@ -123,10 +123,10 @@ We get the following output:
 
     ...
 
-.. doctest::
+.. testcode::
     :hide:
 
-    >>> assert all([prediction in [0, 1] for prediction in predictions])
+    assert all([prediction in [0, 1] for prediction in predictions])
 
 .. code-block::
 
