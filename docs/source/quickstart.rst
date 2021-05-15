@@ -118,6 +118,20 @@ Here's an example of inference:
 
 We get the following output:
 
+.. testoutput::
+    :hide:
+
+    ...
+
+.. doctest::
+    :hide:
+
+    >>> assert all([prediction in [0, 1] for prediction in predictions])
+
+.. code-block::
+
+    [1, 1, 0]
+
 -------
 
 Finetuning

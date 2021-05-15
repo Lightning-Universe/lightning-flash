@@ -44,11 +44,17 @@ Here's an example of finetuning.
     trainer.save_checkpoint("image_classification_model.pt")
 
 
+.. testoutput:: finetune
+    :hide:
+
+    ...
+
+
 Using a finetuned model
 -----------------------
 Once you've finetuned, use the model to predict:
 
-.. code-block:: python
+.. testcode:: python
 
     # Serialize predictions as labels, automatically inferred from the training data in part 2.
     model.serializer = Labels()
@@ -56,6 +62,21 @@ Once you've finetuned, use the model to predict:
     predictions = model.predict(["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg"])
     print(predictions)
 
+We get the following output:
+
+.. testoutput:: finteune
+    :hide:
+
+    ...
+
+.. doctest:: finetune
+    :hide:
+
+    >>> assert all([prediction in ["ants", "bees"] for prediction in predictions])
+
+.. code-block::
+
+    ['bees', 'ants']
 
 Or you can use the saved model for prediction anywhere you want!
 

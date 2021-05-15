@@ -42,3 +42,8 @@ Here's an example:
 
     # 5. Save the model!
     trainer.save_checkpoint("image_classification_model.pt")
+
+.. testoutput:: training
+    :hide:
+
+    ...
