@@ -62,17 +62,19 @@ Once you've finetuned, use the model to predict:
     predictions = model.predict(["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg"])
     print(predictions)
 
-We get the following output:
 
 .. testoutput:: finteune
     :hide:
 
     ...
 
+
 .. doctest:: finetune
     :hide:
 
     >>> assert all([prediction in ["ants", "bees"] for prediction in predictions])
+
+We get the following output:
 
 .. code-block::
 
