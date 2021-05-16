@@ -285,6 +285,11 @@ supplying the task itself, and the associated data:
     trainer.fit(model, datamodule=datamodule)
 
 
+.. testoutput:: custom_task
+    :hide:
+
+    ...
+
 
 5. Predicting
 -------------
@@ -298,8 +303,8 @@ With a trained model we can now perform inference. Here we will use a few exampl
         [-0.0128, -0.0446,  0.0606,  0.0529,  0.0480,  0.0294, -0.0176,  0.0343,  0.0702,  0.0072],
         [ 0.0381,  0.0507,  0.0089,  0.0425, -0.0428, -0.0210, -0.0397, -0.0026, -0.0181,  0.0072],
         [-0.0128, -0.0446, -0.0235, -0.0401, -0.0167,  0.0046, -0.0176, -0.0026, -0.0385, -0.0384],
-        [-0.0237, -0.0446,  0.0455,  0.0907, -0.0181, -0.0354,  0.0707, -0.0395, -0.0345, -0.0094]]
-    )
+        [-0.0237, -0.0446,  0.0455,  0.0907, -0.0181, -0.0354,  0.0707, -0.0395, -0.0345, -0.0094],
+    ])
 
     predictions = model.predict(predict_data)
     print(predictions)
