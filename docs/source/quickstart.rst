@@ -6,7 +6,7 @@ Quick Start
 
 Flash is a high-level deep learning framework for fast prototyping, baselining, finetuning and solving deep learning problems. It features a set of tasks for you to use for inference and finetuning out of the box, and an easy to implement API to customize every step of the process for full flexibility.
 
-Flash is built for beginners with a simple API that requires very little deep learning background, and for data scientists, kagglers, applied ML practitioners and deep learning researchers that want a quick way to get a deep learning baseline with advnaced features `PyTorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ offers.
+Flash is built for beginners with a simple API that requires very little deep learning background, and for data scientists, Kagglers, applied ML practitioners and deep learning researchers that want a quick way to get a deep learning baseline with advanced features `PyTorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ offers.
 
 
 Why Flash?
