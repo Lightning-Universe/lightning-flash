@@ -56,17 +56,6 @@ Flash tasks implement the standard best practices for a variety of diffrent mode
 
     Read :doc:`here <reference/flash_to_pl>` to understand when to use Flash vs Lightning.
 
-----
-
-Install
-=======
-
-You can install flash using pip or conda:
-
-.. code-block:: bash
-
-    pip install lightning-flash -U
-
 ------
 
 Tasks
