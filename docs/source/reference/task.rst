@@ -27,7 +27,7 @@ API reference
 Task
 ----
 
-.. autoclass:: flash.core.Task
+.. autoclass:: flash.core.model.Task
     :members:
     :noindex:
     :exclude-members: forward

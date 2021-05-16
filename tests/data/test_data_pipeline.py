@@ -18,8 +18,6 @@ from unittest import mock
 import numpy as np
 import pytest
 import torch
-import torchvision.transforms as T
-from PIL import Image
 from pytorch_lightning import Trainer
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -27,13 +25,18 @@ from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core import Task
-from flash.data.auto_dataset import AutoDataset, IterableAutoDataset
-from flash.data.batch import _PostProcessor, _PreProcessor
-from flash.data.data_module import DataModule
-from flash.data.data_pipeline import _StageOrchestrator, DataPipeline
-from flash.data.data_source import DataSource
-from flash.data.process import DefaultPreprocess, Postprocess, Preprocess
+from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
+from flash.core.data.batch import _PostProcessor, _PreProcessor
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline
+from flash.core.data.data_source import DataSource
+from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess
+from flash.core.model import Task
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+
+if _IMAGE_AVAILABLE:
+    import torchvision.transforms as T
+    from PIL import Image
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -723,6 +726,7 @@ def test_is_overriden_recursive(tmpdir):
         assert not DataPipeline._is_overriden_recursive("chocolate", preprocess, Preprocess)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @mock.patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
 

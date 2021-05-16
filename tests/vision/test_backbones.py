@@ -3,8 +3,8 @@ import urllib.error
 import pytest
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE, _TORCHVISION_AVAILABLE
 
-from flash.utils.imports import _TIMM_AVAILABLE
-from flash.vision.backbones import catch_url_error, IMAGE_CLASSIFIER_BACKBONES
+from flash.core.utilities.imports import _TIMM_AVAILABLE
+from flash.image.backbones import catch_url_error, IMAGE_CLASSIFIER_BACKBONES
 
 
 @pytest.mark.parametrize(["backbone", "expected_num_features"], [

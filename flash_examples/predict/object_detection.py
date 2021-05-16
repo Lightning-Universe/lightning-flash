@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash import Trainer
-from flash.data.utils import download_data
-from flash.vision import ObjectDetector
+from flash.core.data.utils import download_data
+from flash.image import ObjectDetector
 
 # 1. Download the data
 # Dataset Credit: https://www.kaggle.com/ultralytics/coco128

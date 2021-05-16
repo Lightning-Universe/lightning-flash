@@ -1,7 +1,7 @@
 from typing import Callable, List
 
 from flash.core.registry import FlashRegistry
-from flash.utils.imports import _TRANSFORMERS_AVAILABLE
+from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 
 _SCHEDULERS_REGISTRY = FlashRegistry("scheduler")
 

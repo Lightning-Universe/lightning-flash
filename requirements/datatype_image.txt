@@ -1,0 +1,9 @@
+torchvision
+timm>=0.4.5
+lightning-bolts>=0.3.3
+Pillow>=7.2
+kornia>=0.5.1
+matplotlib
+pycocotools>=2.0.2 ; python_version >= "3.7"
+git+https://github.com/pystiche/pystiche@releases/v0.7.2
+# pystiche>=0.7.2

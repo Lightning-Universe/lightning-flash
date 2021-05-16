@@ -20,9 +20,9 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data.dataloader import DataLoader
 
-from flash.core import Task
-from flash.data.data_pipeline import DataPipeline
-from flash.data.process import DefaultPreprocess
+from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.process import DefaultPreprocess
+from flash.core.model import Task
 
 
 class CustomModel(Task):

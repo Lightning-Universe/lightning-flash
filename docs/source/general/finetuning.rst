@@ -49,8 +49,8 @@ Finetune strategies
 .. testsetup:: strategies
 
     import flash
-    from flash.data.utils import download_data
-    from flash.vision import ImageClassificationData, ImageClassifier
+    from flash.core.data.utils import download_data
+    from flash.image import ImageClassificationData, ImageClassifier
 
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
 

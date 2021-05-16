@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from flash.data.data_source import DefaultDataKeys
-from flash.vision.segmentation.serialization import SegmentationLabels
+from flash.core.data.data_source import DefaultDataKeys
+from flash.image.segmentation.serialization import SegmentationLabels
 
 
 class TestSemanticSegmentationLabels:

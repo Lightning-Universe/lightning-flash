@@ -16,8 +16,9 @@ import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
 
-from flash.data.data_source import DefaultDataKeys
-from flash.vision import ObjectDetector
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import ObjectDetector
 
 
 def collate_fn(samples):
@@ -49,6 +50,7 @@ class DummyDetectionDataset(Dataset):
         return {DefaultDataKeys.INPUT: img, DefaultDataKeys.TARGET: {"boxes": boxes, "labels": labels}}
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_init():
     model = ObjectDetector(num_classes=2)
     model.eval()
@@ -66,6 +68,7 @@ def test_init():
 
 
 @pytest.mark.parametrize("model", ["fasterrcnn", "retinanet"])
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_training(tmpdir, model):
     model = ObjectDetector(num_classes=2, model=model, pretrained=False, pretrained_backbone=False)
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)

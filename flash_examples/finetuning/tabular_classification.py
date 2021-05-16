@@ -14,7 +14,7 @@
 from torchmetrics.classification import Accuracy, Precision, Recall
 
 import flash
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data

@@ -1,15 +1,16 @@
 import sys
 
 import flash
-from flash.data.utils import download_data
-from flash.utils.imports import _PYSTICHE_AVAILABLE
-from flash.vision.style_transfer import StyleTransfer, StyleTransferData
+from flash.core.data.utils import download_data
+from flash.core.utilities.imports import _PYSTICHE_AVAILABLE
 
 if _PYSTICHE_AVAILABLE:
     import pystiche.demo
 else:
     print("Please, run `pip install pystiche`")
     sys.exit(0)
+
+from flash.image.style_transfer import StyleTransfer, StyleTransferData
 
 download_data("http://images.cocodataset.org/zips/train2014.zip", "data")
 
