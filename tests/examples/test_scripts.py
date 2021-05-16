@@ -94,6 +94,11 @@ def run_test(filepath):
             "translation.py",
             marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
         ),
+        # pytest.param(
+        #     "finetuning",
+        #     "style_transfer.py",
+        #     marks=pytest.mark.skipif(not _PYSTICHE_AVAILABLE, reason="pystiche is not installed")
+        # ),  # TODO: takes too long
         pytest.param(
             "predict",
             "image_classification.py",
