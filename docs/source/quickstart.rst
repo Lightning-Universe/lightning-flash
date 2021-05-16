@@ -27,7 +27,7 @@ you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any c
 
 Easy to upskill
 ^^^^^^^^^^^^^^^
-If you want create more complex and custmoized models, you can refactor any part of flash with PyTorch or `PyTorch Lightning
+If you want to create more complex and customized models, you can refactor any part of flash with PyTorch or `PyTorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ components to get all the flexibility you need. Lightning is just
 organized PyTorch with the unnecessary engineering details abstracted away.
 
@@ -46,11 +46,11 @@ Quickest way to a baseline
 
 Flexibility where you want it
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Flash tasks are essentialy LightningModules, and the Flash Trainer is a thin wrapper for the Lightning Trainer. You can use your own LightningModule instead of the Flash task, the Lightning Trainer instead of the flash trainer, etc. Flash helps you focus even more only on your research, and less on anything else.
+Flash tasks are essentially LightningModules, and the Flash Trainer is a thin wrapper for the Lightning Trainer. You can use your own LightningModule instead of the Flash task, the Lightning Trainer instead of the flash trainer, etc. Flash helps you focus even more only on your research, and less on anything else.
 
 Standard best practices
 ^^^^^^^^^^^^^^^^^^^^^^^
-Flash tasks implement the standard best practices for a variety of diffrent models and domains, to save you time digging through different implementations. Flash abstracts even more details than lightning, allowing deep learning experts to share their tips and tricks for solving scoped deep learning problems.
+Flash tasks implement the standard best practices for a variety of different models and domains, to save you time digging through different implementations. Flash abstracts even more details than Lightning, allowing deep learning experts to share their tips and tricks for solving scoped deep learning problems.
 
 .. tip::
 
@@ -145,7 +145,7 @@ When you have enough data, you're likely better off training from scratch instea
 A few Built-in Tasks
 ====================
 
-- :doc:`Generic Flash Task <reference/task>`
+- :doc:`General Task <reference/task>`
 - :doc:`ImageClassification <reference/image_classification>`
 - :doc:`ImageEmbedder <reference/image_embedder>`
 - :doc:`TextClassification <reference/text_classification>`
