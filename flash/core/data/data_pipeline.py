@@ -180,7 +180,7 @@ class DataPipeline:
         if object_type is None:
             object_type = Preprocess
 
-        prefixes = ['']
+        prefixes = [None]
         if stage in (RunningStage.TRAINING, RunningStage.TUNING):
             prefixes += ['train', 'fit']
         elif stage == RunningStage.VALIDATING:
@@ -192,7 +192,7 @@ class DataPipeline:
 
         for prefix in prefixes:
             if cls._is_overriden(function_name, process_obj, object_type, prefix=prefix):
-                return f'{prefix}_{function_name}'
+                return function_name if prefix is None else f'{prefix}_{function_name}'
 
         return function_name
 
