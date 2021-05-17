@@ -26,6 +26,9 @@ else:
         FeatureReconstructionOperator = None
         MultiLayerEncodingOperator = None
 
+    class loss:
+        PerceptualLoss = object
+
 
 from flash.image.style_transfer.utils import raise_not_supported
 

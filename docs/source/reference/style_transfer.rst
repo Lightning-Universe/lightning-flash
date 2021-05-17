@@ -6,7 +6,7 @@ Style Transfer
 The task
 ********
 
-The Neural Style Transfer Task is an optimization method which extract the style from an image and apply it the content image (target).
+The Neural Style Transfer Task is an optimization method which extract the style from an image and apply it another image while preserving its content.
 The goal is that the output image looks like the content image, but “painted” in the style of the style reference image.
 
 ------
@@ -24,6 +24,7 @@ and :class:`~flash.image.style_transfer.StyleTransferData` from Flash.
     import flash
     from flash.core.data.utils import download_data
     from flash.image.style_transfer import StyleTransfer, StyleTransferData
+    import pystiche
 
 
 Then, download some content images and create a DataModule.
