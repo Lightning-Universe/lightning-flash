@@ -1,10 +1,13 @@
 import pytest
 
-from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER
+from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER, _PYSTICHE_GREATER_EQUAL_0_7_2
 from flash.image.style_transfer import StyleTransfer
 
 
-@pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER, reason="image style transfer libraries aren't installed.")
+@pytest.mark.skipif(
+    not (_IMAGE_STLYE_TRANSFER and _PYSTICHE_GREATER_EQUAL_0_7_2),
+    reason="image style transfer libraries aren't installed."
+)
 def test_style_transfer_task():
 
     model = StyleTransfer(
