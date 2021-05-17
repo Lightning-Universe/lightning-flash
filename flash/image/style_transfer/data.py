@@ -2,15 +2,17 @@ import functools
 import pathlib
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
-import torchvision
 from torch import nn
-from torchvision import transforms
 
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.classification import ImageClassificationData, ImageClassificationPreprocess
 from flash.image.style_transfer.utils import raise_not_supported
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as T
 
 __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
@@ -58,16 +60,16 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         if self.training:
             return dict(
-                to_tensor_transform=torchvision.transforms.ToTensor(),
+                to_tensor_transform=T.ToTensor(),
                 per_sample_transform_on_device=nn.Sequential(
-                    transforms.Resize(self.image_size),
-                    transforms.CenterCrop(self.image_size),
+                    T.Resize(self.image_size),
+                    T.CenterCrop(self.image_size),
                 ),
             )
         elif self.predicting:
             return dict(
-                pre_tensor_transform=transforms.Resize(self.image_size),
-                to_tensor_transform=torchvision.transforms.ToTensor(),
+                pre_tensor_transform=T.Resize(self.image_size),
+                to_tensor_transform=T.ToTensor(),
             )
         else:
             # Style transfer doesn't support a validation or test phase, so we return nothing here
