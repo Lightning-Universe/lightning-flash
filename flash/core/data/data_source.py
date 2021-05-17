@@ -36,6 +36,7 @@ import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
+from torch.utils.data.dataset import Dataset
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
@@ -143,6 +144,7 @@ class DefaultDataSources(LightningEnum):
     TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
+    DATASET = "dataset"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -319,6 +321,17 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
 
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
+
+
+class DatasetDataSource(DataSource):
+
+    def load_data(self, dataset: Dataset) -> Dataset:
+        return dataset
+
+    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any]) -> Any:
+        import pdb
+        pdb.set_trace()
+        return sample
 
 
 class SequenceDataSource(
