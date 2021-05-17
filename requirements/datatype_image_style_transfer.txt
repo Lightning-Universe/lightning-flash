@@ -1,1 +1,1 @@
-pystiche>=0.7.2.post0
+pystiche>=0.7.2
