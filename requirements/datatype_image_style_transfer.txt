@@ -1,4 +1,1 @@
-torchvision
-Pillow>=7.2
-kornia>=0.5.1
-pystiche>=0.7.1
+pystiche>=0.7.2
