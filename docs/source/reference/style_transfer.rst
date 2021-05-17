@@ -27,7 +27,6 @@ and :class:`~flash.image.style_transfer.StyleTransferData` from Flash.
 
 .. testcode:: style_transfer
 
-    import sys
     import flash
     from flash.core.data.utils import download_data
     from flash.image.style_transfer import StyleTransfer, StyleTransferData
