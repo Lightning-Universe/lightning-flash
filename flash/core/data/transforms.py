@@ -70,9 +70,13 @@ class KorniaParallelTransforms(nn.Sequential):
         result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
         for transform in self.children():
             inputs = result
+            if hasattr(transform, "_params") and bool(transform._params):
+                params = transform._params
+            else:
+                params = None
+
             for i, input in enumerate(inputs):
-                if hasattr(transform, "_params") and bool(transform._params):
-                    params = transform._params
+                if params is not None:
                     result[i] = transform(input, params)
                 else:  # case for non random transforms
                     result[i] = transform(input)
