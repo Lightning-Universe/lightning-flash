@@ -25,7 +25,7 @@ The finetuning example should:
 For our template example we don't have a pretrained backbone, so we can just call :meth:`~flash.core.trainer.Trainer.fit` rather than :meth:`~flash.core.trainer.Trainer.finetune`.
 Here's the full example:
 
-.. literalinclude:: ../../../flash/template/flash_examples/finetuning/template.py
+.. literalinclude:: ../../../flash_examples/finetuning/template.py
     :language: python
     :lines: 14-
 
@@ -48,7 +48,7 @@ The predict example should:
 For our template example we don't have a pretrained backbone, so we can just call :meth:`~flash.core.trainer.Trainer.fit` rather than :meth:`~flash.core.trainer.Trainer.finetune`.
 Here's the full example:
 
-.. literalinclude:: ../../../flash/template/flash_examples/predict/template.py
+.. literalinclude:: ../../../flash_examples/predict/template.py
     :language: python
     :lines: 14-
 
