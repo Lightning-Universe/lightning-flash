@@ -52,6 +52,23 @@ serialization.py
 ================
 
 Sometimes you want to give the user some control over their prediction format.
-`Postprocess` can do the heavy lifting (anything you always want to apply to the predictions), but one or more custom `Serializer` implementations can be used to convert the predictions to a desired output format.
-A good example is in classification; sometimes we'd like the classes, sometimes the logits, sometimes the labels, you get the idea.
-You should add your `Serializer` implementations in a `serialization.py` file and set a good default in your `Task`.
+:class:`~flash.core.data.process.Postprocess` can do the heavy lifting (anything you always want to apply to the predictions), but one or more custom :class:`~flash.core.data.process.Serializer` implementations can be used to convert the predictions to a desired output format.
+You should add your :class:`~flash.core.data.process.Serializer` implementations in a ``serialization.py`` file and set a good default in your :class:`~flash.core.model.Task`.
+Some good examples are in ``core/classification.py``.
+Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.process.Serializer`:
+
+.. literalinclude:: ../../../flash/core/classification.py
+    :language: python
+    :pyobject: Classes
+
+Alternatively, here's the :class:`~flash.core.classification.Logits` :class:`~flash.core.data.process.Serializer`:
+
+.. literalinclude:: ../../../flash/core/classification.py
+    :language: python
+    :pyobject: Logits
+
+Take a look at :ref:`predictions` to learn more.
+
+------
+
+Once you've added any optional extras, it's time to :ref:`create some examples showing your task in action! <contributing_examples>`
