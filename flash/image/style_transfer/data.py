@@ -1,6 +1,6 @@
 import functools
 import pathlib
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import torchvision
 from torch import nn
@@ -10,13 +10,13 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.image.classification import ImageClassificationData, ImageClassificationPreprocess
-
-from ._utils import raise_not_supported
+from flash.image.style_transfer.utils import raise_not_supported
 
 __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
-def _apply_to_input(default_transforms_fn) -> Callable[..., Dict[str, ApplyToKeys]]:
+def _apply_to_input(default_transforms_fn, keys: Union[Sequence[DefaultDataKeys],
+                                                       DefaultDataKeys]) -> Callable[..., Dict[str, ApplyToKeys]]:
 
     @functools.wraps(default_transforms_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Optional[Dict[str, ApplyToKeys]]:
@@ -24,7 +24,7 @@ def _apply_to_input(default_transforms_fn) -> Callable[..., Dict[str, ApplyToKey
         if not default_transforms:
             return default_transforms
 
-        return {hook: ApplyToKeys(DefaultDataKeys.INPUT, transform) for hook, transform in default_transforms.items()}
+        return {hook: ApplyToKeys(keys, transform) for hook, transform in default_transforms.items()}
 
     return wrapper
 
@@ -54,20 +54,20 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
             image_size=image_size,
         )
 
-    @_apply_to_input
+    @functools.partial(_apply_to_input, keys=DefaultDataKeys.INPUT)
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         if self.training:
             return dict(
                 to_tensor_transform=torchvision.transforms.ToTensor(),
                 per_sample_transform_on_device=nn.Sequential(
-                    transforms.Resize(min(self.image_size)),
+                    transforms.Resize(self.image_size),
                     transforms.CenterCrop(self.image_size),
                 ),
             )
         elif self.predicting:
             return dict(
+                pre_tensor_transform=transforms.Resize(self.image_size),
                 to_tensor_transform=torchvision.transforms.ToTensor(),
-                per_sample_transform_on_device=transforms.Resize(min(self.image_size)),
             )
         else:
             # Style transfer doesn't support a validation or test phase, so we return nothing here
@@ -87,12 +87,17 @@ class StyleTransferData(ImageClassificationData):
         preprocess: Optional[Preprocess] = None,
         **kwargs: Any,
     ) -> "StyleTransferData":
+
         if any(param in kwargs for param in ("val_folder", "val_transform")):
             raise_not_supported("validation")
+
         if any(param in kwargs for param in ("test_folder", "test_transform")):
             raise_not_supported("test")
 
-        preprocess = preprocess or cls.preprocess_cls(train_transform, predict_transform)
+        preprocess = preprocess or cls.preprocess_cls(
+            train_transform=train_transform,
+            predict_transform=predict_transform,
+        )
 
         return cls.from_data_source(
             DefaultDataSources.FOLDERS,

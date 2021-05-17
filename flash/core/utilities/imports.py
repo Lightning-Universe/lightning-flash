@@ -78,7 +78,9 @@ _PYSTICHE_AVAILABLE = _module_available("pystiche")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
+    _PYSTICHE_GREATER_EQUAL_0_7_2 = _compare_version("pystiche", operator.ge, "0.7.2")
 
+_IMAGE_STLYE_TRANSFER = _PYSTICHE_AVAILABLE
 _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE

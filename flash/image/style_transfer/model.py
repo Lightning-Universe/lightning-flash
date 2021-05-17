@@ -1,9 +1,6 @@
 from typing import Any, cast, Dict, Mapping, NoReturn, Optional, Sequence, Type, Union
 
-import pystiche.demo
 import torch
-from pystiche import enc, loss, ops
-from pystiche.image import read_image
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
@@ -11,9 +8,15 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER
 from flash.image.style_transfer import STYLE_TRANSFER_BACKBONES
 
-from ._utils import raise_not_supported
+if _IMAGE_STLYE_TRANSFER:
+    import pystiche.demo
+    from pystiche import enc, loss, ops
+    from pystiche.image import read_image
+
+from flash.image.style_transfer.utils import raise_not_supported
 
 __all__ = ["StyleTransfer"]
 
@@ -37,6 +40,9 @@ class StyleTransfer(Task):
         learning_rate: float = 1e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+        if not _IMAGE_STLYE_TRANSFER:
+            raise ModuleNotFoundError("Please, pip install -e '.[image_style_transfer]'")
+
         self.save_hyperparameters(ignore="style_image")
 
         if style_image is None:
@@ -111,7 +117,6 @@ class StyleTransfer(Task):
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         input_image = batch[DefaultDataKeys.INPUT]
         self.perceptual_loss.set_content_image(input_image)
-
         output_image = self(input_image)
         return self.perceptual_loss(output_image).total()
 
@@ -120,3 +125,7 @@ class StyleTransfer(Task):
 
     def test_step(self, batch: Any, batch_idx: int) -> NoReturn:
         raise_not_supported("test")
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int) -> Any:
+        input_image = batch[DefaultDataKeys.INPUT]
+        return self(input_image)

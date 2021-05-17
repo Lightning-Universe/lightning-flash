@@ -22,6 +22,8 @@ import pytest
 
 from flash.core.utilities.imports import (
     _IMAGE_AVAILABLE,
+    _IMAGE_STLYE_TRANSFER,
+    _PYSTICHE_GREATER_EQUAL_0_7_2,
     _TABULAR_AVAILABLE,
     _TEXT_AVAILABLE,
     _TORCHVISION_GREATER_EQUAL_0_9,
@@ -29,6 +31,7 @@ from flash.core.utilities.imports import (
 )
 
 _IMAGE_AVAILABLE = _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9
+_IMAGE_STLYE_TRANSFER = _IMAGE_STLYE_TRANSFER and _PYSTICHE_GREATER_EQUAL_0_7_2
 
 root = Path(__file__).parent.parent.parent
 
@@ -94,11 +97,11 @@ def run_test(filepath):
             "translation.py",
             marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
         ),
-        # pytest.param(
-        #     "finetuning",
-        #     "style_transfer.py",
-        #     marks=pytest.mark.skipif(not _PYSTICHE_AVAILABLE, reason="pystiche is not installed")
-        # ),  # TODO: takes too long
+        pytest.param(
+            "finetuning",
+            "style_transfer.py",
+            marks=pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER, reason="pystiche is not installed")
+        ),
         pytest.param(
             "predict",
             "image_classification.py",
