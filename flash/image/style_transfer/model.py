@@ -1,7 +1,6 @@
 from typing import Any, cast, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple, Type, Union
 
 import torch
-from pystiche.enc.encoder import Encoder
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
