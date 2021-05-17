@@ -23,7 +23,7 @@ Here's an example of finetuning.
     seed_everything(42)
 
     # 1. Download and organize the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
@@ -43,12 +43,17 @@ Here's an example of finetuning.
     # 5. Save the model!
     trainer.save_checkpoint("image_classification_model.pt")
 
+.. testoutput:: finetune
+    :hide:
+
+    ...
+
 
 Using a finetuned model
 -----------------------
 Once you've finetuned, use the model to predict:
 
-.. code-block:: python
+.. testcode:: finetune
 
     # Serialize predictions as labels, automatically inferred from the training data in part 2.
     model.serializer = Labels()
@@ -56,6 +61,11 @@ Once you've finetuned, use the model to predict:
     predictions = model.predict(["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg"])
     print(predictions)
 
+We get the following output:
+
+.. testoutput:: finetune
+
+    ['bees', 'ants']
 
 Or you can use the saved model for prediction anywhere you want!
 
