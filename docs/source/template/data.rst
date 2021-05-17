@@ -7,7 +7,7 @@ The Data
 The first step to contributing a task is to implement the classes we need to load some data.
 Inside ``data.py`` you should implement:
 
-#. one or more :class:`~flash.core.data.data_source.DataSource` classes
+#. zero or more :class:`~flash.core.data.data_source.DataSource` classes
 #. a :class:`~flash.core.data.process.Preprocess`
 #. a :class:`~flash.core.data.data_module.DataModule`
 #. a :class:`~flash.core.data.callbacks.BaseVisualization` *(optional)*
@@ -17,7 +17,7 @@ DataSource
 ^^^^^^^^^^
 
 The :class:`~flash.core.data.data_source.DataSource` implementations describe how data from particular sources (like folders, files, tensors, etc.) should be loaded.
-At a minimum you will require one :class:`~flash.core.data.data_source.DataSource` implementation, but if you want to support a few different ways of loading data for your task, the more the merrier!
+If you just want to support :meth:`flash.core.data.data_module.DataModule.from_datasets` you won't need a :class:`~flash.core.data.data_source.DataSource`, but if you want to support a few different ways of loading data for your task, the more the merrier!
 Each :class:`~flash.core.data.data_source.DataSource` has a ``load_data`` method and a ``load_sample`` method.
 The ``load_data`` method accepts some dataset metadata (e.g. a folder name) and produces a sequence or iterable of samples or sample metadata.
 The ``load_sample`` method then takes as input a single element from the output of ``load_data`` and returns a sample.
@@ -69,7 +69,7 @@ A :class:`~flash.core.data.data_source.DataSource` is not the same as a :class:`
 A :class:`torch.utils.data.Dataset` knows about the data, whereas a :class:`~flash.core.data.data_source.DataSource` only know about how to load the data.
 So it's possible for a single :class:`~flash.core.data.data_source.DataSource` to create more than one :class:`~torch.utils.data.Dataset`.
 It's also fine for the output of the ``load_data`` method to just be a :class:`torch.utils.data.Dataset` instance.
-You don't need to re-write custom datasets, just instantiate them in ``load_data`` similarly to what we did with the ``TemplateSKLearnDataSource``.
+You don't need to re-write custom datasets, either use :meth:`flash.core.data.data_module.DataModule.from_datasets` or just instantiate them in ``load_data`` similarly to what we did with the ``TemplateSKLearnDataSource``.
 For example, the ``load_data`` of the ``VideoClassificationPathsDataSource`` just creates an :class:`~pytorchvideo.data.EncodedVideoDataset` from the given folder.
 Here's how it looks (from ``video/classification.data.py``):
 

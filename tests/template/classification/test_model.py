@@ -47,14 +47,14 @@ class DummyDataset(torch.utils.data.Dataset):
 # ==============================
 
 
-@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed.")
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
 def test_smoke():
     """A simple test that the class can be instantiated."""
     model = TemplateSKLearnClassifier(num_features=1, num_classes=1)
     assert model is not None
 
 
-@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed.")
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
 @pytest.mark.parametrize("num_classes", [4, 256])
 @pytest.mark.parametrize("shape", [(1, 3), (2, 128)])
 def test_forward(num_classes, shape):
@@ -71,8 +71,8 @@ def test_forward(num_classes, shape):
     assert out.shape == (shape[0], num_classes)
 
 
-@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed.")
-def test_init_train(tmpdir):
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+def test_train(tmpdir):
     """Tests that the model can be trained on our ``DummyDataset``."""
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=4)
@@ -80,7 +80,7 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed.")
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
 def test_predict_numpy():
     """Tests that we can generate predictions from a numpy array."""
     row = np.random.rand(1, DummyDataset.num_features)
@@ -90,8 +90,8 @@ def test_predict_numpy():
     assert isinstance(out[0], int)
 
 
-@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed.")
-def test_predict_bunch():
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+def test_predict_sklearn():
     """Tests that we can generate predictions from a scikit-learn ``Bunch``."""
     bunch = datasets.load_iris()
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)

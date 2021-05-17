@@ -22,6 +22,7 @@ if _SKLEARN_AVAILABLE:
     from sklearn import datasets
 
 
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
 class TestTemplatePreprocess:
     """Tests ``TemplatePreprocess``."""
 
@@ -31,7 +32,7 @@ class TestTemplatePreprocess:
         assert prep is not None
 
 
-@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed.")
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
 class TestTemplateData:
     """Tests ``TemplateData``."""
 

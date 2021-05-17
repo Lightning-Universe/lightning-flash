@@ -60,6 +60,12 @@ Lightning Flash
    template/optional
    template/examples
    template/tests
+   template/docs
+
+.. toctree::
+   :hidden:
+
+   reference/template
 
 Indices and tables
 ==================
