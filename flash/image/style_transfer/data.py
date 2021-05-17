@@ -40,7 +40,7 @@ class StyleTransferPreprocess(Preprocess):
         val_transform: Optional[Union[Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Dict[str, Callable]]] = None,
-        image_size: Union[int, Tuple[int, int]] = 256,
+        image_size: int = 256,
     ):
         if val_transform:
             raise_not_supported("validation")
