@@ -30,6 +30,7 @@ from flash.data.process import Serializer
 
 class GraphClassifier(ClassificationTask):
     """Task that classifies graphs.
+    Some documentation https://1176-333857397-gh.circle-artifacts.com/0/html/custom_task.html
 
     Args:
         num_features: Number of columns in table (not including target column).

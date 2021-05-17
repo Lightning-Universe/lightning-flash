@@ -40,9 +40,9 @@ class GraphClassificationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        num_features: int = 128
+        num_features: int = 128 #todo: do we want to add backbone here as in text?
     ):
-        self.num_features = num_features  #todo: probably wrong
+        self.num_features = num_features
 
         super().__init__(
             train_transform=train_transform,

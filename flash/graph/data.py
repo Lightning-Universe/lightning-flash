@@ -31,8 +31,8 @@ class GraphPathsDataSource(PathsDataSource):
         # that PyG uses torch.load()
         default_loader = torch.load  # todo: is this right?
         sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
-        return sample
+        return sample # todo: what fields should sample have here?
 
     # todo: an alternative would be to load from networkx https://networkx.org/documentation/stable/reference/readwrite/index.html recognised files
     # In such case one can use https://pytorch-geometric.readthedocs.io/en/latest/modules/utils.html?highlight=networkx%20to%20pyg#torch_geometric.utils.from_networkx
-    # to convert it to torch_geometric.data.Data instance
+    # to convert it to torch_geometric.data.Data instance.
