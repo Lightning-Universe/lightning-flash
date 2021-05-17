@@ -51,12 +51,16 @@ extras = {
     "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image.txt"),
     "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
     "serve": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="serve.txt"),
+    "graph": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_graph.txt"),
 }
 
 # remove possible duplicate.
 extras["vision"] = list(set(extras["image"] + extras["video"]))
-extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
-extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
+extras["dev"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["image"] + extras["graph"]))
+extras["dev-test"] = list(set(extras["test"] + extras["dev"]))
+extras["all"] = list(set(extras["dev"] + extras["docs"]))
+
+print(extras)
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
