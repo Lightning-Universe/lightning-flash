@@ -114,7 +114,6 @@ It also includes all of your default transforms!
 If you've defined a fully custom :class:`~flash.core.data.data_source.DataSource` (like our ``TemplateSKLearnDataSource``), then you will need a ``from_*`` method for each (we'll define ``from_sklearn`` for our example).
 The ``from_*`` methods take whatever arguments you want them to and call :meth:`~flash.core.data.data_module.DataModule.from_data_source` with the name given to your custom data source in the ``Preprocess.__init__``.
 
-
 Take a look at our ``TemplateData`` to get started:
 
 .. autoclass:: flash.template.data.TemplateData
