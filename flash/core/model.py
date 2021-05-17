@@ -13,9 +13,11 @@
 # limitations under the License.
 import functools
 import inspect
+from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
+import pytorch_lightning as pl
 import torch
 import torchmetrics
 from pytorch_lightning import LightningModule
@@ -26,12 +28,25 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
+import flash
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utilities.apply_func import get_callable_dict
+
+
+class BencharmkConvergenceCI(Callback):
+
+    def __init__(self):
+        pl.seed_everything(42)
+        self.history = []
+
+    def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+        self.history.append(deepcopy(trainer.callback_metrics))
+        if trainer.current_epoch == trainer.max_epochs - 1:
+            pl_module._ci_benchmark_fn(self.history)
 
 
 def predict_context(func: Callable) -> Callable:
@@ -516,3 +531,8 @@ class Task(LightningModule):
         super()._load_from_state_dict(
             state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
         )
+
+    def configure_callbacks(self):
+        # used only for CI
+        if flash._IS_TESTING:
+            return [BencharmkConvergenceCI()]
