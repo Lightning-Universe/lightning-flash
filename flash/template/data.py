@@ -81,6 +81,19 @@ class TemplateSKLearnDataSource(TemplateNumpyDataSource):
         # Now we just call super with the data and targets
         return super().load_data((data.data, data.target), dataset=dataset)
 
+    def predict_load_data(self, data: Bunch) -> Sequence[Mapping[str, Any]]:
+        """You can prepend ``train``, ``val``, ``test``, or ``predict`` to ``load_data`` in order to customize the
+        behaviour for a particular stage. In this case, we implement ``predict_load_data`` to avoid including targets
+        when predicting.
+
+        Args:
+            data: The scikit-learn data ``Bunch``.
+
+        Returns:
+            A sequence of samples / sample metadata.
+        """
+        return super().predict_load_data(data.data)
+
 
 class TemplatePreprocess(Preprocess):
     """The next thing for us to implement is the :class:`~flash.core.data.process.Preprocess`. The
@@ -138,6 +151,11 @@ class TemplatePreprocess(Preprocess):
         """
         return cls(**state_dict)
 
+    @staticmethod
+    def input_to_tensor(input: np.ndarray):
+        """Transform which creates a tensor from the given numpy ``ndarray`` and converts it to ``float``"""
+        return torch.from_numpy(input).float()
+
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         """Your :class:`~flash.core.data.process.Preprocess` should usually define some default transforms. Generally, we at
         least want to convert to a tensor, so let's do that here.
@@ -152,7 +170,7 @@ class TemplatePreprocess(Preprocess):
         """
         return {
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DefaultDataKeys.INPUT, torch.from_numpy),
+                ApplyToKeys(DefaultDataKeys.INPUT, self.input_to_tensor),
                 ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
             ),
         }

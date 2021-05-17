@@ -49,20 +49,21 @@ class TemplateSKLearnClassifier(ClassificationTask):
         self,
         num_features: int,
         num_classes: int,
-        hidden_size: 128,
+        hidden_size: int = 128,
         loss_fn: Optional[Callable] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
+        learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
         model = nn.Sequential(
             nn.Linear(num_features, hidden_size),
             nn.ReLU(True),
+            nn.BatchNorm1d(hidden_size),
             nn.Linear(hidden_size, num_classes),
         )
 
