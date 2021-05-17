@@ -14,15 +14,14 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import pandas as pd
-from pandas.core.frame import DataFrame
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.classification import LabelsState
-from flash.data.callback import BaseDataFetcher
-from flash.data.data_module import DataModule
-from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.data.process import Preprocess
+from flash.core.data.callback import BaseDataFetcher
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.process import Preprocess
+from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
     _generate_codes,
@@ -30,6 +29,12 @@ from flash.tabular.classification.data.dataset import (
     _to_cat_vars_numpy,
     _to_num_vars_numpy,
 )
+
+if _PANDAS_AVAILABLE:
+    import pandas as pd
+    from pandas.core.frame import DataFrame
+else:
+    DataFrame = object
 
 
 class TabularDataFrameDataSource(DataSource[DataFrame]):
@@ -283,21 +288,21 @@ class TabularData(DataModule):
             test_data_frame: The pandas ``DataFrame`` containing the testing data.
             predict_data_frame: The pandas ``DataFrame`` containing the data to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.data.data.Preprocess` to pass to the
-                :class:`~flash.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
-                and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             is_regression: If ``True``, targets will be formatted as floating point. If ``False``, targets will be
                 formatted as integers.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
@@ -393,21 +398,21 @@ class TabularData(DataModule):
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.data.data.Preprocess` to pass to the
-                :class:`~flash.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
-                and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             is_regression: If ``True``, targets will be formatted as floating point. If ``False``, targets will be
                 formatted as integers.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used

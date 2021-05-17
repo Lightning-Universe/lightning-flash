@@ -24,10 +24,10 @@ Take a look at their paper (and please consider citing their paper if you use th
 Inference
 *********
 
-The :class:`~flash.vision.ImageClassifier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
+The :class:`~flash.image.ImageClassifier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
 
-We can use the :class:`~flash.vision.ImageClassifier` model (pretrained on our data) for inference on any string sequence using :func:`~flash.vision.ImageClassifier.predict`.
-We can also add a simple visualisation by extending :class:`~flash.data.base_viz.BaseVisualization`, like this:
+We can use the :class:`~flash.image.ImageClassifier` model (pretrained on our data) for inference on any string sequence using :func:`~flash.image.ImageClassifier.predict`.
+We can also add a simple visualisation by extending :class:`~flash.core.data.base_viz.BaseVisualization`, like this:
 
 .. literalinclude:: ../../../flash_examples/predict/image_classification_multi_label.py
     :language: python
@@ -42,7 +42,7 @@ Finetuning
 **********
 
 Now let's look at how we can finetune a model on the movie poster data.
-Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.ImageClassificationData`.
+Once we download the data using :func:`~flash.core.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.image.ImageClassificationData`.
 
 .. note:: The dataset contains ``train`` and ``validation`` folders, and then each folder contains images and a ``metadata.csv`` which stores the labels.
 

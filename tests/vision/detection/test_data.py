@@ -3,12 +3,13 @@ import os
 from pathlib import Path
 
 import pytest
-from PIL import Image
-from pytorch_lightning.utilities import _module_available
 
-from flash.data.data_source import DefaultDataKeys
-from flash.utils.imports import _COCO_AVAILABLE
-from flash.vision.detection.data import ObjectDetectionData
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
+from flash.image.detection.data import ObjectDetectionData
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def _create_dummy_coco_json(dummy_json_path):
@@ -76,7 +77,7 @@ def _create_synth_coco_dataset(tmpdir):
     return train_folder, coco_ann_path
 
 
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
 def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)

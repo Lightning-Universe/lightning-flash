@@ -70,7 +70,7 @@ By default, we use the `bert-base-uncased <https://arxiv.org/abs/1810.04805>`_ m
 
 .. testsetup::
 
-    from flash.data.utils import download_data
+    from flash.core.data.utils import download_data
     from flash.text import TextClassificationData, TextClassifier
 
     download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")

@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
@@ -46,6 +47,7 @@ def json_data(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = TextClassificationData.from_csv("sentence", "label", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
@@ -55,6 +57,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_test_valid(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = TextClassificationData.from_csv(
@@ -76,9 +79,16 @@ def test_test_valid(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
     batch = next(iter(dm.train_dataloader()))
     assert batch["labels"].item() in [0, 1]
     assert "input_ids" in batch
+
+
+@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
+def test_text_module_not_found_error():
+    with pytest.raises(ModuleNotFoundError, match="[text]"):
+        TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)

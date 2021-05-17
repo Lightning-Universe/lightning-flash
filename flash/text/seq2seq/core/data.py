@@ -12,18 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import datasets
 import torch
-from datasets import DatasetDict, load_dataset
 from torch import Tensor
-from transformers import AutoTokenizer, default_data_collator
 
-from flash.data.data_module import DataModule
-from flash.data.data_source import DataSource, DefaultDataSources
-from flash.data.process import Preprocess
+import flash
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.process import Preprocess
+from flash.core.data.properties import ProcessState
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+
+if _TEXT_AVAILABLE:
+    import datasets
+    from datasets import DatasetDict, load_dataset
+    from transformers import AutoTokenizer, default_data_collator
 
 
 class Seq2SeqDataSource(DataSource):
@@ -36,6 +42,9 @@ class Seq2SeqDataSource(DataSource):
         padding: Union[str, bool] = 'max_length'
     ):
         super().__init__()
+
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
 
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         self.max_source_length = max_source_length
@@ -90,7 +99,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
+        if use_full and flash._IS_TESTING:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             # used for debugging. Avoid processing the entire dataset   # noqa E265
@@ -158,6 +167,15 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
         return [self._tokenize_fn(s) for s in data]
 
 
+@dataclass(unsafe_hash=True, frozen=True)
+class Seq2SeqBackboneState(ProcessState):
+    """The ``Seq2SeqBackboneState`` stores the backbone in use by the
+    :class:`~flash.text.seq2seq.core.data.Seq2SeqPreprocess`
+    """
+
+    backbone: str
+
+
 class Seq2SeqPreprocess(Preprocess):
 
     def __init__(
@@ -175,6 +193,9 @@ class Seq2SeqPreprocess(Preprocess):
         self.max_target_length = max_target_length
         self.max_source_length = max_source_length
         self.padding = padding
+
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
 
         super().__init__(
             train_transform=train_transform,
@@ -203,6 +224,8 @@ class Seq2SeqPreprocess(Preprocess):
             },
             default_data_source="sentences",
         )
+
+        self.set_state(Seq2SeqBackboneState(self.backbone))
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {

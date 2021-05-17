@@ -19,11 +19,11 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import RandomSampler, Sampler
 
-from flash.data.data_module import DataModule
-from flash.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, PathsDataSource
-from flash.data.process import Preprocess
-from flash.data.transforms import merge_transforms
-from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, PathsDataSource
+from flash.core.data.process import Preprocess
+from flash.core.data.transforms import merge_transforms
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K

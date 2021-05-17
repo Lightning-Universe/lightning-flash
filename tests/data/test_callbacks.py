@@ -16,19 +16,23 @@ from pathlib import Path
 from typing import Any, List, Sequence
 
 import numpy as np
+import pytest
 import torch
-from PIL import Image
 from pytorch_lightning import seed_everything
 from pytorch_lightning.trainer.states import RunningStage
 from torch import tensor
 
-from flash.data.base_viz import BaseVisualization
-from flash.data.callback import BaseDataFetcher
-from flash.data.data_module import DataModule
-from flash.data.data_source import DefaultDataKeys
-from flash.data.process import DefaultPreprocess
-from flash.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
-from flash.vision import ImageClassificationData
+from flash.core.data.base_viz import BaseVisualization
+from flash.core.data.callback import BaseDataFetcher
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import DefaultPreprocess
+from flash.core.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import ImageClassificationData
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 
 def _rand_image():
@@ -86,6 +90,7 @@ def test_base_data_fetcher(tmpdir):
     assert data_fetcher.batches == {'train': {}, 'test': {}, 'val': {}, 'predict': {}}
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_base_viz(tmpdir):
 
     seed_everything(42)

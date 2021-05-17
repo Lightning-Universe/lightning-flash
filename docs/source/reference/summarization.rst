@@ -68,7 +68,7 @@ By default, we use the `t5 <https://arxiv.org/abs/1910.10683>`_ model for summar
 
 .. testsetup::
 
-    from flash.data.utils import download_data
+    from flash.core.data.utils import download_data
     from flash.text import SummarizationData, SummarizationTask
 
     download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")

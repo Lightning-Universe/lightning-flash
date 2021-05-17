@@ -20,9 +20,9 @@ from torch.utils.data.sampler import RandomSampler
 
 import flash
 from flash.core.classification import Labels
+from flash.core.data.utils import download_data
 from flash.core.finetuning import NoFreeze
-from flash.data.utils import download_data
-from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 
 if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
@@ -31,7 +31,7 @@ if _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE:
     from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
 else:
     print("Please, run `pip install torchvideo kornia`")
-    sys.exit(0)
+    sys.exit(1)
 
 if __name__ == '__main__':
 
@@ -40,7 +40,8 @@ if __name__ == '__main__':
 
     # 2. [Optional] Specify transforms to be used during training.
     # Flash helps you to place your transform exactly where you want.
-    # Learn more at https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.data.process.Preprocess
+    # Learn more at:
+    # https://lightning-flash.readthedocs.io/en/latest/general/data.html#flash.core.data.process.Preprocess
     post_tensor_transform = [UniformTemporalSubsample(8), RandomShortSideScale(min_size=256, max_size=320)]
     per_batch_transform_on_device = [K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225]))]
 

@@ -16,11 +16,14 @@ import warnings
 from typing import Callable, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from transformers import BertForSequenceClassification
-from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationTask
-from flash.data.process import Serializer
+from flash.core.data.process import Serializer
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+
+if _TEXT_AVAILABLE:
+    from transformers import BertForSequenceClassification
+    from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
@@ -33,7 +36,7 @@ class TextClassifier(ClassificationTask):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
+        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
 
     def __init__(
@@ -46,6 +49,9 @@ class TextClassifier(ClassificationTask):
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+
         self.save_hyperparameters()
 
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
