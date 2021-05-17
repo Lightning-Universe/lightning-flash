@@ -21,12 +21,12 @@ At a minimum you will require one :class:`~flash.core.data.data_source.DataSourc
 Each :class:`~flash.core.data.data_source.DataSource` has a ``load_data`` method and a ``load_sample`` method.
 The ``load_data`` method accepts some dataset metadata (e.g. a folder name) and produces a sequence or iterable of samples or sample metadata.
 The ``load_sample`` method then takes as input a single element from the output of ``load_data`` and returns a sample.
-By default, these methods just return their input as you will not always need both to create a functioning :class:`~flash.core.data.data_source.DataSource`.
+By default, these methods just return their input, you will not always need both methods to create :class:`~flash.core.data.data_source.DataSource`.
 
-I'ts best practice to just override one of our existing :class:`~flash.core.data.data_source.DataSource` classes where possible.
-Take a look at our ``TemplateNumpyDataSource`` which does this to get started:
+It's best practice to just override one of our existing :class:`~flash.core.data.data_source.DataSource` classes where possible.
+Take a look at our ``TemplateNumpyDataSource`` (which does this) to get started:
 
-.. autoclass:: flash.template.data.TemplateNumpyDataSource
+.. autoclass:: flash.template.classification.data.TemplateNumpyDataSource
     :members:
 
 .. raw:: html
@@ -34,7 +34,7 @@ Take a look at our ``TemplateNumpyDataSource`` which does this to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :pyobject: TemplateNumpyDataSource
 
@@ -46,7 +46,7 @@ Take a look at our ``TemplateNumpyDataSource`` which does this to get started:
 
 Sometimes you need to something a bit more custom, have a look at our ``TemplateSKLearnDataSource`` for an example:
 
-.. autoclass:: flash.template.data.TemplateSKLearnDataSource
+.. autoclass:: flash.template.classification.data.TemplateSKLearnDataSource
     :members:
 
 .. raw:: html
@@ -54,7 +54,7 @@ Sometimes you need to something a bit more custom, have a look at our ``Template
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :pyobject: TemplateSKLearnDataSource
 
@@ -87,7 +87,7 @@ The :class:`~flash.core.data.process.Preprocess` also knows about the available 
 
 Take a look at our ``TemplatePreprocess`` to get started:
 
-.. autoclass:: flash.template.data.TemplatePreprocess
+.. autoclass:: flash.template.classification.data.TemplatePreprocess
     :members:
 
 .. raw:: html
@@ -95,7 +95,7 @@ Take a look at our ``TemplatePreprocess`` to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :pyobject: TemplatePreprocess
 
@@ -116,7 +116,7 @@ The ``from_*`` methods take whatever arguments you want them to and call :meth:`
 
 Take a look at our ``TemplateData`` to get started:
 
-.. autoclass:: flash.template.data.TemplateData
+.. autoclass:: flash.template.classification.data.TemplateData
     :members:
 
 .. raw:: html
@@ -124,7 +124,7 @@ Take a look at our ``TemplateData`` to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :pyobject: TemplateData
 
@@ -143,7 +143,7 @@ Take a look at our ``TemplateVisualization`` to get started:
 .. note::
     Don't worry about implementing it right away, you can always come back and add it later!
 
-.. autoclass:: flash.template.data.TemplateVisualization
+.. autoclass:: flash.template.classification.data.TemplateVisualization
     :members:
 
 .. raw:: html
@@ -151,7 +151,7 @@ Take a look at our ``TemplateVisualization`` to get started:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../../flash/template/data.py
+.. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :pyobject: TemplateVisualization
 

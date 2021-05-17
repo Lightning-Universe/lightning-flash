@@ -23,7 +23,7 @@ The finetuning example should:
 #. generate predictions for a few examples *(optional)*
 
 For our template example we don't have a pretrained backbone, so we can just call :meth:`~flash.core.trainer.Trainer.fit` rather than :meth:`~flash.core.trainer.Trainer.finetune`.
-Here's the full example:
+Here's the full example (``flash_examples/finetuning/template.py``):
 
 .. literalinclude:: ../../../flash_examples/finetuning/template.py
     :language: python
@@ -46,7 +46,7 @@ The predict example should:
 #. generate predictions for a whole dataset, folder, etc.
 
 For our template example we don't have a pretrained backbone, so we can just call :meth:`~flash.core.trainer.Trainer.fit` rather than :meth:`~flash.core.trainer.Trainer.finetune`.
-Here's the full example:
+Here's the full example (``flash_examples/predict/template.py``):
 
 .. literalinclude:: ../../../flash_examples/predict/template.py
     :language: python

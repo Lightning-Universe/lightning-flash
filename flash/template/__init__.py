@@ -1,2 +1,1 @@
-from flash.template.data import TemplateData
-from flash.template.model import TemplateSKLearnClassifier
+from flash.template.classification import TemplateData, TemplateSKLearnClassifier

@@ -19,7 +19,7 @@ In our template example, we just extract the input and target from the input map
 
 Here's our ``TemplateSKLearnClassifier``:
 
-.. autoclass:: flash.template.model.TemplateSKLearnClassifier
+.. autoclass:: flash.template.classification.model.TemplateSKLearnClassifier
     :members:
 
 .. raw:: html
@@ -27,7 +27,7 @@ Here's our ``TemplateSKLearnClassifier``:
     <details>
     <summary>Source</summary>
 
-.. literalinclude:: ../../../flash/template/model.py
+.. literalinclude:: ../../../flash/template/classification/model.py
     :language: python
     :pyobject: TemplateSKLearnClassifier
 
