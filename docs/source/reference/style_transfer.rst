@@ -9,6 +9,9 @@ The task
 The Neural Style Transfer Task is an optimization method which extract the style from an image and apply it another image while preserving its content.
 The goal is that the output image looks like the content image, but “painted” in the style of the style reference image.
 
+.. image:: https://raw.githubusercontent.com/pystiche/pystiche/master/docs/source/graphics/banner/banner.jpg
+    :alt: style_transfer_example
+
 ------
 
 ***
@@ -27,7 +30,7 @@ and :class:`~flash.image.style_transfer.StyleTransferData` from Flash.
     import pystiche
 
 
-Then, download some content images and create a DataModule.
+Then, download some content images and create a :class:`~flash.image.style_transfer.StyleTransferData` DataModule.
 
 .. testcode:: style_transfer
 
@@ -35,8 +38,8 @@ Then, download some content images and create a DataModule.
 
     data_module = StyleTransferData.from_folders(train_folder="data/coco128/images", batch_size=4)
 
-Select a style image and pass it to the `StyleTransfer` task.
 
+Select a style image and pass it to the `StyleTransfer` task.
 
 .. testcode:: style_transfer
 
@@ -44,7 +47,7 @@ Select a style image and pass it to the `StyleTransfer` task.
 
     model = StyleTransfer(style_image)
 
-Finally, create a Flash Trainer and pass it the model and datamodule.
+Finally, create a Flash :class:`flash.core.trainer.Trainer` and pass it the model and datamodule.
 
 .. testcode:: style_transfer
 
