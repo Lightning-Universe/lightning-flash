@@ -12,6 +12,10 @@ The goal is that the output image looks like the content image, but â€œpaintedâ€
 .. image:: https://raw.githubusercontent.com/pystiche/pystiche/master/docs/source/graphics/banner/banner.jpg
     :alt: style_transfer_example
 
+Lightning Flash :class:`~flash.image.style_transfer.StyleTransfer` and
+:class:`~flash.image.style_transfer.StyleTransferData` internally rely on `pystiche <https://pystiche.org>`_ as
+backend.
+
 ------
 
 ***
