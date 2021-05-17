@@ -18,8 +18,9 @@ from pytorch_lightning.trainer.states import RunningStage
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.callback import FlashCallback
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.data_source import DataSource
+from flash.core.data.data_source import DataSource, DefaultDataKeys
 from flash.core.data.process import Preprocess
 
 
@@ -190,3 +191,9 @@ def test_preprocessing_data_source_with_running_stage(with_dataset):
     else:
         assert data_source.train_load_sample_count == len(dataset)
         assert data_source.train_load_data_count == 1
+
+
+def test_dataset_data_source():
+
+    dm = DataModule.from_datasets(range(10), range(10))
+    assert dm.train_dataset.sample == {DefaultDataKeys.INPUT: 0}
