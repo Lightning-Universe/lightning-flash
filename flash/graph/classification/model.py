@@ -20,12 +20,15 @@ from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import Linear
-from torch_geometric.nn import GCNConv, global_mean_pool
 
 from flash.core.classification import ClassificationTask
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.data.data_source import DefaultDataKeys
-from flash.data.process import Serializer
+from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
+
+if _PYTORCH_GEOMETRIC_AVAILABLE:
+    from torch_geometric.nn import GCNConv, global_mean_pool
 
 
 class GraphClassifier(ClassificationTask):

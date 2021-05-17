@@ -11,23 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import pathlib
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional
 
-import networkx as nx
-import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch_geometric.data import DataLoader, Dataset
-from torch_geometric.transforms import default_transforms, train_default_transforms
-
-from flash.data.base_viz import BaseVisualization  # for viz
-from flash.data.callback import BaseDataFetcher
-from flash.data.data_module import DataModule
-from flash.data.data_source import DefaultDataKeys, DefaultDataSources
-from flash.data.process import Preprocess
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.process import Preprocess
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PYTORCH_GEOMETRIC_AVAILABLE
 from flash.graph.data import GraphPathsDataSource
-from flash.utils.imports import _MATPLOTLIB_AVAILABLE
+
+if _PYTORCH_GEOMETRIC_AVAILABLE:
+    import networkx as nx
+    from torch_geometric.data import DataLoader, Dataset
 
 # See https://1176-333857397-gh.circle-artifacts.com/0/html/task_template.html
 
@@ -43,6 +37,8 @@ class GraphClassificationPreprocess(Preprocess):
         num_features: int = 128 #todo: do we want to add backbone here as in text?
     ):
         self.num_features = num_features
+        if not _PYTORCH_GEOMETRIC_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[graph]'")
 
         super().__init__(
             train_transform=train_transform,
