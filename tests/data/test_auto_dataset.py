@@ -177,6 +177,9 @@ def test_preprocessing_data_source_with_running_stage(with_dataset):
 
     dataset = data_source.generate_dataset(range(10), running_stage=running_stage)
 
+    import pdb
+    pdb.set_trace()
+
     assert len(dataset) == 10
 
     for idx in range(len(dataset)):
