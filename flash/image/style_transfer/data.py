@@ -47,7 +47,11 @@ class StyleTransferPreprocess(Preprocess):
         if test_transform:
             raise_not_supported("test")
 
+        if isinstance(image_size, int):
+            image_size = (image_size, image_size)
+
         self.image_size = image_size
+
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,

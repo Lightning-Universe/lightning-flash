@@ -13,7 +13,7 @@ download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.
 
 model = StyleTransfer.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/style_transfer_model.pt")
 
-datamodule = StyleTransferData.from_folders(predict_folder="data/coco128/images", batch_size=4)
+datamodule = StyleTransferData.from_folders(predict_folder="data/coco128/images/train2017", batch_size=4)
 
 trainer = flash.Trainer(max_epochs=2)
 trainer.predict(model, datamodule=datamodule)

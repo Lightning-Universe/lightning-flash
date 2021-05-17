@@ -21,7 +21,7 @@ Fit
 First, you would have to import the :class:`~flash.image.style_transfer.StyleTransfer`
 and :class:`~flash.image.style_transfer.StyleTransferData` from Flash.
 
-.. testcode:: style_transfer
+.. codeblock:: style_transfer
 
     import sys
     import flash
@@ -32,7 +32,7 @@ and :class:`~flash.image.style_transfer.StyleTransferData` from Flash.
 
 Then, download some content images and create a :class:`~flash.image.style_transfer.StyleTransferData` DataModule.
 
-.. testcode:: style_transfer
+.. codeblock:: style_transfer
 
     download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
 
@@ -41,7 +41,7 @@ Then, download some content images and create a :class:`~flash.image.style_trans
 
 Select a style image and pass it to the `StyleTransfer` task.
 
-.. testcode:: style_transfer
+.. codeblock:: style_transfer
 
     style_image = pystiche.demo.images()["paint"].read(size=256)
 
@@ -49,7 +49,7 @@ Select a style image and pass it to the `StyleTransfer` task.
 
 Finally, create a Flash :class:`flash.core.trainer.Trainer` and pass it the model and datamodule.
 
-.. testcode:: style_transfer
+.. codeblock:: style_transfer
 
     trainer = flash.Trainer(max_epochs=2)
     trainer.fit(model, data_module)
