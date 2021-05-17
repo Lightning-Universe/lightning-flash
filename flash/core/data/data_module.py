@@ -966,7 +966,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
         :class:`~flash.core.data.data_source.DataSource`
         of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
