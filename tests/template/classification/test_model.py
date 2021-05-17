@@ -37,7 +37,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: torch.randn(self.num_features),
-            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, (1, )),
+            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, (1, ))[0],
         }
 
     def __len__(self) -> int:
