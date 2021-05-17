@@ -9,8 +9,6 @@ if not _PYSTICHE_AVAILABLE:
     print("Please, run `pip install pystiche`")
     sys.exit(1)
 
-from flash.image.style_transfer import StyleTransfer, StyleTransferData
-
 download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
 
 model = StyleTransfer.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/style_transfer_model.pt")

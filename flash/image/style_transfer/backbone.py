@@ -11,7 +11,7 @@ if _PYSTICHE_AVAILABLE:
 
     for mle_fn in dir(enc):
 
-        if not "multi_layer_encoder" in mle_fn:
+        if "multi_layer_encoder" not in mle_fn:
             continue
 
         name = mle_fn.split("_")[0]
