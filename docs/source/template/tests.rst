@@ -65,6 +65,19 @@ Here's the code for ``test_forward`` and ``test_train``:
 
 |
 
+We also include tests for validating and testing: ``test_val``, and ``test_test``.
+These tests are very similar to ``test_train``, but here they are for completeness:
+
+.. literalinclude:: ../../../tests/template/classification/test_model.py
+    :language: python
+    :pyobject: test_val
+
+.. literalinclude:: ../../../tests/template/classification/test_model.py
+    :language: python
+    :pyobject: test_test
+
+|
+
 We also include tests for prediction named ``test_predict_*`` for each of our data sources.
 In our case, we have ``test_predict_numpy`` and ``test_predict_sklearn``.
 These tests should use the ``data_source`` argument to :meth:`~flash.core.model.Task.predict` to select the required :class:`~flash.core.data.DataSource`.

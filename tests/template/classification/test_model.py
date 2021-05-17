@@ -81,6 +81,24 @@ def test_train(tmpdir):
 
 
 @pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+def test_val(tmpdir):
+    """Tests that the model can be validated on our ``DummyDataset``."""
+    model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
+    val_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=4)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.validate(model, val_dl)
+
+
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+def test_test(tmpdir):
+    """Tests that the model can be tested on our ``DummyDataset``."""
+    model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
+    test_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=4)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.test(model, test_dl)
+
+
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
 def test_predict_numpy():
     """Tests that we can generate predictions from a numpy array."""
     row = np.random.rand(1, DummyDataset.num_features)
