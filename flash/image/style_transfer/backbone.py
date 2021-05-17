@@ -1,3 +1,5 @@
+import re
+
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _PYSTICHE_AVAILABLE
 
@@ -9,16 +11,18 @@ if _PYSTICHE_AVAILABLE:
 
     from pystiche import enc
 
+    MLE_FN_PATTERN = re.compile(r"^(?P<name>\w+?)_multi_layer_encoder$")
+
+    STYLE_TRANSFER_BACKBONES = FlashRegistry("backbones")
+
     for mle_fn in dir(enc):
-
-        if "multi_layer_encoder" not in mle_fn:
+        match = MLE_FN_PATTERN.match(mle_fn)
+        if not match:
             continue
-
-        name = mle_fn.split("_")[0]
 
         STYLE_TRANSFER_BACKBONES(
             fn=lambda: (getattr(enc, mle_fn)(), None),
-            name=mle_fn.split("_")[0],
+            name=match.group("name"),
             namespace="image/style_transfer",
             package="pystiche",
         )

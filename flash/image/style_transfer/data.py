@@ -8,7 +8,8 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from flash.image.classification import ImageClassificationData, ImageClassificationPreprocess
+from flash.image.classification import ImageClassificationData
+from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
 from flash.image.style_transfer.utils import raise_not_supported
 
 if _TORCHVISION_AVAILABLE:
@@ -31,7 +32,7 @@ def _apply_to_input(default_transforms_fn, keys: Union[Sequence[DefaultDataKeys]
     return wrapper
 
 
-class StyleTransferPreprocess(ImageClassificationPreprocess):
+class StyleTransferPreprocess(Preprocess):
 
     def __init__(
         self,
@@ -48,13 +49,28 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
 
         if isinstance(image_size, int):
             image_size = (image_size, image_size)
+
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            image_size=image_size,
+            data_sources={
+                DefaultDataSources.FILES: ImagePathsDataSource(),
+                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
+                DefaultDataSources.NUMPY: ImageNumpyDataSource(),
+                DefaultDataSources.TENSORS: ImageTensorDataSource(),
+                DefaultDataSources.TENSORS: ImageTensorDataSource(),
+            },
+            default_data_source=DefaultDataSources.FILES,
         )
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {**self.transforms, "image_size": self.image_size}
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
+        return cls(**state_dict)
 
     @functools.partial(_apply_to_input, keys=DefaultDataKeys.INPUT)
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
@@ -71,9 +87,8 @@ class StyleTransferPreprocess(ImageClassificationPreprocess):
                 pre_tensor_transform=T.Resize(self.image_size),
                 to_tensor_transform=T.ToTensor(),
             )
-        else:
-            # Style transfer doesn't support a validation or test phase, so we return nothing here
-            return None
+        # Style transfer doesn't support a validation or test phase, so we return nothing here
+        return None
 
 
 class StyleTransferData(ImageClassificationData):
