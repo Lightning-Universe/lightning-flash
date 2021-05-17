@@ -14,16 +14,26 @@
 from types import FunctionType
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
+import pytorch_lightning as pl
 import torch
 import torchmetrics
+from pytorch_lightning.callbacks.base import Callback
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
+import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+
+
+class CIBenchmarkImageClassifier(Callback):
+
+    def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+        if trainer.current_epoch == 10:
+            assert trainer.callback_metrics["val_acc"] > 0.9
 
 
 class ImageClassifier(ClassificationTask):
@@ -128,3 +138,7 @@ class ImageClassifier(ClassificationTask):
         if x.dim() == 4:
             x = x.mean(-1).mean(-1)
         return self.head(x)
+
+    def configure_callbacks(self):
+        # used only for CI
+        return [flash._IS_TESTING * CIBenchmarkImageClassifier()]
