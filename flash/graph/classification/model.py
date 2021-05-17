@@ -28,7 +28,64 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
 
 if _PYTORCH_GEOMETRIC_AVAILABLE:
-    from torch_geometric.nn import GCNConv, global_mean_pool
+    from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
+else:
+    MessagePassing = type(object)
+    GCNConv = object
+
+
+class GraphBlock(nn.Module):
+
+    def __init__(self, nc_input, nc_output, conv_cls, act=nn.ReLU(), **conv_kwargs):
+        super().__init__()
+        self.conv = conv_cls(nc_input, nc_output, **conv_kwargs)
+        self.norm = BatchNorm(nc_output)
+        self.act = act
+
+    def forward(self, x, edge_index, batch):
+        x = self.conv(x, edge_index)
+        x = self.norm(x)
+        return self.act(x)
+
+
+class BaseGraphModel(nn.Module):
+
+    def __init__(
+        self,
+        num_features: int,
+        hidden_channels: List[int],
+        num_classes: int,
+        conv_cls: Type[MessagePassing],
+        act=nn.ReLU(),
+        **conv_kwargs: Any
+    ):
+        super().__init__()
+
+        self.blocks = nn.ModuleList()
+        hidden_channels = [num_features] + hidden_channels
+
+        nc_output = num_features
+
+        for idx in range(len(hidden_channels) - 1):
+            nc_input = hidden_channels[idx]
+            nc_output = hidden_channels[idx + 1]
+            graph_block = GraphBlock(nc_input, nc_output, conv_cls, act, **conv_kwargs)
+            self.blocks.append(graph_block)
+
+        self.lin = Linear(nc_output, num_classes, act, **conv_kwargs)
+
+    def forward(self, x, edge_index, batch):
+        # 1. Obtain node embeddings
+        for block in self.blocks:
+            x = block(x, edge_index, batch)
+
+        # 2. Readout layer
+        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+
+        # 3. Apply a final classifier
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.lin(x)
+        return x
 
 
 class GraphClassifier(ClassificationTask):
@@ -50,21 +107,23 @@ class GraphClassifier(ClassificationTask):
         self,
         num_features: int,
         num_classes: int,
-        head: Optional[Union[FunctionType, nn.Module]] = None,
-        hidden: Union[List[int], int] = 512,
+        hidden_channels: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
         learning_rate: float = 1e-3,
         model: torch.nn.Module = None,
+        conv_cls: Type[MessagePassing] = GCNConv,
+        **conv_kwargs
     ):
 
-        if isinstance(hidden, int):
-            hidden = [hidden]
+        self.save_hyperparameters()
 
-        #sizes = [input_size] + hidden + [num_classes]
-        if model == None:  #todo: the main difference with Image classification is selection of backbone. How to do this?
-            self.model = GCN(in_features=num_features, hidden_channels=hidden, out_features=num_classes)
+        if isinstance(hidden_channels, int):
+            hidden_channels = [hidden_channels]
+
+        if not model:
+            model = BaseGraphModel(num_features, hidden_channels, num_classes, conv_cls, **conv_kwargs)
 
         super().__init__(
             model=model,
@@ -74,65 +133,33 @@ class GraphClassifier(ClassificationTask):
             learning_rate=learning_rate,
         )
 
-        self.save_hyperparameters()
-
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
-
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (
+            batch[DefaultDataKeys.INPUT],
+            batch[DefaultDataKeys.INPUT].y,
+        )
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (
+            batch[DefaultDataKeys.INPUT],
+            batch[DefaultDataKeys.INPUT].y,
+        )
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (
+            batch[DefaultDataKeys.INPUT],
+            batch[DefaultDataKeys.INPUT].y,
+        )
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        return super().predict_step(batch[DefaultDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
     def forward(self, data) -> Any:
-        x = self.model(data.x, data.edge_index, data.batch)
-        return self.head(x)
-
-
-#Taken from https://colab.research.google.com/drive/1I8a0DfQ3fI7Njc62__mVXUlcAleUclnb?usp=sharing#scrollTo=CN3sRVuaQ88l
-class GCN(pl.LightningModule):
-
-    def __init__(self, num_features, hidden_channels, num_classes):
-        super(GCN, self).__init__()
-        torch.manual_seed(12345)
-        self.conv1 = GCNConv(num_features, hidden_channels)
-        self.conv2 = GCNConv(hidden_channels, hidden_channels)
-        self.conv3 = GCNConv(hidden_channels, hidden_channels)
-        self.lin = Linear(hidden_channels, num_classes)
-
-    def forward(self, x, edge_index, batch):
-        # 1. Obtain node embeddings
-        x = self.conv1(x, edge_index)
-        x = x.relu()
-        x = self.conv2(x, edge_index)
-        x = x.relu()
-        x = self.conv3(x, edge_index)
-
-        # 2. Readout layer
-        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
-
-        # 3. Apply a final classifier
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.lin(x)
-
+        edge_index = data.edge_index
+        if not edge_index:
+            edge_index = data.adj_t
+        x = self.model(data.x, edge_index, data.batch)
         return x
-
-    def training_step(self, batch, batch_idx):  #todo: is this needed?
-        x, y = batch
-        y_hat = self(x)
-        loss = F.cross_entropy(y_hat, y)
-        return loss
-
-    def configure_optimizers(self):  #todo: is this needed?
-        return torch.optim.Adam(self.parameters(), lr=0.02)
