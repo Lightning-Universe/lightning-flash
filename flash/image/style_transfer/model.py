@@ -22,6 +22,41 @@ __all__ = ["StyleTransfer"]
 
 
 class StyleTransfer(Task):
+    """Task that transfer the style from an image onto another.
+
+    Use a built in backbone
+
+    Example::
+
+        from flash.image import ImageClassifier
+
+        classifier = ImageClassifier(backbone='resnet18')
+
+    Or your own backbone (num_features is the number of features produced by your backbone)
+
+    Example::
+
+        from flash.image import ImageClassifier
+        from torch import nn
+
+        # use any backbone
+        some_backbone = nn.Conv2D(...)
+        num_out_features = 1024
+        classifier = ImageClassifier(backbone=(some_backbone, num_out_features))
+
+
+    Args:
+        num_classes: Number of classes to classify.
+        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
+        pretrained: Use a pretrained backbone, defaults to ``True``.
+        loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
+        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
+        metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.Accuracy`.
+        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        multi_label: Whether the targets are multi-label or not.
+        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+    """
+
     backbones: FlashRegistry = STYLE_TRANSFER_BACKBONES
 
     def __init__(
@@ -40,6 +75,7 @@ class StyleTransfer(Task):
         learning_rate: float = 1e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+
         if not _IMAGE_STLYE_TRANSFER:
             raise ModuleNotFoundError("Please, pip install -e '.[image_style_transfer]'")
 
