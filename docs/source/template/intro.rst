@@ -21,6 +21,7 @@ Before you begin, copy the files in ``flash/template/classification`` to the loc
 Our folders are organised in terms of data-type (image, text, video, etc.), with sub-folders for different task types (classification, regression, etc.).
 If a data-type folder already exists for your task, then a task type sub-folder should be added containing the template files.
 If a data-type folder doesn't exist, then you will need to add that too.
+You should also copy the files from ``tests/template/classification`` to the corresponding data-type, task type folder in ``tests``.
 
 Tutorials
 =========
