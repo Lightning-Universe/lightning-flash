@@ -14,18 +14,17 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
-import sklearn.utils
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from sklearn.utils import Bunch
 from torch import nn
 
-from flash.data.base_viz import BaseVisualization
-from flash.data.callback import BaseDataFetcher
-from flash.data.data_module import DataModule
-from flash.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, NumpyDataSource
-from flash.data.process import Preprocess
-from flash.data.transforms import ApplyToKeys
+from flash.core.data.base_viz import BaseVisualization
+from flash.core.data.callback import BaseDataFetcher
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, NumpyDataSource
+from flash.core.data.process import Preprocess
+from flash.core.data.transforms import ApplyToKeys
 
 
 class TemplateNumpyDataSource(NumpyDataSource):

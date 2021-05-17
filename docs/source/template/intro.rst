@@ -16,8 +16,10 @@ Tutorials
 =========
 
 The Task template is designed to guide you through contributing a task to Flash.
+It contains the code, tests, and examples for a task that performs classification with a multi-layer perceptron, intended for use with the classic data sets from scikit-learn.
 You should copy the files in ``flash/template`` to get started.
-The tutorials in this section will take you through all of the components you need to implement for your custom task.
+
+The tutorials in this section will walk you through all of the components you need to implement (or adapt from the template) for your custom task.
 
 - :ref:`contributing_data`: our first tutorial goes over the best practices for implementing everything you need to connect data to your task
 - :ref:`contributing_task`: now that we have the data, in this tutorial we create our custom task

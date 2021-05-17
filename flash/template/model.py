@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from types import FunctionType
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Type, Union
 
 import torch
 import torchmetrics
@@ -20,57 +19,37 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.classification import ClassificationTask
-from flash.core.registry import FlashRegistry
-from flash.data.data_source import DefaultDataKeys
-from flash.data.process import Serializer
-from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
 
 
-class ImageClassifier(ClassificationTask):
-    """Task that classifies images.
-
-    Use a built in backbone
-
-    Example::
-
-        from flash.vision import ImageClassifier
-
-        classifier = ImageClassifier(backbone='resnet18')
-
-    Or your own backbone (num_features is the number of features produced by your backbone)
-
-    Example::
-
-        from flash.vision import ImageClassifier
-        from torch import nn
-
-        # use any backbone
-        some_backbone = nn.Conv2D(...)
-        num_out_features = 1024
-        classifier = ImageClassifier(backbone=(some_backbone, num_out_features))
-
+class TemplateSKLearnClassifier(ClassificationTask):
+    """The ``TemplateSKLearnClassifier`` is a :class:`~flash.core.classification.ClassificationTask` that uses a simple
+    multi-layer perceptron model to classify tabular data from scikit-learn. In the ``__init__``, we create our model
+    and pass it to the super :class:`~flash.core.model.Task` along with any arguments that we need.
 
     Args:
-        num_classes: Number of classes to classify.
-        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
-        pretrained: Use a pretrained backbone, defaults to ``True``.
-        loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.Accuracy`.
-        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
+        num_features: The number of features (elements) in the input data.
+        num_classes: The number of classes (outputs) for this :class:`~flash.core.model.Task`.
+        hidden_size: The number of units to use in the hidden layer of the multi-layer perceptron model.
+        loss_fn: The loss function to use. If ``None``, a default will be selected by the
+            :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
+        optimizer: The optimizer or optimizer class to use.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
+            by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
+        learning_rate: The learning rate for the optimizer.
+        multi_label: If ``True``, this will be treated as a multi-label classification problem.
+        serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
     """
-
-    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
 
     def __init__(
         self,
+        num_features: int,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
-        backbone_kwargs: Optional[Dict] = None,
-        head: Optional[Union[FunctionType, nn.Module]] = None,
-        pretrained: bool = True,
+        hidden_size: 128,
         loss_fn: Optional[Callable] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
@@ -81,8 +60,14 @@ class ImageClassifier(ClassificationTask):
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+        model = nn.Sequential(
+            nn.Linear(num_features, hidden_size),
+            nn.ReLU(True),
+            nn.Linear(hidden_size, num_classes),
+        )
+
         super().__init__(
-            model=None,
+            model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
@@ -96,35 +81,29 @@ class ImageClassifier(ClassificationTask):
 
         self.save_hyperparameters()
 
-        if not backbone_kwargs:
-            backbone_kwargs = {}
-
-        if isinstance(backbone, tuple):
-            self.backbone, num_features = backbone
-        else:
-            self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
-
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
-
     def training_step(self, batch: Any, batch_idx: int) -> Any:
+        """For the training step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
+        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
+        :meth:`~flash.core.model.Task.training_step`."""
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
+        """For the validation step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
+        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
+        :meth:`~flash.core.model.Task.validation_step`."""
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
+        """For the test step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
+        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
+        :meth:`~flash.core.model.Task.test_step`."""
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key from
+        the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
         batch = (batch[DefaultDataKeys.INPUT])
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
-
-    def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
-        if x.dim() == 4:
-            x = x.mean(-1).mean(-1)
-        return self.head(x)

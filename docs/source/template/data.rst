@@ -5,7 +5,7 @@ The Data
 ********
 
 The first step to contributing a task is to implement the classes we need to load some data.
-Inside ``data.py`` you we implement:
+Inside ``data.py`` you should implement:
 
 #. one or more :class:`~flash.data.data_source.DataSource` classes
 #. a :class:`~flash.data.process.Preprocess`
@@ -18,8 +18,13 @@ DataSource
 
 The :class:`~flash.data.data_source.DataSource` implementations describe how data from particular sources (like folders, files, tensors, etc.) should be loaded.
 At a minimum you will require one :class:`~flash.data.data_source.DataSource` implementation, but if you want to support a few different ways of loading data for your task, the more the merrier!
+Each :class:`~flash.data.data_source.DataSource` has a ``load_data`` method and a ``load_sample`` method.
+The ``load_data`` method accepts some dataset metadata (e.g. a folder name) and produces a sequence or iterable of samples or sample metadata.
+The ``load_sample`` method then takes as input a single element from the output of ``load_data`` and returns a sample.
+By default, these methods just return their input as you will not always need both to create a functioning :class:`~flash.data.data_source.DataSource`.
 
-Take a look at our ``TemplateNumpyDataSource`` to get started:
+I'ts best practice to just override one of our existing :class:`~flash.data.data_source.DataSource` classes where possible.
+Take a look at our ``TemplateNumpyDataSource`` which does this to get started:
 
 .. autoclass:: flash.template.data.TemplateNumpyDataSource
     :members:
@@ -39,7 +44,7 @@ Take a look at our ``TemplateNumpyDataSource`` to get started:
 
 |
 
-And have a look at our ``TemplateSKLearnDataSource`` for another example:
+Sometimes you need to something a bit more custom, have a look at our ``TemplateSKLearnDataSource`` for an example:
 
 .. autoclass:: flash.template.data.TemplateSKLearnDataSource
     :members:
@@ -56,6 +61,16 @@ And have a look at our ``TemplateSKLearnDataSource`` for another example:
 .. raw:: html
 
     </details>
+
+DataSource vs Dataset
+~~~~~~~~~~~~~~~~~~~~~
+
+A :class:`~flash.data.data_source.DataSource` is not the same as a :class:`torch.utils.data.Dataset`.
+A :class:`torch.utils.data.Dataset` knows about the data, whereas a :class:`~flash.data.data_source.DataSource` only know about how to load the data.
+So it's possible for a single :class:`~flash.data.data_source.DataSource` to create more than one :class:`~torch.utils.data.Dataset`.
+It's also fine for the output of the ``load_data`` method to just be a :class:`torch.utils.data.Dataset` instance.
+You don't need to re-write custom datasets, just instantiate them in ``load_data`` similarly to what we did with the ``TemplateSKLearnDataSource``.
+For example, the ``load_data`` of the PyTorchVideo ``PathsDataSource`` just creates a :class:`pytorchvideo.data.encoded_video_dataset.EncodedVideoDataset` from the given folder.
 
 Preprocess
 ^^^^^^^^^^
@@ -92,7 +107,7 @@ You now have a :class:`~flash.data.data_module.DataModule` that can be instantia
 It also includes all of your default transforms!
 
 If you've defined a fully custom :class:`~flash.data.data_source.DataSource` (like our ``TemplateSKLearnDataSource``), then you will need a ``from_*`` method for each (we'll define ``from_sklearn`` for our example).
-The ``from_*`` methods take whatever arguments you want them too and call ``super().from_data_source`` with the name given to your custom data source in the ``Preprocess.__init__``.
+The ``from_*`` methods take whatever arguments you want them to and call :meth:`~flash.data.data_module.DataModule.from_data_source` with the name given to your custom data source in the ``Preprocess.__init__``.
 
 
 Take a look at our ``TemplateData`` to get started:
@@ -148,4 +163,6 @@ For this you can optionally implement a :class:`~flash.data.process.Postprocess`
 The :class:`~flash.data.process.Postprocess` is applied to the model outputs during inference.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
 
-:ref:`Now that you've got some data, it's time to implement your task! <contributing_task>`
+------
+
+Now that you've got some data, it's time to :ref:`implement your task! <contributing_task>`
