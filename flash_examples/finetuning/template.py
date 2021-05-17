@@ -35,7 +35,7 @@ model = TemplateSKLearnClassifier(
 )
 
 # 4. Create the trainer.
-trainer = flash.Trainer(max_epochs=20)
+trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 
 # 5. Train the model
 trainer.fit(model, datamodule=datamodule)
