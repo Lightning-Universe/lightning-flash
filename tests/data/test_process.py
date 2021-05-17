@@ -167,10 +167,10 @@ def test_available_data_sources():
 
     assert DefaultDataSources.TENSORS in preprocess.available_data_sources()
     assert "test" in preprocess.available_data_sources()
-    assert len(preprocess.available_data_sources()) == 2
+    assert len(preprocess.available_data_sources()) == 3
 
     data_module = DataModule(preprocess=preprocess)
 
     assert DefaultDataSources.TENSORS in data_module.available_data_sources()
     assert "test" in data_module.available_data_sources()
-    assert len(data_module.available_data_sources()) == 2
+    assert len(data_module.available_data_sources()) == 3
