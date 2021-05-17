@@ -1,4 +1,4 @@
-from typing import Any, cast, Dict, Mapping, NoReturn, Optional, Sequence, Type, Union
+from typing import Any, cast, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
@@ -24,36 +24,24 @@ __all__ = ["StyleTransfer"]
 class StyleTransfer(Task):
     """Task that transfer the style from an image onto another.
 
-    Use a built in backbone
-
     Example::
 
-        from flash.image import ImageClassifier
+        from flash.image.style_transfer import StyleTransfer
 
-        classifier = ImageClassifier(backbone='resnet18')
-
-    Or your own backbone (num_features is the number of features produced by your backbone)
-
-    Example::
-
-        from flash.image import ImageClassifier
-        from torch import nn
-
-        # use any backbone
-        some_backbone = nn.Conv2D(...)
-        num_out_features = 1024
-        classifier = ImageClassifier(backbone=(some_backbone, num_out_features))
-
+        model = StyleTransfer(image_style)
 
     Args:
-        num_classes: Number of classes to classify.
-        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
-        pretrained: Use a pretrained backbone, defaults to ``True``.
-        loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.Accuracy`.
+        style_image: Image or path to an image to derive the style from.
+        model: The model by the style transfer task.
+        backbone: A string or model to use to compute the style loss from.
+        content_layer: Which layer from the backbone to extract the content loss from.
+        content_weight: The weight associated with the content loss. A lower value will lose content over style.
+        style_layers: Layers from the backbone to derive the style loss from.
+        optimizer: Optimizer to use for training the model.
+        optimizer_kwargs: Optimizer keywords arguments.
+        scheduler: Scheduler to use for training the model.
+        scheduler_kwargs: Scheduler keywords arguments.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
 
@@ -66,7 +54,7 @@ class StyleTransfer(Task):
         backbone: str = "vgg16",
         content_layer: str = "relu2_2",
         content_weight: float = 1e5,
-        style_layers: Sequence[str] = ("relu1_2", "relu2_2", "relu3_3", "relu4_3"),
+        style_layers: Union[Sequence[str], str] = ("relu1_2", "relu2_2", "relu3_3", "relu4_3"),
         style_weight: float = 1e10,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
@@ -88,6 +76,9 @@ class StyleTransfer(Task):
 
         if model is None:
             model = pystiche.demo.transformer()
+
+        if not isinstance(style_layers, (List, Tuple)):
+            style_layers = (style_layers, )
 
         perceptual_loss = self._get_perceptual_loss(
             backbone=backbone,
