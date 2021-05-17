@@ -1007,32 +1007,20 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        preprocess = preprocess or cls.preprocess_cls(
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
-            **preprocess_kwargs,
-        )
-
-        data_source = DatasetDataSource()
-
-        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(
+        return cls.from_data_source(
+            DefaultDataSources.DATASET,
             train_dataset,
             val_dataset,
             test_dataset,
             predict_dataset,
-        )
-
-        return cls(
-            train_dataset,
-            val_dataset,
-            test_dataset,
-            predict_dataset,
-            data_source=data_source,
-            preprocess=preprocess,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
             data_fetcher=data_fetcher,
+            preprocess=preprocess,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            **preprocess_kwargs,
         )

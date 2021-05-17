@@ -325,13 +325,19 @@ SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
 class DatasetDataSource(DataSource):
 
-    def load_data(self, dataset: Dataset) -> Dataset:
+    def load_data(self, dataset: Dataset, auto_dataset: AutoDataset) -> Dataset:
+        if self.training:
+            # store a sample to infer the shape
+            parameters = signature(self.load_sample).parameters
+            if len(parameters) > 1 and AutoDataset.DATASET_KEY in parameters:
+                auto_dataset.sample = self.load_sample(dataset[0], self)
+            else:
+                auto_dataset.sample = self.load_sample(dataset[0])
         return dataset
 
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any]) -> Any:
-        import pdb
-        pdb.set_trace()
-        return sample
+        # wrap everything within `.INPUT`.
+        return {DefaultDataKeys.INPUT: sample}
 
 
 class SequenceDataSource(
