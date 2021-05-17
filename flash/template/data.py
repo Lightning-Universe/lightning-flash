@@ -29,11 +29,11 @@ from flash.core.data.transforms import ApplyToKeys
 
 class TemplateNumpyDataSource(NumpyDataSource):
     """An example data source that records ``num_features`` on the dataset. We extend
-    :class:`~flash.data.data_source.NumpyDataSource` so that we can use ``super().load_data``."""
+    :class:`~flash.core.data.data_source.NumpyDataSource` so that we can use ``super().load_data``."""
 
     def load_data(self, data: Tuple[np.ndarray, Sequence[Any]], dataset: Any) -> Sequence[Mapping[str, Any]]:
-        """The main :class:`~flash.data.data_source.DataSource` method that we have to implement is
-        :meth:`~flash.data.data_source.DataSource.load_data`. As we're extending the ``NumpyDataSource``, we expect the
+        """The main :class:`~flash.core.data.data_source.DataSource` method that we have to implement is
+        :meth:`~flash.core.data.data_source.DataSource.load_data`. As we're extending the ``NumpyDataSource``, we expect the
         same ``data`` argument (in this case, a tuple containing data and corresponding target arrays).
 
         We can also take the dataset argument. Any attributes we set on ``dataset`` will be available on the ``Dataset``
@@ -57,12 +57,12 @@ class TemplateSKLearnDataSource(TemplateNumpyDataSource):
     """An example data source that loads data from an sklearn data ``Bunch``."""
 
     def load_data(self, data: Bunch, dataset: Any) -> Sequence[Mapping[str, Any]]:
-        """Here we're creating a fully custom :class:`~flash.data.data_source.DataSource` (that is, we're not going to
-        treat it as one of the :class:`~flash.data.data_source.DefaultDataSources`) so the type of the ``data`` argument
+        """Here we're creating a fully custom :class:`~flash.core.data.data_source.DataSource` (that is, we're not going to
+        treat it as one of the :class:`~flash.core.data.data_source.DefaultDataSources`) so the type of the ``data`` argument
         is up to us. In this case, we want to be able to use a scikit-learn data ``Bunch`` as an input.
 
         On our dataset, we'll set the ``num_classes`` attribute. This is a standard practice in our classification tasks
-        and ``num_classes`` will automatically be made available by the :class:`~flash.data.data_module.DataModule`.
+        and ``num_classes`` will automatically be made available by the :class:`~flash.core.data.data_module.DataModule`.
 
         Args:
             data: The scikit-learn data ``Bunch``.
@@ -83,20 +83,20 @@ class TemplateSKLearnDataSource(TemplateNumpyDataSource):
 
 
 class TemplatePreprocess(Preprocess):
-    """The next thing for us to implement is the :class:`~flash.data.process.Preprocess`. The
-    :class:`~flash.data.process.Preprocess` must take ``train_transform``, ``val_transform``, ``test_transform``, and
+    """The next thing for us to implement is the :class:`~flash.core.data.process.Preprocess`. The
+    :class:`~flash.core.data.process.Preprocess` must take ``train_transform``, ``val_transform``, ``test_transform``, and
     ``predict_transform`` arguments in the ``__init__``. Any additional arguments for it to take are up to you.
 
     Inside the ``__init__``, we make a call to super. This is where we register our data sources. Data sources should be
     given as a dictionary which maps data source name to data source object. The name can be anything, but if you want
     to take advantage of our built-in ``from_*`` classmethods, you should use
-    :class:`~flash.data.data_source.DefaultDataSources` as the names. In our case, we have both a
-    :attr:`~flash.data.data_source.DefaultDataSources.NUMPY` and a custom scikit-learn data source (which we'll call
+    :class:`~flash.core.data.data_source.DefaultDataSources` as the names. In our case, we have both a
+    :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` and a custom scikit-learn data source (which we'll call
     "sklearn").
 
     We can also provide a ``default_data_source``. This is the name of the data source to use by default when
     predicting. It'd be cool if we could get predictions just from a numpy array, so let's use the
-    :attr:`~flash.data.data_source.DefaultDataSources.NUMPY` as the default.
+    :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` as the default.
 
     Args:
         train_transform: The user-specified transforms to apply during training.
@@ -139,12 +139,12 @@ class TemplatePreprocess(Preprocess):
         return cls(**state_dict)
 
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        """Your :class:`~flash.data.process.Preprocess` should usually define some default transforms. Generally, we at
+        """Your :class:`~flash.core.data.process.Preprocess` should usually define some default transforms. Generally, we at
         least want to convert to a tensor, so let's do that here.
 
         Our inputs samples will be dictionaries whose keys are from the
-        :class:`~flash.data.data_source.DefaultDataKeys`, so we need to map each key to different transforms using
-        :class:`~flash.data.transforms.ApplyToKeys`. By convention, we apply sequences of transforms by wrapping them in
+        :class:`~flash.core.data.data_source.DefaultDataKeys`, so we need to map each key to different transforms using
+        :class:`~flash.core.data.transforms.ApplyToKeys`. By convention, we apply sequences of transforms by wrapping them in
         an ``nn.Sequential``.
 
         Returns:
@@ -163,7 +163,7 @@ class TemplatePreprocess(Preprocess):
 
 
 class TemplateData(DataModule):
-    """Creating our :class:`~flash.data.data_module.DataModule` is as easy as setting the ``preprocess_cls`` attribute.
+    """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the ``preprocess_cls`` attribute.
     We get the ``from_numpy`` method for free as we've configured a ``DefaultDataSources.NUMPY`` data source. We'll also
     add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnDataSource. Finally, we define the
     ``num_features`` property for convenience.
@@ -190,9 +190,9 @@ class TemplateData(DataModule):
         **preprocess_kwargs: Any,
     ):
         """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them
-        through to the :meth:`~flash.data.data_module.DataModule.from_data_source` method underneath. It's really just
+        through to the :meth:`~flash.core.data.data_module.DataModule.from_data_source` method underneath. It's really just
         a convenience method to save the user from needing to call
-        :meth:`~flash.data.data_module.DataModule.from_data_source` directly.
+        :meth:`~flash.core.data.data_module.DataModule.from_data_source` directly.
 
         Args:
             train_bunch: The scikit-learn ``Bunch`` containing the train data.
@@ -200,21 +200,21 @@ class TemplateData(DataModule):
             test_bunch: The scikit-learn ``Bunch`` containing the test data.
             predict_bunch: The scikit-learn ``Bunch`` containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.data.data.Preprocess` to pass to the
-                :class:`~flash.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be constructed
                 and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.data.data_module.DataModule`.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -256,7 +256,7 @@ class TemplateData(DataModule):
 
 
 class TemplateVisualization(BaseVisualization):
-    """The ``TemplateVisualization`` class is a :class:`~flash.data.callbacks.BaseVisualization` that just prints the
+    """The ``TemplateVisualization`` class is a :class:`~flash.core.data.callbacks.BaseVisualization` that just prints the
     data. If you want to provide a visualization with your task, you can override these hooks."""
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
