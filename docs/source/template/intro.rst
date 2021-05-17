@@ -32,4 +32,5 @@ The tutorials in this section will walk you through all of the components you ne
 - :ref:`contributing_task`: now that we have the data, in this tutorial we create our custom task
 - :ref:`contributing_optional`: this tutorial covers some optional extras you can add if needed for your particular task
 - :ref:`contributing_examples`: this tutorial guides you through creating some simple examples showing your task in action
-- :ref:`contributing_tests`: in our final tutorial, we cover best practices for writing some tests for your new task
+- :ref:`contributing_tests`: in this tutorial, we cover best practices for writing some tests for your new task
+- :ref:`contributing_docs`: in our final tutorial, we provide a template for you to create the docs page for your task
