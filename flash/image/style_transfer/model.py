@@ -1,6 +1,7 @@
 from typing import Any, cast, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple, Type, Union
 
 import torch
+from pystiche.enc.encoder import Encoder
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
@@ -15,6 +16,17 @@ if _IMAGE_STLYE_TRANSFER:
     import pystiche.demo
     from pystiche import enc, loss, ops
     from pystiche.image import read_image
+else:
+
+    class enc:
+        Encoder = None
+        MultiLayerEncoder = None
+
+    class ops:
+        EncodingComparisonOperator = None
+        FeatureReconstructionOperator = None
+        MultiLayerEncodingOperator = None
+
 
 from flash.image.style_transfer.utils import raise_not_supported
 
