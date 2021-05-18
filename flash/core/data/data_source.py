@@ -298,14 +298,10 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
             mock_dataset = typing.cast(AutoDataset, MockDataset())
             with CurrentRunningStageFuncContext(running_stage, "load_data", self):
-                load_data: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(
-                    self, DataPipeline._resolve_function_hierarchy(
-                        "load_data",
-                        self,
-                        running_stage,
-                        DataSource,
-                    )
+                resolved_func_name = DataPipeline._resolve_function_hierarchy(
+                    "load_data", self, running_stage, DataSource
                 )
+                load_data: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(self, resolved_func_name)
                 parameters = signature(load_data).parameters
                 if len(parameters) > 1 and "dataset" in parameters:  # TODO: This was DATASET_KEY before
                     data = load_data(data, mock_dataset)
