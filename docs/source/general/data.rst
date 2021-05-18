@@ -76,23 +76,14 @@ How to customize existing datamodules
 
 Any Flash :class:`~flash.core.data.data_module.DataModule` can be created directly from datasets using the :meth:`~flash.core.data.data_module.DataModule.from_datasets` like this:
 
-.. testsetup:: data_module
+.. code-block:: python
 
-    from unittest.mock import Mock
-    Trainer = Mock()
-
-.. testcode:: data_module
-
+    from flash import Trainer
     from flash.core.data.data_module import DataModule
 
     data_module = DataModule.from_datasets(train_dataset=MyDataset())
     trainer = Trainer()
     trainer.fit(model, data_module=data_module)
-
-.. testoutput:: data_module
-    :hide:
-
-    ...
 
 
 The :class:`~flash.core.data.data_module.DataModule` provides additional ``classmethod`` helpers (``from_*``) for loading data from various sources.
