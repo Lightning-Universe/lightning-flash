@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -72,3 +72,9 @@ class TranslationTask(Seq2SeqTask):
         tgt_lns = [[reference] for reference in tgt_lns]
         result = self.bleu(generated_tokens, tgt_lns)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        # assert history[-1]["val_bleu_score"]
