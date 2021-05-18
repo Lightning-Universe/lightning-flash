@@ -100,7 +100,9 @@ jobs:
       - name: Cache datasets
         uses: actions/cache@v2
         with:
-          path: docs/data # This path is specific to Ubuntu
+          path: |
+            docs/data
+            data
           key: flash-datasets-docs
 
       - name: Test Documentation
