@@ -5,3 +5,4 @@ PyYAML>=5.1
 numpy
 pandas
 packaging
+tqdm
