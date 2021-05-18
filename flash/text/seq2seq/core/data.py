@@ -90,7 +90,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
     def load_data(
         self,
         data: Any,
-        use_full: bool = False,
+        use_full: bool = True,
         columns: List[str] = ["input_ids", "attention_mask", "labels"]
     ) -> 'datasets.Dataset':
         file, input, target = data
@@ -99,7 +99,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full and flash._IS_TESTING:
+        if use_full and not flash._IS_TESTING:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             # used for debugging. Avoid processing the entire dataset   # noqa E265
@@ -115,7 +115,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
-        return self.load_data(data, use_full=False, columns=["input_ids", "attention_mask"])
+        return self.load_data(data, use_full=True, columns=["input_ids", "attention_mask"])
 
 
 class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
