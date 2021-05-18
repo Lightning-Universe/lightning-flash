@@ -22,8 +22,8 @@ import pytest
 
 from flash.core.utilities.imports import (
     _IMAGE_AVAILABLE,
-    _SKLEARN_AVAILABLE,
     _PYSTICHE_GREATER_EQUAL_0_7_2,
+    _SKLEARN_AVAILABLE,
     _TABULAR_AVAILABLE,
     _TEXT_AVAILABLE,
     _TORCHVISION_GREATER_EQUAL_0_9,
