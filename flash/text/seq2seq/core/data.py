@@ -115,7 +115,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
-        return self.load_data(data, use_full=False, columns=["input_ids", "attention_mask"])
+        return self.load_data(data, use_full=True, columns=["input_ids", "attention_mask"])
 
 
 class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
