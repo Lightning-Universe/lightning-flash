@@ -77,4 +77,4 @@ class TranslationTask(Seq2SeqTask):
         """
         This function is used only for debugging usage with CI
         """
-        # assert history[-1]["val_bleu_score"]
+        # assert history[-1]["val_bleu_score"]
