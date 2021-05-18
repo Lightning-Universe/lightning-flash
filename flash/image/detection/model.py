@@ -199,9 +199,9 @@ class ObjectDetector(Task):
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]
 
-    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
         """
         This function is used only for debugging usage with CI
         """
         # todo (tchaton) Improve convergence
-        # history[-1]["val_iou"]
+        # history[-1]["val_iou"]

@@ -105,4 +105,4 @@ if __name__ == '__main__':
     # 7. Make a prediction
     predictions = model.predict(os.path.join(flash.PROJECT_ROOT, "data/kinetics/predict"))
     print(predictions)
-    # ['marching', 'flying_kite', 'archery', 'high_jump', 'bowling']
+    # ['marching', 'flying_kite', 'archery', 'high_jump', 'bowling']
