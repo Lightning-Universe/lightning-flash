@@ -25,6 +25,12 @@ Fit
 First, you would have to import the :class:`~flash.image.style_transfer.StyleTransfer`
 and :class:`~flash.image.style_transfer.StyleTransferData` from Flash.
 
+.. testsetup:: style_transfer
+    :hide:
+
+    import os
+    os.environ["FLASH_TESTING"] = "1"
+
 .. testcode:: style_transfer
 
     import flash
