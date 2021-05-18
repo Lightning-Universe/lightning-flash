@@ -64,6 +64,16 @@ Once you've finetuned, use the model to predict:
 We get the following output:
 
 .. testoutput:: finetune
+    :hide:
+
+    ...
+
+.. testcode:: finetune
+    :hide:
+
+    assert all([prediction in ["ants", "bees"] for prediction in predictions])
+
+.. code-block::
 
     ['bees', 'ants']
 
