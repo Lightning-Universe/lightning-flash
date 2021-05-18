@@ -53,7 +53,7 @@ def _compare_version(package: str, op, version) -> bool:
     """
     try:
         pkg = importlib.import_module(package)
-    except (ModuleNotFoundError, DistributionNotFound):
+    except (ModuleNotFoundError, DistributionNotFound, ValueError):
         return False
     try:
         pkg_version = Version(pkg.__version__)
