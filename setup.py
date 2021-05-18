@@ -32,11 +32,14 @@ extras = {
     "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_text.txt"),
     "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_tabular.txt"),
     "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image.txt"),
+    "image_style_transfer": setup_tools._load_requirements(
+        path_dir=_PATH_REQUIRE, file_name="datatype_image_style_transfer.txt"
+    ),
     "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
 }
 
 # remove possible duplicate.
-extras["vision"] = list(set(extras["image"] + extras["video"]))
+extras["vision"] = list(set(extras["image"] + extras["video"] + extras["image_style_transfer"]))
 extras["dev"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["image"]))
 extras["dev-test"] = list(set(extras["test"] + extras["dev"]))
 extras["all"] = list(set(extras["dev"] + extras["docs"]))
