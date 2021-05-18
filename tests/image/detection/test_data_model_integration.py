@@ -26,7 +26,7 @@ else:
     Image = None
 
 if _COCO_AVAILABLE:
-    from tests.vision.detection.test_data import _create_synth_coco_dataset
+    from tests.image.detection.test_data import _create_synth_coco_dataset
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")

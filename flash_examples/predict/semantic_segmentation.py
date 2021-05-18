@@ -24,7 +24,9 @@ download_data(
 )
 
 # 2. Load the model from a checkpoint
-model = SemanticSegmentation.load_from_checkpoint("semantic_segmentation_model.pt")
+model = SemanticSegmentation.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/semantic_segmentation_model.pt"
+)
 model.serializer = SegmentationLabels(visualize=True)
 
 # 3. Predict what's on a few images and visualize!

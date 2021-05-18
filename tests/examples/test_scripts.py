@@ -22,6 +22,7 @@ import pytest
 
 from flash.core.utilities.imports import (
     _IMAGE_AVAILABLE,
+    _PYSTICHE_GREATER_EQUAL_0_7_2,
     _TABULAR_AVAILABLE,
     _TEXT_AVAILABLE,
     _TORCHVISION_GREATER_EQUAL_0_9,
@@ -93,6 +94,11 @@ def run_test(filepath):
             "finetuning",
             "translation.py",
             marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+        ),
+        pytest.param(
+            "finetuning",
+            "style_transfer.py",
+            marks=pytest.mark.skipif(not _PYSTICHE_GREATER_EQUAL_0_7_2, reason="pystiche is not installed")
         ),
         pytest.param(
             "predict",
