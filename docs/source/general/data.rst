@@ -77,7 +77,6 @@ How to customize existing datamodules
 Any Flash :class:`~flash.core.data.data_module.DataModule` can be created directly from datasets using the :meth:`~flash.core.data.data_module.DataModule.from_datasets` like this:
 
 .. testsetup:: data_module
-    :hide:
 
     from unittest.mock import Mock
     Trainer = Mock()
@@ -265,7 +264,7 @@ Next, implement your custom ``ImageClassificationPreprocess`` with some default 
                 "to_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.to_tensor)
             }
 
-2. The DataModule
+4. The DataModule
 _________________
 
 Finally, let's implement the ``ImageClassificationDataModule``.
