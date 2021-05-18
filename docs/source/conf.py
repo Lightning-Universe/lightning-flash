@@ -20,15 +20,18 @@ _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
+try:
+    from flash import __about__ as about
 
-def _load_py_module(fname, pkg="flash"):
-    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
-    py = module_from_spec(spec)
-    spec.loader.exec_module(py)
-    return py
+except ModuleNotFoundError:
 
+    def _load_py_module(fname, pkg="flash"):
+        spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
+        py = module_from_spec(spec)
+        spec.loader.exec_module(py)
+        return py
 
-about = _load_py_module("__about__.py")
+    about = _load_py_module("__about__.py")
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
 
