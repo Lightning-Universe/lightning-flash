@@ -66,4 +66,4 @@ Trainer API
 
 .. autoclass:: flash.core.trainer.Trainer
     :members:
-    :exclude-members: training_step, validation_step, test_step, configure_optimizers, forward
+    :exclude-members: __init__, training_step, validation_step, test_step, configure_optimizers, forward
