@@ -97,6 +97,12 @@ jobs:
           pip list
         shell: bash
 
+      - name: Cache datasets
+        uses: actions/cache@v2
+        with:
+          path: docs/data # This path is specific to Ubuntu
+          key: flash-datasets-docs
+
       - name: Test Documentation
         env:
           SPHINX_MOCK_REQUIREMENTS: 0
