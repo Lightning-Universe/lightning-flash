@@ -99,16 +99,12 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full or (flash._IS_TESTING and not torch.cuda.is_available()):
-            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        if not use_full or (flash._IS_TESTING and not torch.cuda.is_available()):
+            dataset_dict = DatasetDict({
+                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+            })
         else:
-            # used for debugging. Avoid processing the entire dataset   # noqa E265
-            try:
-                dataset_dict = DatasetDict({
-                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-                })
-            except AssertionError:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files)
+            dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
         dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input, target=target), batched=True)
         dataset_dict.set_format(columns=columns)

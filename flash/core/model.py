@@ -46,7 +46,7 @@ class BencharmkConvergenceCI(Callback):
     def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
         self.history.append(deepcopy(trainer.callback_metrics))
         if trainer.current_epoch == trainer.max_epochs - 1:
-            fn = getattr(pl_module, "_ci_benchmark_fn")
+            fn = getattr(pl_module, "_ci_benchmark_fn", None)
             if fn:
                 fn(self.history)
                 if trainer.is_global_zero:
