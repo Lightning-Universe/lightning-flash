@@ -133,9 +133,10 @@ class ImageClassifier(ClassificationTask):
         return self.head(x)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
         if self.hparams.multi_label:
-            import pdb
-            pdb.set_trace()
-            assert history[-1]["val_accuracy"] > 0.85
+            assert history[-1]["val_f1"] > 0.45
         else:
-            assert history[-1]["val_accuracy"] > 0.915
+            assert history[-1]["val_accuracy"] > 0.90

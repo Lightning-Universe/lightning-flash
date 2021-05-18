@@ -46,7 +46,11 @@ class BencharmkConvergenceCI(Callback):
     def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
         self.history.append(deepcopy(trainer.callback_metrics))
         if trainer.current_epoch == trainer.max_epochs - 1:
-            pl_module._ci_benchmark_fn(self.history)
+            fn = getattr(pl_module, "_ci_benchmark_fn")
+            if fn:
+                fn(self.history)
+                if trainer.is_global_zero:
+                    print("BencharmkConvergenceCI Activated")
 
 
 def predict_context(func: Callable) -> Callable:
@@ -534,5 +538,5 @@ class Task(LightningModule):
 
     def configure_callbacks(self):
         # used only for CI
-        if flash._IS_TESTING:
+        if flash._IS_TESTING and torch.cuda.is_available():
             return [BencharmkConvergenceCI()]

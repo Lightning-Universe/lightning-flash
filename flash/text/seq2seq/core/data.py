@@ -99,7 +99,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full and flash._IS_TESTING:
+        if use_full or (flash._IS_TESTING and not torch.cuda.is_available()):
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             # used for debugging. Avoid processing the entire dataset   # noqa E265

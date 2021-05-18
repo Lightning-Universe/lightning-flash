@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
 
@@ -42,10 +42,10 @@ class TextClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "prajjwal1/bert-tiny",
+        backbone: str = "prajjwal1/bert-medium",
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
+        learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
@@ -90,3 +90,9 @@ class TextClassifier(ClassificationTask):
         probs = torch.softmax(logits, 1)
         output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
         return output
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        assert history[-1]["val_accuracy"] > 0.730
