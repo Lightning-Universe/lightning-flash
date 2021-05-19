@@ -4,6 +4,7 @@ Tutorial: Creating a Custom Task
 In this tutorial we will go over the process of creating a custom :class:`~flash.core.model.Task`,
 along with a custom :class:`~flash.core.data.data_module.DataModule`.
 
+.. note:: This tutorial is only intended to help you create a small custom task for a personal project. If you want a more detailed guide, have a look at our :ref:`guide on contributing a task to flash. <contributing>`
 
 The tutorial objective is to create a ``RegressionTask`` to learn to predict if someone has ``diabetes`` or not.
 We will use ``scikit-learn`` `Diabetes dataset <https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset>`__.
