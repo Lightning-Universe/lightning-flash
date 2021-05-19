@@ -10,7 +10,7 @@ Inside ``data.py`` you should implement:
 #. some :class:`~flash.core.data.data_source.DataSource` classes *(optional)*
 #. a :class:`~flash.core.data.process.Preprocess`
 #. a :class:`~flash.core.data.data_module.DataModule`
-#. a :class:`~flash.core.data.callback.BaseVisualization` *(optional)*
+#. a :class:`~flash.core.data.base_viz.BaseVisualization` *(optional)*
 #. a :class:`~flash.core.data.process.Postprocess` *(optional)*
 
 DataSource
@@ -175,30 +175,25 @@ Here's the code:
 BaseVisualization
 ^^^^^^^^^^^^^^^^^
 
-An optional step is to implement a :class:`~flash.core.data.callback.BaseVisualization`.
-The :class:`~flash.core.data.callback.BaseVisualization` lets you control how data at various points in the pipeline can be visualized.
+An optional step is to implement a :class:`~flash.core.data.base_viz.BaseVisualization`.
+The :class:`~flash.core.data.base_viz.BaseVisualization` lets you control how data at various points in the pipeline can be visualized.
 This is extremely useful for debugging purposes, allowing users to view their data and understand the impact of their transforms.
-
-Take a look at our ``TemplateVisualization`` to get started:
 
 .. note::
     Don't worry about implementing it right away, you can always come back and add it later!
 
-.. autoclass:: flash.template.classification.data.TemplateVisualization
-    :members:
-
-.. raw:: html
-
-    <details>
-    <summary>Source</summary>
+Here's the code for our ``TemplateVisualization`` which just prints the data:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :pyobject: TemplateVisualization
 
-.. raw:: html
+We can configure our custom visualization in the ``TemplateData`` using :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` like this:
 
-    </details>
+.. literalinclude:: ../../../flash/template/classification/data.py
+    :language: python
+    :dedent: 4
+    :pyobject: TemplateData.configure_data_fetcher
 
 Postprocess
 ^^^^^^^^^^^
