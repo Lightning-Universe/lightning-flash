@@ -8,16 +8,19 @@ Once you've implemented a Flash :class:`~flash.core.data.data_module.DataModule`
 The :class:`~flash.core.model.Task` is responsible for: setting up the backbone, performing the forward pass of the model, and calculating the loss and any metrics.
 Remember that, under the hood, the Flash :class:`~flash.core.model.Task` is simply a :any:`pytorch_lightning:lightning_module` with some helpful defaults.
 
-Task
-^^^^
-To build your task, you can strat by overriding the base :class:`~flash.core.model.Task` or any of the existing :class:`~flash.core.model.Task` implementations.
+To build your task, you can start by overriding the base :class:`~flash.core.model.Task` or any of the existing :class:`~flash.core.model.Task` implementations.
 For example, in our scikit-learn example, we can just override :class:`~flash.core.classification.ClassificationTask` which provides good defaults for classification.
 
 You should attach your backbones registry as a class attribute like this:
 
 .. code-block:: python
 
-    backbones: FlashRegistry = TEMPLATE_BACKBONES
+    class TemplateSKLearnClassifier(ClassificationTask):
+
+        backbones: FlashRegistry = TEMPLATE_BACKBONES
+
+Model architecture and hyper-parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the :meth:`~flash.core.model.Task.__init__`, you will need to configure defaults for the:
 
@@ -34,8 +37,11 @@ Here's the code:
     :dedent: 4
     :pyobject: TemplateSKLearnClassifier.__init__
 
-You should also override the ``{train,val,test,predict}_step`` methods.
-The default ``{train,val,test,predict}_step`` implementations in :class:`~flash.core.model.Task` expect a tuple containing the input and target, and should be suitable for most applications.
+Adding the model routines
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You should override the ``{train,val,test,predict}_step`` methods.
+The default ``{train,val,test,predict}_step`` implementations in :class:`~flash.core.model.Task` expect a tuple containing the input (to be passed to the model) and target (to be used when computing the loss), and should be suitable for most applications.
 In our template example, we just extract the input and target from the input mapping and forward them to the ``super`` methods.
 Here's the code for the ``training_step``:
 

@@ -31,9 +31,6 @@ Here's another example with a slightly more complex model:
     :language: python
     :pyobject: load_mlp_128_256
 
-More Examples
-_____________
-
 Here's a more advanced example, which adds ``SimCLR`` to the ``IMAGE_CLASSIFIER_BACKBONES``, from `flash/image/backbones.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/backbones.py>`_:
 
 .. literalinclude:: ../../../flash/image/backbones.py
