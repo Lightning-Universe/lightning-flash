@@ -162,7 +162,7 @@ print(predictions)
 Flash is built as a collection of community-built tasks. A task is highly opinionated and laser-focused on solving a single problem well, using state-of-the-art methods.
 
 ### Example 1: Image embedding
-Flash has an Image embedding task to encode an image into a vector of image features which can be used for anything like clustering, similarity search or classification.
+Flash has an [Image Embedder task](https://lightning-flash.readthedocs.io/en/latest/reference/image_embedder.html) to encode an image into a vector of image features which can be used for anything like clustering, similarity search or classification.
 
 <details>
   <summary>View example</summary>
@@ -187,7 +187,7 @@ print(embeddings.shape)
 </details>
 
 ### Example 2: Text Summarization
-Flash has a Summarization task to sum up text from a larger article into a short description.
+Flash has a [Summarization task](https://lightning-flash.readthedocs.io/en/latest/reference/summarization.html) to sum up text from a larger article into a short description.
 
 <details>
   <summary>View example</summary>
@@ -230,7 +230,7 @@ python flash_examples/finetuning/summarization.py
 
 ### Example 3: Tabular Classification
 
-Flash has a TabularClassification task to tackle any tabular classification problem.
+Flash has a [Tabular Classification task](https://lightning-flash.readthedocs.io/en/latest/reference/tabular_classification.html) to tackle any tabular classification problem.
 
 <details>
   <summary>View example</summary>
@@ -281,7 +281,7 @@ python flash_examples/finetuning/tabular_data.py
 
 ### Example 4: Object Detection
 
-Flash has an ObjectDetection task to identify and locate objects in images.
+Flash has an [Object Detection task](https://lightning-flash.readthedocs.io/en/latest/reference/object_detection.html) to identify and locate objects in images.
 
 <details>
   <summary>View example</summary>
@@ -325,7 +325,7 @@ python flash_examples/finetuning/object_detection.py
 
 ### Example 5: Video Classification with PyTorchVideo
 
-Flash has a VideoClassifier task to classify videos using [PyTorchVideo](https://pytorchvideo.org/).
+Flash has a [Video Classification task](https://lightning-flash.readthedocs.io/en/latest/reference/video_classification.html) to classify videos using [PyTorchVideo](https://pytorchvideo.org/).
 
 <details>
   <summary>View example</summary>
@@ -378,7 +378,7 @@ python flash_examples/finetuning/video_classification.py
 
 ### Example 6: Semantic Segmentation
 
-Flash has a SemanticSegmentation task for segmentation of images.
+Flash has a [Semantic Segmentation task](https://lightning-flash.readthedocs.io/en/latest/reference/semantic_segmentation.html) for segmentation of images.
 
 <details>
   <summary>View example</summary>
@@ -427,7 +427,7 @@ python flash_examples/finetuning/semantic_segmentation.py
 
 ### Example 7: Style Transfer with Pystiche
 
-Flash has a StyleTransfer task for Neural Style Transfer (NST) with [Pystiche](https://github.com/pystiche/pystiche).
+Flash has a [Style Transfer task](https://lightning-flash.readthedocs.io/en/latest/reference/style_transfer.html) for Neural Style Transfer (NST) with [Pystiche](https://github.com/pystiche/pystiche).
 
 <details>
   <summary>View example</summary>
@@ -537,7 +537,7 @@ classifier = LinearClassifier(128, 10)
 
 ```
 
-When you reach the limits of the flexibility provided by tasks, then seamlessly transition to PyTorch Lightning which
+When you reach the limits of the flexibility provided by Flash, then seamlessly transition to PyTorch Lightning which
 gives you the most flexibility because it is simply organized PyTorch.
 
 ## Contribute!
