@@ -90,6 +90,7 @@ intersphinx_mapping = {
     "torch": ("https://pytorch.org/docs/stable/", None),
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
     "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
+    "pytorchvideo": ("https://pytorchvideo.readthedocs.io/en/latest/", None),
     "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
 }
 

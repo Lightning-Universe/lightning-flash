@@ -11,29 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import numpy as np
+from sklearn import datasets
+
 from flash import Trainer
-from flash.core.classification import Probabilities
-from flash.core.data.utils import download_data
-from flash.image import ImageClassificationData, ImageClassifier
+from flash.template import TemplateData, TemplateSKLearnClassifier
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
+data_bunch = datasets.load_iris()
 
 # 2. Load the model from a checkpoint
-model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+model = TemplateSKLearnClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/template_model.pt")
 
-# 3a. Predict what's on a few images! ants or bees?
-
-model.serializer = Probabilities()
+# 3. Classify a few examples
 predictions = model.predict([
-    "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
-    "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
-    "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
+    np.array([4.9, 3.0, 1.4, 0.2]),
+    np.array([6.9, 3.2, 5.7, 2.3]),
+    np.array([7.2, 3.0, 5.8, 1.6]),
 ])
 print(predictions)
 
-# 3b. Or generate predictions with a whole folder!
-datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
+# 4. Or generate predictions from a whole dataset!
+datamodule = TemplateData.from_sklearn(predict_bunch=data_bunch)
 
 predictions = Trainer().predict(model, datamodule=datamodule)
 print(predictions)

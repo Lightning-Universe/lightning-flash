@@ -50,6 +50,25 @@ Lightning Flash
    general/finetuning
    general/predictions
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contributing a Task
+
+   template/intro
+   template/data
+   template/backbones
+   template/task
+   template/optional
+   template/examples
+   template/tests
+   template/docs
+
+.. toctree::
+   :hidden:
+
+   reference/template
+
 Indices and tables
 ==================
 

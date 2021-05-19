@@ -23,6 +23,7 @@ import pytest
 from flash.core.utilities.imports import (
     _IMAGE_AVAILABLE,
     _PYSTICHE_GREATER_EQUAL_0_7_2,
+    _SKLEARN_AVAILABLE,
     _TABULAR_AVAILABLE,
     _TEXT_AVAILABLE,
     _TORCHVISION_GREATER_EQUAL_0_9,
@@ -92,6 +93,11 @@ def run_test(filepath):
         # pytest.param("finetuning", "text_classification.py"),  # TODO: takes too long
         pytest.param(
             "finetuning",
+            "template.py",
+            marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+        ),
+        pytest.param(
+            "finetuning",
             "translation.py",
             marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
         ),
@@ -132,6 +138,11 @@ def run_test(filepath):
             marks=pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="video libraries aren't installed")
         ),
         # pytest.param("predict", "summarization.py"),  # TODO: takes too long
+        pytest.param(
+            "predict",
+            "template.py",
+            marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+        ),
         pytest.param(
             "predict",
             "translation.py",
