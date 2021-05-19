@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from functools import partial
-from logging import logMultiprocessing
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
+import torch
 from torch import Tensor
 
 import flash
@@ -69,7 +68,6 @@ class TextFileDataSource(TextDataSource):
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
-        use_full: bool = True,
     ) -> Union[Sequence[Mapping[str, Any]]]:
         csv_file, input, target = data
 
@@ -79,11 +77,14 @@ class TextFileDataSource(TextDataSource):
         data_files[stage] = str(csv_file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if flash._IS_TESTING and not use_full:
-            # used for debugging. Avoid processing the entire dataset   # noqa E265
-            dataset_dict = DatasetDict({
-                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-            })
+        # FLASH_TESTING is set in the CI to run faster.
+        if flash._IS_TESTING and not torch.cuda.is_available():
+            try:
+                dataset_dict = DatasetDict({
+                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                })
+            except Exception:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
 

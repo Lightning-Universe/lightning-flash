@@ -38,11 +38,10 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(
                 [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest')),
+                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='bilinear')),
             ),
         ),
         "collate": Compose([kornia_collate, ApplyToKeys(DefaultDataKeys.TARGET, prepare_target)]),
-        "per_batch_transform_on_device": ApplyToKeys(DefaultDataKeys.INPUT, K.enhance.Normalize(0., 255.)),
     }
 
 
@@ -53,12 +52,8 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
             "post_tensor_transform": nn.Sequential(
                 ApplyToKeys(
                     [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-                    KorniaParallelTransforms(K.augmentation.RandomHorizontalFlip(p=0.75)),
+                    KorniaParallelTransforms(K.augmentation.RandomHorizontalFlip(p=0.5)),
                 ),
-            ),
-            "per_batch_transform_on_device": ApplyToKeys(
-                DefaultDataKeys.INPUT,
-                K.augmentation.ColorJitter(0.4, p=0.5),
             ),
         }
     )
