@@ -20,7 +20,7 @@ Here's how we create our transforms in the :class:`~flash.image.classification.d
     :language: python
     :pyobject: ImageClassificationPreprocess.default_transforms
 
-Add serializers for use with your Task
+Add output serializers to your Task
 ======================================
 
 Sometimes you want to give the user some control over their prediction format.
