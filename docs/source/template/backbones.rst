@@ -18,7 +18,8 @@ You can create a registry like this:
     TEMPLATE_BACKBONES = FlashRegistry("backbones")
 
 Let's add a simple MLP backbone to our registry.
-We'll create the backbone and return it along with the output size (so that we can create the model head in our :class:`~flash.core.model.Task`).
+We need a function that creates the backbone and returns it along with the output size (so that we can create the model head in our :class:`~flash.core.model.Task`).
+You can use any name for the function, although we use ``load_{model name}`` by convention.
 Here's the code:
 
 .. literalinclude:: ../../../flash/template/classification/backbones.py
