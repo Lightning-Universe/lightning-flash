@@ -7,7 +7,7 @@ Optional Extras
 Organize your transforms in transforms.py
 =========================================
 
-If you have a lot of default transforms, then for better organization you can add a ``transforms.py`` which houses your default transforms to be referenced in your :class:`~flash.core.data.process.Preprocess`.
+If you have a lot of default transforms, it can be useful to put them all in a ``transforms.py`` file, to be referenced in your :class:`~flash.core.data.process.Preprocess`.
 Here's an example from `image/classification/transforms.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/transforms.py>`_ which creates some default transforms given the desired image size:
 
 .. literalinclude:: ../../../flash/image/classification/transforms.py
