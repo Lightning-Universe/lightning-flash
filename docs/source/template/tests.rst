@@ -89,4 +89,4 @@ Here's ``test_predict_sklearn`` as an example:
 
 ------
 
-Now that you've written the tests, it's time to add some docs!
+Now that you've written the tests, it's time to :ref:`add some docs! <contributing_docs>`

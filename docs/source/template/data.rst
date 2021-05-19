@@ -17,8 +17,9 @@ DataSource
 ^^^^^^^^^^
 
 The :class:`~flash.core.data.data_source.DataSource` class contains the logic for data loading from different sources such as folders, files, tensors, etc.
-If you just want to support :meth:`~flash.core.data.data_module.DataModule.from_datasets` you won't need a :class:`~flash.core.data.data_source.DataSource`, but if you want to support a few different ways of loading data for your task, the more the merrier!
-Each :class:`~flash.core.data.data_source.DataSource` has a 2 methods:
+Every Flash :class:`~flash.core.data.data_module.DataModule` can be instantiated with :meth:`~flash.core.data.data_module.DataModule.from_datasets`.
+For each additional way you want the user to be able to instantiate your :class:`~flash.core.data.data_module.DataModule`, you'll need to create a :class:`~flash.core.data.data_source.DataSource`.
+Each :class:`~flash.core.data.data_source.DataSource` has 2 methods:
 
 - :meth:`~flash.core.data.data_source.DataSource.load_data` takes some dataset metadata (e.g. a folder name) as input and produces a sequence or iterable of samples or sample metadata.
 - :meth:`~flash.core.data.data_source.DataSource.load_sample` then takes as input a single element from the output of ``load_data`` and returns a sample.
