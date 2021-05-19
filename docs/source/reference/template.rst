@@ -37,7 +37,7 @@ For more advanced inference options, see :ref:`predictions`.
 Training
 ********
 
-In this section, we breifly describe the data, and then ``literalinclude`` our finetuning example.
+In this section, we briefly describe the data, and then ``literalinclude`` our finetuning example.
 
 Now we'll train on Fisher's classic iris data.
 It contains 150 records with four features (sepal length, sepal width, petal length, and petal width) in three classes (species of Iris: setosa, virginica and versicolor).
