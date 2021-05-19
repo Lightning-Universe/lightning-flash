@@ -2,7 +2,7 @@
 From Flash to Lightning
 #######################
 
-Flash is built on top of `Pytorch Lightning
+Flash is built on top of `PyTorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ to abstract away the unnecessary boilerplate for:
 
 - Data science

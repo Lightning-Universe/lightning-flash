@@ -35,13 +35,22 @@ model = nn.Sequential(
 )
 
 # 3. Load a dataset
-dataset = datasets.MNIST(os.path.join(_PATH_ROOT, 'data'), download=False, transform=transforms.ToTensor())
+dataset = datasets.MNIST(
+    os.path.join(_PATH_ROOT, 'data'),
+    download=False,
+    transform=transforms.ToTensor(),
+)
 
 # 4. Split the data randomly
 train, val, test = random_split(dataset, [50000, 5000, 5000])  # type: ignore
 
 # 5. Create the model
-classifier = ClassificationTask(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam, learning_rate=10e-3)
+classifier = ClassificationTask(
+    model,
+    loss_fn=nn.functional.cross_entropy,
+    optimizer=optim.Adam,
+    learning_rate=10e-3,
+)
 
 # 6. Create the trainer
 trainer = pl.Trainer(
