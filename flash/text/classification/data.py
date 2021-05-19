@@ -83,7 +83,7 @@ class TextFileDataSource(TextDataSource):
                 dataset_dict = DatasetDict({
                     stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
                 })
-            except:
+            except Exception:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
