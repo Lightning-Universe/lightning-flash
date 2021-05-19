@@ -6,7 +6,7 @@ The Task
 
 Inside ``model.py`` you just need to implement your :class:`~flash.core.model.Task`.
 The :class:`~flash.core.model.Task` is responsible for the forward pass of the model.
-It's just a :any:`pytorch_lightning:lightning_module` with some helpful defaults, so anything you can do inside a :any:`pytorch_lightning:lightning_module` you can do inside a :class:`~flash.core.model.Task`.
+Remember that under the hood the flash :class:`~flash.core.model.Task` is simply a :any:`pytorch_lightning:lightning_module` with some helpful defaults.
 
 Task
 ^^^^
