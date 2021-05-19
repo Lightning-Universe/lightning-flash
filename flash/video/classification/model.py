@@ -25,6 +25,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy
 
+import flash
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
@@ -112,7 +113,8 @@ class VideoClassifier(ClassificationTask):
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        backbone_kwargs["pretrained"] = pretrained
+        # todo (tchaton): Force pretrained when running CI Benchmarking.
+        backbone_kwargs["pretrained"] = True if (flash._IS_TESTING and torch.cuda.is_available()) else pretrained
         backbone_kwargs["head_activation"] = None
 
         if isinstance(backbone, nn.Module):
@@ -155,3 +157,9 @@ class VideoClassifier(ClassificationTask):
 
     def configure_finetune_callback(self) -> List[Callback]:
         return [VideoClassifierFinetuning()]
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        assert history[-1]["val_accuracy"] > 0.80

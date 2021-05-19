@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
 
 import torch
 from torch.nn import functional as F
@@ -51,7 +51,7 @@ class TabularClassifier(ClassificationTask):
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: List[Metric] = None,
-        learning_rate: float = 1e-3,
+        learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **tabnet_kwargs,
@@ -106,3 +106,9 @@ class TabularClassifier(ClassificationTask):
     def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
         return model
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        assert history[-1]["val_accuracy"] > 0.75
