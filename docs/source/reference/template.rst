@@ -23,7 +23,7 @@ Here, you should add a short intro to your predict example, and then use ``liter
 
 .. note:: We skip the first 14 lines as they are just the copyright notice.
 
-Our predict example uses a model pre-trained on the iris data.
+Our predict example uses a model pre-trained on the Iris data.
 
 .. literalinclude:: ../../../flash_examples/predict/template.py
     :language: python
@@ -39,7 +39,7 @@ Training
 
 In this section, we briefly describe the data, and then ``literalinclude`` our finetuning example.
 
-Now we'll train on Fisher's classic iris data.
+Now we'll train on Fisher's classic Iris data.
 It contains 150 records with four features (sepal length, sepal width, petal length, and petal width) in three classes (species of Iris: setosa, virginica and versicolor).
 
 Now all we need is to train our task!
