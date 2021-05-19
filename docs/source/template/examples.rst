@@ -14,7 +14,7 @@ finetuning
 
 The finetuning example should:
 
-#. download the data
+#. download the data (we'll add the example to our CI later on, so choose a dataset small enough that it runs in reasonable time)
 #. load the data into a :class:`~flash.core.data.data_module.DataModule`
 #. create an instance of the :class:`~flash.core.model.Task`
 #. create a :class:`~flash.core.trainer.Trainer`
@@ -40,7 +40,7 @@ predict
 
 The predict example should:
 
-#. download the data
+#. download the data (this should be the data from the finetuning example)
 #. load an instance of the :class:`~flash.core.model.Task` from a checkpoint stored on `S3` (speak with one of us about getting your checkpoint hosted)
 #. generate predictions for a few examples
 #. generate predictions for a whole dataset, folder, etc.
