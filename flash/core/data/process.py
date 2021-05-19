@@ -121,10 +121,10 @@ class Preprocess(BasePreprocess, Properties, Module):
         as it will impact performances.
 
     Data processing can be configured by overriding hooks or through transforms. The preprocess transforms are given as
-    a mapping from hook names to callables. Default transforms can be configured by overriding the `default_transforms`
-    or `{train,val,test,predict}_default_transforms` methods. These can then be overridden by the user with the
-    `{train,val,test,predict}_transform` arguments to the ``Preprocess``. All of the hooks can be used in the transform
-    mappings.
+    a mapping from hook names to callables. Default transforms can be configured by overriding the
+    ``default_transforms`` or ``{train,val,test,predict}_default_transforms`` methods. These can then be overridden by
+    the user with the ``{train,val,test,predict}_transform`` arguments to the ``Preprocess``. All of the hooks can be
+    used in the transform mappings.
 
     Example::
 
@@ -144,7 +144,7 @@ class Preprocess(BasePreprocess, Properties, Module):
                 }
 
     When overriding hooks for particular stages, you can prefix with ``train``, ``val``, ``test`` or ``predict``. For
-    example, you can achieve the same as the above example by implementing ```train_pre_tensor_transform`` and
+    example, you can achieve the same as the above example by implementing ``train_pre_tensor_transform`` and
     ``train_to_tensor_transform``.
 
     Example::
@@ -160,8 +160,8 @@ class Preprocess(BasePreprocess, Properties, Module):
             def collate(self, samples: List[torch.Tensor]) -> torch.Tensor:
                 return torch.utils.data._utils.collate.default_collate(samples)
 
-    Each hook is aware of the Trainer ``running stage`` through booleans. These are useful for adapting functionality
-    for a stage without duplicating code.
+    Each hook is aware of the Trainer running stage through booleans. These are useful for adapting functionality for a
+    stage without duplicating code.
 
     Example::
 

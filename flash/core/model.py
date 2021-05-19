@@ -82,9 +82,9 @@ class Task(LightningModule):
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
-        learning_rate: Learning rate to use for training, defaults to `5e-5`.
+        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
         postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
     """
@@ -286,7 +286,7 @@ class Task(LightningModule):
         objects. These will be overridden in the following resolution order (lowest priority first):
 
         - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
-        - :class:`.Task` defaults given to ``.Task.__init__``.
+        - :class:`.Task` defaults given to :meth:`.Task.__init__`.
         - :class:`.Task` manual overrides by setting :py:attr:`~data_pipeline`.
         - :class:`.DataPipeline` passed to this method.
 
