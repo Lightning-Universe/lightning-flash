@@ -90,8 +90,8 @@ Here's how it looks (from `video/classification.data.py <https://github.com/PyTo
 Preprocess
 ^^^^^^^^^^
 
-The :class:`~flash.core.data.process.Preprocess` object contains all data transforms.
-Internally we inject the :class:`~flash.core.data.process.Preprocess` transforms into the right places so that we can address the batch at several points along the pipeline.
+The :class:`~flash.core.data.process.Preprocess` object contains all the data transforms.
+Internally we inject the :class:`~flash.core.data.process.Preprocess` transforms at several points along the pipeline.
 
 Defining the standard transforms (typically at least a ``to_tensor_transform`` should be defined) for your :class:`~flash.core.data.process.Preprocess` is as simple as implementing the ``default_transforms`` method.
 The :class:`~flash.core.data.process.Preprocess` must take ``train_transform``, ``val_transform``, ``test_transform``, and ``predict_transform`` arguments in the ``__init__``.
