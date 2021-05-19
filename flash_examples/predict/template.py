@@ -23,7 +23,7 @@ data_bunch = datasets.load_iris()
 # 2. Load the model from a checkpoint
 model = TemplateSKLearnClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/template_model.pt")
 
-# 3. Predict what's on a few images! ants or bees?
+# 3. Classify a few examples
 predictions = model.predict([
     np.array([4.9, 3.0, 1.4, 0.2]),
     np.array([6.9, 3.2, 5.7, 2.3]),
