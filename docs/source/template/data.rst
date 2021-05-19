@@ -208,4 +208,4 @@ As an example, here's the :class:`~text.classification.data.TextClassificationPo
 
 ------
 
-Now that you've got some data, it's time to :ref:`implement your task! <contributing_task>`
+Now that you've got some data, it's time to :ref:`add some backbones for your task! <contributing_backbones>`

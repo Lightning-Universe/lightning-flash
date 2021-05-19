@@ -40,7 +40,8 @@ Tutorials
 The tutorials in this section will walk you through all of the components you need to implement (or adapt from the template) for your custom task.
 
 - :ref:`contributing_data`: our first tutorial goes over the best practices for implementing everything you need to connect data to your task
-- :ref:`contributing_task`: now that we have the data, in this tutorial we create our custom task
+- :ref:`contributing_backbones`: the second tutorial shows you how to create an extensible backbone registry for your task
+- :ref:`contributing_task`: now that we have the data and the models, in this tutorial we create our custom task
 - :ref:`contributing_optional`: this tutorial covers some optional extras you can add if needed for your particular task
 - :ref:`contributing_examples`: this tutorial guides you through creating some simple examples showing your task in action
 - :ref:`contributing_tests`: in this tutorial, we cover best practices for writing some tests for your new task
