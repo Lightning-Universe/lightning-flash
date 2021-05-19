@@ -81,7 +81,7 @@ Here's how it looks (from ``video/classification.data.py``):
 Preprocess
 ^^^^^^^^^^
 
-The :class:`~flash.core.data.process.Preprocess` is how all transforms are defined in Flash.
+The :class:`~flash.core.data.process.Preprocess` object contains all data transforms.
 Internally we inject the :class:`~flash.core.data.process.Preprocess` transforms into the right places so that we can address the batch at several points along the pipeline.
 Defining the standard transforms (typically at least a ``to_tensor_transform`` should be defined) for your :class:`~flash.core.data.process.Preprocess` is as simple as implementing the ``default_transforms`` method.
 The :class:`~flash.core.data.process.Preprocess` also knows about the available :class:`~flash.core.data.data_source.DataSource` classes that it can work with, which should be configured in the ``__init__``.
