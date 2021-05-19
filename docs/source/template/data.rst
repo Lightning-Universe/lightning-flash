@@ -7,7 +7,7 @@ The Data
 The first step to contributing a task is to implement the classes we need to load some data.
 Inside ``data.py`` you should implement:
 
-#. zero or more :class:`~flash.core.data.data_source.DataSource` classes
+#. some :class:`~flash.core.data.data_source.DataSource` classes *(optional)*
 #. a :class:`~flash.core.data.process.Preprocess`
 #. a :class:`~flash.core.data.data_module.DataModule`
 #. a :class:`~flash.core.data.callbacks.BaseVisualization` *(optional)*
@@ -17,7 +17,7 @@ DataSource
 ^^^^^^^^^^
 
 The :class:`~flash.core.data.data_source.DataSource` class contains the logic for data loading from different sources such as folders, files, tensors, etc.
-If you just want to support :meth:`flash.core.data.data_module.DataModule.from_datasets` you won't need a :class:`~flash.core.data.data_source.DataSource`, but if you want to support a few different ways of loading data for your task, the more the merrier!
+If you just want to support :meth:`~flash.core.data.data_module.DataModule.from_datasets` you won't need a :class:`~flash.core.data.data_source.DataSource`, but if you want to support a few different ways of loading data for your task, the more the merrier!
 Each :class:`~flash.core.data.data_source.DataSource` has a 2 methods:
 
 - :meth:`~flash.core.data.data_source.DataSource.load_data` takes some dataset metadata (e.g. a folder name) as input and produces a sequence or iterable of samples or sample metadata.
@@ -85,6 +85,7 @@ Here's how it looks (from ``video/classification.data.py``):
 
 .. literalinclude:: ../../../flash/video/classification/data.py
     :language: python
+    :dedent: 4
     :pyobject: VideoClassificationPathsDataSource.load_data
 
 Preprocess
@@ -92,57 +93,84 @@ Preprocess
 
 The :class:`~flash.core.data.process.Preprocess` object contains all data transforms.
 Internally we inject the :class:`~flash.core.data.process.Preprocess` transforms into the right places so that we can address the batch at several points along the pipeline.
+
 Defining the standard transforms (typically at least a ``to_tensor_transform`` should be defined) for your :class:`~flash.core.data.process.Preprocess` is as simple as implementing the ``default_transforms`` method.
-The :class:`~flash.core.data.process.Preprocess` also knows about the available :class:`~flash.core.data.data_source.DataSource` classes that it can work with, which should be configured in the ``__init__``.
+The :class:`~flash.core.data.process.Preprocess` must take ``train_transform``, ``val_transform``, ``test_transform``, and ``predict_transform`` arguments in the ``__init__``.
+These arguments can be provided by the user (when creating the :class:`~flash.core.data.data_module.DataModule`) to override the default transforms.
+Any additional arguments are up to you.
 
-Take a look at our ``TemplatePreprocess`` to get started:
+Inside the ``__init__``, we make a call to super.
+This is where we register our data sources.
+Data sources should be given as a dictionary which maps data source name to data source object.
+The name can be anything, but if you want to take advantage of our built-in ``from_*`` classmethods, you should use :class:`~flash.core.data.data_source.DefaultDataSources` as the names.
+In our case, we have both a :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` and a custom scikit-learn data source (which we'll call `"sklearn"`).
 
-.. autoclass:: flash.template.classification.data.TemplatePreprocess
-    :members:
+You should also provide a ``default_data_source``.
+This is the name of the data source to use by default when predicting.
+It'd be cool if we could get predictions just from a numpy array, so we'll use :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` as the default.
 
-.. raw:: html
-
-    <details>
-    <summary>Source</summary>
+Here's our ``TemplatePreprocess.__init__``:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
-    :pyobject: TemplatePreprocess
+    :dedent: 4
+    :pyobject: TemplatePreprocess.__init__
 
-.. raw:: html
+For our ``TemplatePreprocess``, we'll just configure a default ``to_tensor_transform``.
+Let's first define the transform as a ``staticmethod``:
 
-    </details>
+.. literalinclude:: ../../../flash/template/classification/data.py
+    :language: python
+    :dedent: 4
+    :pyobject: TemplatePreprocess.input_to_tensor
+
+Our inputs samples will be dictionaries whose keys are in the :class:`~flash.core.data.data_source.DefaultDataKeys`.
+You can map each key to different transforms using :class:`~flash.core.data.transforms.ApplyToKeys`.
+Here's our ``default_transforms`` method:
+
+.. literalinclude:: ../../../flash/template/classification/data.py
+    :language: python
+    :dedent: 4
+    :pyobject: TemplatePreprocess.default_transforms
 
 .. _contributing_data_module:
 
 DataModule
 ^^^^^^^^^^
 
-The :class:`~flash.core.data.data_module.DataModule` is where the hard work of our :class:`~flash.core.data.data_source.DataSource` and :class:`~flash.core.data.process.Preprocess` implementations pays off.
-If your :class:`~flash.core.data.data_source.DataSource` implementation(s) conform to our :class:`~flash.core.data.data_source.DefaultDataSources` (e.g. ``DefaultDataSources.FOLDERS``) then your :class:`~flash.core.data.data_module.DataModule` implementation simply needs a ``preprocess_cls`` attribute.
-You now have a :class:`~flash.core.data.data_module.DataModule` that can be instantiated with ``from_*`` for whichever data sources you have configured (e.g. ``MyDataModule.from_folders``).
-It also includes all of your default transforms!
+The :class:`~flash.core.data.data_module.DataModule` is responsible for creating the :class:`~torch.utils.data.DataLoader` and injecting the transforms for each stage.
+When the user calls a ``from_*`` method (such as :meth:`~flash.core.data.data_module.DataModule.from_numpy`), the following steps take place:
 
-If you've defined a fully custom :class:`~flash.core.data.data_source.DataSource` (like our ``TemplateSKLearnDataSource``), then you will need a ``from_*`` method for each (we'll define ``from_sklearn`` for our example).
-The ``from_*`` methods take whatever arguments you want them to and call :meth:`~flash.core.data.data_module.DataModule.from_data_source` with the name given to your custom data source in the ``Preprocess.__init__``.
+#. The :meth:`~flash.core.data.data_module.DataModule.from_data_source` method is called with the name of the :class:`~flash.core.data.data_source.DataSource` to use and the inputs to provide to :meth:`~flash.core.data.data_source.DataSource.load_data` for each stage.
+#. The :class:`~flash.core.data.process.Preprocess` is created from ``cls.preprocess_cls`` (if it wasn't provided by the user) with any provided transforms.
+#. The :class:`~flash.core.data.data_source.DataSource` of the provided name is retrieved from the :class:`~flash.core.data.process.Preprocess`.
+#. A :class:`~flash.core.data.auto_dataset.BaseAutoDataset` is created from the :class:`~flash.core.data.data_source.DataSource` for each stage.
+#. The :class:`~flash.core.data.data_module.DataModule` is instantiated with the data sets.
 
-Take a look at our ``TemplateData`` to get started:
+To create our ``TemplateData`` :class:`~flash.core.data.data_module.DataModule`, we first need to attach out preprocess class like this:
 
-.. autoclass:: flash.template.classification.data.TemplateData
-    :members:
+.. code-block:: python
 
-.. raw:: html
+    preprocess_cls = TemplatePreprocess
 
-    <details>
-    <summary>Source</summary>
+Since we provided a :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` :class:`~flash.core.data.data_source.DataSource` in the ``TemplatePreprocess``, :meth:`~flash.core.data.data_module.DataModule.from_numpy` will now work with our ``TemplateData``.
+
+If you've defined a fully custom :class:`~flash.core.data.data_source.DataSource` (like our ``TemplateSKLearnDataSource``), then you will need to write a ``from_*`` method for each.
+Here's the ``from_sklearn`` method for our ``TemplateData``:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
-    :pyobject: TemplateData
+    :dedent: 4
+    :pyobject: TemplateData.from_sklearn
 
-.. raw:: html
+The final step is to implement the ``num_features`` property for our ``TemplateData``.
+This is just a convenience for the user that finds the ``num_features`` attribute on any of the data sets and returns it.
+Here's the code:
 
-    </details>
+.. literalinclude:: ../../../flash/template/classification/data.py
+    :language: python
+    :dedent: 4
+    :pyobject: TemplateData.num_features
 
 BaseVisualization
 ^^^^^^^^^^^^^^^^^

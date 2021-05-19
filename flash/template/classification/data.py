@@ -80,20 +80,7 @@ class TemplateSKLearnDataSource(TemplateNumpyDataSource):
 
 
 class TemplatePreprocess(Preprocess):
-    """The next thing for us to implement is the :class:`~flash.core.data.process.Preprocess`. The
-    :class:`~flash.core.data.process.Preprocess` must take ``train_transform``, ``val_transform``, ``test_transform``,
-    and ``predict_transform`` arguments in the ``__init__``. Any additional arguments for it to take are up to you.
-
-    Inside the ``__init__``, we make a call to super. This is where we register our data sources. Data sources should be
-    given as a dictionary which maps data source name to data source object. The name can be anything, but if you want
-    to take advantage of our built-in ``from_*`` classmethods, you should use
-    :class:`~flash.core.data.data_source.DefaultDataSources` as the names. In our case, we have both a
-    :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` and a custom scikit-learn data source (which we'll
-    call "sklearn").
-
-    We can also provide a ``default_data_source``. This is the name of the data source to use by default when
-    predicting. It'd be cool if we could get predictions just from a numpy array, so let's use the
-    :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` as the default.
+    """An example :class:`~flash.core.data.process.Preprocess`.
 
     Args:
         train_transform: The user-specified transforms to apply during training.
@@ -141,13 +128,7 @@ class TemplatePreprocess(Preprocess):
         return torch.from_numpy(input).float()
 
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        """Your :class:`~flash.core.data.process.Preprocess` should usually define some default transforms. Generally,
-        we at least want to convert to a tensor, so let's do that here.
-
-        Our inputs samples will be dictionaries whose keys are from the
-        :class:`~flash.core.data.data_source.DefaultDataKeys`, so we need to map each key to different transforms using
-        :class:`~flash.core.data.transforms.ApplyToKeys`. By convention, we apply sequences of transforms by wrapping
-        them in an ``nn.Sequential``.
+        """Configures the default ``to_tensor_transform``.
 
         Returns:
             Our dictionary of transforms.
@@ -192,9 +173,7 @@ class TemplateData(DataModule):
         **preprocess_kwargs: Any,
     ):
         """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them
-        through to the :meth:`~flash.core.data.data_module.DataModule.from_data_source` method underneath. It's really
-        just a convenience method to save the user from needing to call
-        :meth:`~flash.core.data.data_module.DataModule.from_data_source` directly.
+        through to the :meth:`~flash.core.data.data_module.DataModule.from_data_source` method underneath.
 
         Args:
             train_bunch: The scikit-learn ``Bunch`` containing the train data.
