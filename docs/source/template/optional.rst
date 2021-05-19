@@ -8,7 +8,7 @@ Organize your transforms in transforms.py
 =========================================
 
 If you have a lot of default transforms, then for better organization you can add a ``transforms.py`` which houses your default transforms to be referenced in your :class:`~flash.core.data.process.Preprocess`.
-Here's an example from ``image/classification/transforms.py`` which creates some default transforms given the desired image size:
+Here's an example from `image/classification/transforms.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/transforms.py>`_ which creates some default transforms given the desired image size:
 
 .. literalinclude:: ../../../flash/image/classification/transforms.py
     :language: python
@@ -26,7 +26,7 @@ Add serializers for use with your Task
 Sometimes you want to give the user some control over their prediction format.
 :class:`~flash.core.data.process.Postprocess` can do the heavy lifting (anything you always want to apply to the predictions), but one or more custom :class:`~flash.core.data.process.Serializer` implementations can be used to convert the predictions to a desired output format.
 You should add your :class:`~flash.core.data.process.Serializer` implementations in a ``serialization.py`` file and set a good default in your :class:`~flash.core.model.Task`.
-Some good examples are in ``core/classification.py``.
+Some good examples are in `flash/core/classification.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/classification.py>`_.
 Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.process.Serializer`:
 
 .. literalinclude:: ../../../flash/core/classification.py

@@ -4,7 +4,7 @@
 The Task
 ********
 
-Once you've implemented a Flash :class:`~flash.core.data.data_module.DataModule` and some backbones, you should implement your :class:`~flash.core.model.Task`.
+Once you've implemented a Flash :class:`~flash.core.data.data_module.DataModule` and some backbones, you should implement your :class:`~flash.core.model.Task` in `model.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/template/classification/model.py>`_.
 The :class:`~flash.core.model.Task` is responsible for: setting up the backbone, performing the forward pass of the model, and calculating the loss and any metrics.
 Remember that, under the hood, the Flash :class:`~flash.core.model.Task` is simply a :any:`pytorch_lightning:lightning_module` with some helpful defaults.
 

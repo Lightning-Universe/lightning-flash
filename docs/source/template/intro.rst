@@ -21,10 +21,10 @@ The Flash tasks are organized in folders by data-type (image, text, video, etc.)
 
 |
 
-Before you begin, copy the files in ``flash/template/classification`` to a new sub-directory under the relevant data-type.
+Before you begin, copy the files in `flash/template/classification <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/template/classification/>`_ to a new sub-directory under the relevant data-type.
 If a data-type folder already exists for your task, then a task type sub-folder should be added containing the template files.
 If a data-type folder doesn't exist, then you will need to add that too.
-You should also copy the files from ``tests/template/classification`` to the corresponding data-type, task type folder in ``tests``.
+You should also copy the files from `tests/template/classification <https://github.com/PyTorchLightning/lightning-flash/blob/master/tests/template/classification/>`_ to the corresponding data-type, task type folder in ``tests``.
 For example, if you were adding an image classification task, you would do:
 
 .. code-block:: bash

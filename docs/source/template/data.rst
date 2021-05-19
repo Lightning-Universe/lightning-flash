@@ -5,7 +5,7 @@ The Data
 ********
 
 The first step to contributing a task is to implement the classes we need to load some data.
-Inside ``data.py`` you should implement:
+Inside `data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/template/classification/data.py>`_ you should implement:
 
 #. some :class:`~flash.core.data.data_source.DataSource` classes *(optional)*
 #. a :class:`~flash.core.data.process.Preprocess`
@@ -80,7 +80,7 @@ A :class:`~torch.utils.data.Dataset` is then created from the :class:`~flash.cor
 The output of the :meth:`~flash.core.data.data_source.DataSource.load_data` can just be a :class:`torch.utils.data.Dataset` instance.
 If the library that your :class:`~flash.core.data.model.Task` is based on provides a custom dataset, you don't need to re-write it as a :class:`~flash.core.data.data_source.DataSource`.
 For example, the :meth:`~flash.core.data.data_source.DataSource.load_data` of the ``VideoClassificationPathsDataSource`` just creates an :class:`~pytorchvideo.data.EncodedVideoDataset` from the given folder.
-Here's how it looks (from ``video/classification.data.py``):
+Here's how it looks (from `video/classification.data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/video/classification/data.py>`_):
 
 .. literalinclude:: ../../../flash/video/classification/data.py
     :language: python

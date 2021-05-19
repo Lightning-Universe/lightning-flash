@@ -5,7 +5,7 @@ The Docs
 *********
 
 The final step is to add some docs.
-For each :class:`~flash.core.model.Task` in Flash, we have a docs page in ``docs/source/reference``.
+For each :class:`~flash.core.model.Task` in Flash, we have a docs page in `docs/source/reference <https://github.com/PyTorchLightning/lightning-flash/blob/master/docs/source/reference>`_.
 You should create a ``.rst`` file there with the following:
 
 - a brief description of the task
@@ -13,7 +13,7 @@ You should create a ``.rst`` file there with the following:
 - the finetuning example
 - any relevant API reference
 
-Here are the contents of ``docs/source/reference/template.rst`` which breaks down each of these steps:
+Here are the contents of `docs/source/reference/template.rst <https://github.com/PyTorchLightning/lightning-flash/blob/master/docs/source/reference/template.rst>`_ which breaks down each of these steps:
 
 .. literalinclude:: ../reference/template.rst
     :language: rest

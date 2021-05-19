@@ -18,7 +18,7 @@ tests/examples/test_scripts.py
 ==============================
 
 Before we write our custom tests, we should add out examples to the CI.
-To do this, add a line for each example (``finetuning`` and ``predict``) to the annotation of ``test_example`` in ``tests/examples/test_scripts.py``.
+To do this, add a line for each example (``finetuning`` and ``predict``) to the annotation of ``test_example`` in `tests/examples/test_scripts.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/tests/examples/test_scripts.py>`_.
 Here's how those lines look for our ``template.py`` examples:
 
 .. code-block:: python
@@ -38,7 +38,7 @@ Here's how those lines look for our ``template.py`` examples:
 test_data.py
 ============
 
-The most important tests in ``data.py`` check that the ``from_*`` methods work correctly.
+The most important tests in `test_data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/tests/template/classification/test_data.py>`_ check that the ``from_*`` methods work correctly.
 In the class ``TestTemplateData``, we have two of these: ``test_from_numpy`` and ``test_from_sklearn``.
 In general, there should be one ``test_from_*`` method for each :class:`~flash.core.data.data_source` you have configured.
 
@@ -51,7 +51,7 @@ Here's the code for ``test_from_numpy``:
 test_model.py
 =============
 
-In ``test_model.py``, we first have ``test_forward`` and ``test_train``.
+In `test_model.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/tests/template/classification/test_model.py>`_, we first have ``test_forward`` and ``test_train``.
 These test that tensors can be passed to the forward and that the :class:`~flash.core.model.Task` can be trained.
 Here's the code for ``test_forward`` and ``test_train``:
 

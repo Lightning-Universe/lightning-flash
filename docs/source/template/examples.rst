@@ -5,7 +5,7 @@ The Examples
 ************
 
 Now you've implemented your task, it's time to add some examples showing how cool it is!
-We usually provide one finetuning example in ``flash_examples/finetuning`` and one predict / inference example in ``flash_examples/predict``.
+We usually provide one finetuning example in `flash_examples/finetuning <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/finetuning/>`_ and one predict / inference example in `flash_examples/predict <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/predict/>`_.
 You can base these off of our ``template.py`` examples.
 Let's take a closer look.
 
@@ -23,7 +23,7 @@ The finetuning example should:
 #. generate predictions for a few examples *(optional)*
 
 For our template example we don't have a pretrained backbone, so we can just call :meth:`~flash.core.trainer.Trainer.fit` rather than :meth:`~flash.core.trainer.Trainer.finetune`.
-Here's the full example (``flash_examples/finetuning/template.py``):
+Here's the full example (`flash_examples/finetuning/template.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/finetuning/template.py>`_):
 
 .. literalinclude:: ../../../flash_examples/finetuning/template.py
     :language: python
@@ -46,7 +46,7 @@ The predict example should:
 #. generate predictions for a whole dataset, folder, etc.
 
 For our template example we don't have a pretrained backbone, so we can just call :meth:`~flash.core.trainer.Trainer.fit` rather than :meth:`~flash.core.trainer.Trainer.finetune`.
-Here's the full example (``flash_examples/predict/template.py``):
+Here's the full example (`flash_examples/predict/template.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/predict/template.py>`_):
 
 .. literalinclude:: ../../../flash_examples/predict/template.py
     :language: python
