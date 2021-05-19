@@ -19,6 +19,9 @@ The Task template is designed to guide you through contributing a task to Flash.
 It contains the code, tests, and examples for a task that performs classification with a multi-layer perceptron, intended for use with the classic data sets from scikit-learn.
 Before you begin, copy the files in ``flash/template/classification`` to the location where you are implementing your task.
 Our folders are organised in terms of data-type (image, text, video, etc.), with sub-folders for different task types (classification, regression, etc.).
+
+|
+
 If a data-type folder already exists for your task, then a task type sub-folder should be added containing the template files.
 If a data-type folder doesn't exist, then you will need to add that too.
 You should also copy the files from ``tests/template/classification`` to the corresponding data-type, task type folder in ``tests``.

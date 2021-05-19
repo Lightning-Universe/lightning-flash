@@ -166,6 +166,11 @@ Sometimes you have some transforms that need to be applied _after_ your model.
 For this you can optionally implement a :class:`~flash.core.data.process.Postprocess`.
 The :class:`~flash.core.data.process.Postprocess` is applied to the model outputs during inference.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
+As an example, here's the :class:`~text.classification.data.TextClassificationPostProcess` which gets the logits from a ``SequenceClassifierOutput``:
+
+.. literalinclude:: ../../../flash/text/classification/data.py
+    :language: python
+    :pyobject: TextClassificationPostProcess
 
 ------
 
