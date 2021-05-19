@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from torch import nn, tensor
@@ -88,7 +88,7 @@ class ObjectDetector(Task):
         anchor_generator: Optional[Type['AnchorGenerator']] = None,
         loss=None,
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
-        optimizer: Type[Optimizer] = torch.optim.Adam,
+        optimizer: Type[Optimizer] = torch.optim.AdamW,
         learning_rate: float = 1e-3,
         **kwargs: Any,
     ):
@@ -180,24 +180,17 @@ class ObjectDetector(Task):
         # fasterrcnn takes only images for eval() mode
         outs = self.model(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
-        return {"val_iou": iou}
+        self.log("val_iou", iou)
 
-    def validation_epoch_end(self, outs):
-        avg_iou = torch.stack([o["val_iou"] for o in outs]).mean()
-        logs = {"val_iou": avg_iou}
-        return {"avg_val_iou": avg_iou, "log": logs}
+    def on_validation_end(self) -> None:
+        return super().on_validation_end()
 
     def test_step(self, batch, batch_idx):
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         # fasterrcnn takes only images for eval() mode
         outs = self.model(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
-        return {"test_iou": iou}
-
-    def test_epoch_end(self, outs):
-        avg_iou = torch.stack([o["test_iou"] for o in outs]).mean()
-        logs = {"test_iou": avg_iou}
-        return {"avg_test_iou": avg_iou, "log": logs}
+        self.log("test_iou", iou)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         images = batch[DefaultDataKeys.INPUT]
@@ -205,3 +198,10 @@ class ObjectDetector(Task):
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
+        """
+        This function is used only for debugging usage with CI
+        """
+        # todo (tchaton) Improve convergence
+        # history[-1]["val_iou"]

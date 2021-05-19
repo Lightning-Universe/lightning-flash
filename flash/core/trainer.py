@@ -56,6 +56,11 @@ class Trainer(Trainer):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
                 kwargs["gpus"] = 1
+                kwargs["max_epochs"] = 3
+                kwargs["limit_train_batches"] = 1.0
+                kwargs["limit_val_batches"] = 1.0
+                kwargs["limit_test_batches"] = 1.0
+                kwargs["fast_dev_run"] = False
             else:
                 kwargs["fast_dev_run"] = True
         super().__init__(*args, **kwargs)
