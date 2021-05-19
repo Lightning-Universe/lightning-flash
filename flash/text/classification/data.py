@@ -68,7 +68,6 @@ class TextFileDataSource(TextDataSource):
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
-        use_full: bool = True,
     ) -> Union[Sequence[Mapping[str, Any]]]:
         csv_file, input, target = data
 
@@ -78,13 +77,16 @@ class TextFileDataSource(TextDataSource):
         data_files[stage] = str(csv_file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full or (flash._IS_TESTING and not torch.cuda.is_available()):
-            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        # FLASH_TESTING is set in the CI to run faster.
+        if flash._IS_TESTING and not torch.cuda.is_available():
+            try:
+                dataset_dict = DatasetDict({
+                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                })
+            except:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            # used for debugging. Avoid processing the entire dataset   # noqa E265
-            dataset_dict = DatasetDict({
-                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-            })
+            dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
         if self.training:
             labels = list(sorted(list(set(dataset_dict[stage][target]))))

@@ -88,10 +88,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         self.filetype = filetype
 
     def load_data(
-        self,
-        data: Any,
-        use_full: bool = False,
-        columns: List[str] = ["input_ids", "attention_mask", "labels"]
+        self, data: Any, columns: List[str] = ["input_ids", "attention_mask", "labels"]
     ) -> 'datasets.Dataset':
         file, input, target = data
         data_files = {}
@@ -99,10 +96,13 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if not use_full or (flash._IS_TESTING and not torch.cuda.is_available()):
-            dataset_dict = DatasetDict({
-                stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-            })
+        if flash._IS_TESTING and not torch.cuda.is_available():
+            try:
+                dataset_dict = DatasetDict({
+                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                })
+            except:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
@@ -111,7 +111,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
-        return self.load_data(data, use_full=False, columns=["input_ids", "attention_mask"])
+        return self.load_data(data, columns=["input_ids", "attention_mask"])
 
 
 class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):

@@ -57,7 +57,7 @@ Finally, create a Flash :class:`flash.core.trainer.Trainer` and pass it the mode
     trainer = flash.Trainer(max_epochs=2)
     trainer.fit(model, data_module)
 
-.. testoutput::
+.. testoutput:: style_transfer
     :hide:
 
     ...
