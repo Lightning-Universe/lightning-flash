@@ -20,7 +20,7 @@ from flash.text import TranslationData, TranslationTask
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 
-backbone = "facebook/mbart-large-en-ro"
+backbone = "t5-small"
 
 # 2. Load the data
 datamodule = TranslationData.from_csv(
