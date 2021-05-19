@@ -23,9 +23,10 @@ Here's how we create our transforms in the :class:`~flash.image.classification.d
 Add output serializers to your Task
 ======================================
 
-Sometimes you want to give the user some control over their prediction format.
-:class:`~flash.core.data.process.Postprocess` can do the heavy lifting (anything you always want to apply to the predictions), but one or more custom :class:`~flash.core.data.process.Serializer` implementations can be used to convert the predictions to a desired output format.
-You should add your :class:`~flash.core.data.process.Serializer` implementations in a ``serialization.py`` file and set a good default in your :class:`~flash.core.model.Task`.
+We recommend that you do most of the heavy lifting in the :class:`~flash.core.data.process.Postprocess`.
+Specifically, it should include any formatting and transforms that should always be applied to the predictions.
+If you want to support different use cases that require different prediction formats, you should add some :class:`~flash.core.data.process.Serializer` implementations in a ``serialization.py`` file.
+
 Some good examples are in `flash/core/classification.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/classification.py>`_.
 Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.process.Serializer`:
 
