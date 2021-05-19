@@ -60,7 +60,7 @@ setup(
     url=about.__homepage__,
     download_url="https://github.com/PyTorchLightning/lightning-flash",
     license=about.__license__,
-    packages=find_packages(exclude=["tests", "docs"]),
+    packages=find_packages(exclude=["tests", "tests.*"]),
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
