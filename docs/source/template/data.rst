@@ -75,11 +75,12 @@ DataSource vs Dataset
 ~~~~~~~~~~~~~~~~~~~~~
 
 A :class:`~flash.core.data.data_source.DataSource` is not the same as a :class:`torch.utils.data.Dataset`.
-A :class:`torch.utils.data.Dataset` knows about the data, whereas a :class:`~flash.core.data.data_source.DataSource` only know about how to load the data.
-So it's possible for a single :class:`~flash.core.data.data_source.DataSource` to create more than one :class:`~torch.utils.data.Dataset`.
-It's also fine for the output of the ``load_data`` method to just be a :class:`torch.utils.data.Dataset` instance.
-You don't need to re-write custom datasets, either use :meth:`flash.core.data.data_module.DataModule.from_datasets` or just instantiate them in ``load_data`` similarly to what we did with the ``TemplateSKLearnDataSource``.
-For example, the ``load_data`` of the ``VideoClassificationPathsDataSource`` just creates an :class:`~pytorchvideo.data.EncodedVideoDataset` from the given folder.
+When a ``from_*`` method is called on your :class:`~flash.core.data.data_module.DataModule`, it gets the :class:`~flash.core.data.data_source.DataSource` to use from the :class:`~flash.core.data.process.Preprocess`.
+A :class:`~torch.utils.data.Dataset` is then created from the :class:`~flash.core.data.data_source.DataSource` for each stage (`train`, `val`, `test`, `predict`) using the provided metadata (e.g. folder name, numpy array etc.).
+
+The output of the :meth:`~flash.core.data.data_source.DataSource.load_data` can just be a :class:`torch.utils.data.Dataset` instance.
+If the library that your :class:`~flash.core.data.model.Task` is based on provides a custom dataset, you don't need to re-write it as a :class:`~flash.core.data.data_source.DataSource`.
+For example, the :meth:`~flash.core.data.data_source.DataSource.load_data` of the ``VideoClassificationPathsDataSource`` just creates an :class:`~pytorchvideo.data.EncodedVideoDataset` from the given folder.
 Here's how it looks (from ``video/classification.data.py``):
 
 .. literalinclude:: ../../../flash/video/classification/data.py
