@@ -10,7 +10,7 @@ Remember that, under the hood, the Flash :class:`~flash.core.model.Task` is simp
 
 Task
 ^^^^
-You can override the base :class:`~flash.core.model.Task` or any of the existing :class:`~flash.core.model.Task` implementations.
+To build your task, you can strat by overriding the base :class:`~flash.core.model.Task` or any of the existing :class:`~flash.core.model.Task` implementations.
 For example, in our scikit-learn example, we can just override :class:`~flash.core.classification.ClassificationTask` which provides good defaults for classification.
 
 You should attach your backbones registry as a class attribute like this:
