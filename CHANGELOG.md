@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added Semantic Segmentation task ([#239](https://github.com/PyTorchLightning/lightning-flash/pull/239) [#287](https://github.com/PyTorchLightning/lightning-flash/pull/287) [#290](https://github.com/PyTorchLightning/lightning-flash/pull/290))
 - Added Object detection prediction example ([#283](https://github.com/PyTorchLightning/lightning-flash/pull/283))
 - Added Style Transfer task and accompanying finetuning and prediction examples ([#262](https://github.com/PyTorchLightning/lightning-flash/pull/262))
+- Added a Template task and tutorials showing how to contribute a task to flash ([#306](https://github.com/PyTorchLightning/lightning-flash/pull/306))
 
 ### Changed
 
