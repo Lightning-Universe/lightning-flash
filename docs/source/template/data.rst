@@ -20,8 +20,9 @@ The :class:`~flash.core.data.data_source.DataSource` class contains the logic fo
 If you just want to support :meth:`flash.core.data.data_module.DataModule.from_datasets` you won't need a :class:`~flash.core.data.data_source.DataSource`, but if you want to support a few different ways of loading data for your task, the more the merrier!
 Each :class:`~flash.core.data.data_source.DataSource` has a 2 methods:
 
-* ``load_data`` method takes some dataset metadata (e.g. a folder name) as input and produces a sequence or iterable of samples or sample metadata.
-* ``load_sample`` method then takes as input a single element from the output of ``load_data`` and returns a sample.
+- ``load_data`` method takes some dataset metadata (e.g. a folder name) as input and produces a sequence or iterable of samples or sample metadata.
+- ``load_sample`` method then takes as input a single element from the output of ``load_data`` and returns a sample.
+
 By default, these methods just return their input, you will not always need both methods to create :class:`~flash.core.data.data_source.DataSource`.
 
 It's best practice to just override one of our existing :class:`~flash.core.data.data_source.DataSource` classes where possible.

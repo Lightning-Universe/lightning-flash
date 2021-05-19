@@ -57,7 +57,7 @@ Lightning Flash
 
    template/intro
    template/data
-   template/model
+   template/task
    template/optional
    template/examples
    template/tests
