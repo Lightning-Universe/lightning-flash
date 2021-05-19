@@ -20,8 +20,8 @@ Here's how we create our transforms in the :class:`~flash.image.classification.d
     :language: python
     :pyobject: ImageClassificationPreprocess.default_transforms
 
-serialization.py
-================
+Add serializers for use with your Task
+======================================
 
 Sometimes you want to give the user some control over their prediction format.
 :class:`~flash.core.data.process.Postprocess` can do the heavy lifting (anything you always want to apply to the predictions), but one or more custom :class:`~flash.core.data.process.Serializer` implementations can be used to convert the predictions to a desired output format.
