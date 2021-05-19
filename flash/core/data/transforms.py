@@ -53,6 +53,14 @@ class ApplyToKeys(nn.Sequential):
             return result
         return x
 
+    def __repr__(self):
+        transform = [c for c in self.children()]
+
+        keys = self.keys[0] if len(self.keys) == 1 else self.keys
+        transform = transform[0] if len(transform) == 1 else transform
+
+        return f"{self.__class__.__name__}(keys={repr(keys)}, transform={repr(transform)})"
+
 
 class KorniaParallelTransforms(nn.Sequential):
     """The ``KorniaParallelTransforms`` class is an ``nn.Sequential`` which will apply the given transforms to each
@@ -70,9 +78,13 @@ class KorniaParallelTransforms(nn.Sequential):
         result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
         for transform in self.children():
             inputs = result
+            if hasattr(transform, "_params") and bool(transform._params):
+                params = transform._params
+            else:
+                params = None
+
             for i, input in enumerate(inputs):
-                if hasattr(transform, "_params") and bool(transform._params):
-                    params = transform._params
+                if params is not None:
                     result[i] = transform(input, params)
                 else:  # case for non random transforms
                     result[i] = transform(input)

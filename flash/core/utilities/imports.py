@@ -53,7 +53,7 @@ def _compare_version(package: str, op, version) -> bool:
     """
     try:
         pkg = importlib.import_module(package)
-    except (ModuleNotFoundError, DistributionNotFound):
+    except (ModuleNotFoundError, DistributionNotFound, ValueError):
         return False
     try:
         pkg_version = Version(pkg.__version__)
@@ -74,10 +74,13 @@ _TORCHVISION_AVAILABLE = _module_available("torchvision")
 _PYTORCHVIDEO_AVAILABLE = _module_available("pytorchvideo")
 _MATPLOTLIB_AVAILABLE = _module_available("matplotlib")
 _TRANSFORMERS_AVAILABLE = _module_available("transformers")
+_PYSTICHE_AVAILABLE = _module_available("pystiche")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
+    _PYSTICHE_GREATER_EQUAL_0_7_2 = _compare_version("pystiche", operator.ge, "0.7.2")
 
+_IMAGE_STLYE_TRANSFER = _PYSTICHE_AVAILABLE
 _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE

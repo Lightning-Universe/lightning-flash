@@ -62,7 +62,6 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
             },
             default_data_source=DefaultDataSources.FILES,
         )

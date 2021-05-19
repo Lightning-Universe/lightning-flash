@@ -312,5 +312,10 @@ With a trained model we can now perform inference. Here we will use a few exampl
 We get the following output:
 
 .. testoutput:: custom_task
+    :hide:
+
+    [tensor([...]), tensor([...]), tensor([...]), tensor([...]), tensor([...])]
+
+.. code-block::
 
     [tensor([189.1198]), tensor([196.0839]), tensor([161.2461]), tensor([130.7591]), tensor([149.1780])]

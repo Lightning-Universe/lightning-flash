@@ -12,18 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
-from typing import List, Optional, Union
+from functools import wraps
+from typing import Callable, List, Optional, Union
 
 import torch
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.trainer.connectors.env_vars_connector import _defaults_from_env_vars
 from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities.argparse import get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
+
+
+def _defaults_from_env_vars(fn: Callable) -> Callable:
+    """Copy of ``pytorch_lightning.trainer.connectors.env_vars_connector._defaults_from_env_vars``. Required to fix
+    build error in readthedocs."""
+
+    @wraps(fn)
+    def insert_env_defaults(self, *args, **kwargs):
+        cls = self.__class__  # get the class
+        if args:  # inace any args passed move them to kwargs
+            # parse only the argument names
+            cls_arg_names = [arg[0] for arg in get_init_arguments_and_types(cls)]
+            # convert args to kwargs
+            kwargs.update({k: v for k, v in zip(cls_arg_names, args)})
+        env_variables = vars(parse_env_variables(cls))
+        # update the kwargs by env variables
+        kwargs = dict(list(env_variables.items()) + list(kwargs.items()))
+
+        # all args were already moved to kwargs
+        return fn(self, **kwargs)
+
+    return insert_env_defaults
 
 
 class Trainer(Trainer):

@@ -24,7 +24,7 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DataSource
+from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
 from flash.core.data.properties import Properties
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 
@@ -216,6 +216,9 @@ class Preprocess(BasePreprocess, Properties, Module):
         self._val_transform = convert_to_modules(self.val_transform)
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
+
+        if DefaultDataSources.DATASET not in data_sources:
+            data_sources[DefaultDataSources.DATASET] = DatasetDataSource()
 
         self._data_sources = data_sources
         self._default_data_source = default_data_source
