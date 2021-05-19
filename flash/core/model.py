@@ -50,7 +50,7 @@ class BencharmkConvergenceCI(Callback):
             if fn:
                 fn(self.history)
                 if trainer.is_global_zero:
-                    print("BencharmkConvergenceCI Activated")
+                    print("Benchmark Successfull !")
 
 
 def predict_context(func: Callable) -> Callable:
