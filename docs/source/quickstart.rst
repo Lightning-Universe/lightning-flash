@@ -6,7 +6,7 @@ Quick Start
 
 Flash is a high-level deep learning framework for fast prototyping, baselining, finetuning and solving deep learning problems. It features a set of tasks for you to use for inference and finetuning out of the box, and an easy to implement API to customize every step of the process for full flexibility.
 
-Flash is built for beginners with a simple API that requires very little deep learning background, and for data scientists, kagglers, applied ML practitioners and deep learning researchers that want a quick way to get a deep learning baseline with advnaced features `Pytorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ offers.
+Flash is built for beginners with a simple API that requires very little deep learning background, and for data scientists, Kagglers, applied ML practitioners and deep learning researchers that want a quick way to get a deep learning baseline with advanced features `PyTorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ offers.
 
 
 Why Flash?
@@ -21,13 +21,13 @@ If you are just getting started with deep learning, Flash offers common deep lea
 
 Easy to scale
 ^^^^^^^^^^^^^
-Flash is built on top of `Pytorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_,
+Flash is built on top of `PyTorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_,
 a powerful deep learning research framework for training models at scale. With the power of Lightning,
 you can train your flash tasks on any hardware: CPUs, GPUs or TPUs without any code changes.
 
 Easy to upskill
 ^^^^^^^^^^^^^^^
-If you want create more complex and custmoized models, you can refactor any part of flash with PyTorch or `Pytorch Lightning
+If you want to create more complex and customized models, you can refactor any part of flash with PyTorch or `PyTorch Lightning
 <https://github.com/PyTorchLightning/pytorch-lightning>`_ components to get all the flexibility you need. Lightning is just
 organized PyTorch with the unnecessary engineering details abstracted away.
 
@@ -42,30 +42,19 @@ For Deep learning research
 
 Quickest way to a baseline
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-`Pytorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ is designed to abstract away unnecessary boilerplate, while enabling maximal flexibility. In order to provide full flexibility, solving very common deep learning problems such as classification in Lightning still requires some boilerplate. It can still take quite some time to get a baseline model running on a new dataset or out of domain task. We created Flash to answer our users need for a super quick way to baseline for Lightning using proven backbones for common data patterns. Flash aims to be the easiest starting point for your research- start with a Flash Task to benchmark against, and override any part of flash with Lightning or PyTorch components on your way to SOTA research.
+`PyTorch Lightning <https://github.com/PyTorchLightning/pytorch-lightning>`_ is designed to abstract away unnecessary boilerplate, while enabling maximal flexibility. In order to provide full flexibility, solving very common deep learning problems such as classification in Lightning still requires some boilerplate. It can still take quite some time to get a baseline model running on a new dataset or out of domain task. We created Flash to answer our users need for a super quick way to baseline for Lightning using proven backbones for common data patterns. Flash aims to be the easiest starting point for your research- start with a Flash Task to benchmark against, and override any part of flash with Lightning or PyTorch components on your way to SOTA research.
 
 Flexibility where you want it
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Flash tasks are essentialy LightningModules, and the Flash Trainer is a thin wrapper for the Lightning Trainer. You can use your own LightningModule instead of the Flash task, the Lightning Trainer instead of the flash trainer, etc. Flash helps you focus even more only on your research, and less on anything else.
+Flash tasks are essentially LightningModules, and the Flash Trainer is a thin wrapper for the Lightning Trainer. You can use your own LightningModule instead of the Flash task, the Lightning Trainer instead of the flash trainer, etc. Flash helps you focus even more only on your research, and less on anything else.
 
 Standard best practices
 ^^^^^^^^^^^^^^^^^^^^^^^
-Flash tasks implement the standard best practices for a variety of diffrent models and domains, to save you time digging through different implementations. Flash abstracts even more details than lightning, allowing deep learning experts to share their tips and tricks for solving scoped deep learning problems.
+Flash tasks implement the standard best practices for a variety of different models and domains, to save you time digging through different implementations. Flash abstracts even more details than Lightning, allowing deep learning experts to share their tips and tricks for solving scoped deep learning problems.
 
 .. tip::
 
     Read :doc:`here <reference/flash_to_pl>` to understand when to use Flash vs Lightning.
-
-----
-
-Install
-=======
-
-You can install flash using pip or conda:
-
-.. code-block:: bash
-
-    pip install lightning-flash -U
 
 ------
 
@@ -156,7 +145,7 @@ When you have enough data, you're likely better off training from scratch instea
 A few Built-in Tasks
 ====================
 
-- :doc:`Generic Flash Task <reference/task>`
+- :doc:`General Task <reference/task>`
 - :doc:`ImageClassification <reference/image_classification>`
 - :doc:`ImageEmbedder <reference/image_embedder>`
 - :doc:`TextClassification <reference/text_classification>`
