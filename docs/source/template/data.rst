@@ -10,7 +10,7 @@ Inside ``data.py`` you should implement:
 #. some :class:`~flash.core.data.data_source.DataSource` classes *(optional)*
 #. a :class:`~flash.core.data.process.Preprocess`
 #. a :class:`~flash.core.data.data_module.DataModule`
-#. a :class:`~flash.core.data.callbacks.BaseVisualization` *(optional)*
+#. a :class:`~flash.core.data.callback.BaseVisualization` *(optional)*
 #. a :class:`~flash.core.data.process.Postprocess` *(optional)*
 
 DataSource
@@ -42,8 +42,6 @@ Here's the code for our ``TemplateNumpyDataSource.load_data`` method:
     :pyobject: TemplateNumpyDataSource.load_data
 
 .. note:: Later, when we add :ref:`our DataModule implementation <contributing_data_module>`, we'll make ``num_features`` available to the user.
-
-|
 
 Sometimes you need to something a bit more custom.
 When creating a custom :class:`~flash.core.data.data_source.DataSource`, the type of the ``data`` argument is up to you.
@@ -147,6 +145,8 @@ When the user calls a ``from_*`` method (such as :meth:`~flash.core.data.data_mo
 #. A :class:`~flash.core.data.auto_dataset.BaseAutoDataset` is created from the :class:`~flash.core.data.data_source.DataSource` for each stage.
 #. The :class:`~flash.core.data.data_module.DataModule` is instantiated with the data sets.
 
+|
+
 To create our ``TemplateData`` :class:`~flash.core.data.data_module.DataModule`, we first need to attach out preprocess class like this:
 
 .. code-block:: python
@@ -175,7 +175,8 @@ Here's the code:
 BaseVisualization
 ^^^^^^^^^^^^^^^^^
 
-An optional step is to implement a ``BaseVisualization``. The ``BaseVisualization`` lets you control how data at various points in the pipeline can be visualized.
+An optional step is to implement a :class:`~flash.core.data.callback.BaseVisualization`.
+The :class:`~flash.core.data.callback.BaseVisualization` lets you control how data at various points in the pipeline can be visualized.
 This is extremely useful for debugging purposes, allowing users to view their data and understand the impact of their transforms.
 
 Take a look at our ``TemplateVisualization`` to get started:
