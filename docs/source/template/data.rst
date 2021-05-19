@@ -16,7 +16,7 @@ Inside ``data.py`` you should implement:
 DataSource
 ^^^^^^^^^^
 
-The :class:`~flash.core.data.data_source.DataSource` implementations describe how data from particular sources (like folders, files, tensors, etc.) should be loaded.
+The :class:`~flash.core.data.data_source.DataSource` class contains the logic for data loading from different sources such as folders, files, tensors, etc.
 If you just want to support :meth:`flash.core.data.data_module.DataModule.from_datasets` you won't need a :class:`~flash.core.data.data_source.DataSource`, but if you want to support a few different ways of loading data for your task, the more the merrier!
 Each :class:`~flash.core.data.data_source.DataSource` has a ``load_data`` method and a ``load_sample`` method.
 The ``load_data`` method accepts some dataset metadata (e.g. a folder name) and produces a sequence or iterable of samples or sample metadata.
