@@ -45,7 +45,7 @@ class Trainer(Trainer):
         datamodule: Optional[LightningDataModule] = None,
     ):
         r"""
-        Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit()
+        Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`
 
         Args:
             datamodule: A instance of :class:`LightningDataModule`.
@@ -73,7 +73,7 @@ class Trainer(Trainer):
     ):
         r"""
 
-        Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
+        Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`, but unfreezes layers
         of the backbone throughout training layers of the backbone throughout training.
 
         Args:
@@ -81,21 +81,21 @@ class Trainer(Trainer):
 
             model: Model to fit.
 
-            train_dataloader: A Pytorch DataLoader with training samples. If the model has
+            train_dataloader: A PyTorch DataLoader with training samples. If the model has
                 a predefined train_dataloader method this will be skipped.
 
-            val_dataloaders: Either a single Pytorch Dataloader or a list of them, specifying validation samples.
+            val_dataloaders: Either a single PyTorch Dataloader or a list of them, specifying validation samples.
                 If the model has a predefined val_dataloaders method this will be skipped
 
             strategy: Should either be a string or a finetuning callback subclassing
-                ``pytorch_lightning.callbacks.BaseFinetuning``.
+                :class:`pytorch_lightning.callbacks.BaseFinetuning`.
 
-                Currently, default strategies can be enabled with these strings:
-                    - ``no_freeze``,
-                    - ``freeze``,
-                    - ``freeze_unfreeze``,
-                    - ``unfreeze_milestones``
+                Default strategies can be enabled with these strings:
 
+                - ``"no_freeze"``,
+                - ``"freeze"``,
+                - ``"freeze_unfreeze"``,
+                - ``"unfreeze_milestones"``.
         """
         self._resolve_callbacks(model, strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
