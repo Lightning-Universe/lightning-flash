@@ -44,7 +44,7 @@ def call_script(
         data = original.read()
 
     with open(filepath, 'w') as modified:
-        modified.write("import pytorch_lightning as pl\n pl.seed_everything(42)\n" + data)
+        modified.write("import pytorch_lightning as pl\npl.seed_everything(42)\n" + data)
 
     if args is None:
         args = []
