@@ -59,6 +59,10 @@ def call_script(
         stdout, stderr = p.communicate()
     stdout = stdout.decode("utf-8")
     stderr = stderr.decode("utf-8")
+
+    with open(filepath, 'w') as modified:
+        modified.write(data)
+
     return p.returncode, stdout, stderr
 
 
