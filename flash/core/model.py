@@ -47,7 +47,6 @@ class BenchmarkConvergenceCI(Callback):
         if trainer.current_epoch == trainer.max_epochs - 1:
             fn = getattr(pl_module, "_ci_benchmark_fn", None)
             if fn:
-                print(self.history)
                 fn(self.history)
                 if trainer.is_global_zero:
                     print("Benchmark Successful!")
