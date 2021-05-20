@@ -37,6 +37,8 @@ Here's the code:
     :dedent: 4
     :pyobject: TemplateSKLearnClassifier.__init__
 
+.. note:: We call :meth:`~pytorch_lightning.core.lightning.LightningModule.save_hyperparameters` to log the arguments to the ``__init__`` as hyperparameters. Read more `here <https://pytorch-lightning.readthedocs.io/en/stable/common/hyperparameters.html#lightningmodule-hyperparameters>`_.
+
 Adding the model routines
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
