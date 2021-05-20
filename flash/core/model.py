@@ -37,7 +37,7 @@ from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utilities.apply_func import get_callable_dict
 
 
-class BencharmkConvergenceCI(Callback):
+class BenchmarkConvergenceCI(Callback):
 
     def __init__(self):
         pl.seed_everything(42)
@@ -48,9 +48,10 @@ class BencharmkConvergenceCI(Callback):
         if trainer.current_epoch == trainer.max_epochs - 1:
             fn = getattr(pl_module, "_ci_benchmark_fn", None)
             if fn:
+                print(self.history)
                 fn(self.history)
                 if trainer.is_global_zero:
-                    print("Benchmark Successfull !")
+                    print("Benchmark Successful!")
 
 
 def predict_context(func: Callable) -> Callable:
@@ -539,4 +540,4 @@ class Task(LightningModule):
     def configure_callbacks(self):
         # used only for CI
         if flash._IS_TESTING and torch.cuda.is_available():
-            return [BencharmkConvergenceCI()]
+            return [BenchmarkConvergenceCI()]
