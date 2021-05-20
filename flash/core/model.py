@@ -30,17 +30,16 @@ from torch.optim.optimizer import Optimizer
 
 import flash
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DataSource
 from flash.core.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.utilities.apply_func import get_callable_dict
 
 
-class BencharmkConvergenceCI(Callback):
+class BenchmarkConvergenceCI(Callback):
 
     def __init__(self):
-        pl.seed_everything(42)
         self.history = []
 
     def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
@@ -50,7 +49,7 @@ class BencharmkConvergenceCI(Callback):
             if fn:
                 fn(self.history)
                 if trainer.is_global_zero:
-                    print("Benchmark Successfull !")
+                    print("Benchmark Successful!")
 
 
 def predict_context(func: Callable) -> Callable:
@@ -539,4 +538,4 @@ class Task(LightningModule):
     def configure_callbacks(self):
         # used only for CI
         if flash._IS_TESTING and torch.cuda.is_available():
-            return [BencharmkConvergenceCI()]
+            return [BenchmarkConvergenceCI()]

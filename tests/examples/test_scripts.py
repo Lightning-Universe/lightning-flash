@@ -40,6 +40,12 @@ def call_script(
     args: Optional[List[str]] = None,
     timeout: Optional[int] = 60 * 5,
 ) -> Tuple[int, str, str]:
+    with open(filepath, 'r') as original:
+        data = original.read()
+
+    with open(filepath, 'w') as modified:
+        modified.write("import pytorch_lightning as pl\npl.seed_everything(42)\n" + data)
+
     if args is None:
         args = []
     args = [str(a) for a in args]

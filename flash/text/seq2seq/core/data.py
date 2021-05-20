@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -96,7 +95,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if flash._IS_TESTING and not torch.cuda.is_available():
+        if flash._IS_TESTING:
             try:
                 dataset_dict = DatasetDict({
                     stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
