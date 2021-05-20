@@ -49,7 +49,7 @@ def call_script(
     if args is None:
         args = []
     args = [str(a) for a in args]
-    command = [sys.executable, "-m", "coverage", "run", filepath] + args
+    command = [sys.executable, filepath] + args
     print(" ".join(command))
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
@@ -59,6 +59,10 @@ def call_script(
         stdout, stderr = p.communicate()
     stdout = stdout.decode("utf-8")
     stderr = stderr.decode("utf-8")
+
+    with open(filepath, 'w') as modified:
+        modified.write(data)
+
     return p.returncode, stdout, stderr
 
 
