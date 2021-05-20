@@ -50,7 +50,7 @@ print(ImageClassifier.available_backbones())
 # 4. Build the model
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Labels())
 
-# 5. Create the trainer.
+# 5. Create the trainer
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 
 # 6. Train the model
