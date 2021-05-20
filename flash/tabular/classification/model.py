@@ -111,4 +111,4 @@ class TabularClassifier(ClassificationTask):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["val_accuracy"] > 0.70
+        assert history[-1]["val_accuracy"] > 0.65
