@@ -30,7 +30,7 @@ from torch.optim.optimizer import Optimizer
 
 import flash
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DataSource
 from flash.core.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
@@ -40,7 +40,6 @@ from flash.core.utilities.apply_func import get_callable_dict
 class BenchmarkConvergenceCI(Callback):
 
     def __init__(self):
-        pl.seed_everything(42)
         self.history = []
 
     def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:

@@ -29,7 +29,6 @@ class SummarizationPostprocess(Postprocess):
         if not _TEXT_AVAILABLE:
             raise ModuleNotFoundError("Please, pip install -e '.[text]'")
 
-        # TODO: Should share the backbone or tokenizer over state
         self._backbone = None
         self._tokenizer = None
 
