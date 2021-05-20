@@ -68,7 +68,7 @@ class DataPipelineState:
 class DataPipeline:
     """
     DataPipeline holds the engineering logic to connect
-    :class:`~flash.core.data.process.Preprocess` and/or :class:`~flash.core.data.process.PostProcess` objects to
+    :class:`~flash.core.data.process.Preprocess` and/or :class:`~flash.core.data.process.Postprocess` objects to
     the ``DataModule``, Flash ``Task`` and ``Trainer``.
 
     Example::

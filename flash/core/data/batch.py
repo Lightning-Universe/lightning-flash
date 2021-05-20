@@ -198,7 +198,7 @@ class _PreProcessor(torch.nn.Module):
 
 class _PostProcessor(torch.nn.Module):
     """
-        This class is used to encapsultate the following functions of a PostProcess Object:
+        This class is used to encapsultate the following functions of a Postprocess Object:
         Inside main process:
             per_batch_transform: Function to transform a batch
             per_sample_transform: Function to transform an individual sample

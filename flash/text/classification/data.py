@@ -200,7 +200,7 @@ class TextClassificationPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
-class TextClassificationPostProcess(Postprocess):
+class TextClassificationPostprocess(Postprocess):
 
     def per_batch_transform(self, batch: Any) -> Any:
         if isinstance(batch, SequenceClassifierOutput):
@@ -212,4 +212,4 @@ class TextClassificationData(DataModule):
     """Data Module for text classification tasks"""
 
     preprocess_cls = TextClassificationPreprocess
-    postprocess_cls = TextClassificationPostProcess
+    postprocess_cls = TextClassificationPostprocess
