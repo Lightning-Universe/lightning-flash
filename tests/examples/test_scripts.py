@@ -49,7 +49,7 @@ def call_script(
     if args is None:
         args = []
     args = [str(a) for a in args]
-    command = [sys.executable, filepath] + args
+    command = [sys.executable, "-m", "coverage", "run", filepath] + args
     print(" ".join(command))
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
