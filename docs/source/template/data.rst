@@ -201,11 +201,11 @@ Postprocess
 
 :class:`~flash.core.data.process.Postprocess` contains any transforms that need to be applied *after* the model.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
-As an example, here's the :class:`~text.classification.data.TextClassificationPostProcess` which gets the logits from a ``SequenceClassifierOutput``:
+As an example, here's the :class:`~text.classification.data.TextClassificationPostprocess` which gets the logits from a ``SequenceClassifierOutput``:
 
 .. literalinclude:: ../../../flash/text/classification/data.py
     :language: python
-    :pyobject: TextClassificationPostProcess
+    :pyobject: TextClassificationPostprocess
 
 ------
 
