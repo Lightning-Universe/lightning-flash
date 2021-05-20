@@ -207,6 +207,25 @@ As an example, here's the :class:`~text.classification.data.TextClassificationPo
     :language: python
     :pyobject: TextClassificationPostprocess
 
+In your :class:`~flash.core.data.data_source.DataSource` or :class:`~flash.core.data.process.Preprocess`, you can add metadata to the batch using the :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA` key.
+Your :class:`~flash.core.data.process.Postprocess` can then use this metadata in its transforms.
+You should use this approach if your postprocessing depends on the state of the input before the :class:`~flash.core.data.process.Preprocess` transforms.
+For example, if you want to resize the predictions to the original size of the inputs you should add the original image size in the :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA`.
+Here's an example from the :class:`~flash.image.segmentation.SemanticSegmentationNumpyDataSource`:
+
+.. literalinclude:: ../../../flash/image/segmentation/data.py
+    :language: python
+    :dedent: 4
+    :pyobject: SemanticSegmentationNumpyDataSource.load_sample
+
+The :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA` can now be referenced in your :class:`~flash.core.data.process.Postprocess`.
+For example, here's the code for the ``per_sample_transform`` method of the :class:`~flash.image.segmentation.model.SemanticSegmentationPostprocess`:
+
+.. literalinclude:: ../../../flash/image/segmentation/model.py
+    :language: python
+    :dedent: 4
+    :pyobject: SemanticSegmentationPostprocess.per_sample_transform
+
 ------
 
 Now that you've got some data, it's time to :ref:`add some backbones for your task! <contributing_backbones>`
