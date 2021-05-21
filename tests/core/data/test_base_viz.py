@@ -174,7 +174,7 @@ class TestBaseViz:
     def test_show(self, func_names, valid):
         base_viz = CustomBaseVisualization()
 
-        batch = {func_name:... for func_name in func_names}
+        batch = {func_name: "test" for func_name in func_names}
 
         if not valid:
             with pytest.raises(MisconfigurationException, match="Invalid function names"):
