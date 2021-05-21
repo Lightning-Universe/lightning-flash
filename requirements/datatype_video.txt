@@ -1,5 +1,4 @@
 torchvision
 Pillow>=7.2
 kornia>=0.5.1
-pytorchvideo>=0.1.1
-opencv-python  # required by pytorchvideo
+pytorchvideo==0.1.0
