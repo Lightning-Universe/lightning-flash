@@ -520,9 +520,17 @@ class DataPipeline:
             model.predict_step = model.predict_step._original
 
     def __str__(self) -> str:
+        data_source: DataSource = self.data_source
         preprocess: Preprocess = self._preprocess_pipeline
         postprocess: Postprocess = self._postprocess_pipeline
-        return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
+        serializer: Serializer = self._serializer
+        return (
+            f"{self.__class__.__name__}("
+            f"data_source={str(data_source)}, "
+            f"preprocess={preprocess}, "
+            f"postprocess={postprocess}, "
+            f"serializer={serializer})"
+        )
 
 
 class _StageOrchestrator:

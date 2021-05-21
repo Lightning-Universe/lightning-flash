@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Optional, Tuple
-from unittest import mock
+from typing import Any, Callable, cast, Dict, List, Optional, Tuple
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -25,12 +25,12 @@ from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
+from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _PostProcessor, _PreProcessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess
+from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess, Serializer
 from flash.core.model import Task
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 
@@ -46,6 +46,19 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         return 5
+
+
+def test_data_pipeline_str():
+    data_pipeline = DataPipeline(
+        data_source=cast(DataSource, "data_source"),
+        preprocess=cast(Preprocess, "preprocess"),
+        postprocess=cast(Postprocess, "postprocess"),
+        serializer=cast(Serializer, "serializer"),
+    )
+
+    assert str(data_pipeline) == (
+        "DataPipeline(data_source=data_source, preprocess=preprocess, postprocess=postprocess, serializer=serializer)"
+    )
 
 
 @pytest.mark.parametrize("use_preprocess", [False, True])
@@ -727,7 +740,7 @@ def test_is_overriden_recursive(tmpdir):
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@mock.patch("torch.save")  # need to mock torch.save or we get pickle error
+@patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
 
     class ImageDataSource(DataSource):
