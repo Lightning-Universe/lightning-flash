@@ -291,21 +291,9 @@ class Preprocess(BasePreprocess, Properties, Module):
     def _identity(x: Any) -> Any:
         return x
 
-    # todo (tchaton): Remove when merged. https://github.com/PyTorchLightning/pytorch-lightning/pull/7056
-    def tmp_wrap(self, transform) -> Callable:
-        if "on_device" in self.current_fn:
-
-            def fn(batch: Any):
-                if isinstance(batch, list) and len(batch) == 1 and isinstance(batch[0], dict):
-                    return [transform(batch[0])]
-                return transform(batch)
-
-            return fn
-        return transform
-
     def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
         if self.current_fn in transform:
-            return self.tmp_wrap(transform[self.current_fn])
+            return transform[self.current_fn]
         return self._identity
 
     @property
