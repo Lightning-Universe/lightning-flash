@@ -20,7 +20,7 @@ from flash.text import TranslationData, TranslationTask
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
 
-backbone = "t5-small"
+backbone = "Helsinki-NLP/opus-mt-en-ro"
 
 # 2. Load the data
 datamodule = TranslationData.from_csv(
@@ -47,7 +47,7 @@ trainer = flash.Trainer(
 trainer.finetune(model, datamodule=datamodule)
 
 # 6. Test model
-trainer.test(model)
+trainer.test(model, datamodule=datamodule)
 
 # 7. Save it!
 trainer.save_checkpoint("translation_model_en_ro.pt")
