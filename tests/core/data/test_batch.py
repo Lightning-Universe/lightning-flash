@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from collections import namedtuple
 from unittest.mock import Mock
 
 import torch
@@ -114,3 +115,20 @@ class TestDefaultUncollate:
             assert len(sample['b']) == 2
             assert isinstance(sample['c'], torch.Tensor)
             assert len(sample['c'].shape) == 0
+
+    def test_named_tuple(self):
+        B = 3  # batch_size
+
+        Batch = namedtuple("Batch", ["x", "y"])
+        batch = Batch(x=torch.rand(B, 4), y=torch.rand(B))
+
+        output = default_uncollate(batch)
+        assert isinstance(output, list)
+        assert len(output) == B
+
+        for sample in output:
+            assert isinstance(sample, Batch)
+            assert isinstance(sample.x, list)
+            assert len(sample.x) == 4
+            assert isinstance(sample.y, torch.Tensor)
+            assert len(sample.y.shape) == 0
