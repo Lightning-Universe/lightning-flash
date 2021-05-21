@@ -47,7 +47,7 @@ trainer = flash.Trainer(
 trainer.finetune(model, datamodule=datamodule)
 
 # 6. Test model
-trainer.test(model, datamodule=datamodule)
+trainer.test(model)
 
 # 7. Save it!
 trainer.save_checkpoint("translation_model_en_ro.pt")
