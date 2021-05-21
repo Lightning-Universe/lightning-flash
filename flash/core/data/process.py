@@ -29,7 +29,7 @@ from flash.core.data.properties import Properties
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 
 if TYPE_CHECKING:
-    from flash.core.data.data_pipeline import DataPipelineState
+    from flash.core.data.data_pipeline import DataPipelineState  # pragma: no-cover
 
 
 class BasePreprocess(ABC):
