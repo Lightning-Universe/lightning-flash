@@ -73,7 +73,7 @@ Here are examples of tasks:
     from flash.image import ImageClassifier
     from flash.tabular import TabularClassifier
 
-.. note:: Tasks are inflexible by definition! To get more flexibility, you can simply use :class:`~pytorch_lightning.core.lightning.LightningModule` directly or modify and existing task in just a few lines.
+.. note:: Tasks are inflexible by definition! To get more flexibility, you can simply use :class:`~pytorch_lightning.core.lightning.LightningModule` directly or modify an existing task in just a few lines.
 
 ------
 
