@@ -28,9 +28,10 @@ from torch.utils.data._utils.collate import default_collate
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _PostProcessor, _PreProcessor
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline
+from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess, Serializer
+from flash.core.data.properties import ProcessState
 from flash.core.model import Task
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 
@@ -46,6 +47,29 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         return 5
+
+
+class TestDataPipelineState:
+
+    def test_str(self):
+        state = DataPipelineState()
+        state.set_state(ProcessState())
+
+        assert str(state) == (
+            "DataPipelineState(initialized=False, "
+            "state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
+        )
+
+    def test_warning(self):
+        state = DataPipelineState()
+        state._initialized = True
+
+        with pytest.warns(UserWarning, match="data pipeline has already been initialized"):
+            state.set_state(ProcessState())
+
+    def test_get_state(self):
+        state = DataPipelineState()
+        assert state.get_state(ProcessState) is None
 
 
 def test_data_pipeline_str():
