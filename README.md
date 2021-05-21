@@ -75,6 +75,10 @@ cd lightning-flash
 # install in editable mode
 pip install -e .
 ```
+In case you want to use the extra packages from a specific domain (image, video, text, ...)
+```bash
+pip install lightning-flash[image]
+```
 </details>
 
 ---
