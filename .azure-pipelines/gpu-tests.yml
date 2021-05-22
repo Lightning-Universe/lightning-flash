@@ -16,6 +16,13 @@ pr:
   - master
   - release/*
 
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight testing
+  branches:
+    include:
+    - master
+
 jobs:
   - job: pytest
     # how long to run the job before automatically cancelling
