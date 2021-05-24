@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Optional
 
 import torch
 from torch.utils.data import Dataset
@@ -23,10 +22,6 @@ from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
 if _PYTORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.data import Dataset as PyGDataset
 
-GRAPH_EXTENSIONS = ['.pt']
-#todo: how to get default_loader and GRAPH_EXTENSIONS? These were provided by torchvision in the case of vision
-
-
 class GraphDatasetSource(DatasetDataSource):
 
     def load_data(self, dataset: Dataset, auto_dataset: AutoDataset) -> Dataset:
@@ -34,21 +29,5 @@ class GraphDatasetSource(DatasetDataSource):
         if self.training:
             if isinstance(dataset, PyGDataset):
                 auto_dataset.num_classes = dataset.num_classes
+                auto_dataset.num_features = dataset.num_features
         return data
-
-
-class GraphPathsDataSource(PathsDataSource):
-
-    def __init__(self):
-        super().__init__(extensions=GRAPH_EXTENSIONS)
-
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        # seems to me from https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html
-        # that PyG uses torch.load()
-        default_loader = torch.load  # todo: is this right?
-        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
-        return sample  # todo: what fields should sample have here?
-
-    # todo: an alternative would be to load from networkx https://networkx.org/documentation/stable/reference/readwrite/index.html recognised files
-    # In such case one can use https://pytorch-geometric.readthedocs.io/en/latest/modules/utils.html?highlight=networkx%20to%20pyg#torch_geometric.utils.from_networkx
-    # to convert it to torch_geometric.data.Data instance.
