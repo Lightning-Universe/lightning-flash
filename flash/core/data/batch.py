@@ -27,8 +27,8 @@ from flash.core.data.utils import (
     CurrentRunningStageContext,
 )
 
-if TYPE_CHECKING:
-    from flash.core.data.process import Preprocess  # pragma: no-cover
+if TYPE_CHECKING:  # pragma: no-cover
+    from flash.core.data.process import Preprocess
 
 
 class _Sequential(torch.nn.Module):

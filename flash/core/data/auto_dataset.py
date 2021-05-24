@@ -19,9 +19,9 @@ from torch.utils.data import Dataset, IterableDataset
 
 from flash.core.data.utils import CurrentRunningStageFuncContext
 
-if TYPE_CHECKING:
-    from flash.core.data.data_pipeline import DataPipeline  # pragma: no-cover
-    from flash.core.data.data_source import DataSource  # pragma: no-cover
+if TYPE_CHECKING:  # pragma: no-cover
+    from flash.core.data.data_pipeline import DataPipeline
+    from flash.core.data.data_source import DataSource
 
 DATA_TYPE = TypeVar('DATA_TYPE')
 

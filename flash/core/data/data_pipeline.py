@@ -31,8 +31,8 @@ from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess, 
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
-if TYPE_CHECKING:
-    from flash.core.model import Task  # pragma: no-cover
+if TYPE_CHECKING:  # pragma: no-cover
+    from flash.core.model import Task
 
 
 class DataPipelineState:
