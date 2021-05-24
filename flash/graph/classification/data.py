@@ -48,13 +48,10 @@ class GraphClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FILES: GraphPathsDataSource(),
-                DefaultDataSources.FOLDERS: GraphPathsDataSource(),
                 DefaultDataSources.DATASET: GraphDatasetSource()
             },
             default_data_source=DefaultDataSources.DATASET,
         )
-        self.num_features = num_features
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {**self.transforms, "num_features": self.num_features}

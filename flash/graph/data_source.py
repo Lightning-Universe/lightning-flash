@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
 from torch.utils.data import Dataset
 
 from flash.core.data.auto_dataset import AutoDataset
