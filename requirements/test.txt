@@ -1,5 +1,6 @@
 coverage
 codecov>=2.1
+nbval
 pytest>=5.0
 pytest-flake8
 flake8
