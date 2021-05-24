@@ -80,6 +80,8 @@ def test_postprocessor_str():
 
 class TestDefaultUncollate:
 
+    BATCH_SIZE = 3
+
     def test_smoke(self):
         batch = torch.rand(2, 1)
         assert default_uncollate(batch) is not None
@@ -96,16 +98,15 @@ class TestDefaultUncollate:
         assert all([isinstance(x, torch.Tensor) for x in output])
 
     def test_sequence(self):
-        B = 3  # batch_size
-
-        batch = {}
-        batch['a'] = torch.rand(B, 4)
-        batch['b'] = torch.rand(B, 2)
-        batch['c'] = torch.rand(B)
+        batch = {
+            'a': torch.rand(self.BATCH_SIZE, 4),
+            'b': torch.rand(self.BATCH_SIZE, 2),
+            'c': torch.rand(self.BATCH_SIZE)
+        }
 
         output = default_uncollate(batch)
         assert isinstance(output, list)
-        assert len(batch) == B
+        assert len(batch) == self.BATCH_SIZE
 
         for sample in output:
             assert list(sample.keys()) == ['a', 'b', 'c']
@@ -117,14 +118,12 @@ class TestDefaultUncollate:
             assert len(sample['c'].shape) == 0
 
     def test_named_tuple(self):
-        B = 3  # batch_size
-
         Batch = namedtuple("Batch", ["x", "y"])
-        batch = Batch(x=torch.rand(B, 4), y=torch.rand(B))
+        batch = Batch(x=torch.rand(self.BATCH_SIZE, 4), y=torch.rand(self.BATCH_SIZE))
 
         output = default_uncollate(batch)
         assert isinstance(output, list)
-        assert len(output) == B
+        assert len(output) == self.BATCH_SIZE
 
         for sample in output:
             assert isinstance(sample, Batch)
