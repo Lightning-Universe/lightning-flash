@@ -16,7 +16,7 @@ from typing import Dict, Optional, Type, TYPE_CHECKING, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no-cover
     from flash.core.data.data_pipeline import DataPipelineState
 
 
