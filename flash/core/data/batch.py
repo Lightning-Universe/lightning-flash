@@ -27,7 +27,7 @@ from flash.core.data.utils import (
     CurrentRunningStageContext,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no-cover
     from flash.core.data.process import Preprocess
 
 
@@ -88,12 +88,14 @@ class _Sequential(torch.nn.Module):
             return sample
 
     def __str__(self) -> str:
-        repr_str = f'{self.__class__.__name__}:'
-        repr_str += f'\n\t\t(pre_tensor_transform): {repr(self.pre_tensor_transform)}'
-        repr_str += f'\n\t\t(to_tensor_transform): {repr(self.to_tensor_transform)}'
-        repr_str += f'\n\t\t(post_tensor_transform): {repr(self.post_tensor_transform)}'
-        repr_str += f'\n\t\t(assert_contains_tensor): {repr(self.assert_contains_tensor)}'
-        return repr_str
+        return (
+            f"{self.__class__.__name__}:\n"
+            f"\t(pre_tensor_transform): {str(self.pre_tensor_transform)}\n"
+            f"\t(to_tensor_transform): {str(self.to_tensor_transform)}\n"
+            f"\t(post_tensor_transform): {str(self.post_tensor_transform)}\n"
+            f"\t(assert_contains_tensor): {str(self.assert_contains_tensor)}\n"
+            f"\t(stage): {str(self.stage)}"
+        )
 
 
 class _PreProcessor(torch.nn.Module):
@@ -187,13 +189,15 @@ class _PreProcessor(torch.nn.Module):
 
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown
-        repr_str = '_PreProcessor:'
-        repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
-        repr_str += f'\n\t(collate_fn): {repr(self.collate_fn)}'
-        repr_str += f'\n\t(per_batch_transform): {repr(self.per_batch_transform)}'
-        repr_str += f'\n\t(apply_per_sample_transform): {repr(self.apply_per_sample_transform)}'
-        repr_str += f'\n\t(stage): {repr(self.stage)}'
-        return repr_str
+        return (
+            "_PreProcessor:\n"
+            f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
+            f"\t(collate_fn): {str(self.collate_fn)}\n"
+            f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
+            f"\t(apply_per_sample_transform): {str(self.apply_per_sample_transform)}\n"
+            f"\t(on_device): {str(self.on_device)}\n"
+            f"\t(stage): {str(self.stage)}"
+        )
 
 
 class _PostProcessor(torch.nn.Module):
@@ -240,12 +244,13 @@ class _PostProcessor(torch.nn.Module):
             return final_preds
 
     def __str__(self) -> str:
-        repr_str = '_PostProcessor:'
-        repr_str += f'\n\t(per_batch_transform): {repr(self.per_batch_transform)}'
-        repr_str += f'\n\t(uncollate_fn): {repr(self.uncollate_fn)}'
-        repr_str += f'\n\t(per_sample_transform): {repr(self.per_sample_transform)}'
-
-        return repr_str
+        return (
+            "_PostProcessor:\n"
+            f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
+            f"\t(uncollate_fn): {str(self.uncollate_fn)}\n"
+            f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
+            f"\t(serializer): {str(self.serializer)}"
+        )
 
 
 def default_uncollate(batch: Any):
