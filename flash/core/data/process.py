@@ -28,7 +28,7 @@ from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDa
 from flash.core.data.properties import Properties
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no-cover
     from flash.core.data.data_pipeline import DataPipelineState
 
 
@@ -291,21 +291,9 @@ class Preprocess(BasePreprocess, Properties, Module):
     def _identity(x: Any) -> Any:
         return x
 
-    # todo (tchaton): Remove when merged. https://github.com/PyTorchLightning/pytorch-lightning/pull/7056
-    def tmp_wrap(self, transform) -> Callable:
-        if "on_device" in self.current_fn:
-
-            def fn(batch: Any):
-                if isinstance(batch, list) and len(batch) == 1 and isinstance(batch[0], dict):
-                    return [transform(batch[0])]
-                return transform(batch)
-
-            return fn
-        return transform
-
     def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
         if self.current_fn in transform:
-            return self.tmp_wrap(transform[self.current_fn])
+            return transform[self.current_fn]
         return self._identity
 
     @property
