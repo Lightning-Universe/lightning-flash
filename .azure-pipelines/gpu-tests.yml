@@ -44,7 +44,7 @@ jobs:
         python --version
         pip --version
         pip list
-        df -kh /dev/shm
+        df -kh /dev/shm  # check shared memory size
       displayName: 'Image info & NVIDIA'
 
     - bash: |
