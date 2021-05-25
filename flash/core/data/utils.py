@@ -185,7 +185,7 @@ class FuncModule(torch.nn.Module):
         return self.func(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}({str(self.func)})"
+        return f"{self.__class__.__name__}({self.func.__name__})"
 
 
 def convert_to_modules(transforms: Optional[Dict[str, Callable]]):

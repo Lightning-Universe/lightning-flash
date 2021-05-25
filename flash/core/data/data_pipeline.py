@@ -31,7 +31,7 @@ from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess, 
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no-cover
     from flash.core.model import Task
 
 
@@ -61,7 +61,7 @@ class DataPipelineState:
         else:
             return None
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return f"{self.__class__.__name__}(initialized={self._initialized}, state={self._state})"
 
 
@@ -520,9 +520,17 @@ class DataPipeline:
             model.predict_step = model.predict_step._original
 
     def __str__(self) -> str:
+        data_source: DataSource = self.data_source
         preprocess: Preprocess = self._preprocess_pipeline
         postprocess: Postprocess = self._postprocess_pipeline
-        return f"{self.__class__.__name__}(preprocess={preprocess}, postprocess={postprocess})"
+        serializer: Serializer = self._serializer
+        return (
+            f"{self.__class__.__name__}("
+            f"data_source={str(data_source)}, "
+            f"preprocess={preprocess}, "
+            f"postprocess={postprocess}, "
+            f"serializer={serializer})"
+        )
 
 
 class _StageOrchestrator:
