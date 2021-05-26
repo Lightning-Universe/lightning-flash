@@ -2,19 +2,16 @@
 # Create and test a Python package on multiple Python versions.
 # Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
+trigger: none
 
-trigger:
-  tags:
-    include:
-      - '*'
+pr: none
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight testing
   branches:
     include:
-      - master
-      - release/*
-      - refs/tags/*
-pr:
-  - master
-  - release/*
+    - master
 
 jobs:
   - job: pytest
