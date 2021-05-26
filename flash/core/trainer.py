@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
+from argparse import ArgumentParser
 from functools import wraps
 from typing import Callable, List, Optional, Union
 
 import torch
-from pytorch_lightning import LightningDataModule, LightningModule, Trainer
+from pytorch_lightning import LightningDataModule, LightningModule
+from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.utilities import rank_zero_warn
-from pytorch_lightning.utilities.argparse import get_init_arguments_and_types, parse_env_variables
+from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
@@ -49,7 +51,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
     return insert_env_defaults
 
 
-class Trainer(Trainer):
+class Trainer(PlTrainer):
 
     @_defaults_from_env_vars
     def __init__(self, *args, **kwargs):
@@ -172,3 +174,9 @@ class Trainer(Trainer):
         override_types = new_callbacks_types.intersection(old_callbacks_types)
         new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
         return new_callbacks
+
+    @classmethod
+    def add_argparse_args(cls, *args, **kwargs) -> ArgumentParser:
+        # the lightning trainer implementation does not support subclasses.
+        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        return add_argparse_args(PlTrainer, *args, **kwargs)
