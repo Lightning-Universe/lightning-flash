@@ -53,12 +53,13 @@ jobs:
 
     - bash: |
         # python -m pip install "pip==20.1"
+        pip install -e .
         pip install --requirement ./requirements/devel.txt --upgrade-strategy only-if-needed
         pip list
       displayName: 'Install dependencies'
 
     - bash: |
-        python -m coverage run --source flash -m pytest flash tests/examples flash_notebooks -v --nbval-lax --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
+        python -m coverage run --source flash -m pytest tests/examples flash_notebooks -v --nbval-lax --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
       displayName: 'Test examples'
 
     - bash: |
