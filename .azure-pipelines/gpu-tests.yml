@@ -53,8 +53,7 @@ jobs:
 
     - bash: |
         # python -m pip install "pip==20.1"
-        pip install -e .
-        pip install --requirement ./requirements/devel.txt --upgrade-strategy only-if-needed
+        pip install -e ".[dev-test]"
         pip list
       displayName: 'Install dependencies'
 
