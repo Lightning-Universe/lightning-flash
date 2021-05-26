@@ -58,11 +58,11 @@ jobs:
       displayName: 'Install dependencies'
 
     - bash: |
-        python -m coverage run --source flash -m pytest tests/examples/test_scripts.py -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
+        python -m coverage run --source flash -m pytest tests/examples/test_scripts.py -v --junitxml=$(Build.StagingDirectory)/test-results-examples.xml --durations=30
       displayName: 'Test examples'
 
     - bash: |
-        python -m coverage run --source flash -m pytest --nbval-lax flash_notebooks -v --junitxml=$(Build.StagingDirectory)/test-notebooks-results.xml --durations=30
+        python -m coverage run --source flash -m pytest --nbval-lax flash_notebooks -v --junitxml=$(Build.StagingDirectory)/test-results-notebooks.xml --durations=30
       displayName: 'Test notebooks'
 
     - bash: |
@@ -76,7 +76,7 @@ jobs:
     - task: PublishTestResults@2
       displayName: 'Publish test results'
       inputs:
-        testResultsFiles: '$(Build.StagingDirectory)/test-results.xml'
+        testResultsFiles: '$(Build.StagingDirectory)/test-results-*.xml'
         testRunTitle: '$(Agent.OS) - $(Build.DefinitionName) - Python $(python.version)'
       condition: succeededOrFailed()
 
