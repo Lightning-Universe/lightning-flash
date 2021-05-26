@@ -58,12 +58,8 @@ jobs:
       displayName: 'Install dependencies'
 
     - bash: |
-        python -m coverage run --source flash -m pytest flash tests/examples/test_scripts.py -v --junitxml=$(Build.StagingDirectory)/test-results-examples.xml --durations=30
+        python -m coverage run --source flash -m pytest flash tests/examples flash_notebooks -v --nbval-lax --junitxml=$(Build.StagingDirectory)/test-results-examples.xml --durations=30
       displayName: 'Test examples'
-
-    - bash: |
-        python -m coverage run --source flash -m pytest flash flash_notebooks --nbval-lax -v --junitxml=$(Build.StagingDirectory)/test-results-notebooks.xml --durations=30
-      displayName: 'Test notebooks'
 
     - bash: |
         python -m coverage report
