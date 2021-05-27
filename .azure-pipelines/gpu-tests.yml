@@ -58,7 +58,7 @@ jobs:
 
     - bash: |
         python -m coverage run --source flash -m pytest tests/examples flash_notebooks -v --nbval-lax --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
-      displayName: 'Test examples'
+      displayName: 'Test examples and notebooks'
 
     - bash: |
         python -m coverage report
