@@ -93,7 +93,7 @@ jobs:
         python --version
         pip --version
         pip install -e '.[${{ matrix.topic }}]' --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install --requirement requirements/test.txt --upgrade
+        pip install -e '.[test]' --pre --upgrade
         pip list
       shell: bash
 
