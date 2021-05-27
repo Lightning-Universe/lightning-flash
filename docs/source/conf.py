@@ -80,7 +80,7 @@ exclude_patterns = []
 #
 source_suffix = [".rst", ".md"]
 
-needs_sphinx = '3.4'
+needs_sphinx = "4.0"
 
 # -- Options for intersphinx extension ---------------------------------------
 
@@ -88,7 +88,7 @@ needs_sphinx = '3.4'
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "torch": ("https://pytorch.org/docs/stable/", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
     "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
     "pytorchvideo": ("https://pytorchvideo.readthedocs.io/en/latest/", None),
     "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
