@@ -94,7 +94,7 @@ class ObjectDetector(Task):
     ):
 
         if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install . '[image]'")
+            raise ModuleNotFoundError("Please, pip install lightning-flash[image]")
 
         self.save_hyperparameters()
 
