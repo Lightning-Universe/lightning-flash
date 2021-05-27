@@ -80,7 +80,7 @@ exclude_patterns = []
 #
 source_suffix = [".rst", ".md"]
 
-needs_sphinx = '3.4'
+needs_sphinx = "4.0"
 
 # -- Options for intersphinx extension ---------------------------------------
 
