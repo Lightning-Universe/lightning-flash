@@ -27,7 +27,7 @@ class SummarizationPostprocess(Postprocess):
         super().__init__()
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+            raise ModuleNotFoundError("Please, pip install -e lightning-flash[text]")
 
         self._backbone = None
         self._tokenizer = None

@@ -60,7 +60,7 @@ class RougeMetric(Metric):
     ):
         super().__init__()
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+            raise ModuleNotFoundError("Please, pip install -e lightning-flash[text]")
 
         self.rouge_newline_sep = rouge_newline_sep
         self.rouge_keys = rouge_keys
