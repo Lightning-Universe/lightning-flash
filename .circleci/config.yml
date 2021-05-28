@@ -14,7 +14,8 @@ references:
         pyenv global 3.7.3
         python --version
         pip install -e .
-        pip install -r requirements/docs.txt
+        pip install -r requirements/docs.txt --progress-bar off
+        pip list
         cd docs
         make clean
         make html --debug --jobs 2 SPHINXOPTS="-W"
