@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Callable, Dict, Optional, Union
 
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2SeqPreprocess
 
 
 class TranslationPreprocess(Seq2SeqPreprocess):
@@ -45,3 +45,4 @@ class TranslationData(Seq2SeqData):
     """Data module for Translation tasks."""
 
     preprocess_cls = TranslationPreprocess
+    postprocess_cls = Seq2SeqPostprocess
