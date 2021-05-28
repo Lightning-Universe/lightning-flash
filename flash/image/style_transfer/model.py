@@ -94,7 +94,7 @@ class StyleTransfer(Task):
     ):
 
         if not _IMAGE_STLYE_TRANSFER:
-            raise ModuleNotFoundError("Please, pip install -e '.[image_style_transfer]'")
+            raise ModuleNotFoundError("Please, pip install -e pytorch-lightning[image_style_transfer]")
 
         self.save_hyperparameters(ignore="style_image")
 
