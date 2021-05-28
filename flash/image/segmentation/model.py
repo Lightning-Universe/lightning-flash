@@ -86,7 +86,7 @@ class SemanticSegmentation(ClassificationTask):
     ) -> None:
 
         if isinstance(backbone, str) and (not _TORCHVISION_AVAILABLE or not _TIMM_AVAILABLE):
-            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
+            raise ModuleNotFoundError("Please, pip install -e lightning-flash[image]")
 
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
