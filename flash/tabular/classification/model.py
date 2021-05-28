@@ -57,7 +57,7 @@ class TabularClassifier(ClassificationTask):
         **tabnet_kwargs,
     ):
         if not _TABULAR_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[tabular]'")
+            raise ModuleNotFoundError("Please, pip install -e lightning-flash[tabular]")
 
         self.save_hyperparameters()
 
