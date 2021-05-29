@@ -50,7 +50,7 @@ class TextClassifier(ClassificationTask):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install lightning-flash[text]")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.save_hyperparameters()
 

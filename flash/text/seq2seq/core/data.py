@@ -43,7 +43,7 @@ class Seq2SeqDataSource(DataSource):
         super().__init__()
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install lightning-flash[text]")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
@@ -236,7 +236,7 @@ class Seq2SeqPreprocess(Preprocess):
         self.padding = padding
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install lightning-flash[text]")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         super().__init__(
             train_transform=train_transform,

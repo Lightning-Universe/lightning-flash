@@ -36,7 +36,7 @@ class TextDataSource(DataSource):
         super().__init__()
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install lightning-flash[text]")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
@@ -203,7 +203,7 @@ class TextClassificationPreprocess(Preprocess):
     ):
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install lightning-flash[text]")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.backbone = backbone
         self.max_length = max_length
