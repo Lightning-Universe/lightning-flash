@@ -292,7 +292,7 @@ class Seq2SeqPostprocess(Postprocess):
         super().__init__()
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self._backbone = None
         self._tokenizer = None
