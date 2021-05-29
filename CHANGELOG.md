@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Changed the installation command for extra features ([#346](https://github.com/PyTorchLightning/lightning-flash/pull/346))
 
 
+- Fixed a bug where the translation task wasn't decoding tokens properly ([#332](https://github.com/PyTorchLightning/lightning-flash/pull/332))
+
+
+- Fixed a bug where huggingface tokenizers were sometimes being pickled ([#332](https://github.com/PyTorchLightning/lightning-flash/pull/332))
+
+
 ## [0.3.0] - 2021-05-20
 
 ### Added

@@ -21,7 +21,7 @@ from torch import Tensor
 import flash
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
-from flash.core.data.process import Preprocess
+from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 
@@ -43,9 +43,10 @@ class Seq2SeqDataSource(DataSource):
         super().__init__()
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+        self.backbone = backbone
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
         self.padding = padding
@@ -70,6 +71,15 @@ class Seq2SeqDataSource(DataSource):
             max_target_length=self.max_target_length,
             padding=self.padding,
         )
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class Seq2SeqFileDataSource(Seq2SeqDataSource):
@@ -112,6 +122,15 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
     def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
         return self.load_data(data, columns=["input_ids", "attention_mask"])
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
 
@@ -129,6 +148,15 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
             max_target_length=max_target_length,
             padding=padding,
         )
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
@@ -148,6 +176,15 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
             padding=padding,
         )
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
 
@@ -160,6 +197,15 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
         if isinstance(data, str):
             data = [data]
         return [self._tokenize_fn(s) for s in data]
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -190,7 +236,7 @@ class Seq2SeqPreprocess(Preprocess):
         self.padding = padding
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         super().__init__(
             train_transform=train_transform,
@@ -240,7 +286,47 @@ class Seq2SeqPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
+class Seq2SeqPostprocess(Postprocess):
+
+    def __init__(self):
+        super().__init__()
+
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
+
+        self._backbone = None
+        self._tokenizer = None
+
+    @property
+    def backbone(self):
+        backbone_state = self.get_state(Seq2SeqBackboneState)
+        if backbone_state is not None:
+            return backbone_state.backbone
+
+    @property
+    def tokenizer(self):
+        if self.backbone is not None and self.backbone != self._backbone:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+            self._backbone = self.backbone
+        return self._tokenizer
+
+    def uncollate(self, generated_tokens: Any) -> Any:
+        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+        pred_str = [str.strip(s) for s in pred_str]
+        return pred_str
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("_tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
+
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
     preprocess_cls = Seq2SeqPreprocess
+    postprocess_cls = Seq2SeqPostprocess
