@@ -30,6 +30,12 @@ from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postp
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+
+if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.collections import SampleCollection
+else:
+    SampleCollection = None
 
 
 class DataModule(pl.LightningDataModule):
@@ -1009,6 +1015,80 @@ class DataModule(pl.LightningDataModule):
         """
         return cls.from_data_source(
             DefaultDataSources.DATASET,
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_fiftyone(
+        cls,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given FiftyOne Datasets using the
+        :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.FIFTYONE`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        Args:
+            train_dataset: The FiftyOne Dataset containing the train data.
+            val_dataset: The FiftyOne Dataset containing the validation data.
+            test_dataset: The FiftyOne Dataset containing the test data.
+            predict_dataset: The FiftyOne Dataset containing the predict data.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+        Returns:
+            The constructed data module.
+        Examples::
+            data_module = DataModule.from_folders(
+                train_folder="train_folder",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+            )
+        """
+        return cls.from_data_source(
+            DefaultDataSources.FIFTYONE,
             train_dataset,
             val_dataset,
             test_dataset,
