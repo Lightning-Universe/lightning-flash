@@ -21,6 +21,10 @@ from pytorch_lightning.utilities import rank_zero_warn
 from flash.core.data.data_source import LabelsState
 from flash.core.data.process import Serializer
 from flash.core.model import Task
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+
+if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.labels import Classification, Classifications
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -158,3 +162,69 @@ class Labels(Classes):
         else:
             rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
             return classes
+
+
+class FiftyOneLabels(Classes):
+    """A :class:`.Serializer` which converts the model outputs (assumed to be logits) to the label of the
+    argmax classification all stored as a FiftyOne Classification label.
+    Args:
+        labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
+            provided, will attempt to get them from the :class:`.LabelsState`.
+        multi_label: If true, treats outputs as multi label logits and creates
+            FiftyOne Classifications.
+        threshold: The threshold to use for multi_label classification.
+    """
+
+    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
+
+        super().__init__(multi_label=multi_label, threshold=threshold)
+        self._labels = labels
+
+        if labels is not None:
+            self.set_state(LabelsState(labels))
+
+    def serialize(self, sample: Any) -> Union[Classification, Classifications]:
+        labels = None
+
+        if self._labels is not None:
+            labels = self._labels
+        else:
+            state = self.get_state(LabelsState)
+            if state is not None:
+                labels = state.labels
+
+        classes = super().serialize(sample)
+
+        if self.multi_label:
+            probabilities = torch.sigmoid(sample).tolist()
+        else:
+            probabilities = torch.softmax(sample, -1).tolist()
+
+        if labels is not None:
+            if self.multi_label:
+                classifications = []
+                for probs, cls in zip(probabilities, classes):
+                    fo_cls = Classification(
+                        label = labels[cls],
+                        confidence = max(prob),
+                    )
+                    classifications.append(fo_cls)
+                fo_labels = Classifications(
+                    classifications=classifications,
+                )
+            else:
+                fo_labels = Classification(
+                    label = labels[classes],
+                    confidence = max(probabilities),
+                    logits = sample.tolist(),
+                )
+        else:
+            rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
+            fo_labels = Classification(
+                label = classes,
+                confidence = max(probabilities),
+            )
+
+        return fo_labels
