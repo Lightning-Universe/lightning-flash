@@ -75,6 +75,7 @@ _PYTORCHVIDEO_AVAILABLE = _module_available("pytorchvideo")
 _MATPLOTLIB_AVAILABLE = _module_available("matplotlib")
 _TRANSFORMERS_AVAILABLE = _module_available("transformers")
 _PYSTICHE_AVAILABLE = _module_available("pystiche")
+_FIFTYONE_AVAILABLE = _module_available("fiftyone")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
