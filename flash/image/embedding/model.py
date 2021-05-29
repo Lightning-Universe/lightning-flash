@@ -60,7 +60,7 @@ class ImageEmbedder(Task):
         pooling_fn: Callable = torch.max
     ):
         if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e lightning-flash[image]")
+            raise ModuleNotFoundError("Please, pip install lightning-flash[image]")
 
         super().__init__(
             model=None,

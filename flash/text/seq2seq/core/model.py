@@ -66,7 +66,7 @@ class Seq2SeqTask(Task):
         num_beams: Optional[int] = None,
     ):
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e lightning-flash[text]")
+            raise ModuleNotFoundError("Please, pip install lightning-flash[text]")
 
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
