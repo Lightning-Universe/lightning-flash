@@ -11,10 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2SeqPreprocess
+import pytest
+import torch
+
+from flash.text.seq2seq.translation.metric import BLEUScore
 
 
-class SummarizationData(Seq2SeqData):
-
-    preprocess_cls = Seq2SeqPreprocess
-    postprocess_cls = Seq2SeqPostprocess
+@pytest.mark.parametrize("smooth, expected", [(False, 0.7598), (True, 0.8091)])
+def test_bleu_score(smooth, expected):
+    translate_corpus = ['the cat is on the mat'.split()]
+    reference_corpus = [['there is a cat on the mat'.split(), 'a cat is on the mat'.split()]]
+    metric = BLEUScore(smooth=smooth)
+    assert torch.allclose(metric(translate_corpus, reference_corpus), torch.tensor(expected), 1e-4)
