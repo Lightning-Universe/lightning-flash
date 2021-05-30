@@ -51,7 +51,7 @@
 Pip / conda
 
 ```bash
-pip install lightning-flash -U
+pip install lightning-flash
 ```
 
 <details>
@@ -75,10 +75,12 @@ cd lightning-flash
 # install in editable mode
 pip install -e .
 ```
+
 In case you want to use the extra packages from a specific domain (image, video, text, ...)
 ```bash
 pip install "lightning-flash[image]"
 ```
+See [Installation](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
 </details>
 
 ---

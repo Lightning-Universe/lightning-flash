@@ -57,11 +57,8 @@ extras = {
 
 # remove possible duplicate.
 extras["vision"] = list(set(extras["image"] + extras["video"] + extras["image_style_transfer"]))
-extras["dev"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["image"]))
-extras["dev-test"] = list(set(extras["test"] + extras["dev"]))
-extras["all"] = list(set(extras["dev"] + extras["docs"]))
-
-print(extras)
+extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
+extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
