@@ -95,12 +95,13 @@ class GraphClassifier(ClassificationTask):
     Args:
         num_features: Number of columns in table (not including target column).
         num_classes: Number of classes to classify.
-        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
-        hidden: Hidden dimension sizes.
+        hidden_channels: Hidden dimension sizes.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
+        model: GraphNN used, defaults to BaseGraphModel.
+        conv_cls: kind of convolution used in model, defaults to GCNConv
     """
 
     def __init__(

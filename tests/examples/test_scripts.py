@@ -17,10 +17,47 @@ from unittest import mock
 
 import pytest
 
-import flash
-from flash.core.utilities.imports import _SKLEARN_AVAILABLE
-from tests.examples.utils import run_test
-from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING, _VIDEO_TESTING
+from flash.core.utilities.imports import (
+    _IMAGE_AVAILABLE,
+    _TABULAR_AVAILABLE,
+    _TEXT_AVAILABLE,
+    _TORCHVISION_GREATER_EQUAL_0_9,
+    _VIDEO_AVAILABLE,
+    _PYTORCH_GEOMETRIC_AVAILABLE,
+    _SKLEARN_AVAILABLE
+)
+
+_IMAGE_AVAILABLE = _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9
+
+root = Path(__file__).parent.parent.parent
+
+
+def call_script(
+    filepath: str,
+    args: Optional[List[str]] = None,
+    timeout: Optional[int] = 60 * 5,
+) -> Tuple[int, str, str]:
+    if args is None:
+        args = []
+    args = [str(a) for a in args]
+    command = [sys.executable, "-m", "coverage", "run", filepath] + args
+    print(" ".join(command))
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        stdout, stderr = p.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        stdout, stderr = p.communicate()
+    stdout = stdout.decode("utf-8")
+    stderr = stderr.decode("utf-8")
+    return p.returncode, stdout, stderr
+
+
+def run_test(filepath):
+    code, stdout, stderr = call_script(filepath)
+    print(f"{filepath} STDOUT: {stdout}")
+    print(f"{filepath} STDERR: {stderr}")
+    assert not code
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -28,7 +65,8 @@ from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING,
     "file",
     [
         pytest.param(
-            "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+            "custom_task.py", 
+            marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
         ),
         pytest.param(
             "image_classification.py",
@@ -48,13 +86,27 @@ from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING,
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
-            "summarization.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+            "summarization.py", 
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+        ),
+        pytest.param(    
+            "finetuning",
+            "template.py",
+            marks=pytest.mark.skipif(not _PYTORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed")
+        ),
+        pytest.param(
+            "predict",
+            "image_classification.py",
+            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
         ),
         pytest.param(
             "tabular_classification.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed")
         ),
-        pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
+        pytest.param(
+            "template.py", 
+            marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+        ),
         pytest.param(
             "text_classification.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
@@ -69,6 +121,11 @@ from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING,
         pytest.param(
             "video_classification.py",
             marks=pytest.mark.skipif(not _VIDEO_TESTING, reason="video libraries aren't installed")
+        ),
+        pytest.param(
+            "predict",
+            "template.py",
+            marks=pytest.mark.skipif(not _PYTORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed")
         ),
     ]
 )
