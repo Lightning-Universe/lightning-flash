@@ -21,6 +21,7 @@ from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
 if _PYTORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.data import Dataset as PyGDataset
 
+
 class GraphDatasetSource(DatasetDataSource):
 
     def load_data(self, dataset: Dataset, auto_dataset: AutoDataset) -> Dataset:

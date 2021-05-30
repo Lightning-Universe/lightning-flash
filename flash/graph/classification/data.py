@@ -47,9 +47,7 @@ class GraphClassificationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.DATASET: GraphDatasetSource()
-            },
+            data_sources={DefaultDataSources.DATASET: GraphDatasetSource()},
             default_data_source=DefaultDataSources.DATASET,
         )
 

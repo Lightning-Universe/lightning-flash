@@ -104,7 +104,7 @@ def test_test(tmpdir):
 @pytest.mark.skipif(not _PYTORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed")
 def test_predict_dataset():
     """Tests that we can generate predictions from a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root = 'tmpdir', name = 'KKI')
+    tudataset = datasets.TUDataset(root='tmpdir', name='KKI')
     model = GraphClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
     data_pipe = DataPipeline(preprocess=GraphClassificationPreprocess())
     out = model.predict(tudataset, data_source="dataset", data_pipeline=data_pipe)
