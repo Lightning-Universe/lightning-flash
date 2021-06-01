@@ -79,7 +79,7 @@ class KorniaParallelTransforms(nn.Sequential):
         for transform in self.children():
             inputs = result
 
-            # we enforce the firs time to sample random params
+            # we enforce the first time to sample random params
             result[0] = transform(inputs[0])
 
             if hasattr(transform, "_params") and bool(transform._params):

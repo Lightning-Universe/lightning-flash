@@ -97,7 +97,7 @@ def test_kornia_parallel_transforms(with_params):
     transform_b = Mock(spec=torch.nn.Module)
 
     if with_params:
-        transform_a._params = "test"
+        transform_a._params = "test"  # initialize params with some value
 
     parallel_transforms = KorniaParallelTransforms(transform_a, transform_b)
     parallel_transforms(samples)
@@ -106,7 +106,8 @@ def test_kornia_parallel_transforms(with_params):
     assert transform_b.call_count == 2
 
     if with_params:
-        assert transform_a.call_args_list[0][0][1] == transform_a.call_args_list[1][0][1] == "test"
+        # check that after the forward `_params` is set to None
+        assert transform_a._params == transform_a._params == None
 
     assert torch.allclose(transform_a.call_args_list[0][0][0], samples[0])
     assert torch.allclose(transform_a.call_args_list[1][0][0], samples[1])
