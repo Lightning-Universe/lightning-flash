@@ -106,6 +106,7 @@ def test_kornia_parallel_transforms(with_params):
     assert transform_b.call_count == 2
 
     if with_params:
+        assert transform_a.call_args_list[1][0][1] == "test"
         # check that after the forward `_params` is set to None
         assert transform_a._params == transform_a._params is None
 
