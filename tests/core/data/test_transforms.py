@@ -100,6 +100,10 @@ def test_kornia_parallel_transforms(with_params):
         transform_a._params = "test"
 
     parallel_transforms = KorniaParallelTransforms(transform_a, transform_b)
+    assert parallel_transforms.reuse_params is False
+
+    parallel_transforms.set_reuse_params(True)
+    assert parallel_transforms.reuse_params is True
 
     parallel_transforms(samples)
 

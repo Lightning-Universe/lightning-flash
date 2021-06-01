@@ -73,6 +73,14 @@ class KorniaParallelTransforms(nn.Sequential):
 
     def __init__(self, *args):
         super().__init__(*[convert_to_modules(arg) for arg in args])
+        self._reuse_params: bool = False
+
+    @property
+    def reuse_params(self) -> bool:
+        return self._reuse_params
+
+    def set_reuse_params(self, val: bool):
+        self._reuse_params = val
 
     def forward(self, inputs: Any):
         result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
@@ -88,7 +96,7 @@ class KorniaParallelTransforms(nn.Sequential):
                     result[i] = transform(input, params)
                 else:  # case for non random transforms
                     result[i] = transform(input)
-            if hasattr(transform, "_params") and bool(transform._params):
+            if not self.reuse_params and hasattr(transform, "_params") and bool(transform._params):
                 transform._params = None
         return result
 
