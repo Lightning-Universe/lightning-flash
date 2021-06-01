@@ -38,7 +38,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(
                 [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='bilinear')),
+                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest')),
             ),
         ),
         "collate": Compose([kornia_collate, ApplyToKeys(DefaultDataKeys.TARGET, prepare_target)]),
