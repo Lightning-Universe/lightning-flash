@@ -107,7 +107,7 @@ def test_kornia_parallel_transforms(with_params):
 
     if with_params:
         # check that after the forward `_params` is set to None
-        assert transform_a._params == transform_a._params == None
+        assert transform_a._params == transform_a._params is None
 
     assert torch.allclose(transform_a.call_args_list[0][0][0], samples[0])
     assert torch.allclose(transform_a.call_args_list[1][0][0], samples[1])
