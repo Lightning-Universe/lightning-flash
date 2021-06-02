@@ -469,12 +469,11 @@ class NumpyDataSource(SequenceDataSource[np.ndarray]):
     """The ``NumpyDataSource`` is a ``SequenceDataSource`` which expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``np.ndarray`` objects."""
 
-class FiftyOneDataSource(SequenceDataSource[SampleCollection]):
-    """The ``FiftyOneDataSource`` is a ``SequenceDataSource`` which expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence
-    of FiftyOne Dataset objects."""
+class FiftyOneDataSource(DataSource[SampleCollection]):
+    """The ``FiftyOneDataSource`` expects the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be FiftyOne Dataset objects."""
 
     def predict_load_data(self,
                           data: SampleCollection,
                           dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        return [{DefaultDataKeys.INPUT: s.filepath} for s in data] 
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")] 

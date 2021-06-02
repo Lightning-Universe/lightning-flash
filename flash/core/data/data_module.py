@@ -1054,6 +1054,7 @@ class DataModule(pl.LightningDataModule):
         :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data.data_source.DefaultDataSources.FIFTYONE`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
         Args:
             train_dataset: The FiftyOne Dataset containing the train data.
             val_dataset: The FiftyOne Dataset containing the validation data.
@@ -1077,11 +1078,18 @@ class DataModule(pl.LightningDataModule):
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
+
         Returns:
             The constructed data module.
+
         Examples::
-            data_module = DataModule.from_folders(
-                train_folder="train_folder",
+
+            train_dataset = fo.Dataset.from_dir(
+                "/path/to/dataset",
+                dataset_type=fo.types.ImageClassificationDirectoryTree,
+            )
+            data_module = DataModule.from_fiftyone(
+                train_data = train_dataset,
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,
                 },

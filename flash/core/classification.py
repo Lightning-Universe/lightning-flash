@@ -73,11 +73,11 @@ class ClassificationSerializer(Serializer):
     def __init__(self, multi_label: bool = False):
         super().__init__()
 
-        self._mutli_label = multi_label
+        self._multi_label = multi_label
 
     @property
     def multi_label(self) -> bool:
-        return self._mutli_label
+        return self._multi_label
 
 
 class Logits(ClassificationSerializer):
@@ -164,7 +164,7 @@ class Labels(Classes):
             return classes
 
 
-class FiftyOneLabels(Classes):
+class FiftyOneLabels(ClassificationSerializer):
     """A :class:`.Serializer` which converts the model outputs (assumed to be logits) to the label of the
     argmax classification all stored as a FiftyOne Classification label.
     Args:
@@ -173,13 +173,23 @@ class FiftyOneLabels(Classes):
         multi_label: If true, treats outputs as multi label logits and creates
             FiftyOne Classifications.
         threshold: The threshold to use for multi_label classification.
+        store_logits: Boolean determining whether to store logits in
+            the FiftyOne labels
     """
 
-    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
+    def __init__(
+            self,
+            labels: Optional[List[str]] = None,
+            multi_label: bool = False,
+            threshold: float = 0.5,
+            store_logits: bool = False,
+        ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
-        super().__init__(multi_label=multi_label, threshold=threshold)
+        super().__init__(multi_label=multi_label)
+        self.threshold = threshold
+        self.store_logits = store_logits
         self._labels = labels
 
         if labels is not None:
@@ -195,36 +205,46 @@ class FiftyOneLabels(Classes):
             if state is not None:
                 labels = state.labels
 
-        classes = super().serialize(sample)
+        logits = None
+        if self.store_logits:
+            logits = sample.tolist()
 
         if self.multi_label:
+            one_hot = (sample.sigmoid() > self.threshold).int().tolist()
+            classes = []
+            for index, value in enumerate(one_hot):
+                if value == 1:
+                    classes.append(index)
             probabilities = torch.sigmoid(sample).tolist()
         else:
+            classes = torch.argmax(sample, -1).tolist()
             probabilities = torch.softmax(sample, -1).tolist()
 
         if labels is not None:
             if self.multi_label:
                 classifications = []
-                for probs, cls in zip(probabilities, classes):
+                for cls in classes:
                     fo_cls = Classification(
                         label = labels[cls],
-                        confidence = max(prob),
+                        confidence = probabilities[cls],
                     )
                     classifications.append(fo_cls)
                 fo_labels = Classifications(
-                    classifications=classifications,
+                    classifications = classifications,
+                    logits = logits,
                 )
             else:
                 fo_labels = Classification(
                     label = labels[classes],
                     confidence = max(probabilities),
-                    logits = sample.tolist(),
+                    logits = logits,
                 )
         else:
             rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
             fo_labels = Classification(
                 label = classes,
                 confidence = max(probabilities),
+                logits = logits
             )
 
         return fo_labels

@@ -127,32 +127,33 @@ class VideoClassificationPathsDataSource(PathsDataSource):
         return self._encoded_video_to_dict(EncodedVideo.from_path(sample[DefaultDataKeys.INPUT]))
 
 
-class VideoClassificationFiftyOneDataSource(FiftyOneDataSource):
+class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, VideoClassificationPathsDataSource):
 
     def __init__(
         self,
         clip_sampler: 'ClipSampler',
-        label_field: str = "ground_truth",
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
+        label_field: str = "ground_truth",
     ):
-        super().__init__()
+        super().__init__(
+            clip_sampler=clip_sampler,
+            video_sampler=video_sampler,
+            decode_audio=decode_audio,
+            decoder=decoder,
+        )
         self.label_field = label_field
-        self.clip_sampler = clip_sampler
-        self.video_sampler = video_sampler
-        self.decode_audio = decode_audio
-        self.decoder = decoder
 
     def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> 'EncodededVideoDataset':
-        label_to_class_mapping = dict(list(enumerate(data.default_classes)))
+        label_to_class_mapping = dict(enumerate(data.default_classes))
         class_to_label_mapping = {c:l for l,c in label_to_class_mapping.items()}
 
-        labeled_video_paths = [] 
-        for s in data:
-            label = class_to_label_mapping[s[self.label_field].label]
-            filepath = s.filepath
-            labeled_video_paths.append((filepath,label))
+        filepaths = data.values("filepath")
+        labels = data.values(self.label_field + ".label")
+
+        targets = [class_to_label_mapping[l] for l in labels]
+        labeled_video_paths = list(zip(filepaths, targets))
 
         labeled_video_paths = LabeledVideoPaths(
             labeled_video_paths
@@ -170,40 +171,6 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource):
             dataset.num_classes = len(class_to_label_mapping)
         return ds
 
-    def _encoded_video_to_dict(self, video) -> Dict[str, Any]:
-        (
-            clip_start,
-            clip_end,
-            clip_index,
-            aug_index,
-            is_last_clip,
-        ) = self.clip_sampler(0.0, video.duration)
-
-        loaded_clip = video.get_clip(clip_start, clip_end)
-
-        clip_is_null = (
-            loaded_clip is None or loaded_clip["video"] is None or (loaded_clip["audio"] is None and self.decode_audio)
-        )
-        if clip_is_null:
-            raise MisconfigurationException(
-                f"The provided video is too short {video.duration} to be clipped at {self.clip_sampler._clip_duration}"
-            )
-        frames = loaded_clip["video"]
-        audio_samples = loaded_clip["audio"]
-        return {
-            "video": frames,
-            "video_name": video.name,
-            "video_index": 0,
-            "clip_index": clip_index,
-            "aug_index": aug_index,
-            **({
-                "audio": audio_samples
-            } if audio_samples is not None else {}),
-        }
-
-    def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        return self._encoded_video_to_dict(EncodedVideo.from_path(sample[DefaultDataKeys.INPUT]))
-
 
 class VideoClassificationPreprocess(Preprocess):
 
@@ -213,14 +180,18 @@ class VideoClassificationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        label_field: str = "ground_truth",
         clip_sampler: Union[str, 'ClipSampler'] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
+        **data_source_kwargs,
     ):
+        """
+        ``data_source_kwargs`` are source-specific keyword arguments that are
+        passed to the ``DataSource`` constructors
+        """
         self.clip_sampler = clip_sampler
         self.clip_duration = clip_duration
         self.clip_sampler_kwargs = clip_sampler_kwargs
@@ -261,10 +232,10 @@ class VideoClassificationPreprocess(Preprocess):
                 ),
                 DefaultDataSources.FIFTYONE: VideoClassificationFiftyOneDataSource(
                     clip_sampler,
-                    label_field=label_field,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
+                    **data_source_kwargs,
                 ),
             },
             default_data_source=DefaultDataSources.FILES,
