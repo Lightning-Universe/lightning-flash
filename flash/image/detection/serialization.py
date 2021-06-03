@@ -21,15 +21,15 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
     from fiftyone.core.labels import Detection, Detections
+else:
+    Detection, Detections = None, None
+
 
 class FiftyOneDetectionLabels(Serializer):
-    """A :class:`.Serializer` which converts the model outputs to a FiftyOne Detections label.
+    """A :class:`.Serializer` which converts the model outputs to FiftyOne detection format.
     """
 
-    def __init__(
-            self,
-            labels: Optional[List[str]] = None,
-        ):
+    def __init__(self, labels: Optional[List[str]] = None):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
         super().__init__()
@@ -40,7 +40,6 @@ class FiftyOneDetectionLabels(Serializer):
 
     def serialize(self, sample: List[Dict[str, Any]]) -> Detections:
         labels = None
-
         if self._labels is not None:
             labels = self._labels
         else:
@@ -48,13 +47,13 @@ class FiftyOneDetectionLabels(Serializer):
             if state is not None:
                 labels = state.labels
             else:
-                rank_zero_warn("No LabelsState was found, this serializer will return integer class labels.", UserWarning)
+                rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
 
         detections = []
 
         for det in sample:
             xmin, ymin, xmax, ymax = [c.tolist() for c in det["boxes"]]
-            box = [xmin, ymin, xmax-xmin, ymax-ymin]
+            box = [xmin, ymin, xmax - xmin, ymax - ymin]
 
             label = det["labels"].tolist()
             if labels is not None:
@@ -63,11 +62,13 @@ class FiftyOneDetectionLabels(Serializer):
                 label = str(int(label))
 
             score = det["scores"].tolist()
-            detections.append(Detection(
-                label = label,
-                bounding_box = box,
-                confidence = score,
-            ))
 
+            detections.append(
+                Detection(
+                    label=label,
+                    bounding_box=box,
+                    confidence=score,
+                )
+            )
 
         return Detections(detections=detections)

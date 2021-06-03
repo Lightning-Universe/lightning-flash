@@ -165,16 +165,14 @@ class Labels(Classes):
 
 
 class FiftyOneLabels(ClassificationSerializer):
-    """A :class:`.Serializer` which converts the model outputs (assumed to be logits) to the label of the
-    argmax classification all stored as a FiftyOne Classification label.
+    """A :class:`.Serializer` which converts the model outputs (assumed to be logits) to FiftyOne classification format.
+
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
             provided, will attempt to get them from the :class:`.LabelsState`.
-        multi_label: If true, treats outputs as multi label logits and creates
-            FiftyOne Classifications.
+        multi_label: If true, treats outputs as multi label logits.
         threshold: The threshold to use for multi_label classification.
-        store_logits: Boolean determining whether to store logits in
-            the FiftyOne labels
+        store_logits: Boolean determining whether to store logits in the FiftyOne labels
     """
 
     def __init__(
@@ -223,41 +221,42 @@ class FiftyOneLabels(ClassificationSerializer):
         if labels is not None:
             if self.multi_label:
                 classifications = []
-                for cls in classes:
+                for idx in classes:
                     fo_cls = Classification(
-                        label = labels[cls],
-                        confidence = probabilities[cls],
+                        label=labels[idx],
+                        confidence=probabilities[idx],
                     )
                     classifications.append(fo_cls)
                 fo_labels = Classifications(
-                    classifications = classifications,
-                    logits = logits,
+                    classifications=classifications,
+                    logits=logits,
                 )
             else:
                 fo_labels = Classification(
-                    label = labels[classes],
-                    confidence = max(probabilities),
-                    logits = logits,
+                    label=labels[classes],
+                    confidence=max(probabilities),
+                    logits=logits,
                 )
         else:
-            rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
+            rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
+
             if self.multi_label:
                 classifications = []
-                for cls in classes:
+                for idx in classes:
                     fo_cls = Classification(
-                        label = str(cls),
-                        confidence = probabilities[cls],
+                        label=str(idx),
+                        confidence=probabilities[idx],
                     )
                     classifications.append(fo_cls)
                 fo_labels = Classifications(
-                    classifications = classifications,
-                    logits = logits,
+                    classifications=classifications,
+                    logits=logits,
                 )
             else:
                 fo_labels = Classification(
-                    label = str(classes),
-                    confidence = max(probabilities),
-                    logits = logits
+                    label=str(classes),
+                    confidence=max(probabilities),
+                    logits=logits,
                 )
 
         return fo_labels

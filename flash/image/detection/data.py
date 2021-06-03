@@ -95,56 +95,41 @@ class COCODataSource(DataSource[Tuple[str, str]]):
 
 class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
 
-    def __init__(self, label_field: str = "ground_truth", iscrowd: str = "attributes.iscrowd.value"):
-        """Constructs an ObjectDetectionFiftyOneDataSource from a FiftyOne
-        SampleCollection using the given fields
-
-        Args:
-            label_field: label field name containing information to construct
-                targets
-            iscrowd: name of the subfield of detections that stores iscrowd
-                information
-        """
+    def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
         super().__init__(label_field=label_field)
         self.iscrowd = iscrowd
-
-    def _reformat_bbox(self, xmin, ymin, box_w, box_h, img_w, img_h):
-        xmin *= img_w
-        ymin *= img_h
-        box_w *= img_w
-        box_h *= img_h
-        xmax = xmin + box_w
-        ymax = ymin + box_h
-        output_bbox = [xmin, ymin, xmax, ymax]
-        return output_bbox, box_w*box_h
 
     def load_data(self,
                   data: SampleCollection,
                   dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        """Takes ``data``, a FiftyOne SampleCollection (generally a
-        ``fiftyone.core.dataset.Dataset`` or ``fiftyone.core.view.View``), and
-        parses sample filenames and detections from the given label field into a
-        list of inputs and targets.
-        """
         data.compute_metadata()
 
-        filepaths, widths, heights = data.values(["filepath", "metadata.width", "metadata.height"])
-        labels = data.values(self.label_field + ".detections.label")
-        bboxes = data.values(self.label_field + ".detections.bounding_box")
-        iscrowds = data.values(self.label_field + ".detections." + self.iscrowd)
+        filepaths, widths, heights, labels, bboxes, iscrowds = data.values(
+            [
+                "filepath",
+                "metadata.width",
+                "metadata.height",
+                self.label_field + ".detections.label",
+                self.label_field + ".detections.bounding_box",
+                self.label_field + ".detections." + self.iscrowd,
+            ]
+        )
 
         classes = data.default_classes
-        if not classes:
+        if classes is None:
+            classes = data.classes.get(self.label_field, None)
+        if classes is None:
             classes = data.distinct(self.label_field + ".detections.label")
+
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
         if dataset is not None:
             dataset.num_classes = len(classes)
 
-        data = zip(filepaths, widths, heights, labels, bboxes, iscrowds)
-
         output_data = []
         img_id = 1
-        for fp, w, h, sample_labs, sample_boxes, sample_iscrowd in data:
+        for fp, w, h, sample_labs, sample_boxes, sample_iscrowd in zip(
+            filepaths, widths, heights, labels, bboxes, iscrowds
+        ):
             output_boxes = []
             output_labs = []
             output_iscrowd = []
@@ -173,6 +158,16 @@ class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
 
         return output_data
 
+    def _reformat_bbox(self, xmin, ymin, box_w, box_h, img_w, img_h):
+        xmin *= img_w
+        ymin *= img_h
+        box_w *= img_w
+        box_h *= img_h
+        xmax = xmin + box_w
+        ymax = ymin + box_h
+        output_bbox = [xmin, ymin, xmax, ymax]
+        return output_bbox, box_w * box_h
+
 
 class ObjectDetectionPreprocess(Preprocess):
 
@@ -184,9 +179,14 @@ class ObjectDetectionPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         **data_source_kwargs,
     ):
-        """
-        ``data_source_kwargs`` are source-specific keyword arguments that are
-        passed to the ``DataSource`` constructors
+        """Preprocess pipeline for object detection tasks.
+
+        Args:
+            train_transform: Dictionary with the set of transforms to apply during training.
+            val_transform: Dictionary with the set of transforms to apply during validation.
+            test_transform: Dictionary with the set of transforms to apply during testing.
+            predict_transform: Dictionary with the set of transforms to apply during prediction.
+            **data_source_kwargs: Additional arguments passed on to the data source constructors.
         """
         super().__init__(
             train_transform=train_transform,
@@ -194,9 +194,7 @@ class ObjectDetectionPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(
-                    **data_source_kwargs
-                ),
+                DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(**data_source_kwargs),
                 DefaultDataSources.FILES: ImagePathsDataSource(),
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 "coco": COCODataSource(),

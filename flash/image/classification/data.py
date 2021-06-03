@@ -51,10 +51,6 @@ class ImageClassificationPreprocess(Preprocess):
         image_size: Tuple[int, int] = (196, 196),
         **data_source_kwargs,
     ):
-        """
-        ``data_source_kwargs`` are source-specific keyword arguments that are
-        passed to the ``DataSource`` constructors
-        """
         self.image_size = image_size
 
         super().__init__(
