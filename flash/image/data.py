@@ -48,6 +48,7 @@ class ImageNumpyDataSource(NumpyDataSource):
         sample[DefaultDataKeys.INPUT] = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
         return sample
 
+
 class ImageFiftyOneDataSource(FiftyOneDataSource):
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:

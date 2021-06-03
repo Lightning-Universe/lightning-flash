@@ -27,6 +27,8 @@ if _COCO_AVAILABLE:
 
 if _FIFTYONE_AVAILABLE:
     from fiftyone.core.collections import SampleCollection
+else:
+    SampleCollection = None
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
@@ -179,15 +181,6 @@ class ObjectDetectionPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         **data_source_kwargs,
     ):
-        """Preprocess pipeline for object detection tasks.
-
-        Args:
-            train_transform: Dictionary with the set of transforms to apply during training.
-            val_transform: Dictionary with the set of transforms to apply during validation.
-            test_transform: Dictionary with the set of transforms to apply during testing.
-            predict_transform: Dictionary with the set of transforms to apply during prediction.
-            **data_source_kwargs: Additional arguments passed on to the data source constructors.
-        """
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,

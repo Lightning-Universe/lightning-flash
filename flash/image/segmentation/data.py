@@ -162,22 +162,23 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
     def __init__(self, label_field: str = "ground_truth"):
         if not _IMAGE_AVAILABLE:
             raise ModuleNotFoundError("Please, pip install -e '.[image]'")
-        super().__init__(label_field)
-        self._fiftyone_dataset_name = None
+
+        super().__init__(label_field=label_field)
+        self._fo_dataset = None
+        self._fo_dataset_name = None
 
     def load_data(self,
                   data: SampleCollection,
                   dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        """Takes a ``fiftyone.core.collections.SampleCollection`` and parses sample filenames and
-        labels from the given label field into a list of inputs and targets.
-        """
-        self._fiftyone_dataset_name = data.name
+        self._fo_dataset_name = data.name
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
+        if self._fo_dataset is None:
+            self._fo_dataset = fo.load_dataset(self._fo_dataset_name)
+
         img_path = sample[DefaultDataKeys.INPUT]
-        fo_dataset = fo.load_dataset(self._fiftyone_dataset_name)
-        fo_sample = fo_dataset[img_path]
+        fo_sample = self._fo_dataset[img_path]
 
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask) # HxW
