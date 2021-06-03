@@ -42,6 +42,7 @@ from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
 if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
     from fiftyone.core.collections import SampleCollection
 
 if _MATPLOTLIB_AVAILABLE:
@@ -160,7 +161,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         if not _IMAGE_AVAILABLE:
             raise ModuleNotFoundError("Please, pip install -e '.[image]'")
         super().__init__(label_field)
-        self._fiftyone_data = None
+        self._fiftyone_dataset_name = None
 
     def load_data(self,
                   data: SampleCollection,
@@ -170,16 +171,17 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         parses sample filenames and labels from the given label field into a
         list of inputs and targets.
         """
-        self._fiftyone_data = data
+        self._fiftyone_dataset_name = data.name
         filepaths = data.values("filepath")
         return [{DefaultDataKeys.INPUT: f} for f in filepaths]
 
     def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         img_path = sample[DefaultDataKeys.INPUT]
-        fo_sample = self._fiftyone_data[img_path]
+        fo_dataset = fo.load_dataset(self._fiftyone_dataset_name)
+        fo_sample = fo_dataset[img_path]
 
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
-        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field+".segmentation.mask"]) # HxW
+        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field]["mask"]) # HxW
 
         return {
             DefaultDataKeys.INPUT: img.float(),

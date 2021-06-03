@@ -487,9 +487,8 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         parses sample filenames and labels from the given label field into a
         list of inputs and targets.
         """
-        filepaths = data.values("filepath")
         _, label_path = data._get_label_field_path(self.label_field, "label")
-        targets = data.values(label_path)
+        filepaths, targets = data.values(["filepath", label_path])
 
         classes = data.default_classes
         if not classes:

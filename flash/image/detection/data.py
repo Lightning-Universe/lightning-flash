@@ -127,12 +127,11 @@ class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
         list of inputs and targets.
         """
         data.compute_metadata()
-        filepaths = data.values("filepath")
+
+        filepaths, widths, heights = data.values(["filepath", "metadata.width", "metadata.height"])
         labels = data.values(self.label_field + ".detections.label")
         bboxes = data.values(self.label_field + ".detections.bounding_box")
         iscrowds = data.values(self.label_field + ".detections." + self.iscrowd)
-        widths = data.values("metadata.width")
-        heights = data.values("metadata.height")
 
         classes = data.default_classes
         if not classes:
