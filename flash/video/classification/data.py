@@ -140,6 +140,7 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, VideoClassificat
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
         VideoClassificationPathsDataSource.__init__(
+            self,
             clip_sampler=clip_sampler,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
