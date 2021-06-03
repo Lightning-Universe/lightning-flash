@@ -25,6 +25,8 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
     from fiftyone.core.labels import Classification, Classifications
+else:
+    Classification, Classifications = None, None
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
