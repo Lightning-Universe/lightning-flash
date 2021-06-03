@@ -27,7 +27,7 @@ Here are common terms you need to be familiar with:
      - The :class:`~flash.core.data.process.Preprocess` provides a simple hook-based API to encapsulate your pre-processing logic.
         These hooks (such as :meth:`~flash.core.data.process.Preprocess.pre_tensor_transform`) enable transformations to be applied to your data at every point along the pipeline (including on the device).
         The :class:`~flash.core.data.data_pipeline.DataPipeline` contains a system to call the right hooks when needed.
-        The :class:`~flash.core.data.process.Preprocess` hooks can be either overriden directly or provided as a dictionary of transforms (mapping hook name to callable transform).
+        The :class:`~flash.core.data.process.Preprocess` hooks can be either overridden directly or provided as a dictionary of transforms (mapping hook name to callable transform).
    * - :class:`~flash.core.data.process.Postprocess`
      - The :class:`~flash.core.data.process.Postprocess` provides a simple hook-based API to encapsulate your post-processing logic.
         The :class:`~flash.core.data.process.Postprocess` hooks cover from model outputs to predictions export.
