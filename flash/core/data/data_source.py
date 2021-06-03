@@ -479,17 +479,19 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         super().__init__()
         self.label_field = label_field
 
+    @property
+    def label_cls(self):
+        return None
+
     def load_data(self,
                   data: SampleCollection,
                   dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        self._validate(data)
+
         _, label_path = data._get_label_field_path(self.label_field, "label")
         filepaths, targets = data.values(["filepath", label_path])
 
-        classes = data.default_classes
-        if classes is None:
-            classes = data.classes.get(self.label_field, None)
-        if classes is None:
-            classes = data.distinct(label_path)
+        classes = self._get_classes(data)
 
         if dataset is not None:
             dataset.num_classes = len(classes)
@@ -508,3 +510,23 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
                           data: SampleCollection,
                           dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+
+    def _validate(self, data):
+        if self.label_cls is None:
+            return
+
+        label_type = data._get_label_field_type(self.label_field)
+        if not issubclass(label_type, self.label_cls):
+            raise ValueError("Expected field '%s' to have type %s; found %s" % (self.label_field, self.label_cls, label_type))
+
+    def _get_classes(self, data):
+        classes = data.classes.get(self.label_field, None)
+
+        if classes is None:
+            classes = data.default_classes
+
+        if classes is None:
+            _, label_path = data._get_label_field_path(self.label_field, "label")
+            classes = data.distinct(label_path)
+
+        return classes

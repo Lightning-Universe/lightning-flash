@@ -26,9 +26,10 @@ if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
 
 if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.labels import Detections
     from fiftyone.core.collections import SampleCollection
 else:
-    SampleCollection = None
+    Detections, SampleCollection = None, None
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
@@ -101,9 +102,15 @@ class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
         super().__init__(label_field=label_field)
         self.iscrowd = iscrowd
 
+    @property
+    def label_cls(self):
+        return Detections
+
     def load_data(self,
                   data: SampleCollection,
                   dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+        self._validate(data)
+
         data.compute_metadata()
 
         filepaths, widths, heights, labels, bboxes, iscrowds = data.values(
@@ -117,12 +124,7 @@ class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
             ]
         )
 
-        classes = data.default_classes
-        if classes is None:
-            classes = data.classes.get(self.label_field, None)
-        if classes is None:
-            classes = data.distinct(self.label_field + ".detections.label")
-
+        classes = self._get_classes(data)
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
         if dataset is not None:
             dataset.num_classes = len(classes)
