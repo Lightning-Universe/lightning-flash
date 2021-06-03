@@ -35,7 +35,7 @@ Here are common terms you need to be familiar with:
      - The :class:`~flash.core.data.process.Serializer` provides a single ``serialize`` method that is used to convert model outputs (after the :class:`~flash.core.data.process.Postprocess`) to the desired output format during prediction.
 
 *******************************************
-How to use out-of-the-box flashdatamodules
+How to use out-of-the-box Flash DataModules
 *******************************************
 
 Flash provides several DataModules with helpers functions.
