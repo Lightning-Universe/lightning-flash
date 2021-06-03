@@ -45,8 +45,8 @@ Check out the :ref:`image_classification` section (or the sections for any of ou
 Data Processing
 ***************
 
-Currently, it is common practice to implement a :class:`pytorch.utils.data.Dataset`
-and provide it to a :class:`pytorch.utils.data.DataLoader`.
+Currently, it is common practice to implement a :class:`torch.utils.data.Dataset`
+and provide it to a :class:`torch.utils.data.DataLoader`.
 However, after model training, it requires a lot of engineering overhead to make inference on raw data and deploy the model in production environment.
 Usually, extra processing logic should be added to bridge the gap between training data and raw data.
 
