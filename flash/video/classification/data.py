@@ -120,6 +120,7 @@ class VideoClassificationPathsDataSource(PathsDataSource, _VideoClassificationMi
     ):
         super().__init__(extensions=("mp4", "avi"))
         _VideoClassificationMixin.__init__(
+            self,
             clip_sampler,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
@@ -158,6 +159,7 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, _VideoClassifica
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
         _VideoClassificationMixin.__init__(
+            self,
             clip_sampler,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
