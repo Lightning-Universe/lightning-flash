@@ -157,7 +157,7 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, _VideoClassifica
     ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
-
+        FiftyOneDataSource.__init__(self, label_field)
         _VideoClassificationMixin.__init__(
             self,
             clip_sampler,
@@ -165,7 +165,6 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, _VideoClassifica
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        self.label_field = label_field
 
     def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> 'EncodededVideoDataset':
         label_to_class_mapping = dict(enumerate(data.default_classes))
