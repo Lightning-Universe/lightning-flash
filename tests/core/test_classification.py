@@ -13,7 +13,7 @@
 # limitations under the License.
 import torch
 
-from flash.core.classification import Classes, Labels, Logits, Probabilities
+from flash.core.classification import Classes, FiftyOneLabels, Labels, Logits, Probabilities
 
 
 def test_classification_serializers():
@@ -21,9 +21,13 @@ def test_classification_serializers():
     labels = ['class_1', 'class_2', 'class_3']
 
     assert torch.allclose(torch.tensor(Logits().serialize(example_output)), example_output)
+    assert torch.allclose(torch.tensor(FiftyOneLabels(store_logits=True).serialize(example_output).logits), example_output)
     assert torch.allclose(torch.tensor(Probabilities().serialize(example_output)), torch.softmax(example_output, -1))
+    assert torch.allclose(torch.tensor(FiftyOneLabels().serialize(example_output).confidence), torch.softmax(example_output, -1)[-1])
     assert Classes().serialize(example_output) == 2
     assert Labels(labels).serialize(example_output) == 'class_3'
+    assert FiftyOneLabels(labels).serialize(example_output).label == 'class_3'
+    assert FiftyOneLabels().serialize(example_output).label == '2'
 
 
 def test_classification_serializers_multi_label():
@@ -31,9 +35,12 @@ def test_classification_serializers_multi_label():
     labels = ['class_1', 'class_2', 'class_3']
 
     assert torch.allclose(torch.tensor(Logits(multi_label=True).serialize(example_output)), example_output)
+    assert torch.allclose(torch.tensor(FiftyOneLabels(store_logits=True,multi_label=True).serialize(example_output).logits), example_output)
     assert torch.allclose(
         torch.tensor(Probabilities(multi_label=True).serialize(example_output)),
         torch.sigmoid(example_output),
     )
     assert Classes(multi_label=True).serialize(example_output) == [1, 2]
+    assert [c.label for c in FiftyOneLabels(multi_label=True).serialize(example_output).classifications] == ['1', '2']
     assert Labels(labels, multi_label=True).serialize(example_output) == ['class_2', 'class_3']
+    assert [c.label for c in FiftyOneLabels(labels, multi_label=True).serialize(example_output).classifications] == ['class_2', 'class_3']
