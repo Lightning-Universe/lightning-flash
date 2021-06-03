@@ -29,6 +29,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import (
     DefaultDataKeys,
     DefaultDataSources,
+    FiftyOneDataSource,
     ImageLabelsMap,
     NumpyDataSource,
     PathsDataSource,
@@ -36,9 +37,12 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
+
+if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.collections import SampleCollection
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -150,6 +154,47 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         }
 
 
+class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
+
+    def __init__(self, label_field: str = "ground_truth"):
+        if not _IMAGE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
+        super().__init__(label_field)
+        self._fiftyone_data = None
+
+    def load_data(self,
+                  data: SampleCollection,
+                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        """Takes ``data``, a FiftyOne SampleCollection (generally a
+        ``fiftyone.core.dataset.Dataset`` or ``fiftyone.core.view.View``), and
+        parses sample filenames and labels from the given label field into a
+        list of inputs and targets.
+        """
+        self._fiftyone_data = data
+        filepaths = data.values("filepath")
+        return [{DefaultDataKeys.INPUT: f} for f in filepaths]
+
+    def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
+        img_path = sample[DefaultDataKeys.INPUT]
+        fo_sample = self._fiftyone_data[img_path]
+
+        img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
+        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field+".segmentation.mask"]) # HxW
+
+        return {
+            DefaultDataKeys.INPUT: img.float(),
+            DefaultDataKeys.TARGET: img_labels.float(),
+            DefaultDataKeys.METADATA: img.shape,
+        }
+
+    def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
+        img = torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()
+        return {
+            DefaultDataKeys.INPUT: img,
+            DefaultDataKeys.METADATA: img.shape,
+        }
+
+
 class SemanticSegmentationPreprocess(Preprocess):
 
     def __init__(
@@ -161,6 +206,7 @@ class SemanticSegmentationPreprocess(Preprocess):
         image_size: Tuple[int, int] = (196, 196),
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
+        **data_source_kwargs,
     ) -> None:
         """Preprocess pipeline for semantic segmentation tasks.
 
@@ -170,6 +216,8 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform: Dictionary with the set of transforms to apply during testing.
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
+            **data_source_kwargs: Additional arguments passed on to the data
+                source constructors
         """
         if not _IMAGE_AVAILABLE:
             raise ModuleNotFoundError("Please, pip install -e '.[image]'")
@@ -184,6 +232,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.FIFTYONE: SemanticSegmentationFiftyOneDataSource(**data_source_kwargs),
                 DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
                 DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
                 DefaultDataSources.TENSORS: SemanticSegmentationTensorDataSource(),

@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional
 
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys, NumpyDataSource, PathsDataSource, TensorDataSource
+from flash.core.data.data_source import DefaultDataKeys, FiftyOneDataSource, NumpyDataSource, PathsDataSource, TensorDataSource
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -46,4 +46,10 @@ class ImageNumpyDataSource(NumpyDataSource):
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample[DefaultDataKeys.INPUT] = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
+        return sample
+
+class ImageFiftyOneDataSource(FiftyOneDataSource):
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
         return sample

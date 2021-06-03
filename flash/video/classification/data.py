@@ -137,7 +137,9 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, VideoClassificat
         decoder: str = "pyav",
         label_field: str = "ground_truth",
     ):
-        super().__init__(
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
+        VideoClassificationPathsDataSource.__init__(
             clip_sampler=clip_sampler,
             video_sampler=video_sampler,
             decode_audio=decode_audio,

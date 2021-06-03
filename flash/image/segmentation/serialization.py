@@ -19,7 +19,10 @@ import torch
 import flash
 from flash.core.data.data_source import DefaultDataKeys, ImageLabelsMap
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
+
+if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.labels import Segmentation
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -80,3 +83,13 @@ class SegmentationLabels(Serializer):
             plt.imshow(labels_vis)
             plt.show()
         return labels
+
+
+class FiftyOneSegmentationLabels(SegmentationLabels):
+
+     def serialize(self, sample: Dict[str, torch.Tensor]) -> Segmentation:
+        preds = sample[DefaultDataKeys.PREDS]
+        assert len(preds.shape) == 3, preds.shape
+        labels = torch.argmax(preds, dim=-3).numpy()  # HxW
+
+        return Segmentation(mask=labels)

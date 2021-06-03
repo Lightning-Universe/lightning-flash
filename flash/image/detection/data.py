@@ -17,13 +17,16 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _COCO_AVAILABLE, _TORCHVISION_AVAILABLE
-from flash.image.data import ImagePathsDataSource
+from flash.core.data.process import Preprocess, Serializer
+from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.image.data import ImagePathsDataSource, ImageFiftyOneDataSource
 from flash.image.detection.transforms import default_transforms
 
 if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
+
+if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.collections import SampleCollection
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
@@ -90,6 +93,88 @@ class COCODataSource(DataSource[Tuple[str, str]]):
         return sample
 
 
+class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
+
+    def __init__(self, label_field: str = "ground_truth", iscrowd: str = "attributes.iscrowd.value"):
+        """Constructs an ObjectDetectionFiftyOneDataSource from a FiftyOne
+        SampleCollection using the given fields
+
+        Args:
+            label_field: label field name containing information to construct
+                targets
+            iscrowd: name of the subfield of detections that stores iscrowd
+                information
+        """
+        super().__init__(label_field=label_field)
+        self.iscrowd = iscrowd
+
+    def _reformat_bbox(self, xmin, ymin, box_w, box_h, img_w, img_h):
+        xmin *= img_w
+        ymin *= img_h
+        box_w *= img_w
+        box_h *= img_h
+        xmax = xmin + box_w
+        ymax = ymin + box_h
+        output_bbox = [xmin, ymin, xmax, ymax]
+        return output_bbox, box_w*box_h
+
+    def load_data(self,
+                  data: SampleCollection,
+                  dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+        """Takes ``data``, a FiftyOne SampleCollection (generally a
+        ``fiftyone.core.dataset.Dataset`` or ``fiftyone.core.view.View``), and
+        parses sample filenames and detections from the given label field into a
+        list of inputs and targets.
+        """
+        data.compute_metadata()
+        filepaths = data.values("filepath")
+        labels = data.values(self.label_field + ".detections.label")
+        bboxes = data.values(self.label_field + ".detections.bounding_box")
+        iscrowds = data.values(self.label_field + ".detections." + self.iscrowd)
+        widths = data.values("metadata.width")
+        heights = data.values("metadata.height")
+
+        classes = data.default_classes
+        if not classes:
+            classes = data.distinct(self.label_field + ".detections.label")
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        if dataset is not None:
+            dataset.num_classes = len(classes)
+
+        data = zip(filepaths, widths, heights, labels, bboxes, iscrowds)
+
+        output_data = []
+        img_id = 1
+        for fp, w, h, sample_labs, sample_boxes, sample_iscrowd in data:
+            output_boxes = []
+            output_labs = []
+            output_iscrowd = []
+            output_areas = []
+            for lab, box, iscrowd in zip(sample_labs, sample_boxes, sample_iscrowd):
+                output_box, output_area = self._reformat_bbox(box[0], box[1], box[2], box[3], w, h)
+                output_areas.append(output_area)
+                output_labs.append(class_to_idx[lab])
+                output_boxes.append(output_box)
+                if iscrowd is None:
+                    iscrowd = 0
+                output_iscrowd.append(iscrowd)
+            output_data.append(
+                dict(
+                    input=fp,
+                    target=dict(
+                        boxes=output_boxes,
+                        labels=output_labs,
+                        image_id=img_id,
+                        area=output_areas,
+                        iscrowd=output_iscrowd,
+                    )
+                )
+            )
+            img_id += 1
+
+        return output_data
+
+
 class ObjectDetectionPreprocess(Preprocess):
 
     def __init__(
@@ -98,13 +183,21 @@ class ObjectDetectionPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_source_kwargs,
     ):
+        """
+        ``data_source_kwargs`` are source-specific keyword arguments that are
+        passed to the ``DataSource`` constructors
+        """
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(
+                    **data_source_kwargs
+                ),
                 DefaultDataSources.FILES: ImagePathsDataSource(),
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 "coco": COCODataSource(),

@@ -473,6 +473,40 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     """The ``FiftyOneDataSource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be FiftyOne Dataset objects."""
 
+    def __init__(self, label_field: str = "ground_truth"):
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
+        super().__init__()
+        self.label_field = label_field
+
+    def load_data(self,
+                  data: SampleCollection,
+                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        """Takes ``data``, a FiftyOne SampleCollection (generally a
+        ``fiftyone.core.dataset.Dataset`` or ``fiftyone.core.view.View``), and
+        parses sample filenames and labels from the given label field into a
+        list of inputs and targets.
+        """
+        filepaths = data.values("filepath")
+        _, label_path = data._get_label_field_path(self.label_field, "label")
+        targets = data.values(label_path)
+
+        classes = data.default_classes
+        if not classes:
+            classes = data.distinct(label_path)
+
+        if dataset is not None:
+            dataset.num_classes = len(classes)
+
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        to_idx = lambda t: class_to_idx[t]
+        if targets and isinstance(targets[0], list):
+            to_idx = lambda t: [class_to_idx[x] for x in t]
+
+
+        data = zip(filepaths, targets)
+        return [{DefaultDataKeys.INPUT: f, DefaultDataKeys.TARGET: to_idx(t)} for f,t in data]
+
     def predict_load_data(self,
                           data: SampleCollection,
                           dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:

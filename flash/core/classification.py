@@ -242,7 +242,7 @@ class FiftyOneLabels(ClassificationSerializer):
         else:
             rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
             fo_labels = Classification(
-                label = classes,
+                label = str(classes),
                 confidence = max(probabilities),
                 logits = logits
             )
