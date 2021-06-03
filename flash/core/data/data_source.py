@@ -486,7 +486,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         filepaths, targets = data.values(["filepath", label_path])
 
         classes = data.default_classes
-        if classes is None:
+        if not classes:
             classes = data.classes.get(self.label_field, None)
         if classes is None:
             classes = data.distinct(label_path)
