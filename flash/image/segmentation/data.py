@@ -44,6 +44,8 @@ from flash.image.segmentation.transforms import default_transforms, train_defaul
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
     from fiftyone.core.collections import SampleCollection
+else:
+    fo, SampleCollection = None, None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -166,14 +168,11 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
     def load_data(self,
                   data: SampleCollection,
                   dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        """Takes ``data``, a FiftyOne SampleCollection (generally a
-        ``fiftyone.core.dataset.Dataset`` or ``fiftyone.core.view.View``), and
-        parses sample filenames and labels from the given label field into a
-        list of inputs and targets.
+        """Takes a ``fiftyone.core.collections.SampleCollection`` and parses sample filenames and
+        labels from the given label field into a list of inputs and targets.
         """
         self._fiftyone_dataset_name = data.name
-        filepaths = data.values("filepath")
-        return [{DefaultDataKeys.INPUT: f} for f in filepaths]
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         img_path = sample[DefaultDataKeys.INPUT]
@@ -181,7 +180,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         fo_sample = fo_dataset[img_path]
 
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
-        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field]["mask"]) # HxW
+        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask) # HxW
 
         return {
             DefaultDataKeys.INPUT: img.float(),
@@ -218,8 +217,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform: Dictionary with the set of transforms to apply during testing.
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
-            **data_source_kwargs: Additional arguments passed on to the data
-                source constructors
+            **data_source_kwargs: Additional arguments passed on to the data source constructors.
         """
         if not _IMAGE_AVAILABLE:
             raise ModuleNotFoundError("Please, pip install -e '.[image]'")

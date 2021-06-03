@@ -23,6 +23,8 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE,
 
 if _FIFTYONE_AVAILABLE:
     from fiftyone.core.labels import Segmentation
+else:
+    Segmentation = None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -91,5 +93,4 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
         preds = sample[DefaultDataKeys.PREDS]
         assert len(preds.shape) == 3, preds.shape
         labels = torch.argmax(preds, dim=-3).numpy()  # HxW
-
         return Segmentation(mask=labels)

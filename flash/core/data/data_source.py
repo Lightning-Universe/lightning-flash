@@ -471,7 +471,7 @@ class NumpyDataSource(SequenceDataSource[np.ndarray]):
 
 class FiftyOneDataSource(DataSource[SampleCollection]):
     """The ``FiftyOneDataSource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be FiftyOne Dataset objects."""
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
 
     def __init__(self, label_field: str = "ground_truth"):
         if not _FIFTYONE_AVAILABLE:
@@ -482,16 +482,13 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     def load_data(self,
                   data: SampleCollection,
                   dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        """Takes ``data``, a FiftyOne SampleCollection (generally a
-        ``fiftyone.core.dataset.Dataset`` or ``fiftyone.core.view.View``), and
-        parses sample filenames and labels from the given label field into a
-        list of inputs and targets.
-        """
         _, label_path = data._get_label_field_path(self.label_field, "label")
         filepaths, targets = data.values(["filepath", label_path])
 
         classes = data.default_classes
-        if not classes:
+        if classes is None:
+            classes = data.classes.get(self.label_field, None)
+        if classes is None:
             classes = data.distinct(label_path)
 
         if dataset is not None:
@@ -502,11 +499,12 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         if targets and isinstance(targets[0], list):
             to_idx = lambda t: [class_to_idx[x] for x in t]
 
-
-        data = zip(filepaths, targets)
-        return [{DefaultDataKeys.INPUT: f, DefaultDataKeys.TARGET: to_idx(t)} for f,t in data]
+        return [
+            {DefaultDataKeys.INPUT: f, DefaultDataKeys.TARGET: to_idx(t)}
+            for f, t in zip(filepaths, targets)
+        ]
 
     def predict_load_data(self,
                           data: SampleCollection,
                           dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")] 
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]

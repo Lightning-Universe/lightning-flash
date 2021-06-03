@@ -1056,10 +1056,10 @@ class DataModule(pl.LightningDataModule):
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
-            train_dataset: The FiftyOne Dataset containing the train data.
-            val_dataset: The FiftyOne Dataset containing the validation data.
-            test_dataset: The FiftyOne Dataset containing the test data.
-            predict_dataset: The FiftyOne Dataset containing the predict data.
+            train_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the train data.
+            val_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the validation data.
+            test_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the test data.
+            predict_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
