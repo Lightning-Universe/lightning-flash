@@ -5,11 +5,14 @@ from pathlib import Path
 import pytest
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
+
+if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
 
 
 def _create_dummy_coco_json(dummy_json_path):
@@ -77,6 +80,49 @@ def _create_synth_coco_dataset(tmpdir):
     return train_folder, coco_ann_path
 
 
+def _create_synth_fiftyone_dataset(tmpdir):
+    img_dir = Path(tmpdir / "fo_imgs")
+    img_dir.mkdir()
+
+    Image.new('RGB', (1920, 1080)).save(img_dir / "sample_one.png")
+    Image.new('RGB', (1920, 1080)).save(img_dir / "sample_two.png")
+
+    dataset = fo.Dataset.from_dir(
+        img_dir, dataset_type=fo.types.ImageDirectory,
+    )
+
+    sample1 = dataset[str(img_dir / "sample_one.png")]
+    sample2 = dataset[str(img_dir / "sample_two.png")]
+
+    d1 = fo.Detection(
+            label = "person",
+            bounding_box = [0.3, 0.4, 0.2, 0.2],
+    )
+    d2 = fo.Detection(
+            label = "person",
+            bounding_box = [0.05, 0.10, 0.28, 0.15],
+    )
+    d3 = fo.Detection(
+            label = "person",
+            bounding_box = [0.23, 0.14, 0.09, 0.18],
+    )
+    d1["iscrowd"] = 1
+    d2["iscrowd"] = 0
+    d3["iscrowd"] = 0
+
+    sample1["ground_truth"] = fo.Detections(
+        detections=[d1]
+    )
+    sample2["ground_truth"] = fo.Detections(
+        detections=[d2,d3]
+    )
+
+    sample1.save()
+    sample2.save()
+
+    return dataset
+
+
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
 def test_image_detector_data_from_coco(tmpdir):
 
@@ -102,6 +148,49 @@ def test_image_detector_data_from_coco(tmpdir):
         val_ann_file=coco_ann_path,
         test_folder=train_folder,
         test_ann_file=coco_ann_path,
+        batch_size=1,
+        num_workers=0,
+    )
+
+    data = next(iter(datamodule.val_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+
+    assert len(imgs) == 1
+    assert imgs[0].shape == (3, 1080, 1920)
+    assert len(labels) == 1
+    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+
+    data = next(iter(datamodule.test_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+
+    assert len(imgs) == 1
+    assert imgs[0].shape == (3, 1080, 1920)
+    assert len(labels) == 1
+    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+
+
+@pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
+def test_image_detector_data_from_fiftyone(tmpdir):
+
+    train_dataset = _create_synth_fiftyone_dataset(tmpdir)
+
+    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1)
+
+    data = next(iter(datamodule.train_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+
+    assert len(imgs) == 1
+    assert imgs[0].shape == (3, 1080, 1920)
+    assert len(labels) == 1
+    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+
+    assert datamodule.val_dataloader() is None
+    assert datamodule.test_dataloader() is None
+
+    datamodule = ObjectDetectionData.from_fiftyone(
+        train_dataset=train_dataset,
+        val_dataset=train_dataset,
+        test_dataset=train_dataset,
         batch_size=1,
         num_workers=0,
     )

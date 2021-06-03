@@ -16,7 +16,7 @@ import os
 import pytest
 
 import flash
-from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from flash.image.detection import ObjectDetectionData
 
@@ -28,6 +28,9 @@ else:
 if _COCO_AVAILABLE:
     from tests.image.detection.test_data import _create_synth_coco_dataset
 
+if _FIFTYONE_AVAILABLE:
+    from tests.image.detection.test_data import _create_synth_fiftyone_dataset
+
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
@@ -37,6 +40,28 @@ def test_detection(tmpdir, model, backbone):
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
     data = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
+    model = ObjectDetector(model=model, backbone=backbone, num_classes=data.num_classes)
+
+    trainer = flash.Trainer(fast_dev_run=True)
+
+    trainer.finetune(model, data)
+
+    test_image_one = os.fspath(tmpdir / "test_one.png")
+    test_image_two = os.fspath(tmpdir / "test_two.png")
+
+    Image.new('RGB', (512, 512)).save(test_image_one)
+    Image.new('RGB', (512, 512)).save(test_image_two)
+
+    test_images = [str(test_image_one), str(test_image_two)]
+    model.predict(test_images)
+
+@pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
+@pytest.mark.parametrize(["model", "backbone"], [("fasterrcnn", "resnet18")])
+def test_detection_fiftyone(tmpdir, model, backbone):
+
+    train_dataset = _create_synth_fiftyone_dataset(tmpdir)
+
+    data = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1)
     model = ObjectDetector(model=model, backbone=backbone, num_classes=data.num_classes)
 
     trainer = flash.Trainer(fast_dev_run=True)
