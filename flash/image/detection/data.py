@@ -16,10 +16,10 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
 from flash.core.data.process import Preprocess, Serializer
 from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE
-from flash.image.data import ImagePathsDataSource, ImageFiftyOneDataSource
+from flash.image.data import ImagePathsDataSource
 from flash.image.detection.transforms import default_transforms
 
 if _COCO_AVAILABLE:
@@ -96,7 +96,7 @@ class COCODataSource(DataSource[Tuple[str, str]]):
         return sample
 
 
-class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
+class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
 
     def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
         super().__init__(label_field=label_field)
@@ -162,6 +162,10 @@ class ObjectDetectionFiftyOneDataSource(ImageFiftyOneDataSource):
 
         return output_data
 
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
+        return sample
+
     def _reformat_bbox(self, xmin, ymin, box_w, box_h, img_w, img_h):
         xmin *= img_w
         ymin *= img_h
@@ -181,7 +185,7 @@ class ObjectDetectionPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        **data_source_kwargs,
+        **data_source_kwargs: Any,
     ):
         super().__init__(
             train_transform=train_transform,

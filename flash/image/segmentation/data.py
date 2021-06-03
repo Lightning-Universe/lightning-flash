@@ -214,7 +214,7 @@ class SemanticSegmentationPreprocess(Preprocess):
         image_size: Tuple[int, int] = (196, 196),
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
-        **data_source_kwargs,
+        **data_source_kwargs: Any,
     ) -> None:
         """Preprocess pipeline for semantic segmentation tasks.
 

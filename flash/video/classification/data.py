@@ -211,7 +211,7 @@ class VideoClassificationPreprocess(Preprocess):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
-        **data_source_kwargs,
+        **data_source_kwargs: Any,
     ):
         self.clip_sampler = clip_sampler
         self.clip_duration = clip_duration

@@ -522,10 +522,10 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     def _get_classes(self, data):
         classes = data.classes.get(self.label_field, None)
 
-        if classes is None:
+        if not classes:
             classes = data.default_classes
 
-        if classes is None:
+        if not classes:
             _, label_path = data._get_label_field_path(self.label_field, "label")
             classes = data.distinct(label_path)
 
