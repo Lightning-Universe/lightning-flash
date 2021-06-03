@@ -21,13 +21,16 @@ import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ImageClassificationData
 
 if _IMAGE_AVAILABLE:
     import kornia as K
     import torchvision
     from PIL import Image
+
+if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
 
 
 def _dummy_image_loader(_):
@@ -381,3 +384,42 @@ def test_from_data(data, from_function):
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, )
     assert list(labels.numpy()) == [2, 5]
+
+
+@pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
+def test_from_fiftyone(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a_1.png")
+    _rand_image().save(tmpdir / "b_1.png")
+
+    train_images = [
+        str(tmpdir / "a_1.png"),
+        str(tmpdir / "b_1.png"),
+    ]
+
+    train_dataset = fo.Dataset.from_dir(str(tmpdir), dataset_type=fo.types.ImageDirectory)
+    s1 = train_dataset[train_images[0]]
+    s2 = train_dataset[train_images[1]]
+    s1["test"] = fo.Classification(label="1")
+    s2["test"] = fo.Classification(label="2")
+    s1.save()
+    s2.save()
+
+    img_data = ImageClassificationData.from_fiftyone(
+        train_dataset=train_dataset,
+        label_field="test",
+        batch_size=2,
+        num_workers=0,
+    )
+    assert img_data.train_dataloader() is not None
+    assert img_data.val_dataloader() is None
+    assert img_data.test_dataloader() is None
+
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [0, 1]

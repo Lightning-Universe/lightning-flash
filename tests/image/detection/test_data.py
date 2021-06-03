@@ -169,6 +169,7 @@ def test_image_detector_data_from_coco(tmpdir):
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_image_detector_data_from_fiftyone(tmpdir):
 
