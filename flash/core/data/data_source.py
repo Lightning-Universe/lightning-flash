@@ -470,6 +470,7 @@ class NumpyDataSource(SequenceDataSource[np.ndarray]):
     """The ``NumpyDataSource`` is a ``SequenceDataSource`` which expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``np.ndarray`` objects."""
 
+
 class FiftyOneDataSource(DataSource[SampleCollection]):
     """The ``FiftyOneDataSource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
