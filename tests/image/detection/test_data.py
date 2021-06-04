@@ -95,16 +95,16 @@ def _create_synth_fiftyone_dataset(tmpdir):
     sample2 = dataset[str(img_dir / "sample_two.png")]
 
     d1 = fo.Detection(
-            label = "person",
-            bounding_box = [0.3, 0.4, 0.2, 0.2],
+        label="person",
+        bounding_box=[0.3, 0.4, 0.2, 0.2],
     )
     d2 = fo.Detection(
-            label = "person",
-            bounding_box = [0.05, 0.10, 0.28, 0.15],
+        label="person",
+        bounding_box=[0.05, 0.10, 0.28, 0.15],
     )
     d3 = fo.Detection(
-            label = "person",
-            bounding_box = [0.23, 0.14, 0.09, 0.18],
+        label="person",
+        bounding_box=[0.23, 0.14, 0.09, 0.18],
     )
     d1["iscrowd"] = 1
     d2["iscrowd"] = 0
@@ -114,7 +114,7 @@ def _create_synth_fiftyone_dataset(tmpdir):
         detections=[d1]
     )
     sample2["ground_truth"] = fo.Detections(
-        detections=[d2,d3]
+        detections=[d2, d3]
     )
 
     sample1.save()

@@ -178,12 +178,12 @@ class FiftyOneLabels(ClassificationSerializer):
     """
 
     def __init__(
-            self,
-            labels: Optional[List[str]] = None,
-            multi_label: bool = False,
-            threshold: float = 0.5,
-            store_logits: bool = False,
-        ):
+        self,
+        labels: Optional[List[str]] = None,
+        multi_label: bool = False,
+        threshold: float = 0.5,
+        store_logits: bool = False,
+    ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 

@@ -169,15 +169,15 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, _VideoClassifica
     def label_cls(self):
         return Classification
 
-    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> 'EncodededVideoDataset':
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> 'EncodedVideoDataset':
         self._validate(data)
 
         classes = self._get_classes(data)
         label_to_class_mapping = dict(enumerate(classes))
-        class_to_label_mapping = {c: l for l, c in label_to_class_mapping.items()}
+        class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
 
         filepaths, labels = data.values(["filepath", self.label_field + ".label"])
-        targets = [class_to_label_mapping[l] for l in labels]
+        targets = [class_to_label_mapping[lab] for lab in labels]
 
         labeled_video_paths = LabeledVideoPaths(list(zip(filepaths, targets)))
 

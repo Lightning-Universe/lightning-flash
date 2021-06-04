@@ -225,7 +225,8 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         return data
 
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        """Given an element from the output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`, this hook
+        """Given an element from the output of a call to
+        :meth:`~flash.core.data.data_source.DataSource.load_data`, this hook
         should load a single data sample. The keys and values in the ``sample`` argument will be same as the keys and
         values in the outputs of :meth:`~flash.core.data.data_source.DataSource.load_data`.
 
@@ -286,8 +287,8 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         data: Optional[DATA_TYPE],
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
-        """Generate a single dataset with the given input to :meth:`~flash.core.data.data_source.DataSource.load_data` for
-        the given ``running_stage``.
+        """Generate a single dataset with the given input to
+        :meth:`~flash.core.data.data_source.DataSource.load_data` for the given ``running_stage``.
 
         Args:
             data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the dataset.
@@ -470,6 +471,7 @@ class NumpyDataSource(SequenceDataSource[np.ndarray]):
     """The ``NumpyDataSource`` is a ``SequenceDataSource`` which expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``np.ndarray`` objects."""
 
+
 class FiftyOneDataSource(DataSource[SampleCollection]):
     """The ``FiftyOneDataSource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
@@ -498,9 +500,13 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
             dataset.num_classes = len(classes)
 
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-        to_idx = lambda t: class_to_idx[t]
+
         if targets and isinstance(targets[0], list):
-            to_idx = lambda t: [class_to_idx[x] for x in t]
+            def to_idx(t):
+                return [class_to_idx[x] for x in t]
+        else:
+            def to_idx(t):
+                return class_to_idx[t]
 
         return [
             {DefaultDataKeys.INPUT: f, DefaultDataKeys.TARGET: to_idx(t)}
@@ -515,7 +521,8 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     def _validate(self, data):
         label_type = data._get_label_field_type(self.label_field)
         if not issubclass(label_type, self.label_cls):
-            raise ValueError("Expected field '%s' to have type %s; found %s" % (self.label_field, self.label_cls, label_type))
+            raise ValueError("Expected field '%s' to have type %s; found %s" %
+                             (self.label_field, self.label_cls, label_type))
 
     def _get_classes(self, data):
         classes = data.classes.get(self.label_field, None)

@@ -55,6 +55,7 @@ def test_detection(tmpdir, model, backbone):
     test_images = [str(test_image_one), str(test_image_two)]
     model.predict(test_images)
 
+
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed for testing")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 @pytest.mark.parametrize(["model", "backbone"], [("fasterrcnn", "resnet18")])

@@ -60,6 +60,7 @@ def test_classification(tmpdir):
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, datamodule=data, strategy="freeze")
 
+
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_classification_fiftyone(tmpdir):

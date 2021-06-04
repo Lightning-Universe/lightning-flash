@@ -23,4 +23,4 @@ class TestFiftyOneDetectionLabels:
 
         detections = serial.serialize(sample)
         assert len(detections.detections) == 1
-        assert detections.detections[0].bounding_box == [20,30,20,20]
+        assert detections.detections[0].bounding_box == [20, 30, 20, 20]

@@ -186,7 +186,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         fo_sample = _fo_dataset[img_path]
 
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
-        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask) # HxW
+        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask)  # HxW
 
         return {
             DefaultDataKeys.INPUT: img.float(),

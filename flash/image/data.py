@@ -15,7 +15,13 @@ from typing import Any, Dict, Optional
 
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys, FiftyOneDataSource, NumpyDataSource, PathsDataSource, TensorDataSource
+from flash.core.data.data_source import (
+    DefaultDataKeys,
+    FiftyOneDataSource,
+    NumpyDataSource,
+    PathsDataSource,
+    TensorDataSource,
+)
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
