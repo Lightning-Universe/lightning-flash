@@ -123,8 +123,10 @@ class ImageClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        batch[DefaultDataKeys.PREDS] = super().predict_step((batch[DefaultDataKeys.INPUT]),
+                                                            batch_idx,
+                                                            dataloader_idx=dataloader_idx)
+        return batch
 
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)

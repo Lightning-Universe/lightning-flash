@@ -252,7 +252,7 @@ class TestSemanticSegmentationData:
             )
 
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
-    def test_from_fiftyone(self, tmpdir):
+    def test_fiftyone_from_datasets(self, tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -286,7 +286,7 @@ class TestSemanticSegmentationData:
 
         # instantiate the data module
 
-        dm = SemanticSegmentationData.from_fiftyone(
+        dm = SemanticSegmentationData.fiftyone_from_datasets(
             train_dataset=dataset,
             val_dataset=dataset,
             test_dataset=dataset,

@@ -26,8 +26,8 @@ if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
 
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.labels import Detections
     from fiftyone.core.collections import SampleCollection
+    from fiftyone.core.labels import Detections
 else:
     Detections, SampleCollection = None, None
 
@@ -106,23 +106,17 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
     def label_cls(self):
         return Detections
 
-    def load_data(self,
-                  data: SampleCollection,
-                  dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         self._validate(data)
 
         data.compute_metadata()
 
-        filepaths, widths, heights, labels, bboxes, iscrowds = data.values(
-            [
-                "filepath",
-                "metadata.width",
-                "metadata.height",
-                self.label_field + ".detections.label",
-                self.label_field + ".detections.bounding_box",
-                self.label_field + ".detections." + self.iscrowd,
-            ]
-        )
+        filepaths = data.values("filepath")
+        widths = data.values("metadata.width")
+        heights = data.values("metadata.height")
+        labels = data.values(self.label_field + ".detections.label")
+        bboxes = data.values(self.label_field + ".detections.bounding_box")
+        iscrowds = data.values(self.label_field + ".detections." + self.iscrowd)
 
         classes = self._get_classes(data)
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}

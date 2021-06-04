@@ -84,7 +84,7 @@ def test_classification_fiftyone(tmpdir):
     s1.save()
     s2.save()
 
-    data = ImageClassificationData.from_fiftyone(
+    data = ImageClassificationData.fiftyone_from_datasets(
         train_dataset=train_dataset,
         label_field="test",
         batch_size=2,

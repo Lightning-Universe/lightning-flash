@@ -33,9 +33,12 @@ from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
     from fiftyone.core.collections import SampleCollection
+    from fiftyone.types import Dataset
 else:
     SampleCollection = None
+    Dataset = None
 
 
 class DataModule(pl.LightningDataModule):
@@ -1032,7 +1035,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     @classmethod
-    def from_fiftyone(
+    def fiftyone_from_datasets(
         cls,
         train_dataset: Optional[SampleCollection] = None,
         val_dataset: Optional[SampleCollection] = None,
@@ -1088,13 +1091,16 @@ class DataModule(pl.LightningDataModule):
                 "/path/to/dataset",
                 dataset_type=fo.types.ImageClassificationDirectoryTree,
             )
-            data_module = DataModule.from_fiftyone(
+            data_module = DataModule.fiftyone_from_datasets(
                 train_data = train_dataset,
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,
                 },
             )
         """
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, `pip install fiftyone`.")
+
         return cls.from_data_source(
             DefaultDataSources.FIFTYONE,
             train_dataset,
@@ -1110,5 +1116,134 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def fiftyone_from_dir(
+        cls,
+        train_dir: Optional[SampleCollection] = None,
+        val_dir: Optional[SampleCollection] = None,
+        test_dir: Optional[SampleCollection] = None,
+        predict_dir: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        dataset_type: Optional[Dataset] = None,
+        predict_dataset_type: Optional[Dataset] = None,
+        label_field: str = 'ground_truth',
+        tags: List[str] = None,
+        importer_kwargs: Dict[str, Any] = {},
+        predict_importer_kwargs: Dict[str, Any] = {},
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given FiftyOne Datasets using the
+        :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.FIFTYONE`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            train_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the train data.
+            val_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the validation data.
+            test_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the test data.
+            predict_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the predict data.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            train_dataset = fo.Dataset.from_dir(
+                "/path/to/dataset",
+                dataset_type=fo.types.ImageClassificationDirectoryTree,
+            )
+            data_module = DataModule.fiftyone_from_datasets(
+                train_data = train_dataset,
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+            )
+        """
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, `pip install fiftyone`.")
+
+        if not dataset_type:
+            dataset_type = fo.types.ImageClassificationDirectoryTree
+
+        if not predict_dataset_type:
+            predict_dataset_type = fo.types.ImageDirectory
+
+        train_dataset = fo.Dataset.from_dir(
+            train_dir,
+            dataset_type,
+            label_field=label_field,
+            tags=tags,
+            **importer_kwargs,
+        )
+
+        val_dataset = fo.Dataset.from_dir(
+            val_dir,
+            dataset_type,
+            label_field=label_field,
+            tags=tags,
+            **importer_kwargs,
+        )
+
+        test_dataset = fo.Dataset.from_dir(
+            test_dir,
+            dataset_type,
+            label_field=label_field,
+            tags=tags,
+            **importer_kwargs,
+        )
+
+        predict_dataset = fo.Dataset.from_dir(
+            predict_dir,
+            predict_dataset_type,
+            label_field=label_field,
+            tags=tags,
+            **predict_importer_kwargs,
+        )
+
+        return cls.fiftyone_from_datasets(
+            train_dataset=train_dataset,
+            val_dataset=val_dataset,
+            test_dataset=test_dataset,
+            predict_dataset=predict_dataset,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            label_field=label_field,
             **preprocess_kwargs,
         )

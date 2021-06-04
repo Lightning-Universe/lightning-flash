@@ -44,8 +44,8 @@ from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.labels import Label
     from fiftyone.core.collections import SampleCollection
+    from fiftyone.core.labels import Label
 else:
     Label, SampleCollection = None, None
 
@@ -486,13 +486,13 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     def label_cls(self):
         return Label
 
-    def load_data(self,
-                  data: SampleCollection,
-                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
-        _, label_path = data._get_label_field_path(self.label_field, "label")
-        filepaths, targets = data.values(["filepath", label_path])
+        label_path = data._get_label_field_path(self.label_field, "label")[1]
+
+        filepaths = data.values("filepath")
+        targets = data.values(label_path)
 
         classes = self._get_classes(data)
 
@@ -502,27 +502,29 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
 
         if targets and isinstance(targets[0], list):
+
             def to_idx(t):
                 return [class_to_idx[x] for x in t]
         else:
+
             def to_idx(t):
                 return class_to_idx[t]
 
-        return [
-            {DefaultDataKeys.INPUT: f, DefaultDataKeys.TARGET: to_idx(t)}
-            for f, t in zip(filepaths, targets)
-        ]
+        return [{
+            DefaultDataKeys.INPUT: f,
+            DefaultDataKeys.TARGET: to_idx(t),
+            DefaultDataKeys.METADATA: data[f]
+        } for f, t in zip(filepaths, targets)]
 
-    def predict_load_data(self,
-                          data: SampleCollection,
-                          dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+    def predict_load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        return [{DefaultDataKeys.INPUT: f, DefaultDataKeys.METADATA: data[f]} for f in data.values("filepath")]
 
     def _validate(self, data):
         label_type = data._get_label_field_type(self.label_field)
         if not issubclass(label_type, self.label_cls):
-            raise ValueError("Expected field '%s' to have type %s; found %s" %
-                             (self.label_field, self.label_cls, label_type))
+            raise ValueError(
+                "Expected field '%s' to have type %s; found %s" % (self.label_field, self.label_cls, label_type)
+            )
 
     def _get_classes(self, data):
         classes = data.classes.get(self.label_field, None)
@@ -531,7 +533,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
             classes = data.default_classes
 
         if not classes:
-            _, label_path = data._get_label_field_path(self.label_field, "label")
+            label_path = data._get_label_field_path(self.label_field, "label")[1]
             classes = data.distinct(label_path)
 
         return classes

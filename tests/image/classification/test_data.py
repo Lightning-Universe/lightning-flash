@@ -387,7 +387,7 @@ def test_from_data(data, from_function):
 
 
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
-def test_from_fiftyone(tmpdir):
+def test_fiftyone_from_datasets(tmpdir):
     tmpdir = Path(tmpdir)
 
     (tmpdir / "a").mkdir()
@@ -408,7 +408,7 @@ def test_from_fiftyone(tmpdir):
     s1.save()
     s2.save()
 
-    img_data = ImageClassificationData.from_fiftyone(
+    img_data = ImageClassificationData.fiftyone_from_datasets(
         train_dataset=train_dataset,
         label_field="test",
         batch_size=2,

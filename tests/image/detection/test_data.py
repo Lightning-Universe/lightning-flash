@@ -88,7 +88,8 @@ def _create_synth_fiftyone_dataset(tmpdir):
     Image.new('RGB', (1920, 1080)).save(img_dir / "sample_two.png")
 
     dataset = fo.Dataset.from_dir(
-        img_dir, dataset_type=fo.types.ImageDirectory,
+        img_dir,
+        dataset_type=fo.types.ImageDirectory,
     )
 
     sample1 = dataset[str(img_dir / "sample_one.png")]
@@ -110,12 +111,8 @@ def _create_synth_fiftyone_dataset(tmpdir):
     d2["iscrowd"] = 0
     d3["iscrowd"] = 0
 
-    sample1["ground_truth"] = fo.Detections(
-        detections=[d1]
-    )
-    sample2["ground_truth"] = fo.Detections(
-        detections=[d2, d3]
-    )
+    sample1["ground_truth"] = fo.Detections(detections=[d1])
+    sample2["ground_truth"] = fo.Detections(detections=[d2, d3])
 
     sample1.save()
     sample2.save()
@@ -171,11 +168,11 @@ def test_image_detector_data_from_coco(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
-def test_image_detector_data_from_fiftyone(tmpdir):
+def test_image_detector_data_fiftyone_from_datasets(tmpdir):
 
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1)
+    datamodule = ObjectDetectionData.fiftyone_from_datasets(train_dataset=train_dataset, batch_size=1)
 
     data = next(iter(datamodule.train_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
@@ -188,7 +185,7 @@ def test_image_detector_data_from_fiftyone(tmpdir):
     assert datamodule.val_dataloader() is None
     assert datamodule.test_dataloader() is None
 
-    datamodule = ObjectDetectionData.from_fiftyone(
+    datamodule = ObjectDetectionData.fiftyone_from_datasets(
         train_dataset=train_dataset,
         val_dataset=train_dataset,
         test_dataset=train_dataset,

@@ -11,19 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 import torch.nn.functional as F
 import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
-from flash.core.data.data_source import LabelsState
+from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
     from fiftyone.core.labels import Classification, Classifications
 else:
     Classification, Classifications = None, None
@@ -86,6 +87,8 @@ class Logits(ClassificationSerializer):
     """A :class:`.Serializer` which simply converts the model outputs (assumed to be logits) to a list."""
 
     def serialize(self, sample: Any) -> Any:
+        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        sample = torch.tensor(sample)
         return sample.tolist()
 
 
@@ -94,6 +97,8 @@ class Probabilities(ClassificationSerializer):
     list."""
 
     def serialize(self, sample: Any) -> Any:
+        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        sample = torch.tensor(sample)
         if self.multi_label:
             return torch.sigmoid(sample).tolist()
         return torch.softmax(sample, -1).tolist()
@@ -115,6 +120,8 @@ class Classes(ClassificationSerializer):
         self.threshold = threshold
 
     def serialize(self, sample: Any) -> Union[int, List[int]]:
+        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        sample = torch.tensor(sample)
         if self.multi_label:
             one_hot = (sample.sigmoid() > self.threshold).int().tolist()
             result = []
@@ -146,6 +153,8 @@ class Labels(Classes):
             self.set_state(LabelsState(labels))
 
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
+        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        sample = torch.tensor(sample)
         labels = None
 
         if self._labels is not None:
@@ -200,6 +209,9 @@ class FiftyOneLabels(ClassificationSerializer):
             self.set_state(LabelsState(labels))
 
     def serialize(self, sample: Any) -> Union[Classification, Classifications]:
+        pred = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        pred = torch.tensor(pred)
+        metadata = sample[DefaultDataKeys.METADATA]
         labels = None
 
         if self._labels is not None:
@@ -211,18 +223,18 @@ class FiftyOneLabels(ClassificationSerializer):
 
         logits = None
         if self.store_logits:
-            logits = sample.tolist()
+            logits = pred.tolist()
 
         if self.multi_label:
-            one_hot = (sample.sigmoid() > self.threshold).int().tolist()
+            one_hot = (pred.sigmoid() > self.threshold).int().tolist()
             classes = []
             for index, value in enumerate(one_hot):
                 if value == 1:
                     classes.append(index)
-            probabilities = torch.sigmoid(sample).tolist()
+            probabilities = torch.sigmoid(pred).tolist()
         else:
-            classes = torch.argmax(sample, -1).tolist()
-            probabilities = torch.softmax(sample, -1).tolist()
+            classes = torch.argmax(pred, -1).tolist()
+            probabilities = torch.softmax(pred, -1).tolist()
 
         if labels is not None:
             if self.multi_label:
@@ -233,16 +245,16 @@ class FiftyOneLabels(ClassificationSerializer):
                         confidence=probabilities[idx],
                     )
                     classifications.append(fo_cls)
-                fo_labels = Classifications(
+                fo_predictions = Classifications(
                     classifications=classifications,
                     logits=logits,
                 )
             else:
                 confidence = max(probabilities)
                 if self.threshold is not None and confidence < self.threshold:
-                    fo_labels = None
+                    fo_predictions = None
                 else:
-                    fo_labels = Classification(
+                    fo_predictions = Classification(
                         label=labels[classes],
                         confidence=confidence,
                         logits=logits,
@@ -258,19 +270,19 @@ class FiftyOneLabels(ClassificationSerializer):
                         confidence=probabilities[idx],
                     )
                     classifications.append(fo_cls)
-                fo_labels = Classifications(
+                fo_predictions = Classifications(
                     classifications=classifications,
                     logits=logits,
                 )
             else:
                 confidence = max(probabilities)
                 if self.threshold is not None and confidence < self.threshold:
-                    fo_labels = None
+                    fo_predictions = None
                 else:
-                    fo_labels = Classification(
+                    fo_predictions = Classification(
                         label=str(classes),
                         confidence=confidence,
                         logits=logits,
                     )
 
-        return fo_labels
+        return fo.Sample(filepath=metadata.filepath, predictions=fo_predictions)
