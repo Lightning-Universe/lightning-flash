@@ -49,7 +49,7 @@ class ImageClassificationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
-        **data_source_kwargs,
+        **data_source_kwargs: Any,
     ):
         self.image_size = image_size
 

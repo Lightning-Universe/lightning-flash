@@ -36,9 +36,10 @@ from flash.core.utilities.imports import (
 )
 
 if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.labels import Classification
     from fiftyone.core.collections import SampleCollection
 else:
-    SampleCollection = None
+    Classification, SampleCollection = None, None
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -164,8 +165,15 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, _VideoClassifica
             decoder=decoder,
         )
 
+    @property
+    def label_cls(self):
+        return Classification
+
     def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> 'EncodededVideoDataset':
-        label_to_class_mapping = dict(enumerate(data.default_classes))
+        self._validate(data)
+
+        classes = self._get_classes(data)
+        label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: l for l, c in label_to_class_mapping.items()}
 
         filepaths, labels = data.values(["filepath", self.label_field + ".label"])
@@ -182,7 +190,7 @@ class VideoClassificationFiftyOneDataSource(FiftyOneDataSource, _VideoClassifica
         )
         if self.training:
             self.set_state(LabelsState(label_to_class_mapping))
-            dataset.num_classes = len(class_to_label_mapping)
+            dataset.num_classes = len(classes)
         return ds
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -203,7 +211,7 @@ class VideoClassificationPreprocess(Preprocess):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
-        **data_source_kwargs,
+        **data_source_kwargs: Any,
     ):
         self.clip_sampler = clip_sampler
         self.clip_duration = clip_duration

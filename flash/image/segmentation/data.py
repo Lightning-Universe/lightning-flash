@@ -42,10 +42,10 @@ from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
 if _FIFTYONE_AVAILABLE:
-    import fiftyone as fo
+    from fiftyone.core.labels import Segmentation
     from fiftyone.core.collections import SampleCollection
 else:
-    fo, SampleCollection = None, None
+    Segmentation, SampleCollection = None, None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -167,9 +167,15 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         self._fo_dataset = None
         self._fo_dataset_name = None
 
+    @property
+    def label_cls(self):
+        return Segmentation
+
     def load_data(self,
                   data: SampleCollection,
                   dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        self._validate(data)
+
         self._fo_dataset_name = data.name
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
@@ -208,7 +214,7 @@ class SemanticSegmentationPreprocess(Preprocess):
         image_size: Tuple[int, int] = (196, 196),
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
-        **data_source_kwargs,
+        **data_source_kwargs: Any,
     ) -> None:
         """Preprocess pipeline for semantic segmentation tasks.
 
