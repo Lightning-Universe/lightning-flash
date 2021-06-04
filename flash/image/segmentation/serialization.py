@@ -103,4 +103,4 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
 
     def serialize(self, sample: Dict[str, torch.Tensor]) -> Segmentation:
         labels = super().serialize(sample)
-        return Segmentation(mask=labels)
+        return Segmentation(mask=labels.numpy())
