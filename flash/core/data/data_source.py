@@ -44,9 +44,10 @@ from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
+    from fiftyone.core.labels import Label
     from fiftyone.core.collections import SampleCollection
 else:
-    SampleCollection = None
+    Label, SampleCollection = None, None
 
 
 # Credit to the PyTorchVision Team:
@@ -481,7 +482,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
     @property
     def label_cls(self):
-        return None
+        return Label
 
     def load_data(self,
                   data: SampleCollection,
@@ -512,9 +513,6 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def _validate(self, data):
-        if self.label_cls is None:
-            return
-
         label_type = data._get_label_field_type(self.label_field)
         if not issubclass(label_type, self.label_cls):
             raise ValueError("Expected field '%s' to have type %s; found %s" % (self.label_field, self.label_cls, label_type))
