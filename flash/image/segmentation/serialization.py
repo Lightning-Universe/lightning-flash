@@ -45,7 +45,7 @@ class SegmentationLabels(Serializer):
 
         Args:
             labels_map: A dictionary that map the labels ids to pixel intensities.
-            visualise: Wether to visualise the image labels.
+            visualize: Wether to visualize the image labels.
         """
         super().__init__()
         self.labels_map = labels_map
@@ -89,8 +89,18 @@ class SegmentationLabels(Serializer):
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
 
+    def __init__(self, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None, visualize: bool = False):
+        """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
+
+        Args:
+            labels_map: A dictionary that map the labels ids to pixel intensities.
+            visualize: Wether to visualize the image labels.
+        """
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
+
+        super().__init__(labels_map=labels_map, visualize=visualize)
+
      def serialize(self, sample: Dict[str, torch.Tensor]) -> Segmentation:
-        preds = sample[DefaultDataKeys.PREDS]
-        assert len(preds.shape) == 3, preds.shape
-        labels = torch.argmax(preds, dim=-3).numpy()  # HxW
+        labels = super().serialize(sample)
         return Segmentation(mask=labels)

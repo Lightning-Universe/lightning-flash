@@ -167,7 +167,7 @@ class Labels(Classes):
 
 
 class FiftyOneLabels(ClassificationSerializer):
-    """A :class:`.Serializer` which converts the model outputs (assumed to be logits) to FiftyOne classification format.
+    """A :class:`.Serializer` which converts the model outputs to FiftyOne classification format.
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not

@@ -26,12 +26,17 @@ else:
 
 
 class FiftyOneDetectionLabels(Serializer):
-    """A :class:`.Serializer` which converts the model outputs to FiftyOne detection format.
+    """A :class:`.Serializer` which converts model outputs to FiftyOne detection format.
+
+    Args:
+        labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
+            provided, will attempt to get them from the :class:`.LabelsState`.
     """
 
     def __init__(self, labels: Optional[List[str]] = None):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
+
         super().__init__()
         self._labels = labels
 
