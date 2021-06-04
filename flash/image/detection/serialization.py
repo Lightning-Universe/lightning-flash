@@ -31,14 +31,16 @@ class FiftyOneDetectionLabels(Serializer):
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
             provided, will attempt to get them from the :class:`.LabelsState`.
+        threshold: a score threshold to apply to candidate detections.
     """
 
-    def __init__(self, labels: Optional[List[str]] = None):
+    def __init__(self, labels: Optional[List[str]] = None, threshold: Optional[float] = None):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
         super().__init__()
         self._labels = labels
+        self.threshold = threshold
 
         if labels is not None:
             self.set_state(LabelsState(labels))
@@ -57,6 +59,11 @@ class FiftyOneDetectionLabels(Serializer):
         detections = []
 
         for det in sample:
+            confidence = det["scores"].tolist()
+
+            if self.threshold is not None and confidence < self.threshold:
+                continue
+
             xmin, ymin, xmax, ymax = [c.tolist() for c in det["boxes"]]
             box = [xmin, ymin, xmax - xmin, ymax - ymin]
 
@@ -66,13 +73,11 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 label = str(int(label))
 
-            score = det["scores"].tolist()
-
             detections.append(
                 Detection(
                     label=label,
                     bounding_box=box,
-                    confidence=score,
+                    confidence=confidence,
                 )
             )
 
