@@ -18,6 +18,16 @@ import pytest
 
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
+from flash.text.classification.data import (
+    TextCSVDataSource,
+    TextDataSource,
+    TextFileDataSource,
+    TextJSONDataSource,
+    TextSentencesDataSource,
+)
+
+if _TEXT_AVAILABLE:
+    from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
@@ -92,3 +102,32 @@ def test_from_json(tmpdir):
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
         TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.parametrize(
+    "cls, kwargs",
+    [
+        (TextDataSource, {}),
+        (TextFileDataSource, {
+            "filetype": "csv"
+        }),
+        (TextCSVDataSource, {}),
+        (TextJSONDataSource, {}),
+        (TextSentencesDataSource, {}),
+    ],
+)
+def test_tokenizer_state(cls, kwargs):
+    """Tests that the tokenizer is not in __getstate__"""
+    instance = cls(backbone="sshleifer/tiny-mbart", **kwargs)
+    state = instance.__getstate__()
+    tokenizers = []
+    for name, attribute in instance.__dict__.items():
+        if isinstance(attribute, PreTrainedTokenizerBase):
+            assert name not in state
+            setattr(instance, name, None)
+            tokenizers.append(name)
+    instance.__setstate__(state)
+    for name in tokenizers:
+        assert getattr(instance, name, None) is not None

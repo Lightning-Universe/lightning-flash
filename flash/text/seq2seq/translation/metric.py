@@ -81,9 +81,7 @@ class BLEUScore(Metric):
             return tensor(0.0, device=self.r.device)
 
         if self.smooth:
-            precision_scores = torch.add(self.numerator, torch.ones(
-                self.n_gram
-            )) / torch.add(self.denominator, torch.ones(self.n_gram))
+            precision_scores = (self.numerator + 1.0) / (self.denominator + 1.0)
         else:
             precision_scores = self.numerator / self.denominator
 

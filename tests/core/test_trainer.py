@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from argparse import ArgumentParser
 from typing import Any
 
 import pytest
@@ -110,3 +111,10 @@ def test_resolve_callbacks_override_warning(tmpdir):
     task = FinetuneClassificationTask(model, loss_fn=F.nll_loss)
     with pytest.warns(UserWarning, match="The model contains a default finetune callback"):
         trainer._resolve_callbacks(task, "test")
+
+
+def test_add_argparse_args():
+    parser = ArgumentParser()
+    parser = Trainer.add_argparse_args(parser)
+    args = parser.parse_args(['--gpus=1'])
+    assert args.gpus == 1

@@ -88,7 +88,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
     def __init__(self):
         if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
         super().__init__(IMG_EXTENSIONS)
 
     def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
@@ -226,7 +226,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             **data_source_kwargs: Additional arguments passed on to the data source constructors.
         """
         if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
         self.image_size = image_size
         self.num_classes = num_classes
         if num_classes:

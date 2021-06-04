@@ -36,8 +36,9 @@ class TextDataSource(DataSource):
         super().__init__()
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
+        self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
         self.max_length = max_length
 
@@ -54,6 +55,15 @@ class TextDataSource(DataSource):
     def _transform_label(self, label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
         ex[target] = label_to_class_mapping[ex[target]]
         return ex
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextFileDataSource(TextDataSource):
@@ -115,17 +125,44 @@ class TextFileDataSource(TextDataSource):
     def predict_load_data(self, data: Any, dataset: AutoDataset):
         return self.load_data(data, dataset, columns=["input_ids", "attention_mask"])
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class TextCSVDataSource(TextFileDataSource):
 
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__("csv", backbone, max_length=max_length)
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class TextJSONDataSource(TextFileDataSource):
 
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__("json", backbone, max_length=max_length)
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextSentencesDataSource(TextDataSource):
@@ -143,6 +180,15 @@ class TextSentencesDataSource(TextDataSource):
             data = [data]
         return [self._tokenize_fn(s, ) for s in data]
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class TextClassificationPreprocess(Preprocess):
 
@@ -157,7 +203,7 @@ class TextClassificationPreprocess(Preprocess):
     ):
 
         if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[text]'")
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.backbone = backbone
         self.max_length = max_length

@@ -1,29 +1,46 @@
 #!/usr/bin/env python
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import os
 from importlib.util import module_from_spec, spec_from_file_location
 
 from setuptools import find_packages, setup
 
-import flash
-import flash.__about__ as about
-
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
-_PATH_ROOT = os.path.dirname(os.path.dirname(flash.__file__))
+_PATH_ROOT = os.path.dirname(__file__)
+_PATH_REQUIRE = os.path.join(_PATH_ROOT, "requirements")
 
 
 def _load_py_module(fname, pkg="flash"):
-    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
+    spec = spec_from_file_location(
+        os.path.join(pkg, fname),
+        os.path.join(_PATH_ROOT, pkg, fname),
+    )
     py = module_from_spec(spec)
     spec.loader.exec_module(py)
     return py
 
 
+about = _load_py_module('__about__.py')
 setup_tools = _load_py_module('setup_tools.py')
 
-long_description = setup_tools._load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__)
-
-_PATH_REQUIRE = os.path.join(_PATH_ROOT, "requirements")
+long_description = setup_tools._load_readme_description(
+    _PATH_ROOT,
+    homepage=about.__homepage__,
+    ver=about.__version__,
+)
 
 extras = {
     "docs": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="docs.txt"),
@@ -40,11 +57,8 @@ extras = {
 
 # remove possible duplicate.
 extras["vision"] = list(set(extras["image"] + extras["video"] + extras["image_style_transfer"]))
-extras["dev"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["image"]))
-extras["dev-test"] = list(set(extras["test"] + extras["dev"]))
-extras["all"] = list(set(extras["dev"] + extras["docs"]))
-
-print(extras)
+extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
+extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
