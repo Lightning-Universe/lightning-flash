@@ -73,12 +73,10 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 label = str(int(label))
 
-            detections.append(
-                Detection(
-                    label=label,
-                    bounding_box=box,
-                    confidence=confidence,
-                )
-            )
+            detections.append(Detection(
+                label=label,
+                bounding_box=box,
+                confidence=confidence,
+            ))
 
         return Detections(detections=detections)

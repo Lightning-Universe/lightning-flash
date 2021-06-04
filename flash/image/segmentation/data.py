@@ -43,8 +43,8 @@ from flash.image.segmentation.transforms import default_transforms, train_defaul
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
-    from fiftyone.core.labels import Segmentation
     from fiftyone.core.collections import SampleCollection
+    from fiftyone.core.labels import Segmentation
 else:
     fo, Segmentation, SampleCollection = None, None, None
 
@@ -171,9 +171,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
     def label_cls(self):
         return Segmentation
 
-    def load_data(self,
-                  data: SampleCollection,
-                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
         self._fo_dataset_name = data.name

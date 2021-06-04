@@ -16,7 +16,8 @@ class TestFiftyOneDetectionLabels:
         serial = FiftyOneDetectionLabels()
 
         sample = [{
-            "boxes": [torch.tensor(20), torch.tensor(30), torch.tensor(40), torch.tensor(50)],
+            "boxes": [torch.tensor(20), torch.tensor(30),
+                      torch.tensor(40), torch.tensor(50)],
             "labels": torch.tensor(0),
             "scores": torch.tensor(0.5),
         }]
