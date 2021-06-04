@@ -75,11 +75,11 @@ class ClassificationSerializer(Serializer):
     def __init__(self, multi_label: bool = False):
         super().__init__()
 
-        self._multi_label = multi_label
+        self._mutli_label = multi_label
 
     @property
     def multi_label(self) -> bool:
-        return self._multi_label
+        return self._mutli_label
 
 
 class Logits(ClassificationSerializer):
