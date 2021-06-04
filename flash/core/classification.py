@@ -173,7 +173,8 @@ class FiftyOneLabels(ClassificationSerializer):
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
             provided, will attempt to get them from the :class:`.LabelsState`.
         multi_label: If true, treats outputs as multi label logits.
-        threshold: The threshold to use for multi_label classification.
+        threshold: A threshold to use to filter candidate labels. In the single label case, predictions below this
+            threshold will be replaced with None
         store_logits: Boolean determining whether to store logits in the FiftyOne labels
     """
 
@@ -181,16 +182,19 @@ class FiftyOneLabels(ClassificationSerializer):
         self,
         labels: Optional[List[str]] = None,
         multi_label: bool = False,
-        threshold: float = 0.5,
+        threshold: Optional[float] = None,
         store_logits: bool = False,
     ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
+        if multi_label and threshold is None:
+            threshold = 0.5
+
         super().__init__(multi_label=multi_label)
+        self._labels = labels
         self.threshold = threshold
         self.store_logits = store_logits
-        self._labels = labels
 
         if labels is not None:
             self.set_state(LabelsState(labels))
@@ -234,11 +238,15 @@ class FiftyOneLabels(ClassificationSerializer):
                     logits=logits,
                 )
             else:
-                fo_labels = Classification(
-                    label=labels[classes],
-                    confidence=max(probabilities),
-                    logits=logits,
-                )
+                confidence = max(probabilities)
+                if self.threshold is not None and confidence < self.threshold:
+                    fo_labels = None
+                else:
+                    fo_labels = Classification(
+                        label=labels[classes],
+                        confidence=confidence,
+                        logits=logits,
+                    )
         else:
             rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
 
@@ -255,10 +263,14 @@ class FiftyOneLabels(ClassificationSerializer):
                     logits=logits,
                 )
             else:
-                fo_labels = Classification(
-                    label=str(classes),
-                    confidence=max(probabilities),
-                    logits=logits,
-                )
+                confidence = max(probabilities)
+                if self.threshold is not None and confidence < self.threshold:
+                    fo_labels = None
+                else:
+                    fo_labels = Classification(
+                        label=str(classes),
+                        confidence=confidence,
+                        logits=logits,
+                    )
 
         return fo_labels
