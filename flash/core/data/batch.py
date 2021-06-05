@@ -98,7 +98,7 @@ class _Sequential(torch.nn.Module):
         )
 
 
-class _PreProcessor(torch.nn.Module):
+class _Preprocessor(torch.nn.Module):
     """
         This class is used to encapsultate the following functions of a Preprocess Object:
         Inside a worker:
@@ -190,7 +190,7 @@ class _PreProcessor(torch.nn.Module):
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown
         return (
-            "_PreProcessor:\n"
+            "_Preprocessor:\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
             f"\t(collate_fn): {str(self.collate_fn)}\n"
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
@@ -200,7 +200,7 @@ class _PreProcessor(torch.nn.Module):
         )
 
 
-class _PostProcessor(torch.nn.Module):
+class _Postprocessor(torch.nn.Module):
     """
         This class is used to encapsultate the following functions of a Postprocess Object:
         Inside main process:
@@ -245,7 +245,7 @@ class _PostProcessor(torch.nn.Module):
 
     def __str__(self) -> str:
         return (
-            "_PostProcessor:\n"
+            "_Postprocessor:\n"
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
             f"\t(uncollate_fn): {str(self.uncollate_fn)}\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"

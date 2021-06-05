@@ -25,7 +25,7 @@ from torch.utils.data import DataLoader, IterableDataset
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _PostProcessor, _PreProcessor, _Sequential
+from flash.core.data.batch import _Postprocessor, _Preprocessor, _Sequential
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
@@ -163,13 +163,13 @@ class DataPipeline:
     def _identity(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
 
-    def worker_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
+    def worker_preprocessor(self, running_stage: RunningStage) -> _Preprocessor:
         return self._create_collate_preprocessors(running_stage)[0]
 
-    def device_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
+    def device_preprocessor(self, running_stage: RunningStage) -> _Preprocessor:
         return self._create_collate_preprocessors(running_stage)[1]
 
-    def postprocessor(self, running_stage: RunningStage) -> _PostProcessor:
+    def postprocessor(self, running_stage: RunningStage) -> _Postprocessor:
         return self._create_uncollate_postprocessors(running_stage)
 
     @classmethod
@@ -208,7 +208,7 @@ class DataPipeline:
         self,
         stage: RunningStage,
         collate_fn: Optional[Callable] = None,
-    ) -> Tuple[_PreProcessor, _PreProcessor]:
+    ) -> Tuple[_Preprocessor, _Preprocessor]:
 
         original_collate_fn = collate_fn
 
@@ -254,14 +254,14 @@ class DataPipeline:
             )
 
         worker_collate_fn = worker_collate_fn.collate_fn if isinstance(
-            worker_collate_fn, _PreProcessor
+            worker_collate_fn, _Preprocessor
         ) else worker_collate_fn
 
         assert_contains_tensor = self._is_overriden_recursive(
             "to_tensor_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
-        worker_preprocessor = _PreProcessor(
+        worker_preprocessor = _Preprocessor(
             preprocess, worker_collate_fn,
             _Sequential(
                 preprocess,
@@ -273,7 +273,7 @@ class DataPipeline:
             ), getattr(preprocess, func_names['per_batch_transform']), stage
         )
         worker_preprocessor._original_collate_fn = original_collate_fn
-        device_preprocessor = _PreProcessor(
+        device_preprocessor = _Preprocessor(
             preprocess,
             device_collate_fn,
             getattr(preprocess, func_names['per_sample_transform_on_device']),
@@ -286,7 +286,7 @@ class DataPipeline:
 
     @staticmethod
     def _model_transfer_to_device_wrapper(
-        func: Callable, preprocessor: _PreProcessor, model: 'Task', stage: RunningStage
+        func: Callable, preprocessor: _Preprocessor, model: 'Task', stage: RunningStage
     ) -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
@@ -296,7 +296,7 @@ class DataPipeline:
         return func
 
     @staticmethod
-    def _model_predict_step_wrapper(func: Callable, postprocessor: _PostProcessor, model: 'Task') -> Callable:
+    def _model_predict_step_wrapper(func: Callable, postprocessor: _Postprocessor, model: 'Task') -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
             _original = func
@@ -400,7 +400,7 @@ class DataPipeline:
                 self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn, model, stage)
             )
 
-    def _create_uncollate_postprocessors(self, stage: RunningStage) -> _PostProcessor:
+    def _create_uncollate_postprocessors(self, stage: RunningStage) -> _Postprocessor:
         save_per_sample = None
         save_fn = None
 
@@ -422,7 +422,7 @@ class DataPipeline:
             else:
                 save_fn: Callable = getattr(postprocess, func_names["save_data"])
 
-        return _PostProcessor(
+        return _Postprocessor(
             getattr(postprocess, func_names["uncollate"]),
             getattr(postprocess, func_names["per_batch_transform"]),
             getattr(postprocess, func_names["per_sample_transform"]),
@@ -491,7 +491,7 @@ class DataPipeline:
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                    if isinstance(dl_args['collate_fn'], _PreProcessor):
+                    if isinstance(dl_args['collate_fn'], _Preprocessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
 
                         if isinstance(dl_args["dataset"], IterableAutoDataset):
