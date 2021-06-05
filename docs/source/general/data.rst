@@ -4,6 +4,10 @@ Data
 
 .. _data:
 
+.. image:: https://miro.medium.com/max/1050/1*f_oNA5pSbtOO4AD8EFuTXg.gif
+  :width: 600
+  :alt: DataFlow Gif
+
 
 ***********
 Terminology
