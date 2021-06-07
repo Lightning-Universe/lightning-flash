@@ -16,6 +16,7 @@ import warnings
 from functools import partial
 
 import torch.nn as nn
+from deprecate import deprecated
 from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
 
 from flash.core.registry import FlashRegistry
@@ -56,6 +57,30 @@ if _TORCHVISION_AVAILABLE:
             package="torchvision",
             type=_type
         )
+
+    SEMANTIC_SEGMENTATION_BACKBONES(
+        fn=deprecated(
+            target=None,
+            stream=partial(warnings.warn, category=UserWarning),
+            deprecated_in="0.3.1",
+            remove_in="0.4.0",
+            template_mgs="The 'torchvision/fcn_resnet50' backbone has been deprecated since v%(deprecated_in)s in "
+            "favor of 'fcn_resnet50'. It will be removed in v%(remove_in)s.",
+        )(SEMANTIC_SEGMENTATION_BACKBONES.get("fcn_resnet50")),
+        name="torchvision/fcn_resnet50",
+    )
+
+    SEMANTIC_SEGMENTATION_BACKBONES(
+        fn=deprecated(
+            target=None,
+            stream=partial(warnings.warn, category=UserWarning),
+            deprecated_in="0.3.1",
+            remove_in="0.4.0",
+            template_mgs="The 'torchvision/fcn_resnet101' backbone has been deprecated since v%(deprecated_in)s in "
+            "favor of 'fcn_resnet101'. It will be removed in v%(remove_in)s.",
+        )(SEMANTIC_SEGMENTATION_BACKBONES.get("fcn_resnet101")),
+        name="torchvision/fcn_resnet101",
+    )
 
     def _fn_lraspp(model_name: str, num_classes: int, pretrained: bool = True, **kwargs) -> nn.Module:
         model: nn.Module = getattr(segmentation, model_name, None)(pretrained, **kwargs)
