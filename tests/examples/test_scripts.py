@@ -93,7 +93,11 @@ def run_test(filepath):
             "semantic_segmentation.py",
             marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
         ),
-        # pytest.param("finetuning", "summarization.py"),  # TODO: takes too long.
+        pytest.param(
+            "finetuning",
+            "summarization.py",
+            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+        ),
         pytest.param(
             "finetuning",
             "tabular_classification.py",
@@ -147,7 +151,11 @@ def run_test(filepath):
             "video_classification.py",
             marks=pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="video libraries aren't installed")
         ),
-        # pytest.param("predict", "summarization.py"),  # TODO: takes too long
+        pytest.param(
+            "predict",
+            "summarization.py",
+            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+        ),
         pytest.param(
             "predict",
             "template.py",
