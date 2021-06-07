@@ -73,7 +73,7 @@ class SemanticSegmentation(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "torchvision/fcn_resnet50",
+        backbone: Union[str, Tuple[nn.Module, int]] = "fcn_resnet50",
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Optional[Callable] = None,
@@ -144,6 +144,8 @@ class SemanticSegmentation(ClassificationTask):
         out: torch.Tensor
         if isinstance(res, dict):
             out = res['out']
+        elif torch.is_tensor(res):
+            out = res
         else:
             raise NotImplementedError(f"Unsupported output type: {type(out)}")
 
