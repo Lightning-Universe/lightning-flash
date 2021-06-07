@@ -39,14 +39,14 @@ LRASPP_MODELS = ["lraspp_mobilenet_v3_large"]
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
 if _TORCHVISION_AVAILABLE:
+
+    def _fn_fcn_deeplabv3(model_name: str, num_classes: int, pretrained: bool = True, **kwargs) -> nn.Module:
+        model: nn.Module = getattr(segmentation, model_name, None)(pretrained, **kwargs)
+        in_channels = model.classifier[-1].in_channels
+        model.classifier[-1] = nn.Conv2d(in_channels, num_classes, 1)
+        return model
+
     for model_name in FCN_MODELS + DEEPLABV3_MODELS:
-
-        def _fn_fcn_deeplabv3(model_name: str, num_classes: int, pretrained: bool = True, **kwargs) -> nn.Module:
-            model: nn.Module = getattr(segmentation, model_name, None)(pretrained, **kwargs)
-            in_channels = model.classifier[-1].in_channels
-            model.classifier[-1] = nn.Conv2d(in_channels, num_classes, 1)
-            return model
-
         _type = model_name.split("_")[0]
 
         SEMANTIC_SEGMENTATION_BACKBONES(
@@ -57,18 +57,17 @@ if _TORCHVISION_AVAILABLE:
             type=_type
         )
 
+    def _fn_lraspp(model_name: str, num_classes: int, pretrained: bool = True, **kwargs) -> nn.Module:
+        model: nn.Module = getattr(segmentation, model_name, None)(pretrained, **kwargs)
+
+        low_channels = model.classifier.low_classifier.in_channels
+        high_channels = model.classifier.high_classifier.in_channels
+
+        model.classifier.low_classifier = nn.Conv2d(low_channels, num_classes, 1)
+        model.classifier.high_classifier = nn.Conv2d(high_channels, num_classes, 1)
+        return model
+
     for model_name in LRASPP_MODELS:
-
-        def _fn_lraspp(model_name: str, num_classes: int, pretrained: bool = True, **kwargs) -> nn.Module:
-            model: nn.Module = getattr(segmentation, model_name, None)(pretrained, **kwargs)
-
-            low_channels = model.classifier.low_classifier.in_channels
-            high_channels = model.classifier.high_classifier.in_channels
-
-            model.classifier.low_classifier = nn.Conv2d(low_channels, num_classes, 1)
-            model.classifier.high_classifier = nn.Conv2d(high_channels, num_classes, 1)
-            return model
-
         SEMANTIC_SEGMENTATION_BACKBONES(
             fn=catch_url_error(partial(_fn_lraspp, model_name)),
             name=model_name,
