@@ -152,6 +152,7 @@ PACKAGE_MAPPING = {
     'rouge-score': 'rouge_score',
     'lightning-bolts': 'pl_bolts',
     'pytorch-tabnet': 'pytorch_tabnet',
+    'pyDeprecate': 'deprecate',
 }
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:
