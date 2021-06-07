@@ -11,24 +11,82 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import warnings
+from functools import partial
+
 import torch.nn as nn
+from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.image.backbones import catch_url_error
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.models import segmentation
+
+if _BOLTS_AVAILABLE:
+    if os.getenv("WARN_MISSING_PACKAGE") == "0":
+        with warnings.catch_warnings(record=True) as w:
+            from pl_bolts.models.vision import UNet
+    else:
+        from pl_bolts.models.vision import UNet
+
+FCN_MODELS = ["fcn_resnet50", "fcn_resnet101"]
+DEEPLABV3_MODELS = ["deeplabv3_resnet50", "deeplabv3_resnet101", "deeplabv3_mobilenet_v3_large"]
+LRASPP_MODELS = ["lraspp_mobilenet_v3_large"]
 
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
+    for model_name in FCN_MODELS + DEEPLABV3_MODELS:
 
-    @SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet50")
-    def load_torchvision_fcn_resnet50(num_classes: int, pretrained: bool = True) -> nn.Module:
-        model = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained)
-        model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-        return model
+        def _fn_fcn_deeplabv3(model_name: str, num_classes: int, pretrained: bool = True, **kwargs) -> nn.Module:
+            model: nn.Module = getattr(segmentation, model_name, None)(pretrained, **kwargs)
+            in_channels = model.classifier[-1].in_channels
+            model.classifier[-1] = nn.Conv2d(in_channels, num_classes, 1)
+            return model
 
-    @SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet101")
-    def load_torchvision_fcn_resnet101(num_classes: int, pretrained: bool = True) -> nn.Module:
-        model = torchvision.models.segmentation.fcn_resnet101(pretrained=pretrained)
-        model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-        return model
+        _type = model_name.split("_")[0]
+
+        SEMANTIC_SEGMENTATION_BACKBONES(
+            fn=catch_url_error(partial(_fn_fcn_deeplabv3, model_name)),
+            name=model_name,
+            namespace="image/segmentation",
+            package="torchvision",
+            type=_type
+        )
+
+    for model_name in LRASPP_MODELS:
+
+        def _fn_lraspp(model_name: str, num_classes: int, pretrained: bool = True, **kwargs) -> nn.Module:
+            model: nn.Module = getattr(segmentation, model_name, None)(pretrained, **kwargs)
+
+            low_channels = model.classifier.low_classifier.in_channels
+            high_channels = model.classifier.high_classifier.in_channels
+
+            model.classifier.low_classifier = nn.Conv2d(low_channels, num_classes, 1)
+            model.classifier.high_classifier = nn.Conv2d(high_channels, num_classes, 1)
+            return model
+
+        SEMANTIC_SEGMENTATION_BACKBONES(
+            fn=catch_url_error(partial(_fn_lraspp, model_name)),
+            name=model_name,
+            namespace="image/segmentation",
+            package="torchvision",
+            type="lraspp"
+        )
+
+if _BOLTS_AVAILABLE:
+
+    def load_bolts_unet(num_classes: int, pretrained: bool = False, **kwargs) -> nn.Module:
+        if pretrained:
+            rank_zero_warn(
+                "No pretrained weights are available for the pl_bolts.models.vision.UNet model. This backbone will be "
+                "initialized with random weights!", UserWarning
+            )
+        return UNet(num_classes, **kwargs)
+
+    SEMANTIC_SEGMENTATION_BACKBONES(
+        fn=load_bolts_unet, name="unet", namespace="image/segmentation", package="bolts", type="unet"
+    )
