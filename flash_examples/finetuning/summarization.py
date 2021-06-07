@@ -11,6 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
+os.environ["FLASH_TESTING"] = "1"
+import pytorch_lightning as pl
+
+pl.seed_everything(42)
 import torch
 
 from flash import Trainer
