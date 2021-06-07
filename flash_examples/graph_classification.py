@@ -11,7 +11,7 @@ if _PYTORCH_GEOMETRIC_AVAILABLE:
 else:
     raise ModuleNotFoundError("Please, pip install -e '.[graph]'")
 
-dataset = TUDataset("data", name='IMDB-BINARY')
+dataset = TUDataset("data", name='IMDB-BINARY').shuffle()
 num_features = 136
 transform = {
     "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.OneHotDegree(num_features - 1)),
