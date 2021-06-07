@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
 import torch
 
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.summarization.metric import RougeMetric
 
 
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_rouge():
     preds = "My name is John".split()
     target = "Is your name John".split()

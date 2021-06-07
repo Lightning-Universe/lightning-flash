@@ -21,7 +21,7 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_sentence
 
 if _TEXT_AVAILABLE:
-    from rouge_score import rouge_scorer, scoring
+    from rouge_score import rouge_scorer
     from rouge_score.scoring import AggregateScore, BootstrapAggregator, Score
 else:
     AggregateScore, Score, BootstrapAggregator = None, None, object
