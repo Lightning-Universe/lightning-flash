@@ -37,7 +37,10 @@ datamodule = SemanticSegmentationData.from_folders(
 # 2.2 Visualise the samples
 datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
 
-# 3. Build the model
+# 3.a List available backbones
+print(SemanticSegmentation.available_backbones())
+
+# 3.b Build the model
 model = SemanticSegmentation(
     backbone="fcn_resnet50", num_classes=datamodule.num_classes, serializer=SegmentationLabels(visualize=True)
 )
