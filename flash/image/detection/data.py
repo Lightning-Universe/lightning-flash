@@ -92,7 +92,9 @@ class COCODataSource(DataSource[Tuple[str, str]]):
         return data
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
+        img = default_loader(sample[DefaultDataKeys.INPUT])
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = img.size  # WxH
         return sample
 
 
@@ -157,7 +159,9 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
         return output_data
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
+        img = default_loader(sample[DefaultDataKeys.INPUT])
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = img.size  # WxH
         return sample
 
     def _reformat_bbox(self, xmin, ymin, box_w, box_h, img_w, img_h):

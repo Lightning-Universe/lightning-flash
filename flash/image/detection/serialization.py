@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 
 from pytorch_lightning.utilities import rank_zero_warn
 
-from flash.core.data.data_source import LabelsState
+from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
@@ -23,6 +23,13 @@ if _FIFTYONE_AVAILABLE:
     from fiftyone.core.labels import Detection, Detections
 else:
     Detection, Detections = None, None
+
+
+class DetectionLabels(Serializer):
+    """A :class:`.Serializer` which extracts predictions from sample dict."""
+
+    def serialize(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        return sample[DefaultDataKeys.PREDS]
 
 
 class FiftyOneDetectionLabels(Serializer):
@@ -45,7 +52,11 @@ class FiftyOneDetectionLabels(Serializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: List[Dict[str, Any]]) -> Detections:
+    def serialize(self, sample: Dict[str, Any]) -> Detections:
+        if DefaultDataKeys.METADATA not in sample:
+            raise ValueError("sample requires DefaultDataKeys.METADATA to use "
+                             "a FiftyOneDetectionLabels serializer.")
+
         labels = None
         if self._labels is not None:
             labels = self._labels
@@ -56,16 +67,23 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
 
+        width, height = sample[DefaultDataKeys.METADATA]
+
         detections = []
 
-        for det in sample:
+        for det in sample[DefaultDataKeys.PREDS]:
             confidence = det["scores"].tolist()
 
             if self.threshold is not None and confidence < self.threshold:
                 continue
 
             xmin, ymin, xmax, ymax = [c.tolist() for c in det["boxes"]]
-            box = [xmin, ymin, xmax - xmin, ymax - ymin]
+            box = [
+                xmin / width,
+                ymin / height,
+                (xmax - xmin) / width,
+                (ymax - ymin) / height,
+            ]
 
             label = det["labels"].tolist()
             if labels is not None:

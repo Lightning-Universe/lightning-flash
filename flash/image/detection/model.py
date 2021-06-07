@@ -18,11 +18,13 @@ from torch import nn, tensor
 from torch.optim import Optimizer
 
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image.backbones import OBJ_DETECTION_BACKBONES
 from flash.image.detection.finetuning import ObjectDetectionFineTuning
+from flash.image.detection.serialization import DetectionLabels
 
 if _IMAGE_AVAILABLE:
     import torchvision
@@ -90,6 +92,7 @@ class ObjectDetector(Task):
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.AdamW,
         learning_rate: float = 1e-3,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs: Any,
     ):
 
@@ -112,6 +115,7 @@ class ObjectDetector(Task):
             metrics=metrics,
             learning_rate=learning_rate,
             optimizer=optimizer,
+            serializer=serializer or DetectionLabels(),
         )
 
     @staticmethod
@@ -194,7 +198,8 @@ class ObjectDetector(Task):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         images = batch[DefaultDataKeys.INPUT]
-        return self.model(images)
+        batch[DefaultDataKeys.PREDS] = self.model(images)
+        return batch
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]
