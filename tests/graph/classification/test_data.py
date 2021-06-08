@@ -13,9 +13,11 @@
 # limitations under the License.
 
 from pathlib import Path
+import networkx as nx
 
 import pytest
 from torch.functional import Tensor
+import random
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
@@ -25,6 +27,8 @@ if _PYTORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.data import Dataset, download_url
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
+    from torch_geometric.data import data as PyGData
+    import torch_geometric
 
 
 @pytest.mark.skipif(not _PYTORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed.")
@@ -90,6 +94,7 @@ class TestGraphClassificationData:
         assert list(input.size())[1] == tudataset.num_features
         assert list(targets.size()) == [1]
 
+
     def test_transforms(self, tmpdir):
         tmpdir = Path(tmpdir)
         tudataset = TUDataset(root='tmpdir', name='KKI')
@@ -132,4 +137,29 @@ class TestGraphClassificationData:
         data = next(iter(dm.test_dataloader()))
         input, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert list(input.size())[1] == tudataset.num_features
+        assert list(targets.size()) == [1]
+
+
+    def test_from_pygdatasequence(self):
+
+        # instantiate the data module
+        dm = GraphClassificationData.from_pygdatasequence(
+                        train_data=[
+                            torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(random.randint(1,10),random.randint(1,10))),
+                            torch_geometric.utils.from_networkx(nx.tetrahedral_graph()),
+                            torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(random.randint(1,10),random.randint(1,10))),
+                        ],
+                        train_targets=[random.randint(0,1), 0, random.randint(0,1)],
+                        train_transform={
+                            torch_geometric.transforms.Cartesian(),
+                        },
+                    )
+
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        input, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert list(input.size())[1] == 1
         assert list(targets.size()) == [1]

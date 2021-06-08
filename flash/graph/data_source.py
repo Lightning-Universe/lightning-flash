@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Sequence
+from typing import Sequence, Tuple, Union
 from torch.utils.data import Dataset
 from copy import copy
 
@@ -37,19 +37,23 @@ class GraphDatasetSource(DatasetDataSource):
 
 class GraphSequenceDataSource(SequenceDataSource):
 
-    def load_data(self, data_list: Sequence[PyGData]) -> Sequence:
-        # Converting the PyGDataList to the tuple of sequences that load_data expects:
-
-        # Recover the labels
-        data_list_y = [data_list[i].y for i in range(len(data_list))]
-
-        # Recover the data
-        data_list_x = copy(data_list)
-        for data_list_i in data_list_x:
-            data_list_i.y = None
+    def load_data(self, data_list: Union[Sequence[PyGData], Tuple[Sequence[PyGData], Sequence]]) -> Sequence:
         
-        # Create data_list
-        data_list = (data_list_x, data_list_y)
+        # If the labels are provided inside the PyGData
+        if type(data_list[0]) == PyGData:
+            
+            # Recover the labels
+            data_list_y = [data_list[i].y for i in range(len(data_list))]
+
+            # Recover the data
+            data_list_x = copy(data_list)
+            for data_list_i in data_list_x:
+                data_list_i.y = None
+            
+            # Create data_list
+            data_list = (data_list_x, data_list_y)
+
+        # Else the format is correct already
         data = super().load_data(data_list)
 
         return data

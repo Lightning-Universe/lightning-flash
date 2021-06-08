@@ -841,7 +841,6 @@ class DataModule(pl.LightningDataModule):
             **preprocess_kwargs,
         )
 
-
     @classmethod
     def from_numpy(
         cls,
