@@ -14,15 +14,14 @@
 
 from typing import Sequence, Tuple, Union
 from torch.utils.data import Dataset
-from copy import copy
 
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, SequenceDataSource
 from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
 
 if _PYTORCH_GEOMETRIC_AVAILABLE:
-    from torch_geometric.data import Dataset as PyGDataset
     from torch_geometric.data import Data as PyGData
+    from torch_geometric.data import Dataset as PyGDataset
 
 
 class GraphDatasetSource(DatasetDataSource):
@@ -33,27 +32,4 @@ class GraphDatasetSource(DatasetDataSource):
             if isinstance(dataset, PyGDataset):
                 auto_dataset.num_classes = dataset.num_classes
                 auto_dataset.num_features = dataset.num_features
-        return data
-
-class GraphSequenceDataSource(SequenceDataSource):
-
-    def load_data(self, data_list: Union[Sequence[PyGData], Tuple[Sequence[PyGData], Sequence]]) -> Sequence:
-        
-        # If the labels are provided inside the PyGData
-        if type(data_list[0]) == PyGData:
-            
-            # Recover the labels
-            data_list_y = [data_list[i].y for i in range(len(data_list))]
-
-            # Recover the data
-            data_list_x = copy(data_list)
-            for data_list_i in data_list_x:
-                data_list_i.y = None
-            
-            # Create data_list
-            data_list = (data_list_x, data_list_y)
-
-        # Else the format is correct already
-        data = super().load_data(data_list)
-
         return data
