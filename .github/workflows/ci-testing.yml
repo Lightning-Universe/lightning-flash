@@ -24,6 +24,10 @@ jobs:
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
+            topic: 'graph'
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
             topic: 'image'
           - os: ubuntu-20.04
             python-version: 3.8
