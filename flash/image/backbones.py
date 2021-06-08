@@ -161,10 +161,10 @@ if _TIMM_AVAILABLE:
         model_name: str,
         pretrained: bool = True,
         num_classes: int = 0,
-        global_pool: str = '',
+        **kwargs,
     ) -> Tuple[nn.Module, int]:
         backbone = timm.create_model(
-            model_name, pretrained=pretrained, num_classes=num_classes, global_pool=global_pool
+            model_name, pretrained=pretrained, num_classes=num_classes, **kwargs
         )
         num_features = backbone.num_features
         return backbone, num_features
