@@ -9,3 +9,6 @@ packaging
 tqdm
 networkx
 torch_geometric
+torch_sparse
+torch_scatter
+torch-spline-conv
