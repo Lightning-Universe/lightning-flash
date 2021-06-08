@@ -126,3 +126,4 @@ def test_from_argparse_args():
     args = parser.parse_args(['--max_epochs=200'])
     trainer = Trainer.from_argparse_args(args)
     assert trainer.max_epochs == 200
+    assert isinstance(trainer, Trainer)

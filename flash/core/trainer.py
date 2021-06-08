@@ -202,4 +202,4 @@ class Trainer(PlTrainer):
     def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> 'Trainer':
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
-        return from_argparse_args(PlTrainer, args, **kwargs)
+        return from_argparse_args(Trainer, args, **kwargs)
