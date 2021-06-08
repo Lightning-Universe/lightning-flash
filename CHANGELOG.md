@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [0.3.1] - YYYY-MM-DD
+## [0.3.1] - 2021-06-08
 
 ### Added
 
@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed `flash.Trainer.add_argparse_args` not adding any arguments ([#343](https://github.com/PyTorchLightning/lightning-flash/pull/343))
 - Fixed a bug where using `val_split` with `overfit_batches` would give an infinite recursion ([#375](https://github.com/PyTorchLightning/lightning-flash/pull/375))
+- Fixed a bug where some timm models were mistakenly given a `global_pool` argument ([#376](https://github.com/PyTorchLightning/lightning-flash/pull/376))
 
 
 ## [0.3.0] - 2021-05-20
