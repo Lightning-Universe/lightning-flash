@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _PostProcessor, _PreProcessor
+from flash.core.data.batch import _Postprocessor, _Preprocessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
@@ -318,7 +318,7 @@ def test_detach_preprocessing_from_model(tmpdir):
     assert model.train_dataloader().collate_fn == default_collate
     assert model.transfer_batch_to_device.__self__ == model
     model.on_train_dataloader()
-    assert isinstance(model.train_dataloader().collate_fn, _PreProcessor)
+    assert isinstance(model.train_dataloader().collate_fn, _Preprocessor)
     assert isinstance(model.transfer_batch_to_device, _StageOrchestrator)
     model.on_fit_end()
     assert model.transfer_batch_to_device.__self__ == model
@@ -412,7 +412,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert p1.per_batch_transform.func == p2.per_batch_transform.func
 
         def _assert_stage_orchestrator_state(
-            self, stage_mapping: Dict, current_running_stage: RunningStage, cls=_PreProcessor
+            self, stage_mapping: Dict, current_running_stage: RunningStage, cls=_Preprocessor
         ):
             assert isinstance(stage_mapping[current_running_stage], cls)
             assert stage_mapping[current_running_stage]
@@ -471,7 +471,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert isinstance(self.predict_step, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
             self._assert_stage_orchestrator_state(
-                self.predict_step._stage_mapping, current_running_stage, cls=_PostProcessor
+                self.predict_step._stage_mapping, current_running_stage, cls=_Postprocessor
             )
 
         def on_fit_end(self) -> None:
@@ -505,7 +505,7 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
 
     class CustomDataPipeline(DataPipeline):
 
-        def _attach_postprocess_to_model(self, model: 'Task', _postprocesssor: _PostProcessor) -> 'Task':
+        def _attach_postprocess_to_model(self, model: 'Task', _postprocesssor: _Postprocessor) -> 'Task':
             model.predict_step = self._model_predict_step_wrapper(model.predict_step, _postprocesssor, model)
             return model
 
