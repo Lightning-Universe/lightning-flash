@@ -118,3 +118,11 @@ def test_add_argparse_args():
     parser = Trainer.add_argparse_args(parser)
     args = parser.parse_args(['--gpus=1'])
     assert args.gpus == 1
+
+
+def test_from_argparse_args():
+    parser = ArgumentParser()
+    parser = Trainer.add_argparse_args(parser)
+    args = parser.parse_args(['--max_epochs=200'])
+    trainer = Trainer.from_argparse_args(args)
+    assert trainer.max_epochs == 200
