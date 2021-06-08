@@ -18,7 +18,7 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
-from flash.graph.data_source import GraphDatasetSource
+from flash.graph.data_source import GraphDatasetSource, GraphSequenceDataSource
 
 if _PYTORCH_GEOMETRIC_AVAILABLE:
     import networkx as nx
@@ -47,7 +47,10 @@ class GraphClassificationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={DefaultDataSources.DATASET: GraphDatasetSource()},
+            data_sources={
+                DefaultDataSources.DATASET: GraphDatasetSource(),
+                DefaultDataSources.PYGDATASEQUENCE: GraphSequenceDataSource()
+            },
             default_data_source=DefaultDataSources.DATASET,
         )
 
