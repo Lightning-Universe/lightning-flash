@@ -21,13 +21,13 @@ else:
 
 
 def fiftyone_launch_app(
-        labels: Union[List[Label], List[Tuple[str, Label]]],
-        filepaths: Optional[List[str]] = None,
-        datamodule: Optional[DataModule] = None,
-        wait: Optional[bool] = True,
-        label_field: Optional[str] = "predictions",
-        **kwargs
-    ) -> Optional[Session]:
+    labels: Union[List[Label], List[Tuple[str, Label]]],
+    filepaths: Optional[List[str]] = None,
+    datamodule: Optional[DataModule] = None,
+    wait: Optional[bool] = True,
+    label_field: Optional[str] = "predictions",
+    **kwargs
+) -> Optional[Session]:
     """Use the result of a FiftyOne serializer to visualize predictions in the
     FiftyOne App.
 
@@ -71,7 +71,7 @@ def fiftyone_launch_app(
         dataset.add_labeled_images(
             list(zip(filepaths, labels)),
             LabeledImageTupleSampleParser(),
-            label_field = label_field,
+            label_field=label_field,
         )
     session = fo.launch_app(dataset, **kwargs)
     if wait:
