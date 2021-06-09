@@ -40,7 +40,7 @@ class ImagePathsDataSource(PathsDataSource):
         img = default_loader(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = (h,w)
+        sample[DefaultDataKeys.METADATA] = (h, w)
         return sample
 
 
@@ -50,7 +50,7 @@ class ImageTensorDataSource(TensorDataSource):
         img = to_pil_image(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = (h,w)
+        sample[DefaultDataKeys.METADATA] = (h, w)
         return sample
 
 
@@ -60,7 +60,7 @@ class ImageNumpyDataSource(NumpyDataSource):
         img = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
         sample[DefaultDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = (h,w)
+        sample[DefaultDataKeys.METADATA] = (h, w)
         return sample
 
 
@@ -70,5 +70,5 @@ class ImageFiftyOneDataSource(FiftyOneDataSource):
         img = default_loader(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = (h,w)
+        sample[DefaultDataKeys.METADATA] = (h, w)
         return sample

@@ -213,7 +213,10 @@ class FiftyOneLabels(ClassificationSerializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Any) -> Union[Classification, Classifications, Tuple[str, Classification], Tuple[str, Classifications]]:
+    def serialize(
+        self,
+        sample: Any,
+    ) -> Union[Classification, Classifications, Tuple[str, Classification], Tuple[str, Classifications]]:
         pred = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
         pred = torch.tensor(pred)
 

@@ -28,8 +28,9 @@ else:
 class DetectionLabels(Serializer):
     """A :class:`.Serializer` which extracts predictions from sample dict."""
 
-    def serialize(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        return sample[DefaultDataKeys.PREDS]
+    def serialize(self, sample: Any) -> Dict[str, Any]:
+        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        return sample
 
 
 class FiftyOneDetectionLabels(Serializer):

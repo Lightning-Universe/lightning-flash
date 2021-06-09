@@ -95,7 +95,7 @@ class COCODataSource(DataSource[Tuple[str, str]]):
         img = default_loader(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = (h,w)
+        sample[DefaultDataKeys.METADATA] = (h, w)
         return sample
 
 
@@ -163,7 +163,7 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
         img = default_loader(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = (h,w)
+        sample[DefaultDataKeys.METADATA] = (h, w)
         return sample
 
     def _reformat_bbox(self, xmin, ymin, box_w, box_h, img_w, img_h):
