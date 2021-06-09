@@ -20,7 +20,7 @@ else:
     Session = None
 
 
-def fiftyone_launch_app(
+def fiftyone_visualize(
     labels: Union[List[Label], List[Tuple[str, Label]]],
     filepaths: Optional[List[str]] = None,
     datamodule: Optional[DataModule] = None,
