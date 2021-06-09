@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import torch
 
@@ -88,19 +88,34 @@ class SegmentationLabels(Serializer):
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
+    """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
 
-    def __init__(self, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None, visualize: bool = False):
-        """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
+    Args:
+        labels_map: A dictionary that map the labels ids to pixel intensities.
+        visualize: Wether to visualize the image labels.
+        return_filepath: Boolean determining whether to return a dict
+            containing filepath and FiftyOne labels (True) or only a
+            list of FiftyOne labels (False)
+    """
 
-        Args:
-            labels_map: A dictionary that map the labels ids to pixel intensities.
-            visualize: Wether to visualize the image labels.
-        """
+    def __init__(
+            self,
+            labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None,
+            visualize: bool = False,
+            return_filepath: bool = False,
+        ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
         super().__init__(labels_map=labels_map, visualize=visualize)
 
-    def serialize(self, sample: Dict[str, torch.Tensor]) -> Segmentation:
+        self.return_filepath = return_filepath
+
+    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Tuple[str, Segmentation]]:
         labels = super().serialize(sample)
-        return Segmentation(mask=labels.numpy())
+        fo_predictions = Segmentation(mask=labels.numpy())
+        if self.return_filepath:
+            filepath = sample[DefaultDataKeys.FILEPATH]
+            return (filepath, fo_predictions)
+        else:
+            return fo_predictions

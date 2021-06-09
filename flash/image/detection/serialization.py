@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
@@ -39,23 +39,35 @@ class FiftyOneDetectionLabels(Serializer):
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
             provided, will attempt to get them from the :class:`.LabelsState`.
         threshold: a score threshold to apply to candidate detections.
+        return_filepath: Boolean determining whether to return a dict
+            containing filepath and FiftyOne labels (True) or only a
+            list of FiftyOne labels (False)
     """
 
-    def __init__(self, labels: Optional[List[str]] = None, threshold: Optional[float] = None):
+    def __init__(
+            self,
+            labels: Optional[List[str]] = None,
+            threshold: Optional[float] = None,
+            return_filepath: bool = False,
+        ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
         super().__init__()
         self._labels = labels
         self.threshold = threshold
+        self.return_filepath = return_filepath
 
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Dict[str, Any]) -> Detections:
+    def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Tuple[str, Detection]]:
         if DefaultDataKeys.METADATA not in sample:
             raise ValueError("sample requires DefaultDataKeys.METADATA to use "
                              "a FiftyOneDetectionLabels serializer.")
+
+        if self.return_filepath:
+            filepath = sample[DefaultDataKeys.FILEPATH]
 
         labels = None
         if self._labels is not None:
@@ -67,7 +79,7 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
 
-        width, height = sample[DefaultDataKeys.METADATA]
+        height, width = sample[DefaultDataKeys.METADATA]
 
         detections = []
 
@@ -96,5 +108,9 @@ class FiftyOneDetectionLabels(Serializer):
                 bounding_box=box,
                 confidence=confidence,
             ))
-
-        return Detections(detections=detections)
+        fo_predictions = Detections(detections=detections)
+        if self.return_filepath:
+            filepath = sample[DefaultDataKeys.FILEPATH]
+            return (filepath, fo_predictions)
+        else:
+            return fo_predictions

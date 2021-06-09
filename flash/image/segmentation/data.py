@@ -175,7 +175,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         self._validate(data)
 
         self._fo_dataset_name = data.name
-        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+        return [{DefaultDataKeys.INPUT: f, DefaultDataKeys.FILEPATH: f} for f in data.values("filepath")]
 
     def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         _fo_dataset = fo.load_dataset(self._fo_dataset_name)
@@ -334,7 +334,8 @@ class SemanticSegmentationData(DataModule):
             **preprocess_kwargs
         )
 
-        dm.train_dataset.num_classes = num_classes
+        if dm.train_dataset is not None:
+            dm.train_dataset.num_classes = num_classes
         return dm
 
     @classmethod

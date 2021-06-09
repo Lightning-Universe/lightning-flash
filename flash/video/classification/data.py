@@ -145,7 +145,8 @@ class VideoClassificationPathsDataSource(PathsDataSource, BaseVideoClassificatio
         return ds
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        return self._encoded_video_to_dict(EncodedVideo.from_path(sample[DefaultDataKeys.INPUT]))
+        sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(sample[DefaultDataKeys.INPUT])))
+        return sample
 
 
 class VideoClassificationFiftyOneDataSource(VideoClassificationPathsDataSource):

@@ -39,7 +39,8 @@ class ImagePathsDataSource(PathsDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = default_loader(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.size  # WxH
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = (h,w)
         return sample
 
 
@@ -48,7 +49,8 @@ class ImageTensorDataSource(TensorDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = to_pil_image(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.size  # WxH
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = (h,w)
         return sample
 
 
@@ -57,7 +59,8 @@ class ImageNumpyDataSource(NumpyDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.size  # WxH
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = (h,w)
         return sample
 
 
@@ -66,5 +69,6 @@ class ImageFiftyOneDataSource(FiftyOneDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = default_loader(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.size  # WxH
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = (h,w)
         return sample

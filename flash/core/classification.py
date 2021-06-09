@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -185,6 +185,9 @@ class FiftyOneLabels(ClassificationSerializer):
         threshold: A threshold to use to filter candidate labels. In the single label case, predictions below this
             threshold will be replaced with None
         store_logits: Boolean determining whether to store logits in the FiftyOne labels
+        return_filepath: Boolean determining whether to return a dict
+            containing filepath and FiftyOne labels (True) or only a
+            list of FiftyOne labels (False)
     """
 
     def __init__(
@@ -193,6 +196,7 @@ class FiftyOneLabels(ClassificationSerializer):
         multi_label: bool = False,
         threshold: Optional[float] = None,
         store_logits: bool = False,
+        return_filepath: bool = False,
     ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
@@ -204,14 +208,15 @@ class FiftyOneLabels(ClassificationSerializer):
         self._labels = labels
         self.threshold = threshold
         self.store_logits = store_logits
+        self.return_filepath = return_filepath
 
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Any) -> Union[Classification, Classifications]:
+    def serialize(self, sample: Any) -> Union[Classification, Classifications, Tuple[str, Classification], Tuple[str, Classifications]]:
         pred = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
         pred = torch.tensor(pred)
-        metadata = sample[DefaultDataKeys.METADATA]
+
         labels = None
 
         if self._labels is not None:
@@ -285,4 +290,8 @@ class FiftyOneLabels(ClassificationSerializer):
                         logits=logits,
                     )
 
-        return fo.Sample(filepath=metadata.filepath, predictions=fo_predictions)
+        if self.return_filepath:
+            filepath = sample[DefaultDataKeys.FILEPATH]
+            return (filepath, fo_predictions)
+        else:
+            return fo_predictions
