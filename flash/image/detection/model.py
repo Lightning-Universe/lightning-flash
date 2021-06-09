@@ -163,6 +163,9 @@ class ObjectDetector(Task):
                 model = RetinaNet(backbone_model, num_classes=num_classes, anchor_generator=anchor_generator)
         return model
 
+    def forward(self, x: List[torch.Tensor]) -> Any:
+        return self.model(x)
+
     def training_step(self, batch, batch_idx) -> Any:
         """The training step. Overrides ``Task.training_step``
         """
@@ -178,7 +181,7 @@ class ObjectDetector(Task):
     def validation_step(self, batch, batch_idx):
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         # fasterrcnn takes only images for eval() mode
-        outs = self.model(images)
+        outs = self(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
         self.log("val_iou", iou)
 
@@ -188,13 +191,13 @@ class ObjectDetector(Task):
     def test_step(self, batch, batch_idx):
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         # fasterrcnn takes only images for eval() mode
-        outs = self.model(images)
+        outs = self(images)
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
         self.log("test_iou", iou)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         images = batch[DefaultDataKeys.INPUT]
-        return self.model(images)
+        return self(images)
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]
