@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from typing import Tuple
 
 import numpy as np
@@ -114,3 +115,19 @@ def test_predict_numpy():
     out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], torch.Tensor)
     assert out[0].shape == (10, 20)
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32), ))])
+def test_jit(tmpdir, jitter, args):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = SemanticSegmentation(2)
+    model = jitter(model, *args)
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(torch.rand(1, 3, 32, 32))
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 2, 32, 32])
