@@ -123,6 +123,8 @@ def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 
     model = SemanticSegmentation(2)
+    model.eval()
+
     model = jitter(model, *args)
 
     torch.jit.save(model, path)
