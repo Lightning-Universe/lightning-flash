@@ -263,12 +263,14 @@ class Task(LightningModule):
 
         return preprocess, postprocess, serializer
 
+    @torch.jit.unused
     @property
     def serializer(self) -> Optional[Serializer]:
         """The current :class:`.Serializer` associated with this model. If this property was set to a mapping
         (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`."""
         return self._serializer
 
+    @torch.jit.unused
     @serializer.setter
     def serializer(self, serializer: Union[Serializer, Mapping[str, Serializer]]):
         if isinstance(serializer, Mapping):
@@ -350,12 +352,14 @@ class Task(LightningModule):
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
+    @torch.jit.unused
     @property
     def data_pipeline(self) -> DataPipeline:
         """The current :class:`.DataPipeline`. If set, the new value will override the :class:`.Task` defaults. See
         :py:meth:`~build_data_pipeline` for more details on the resolution order."""
         return self.build_data_pipeline()
 
+    @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
         self._preprocess, self._postprocess, self.serializer = Task._resolve(
@@ -366,14 +370,16 @@ class Task(LightningModule):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
-        self._preprocess.state_dict()
+        # self._preprocess.state_dict()
         if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
 
+    @torch.jit.unused
     @property
     def preprocess(self) -> Preprocess:
         return getattr(self.data_pipeline, '_preprocess_pipeline', None)
 
+    @torch.jit.unused
     @property
     def postprocess(self) -> Postprocess:
         return getattr(self.data_pipeline, '_postprocess_pipeline', None)

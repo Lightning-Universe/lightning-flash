@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from pytorch_lightning.utilities.distributed import rank_zero_warn
@@ -89,13 +89,12 @@ class ImageEmbedder(Task):
             rank_zero_warn('embedding_dim. Remember to finetune first!')
 
     def apply_pool(self, x):
-        if self.pooling_fn == torch.max:
-            # torch.max also returns argmax
-            x = self.pooling_fn(x, dim=-1)[0]
-            x = self.pooling_fn(x, dim=-1)[0]
-        else:
-            x = self.pooling_fn(x, dim=-1)
-            x = self.pooling_fn(x, dim=-1)
+        x = self.pooling_fn(x, dim=-1)
+        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+            x = x[0]
+        x = self.pooling_fn(x, dim=-1)
+        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+            x = x[0]
         return x
 
     def forward(self, x) -> torch.Tensor:

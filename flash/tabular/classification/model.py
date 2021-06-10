@@ -83,7 +83,11 @@ class TabularClassifier(ClassificationTask):
 
     def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)
-        x = torch.cat([x for x in x_in if x.numel()], dim=1)
+        xs = []
+        for x in x_in:
+            if x.numel():
+                xs.append(x)
+        x = torch.cat(xs, dim=1)
         return self.model(x)[0]
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:

@@ -49,7 +49,7 @@ class BasePreprocess(ABC):
         pass
 
 
-class Preprocess(BasePreprocess, Properties, Module):
+class Preprocess(BasePreprocess, Properties):
     """The :class:`~flash.core.data.process.Preprocess` encapsulates all the data processing logic that should run before
     the data is passed to the model. It is particularly useful when you want to provide an end to end implementation
     which works with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
@@ -454,7 +454,7 @@ class DefaultPreprocess(Preprocess):
         return cls(**state_dict)
 
 
-class Postprocess(Properties, Module):
+class Postprocess(Properties):
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()

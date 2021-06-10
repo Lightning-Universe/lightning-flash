@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
 import pytest
 import torch
 from pytorch_lightning import Trainer
@@ -75,3 +77,23 @@ def test_training(tmpdir, model):
     dl = DataLoader(ds, collate_fn=collate_fn)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, dl)
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+def test_jit(tmpdir):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = ObjectDetector(2)
+    model.eval()
+
+    model = torch.jit.script(model)  # torch.jit.trace doesn't work with torchvision RCNN
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model([torch.rand(3, 32, 32)])
+
+    # torchvision RCNN always returns a (Losses, Detections) tuple in scripting
+    out = out[1]
+
+    assert {"boxes", "labels", "scores"} <= out[0].keys()

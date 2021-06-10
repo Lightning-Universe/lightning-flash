@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
 import numpy as np
 import pytest
 import torch
@@ -116,3 +118,21 @@ def test_predict_sklearn():
     data_pipe = DataPipeline(preprocess=TemplatePreprocess())
     out = model.predict(bunch, data_source="sklearn", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
+
+
+@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 16), ))])
+def test_jit(tmpdir, jitter, args):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = TemplateSKLearnClassifier(num_features=16, num_classes=10)
+    model.eval()
+
+    model = jitter(model, *args)
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(torch.rand(1, 16))
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 10])
