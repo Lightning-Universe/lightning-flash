@@ -114,6 +114,9 @@ class TextClassifier(ClassificationTask):
         output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
         return output
 
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(**batch)
+
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """
         This function is used only for debugging usage with CI
