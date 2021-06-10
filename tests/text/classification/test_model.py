@@ -47,3 +47,22 @@ def test_init_train(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
+
+
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+def test_jit(tmpdir):
+    sample_input = torch.randint(1000, size=(1, 100))
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = TextClassifier(2, TEST_BACKBONE)
+    model.eval()
+
+    # Huggingface bert model only supports `torch.jit.trace` with `strict=False`
+    model = torch.jit.trace(model, sample_input, strict=False)
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(sample_input)["logits"]
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 2])

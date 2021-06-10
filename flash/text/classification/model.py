@@ -76,12 +76,35 @@ class TextClassifier(ClassificationTask):
         # see huggingface's BertForSequenceClassification
         return self.model.bert
 
-    def forward(self, batch_dict):
-        return self.model(**batch_dict)
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        position_ids=None,
+        head_mask=None,
+        inputs_embeds=None,
+        labels=None,
+        output_attentions=None,
+        output_hidden_states=None,
+        return_dict=None
+    ):
+        return self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            labels=labels,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict
+        )
 
     def step(self, batch, batch_idx) -> dict:
         output = {}
-        out = self.forward(batch)
+        out = self.forward(**batch)
         loss, logits = out[:2]
         output["loss"] = loss
         output["y_hat"] = logits
