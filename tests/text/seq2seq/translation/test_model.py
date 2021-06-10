@@ -47,3 +47,24 @@ def test_init_train(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
+
+
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+def test_jit(tmpdir):
+    sample_input = {
+        "input_ids": torch.randint(128, size=(1, 4)),
+        "attention_mask": torch.randint(1, size=(1, 4)),
+    }
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = TranslationTask(TEST_BACKBONE, val_target_max_length=None)
+    model.eval()
+
+    # Huggingface only supports `torch.jit.trace`
+    model = torch.jit.trace(model, [sample_input])
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(sample_input)
+    assert isinstance(out, torch.Tensor)
