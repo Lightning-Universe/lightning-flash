@@ -158,3 +158,22 @@ def test_image_classifier_finetune(tmpdir):
         trainer = flash.Trainer(fast_dev_run=True)
 
         trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+def test_jit(tmpdir):
+    sample_input = torch.rand(1, 3, 32, 256, 256)
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = VideoClassifier(2, pretrained=False)
+    model.eval()
+
+    # pytorchvideo only works with `torch.jit.trace`
+    model = torch.jit.trace(model, sample_input)
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(sample_input)
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 2])
