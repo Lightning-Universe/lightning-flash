@@ -145,8 +145,8 @@ class _Preprocessor(torch.nn.Module):
         self._collate_context = CurrentFuncContext("collate", preprocess)
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
+    @staticmethod
     def _extract_metadata(
-        self,
         samples: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
         metadata = [s.pop(DefaultDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
@@ -229,8 +229,18 @@ class _Postprocessor(torch.nn.Module):
         self.save_fn = convert_to_modules(save_fn)
         self.save_per_sample = convert_to_modules(save_per_sample)
 
+    @staticmethod
+    def _extract_metadata(batch: Any, ) -> Tuple[Any, Optional[Any]]:
+        if isinstance(batch, Mapping):
+            return batch, batch.get(DefaultDataKeys.METADATA, None)
+        return batch, None
+
     def forward(self, batch: Sequence[Any]):
+        batch, metadata = self._extract_metadata(batch)
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
+        if metadata:
+            for sample, sample_metadata in zip(uncollated, metadata):
+                sample[DefaultDataKeys.METADATA] = sample_metadata
 
         final_preds = type(uncollated)([self.serializer(self.per_sample_transform(sample)) for sample in uncollated])
 
