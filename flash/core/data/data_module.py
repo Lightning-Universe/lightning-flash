@@ -264,20 +264,13 @@ class DataModule(pl.LightningDataModule):
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
+        shuffle: bool = False
         if self.sampler is None:
             shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
-            return DataLoader(
-                train_ds,
-                batch_size=self.batch_size,
-                shuffle=shuffle,
-                num_workers=self.num_workers,
-                pin_memory=True,
-                drop_last=True,
-                collate_fn=self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
-            )
         return DataLoader(
             train_ds,
             batch_size=self.batch_size,
+            shuffle=shuffle,
             sampler=self.sampler,
             num_workers=self.num_workers,
             pin_memory=True,
