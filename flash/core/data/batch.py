@@ -230,7 +230,7 @@ class _Postprocessor(torch.nn.Module):
         self.save_per_sample = convert_to_modules(save_per_sample)
 
     @staticmethod
-    def _extract_metadata(batch: Any, ) -> Tuple[Any, Optional[Any]]:
+    def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
         if isinstance(batch, Mapping):
             return batch, batch.get(DefaultDataKeys.METADATA, None)
         return batch, None
