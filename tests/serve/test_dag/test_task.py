@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pickle
 from collections import namedtuple
 

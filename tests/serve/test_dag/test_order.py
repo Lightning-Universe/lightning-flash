@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pytest
 
 from flash.core.serve.dag.order import ndependencies, order

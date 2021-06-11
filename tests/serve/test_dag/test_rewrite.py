@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from flash.core.serve.dag.rewrite import args, head, RewriteRule, RuleSet, Traverser, VAR
 
 

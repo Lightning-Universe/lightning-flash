@@ -5,8 +5,6 @@
 credits: https://github.com/penguinolog/backports.cached_property
 """
 
-from __future__ import annotations
-
 # Standard Library
 import concurrent.futures
 import sys
