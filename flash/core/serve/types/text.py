@@ -34,7 +34,7 @@ class Text(BaseType):
             try:
                 from transformers import AutoTokenizer
             except (ImportError, ModuleNotFoundError) as e:  # pragma: no cover
-                msg = f"install the 'transformers' package to make use of this feature"
+                msg = "install the 'transformers' package to make use of this feature"
                 warnings.warn(msg, UserWarning)
                 raise e
             self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer)

@@ -216,7 +216,7 @@ def setup_http_app(composition: Composition, debug: bool) -> FastAPI:
             f"{ep_proto.route}/dag_json",
             name=f"{ep_name} JSON DAG",
             tags=[ep_name],
-            summary=f"JSON representatino of DAG",
+            summary="JSON representatino of DAG",
             response_model=MergedJSON,
         )(_build_dag_json(
             components=composition.components,

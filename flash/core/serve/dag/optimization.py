@@ -6,6 +6,7 @@ from enum import Enum
 
 from flash.core.serve.dag.task import flatten, get, get_dependencies, ishashable, istask, reverse_dict, subs, toposort
 from flash.core.serve.dag.utils import key_split
+from flash.core.serve.dag.utils_test import add, inc, mul
 
 
 def cull(dsk, keys):
@@ -595,9 +596,9 @@ def fuse(
                     no_new_edges = len(edges) == num_children_edges
                     if not no_new_edges:
                         fudge += 1
-                    if ((num_nodes + fudge) / height <= ave_width and
-                        # Sanity check; don't go too deep if new levels introduce new edge dependencies
-                        (no_new_edges or height < max_depth_new_edges)):
+
+                    # Sanity check; don't go too deep if new levels introduce new edge dependencies
+                    if ((num_nodes + fudge) / height <= ave_width and (no_new_edges or height < max_depth_new_edges)):
                         # Perform substitutions as we go
                         val = subs(dsk[parent], child_key, child_task)
                         deps_parent.remove(child_key)
@@ -698,10 +699,10 @@ def fuse(
                     no_new_edges = len(edges) == num_children_edges
                     if not no_new_edges:
                         fudge += 1
+                    # Sanity check; don't go too deep if new levels introduce new edge dependencies
                     if ((num_nodes + fudge) / height <= ave_width and num_single_nodes <= ave_width
-                        and width <= max_width and height <= max_height and
-                        # Sanity check; don't go too deep if new levels introduce new edge dependencies
-                        (no_new_edges or height < max_depth_new_edges)):
+                        and width <= max_width and height <= max_height  # noqa E129
+                        and (no_new_edges or height < max_depth_new_edges)):
                         # Perform substitutions as we go
                         val = dsk[parent]
                         children_deps = set()

@@ -81,9 +81,9 @@ def test_data_pipeline_str():
         deserializer=cast(Deserializer, "deserializer"),
     )
 
-    assert str(data_pipeline) == (
-        "DataPipeline(data_source=data_source, deserializer=deserializer, preprocess=preprocess, postprocess=postprocess, serializer=serializer)"
-    )
+    expected = "data_source=data_source, deserializer=deserializer, "
+    expected += "preprocess=preprocess, postprocess=postprocess, serializer=serializer"
+    assert str(data_pipeline) == (f"DataPipeline({expected})")
 
 
 @pytest.mark.parametrize("use_preprocess", [False, True])

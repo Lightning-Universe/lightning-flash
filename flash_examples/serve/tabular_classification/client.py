@@ -22,5 +22,5 @@ download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 df = pd.read_csv("./data/titanic/predict.csv")
 text = str(df.to_csv())
 body = {"session": "UUID", "payload": {"inputs": {"data": text}}}
-resp = requests.post(f"http://127.0.0.1:8000/predict", json=body)
+resp = requests.post("http://127.0.0.1:8000/predict", json=body)
 print(resp.json())

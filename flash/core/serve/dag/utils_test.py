@@ -7,3 +7,7 @@ def inc(x):
 
 def add(x, y):
     return x + y
+
+
+def muk(x, y):
+    return x * y

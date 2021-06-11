@@ -11,7 +11,7 @@ import torch
 try:
     from PIL import Image as PILImage
 except (ImportError, ModuleNotFoundError) as e:  # pragma: no cover
-    msg = f"install the 'Pillow' package to make use of this feature"
+    msg = "install the 'Pillow' package to make use of this feature"
     raise ValueError(msg) from e
 
 from flash.core.serve.types.base import BaseType

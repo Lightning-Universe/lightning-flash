@@ -80,7 +80,8 @@ from __future__ import annotations
 from collections import defaultdict
 from math import log
 
-from flash.core.serve.dag.task import get_dependencies, getcycle, reverse_dict
+from flash.core.serve.dag.task import get_dependencies, get_deps, getcycle, reverse_dict
+from flash.core.serve.dag.utils_test import add, inc
 
 
 def order(dsk, dependencies=None):

@@ -47,7 +47,7 @@ class Endpoint:
                 f"route={self.route} of type={type(self.route)}"
             )
         if not self.route.startswith("/"):
-            raise ValueError(f"route must begin with a `slash` character (ie `/`).")
+            raise ValueError("route must begin with a `slash` character (ie `/`).")
 
         for k in tuple(self.inputs.keys()):
             v = self.inputs[k]
@@ -236,7 +236,7 @@ class Parameter:
 
         # assert not same instance
         if id(other) == id(self):
-            raise RuntimeError(f"Cannot compose a parameters of same components")
+            raise RuntimeError("Cannot compose a parameters of same components")
 
         # assert bitshift directionality is acceptable for source/target map
         source = other if dunder_meth_called == "__lshift__" else self
@@ -284,7 +284,7 @@ class Parameter:
 class DictAttrAccessBase:
 
     def __grid_fields__(self) -> Iterator[str]:
-        for field in dataclasses.fields(self):
+        for field in dataclasses.fields(self):  # noqa F402
             yield field.name
 
     def __getitem__(self, item) -> Parameter:

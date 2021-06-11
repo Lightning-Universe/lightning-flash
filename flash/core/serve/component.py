@@ -61,8 +61,8 @@ def _validate_subclass_init_signature(cls: Type[ModelComponent]):
     params = inspect.signature(cls.__init__).parameters
     if len(params) > 3:
         raise SyntaxError(
-            f"__init__ can only have 1 or 2 parameters. Must conform to "
-            f"specification: (`'self', 'model', Optional['config']`)"
+            "__init__ can only have 1 or 2 parameters. Must conform to "
+            "specification: (`'self', 'model', Optional['config']`)"
         )
     for idx, param in enumerate(params.keys()):
         if (idx == 1) and (param != "model"):
@@ -132,7 +132,7 @@ def _validate_config_args(config: Optional[Dict[str, Union[str, int, float, byte
         raise TypeError(f"Config must be {dict}. Recieved config={config}")
 
     if len(config) == 0:
-        raise ValueError(f"cannot set dict of length < 1 for `config`")
+        raise ValueError("cannot set dict of length < 1 for `config`")
 
     for k, v in config.items():
         if not isinstance(k, str):
