@@ -60,40 +60,39 @@ def global_datadir(tmp_path_factory, original_global_datadir):
     return prep_global_datadir(tmp_path_factory, original_global_datadir)
 
 
-@pytest.fixture(scope="session")
-def squeezenet1_1_model():
-    model = torchvision.models.squeezenet1_1(pretrained=True).eval()
-    yield model
+if _TORCHVISION_AVAILABLE:
 
+    @pytest.fixture(scope="session")
+    def squeezenet1_1_model():
+        model = torchvision.models.squeezenet1_1(pretrained=True).eval()
+        yield model
 
-@pytest.fixture(scope="session")
-def lightning_squeezenet1_1_obj():
-    from tests.serve.models import LightningSqueezenet
+    @pytest.fixture(scope="session")
+    def lightning_squeezenet1_1_obj():
+        from tests.serve.models import LightningSqueezenet
 
-    model = LightningSqueezenet()
-    model.eval()
-    yield model
+        model = LightningSqueezenet()
+        model.eval()
+        yield model
 
+    @pytest.fixture(scope="session")
+    def squeezenet_gridmodel(squeezenet1_1_model, session_global_datadir):
+        from flash.core.serve import GridModel
 
-@pytest.fixture(scope="session")
-def squeezenet_gridmodel(squeezenet1_1_model, session_global_datadir):
-    from flash.core.serve import GridModel
+        trace = torch.jit.trace(squeezenet1_1_model.eval(), (torch.rand(1, 3, 224, 224), ))
+        fpth = str(session_global_datadir / "squeezenet_jit_trace.pt")
+        torch.jit.save(trace, fpth)
 
-    trace = torch.jit.trace(squeezenet1_1_model.eval(), (torch.rand(1, 3, 224, 224), ))
-    fpth = str(session_global_datadir / "squeezenet_jit_trace.pt")
-    torch.jit.save(trace, fpth)
+        model = GridModel(fpth)
+        yield (model, fpth)
 
-    model = GridModel(fpth)
-    yield (model, fpth)
+    @pytest.fixture()
+    def lightning_squeezenet_checkpoint_path(tmp_path):
+        from tests.serve.models import LightningSqueezenet
 
-
-@pytest.fixture()
-def lightning_squeezenet_checkpoint_path(tmp_path):
-    from tests.serve.models import LightningSqueezenet
-
-    model = LightningSqueezenet()
-    state_dict = {"state_dict": model.state_dict()}
-    path = tmp_path / "model.pth"
-    torch.save(state_dict, path)
-    yield path
-    path.unlink()
+        model = LightningSqueezenet()
+        state_dict = {"state_dict": model.state_dict()}
+        path = tmp_path / "model.pth"
+        torch.save(state_dict, path)
+        yield path
+        path.unlink()
