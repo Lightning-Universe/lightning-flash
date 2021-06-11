@@ -6,11 +6,10 @@ from typing import Optional
 import numpy as np
 import torch
 
-try:
+from flash.core.utilities.imports import _PIL_AVAILABLE
+
+if _PIL_AVAILABLE:
     from PIL import Image as PILImage
-except (ImportError, ModuleNotFoundError) as e:  # pragma: no cover
-    msg = "install the 'Pillow' package to make use of this feature"
-    raise ValueError(msg) from e
 
 from flash.core.serve.types.base import BaseType
 

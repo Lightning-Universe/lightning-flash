@@ -1,12 +1,14 @@
 import base64
-from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 
 from flash.core.serve.types import Image
+from flash.core.utilities.imports import _PIL_AVAILABLE
 
 
+@pytest.mark.skipif(not _PIL_AVAILABLE, reason="library PIL is not installed.")
 def test_deserialize_serialize(session_global_datadir):
 
     with (session_global_datadir / "cat.jpg").open("rb") as f:
