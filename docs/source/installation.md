@@ -8,7 +8,7 @@ Flash is tested on Python 3.6+, and PyTorch 1.6.
 pip install lightning-flash
 ```
 
-Optionally, you can install Flash with extra pacakges for each domain or all domains.
+Optionally, you can install Flash with extra packages for each domain or all domains.
 ```bash
 pip install 'lightning-flash[image]'
 pip install 'lightning-flash[image_style_transfer]'
