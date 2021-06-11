@@ -18,3 +18,4 @@ uvicorn[standard]>=0.12.0,<0.14.0
 aiofiles
 jinja2
 importlib-metadata>=0.12,<3;python_version<"3.8"
+torchvision
