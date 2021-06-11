@@ -1,5 +1,5 @@
 
-.. _multi_label_classification:
+.. _image_classification_multi_label:
 
 ################################
 Multi-label Image Classification

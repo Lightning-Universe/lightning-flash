@@ -21,7 +21,6 @@ import flash
 from flash.core.classification import Labels
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
-from flash.image.classification.data import ImageClassificationPreprocess
 
 # 1. Download the data
 # This is a subset of the movie poster genre prediction data set from the paper

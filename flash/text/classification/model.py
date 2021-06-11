@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type,
 
 import torch
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 
@@ -43,6 +43,7 @@ class TextClassifier(ClassificationTask):
         self,
         num_classes: int,
         backbone: str = "prajjwal1/bert-medium",
+        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
@@ -62,12 +63,12 @@ class TextClassifier(ClassificationTask):
 
         super().__init__(
             model=None,
-            loss_fn=None,
+            loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            serializer=serializer or Labels(multi_label=multi_label),
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
 
@@ -78,49 +79,32 @@ class TextClassifier(ClassificationTask):
         # see huggingface's BertForSequenceClassification
         return self.model.bert
 
-    def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None
-    ):
-        return self.model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            position_ids=position_ids,
-            head_mask=head_mask,
-            inputs_embeds=inputs_embeds,
-            labels=labels,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict
-        )
+    def forward(self, batch: Dict[str, torch.Tensor]):
+        return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
+
+    def to_loss_format(self, x) -> torch.Tensor:
+        if isinstance(x, SequenceClassifierOutput):
+            x = x.logits
+        return super().to_loss_format(x)
+
+    def to_metrics_format(self, x) -> torch.Tensor:
+        if isinstance(x, SequenceClassifierOutput):
+            x = x.logits
+        return super().to_metrics_format(x)
 
     def step(self, batch, batch_idx) -> dict:
-        output = {}
-        out = self.forward(**batch)
-        loss, logits = out[:2]
-        output["loss"] = loss
-        output["y_hat"] = logits
-        if isinstance(logits, SequenceClassifierOutput):
-            logits = logits.logits
-        probs = torch.softmax(logits, 1)
-        output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
-        return output
+        target = batch.pop("labels")
+        batch = (batch, target)
+        return super().step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self(**batch)
+        return self(batch)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["val_accuracy"] > 0.730
+        if self.hparams.multi_label:
+            assert history[-1]["val_f1"] > 0.45
+        else:
+            assert history[-1]["val_accuracy"] > 0.73
