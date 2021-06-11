@@ -700,7 +700,7 @@ def fuse(
                     # Sanity check; don't go too deep if new levels introduce new edge dependencies
                     if ((num_nodes + fudge) / height <= ave_width and num_single_nodes <= ave_width
                         and width <= max_width and height <= max_height  # noqa E129
-                        and (no_new_edges or height < max_depth_new_edges)):
+                        and (no_new_edges or height < max_depth_new_edges)):  # noqa E129
                         # Perform substitutions as we go
                         val = dsk[parent]
                         children_deps = set()

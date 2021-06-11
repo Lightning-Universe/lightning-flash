@@ -277,8 +277,13 @@ def test_inline_functions_protects_output_keys():
 
 
 def test_functions_of():
-    a = lambda x: x
-    b = lambda x: x
+
+    def a(x):
+        return x
+
+    def b(x):
+        return x
+
     assert functions_of((a, 1)) == set([a])
     assert functions_of((a, (b, 1))) == set([a, b])
     assert functions_of((a, [(b, 1)])) == set([a, b])

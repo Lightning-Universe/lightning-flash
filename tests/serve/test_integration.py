@@ -479,7 +479,7 @@ def test_composition_from_url_torchscript_gridmodel(tmp_path):
 
     TorchScript (.pt) can be downloaded at TORCHSCRIPT_DOWNLOAD_URL
     """
-    TORCHSCRIPT_DOWNLOAD_URL = "https://github.com/pytorch/pytorch/raw/95489b590f00801bdee7f41783f30874883cf6bb/test/jit/fixtures/test_versioned_div_tensor_inplace_v3.pt"
+    TORCHSCRIPT_DOWNLOAD_URL = "https://github.com/pytorch/pytorch/raw/95489b590f00801bdee7f41783f30874883cf6bb/test/jit/fixtures/test_versioned_div_tensor_inplace_v3.pt"  # noqa E501
 
     class ComponentTwoModels(ModelComponent):
 

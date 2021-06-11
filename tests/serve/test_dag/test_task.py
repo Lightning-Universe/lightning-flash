@@ -218,10 +218,10 @@ def test_subs_unexpected_hashable_key():
 def test_quote():
     literals = [[1, 2, 3], (add, 1, 2), [1, [2, 3]], (add, 1, (add, 2, 3)), {"x": "x"}]
 
-    for l in literals:
-        assert get({"x": quote(l)}, "x") == l
+    for le in literals:
+        assert get({"x": quote(le)}, "x") == le
 
 
 def test_literal_serializable():
-    l = literal((add, 1, 2))
-    assert pickle.loads(pickle.dumps(l)).data == (add, 1, 2)
+    le = literal((add, 1, 2))
+    assert pickle.loads(pickle.dumps(le)).data == (add, 1, 2)

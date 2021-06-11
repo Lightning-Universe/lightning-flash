@@ -104,7 +104,8 @@ class TestCachedProperty:
             tpr = concurrent.futures.ThreadPoolExecutor(max_workers=num_threads, thread_name_prefix="test")
             futures = [tpr.submit(lambda: item.cost) for _ in range(num_threads)]
             _, not_done = concurrent.futures.wait(futures)
-            assert len(not_done) == 0  #  "Threads not stopped"
+            # "Threads not stopped"
+            assert len(not_done) == 0
         finally:
             sys.setswitchinterval(orig_si)
 
@@ -135,14 +136,13 @@ class TestCachedProperty:
 
         with pytest.raises(
             TypeError,
-            match=
-            "The '__dict__' attribute on 'MyMeta' instance does not support item assignment for caching 'prop' property.",
+            match="The '__dict__' attribute on 'MyMeta' instance does not support",
         ):
             MyClass.prop
 
     def test_reuse_different_names(self):
         """Disallow this case because decorated function a would not be cached."""
-        with pytest.raises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError):
 
             # noinspection PyUnusedLocal
             class ReusedCachedProperty:  # NOSONAR
