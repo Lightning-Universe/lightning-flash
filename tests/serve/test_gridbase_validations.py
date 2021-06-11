@@ -2,6 +2,7 @@ import pytest
 
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types import Number
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 
 def test_metaclass_raises_if_expose_decorator_not_applied_to_method():
@@ -166,6 +167,7 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
                 return param
 
 
+@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
 def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_method_parameters(
     lightning_squeezenet1_1_obj,
 ):
@@ -191,6 +193,7 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
         _ = FailedExposedDecorator(comp)
 
 
+@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
 def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_obj):
     """This occurs when the instance is being initialized.
 

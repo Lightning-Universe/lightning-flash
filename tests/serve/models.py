@@ -2,10 +2,13 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
-from torchvision.models import squeezenet1_1
 
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types import Image, Label, Number, Repeated
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.models import squeezenet1_1
 
 CWD = Path(__file__).parent.joinpath("data").absolute()
 
