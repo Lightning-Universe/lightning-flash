@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from flash.core.serve.component import ModelComponent
 from flash.core.serve.composition import Composition
 from flash.core.serve.core import Endpoint, GridModel

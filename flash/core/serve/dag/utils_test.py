@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def inc(x):
     return x + 1
 

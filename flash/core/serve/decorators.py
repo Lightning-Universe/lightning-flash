@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from dataclasses import dataclass, field, fields
 from functools import partial, wraps
 from keyword import iskeyword

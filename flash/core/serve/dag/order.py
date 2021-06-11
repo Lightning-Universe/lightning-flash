@@ -75,7 +75,6 @@ Work towards *small goals* with *big steps*.
     This relies on the regularity of graph constructors like dask.array to be a
     good proxy for ordering.  This is usually a good idea and a sane default.
 """
-from __future__ import annotations
 
 from collections import defaultdict
 from math import log

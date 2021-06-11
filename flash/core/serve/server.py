@@ -1,7 +1,4 @@
-from __future__ import annotations
-
 import os
-from typing import TYPE_CHECKING
 
 from flash.core.serve.interfaces.http import setup_http_app
 from flash.core.utilities.imports import _FASTAPI_AVAILABLE, _UVICORN_AVAILABLE

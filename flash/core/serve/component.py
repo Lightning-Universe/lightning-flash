@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import inspect
 from dataclasses import replace
 from functools import wraps

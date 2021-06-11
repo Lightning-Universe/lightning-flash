@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Dict, ForwardRef, Optional, Tuple, TYPE_CHECKING
 
 from flash.core.serve.types import Repeated

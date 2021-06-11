@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import itertools
 from dataclasses import asdict
 from typing import Dict, List, Tuple, Union

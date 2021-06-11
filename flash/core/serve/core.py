@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dataclasses
 from dataclasses import dataclass, field, make_dataclass
 from pathlib import Path

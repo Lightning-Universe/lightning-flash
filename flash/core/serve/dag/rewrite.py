@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections import deque
 
 from flash.core.serve.dag.task import istask, subs

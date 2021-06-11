@@ -1,7 +1,6 @@
 """
 NOTICE: Some methods in this file have been modified from their original source.
 """
-from __future__ import annotations
 
 import functools
 import re
