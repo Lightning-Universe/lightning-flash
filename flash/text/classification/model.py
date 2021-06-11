@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type,
 
 import torch
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 
@@ -46,7 +46,7 @@ class TextClassifier(ClassificationTask):
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
+        learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
@@ -68,7 +68,7 @@ class TextClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            serializer=serializer or Labels(multi_label=multi_label),
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
 

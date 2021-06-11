@@ -357,11 +357,15 @@ class DataModule(pl.LightningDataModule):
                 "`val_split` should be `None` when the dataset is built with an IterableDataset."
             )
 
-        train_num_samples = len(train_dataset)
-        val_num_samples = int(train_num_samples * val_split)
-        val_indices = list(np.random.choice(range(train_num_samples), val_num_samples, replace=False))
-        train_indices = [i for i in range(train_num_samples) if i not in val_indices]
-        return SplitDataset(train_dataset, train_indices), SplitDataset(train_dataset, val_indices)
+        val_num_samples = int(len(train_dataset) * val_split)
+        indices = list(range(len(train_dataset)))
+        np.random.shuffle(indices)
+        val_indices = indices[:val_num_samples]
+        train_indices = indices[val_num_samples:]
+        return (
+            SplitDataset(train_dataset, train_indices, use_duplicated_indices=True),
+            SplitDataset(train_dataset, val_indices, use_duplicated_indices=True),
+        )
 
     @classmethod
     def from_data_source(
