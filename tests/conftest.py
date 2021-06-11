@@ -80,7 +80,7 @@ def lightning_squeezenet1_1_obj():
 
 
 @pytest.fixture(scope="session")
-def squeezenet_gridmodel(squeezenet1_1_model, session_global_datadir) -> Tuple[GridModel, str]:
+def squeezenet_gridmodel(squeezenet1_1_model, session_global_datadir):
     from flash.core.serve import GridModel
 
     trace = torch.jit.trace(squeezenet1_1_model.eval(), (torch.rand(1, 3, 224, 224), ))
