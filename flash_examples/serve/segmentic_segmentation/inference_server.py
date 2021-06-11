@@ -14,12 +14,9 @@
 
 # todo: (tchaton) This script is currently not working.
 
-from flash import FlashServeModel
 from flash.image import SemanticSegmentation
 
-model = FlashServeModel(
-    SemanticSegmentation,
-    "https://flash-weights.s3.amazonaws.com/semantic_segmentation_model.pt",
+model = SemanticSegmentation.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/semantic_segmentation_model.pt"
 )
-
 model.serve()

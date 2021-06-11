@@ -4,8 +4,6 @@ From Flash to Production
 
 Flash makes it simple to deploy models in production.
 
-Use a :class:`~flash.FlashServeModel` and pass as arguments a :class:`~flash.Task` class and path or url to an associated checkpoint to serve.
-
 Server Side
 ^^^^^^^^^^^
 

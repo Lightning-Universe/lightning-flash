@@ -119,13 +119,12 @@ print(predictions)
 
 ### Serving
 
-Note: `Serve` is a framework agnostic serving engine ! [Learn more](flash_examples/serve/generic/boston_prediction/inference_server.py)
+`Serve` is a framework agnostic serving engine ! [Learn more](flash_examples/serve/generic/boston_prediction/inference_server.py)
 
 ```python
-from flash import FlashServeModel
 from flash.text import TranslationTask
 
-model = FlashServeModel(TranslationTask, "https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
+model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 model.serve()
 ```
 

@@ -11,12 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash import FlashServeModel
 from flash.tabular import TabularClassifier
 
-model = FlashServeModel(
-    TabularClassifier,
-    "https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt",
-)
-
+model = TabularClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt")
 model.serve()

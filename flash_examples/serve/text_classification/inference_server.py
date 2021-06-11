@@ -11,12 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash import FlashServeModel
 from flash.text import TextClassifier
 
-model = FlashServeModel(
-    TextClassifier,
-    "/Users/thomas/Documents/GitHub/lightning-flash/text_classification_model.pt",
-)
-
+model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
 model.serve()

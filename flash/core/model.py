@@ -41,6 +41,7 @@ from flash.core.data.process import (
 )
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
+from flash.core.serve import Composition, expose, ModelComponent
 from flash.core.utilities.apply_func import get_callable_dict
 
 
@@ -586,3 +587,42 @@ class Task(LightningModule):
         # used only for CI
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
+
+    def serve(self, host: str = "127.0.0.1", port: int = 8000) -> 'Composition':
+        from flash.core.serve.flash_components import FlashInputs, FlashOutputs
+
+        class FlashServeModelComponent(ModelComponent):
+
+            def __init__(self, model):
+                self.model = model
+                self.model.eval()
+                self.data_pipeline = self.model.build_data_pipeline()
+                self.worker_preprocessor = self.data_pipeline.worker_preprocessor(
+                    RunningStage.PREDICTING, is_serving=True
+                )
+                self.device_preprocessor = self.data_pipeline.device_preprocessor(RunningStage.PREDICTING)
+                self.postprocessor = self.data_pipeline.postprocessor(RunningStage.PREDICTING, is_serving=True)
+                # todo (tchaton) Remove this hack
+                self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
+                self.device = self.model.device
+
+            @expose(
+                inputs={"inputs": FlashInputs(self.data_pipeline.deserialize_processor())},
+                outputs={"outputs": FlashOutputs(self.data_pipeline.serialize_processor())},
+            )
+            def predict(self, inputs):
+                with torch.no_grad():
+                    inputs = self.worker_preprocessor(inputs)
+                    if self.extra_arguments:
+                        inputs = self.model.transfer_batch_to_device(inputs, self.device, 0)
+                    else:
+                        inputs = self.model.transfer_batch_to_device(inputs, self.device)
+                    inputs = self.device_preprocessor(inputs)
+                    preds = self.model.predict_step(inputs, 0)
+                    preds = self.postprocessor(preds)
+                    return preds
+
+        comp = FlashServeModelComponent(self)
+        composition = Composition(predict=comp)
+        composition.serve(host=host, port=port)
+        return composition
