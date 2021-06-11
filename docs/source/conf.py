@@ -92,6 +92,7 @@ intersphinx_mapping = {
     "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
     "pytorchvideo": ("https://pytorchvideo.readthedocs.io/en/latest/", None),
     "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
+    "fiftyone": ("https://voxel51.com/docs/fiftyone/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
