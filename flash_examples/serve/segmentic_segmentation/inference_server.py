@@ -11,9 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# todo: (tchaton) This script is currently not working.
-
 from flash.image import SemanticSegmentation
 
 model = SemanticSegmentation.load_from_checkpoint(
