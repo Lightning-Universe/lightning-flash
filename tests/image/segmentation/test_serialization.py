@@ -32,8 +32,8 @@ class TestSemanticSegmentationLabels:
         sample[3, 0, 1] = 1  # add peak in class 4
 
         classes = serial.serialize({DefaultDataKeys.PREDS: sample})
-        assert classes[1, 2] == 1
-        assert classes[0, 1] == 3
+        assert torch.tensor(classes)[1, 2] == 1
+        assert torch.tensor(classes)[0, 1] == 3
 
     # TODO: implement me
     def test_create_random_labels(self):

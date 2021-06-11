@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -20,7 +20,7 @@ from flash.core.classification import LabelsState
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Preprocess
+from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.data.dataset import (
     _compute_normalization,
@@ -109,6 +109,57 @@ class TabularCSVDataSource(TabularDataFrameDataSource):
         return super().predict_load_data(pd.read_csv(data), dataset=dataset)
 
 
+class TabularDeserializer(Deserializer):
+
+    def __init__(
+        self,
+        cat_cols: Optional[List[str]] = None,
+        num_cols: Optional[List[str]] = None,
+        target_col: Optional[str] = None,
+        mean: Optional[DataFrame] = None,
+        std: Optional[DataFrame] = None,
+        codes: Optional[Dict[str, Any]] = None,
+        target_codes: Optional[Dict[str, Any]] = None,
+        classes: Optional[List[str]] = None,
+        is_regression: bool = True
+    ):
+
+        self.cat_cols = cat_cols
+        self.num_cols = num_cols
+        self.target_col = target_col
+        self.mean = mean
+        self.std = std
+        self.codes = codes
+        self.target_codes = target_codes
+        self.classes = classes
+        self.is_regression = is_regression
+
+    @staticmethod
+    def _convert_row(row):
+        _row = []
+        for c in row:
+            try:
+                _row.append(float(c))
+            except Exception:
+                _row.append(c)
+        return _row
+
+    def deserialize(self, data: str) -> Any:
+        columns = data.split("\n")[0].split(',')
+        df = pd.DataFrame([TabularDeserializer._convert_row(x.split(',')[1:]) for x in data.split('\n')[1:-1]],
+                          columns=columns)
+        df = _pre_transform([df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col,
+                            self.target_codes)[0]
+
+        cat_vars = _to_cat_vars_numpy(df, self.cat_cols)
+        num_vars = _to_num_vars_numpy(df, self.num_cols)
+
+        cat_vars = np.stack(cat_vars, 1)
+        num_vars = np.stack(num_vars, 1)
+
+        return [{DefaultDataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
+
+
 class TabularPreprocess(Preprocess):
 
     def __init__(
@@ -126,6 +177,7 @@ class TabularPreprocess(Preprocess):
         target_codes: Optional[Dict[str, Any]] = None,
         classes: Optional[List[str]] = None,
         is_regression: bool = True,
+        deserializer: Optional[Deserializer] = None
     ):
         self.cat_cols = cat_cols
         self.num_cols = num_cols
@@ -151,6 +203,17 @@ class TabularPreprocess(Preprocess):
                 ),
             },
             default_data_source=DefaultDataSources.CSV,
+            deserializer=deserializer or TabularDeserializer(
+                cat_cols=cat_cols,
+                num_cols=num_cols,
+                target_col=target_col,
+                mean=mean,
+                std=std,
+                codes=codes,
+                target_codes=target_codes,
+                classes=classes,
+                is_regression=is_regression
+            )
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
@@ -172,10 +235,17 @@ class TabularPreprocess(Preprocess):
         return cls(**state_dict)
 
 
+class TabularPostprocess(Postprocess):
+
+    def uncollate(self, batch: Any) -> Any:
+        return batch
+
+
 class TabularData(DataModule):
     """Data module for tabular tasks"""
 
     preprocess_cls = TabularPreprocess
+    postprocess_cls = TabularPostprocess
 
     @property
     def codes(self) -> Dict[str, str]:
@@ -222,9 +292,9 @@ class TabularData(DataModule):
         val_data_frame: Optional[DataFrame],
         test_data_frame: Optional[DataFrame],
         predict_data_frame: Optional[DataFrame],
-        target_col: str,
-        num_cols: List[str],
-        cat_cols: List[str],
+        target_fields: str,
+        numerical_fields: List[str],
+        categorical_fields: List[str],
     ) -> Tuple[float, float, List[str], Dict[str, Any], Dict[str, Any]]:
 
         if train_data_frame is None:
@@ -243,15 +313,16 @@ class TabularData(DataModule):
         if predict_data_frame is not None:
             data_frames += [predict_data_frame]
 
-        mean, std = _compute_normalization(data_frames[0], num_cols)
-        classes = list(data_frames[0][target_col].unique())
+        mean, std = _compute_normalization(data_frames[0], numerical_fields)
 
-        if data_frames[0][target_col].dtype == object:
-            # if the target_col is a category, not an int
-            target_codes = _generate_codes(data_frames, [target_col])
+        classes = list(data_frames[0][target_fields].unique())
+
+        if data_frames[0][target_fields].dtype == object:
+            # if the target_fields is a category, not an int
+            target_codes = _generate_codes(data_frames, [target_fields])
         else:
             target_codes = None
-        codes = _generate_codes(data_frames, cat_cols)
+        codes = _generate_codes(data_frames, categorical_fields)
 
         return mean, std, classes, codes, target_codes
 
@@ -329,13 +400,13 @@ class TabularData(DataModule):
             numerical_fields = [numerical_fields]
 
         mean, std, classes, codes, target_codes = cls.compute_state(
-            train_data_frame,
-            val_data_frame,
-            test_data_frame,
-            predict_data_frame,
-            target_fields,
-            numerical_fields,
-            categorical_fields,
+            train_data_frame=train_data_frame,
+            val_data_frame=val_data_frame,
+            test_data_frame=test_data_frame,
+            predict_data_frame=predict_data_frame,
+            target_fields=target_fields,
+            numerical_fields=numerical_fields,
+            categorical_fields=categorical_fields,
         )
 
         return cls.from_data_source(
@@ -431,9 +502,9 @@ class TabularData(DataModule):
             )
         """
         return cls.from_data_frame(
-            categorical_fields,
-            numerical_fields,
-            target_fields,
+            categorical_fields=categorical_fields,
+            numerical_fields=numerical_fields,
+            target_fields=target_fields,
             train_data_frame=pd.read_csv(train_file) if train_file is not None else None,
             val_data_frame=pd.read_csv(val_file) if val_file is not None else None,
             test_data_frame=pd.read_csv(test_file) if test_file is not None else None,

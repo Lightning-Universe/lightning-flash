@@ -103,8 +103,9 @@ def test_predict_tensor():
     model = SemanticSegmentation(2)
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
-    assert isinstance(out[0], torch.Tensor)
-    assert out[0].shape == (10, 20)
+    assert isinstance(out[0], list)
+    assert len(out[0]) == 10
+    assert len(out[0][0]) == 20
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -113,8 +114,9 @@ def test_predict_numpy():
     model = SemanticSegmentation(2)
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
-    assert isinstance(out[0], torch.Tensor)
-    assert out[0].shape == (10, 20)
+    assert isinstance(out[0], list)
+    assert len(out[0]) == 10
+    assert len(out[0][0]) == 20
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")

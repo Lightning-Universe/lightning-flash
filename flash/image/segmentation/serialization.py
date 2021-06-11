@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 
@@ -79,4 +79,4 @@ class SegmentationLabels(Serializer):
             labels_vis = K.utils.tensor_to_image(labels_vis)
             plt.imshow(labels_vis)
             plt.show()
-        return labels
+        return labels.tolist()

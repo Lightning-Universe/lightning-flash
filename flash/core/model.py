@@ -31,9 +31,17 @@ from torch.optim.optimizer import Optimizer
 import flash
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import Postprocess, Preprocess, Serializer, SerializerMapping
+from flash.core.data.process import (
+    Deserializer,
+    DeserializerMapping,
+    Postprocess,
+    Preprocess,
+    Serializer,
+    SerializerMapping,
+)
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
+from flash.core.serve import Composition, expose, ModelComponent
 from flash.core.utilities.apply_func import get_callable_dict
 
 
@@ -100,6 +108,7 @@ class Task(LightningModule):
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
+        deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
@@ -118,6 +127,7 @@ class Task(LightningModule):
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
+        self._deserializer: Optional[Deserializer] = None
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
@@ -126,6 +136,7 @@ class Task(LightningModule):
         self._data_pipeline_state: Optional[DataPipelineState] = None
 
         # Explicitly set the serializer to call the setter
+        self.deserializer = deserializer
         self.serializer = serializer
 
     def step(self, batch: Any, batch_idx: int) -> Any:
@@ -177,6 +188,7 @@ class Task(LightningModule):
         self,
         x: Any,
         data_source: Optional[str] = None,
+        deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
         """
@@ -192,12 +204,14 @@ class Task(LightningModule):
         """
         running_stage = RunningStage.PREDICTING
 
-        data_pipeline = self.build_data_pipeline(data_source or "default", data_pipeline)
-
+        data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
-        # switch to self.device when #7188 merge in Lightning
-        x = self.transfer_batch_to_device(x, next(self.parameters()).device)
+        # todo (tchaton): Remove this when sync with Lightning master.
+        if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
+            x = self.transfer_batch_to_device(x, self.device, 0)
+        else:
+            x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(running_stage)(predictions)
@@ -225,13 +239,15 @@ class Task(LightningModule):
 
     @staticmethod
     def _resolve(
+        old_deserializer: Optional[Deserializer],
         old_preprocess: Optional[Preprocess],
         old_postprocess: Optional[Postprocess],
         old_serializer: Optional[Serializer],
+        new_deserializer: Optional[Deserializer],
         new_preprocess: Optional[Preprocess],
         new_postprocess: Optional[Postprocess],
         new_serializer: Optional[Serializer],
-    ) -> Tuple[Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
+    ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
         """Resolves the correct :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
         :class:`~flash.core.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
         (:class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, or
@@ -249,6 +265,10 @@ class Task(LightningModule):
             The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`,
             and :class:`~flash.core.data.process.Serializer`.
         """
+        deserializer = old_deserializer
+        if new_deserializer is not None and type(new_deserializer) != Deserializer:
+            deserializer = new_deserializer
+
         preprocess = old_preprocess
         if new_preprocess is not None and type(new_preprocess) != Preprocess:
             preprocess = new_preprocess
@@ -261,7 +281,18 @@ class Task(LightningModule):
         if new_serializer is not None and type(new_serializer) != Serializer:
             serializer = new_serializer
 
-        return preprocess, postprocess, serializer
+        return deserializer, preprocess, postprocess, serializer
+
+    @torch.jit.unused
+    @property
+    def deserializer(self) -> Optional[Deserializer]:
+        return self._deserializer
+
+    @deserializer.setter
+    def deserializer(self, deserializer: Union[Deserializer, Mapping[str, Deserializer]]):
+        if isinstance(deserializer, Mapping):
+            deserializer = DeserializerMapping(deserializer)
+        self._deserializer = deserializer
 
     @torch.jit.unused
     @property
@@ -280,6 +311,7 @@ class Task(LightningModule):
     def build_data_pipeline(
         self,
         data_source: Optional[str] = None,
+        deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
@@ -298,7 +330,7 @@ class Task(LightningModule):
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        old_data_source, preprocess, postprocess, serializer = None, None, None, None
+        deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
 
         # Datamodule
         if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
@@ -306,6 +338,7 @@ class Task(LightningModule):
             preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
+            deserializer = getattr(self.datamodule.data_pipeline, '_deserializer', None)
 
         elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
             self.trainer.datamodule, 'data_pipeline', None
@@ -314,27 +347,32 @@ class Task(LightningModule):
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
+            deserializer = getattr(self.trainer.datamodule.data_pipeline, '_deserializer', None)
         else:
             # TODO: we should log with low severity level that we use defaults to create
             # `preprocess`, `postprocess` and `serializer`.
             pass
 
         # Defaults / task attributes
-        preprocess, postprocess, serializer = Task._resolve(
+        deserializer, preprocess, postprocess, serializer = Task._resolve(
+            deserializer,
             preprocess,
             postprocess,
             serializer,
+            self._deserializer,
             self._preprocess,
             self._postprocess,
-            self.serializer,
+            self._serializer,
         )
 
         # Datapipeline
         if data_pipeline is not None:
-            preprocess, postprocess, serializer = Task._resolve(
+            deserializer, preprocess, postprocess, serializer = Task._resolve(
+                deserializer,
                 preprocess,
                 postprocess,
                 serializer,
+                getattr(data_pipeline, '_deserializer', None),
                 getattr(data_pipeline, '_preprocess_pipeline', None),
                 getattr(data_pipeline, '_postprocess_pipeline', None),
                 getattr(data_pipeline, '_serializer', None),
@@ -348,7 +386,9 @@ class Task(LightningModule):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        data_pipeline = DataPipeline(data_source, preprocess, postprocess, serializer)
+        deserializer = deserializer or getattr(preprocess, "deserializer", None)
+
+        data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
@@ -362,10 +402,12 @@ class Task(LightningModule):
     @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._preprocess, self._postprocess, self.serializer = Task._resolve(
+        self._deserializer, self._preprocess, self._postprocess, self.serializer = Task._resolve(
+            self._deserializer,
             self._preprocess,
             self._postprocess,
-            self.serializer,
+            self._serializer,
+            getattr(data_pipeline, '_deserializer', None),
             getattr(data_pipeline, '_preprocess_pipeline', None),
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
@@ -545,3 +587,42 @@ class Task(LightningModule):
         # used only for CI
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
+
+    def serve(self, host: str = "127.0.0.1", port: int = 8000) -> 'Composition':
+        from flash.core.serve.flash_components import FlashInputs, FlashOutputs
+
+        class FlashServeModelComponent(ModelComponent):
+
+            def __init__(self, model):
+                self.model = model
+                self.model.eval()
+                self.data_pipeline = self.model.build_data_pipeline()
+                self.worker_preprocessor = self.data_pipeline.worker_preprocessor(
+                    RunningStage.PREDICTING, is_serving=True
+                )
+                self.device_preprocessor = self.data_pipeline.device_preprocessor(RunningStage.PREDICTING)
+                self.postprocessor = self.data_pipeline.postprocessor(RunningStage.PREDICTING, is_serving=True)
+                # todo (tchaton) Remove this hack
+                self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
+                self.device = self.model.device
+
+            @expose(
+                inputs={"inputs": FlashInputs(self.data_pipeline.deserialize_processor())},
+                outputs={"outputs": FlashOutputs(self.data_pipeline.serialize_processor())},
+            )
+            def predict(self, inputs):
+                with torch.no_grad():
+                    inputs = self.worker_preprocessor(inputs)
+                    if self.extra_arguments:
+                        inputs = self.model.transfer_batch_to_device(inputs, self.device, 0)
+                    else:
+                        inputs = self.model.transfer_batch_to_device(inputs, self.device)
+                    inputs = self.device_preprocessor(inputs)
+                    preds = self.model.predict_step(inputs, 0)
+                    preds = self.postprocessor(preds)
+                    return preds
+
+        comp = FlashServeModelComponent(self)
+        composition = Composition(predict=comp)
+        composition.serve(host=host, port=port)
+        return composition

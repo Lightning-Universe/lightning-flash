@@ -75,6 +75,12 @@ _PYTORCHVIDEO_AVAILABLE = _module_available("pytorchvideo")
 _MATPLOTLIB_AVAILABLE = _module_available("matplotlib")
 _TRANSFORMERS_AVAILABLE = _module_available("transformers")
 _PYSTICHE_AVAILABLE = _module_available("pystiche")
+_FASTAPI_AVAILABLE = _module_available("fastapi")
+_PYDANTIC_AVAILABLE = _module_available("pydantic")
+_GRAPHVIZ_AVAILABLE = _module_available("graphviz")
+_CYTOOLZ_AVAILABLE = _module_available("cytoolz")
+_UVICORN_AVAILABLE = _module_available("uvicorn")
+_PIL_AVAILABLE = _module_available("PIL")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -85,3 +91,4 @@ _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
 _IMAGE_AVAILABLE = _TORCHVISION_AVAILABLE and _TIMM_AVAILABLE and _KORNIA_AVAILABLE
+_SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE

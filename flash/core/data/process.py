@@ -189,7 +189,8 @@ class Preprocess(BasePreprocess, Properties):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, DataSource]] = None,
+        data_sources: Optional[Dict[str, 'DataSource']] = None,
+        deserializer: Optional['Deserializer'] = None,
         default_data_source: Optional[str] = None,
     ):
         super().__init__()
@@ -221,10 +222,22 @@ class Preprocess(BasePreprocess, Properties):
             data_sources[DefaultDataSources.DATASET] = DatasetDataSource()
 
         self._data_sources = data_sources
+        self._deserializer = deserializer
         self._default_data_source = default_data_source
-
         self._callbacks: List[FlashCallback] = []
         self._default_collate: Callable = default_collate
+
+    @property
+    def deserializer(self) -> Optional['Deserializer']:
+        return self._deserializer
+
+    @property
+    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
+
+    @property
+    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
+        return None
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
@@ -551,3 +564,33 @@ class SerializerMapping(Serializer):
     def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
         for serializer in self._serializers.values():
             serializer.attach_data_pipeline_state(data_pipeline_state)
+
+
+class Deserializer(Properties):
+    """"""
+
+    def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
+        raise NotImplementedError
+
+    def __call__(self, sample: Any) -> Any:
+        return self.deserialize(sample)
+
+
+class DeserializerMapping(Deserializer):
+    # TODO: This is essentially a duplicate of SerializerMapping, should be abstracted away somewhere
+    """"""
+
+    def __init__(self, deserializers: Mapping[str, Deserializer]):
+        super().__init__()
+
+        self._deserializers = deserializers
+
+    def deserialize(self, sample: Any) -> Any:
+        if isinstance(sample, Mapping):
+            return {key: deserializer.deserialize(sample[key]) for key, deserializer in self._deserializers.items()}
+        else:
+            raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        for deserializer in self._deserializers.values():
+            deserializer.attach_data_pipeline_state(data_pipeline_state)

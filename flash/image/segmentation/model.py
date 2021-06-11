@@ -130,8 +130,7 @@ class SemanticSegmentation(ClassificationTask):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch_input = (batch[DefaultDataKeys.INPUT])
-        preds = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
-        batch[DefaultDataKeys.PREDS] = preds
+        batch[DefaultDataKeys.PREDS] = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
         return batch
 
     def forward(self, x) -> torch.Tensor:
