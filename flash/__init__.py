@@ -24,16 +24,22 @@ if _TORCH_AVAILABLE:
     from flash.core.data.data_source import DataSource
     from flash.core.data.process import Postprocess, Preprocess, Serializer
     from flash.core.model import Task  # noqa: E402
+    from flash.core.serve import FlashServeModel
     from flash.core.trainer import Trainer  # noqa: E402
 
     _PACKAGE_ROOT = os.path.dirname(__file__)
     PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
     _IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
 
+    if _IS_TESTING:
+        from pytorch_lightning import seed_everything
+        seed_everything(42)
+
     __all__ = [
         "DataSource",
         "DataModule",
         "FlashCallback",
+        "FlashServeModel",
         "Preprocess",
         "Postprocess",
         "Serializer",

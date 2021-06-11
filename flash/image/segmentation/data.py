@@ -13,15 +13,11 @@
 # limitations under the License.
 import base64
 import os
-from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-import torchvision
-from PIL import Image
-from PIL import Image as PILImage
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -52,6 +48,7 @@ else:
 if _IMAGE_AVAILABLE:
     import torchvision
     from PIL import Image
+    from PIL import Image as PILImage
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 
 else:
@@ -158,14 +155,17 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
 class SemanticSegmentationDeserializer(Deserializer):
 
-    to_tensor = torchvision.transforms.ToTensor()
+    def __init__(self):
+
+        self.to_tensor = torchvision.transforms.ToTensor()
 
     def deserialize(self, data: str) -> torch.Tensor:
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
         img = PILImage.open(buffer, mode="r")
-        return {DefaultDataKeys.INPUT: self.to_tensor(img)}
+        img = self.to_tensor(img)
+        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.METADATA: img.shape}
 
 
 class SemanticSegmentationPreprocess(Preprocess):

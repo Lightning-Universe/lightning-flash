@@ -86,13 +86,6 @@ class Trainer(PlTrainer):
                 kwargs["fast_dev_run"] = True
         super().__init__(*args, **kwargs)
 
-    @_defaults_from_env_vars
-    def __init__(self, *args, **kwargs):
-        # used to make test run faster without changing examples.
-        if os.getenv("FLASH_TESTING") == '1':
-            kwargs["fast_dev_run"] == True
-        super().__init__(*args, **kwargs)
-
     def fit(
         self,
         model: LightningModule,

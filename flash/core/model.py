@@ -206,8 +206,11 @@ class Task(LightningModule):
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
         x = data_pipeline.worker_preprocessor(running_stage)(x)
-        # switch to self.device when #7188 merge in Lightning
-        x = self.transfer_batch_to_device(x, self.device)
+        # todo (tchaton): Remove this when sync with Lightning master.
+        if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
+            x = self.transfer_batch_to_device(x, self.device, 0)
+        else:
+            x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(running_stage)(predictions)
@@ -279,6 +282,7 @@ class Task(LightningModule):
 
         return deserializer, preprocess, postprocess, serializer
 
+    @torch.jit.unused
     @property
     def deserializer(self) -> Optional[Deserializer]:
         return self._deserializer

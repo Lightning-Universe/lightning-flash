@@ -265,6 +265,7 @@ class _Postprocessor(torch.nn.Module):
             per_sample_transform: Function to transform an individual sample
             save_fn: Function to save all data
             save_per_sample: Function to save an individual sample
+            is_serving: Whether the Postprocessor is used in serving mode.
     """
 
     def __init__(
@@ -274,7 +275,8 @@ class _Postprocessor(torch.nn.Module):
         per_sample_transform: Callable,
         serializer: Optional[Callable],
         save_fn: Optional[Callable] = None,
-        save_per_sample: bool = False
+        save_per_sample: bool = False,
+        is_serving: bool = False,
     ):
         super().__init__()
         self.uncollate_fn = convert_to_modules(uncollate_fn)
@@ -283,6 +285,7 @@ class _Postprocessor(torch.nn.Module):
         self.serializer = convert_to_modules(serializer)
         self.save_fn = convert_to_modules(save_fn)
         self.save_per_sample = convert_to_modules(save_per_sample)
+        self.is_serving = is_serving
 
     def forward(self, batch: Sequence[Any]):
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
@@ -304,7 +307,7 @@ class _Postprocessor(torch.nn.Module):
             else:
                 self.save_fn(final_preds)
         else:
-            if len(final_preds) == 1:
+            if self.is_serving and isinstance(final_preds, list) and len(final_preds) == 1:
                 return final_preds[0]
             return final_preds
 

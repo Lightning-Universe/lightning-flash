@@ -292,9 +292,9 @@ class TabularData(DataModule):
         val_data_frame: Optional[DataFrame],
         test_data_frame: Optional[DataFrame],
         predict_data_frame: Optional[DataFrame],
-        target_col: str,
-        num_cols: List[str],
-        cat_cols: List[str],
+        target_fields: str,
+        numerical_fields: List[str],
+        categorical_fields: List[str],
     ) -> Tuple[float, float, List[str], Dict[str, Any], Dict[str, Any]]:
 
         if train_data_frame is None:
@@ -313,15 +313,16 @@ class TabularData(DataModule):
         if predict_data_frame is not None:
             data_frames += [predict_data_frame]
 
-        mean, std = _compute_normalization(data_frames[0], num_cols)
-        classes = list(data_frames[0][target_col].unique())
+        mean, std = _compute_normalization(data_frames[0], numerical_fields)
 
-        if data_frames[0][target_col].dtype == object:
-            # if the target_col is a category, not an int
-            target_codes = _generate_codes(data_frames, [target_col])
+        classes = list(data_frames[0][target_fields].unique())
+
+        if data_frames[0][target_fields].dtype == object:
+            # if the target_fields is a category, not an int
+            target_codes = _generate_codes(data_frames, [target_fields])
         else:
             target_codes = None
-        codes = _generate_codes(data_frames, cat_cols)
+        codes = _generate_codes(data_frames, categorical_fields)
 
         return mean, std, classes, codes, target_codes
 
@@ -399,13 +400,13 @@ class TabularData(DataModule):
             numerical_fields = [numerical_fields]
 
         mean, std, classes, codes, target_codes = cls.compute_state(
-            train_data_frame,
-            val_data_frame,
-            test_data_frame,
-            predict_data_frame,
-            target_fields,
-            numerical_fields,
-            categorical_fields,
+            train_data_frame=train_data_frame,
+            val_data_frame=val_data_frame,
+            test_data_frame=test_data_frame,
+            predict_data_frame=predict_data_frame,
+            target_fields=target_fields,
+            numerical_fields=numerical_fields,
+            categorical_fields=categorical_fields,
         )
 
         return cls.from_data_source(
@@ -501,9 +502,9 @@ class TabularData(DataModule):
             )
         """
         return cls.from_data_frame(
-            categorical_fields,
-            numerical_fields,
-            target_fields,
+            categorical_fields=categorical_fields,
+            numerical_fields=numerical_fields,
+            target_fields=target_fields,
             train_data_frame=pd.read_csv(train_file) if train_file is not None else None,
             val_data_frame=pd.read_csv(val_file) if val_file is not None else None,
             test_data_frame=pd.read_csv(test_file) if test_file is not None else None,

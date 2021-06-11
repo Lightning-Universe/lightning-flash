@@ -171,7 +171,7 @@ class DataPipeline:
     def device_preprocessor(self, running_stage: RunningStage) -> _Preprocessor:
         return self._create_collate_preprocessors(running_stage)[2]
 
-    def postprocessor(self, running_stage: RunningStage, is_serving=True) -> _Postprocessor:
+    def postprocessor(self, running_stage: RunningStage, is_serving=False) -> _Postprocessor:
         return self._create_uncollate_postprocessors(running_stage, is_serving=is_serving)
 
     def serialize_processor(self) -> _SerializeProcessor:
@@ -446,9 +446,10 @@ class DataPipeline:
             getattr(postprocess, func_names["uncollate"]),
             getattr(postprocess, func_names["per_batch_transform"]),
             getattr(postprocess, func_names["per_sample_transform"]),
-            serializer=self._serializer if not is_serving else None,
+            serializer=None if is_serving else self._serializer,
             save_fn=save_fn,
-            save_per_sample=save_per_sample
+            save_per_sample=save_per_sample,
+            is_serving=is_serving,
         )
 
     def _attach_postprocess_to_model(
@@ -554,9 +555,11 @@ class DataPipeline:
         preprocess: Preprocess = self._preprocess_pipeline
         postprocess: Postprocess = self._postprocess_pipeline
         serializer: Serializer = self._serializer
+        deserializer: Deserializer = self._deserializer
         return (
             f"{self.__class__.__name__}("
             f"data_source={str(data_source)}, "
+            f"deserializer={deserializer}, "
             f"preprocess={preprocess}, "
             f"postprocess={postprocess}, "
             f"serializer={serializer})"

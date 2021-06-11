@@ -14,6 +14,7 @@ Lightning Flash
    installation
    custom_task
    reference/flash_to_pl
+   reference/flash_to_production
 
 .. toctree::
    :maxdepth: 1
@@ -40,6 +41,7 @@ Lightning Flash
    general/data
    general/callback
    general/registry
+   general/serve
 
 
 .. toctree::
