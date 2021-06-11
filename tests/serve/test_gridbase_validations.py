@@ -2,9 +2,10 @@ import pytest
 
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types import Number
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_AVAILABLE
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_expose_decorator_not_applied_to_method():
 
     with pytest.raises(SyntaxError, match=r"expose.* decorator"):
@@ -15,6 +16,7 @@ def test_metaclass_raises_if_expose_decorator_not_applied_to_method():
                 pass
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_more_than_one_expose_decorator_applied():
 
     with pytest.raises(SyntaxError, match=r"decorator must be applied to one"):
@@ -33,6 +35,7 @@ def test_metaclass_raises_if_more_than_one_expose_decorator_applied():
                 return param
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_first_arg_in_init_is_not_model():
 
     with pytest.raises(SyntaxError, match="__init__ must set 'model' as first"):
@@ -47,6 +50,7 @@ def test_metaclass_raises_if_first_arg_in_init_is_not_model():
                 return param
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_second_arg_is_not_config():
 
     with pytest.raises(SyntaxError, match="__init__ can only set 'config'"):
@@ -61,6 +65,7 @@ def test_metaclass_raises_if_second_arg_is_not_config():
                 return param
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_random_parameters_in_init():
 
     with pytest.raises(SyntaxError, match="__init__ can only have 1 or 2 parameters"):
@@ -75,6 +80,7 @@ def test_metaclass_raises_if_random_parameters_in_init():
                 return param
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_uses_restricted_method_name():
 
     # Restricted Name: `inputs`
@@ -167,7 +173,7 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
                 return param
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_method_parameters(
     lightning_squeezenet1_1_obj,
 ):
@@ -193,7 +199,7 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
         _ = FailedExposedDecorator(comp)
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not (_SERVE_AVAILABLE or _CYTOOLZ_AVAILABLE), reason="torchvision is not installed.")
 def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_obj):
     """This occurs when the instance is being initialized.
 
@@ -214,6 +220,7 @@ def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_o
         _ = ConfigComponent(lightning_squeezenet1_1_obj, config={})
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_ModelComponent_raises_if_model_is_empty_iterable():
     """This occurs when the instance is being initialized.
 

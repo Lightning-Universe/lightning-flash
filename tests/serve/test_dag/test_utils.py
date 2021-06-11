@@ -2,9 +2,13 @@ import operator
 from functools import partial
 
 import numpy as np
-from cytoolz import curry
+import pytest
 
 from flash.core.serve.dag.utils import funcname, partial_by_order
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE
+
+if _CYTOOLZ_AVAILABLE:
+    from cytoolz import curry
 
 
 def test_funcname_long():
@@ -17,6 +21,7 @@ def test_funcname_long():
     assert len(result) < 60
 
 
+@pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library `cytoolz` is not installed.")
 def test_funcname_cytoolz():
 
     @curry

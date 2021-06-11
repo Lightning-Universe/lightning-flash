@@ -248,4 +248,4 @@ if _SERVE_AVAILABLE:
             return self._gridserve_meta_.uid
 
 else:
-    ModelComponent = None
+    ModelComponent = object

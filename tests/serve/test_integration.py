@@ -1,13 +1,15 @@
 import base64
 
 import pytest
-from fastapi.testclient import TestClient
 
 from flash.core.serve import Composition, Endpoint
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _FASTAPI_AVAILABLE, _SERVE_AVAILABLE
+
+if _FASTAPI_AVAILABLE:
+    from fastapi.testclient import TestClient
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_resnet_18_inference_class(session_global_datadir, lightning_squeezenet1_1_obj):
     from tests.serve.models import ClassificationInference
 
@@ -35,7 +37,7 @@ def test_resnet_18_inference_class(session_global_datadir, lightning_squeezenet1
         assert expected == resp.json()
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_start_server_with_repeated_exposed(session_global_datadir, lightning_squeezenet1_1_obj):
     from tests.serve.models import ClassificationInferenceRepeated
 
@@ -61,7 +63,7 @@ def test_start_server_with_repeated_exposed(session_global_datadir, lightning_sq
         assert resp.json() == expected
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_serving_single_component_and_endpoint_no_composition(session_global_datadir, lightning_squeezenet1_1_obj):
     from tests.serve.models import ClassificationInference
 
@@ -168,7 +170,7 @@ def test_serving_single_component_and_endpoint_no_composition(session_global_dat
         }
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_serving_composed(session_global_datadir, lightning_squeezenet1_1_obj):
     from tests.serve.models import ClassificationInference, SeatClassifier
 
@@ -233,7 +235,7 @@ def test_serving_composed(session_global_datadir, lightning_squeezenet1_1_obj):
         assert resp.template.name == "dag.html"
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_composed_does_not_eliminate_endpoint_serialization(session_global_datadir, lightning_squeezenet1_1_obj):
     from tests.serve.models import ClassificationInference, SeatClassifier
 
@@ -319,7 +321,7 @@ def test_composed_does_not_eliminate_endpoint_serialization(session_global_datad
         assert resp.template.name == "dag.html"
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squeezenet1_1_obj):
     from tests.serve.models import ClassificationInference, SeatClassifier
 
@@ -459,7 +461,7 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
         }
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_cycle_in_connection_fails(session_global_datadir, lightning_squeezenet1_1_obj):
     from tests.serve.models import ClassificationInferenceComposable
 
@@ -469,7 +471,7 @@ def test_cycle_in_connection_fails(session_global_datadir, lightning_squeezenet1
         c1.outputs.cropped_img >> c1.inputs.img
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torchvision is not installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_composition_from_url_torchscript_gridmodel(tmp_path):
     from flash.core.serve import expose, GridModel, ModelComponent
     from flash.core.serve.types import Number
