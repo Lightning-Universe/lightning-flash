@@ -94,17 +94,6 @@ class TextClassifier(ClassificationTask):
         target = batch.pop("labels")
         batch = (batch, target)
         return super().step(batch, batch_idx)
-        # # output = {}
-        # # out = self.forward(**batch)
-        # # loss, logits = out[:2]
-        # # output["loss"] = loss
-        # # output["y_hat"] = logits
-        # # if isinstance(logits, SequenceClassifierOutput):
-        # #     logits = logits.logits
-        # # probs = self.to_metrics_format(logits)
-        # # # probs = torch.softmax(logits, 1)
-        # # output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
-        # return output
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self(batch)
