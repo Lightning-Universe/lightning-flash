@@ -135,9 +135,10 @@ class Task(LightningModule):
         x, y = batch
         y_hat = self(x)
         output = {"y_hat": y_hat}
+        y_hat = self.to_loss_format(output["y_hat"])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
-        y_hat = self.to_metrics_format(y_hat)
+        y_hat = self.to_metrics_format(output["y_hat"])
         for name, metric in self.metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
@@ -152,6 +153,9 @@ class Task(LightningModule):
         output["logs"] = logs
         output["y"] = y
         return output
+
+    def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
+        return x
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
         return x
