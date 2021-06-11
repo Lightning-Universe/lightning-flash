@@ -64,7 +64,7 @@ we will implement a ``ClassificationInference`` class, which overrides :class:`~
 
 First, we need make the following imports:
 
-.. code-block:: image_classification
+.. code-block::
 
     import torch
     import torchvision
@@ -84,7 +84,7 @@ The name of the inference method isn't constrained, but we will use ``classify``
 
 Our classify function will take a tensor image, apply some normalization on it, and forward it through the model.
 
-.. code-block:: image_classification
+.. code-block::
 
     def classify(img):
         img = img.float() / 255
@@ -110,7 +110,7 @@ which implements a ``serialize`` and ``deserialize`` function.
 
 .. note:: Grid Serve has already several :class:`~flash.core.serve.types.base.BaseType` built-in such as :class:`~flash.core.serve.types.image.Image` or :class:`~flash.core.serve.types.text.Text`.
 
-.. code-block:: image_classification
+.. code-bloc image_classification
 
 
     class ClassificationInference(ModelComponent):
@@ -139,7 +139,7 @@ Using the `PyTorchVision library <https://github.com/pytorch/vision>`_, we creat
 
 .. note:: TorchScript is a way to create serializable and optimizable models from PyTorch code. Any TorchScript program can be saved from a Python process and loaded in a process where there is no Python dependency.
 
-.. code-block:: image_classification
+.. code-block::
 
     model = torchvision.models.resnet18(pretrained=True).eval()
     torch.jit.script(model).save("resnet.pt")
@@ -154,7 +154,7 @@ The ``ClassificationInference`` instance will be passed as argument to a :class:
 Once the :class:`~flash.core.serve.Composition` class is instantiated, just call its :func:`~flash.core.serve.Composition.serve` method.
 
 
-.. code-block:: image_classification
+.. code-block::
 
     resnet = GridModel("resnet.pt")
     comp = ClassificationInference(resnet)
