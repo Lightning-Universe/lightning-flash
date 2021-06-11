@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
 import warnings
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from functools import wraps
 from typing import Callable, List, Optional, Union
 
@@ -27,6 +28,22 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
+
+
+def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
+    """Modified version of ``pytorch_lightning.utilities.argparse.from_argparse_args`` which populates ``valid_kwargs``
+    from ``pytorch_lightning.Trainer``."""
+    if isinstance(args, ArgumentParser):
+        args = cls.parse_argparser(args)
+
+    params = vars(args)
+
+    # we only want to pass in valid PLTrainer args, the rest may be user specific
+    valid_kwargs = inspect.signature(PlTrainer.__init__).parameters
+    trainer_kwargs = dict((name, params[name]) for name in valid_kwargs if name in params)
+    trainer_kwargs.update(**kwargs)
+
+    return cls(**trainer_kwargs)
 
 
 def _defaults_from_env_vars(fn: Callable) -> Callable:
@@ -180,3 +197,9 @@ class Trainer(PlTrainer):
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return add_argparse_args(PlTrainer, *args, **kwargs)
+
+    @classmethod
+    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> 'Trainer':
+        # the lightning trainer implementation does not support subclasses.
+        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        return from_argparse_args(Trainer, args, **kwargs)

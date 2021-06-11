@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 
@@ -111,11 +111,11 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
 
         self.return_filepath = return_filepath
 
-    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Tuple[str, Segmentation]]:
+    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Dict[str, Any]]:
         labels = super().serialize(sample)
         fo_predictions = Segmentation(mask=labels.numpy())
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.FILEPATH]
-            return (filepath, fo_predictions)
+            return {"filepath": filepath, "predictions": fo_predictions}
         else:
             return fo_predictions

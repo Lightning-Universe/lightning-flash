@@ -1,3 +1,17 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import os
 from typing import Tuple
 
 import numpy as np
@@ -43,7 +57,7 @@ def test_smoke():
 def test_forward(num_classes, img_shape):
     model = SemanticSegmentation(
         num_classes=num_classes,
-        backbone='torchvision/fcn_resnet50',
+        backbone='fcn_resnet50',
     )
 
     B, C, H, W = img_shape
@@ -54,15 +68,8 @@ def test_forward(num_classes, img_shape):
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.parametrize(
-    "backbone",
-    [
-        "torchvision/fcn_resnet50",
-        "torchvision/fcn_resnet101",
-    ],
-)
-def test_init_train(tmpdir, backbone):
-    model = SemanticSegmentation(num_classes=10, backbone=backbone)
+def test_init_train(tmpdir):
+    model = SemanticSegmentation(num_classes=10)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
@@ -108,3 +115,21 @@ def test_predict_numpy():
     out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], torch.Tensor)
     assert out[0].shape == (10, 20)
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32), ))])
+def test_jit(tmpdir, jitter, args):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = SemanticSegmentation(2)
+    model.eval()
+
+    model = jitter(model, *args)
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(torch.rand(1, 3, 32, 32))
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 2, 32, 32])

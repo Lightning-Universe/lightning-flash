@@ -98,7 +98,7 @@ class _Sequential(torch.nn.Module):
         )
 
 
-class _PreProcessor(torch.nn.Module):
+class _Preprocessor(torch.nn.Module):
     """
         This class is used to encapsultate the following functions of a Preprocess Object:
         Inside a worker:
@@ -145,8 +145,8 @@ class _PreProcessor(torch.nn.Module):
         self._collate_context = CurrentFuncContext("collate", preprocess)
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
+    @staticmethod
     def _extract_metadata(
-        self,
         samples: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
         metadata = [s.pop(DefaultDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
@@ -190,7 +190,7 @@ class _PreProcessor(torch.nn.Module):
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown
         return (
-            "_PreProcessor:\n"
+            "_Preprocessor:\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
             f"\t(collate_fn): {str(self.collate_fn)}\n"
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
@@ -200,7 +200,7 @@ class _PreProcessor(torch.nn.Module):
         )
 
 
-class _PostProcessor(torch.nn.Module):
+class _Postprocessor(torch.nn.Module):
     """
         This class is used to encapsultate the following functions of a Postprocess Object:
         Inside main process:
@@ -229,8 +229,18 @@ class _PostProcessor(torch.nn.Module):
         self.save_fn = convert_to_modules(save_fn)
         self.save_per_sample = convert_to_modules(save_per_sample)
 
+    @staticmethod
+    def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
+        if isinstance(batch, Mapping):
+            return batch, batch.get(DefaultDataKeys.METADATA, None)
+        return batch, None
+
     def forward(self, batch: Sequence[Any]):
+        batch, metadata = self._extract_metadata(batch)
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
+        if metadata:
+            for sample, sample_metadata in zip(uncollated, metadata):
+                sample[DefaultDataKeys.METADATA] = sample_metadata
 
         final_preds = type(uncollated)([self.serializer(self.per_sample_transform(sample)) for sample in uncollated])
 
@@ -245,7 +255,7 @@ class _PostProcessor(torch.nn.Module):
 
     def __str__(self) -> str:
         return (
-            "_PostProcessor:\n"
+            "_Postprocessor:\n"
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
             f"\t(uncollate_fn): {str(self.uncollate_fn)}\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"

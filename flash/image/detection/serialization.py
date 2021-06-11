@@ -62,7 +62,7 @@ class FiftyOneDetectionLabels(Serializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Tuple[str, Detection]]:
+    def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DefaultDataKeys.METADATA not in sample:
             raise ValueError("sample requires DefaultDataKeys.METADATA to use "
                              "a FiftyOneDetectionLabels serializer.")
@@ -112,6 +112,6 @@ class FiftyOneDetectionLabels(Serializer):
         fo_predictions = Detections(detections=detections)
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.FILEPATH]
-            return (filepath, fo_predictions)
+            return {"filepath": filepath, "predictions": fo_predictions}
         else:
             return fo_predictions

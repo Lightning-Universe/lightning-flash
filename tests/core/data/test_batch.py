@@ -19,7 +19,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from torch.testing import assert_allclose
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.batch import _PostProcessor, _PreProcessor, _Sequential, default_uncollate
+from flash.core.data.batch import _Postprocessor, _Preprocessor, _Sequential, default_uncollate
 
 
 def test_sequential_str():
@@ -42,7 +42,7 @@ def test_sequential_str():
 
 
 def test_preprocessor_str():
-    preprocessor = _PreProcessor(
+    preprocessor = _Preprocessor(
         Mock(name="preprocess"),
         default_collate,
         torch.relu,
@@ -52,7 +52,7 @@ def test_preprocessor_str():
         True,
     )
     assert str(preprocessor) == (
-        "_PreProcessor:\n"
+        "_Preprocessor:\n"
         "\t(per_sample_transform): FuncModule(relu)\n"
         "\t(collate_fn): FuncModule(default_collate)\n"
         "\t(per_batch_transform): FuncModule(softmax)\n"
@@ -63,14 +63,14 @@ def test_preprocessor_str():
 
 
 def test_postprocessor_str():
-    postprocessor = _PostProcessor(
+    postprocessor = _Postprocessor(
         default_uncollate,
         torch.relu,
         torch.softmax,
         None,
     )
     assert str(postprocessor) == (
-        "_PostProcessor:\n"
+        "_Postprocessor:\n"
         "\t(per_batch_transform): FuncModule(relu)\n"
         "\t(uncollate_fn): FuncModule(default_uncollate)\n"
         "\t(per_sample_transform): FuncModule(softmax)\n"

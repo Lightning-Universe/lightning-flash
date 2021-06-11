@@ -21,7 +21,7 @@ else:
 
 
 def fiftyone_visualize(
-    labels: Union[List[Label], List[Tuple[str, Label]]],
+    labels: Union[List[Label], List[Dict[str, Label]]],
     filepaths: Optional[List[str]] = None,
     datamodule: Optional[DataModule] = None,
     wait: Optional[bool] = True,
@@ -34,7 +34,7 @@ def fiftyone_visualize(
     Args:
         labels: Either a list of FiftyOne labels that will be applied to the
             corresponding filepaths provided with through `filepath` or
-            `datamodule`. Or a list of tuples containing image/video
+            `datamodule`. Or a list of dictionaries containing image/video
             filepaths and corresponding FiftyOne labels.
         filepaths: A list of filepaths to images or videos corresponding to the
             provided `labels`.
@@ -54,9 +54,9 @@ def fiftyone_visualize(
     if all(isinstance(fl, list) for fl in labels):
         labels = list(chain.from_iterable(labels))
 
-    if all(isinstance(fl, tuple) for fl in labels):
-        filepaths = [lab[0] for lab in labels]
-        labels = [lab[1] for lab in labels]
+    if all(isinstance(fl, dict) for fl in labels):
+        filepaths = [lab["filepath"] for lab in labels]
+        labels = [lab["predictions"] for lab in labels]
 
     if filepaths is None:
         if datamodule is None:

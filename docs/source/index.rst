@@ -49,6 +49,7 @@ Lightning Flash
    general/training
    general/finetuning
    general/predictions
+   general/jit
 
 
 .. toctree::

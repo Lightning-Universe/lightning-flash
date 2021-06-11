@@ -14,14 +14,11 @@
 from types import FunctionType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
-import pytorch_lightning as pl
 import torch
 import torchmetrics
-from pytorch_lightning.callbacks.base import Callback
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
-import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer

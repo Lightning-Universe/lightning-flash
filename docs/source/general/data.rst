@@ -393,7 +393,7 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`.
+    # This will be wrapped into a :class:`~flash.core.data.batch._Preprocessor`.
     def collate_fn(samples: Sequence[Any]) -> Any:
 
         # This will be wrapped into a :class:`~flash.core.data.batch._Sequential`
@@ -423,7 +423,7 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`
+    # This will be wrapped into a :class:`~flash.core.data.batch._Preprocessor`
     def collate_fn(samples: Sequence[Any]) -> Any:
 
         # if ``per_batch_transform`` hook is overridden, those functions below will be no-ops
@@ -459,7 +459,7 @@ Here is the pseudo-code:
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`
+    # This will be wrapped into a :class:`~flash.core.data.batch._Preprocessor`
     def uncollate_fn(batch: Any) -> Any:
 
         batch = per_batch_transform(batch)

@@ -216,7 +216,7 @@ class FiftyOneLabels(ClassificationSerializer):
     def serialize(
         self,
         sample: Any,
-    ) -> Union[Classification, Classifications, Tuple[str, Classification], Tuple[str, Classifications]]:
+    ) -> Union[Classification, Classifications, Dict[str, Any], Dict[str, Any]]:
         pred = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
         pred = torch.tensor(pred)
 
@@ -295,6 +295,6 @@ class FiftyOneLabels(ClassificationSerializer):
 
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.FILEPATH]
-            return (filepath, fo_predictions)
+            return {"filepath": filepath, "predictions": fo_predictions}
         else:
             return fo_predictions

@@ -1,4 +1,7 @@
+import os
+
 import pytest
+import torch
 
 from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER, _PYSTICHE_GREATER_EQUAL_0_7_2
 from flash.image.style_transfer import StyleTransfer
@@ -20,3 +23,20 @@ def test_style_transfer_task():
 def test_style_transfer_task_import():
     with pytest.raises(ModuleNotFoundError, match="[image_style_transfer]"):
         StyleTransfer()
+
+
+@pytest.mark.skipif(not _PYSTICHE_GREATER_EQUAL_0_7_2, reason="image style transfer libraries aren't installed.")
+def test_jit(tmpdir):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = StyleTransfer()
+    model.eval()
+
+    model = torch.jit.trace(model, torch.rand(1, 3, 32, 32))  # torch.jit.script doesn't work with pystiche
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(torch.rand(1, 3, 32, 32))
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 3, 32, 32])
