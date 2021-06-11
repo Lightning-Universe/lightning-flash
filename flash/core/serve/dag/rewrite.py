@@ -226,11 +226,6 @@ class RuleSet:
     >>> dsk = {'a': (add, 2, 0),      # Apply ruleset to full dask graph
     ...        'b': (f, (g, 'a', 3))}
 
-    >>> from toolz import valmap
-    >>> valmap(rs.rewrite, dsk)  # doctest: +SKIP
-    {'a': 2,
-     'b': (h, 'a', 3)}
-
     Attributes
     ----------
     rules : list

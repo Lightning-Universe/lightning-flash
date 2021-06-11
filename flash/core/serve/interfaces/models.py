@@ -1,4 +1,4 @@
-from typing import Dict, ForwardRef, Optional, Tuple, TYPE_CHECKING
+from typing import Dict, Optional, Tuple
 
 from flash.core.serve.component import ModelComponent
 from flash.core.serve.core import Endpoint
@@ -10,8 +10,13 @@ if _PYDANTIC_AVAILABLE:
 else:
     BaseModel, create_model = object, None
 
-RequestModel = ForwardRef("RequestModel")
-ResponseModel = ForwardRef("ResponseModel")
+try:
+    from typing import ForwardRef
+    RequestModel = ForwardRef("RequestModel")
+    ResponseModel = ForwardRef("ResponseModel")
+except ImportError:
+    RequestModel = None
+    ResponseModel = None
 
 
 class Alive(BaseModel):

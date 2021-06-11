@@ -2,7 +2,7 @@ import base64
 import uuid
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, Dict, ForwardRef, Optional, TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
 
 from flash.core.serve.dag.task import get
 from flash.core.serve.dag.visualize import visualize
@@ -33,8 +33,13 @@ if TYPE_CHECKING:  # pragma: no cover
     from flash.core.serve.component import ModelComponent
     from flash.core.serve.composition import Composition
 
-RequestModel = ForwardRef("RequestModel")
-ResponseModel = ForwardRef("ResponseModel")
+try:
+    from typing import ForwardRef
+    RequestModel = ForwardRef("RequestModel")
+    ResponseModel = ForwardRef("ResponseModel")
+except ImportError:
+    RequestModel = None
+    ResponseModel = None
 
 
 def _build_endpoint(
