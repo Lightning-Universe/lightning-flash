@@ -17,7 +17,7 @@ import torch
 from torch.nn import functional as F
 from torchmetrics import Metric
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationTask, Probabilities
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
@@ -78,8 +78,10 @@ class TabularClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            serializer=serializer or Probabilities(),
         )
+
+        self.save_hyperparameters()
 
     def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)

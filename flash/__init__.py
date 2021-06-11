@@ -30,6 +30,10 @@ if _TORCH_AVAILABLE:
     PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
     _IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
 
+    if _IS_TESTING:
+        from pytorch_lightning import seed_everything
+        seed_everything(42)
+
     __all__ = [
         "DataSource",
         "DataModule",

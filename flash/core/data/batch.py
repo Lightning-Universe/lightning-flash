@@ -27,8 +27,8 @@ from flash.core.data.utils import (
     CurrentRunningStageContext,
 )
 
-if TYPE_CHECKING:  # pragma: no-cover
-    from flash.core.data.process import Preprocess
+if TYPE_CHECKING:
+    from flash.core.data.process import Deserializer, Preprocess, Serializer
 
 
 class _Sequential(torch.nn.Module):
@@ -42,8 +42,8 @@ class _Sequential(torch.nn.Module):
     def __init__(
         self,
         preprocess: 'Preprocess',
-        pre_tensor_transform: Callable,
-        to_tensor_transform: Callable,
+        pre_tensor_transform: Optional[Callable],
+        to_tensor_transform: Optional[Callable],
         post_tensor_transform: Callable,
         stage: RunningStage,
         assert_contains_tensor: bool = False,
@@ -66,20 +66,22 @@ class _Sequential(torch.nn.Module):
         self.callback.on_load_sample(sample, self.stage)
 
         with self._current_stage_context:
-            with self._pre_tensor_transform_context:
-                sample = self.pre_tensor_transform(sample)
-                self.callback.on_pre_tensor_transform(sample, self.stage)
+            if self.pre_tensor_transform is not None:
+                with self._pre_tensor_transform_context:
+                    sample = self.pre_tensor_transform(sample)
+                    self.callback.on_pre_tensor_transform(sample, self.stage)
 
-            with self._to_tensor_transform_context:
-                sample = self.to_tensor_transform(sample)
-                self.callback.on_to_tensor_transform(sample, self.stage)
+            if self.to_tensor_transform is not None:
+                with self._to_tensor_transform_context:
+                    sample = self.to_tensor_transform(sample)
+                    self.callback.on_to_tensor_transform(sample, self.stage)
 
-            if self.assert_contains_tensor:
-                if not _contains_any_tensor(sample):
-                    raise MisconfigurationException(
-                        "When ``to_tensor_transform`` is overriden, "
-                        "``DataPipeline`` expects the outputs to be ``tensors``"
-                    )
+                if self.assert_contains_tensor:
+                    if not _contains_any_tensor(sample):
+                        raise MisconfigurationException(
+                            "When ``to_tensor_transform`` is overriden, "
+                            "``DataPipeline`` expects the outputs to be ``tensors``"
+                        )
 
             with self._post_tensor_transform_context:
                 sample = self.post_tensor_transform(sample)
@@ -96,6 +98,55 @@ class _Sequential(torch.nn.Module):
             f"\t(assert_contains_tensor): {str(self.assert_contains_tensor)}\n"
             f"\t(stage): {str(self.stage)}"
         )
+
+
+class _DeserializeProcessor(torch.nn.Module):
+
+    def __init__(
+        self,
+        deserializer: 'Deserializer',
+        preprocess: 'Preprocess',
+        pre_tensor_transform: Callable,
+        to_tensor_transform: Callable,
+    ):
+        super().__init__()
+        self.preprocess = preprocess
+        self.callback = ControlFlow(self.preprocess.callbacks)
+        self.deserializer = convert_to_modules(deserializer)
+        self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
+        self.to_tensor_transform = convert_to_modules(to_tensor_transform)
+
+        self._current_stage_context = CurrentRunningStageContext(RunningStage.PREDICTING, preprocess, reset=False)
+        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", preprocess)
+        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", preprocess)
+
+    def forward(self, sample: str):
+
+        sample = self.deserializer(sample)
+
+        with self._current_stage_context:
+            with self._pre_tensor_transform_context:
+                sample = self.pre_tensor_transform(sample)
+                self.callback.on_pre_tensor_transform(sample, RunningStage.PREDICTING)
+
+            with self._to_tensor_transform_context:
+                sample = self.to_tensor_transform(sample)
+                self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
+
+        return sample
+
+
+class _SerializeProcessor(torch.nn.Module):
+
+    def __init__(
+        self,
+        serializer: 'Serializer',
+    ):
+        super().__init__()
+        self.serializer = convert_to_modules(serializer)
+
+    def forward(self, sample):
+        return self.serializer(sample)
 
 
 class _Preprocessor(torch.nn.Module):
@@ -164,6 +215,10 @@ class _Preprocessor(torch.nn.Module):
             if self.apply_per_sample_transform:
                 with self._per_sample_transform_context:
                     _samples = []
+
+                    if isinstance(samples, Mapping):
+                        samples = [samples]
+
                     for sample in samples:
                         sample = self.per_sample_transform(sample)
                         if self.on_device:
@@ -210,6 +265,7 @@ class _Postprocessor(torch.nn.Module):
             per_sample_transform: Function to transform an individual sample
             save_fn: Function to save all data
             save_per_sample: Function to save an individual sample
+            is_serving: Whether the Postprocessor is used in serving mode.
     """
 
     def __init__(
@@ -219,7 +275,8 @@ class _Postprocessor(torch.nn.Module):
         per_sample_transform: Callable,
         serializer: Optional[Callable],
         save_fn: Optional[Callable] = None,
-        save_per_sample: bool = False
+        save_per_sample: bool = False,
+        is_serving: bool = False,
     ):
         super().__init__()
         self.uncollate_fn = convert_to_modules(uncollate_fn)
@@ -228,6 +285,7 @@ class _Postprocessor(torch.nn.Module):
         self.serializer = convert_to_modules(serializer)
         self.save_fn = convert_to_modules(save_fn)
         self.save_per_sample = convert_to_modules(save_per_sample)
+        self.is_serving = is_serving
 
     @staticmethod
     def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
@@ -242,7 +300,15 @@ class _Postprocessor(torch.nn.Module):
             for sample, sample_metadata in zip(uncollated, metadata):
                 sample[DefaultDataKeys.METADATA] = sample_metadata
 
-        final_preds = type(uncollated)([self.serializer(self.per_sample_transform(sample)) for sample in uncollated])
+        final_preds = [self.per_sample_transform(sample) for sample in uncollated]
+
+        if self.serializer is not None:
+            final_preds = [self.serializer(sample) for sample in final_preds]
+
+        if isinstance(uncollated, Tensor):
+            final_preds = torch.stack(final_preds)
+        else:
+            final_preds = type(final_preds)(final_preds)
 
         if self.save_fn:
             if self.save_per_sample:
@@ -251,6 +317,9 @@ class _Postprocessor(torch.nn.Module):
             else:
                 self.save_fn(final_preds)
         else:
+            # todo (tchaton): Debug the serializer not iterating over a list.
+            if self.is_serving and isinstance(final_preds, list) and len(final_preds) == 1:
+                return final_preds[0]
             return final_preds
 
     def __str__(self) -> str:

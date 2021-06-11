@@ -30,7 +30,7 @@ from flash.core.data.batch import _Postprocessor, _Preprocessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess, Serializer
+from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
@@ -78,11 +78,12 @@ def test_data_pipeline_str():
         preprocess=cast(Preprocess, "preprocess"),
         postprocess=cast(Postprocess, "postprocess"),
         serializer=cast(Serializer, "serializer"),
+        deserializer=cast(Deserializer, "deserializer"),
     )
 
-    assert str(data_pipeline) == (
-        "DataPipeline(data_source=data_source, preprocess=preprocess, postprocess=postprocess, serializer=serializer)"
-    )
+    expected = "data_source=data_source, deserializer=deserializer, "
+    expected += "preprocess=preprocess, postprocess=postprocess, serializer=serializer"
+    assert str(data_pipeline) == (f"DataPipeline({expected})")
 
 
 @pytest.mark.parametrize("use_preprocess", [False, True])
