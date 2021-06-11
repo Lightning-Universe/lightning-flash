@@ -5,13 +5,16 @@ from typing import Tuple, TYPE_CHECKING
 
 import pytest
 import torch
-import torchvision
 from pytest_mock import MockerFixture
 
 from flash.core.serve.decorators import uuid4  # noqa (used in mocker.patch)
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if TYPE_CHECKING:
     from flash.core.serve import GridModel
+
+if _TORCHVISION_AVAILABLE:
+    import torchvision
 
 
 class UUID_String(str):
