@@ -115,7 +115,7 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
         labels = super().serialize(sample)
         fo_predictions = Segmentation(mask=labels.numpy())
         if self.return_filepath:
-            filepath = sample[DefaultDataKeys.FILEPATH]
+            filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         else:
             return fo_predictions

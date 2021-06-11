@@ -45,22 +45,19 @@ def test_classification_serializers_multi_label():
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_classification_serializers_fiftyone():
 
-    class MockSample(object):
-        filepath = "something"
-
     logits = torch.tensor([-0.1, 0.2, 0.3])
-    example_output = {DefaultDataKeys.PREDS: logits, DefaultDataKeys.METADATA: MockSample()}  # 3 classes
+    example_output = {DefaultDataKeys.PREDS: logits, DefaultDataKeys.METADATA: {"filepath": "something"}}  # 3 classes
     labels = ['class_1', 'class_2', 'class_3']
 
-    predictions = FiftyOneLabels(store_logits=True).serialize(example_output).predictions
+    predictions = FiftyOneLabels(store_logits=True).serialize(example_output)
     assert torch.allclose(torch.tensor(predictions.logits), logits)
     assert torch.allclose(torch.tensor(predictions.confidence), torch.softmax(logits, -1)[-1])
     assert predictions.label == '2'
-    predictions = FiftyOneLabels(labels, store_logits=True).serialize(example_output).predictions
+    predictions = FiftyOneLabels(labels, store_logits=True).serialize(example_output)
     assert predictions.label == 'class_3'
 
-    predictions = FiftyOneLabels(store_logits=True, multi_label=True).serialize(example_output).predictions
+    predictions = FiftyOneLabels(store_logits=True, multi_label=True).serialize(example_output)
     assert torch.allclose(torch.tensor(predictions.logits), logits)
     assert [c.label for c in predictions.classifications] == ['1', '2']
-    predictions = FiftyOneLabels(labels, multi_label=True).serialize(example_output).predictions
+    predictions = FiftyOneLabels(labels, multi_label=True).serialize(example_output)
     assert [c.label for c in predictions.classifications] == ['class_2', 'class_3']

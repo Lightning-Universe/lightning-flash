@@ -204,7 +204,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
             dir_name,
             dataset_type=fo.types.VideoClassificationDirectoryTree,
         )
-        datamodule = VideoClassificationData.fiftyone_from_datasets(
+        datamodule = VideoClassificationData.from_fiftyone_datasets(
             train_dataset=train_dataset,
             clip_sampler="uniform",
             clip_duration=half_duration,
@@ -243,7 +243,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
             ]),
         }
 
-        datamodule = VideoClassificationData.fiftyone_from_datasets(
+        datamodule = VideoClassificationData.from_fiftyone_datasets(
             train_dataset=train_dataset,
             clip_sampler="uniform",
             clip_duration=half_duration,

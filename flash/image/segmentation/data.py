@@ -71,7 +71,7 @@ class SemanticSegmentationNumpyDataSource(NumpyDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.shape
+        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
@@ -80,7 +80,7 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = sample[DefaultDataKeys.INPUT].float()
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.shape
+        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
@@ -144,18 +144,24 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
-        return {
-            DefaultDataKeys.INPUT: img.float(),
-            DefaultDataKeys.TARGET: img_labels.float(),
-            DefaultDataKeys.METADATA: img.shape,
+        sample[DefaultDataKeys.INPUT] = img.float()
+        sample[DefaultDataKeys.TARGET] = img_labels.float()
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
         }
+        return sample
 
     def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img = torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()
-        return {
-            DefaultDataKeys.INPUT: img,
-            DefaultDataKeys.METADATA: img.shape,
+        img_path = sample[DefaultDataKeys.INPUT]
+        img = torchvision.io.read_image(img_path).float()
+
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
         }
+        return sample
 
 
 class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
@@ -175,7 +181,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         self._validate(data)
 
         self._fo_dataset_name = data.name
-        return [{DefaultDataKeys.INPUT: f, DefaultDataKeys.FILEPATH: f} for f in data.values("filepath")]
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         _fo_dataset = fo.load_dataset(self._fo_dataset_name)
@@ -186,18 +192,24 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
         img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask)  # HxW
 
-        return {
-            DefaultDataKeys.INPUT: img.float(),
-            DefaultDataKeys.TARGET: img_labels.float(),
-            DefaultDataKeys.METADATA: img.shape,
+        sample[DefaultDataKeys.INPUT] = img.float()
+        sample[DefaultDataKeys.TARGET] = img_labels.float()
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
         }
+        return sample
 
     def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img = torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()
-        return {
-            DefaultDataKeys.INPUT: img,
-            DefaultDataKeys.METADATA: img.shape,
+        img_path = sample[DefaultDataKeys.INPUT]
+        img = torchvision.io.read_image(img_path).float()
+
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
         }
+        return sample
 
 
 class SemanticSegmentationPreprocess(Preprocess):

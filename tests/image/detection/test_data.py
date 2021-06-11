@@ -168,11 +168,11 @@ def test_image_detector_data_from_coco(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
-def test_image_detector_data_fiftyone_from_datasets(tmpdir):
+def test_image_detector_data_from_fiftyone_datasets(tmpdir):
 
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.fiftyone_from_datasets(train_dataset=train_dataset, batch_size=1)
+    datamodule = ObjectDetectionData.from_fiftyone_datasets(train_dataset=train_dataset, batch_size=1)
 
     data = next(iter(datamodule.train_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
@@ -185,7 +185,7 @@ def test_image_detector_data_fiftyone_from_datasets(tmpdir):
     assert datamodule.val_dataloader() is None
     assert datamodule.test_dataloader() is None
 
-    datamodule = ObjectDetectionData.fiftyone_from_datasets(
+    datamodule = ObjectDetectionData.from_fiftyone_datasets(
         train_dataset=train_dataset,
         val_dataset=train_dataset,
         test_dataset=train_dataset,

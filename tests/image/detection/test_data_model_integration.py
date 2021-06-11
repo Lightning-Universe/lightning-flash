@@ -63,7 +63,7 @@ def test_detection_fiftyone(tmpdir, model, backbone):
 
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
-    data = ObjectDetectionData.fiftyone_from_datasets(train_dataset=train_dataset, batch_size=1)
+    data = ObjectDetectionData.from_fiftyone_datasets(train_dataset=train_dataset, batch_size=1)
     model = ObjectDetector(model=model, backbone=backbone, num_classes=data.num_classes)
 
     trainer = flash.Trainer(fast_dev_run=True)

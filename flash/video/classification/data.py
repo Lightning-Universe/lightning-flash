@@ -145,7 +145,9 @@ class VideoClassificationPathsDataSource(PathsDataSource, BaseVideoClassificatio
         return ds
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(sample[DefaultDataKeys.INPUT])))
+        video_path = sample[DefaultDataKeys.INPUT]
+        sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(video_path)))
+        sample[DefaultDataKeys.METADATA] = {"filepath": video_path}
         return sample
 
 
@@ -178,9 +180,9 @@ class VideoClassificationFiftyOneDataSource(VideoClassificationPathsDataSource):
         label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
 
-        filepaths, labels = data.values("filepath"), data.values(self.label_field + ".label")
+        filepaths, labels = data.values(["filepath", self.label_field + ".label"])
         targets = [class_to_label_mapping[lab] for lab in labels]
-        labeled_video_paths = LabeledVideoPaths(list(zip(data.values("filepath"), targets)))
+        labeled_video_paths = LabeledVideoPaths(list(zip(filepaths, targets)))
 
         ds: EncodedVideoDataset = EncodedVideoDataset(
             labeled_video_paths,

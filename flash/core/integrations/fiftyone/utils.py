@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import flash
 from flash.core.data.data_module import DataModule

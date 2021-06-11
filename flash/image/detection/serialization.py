@@ -46,11 +46,11 @@ class FiftyOneDetectionLabels(Serializer):
     """
 
     def __init__(
-            self,
-            labels: Optional[List[str]] = None,
-            threshold: Optional[float] = None,
-            return_filepath: bool = False,
-        ):
+        self,
+        labels: Optional[List[str]] = None,
+        threshold: Optional[float] = None,
+        return_filepath: bool = False,
+    ):
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
@@ -67,9 +67,6 @@ class FiftyOneDetectionLabels(Serializer):
             raise ValueError("sample requires DefaultDataKeys.METADATA to use "
                              "a FiftyOneDetectionLabels serializer.")
 
-        if self.return_filepath:
-            filepath = sample[DefaultDataKeys.FILEPATH]
-
         labels = None
         if self._labels is not None:
             labels = self._labels
@@ -80,7 +77,7 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
 
-        height, width = sample[DefaultDataKeys.METADATA]
+        height, width = sample[DefaultDataKeys.METADATA]["size"]
 
         detections = []
 
@@ -111,7 +108,7 @@ class FiftyOneDetectionLabels(Serializer):
             ))
         fo_predictions = Detections(detections=detections)
         if self.return_filepath:
-            filepath = sample[DefaultDataKeys.FILEPATH]
+            filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         else:
             return fo_predictions

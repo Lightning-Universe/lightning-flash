@@ -36,10 +36,8 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
     from fiftyone.core.collections import SampleCollection
-    from fiftyone.types import Dataset
 else:
     SampleCollection = None
-    Dataset = None
 
 
 class DataModule(pl.LightningDataModule):
@@ -324,8 +322,8 @@ class DataModule(pl.LightningDataModule):
     @property
     def num_classes(self) -> Optional[int]:
         return (
-            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None)
-            or getattr(self.test_dataset, "num_classes", None)
+            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None) or
+            getattr(self.test_dataset, "num_classes", None)
         )
 
     @property
@@ -345,7 +343,8 @@ class DataModule(pl.LightningDataModule):
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     def available_data_sources(self) -> Sequence[str]:
-        """Get the list of available data source names for use with this :class:`~flash.core.data.data_module.DataModule`.
+        """Get the list of available data source names for use with this
+        :class:`~flash.core.data.data_module.DataModule`.
 
         Returns:
             The list of data source names.

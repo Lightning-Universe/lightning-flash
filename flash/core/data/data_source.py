@@ -167,7 +167,6 @@ class DefaultDataKeys(LightningEnum):
     PREDS = "preds"
     TARGET = "target"
     METADATA = "metadata"
-    FILEPATH = "filepath"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -455,7 +454,7 @@ class PathsDataSource(SequenceDataSource):
         if not isinstance(data, list):
             data = [data]
 
-        data = [{DefaultDataKeys.INPUT: input, DefaultDataKeys.FILEPATH: input} for input in data]
+        data = [{DefaultDataKeys.INPUT: input} for input in data]
 
         return list(
             filter(
@@ -516,11 +515,10 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         return [{
             DefaultDataKeys.INPUT: f,
             DefaultDataKeys.TARGET: to_idx(t),
-            DefaultDataKeys.FILEPATH: f,
         } for f, t in zip(filepaths, targets)]
 
     def predict_load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        return [{DefaultDataKeys.INPUT: f, DefaultDataKeys.FILEPATH: f} for f in data.values("filepath")]
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def _validate(self, data):
         label_type = data._get_label_field_type(self.label_field)
