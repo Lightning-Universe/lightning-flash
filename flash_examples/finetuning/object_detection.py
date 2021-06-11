@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.data.utils import download_data
-from flash.vision import ObjectDetectionData, ObjectDetector
+from flash.core.data.utils import download_data
+from flash.image import ObjectDetectionData, ObjectDetector
 
 # 1. Download the data
 # Dataset Credit: https://www.kaggle.com/ultralytics/coco128
@@ -23,17 +23,19 @@ download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.
 datamodule = ObjectDetectionData.from_coco(
     train_folder="data/coco128/images/train2017/",
     train_ann_file="data/coco128/annotations/instances_train2017.json",
-    batch_size=2,
+    val_split=0.3,
+    batch_size=4,
+    num_workers=4,
 )
 
 # 3. Build the model
-model = ObjectDetector(num_classes=datamodule.num_classes)
+model = ObjectDetector(model="retinanet", num_classes=datamodule.num_classes)
 
 # 4. Create the trainer
-trainer = flash.Trainer(max_epochs=3, limit_train_batches=1)
+trainer = flash.Trainer(max_epochs=3, limit_train_batches=1, limit_val_batches=1)
 
 # 5. Finetune the model
-trainer.finetune(model, datamodule)
+trainer.finetune(model, datamodule=datamodule)
 
 # 6. Save it!
 trainer.save_checkpoint("object_detection_model.pt")

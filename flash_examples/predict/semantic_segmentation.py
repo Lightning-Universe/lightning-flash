@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.data.utils import download_data
-from flash.vision import SemanticSegmentation
-from flash.vision.segmentation.serialization import SegmentationLabels
+from flash.core.data.utils import download_data
+from flash.image import SemanticSegmentation
+from flash.image.segmentation.serialization import SegmentationLabels
 
 # 1. Download the data
 # This is a Dataset with Semantic Segmentation Labels generated via CARLA self-driving simulator.

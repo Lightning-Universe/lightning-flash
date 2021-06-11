@@ -17,9 +17,9 @@ from torch import nn
 import flash
 from flash import Trainer
 from flash.core.classification import Labels
+from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
-from flash.data.utils import download_data
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
@@ -48,9 +48,9 @@ def fn_resnet(pretrained: bool = True):
 print(ImageClassifier.available_backbones())
 
 # 4. Build the model
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Labels())
 
-# 5. Create the trainer.
+# 5. Create the trainer
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 
 # 6. Train the model

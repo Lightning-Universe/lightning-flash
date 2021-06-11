@@ -1,3 +1,6 @@
+import pytorch_lightning as pl
+
+pl.seed_everything(42)
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +17,13 @@
 import torch
 
 import flash
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.text import TranslationData, TranslationTask
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "data/")
+
+backbone = "Helsinki-NLP/opus-mt-en-ro"
 
 # 2. Load the data
 datamodule = TranslationData.from_csv(
@@ -28,10 +33,11 @@ datamodule = TranslationData.from_csv(
     val_file="data/wmt_en_ro/valid.csv",
     test_file="data/wmt_en_ro/test.csv",
     batch_size=1,
+    backbone=backbone,
 )
 
 # 3. Build the model
-model = TranslationTask()
+model = TranslationTask(backbone=backbone)
 
 # 4. Create the trainer
 trainer = flash.Trainer(

@@ -19,11 +19,16 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
-from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
 
-from flash.core import Task
 from flash.core.finetuning import FlashBaseFinetuning
+from flash.core.model import Task
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
+
+if _TEXT_AVAILABLE:
+    from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
+else:
+    AutoModelForSeq2SeqLM, PreTrainedTokenizerBase = None, None
 
 
 def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
@@ -60,6 +65,9 @@ class Seq2SeqTask(Task):
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
     ):
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
+
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
@@ -119,7 +127,7 @@ class Seq2SeqTask(Task):
             self.model.config.update(pars)
 
     @property
-    def tokenizer(self) -> PreTrainedTokenizerBase:
+    def tokenizer(self) -> 'PreTrainedTokenizerBase':
         return self.data_pipeline.data_source.tokenizer
 
     def tokenize_labels(self, labels: Tensor) -> List[str]:

@@ -25,11 +25,13 @@ from torch.optim import Optimizer
 from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy
 
-from flash.core.classification import ClassificationTask
+import flash
+from flash.core.classification import ClassificationTask, Labels
+from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 
-_VIDEO_CLASSIFIER_MODELS = FlashRegistry("backbones")
+_VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.models import hub
@@ -37,7 +39,7 @@ if _PYTORCHVIDEO_AVAILABLE:
         if "__" not in fn_name:
             fn = getattr(hub, fn_name)
             if isinstance(fn, FunctionType):
-                _VIDEO_CLASSIFIER_MODELS(fn=fn)
+                _VIDEO_CLASSIFIER_BACKBONES(fn=fn)
 
 
 class VideoClassifierFinetuning(BaseFinetuning):
@@ -49,7 +51,7 @@ class VideoClassifierFinetuning(BaseFinetuning):
         self.unfreeze_epoch = unfreeze_epoch
 
     def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.model.children())[:-self.num_layers], train_bn=self.train_bn)
+        self.freeze(modules=list(pl_module.backbone.children())[:-self.num_layers], train_bn=self.train_bn)
 
     def finetune_function(
         self,
@@ -61,7 +63,7 @@ class VideoClassifierFinetuning(BaseFinetuning):
         if epoch != self.unfreeze_epoch:
             return
         self.unfreeze_and_add_param_group(
-            modules=list(pl_module.model.children())[-self.num_layers:],
+            modules=list(pl_module.backbone.children())[-self.num_layers:],
             optimizer=optimizer,
             train_bn=self.train_bn,
         )
@@ -72,7 +74,8 @@ class VideoClassifier(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        model: A string mapped to ``pytorch_video`` models or ``nn.Module``, defaults to ``"slowfast_r50"``.
+        backbone: A string mapped to ``pytorch_video`` backbones or ``nn.Module``, defaults to ``"slowfast_r50"``.
+        backbone_kwargs: Arguments to customize the backbone from PyTorchVideo.
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
@@ -81,19 +84,20 @@ class VideoClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
-    models: FlashRegistry = _VIDEO_CLASSIFIER_MODELS
+    backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES
 
     def __init__(
         self,
         num_classes: int,
-        model: Union[str, nn.Module] = "slow_r50",
-        model_kwargs: Optional[Dict] = None,
+        backbone: Union[str, nn.Module] = "slow_r50",
+        backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
+        serializer: Optional[Serializer] = None,
     ):
         super().__init__(
             model=None,
@@ -101,23 +105,25 @@ class VideoClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
+            serializer=serializer or Labels()
         )
 
         self.save_hyperparameters()
 
-        if not model_kwargs:
-            model_kwargs = {}
+        if not backbone_kwargs:
+            backbone_kwargs = {}
 
-        model_kwargs["pretrained"] = pretrained
-        model_kwargs["head_activation"] = None
+        # todo (tchaton): Force pretrained when running CI Benchmarking.
+        backbone_kwargs["pretrained"] = True if (flash._IS_TESTING and torch.cuda.is_available()) else pretrained
+        backbone_kwargs["head_activation"] = None
 
-        if isinstance(model, nn.Module):
-            self.model = model
-        elif isinstance(model, str):
-            self.model = self.models.get(model)(**model_kwargs)
-            num_features = self.model.blocks[-1].proj.out_features
+        if isinstance(backbone, nn.Module):
+            self.backbone = backbone
+        elif isinstance(backbone, str):
+            self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
+            num_features = self.backbone.blocks[-1].proj.out_features
         else:
-            raise MisconfigurationException(f"model should be either a string or a nn.Module. Found: {model}")
+            raise MisconfigurationException(f"backbone should be either a string or a nn.Module. Found: {backbone}")
 
         self.head = head or nn.Sequential(
             nn.Flatten(),
@@ -140,7 +146,7 @@ class VideoClassifier(ClassificationTask):
         return super().step((batch["video"], batch["label"]), batch_idx)
 
     def forward(self, x: Any) -> Any:
-        x = self.model(x)
+        x = self.backbone(x)
         if self.head is not None:
             x = self.head(x)
         return x
@@ -151,3 +157,9 @@ class VideoClassifier(ClassificationTask):
 
     def configure_finetune_callback(self) -> List[Callback]:
         return [VideoClassifierFinetuning()]
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        assert history[-1]["val_accuracy"] > 0.80

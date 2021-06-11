@@ -13,9 +13,11 @@
 # limitations under the License.
 import functools
 import inspect
+from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
+import pytorch_lightning as pl
 import torch
 import torchmetrics
 from pytorch_lightning import LightningModule
@@ -26,12 +28,35 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
+import flash
+from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
+from flash.core.data.data_source import DataSource
+from flash.core.data.process import (
+    Deserializer,
+    DeserializerMapping,
+    Postprocess,
+    Preprocess,
+    Serializer,
+    SerializerMapping,
+)
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
-from flash.core.utils import get_callable_dict
-from flash.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.data.data_source import DataSource
-from flash.data.process import Deserializer, DeserializerMapping, Postprocess, Preprocess, Serializer, SerializerMapping
+from flash.core.utilities.apply_func import get_callable_dict
+
+
+class BenchmarkConvergenceCI(Callback):
+
+    def __init__(self):
+        self.history = []
+
+    def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+        self.history.append(deepcopy(trainer.callback_metrics))
+        if trainer.current_epoch == trainer.max_epochs - 1:
+            fn = getattr(pl_module, "_ci_benchmark_fn", None)
+            if fn:
+                fn(self.history)
+                if trainer.is_global_zero:
+                    print("Benchmark Successful!")
 
 
 def predict_context(func: Callable) -> Callable:
@@ -63,11 +88,11 @@ class Task(LightningModule):
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
         metrics: Metrics to compute for training and evaluation.
-        learning_rate: Learning rate to use for training, defaults to `5e-5`.
-        preprocess: :class:`~flash.data.process.Preprocess` to use as the default for this task.
-        postprocess: :class:`~flash.data.process.Postprocess` to use as the default for this task.
+        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
+        preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
+        postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
     """
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
@@ -219,22 +244,22 @@ class Task(LightningModule):
         new_postprocess: Optional[Postprocess],
         new_serializer: Optional[Serializer],
     ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
-        """Resolves the correct :class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, and
-        :class:`~flash.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
-        (:class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, or
-        :class:`~flash.data.process.Serializer`) and ``old_*`` otherwise.
+        """Resolves the correct :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
+        :class:`~flash.core.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
+        (:class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, or
+        :class:`~flash.core.data.process.Serializer`) and ``old_*`` otherwise.
 
         Args:
-            old_preprocess: :class:`~flash.data.process.Preprocess` to be overridden.
-            old_postprocess: :class:`~flash.data.process.Postprocess` to be overridden.
-            old_serializer: :class:`~flash.data.process.Serializer` to be overridden.
-            new_preprocess: :class:`~flash.data.process.Preprocess` to override with.
-            new_postprocess: :class:`~flash.data.process.Postprocess` to override with.
-            new_serializer: :class:`~flash.data.process.Serializer` to override with.
+            old_preprocess: :class:`~flash.core.data.process.Preprocess` to be overridden.
+            old_postprocess: :class:`~flash.core.data.process.Postprocess` to be overridden.
+            old_serializer: :class:`~flash.core.data.process.Serializer` to be overridden.
+            new_preprocess: :class:`~flash.core.data.process.Preprocess` to override with.
+            new_postprocess: :class:`~flash.core.data.process.Postprocess` to override with.
+            new_serializer: :class:`~flash.core.data.process.Serializer` to override with.
 
         Returns:
-            The resolved :class:`~flash.data.process.Preprocess`, :class:`~flash.data.process.Postprocess`, and
-            :class:`~flash.data.process.Serializer`.
+            The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`,
+            and :class:`~flash.core.data.process.Serializer`.
         """
         deserializer = old_deserializer
         if new_deserializer is not None and type(new_deserializer) != Deserializer:
@@ -264,12 +289,14 @@ class Task(LightningModule):
             deserializer = DeserializerMapping(deserializer)
         self._deserializer = deserializer
 
+    @torch.jit.unused
     @property
     def serializer(self) -> Optional[Serializer]:
         """The current :class:`.Serializer` associated with this model. If this property was set to a mapping
         (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`."""
         return self._serializer
 
+    @torch.jit.unused
     @serializer.setter
     def serializer(self, serializer: Union[Serializer, Mapping[str, Serializer]]):
         if isinstance(serializer, Mapping):
@@ -283,17 +310,17 @@ class Task(LightningModule):
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
-        :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`
+        :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`
         objects. These will be overridden in the following resolution order (lowest priority first):
 
         - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
-        - :class:`.Task` defaults given to ``.Task.__init__``.
+        - :class:`.Task` defaults given to :meth:`.Task.__init__`.
         - :class:`.Task` manual overrides by setting :py:attr:`~data_pipeline`.
         - :class:`.DataPipeline` passed to this method.
 
         Args:
             data_pipeline: Optional highest priority source of
-                :class:`~flash.data.process.Preprocess` and :class:`~flash.data.process.Postprocess`.
+                :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`.
 
         Returns:
             The fully resolved :class:`.DataPipeline`.
@@ -306,14 +333,16 @@ class Task(LightningModule):
             preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
+            deserializer = getattr(self.datamodule.data_pipeline, '_deserializer', None)
 
-        elif self.trainer is not None and hasattr(
-            self.trainer, 'datamodule'
-        ) and getattr(self.trainer.datamodule, 'data_pipeline', None) is not None:
+        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
+            self.trainer.datamodule, 'data_pipeline', None
+        ) is not None:
             old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
             preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
             postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
             serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
+            deserializer = getattr(self.trainer.datamodule.data_pipeline, '_deserializer', None)
         else:
             # TODO: we should log with low severity level that we use defaults to create
             # `preprocess`, `postprocess` and `serializer`.
@@ -328,7 +357,7 @@ class Task(LightningModule):
             self._deserializer,
             self._preprocess,
             self._postprocess,
-            self.serializer,
+            self._serializer,
         )
 
         # Datapipeline
@@ -352,18 +381,20 @@ class Task(LightningModule):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        deserializer = deserializer or preprocess.deserializer
+        deserializer = deserializer or getattr(preprocess, "deserializer", None)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
+    @torch.jit.unused
     @property
     def data_pipeline(self) -> DataPipeline:
         """The current :class:`.DataPipeline`. If set, the new value will override the :class:`.Task` defaults. See
         :py:meth:`~build_data_pipeline` for more details on the resolution order."""
         return self.build_data_pipeline()
 
+    @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
         self._deserializer, self._preprocess, self._postprocess, self.serializer = Task._resolve(
@@ -376,14 +407,16 @@ class Task(LightningModule):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
-        self._preprocess.state_dict()
+        # self._preprocess.state_dict()
         if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
 
+    @torch.jit.unused
     @property
     def preprocess(self) -> Preprocess:
         return getattr(self.data_pipeline, '_preprocess_pipeline', None)
 
+    @torch.jit.unused
     @property
     def postprocess(self) -> Postprocess:
         return getattr(self.data_pipeline, '_postprocess_pipeline', None)
@@ -453,8 +486,8 @@ class Task(LightningModule):
         return registry.available_keys()
 
     @classmethod
-    def get_model_details(cls, key) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+    def get_backbone_details(cls, key) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
         if registry is None:
             return []
         return [v for v in inspect.signature(registry.get(key)).parameters.items()]
@@ -544,3 +577,8 @@ class Task(LightningModule):
         super()._load_from_state_dict(
             state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
         )
+
+    def configure_callbacks(self):
+        # used only for CI
+        if flash._IS_TESTING and torch.cuda.is_available():
+            return [BenchmarkConvergenceCI()]

@@ -1,3 +1,6 @@
+import pytorch_lightning as pl
+
+pl.seed_everything(42)
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +16,7 @@
 # limitations under the License.
 from pytorch_lightning import Trainer
 
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data

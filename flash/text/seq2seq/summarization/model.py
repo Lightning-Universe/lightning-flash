@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -37,11 +37,11 @@ class SummarizationTask(Seq2SeqTask):
 
     def __init__(
         self,
-        backbone: str = "sshleifer/tiny-mbart",
+        backbone: str = "sshleifer/distilbart-xsum-1-1",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
+        learning_rate: float = 1e-5,
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = 4,
         use_stemmer: bool = True,
@@ -69,4 +69,10 @@ class SummarizationTask(Seq2SeqTask):
     def compute_metrics(self, generated_tokens: torch.Tensor, batch: Dict, prefix: str) -> None:
         tgt_lns = self.tokenize_labels(batch["labels"])
         result = self.rouge(self._postprocess.uncollate(generated_tokens), tgt_lns)
-        self.log_dict(result, on_step=False, on_epoch=True)
+        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        assert history[-1]["rouge1_recall"] > 0.2

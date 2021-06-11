@@ -13,8 +13,8 @@
 # limitations under the License.
 import os
 
-from flash.core import utils as core_utils
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
+from flash.core.utilities.apply_func import get_callable_dict, get_callable_name
 
 # ======== Mock functions ========
 
@@ -35,20 +35,20 @@ c = lambda: True  # noqa: E731
 
 
 def test_get_callable_name():
-    assert core_utils.get_callable_name(A()) == "a"
-    assert core_utils.get_callable_name(b) == "b"
-    assert core_utils.get_callable_name(c) == "<lambda>"
+    assert get_callable_name(A()) == "a"
+    assert get_callable_name(b) == "b"
+    assert get_callable_name(c) == "<lambda>"
 
 
 def test_get_callable_dict():
-    d = core_utils.get_callable_dict(A())
+    d = get_callable_dict(A())
     assert type(d["a"]) == A
 
-    d = core_utils.get_callable_dict([A(), b])
+    d = get_callable_dict([A(), b])
     assert type(d["a"]) == A
     assert d["b"] == b
 
-    d = core_utils.get_callable_dict({"one": A(), "two": b, "three": c})
+    d = get_callable_dict({"one": A(), "two": b, "three": c})
     assert type(d["one"]) == A
     assert d["two"] == b
     assert d["three"] == c

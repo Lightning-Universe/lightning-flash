@@ -19,10 +19,11 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import RandomSampler, Sampler
 
-from flash.data.data_module import DataModule
-from flash.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, PathsDataSource
-from flash.data.process import Preprocess
-from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, PathsDataSource
+from flash.core.data.process import Preprocess
+from flash.core.data.transforms import merge_transforms
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -31,7 +32,12 @@ if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
     from pytorchvideo.data.encoded_video import EncodedVideo
     from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
-    from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
+    from pytorchvideo.transforms import (
+        ApplyTransformToKey,
+        RandomShortSideScale,
+        ShortSideScale,
+        UniformTemporalSubsample,
+    )
     from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
 else:
     ClipSampler, EncodedVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
@@ -146,14 +152,20 @@ class VideoClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.PATHS: VideoClassificationPathsDataSource(
+                DefaultDataSources.FILES: VideoClassificationPathsDataSource(
                     clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
-                )
+                ),
+                DefaultDataSources.FOLDERS: VideoClassificationPathsDataSource(
+                    clip_sampler,
+                    video_sampler=video_sampler,
+                    decode_audio=decode_audio,
+                    decoder=decoder,
+                ),
             },
-            default_data_source=DefaultDataSources.PATHS,
+            default_data_source=DefaultDataSources.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -171,18 +183,23 @@ class VideoClassificationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool) -> 'VideoClassificationPreprocess':
         return cls(**state_dict)
 
-    @staticmethod
-    def default_predict_transform() -> Dict[str, 'Compose']:
+    def default_transforms(self) -> Dict[str, Callable]:
+        if self.training:
+            post_tensor_transform = [
+                RandomShortSideScale(min_size=256, max_size=320),
+                RandomCrop(244),
+                RandomHorizontalFlip(p=0.5),
+            ]
+        else:
+            post_tensor_transform = [
+                ShortSideScale(256),
+            ]
+
         return {
             "post_tensor_transform": Compose([
                 ApplyTransformToKey(
                     key="video",
-                    transform=Compose([
-                        UniformTemporalSubsample(8),
-                        RandomShortSideScale(min_size=256, max_size=320),
-                        RandomCrop(244),
-                        RandomHorizontalFlip(p=0.5),
-                    ]),
+                    transform=Compose([UniformTemporalSubsample(8)] + post_tensor_transform),
                 ),
             ]),
             "per_batch_transform_on_device": Compose([

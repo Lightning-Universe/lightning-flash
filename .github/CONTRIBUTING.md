@@ -21,7 +21,7 @@ When something becomes a best practice, we add it to the framework. This is usua
 
 #### Backward-compatible API
 
-We all hate updating our deep learning packages because we don't want to refactor a bunch of stuff. In flash, we make sure every change we make which could break an API is backward compatible with good deprecation warnings.
+We all hate updating our deep learning packages because we don't want to refactor a bunch of stuff. In Flash, we make sure every change we make which could break an API is backward compatible with good deprecation warnings.
 
 #### Gain User Trust
 
@@ -81,7 +81,7 @@ Flash is a framework of tasks for fast prototyping, baselining, finetuning and s
 4. Do not reinvent the wheel, natively support torchvision, torchtext, torchaudio models.
 5. Use open source licensed models.
 
-Please raise an issue before adding a new task. Please let us know why the particular task is important for flash.
+Please raise an issue before adding a new task. Please let us know why the particular task is important for Flash.
 
 ### Test cases:
 
@@ -99,12 +99,11 @@ make test
 
 Want to add a new test case and not sure how? [Talk to us!](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)
 
-**Note before submitting the PR, make sure you have run `make isort`.**
 ---
 
 ## Guidelines
 
-For this section, we refer to read the [parent PL guidelines](https://pytorch-lightning.readthedocs.io/en/latest/CONTRIBUTING.html)
+For this section, we refer to read the [parent PL guidelines](https://pytorch-lightning.readthedocs.io/en/latest/generated/CONTRIBUTING.html)
 
 **Reminder**
 

@@ -30,6 +30,7 @@ Lightning Flash
    reference/object_detection
    reference/video_classification
    reference/semantic_segmentation
+   reference/style_transfer
 
 .. toctree::
    :maxdepth: 1
@@ -48,6 +49,26 @@ Lightning Flash
    general/training
    general/finetuning
    general/predictions
+   general/jit
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contributing a Task
+
+   template/intro
+   template/data
+   template/backbones
+   template/task
+   template/optional
+   template/examples
+   template/tests
+   template/docs
+
+.. toctree::
+   :hidden:
+
+   reference/template
 
 Indices and tables
 ==================

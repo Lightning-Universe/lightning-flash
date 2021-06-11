@@ -2,8 +2,8 @@
 From Flash to Lightning
 #######################
 
-Flash is built on top of `Pytorch Lightning
-<https://github.com/PyTorchLightning/pytorch-lightning>`_ to abstract away the unecessary boilerplate for:
+Flash is built on top of `PyTorch Lightning
+<https://github.com/PyTorchLightning/pytorch-lightning>`_ to abstract away the unnecessary boilerplate for:
 
 - Data science
 - Kaggle
@@ -12,7 +12,7 @@ Flash is built on top of `Pytorch Lightning
 
 Flash is a HIGH level library and Lightning is a LOW level library.
 
-- Flash (High-level)
+- Flash (high-level)
 - Lightning (medium-level)
 - PyTorch (low-level)
 

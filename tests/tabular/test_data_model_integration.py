@@ -11,30 +11,35 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pandas as pd
+import pytest
 import pytorch_lightning as pl
 
+from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular import TabularClassifier, TabularData
 
-TEST_DF_1 = pd.DataFrame(
-    data={
-        "category": ["a", "b", "c", "a", None, "c"],
-        "scalar_a": [0.0, 1.0, 2.0, 3.0, None, 5.0],
-        "scalar_b": [5.0, 4.0, 3.0, 2.0, None, 1.0],
-        "label": [0, 1, 0, 1, 0, 1],
-    }
-)
+if _TABULAR_AVAILABLE:
+    import pandas as pd
+
+    TEST_DF_1 = pd.DataFrame(
+        data={
+            "category": ["a", "b", "c", "a", None, "c"],
+            "scalar_a": [0.0, 1.0, 2.0, 3.0, None, 5.0],
+            "scalar_b": [5.0, 4.0, 3.0, 2.0, None, 1.0],
+            "label": [0, 1, 0, 1, 0, 1],
+        }
+    )
 
 
+@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 def test_classification(tmpdir):
 
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_1.copy()
     test_data_frame = TEST_DF_1.copy()
     data = TabularData.from_data_frame(
-        categorical_cols=["category"],
-        numerical_cols=["scalar_a", "scalar_b"],
-        target_col="label",
+        categorical_fields=["category"],
+        numerical_fields=["scalar_a", "scalar_b"],
+        target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
         test_data_frame=test_data_frame,

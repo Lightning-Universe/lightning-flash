@@ -13,7 +13,9 @@ references:
         # we need to use py3.7 ot higher becase of an issue with metaclass inheritence
         pyenv global 3.7.3
         python --version
-        pip install -r requirements/docs.txt
+        pip install . --progress-bar off
+        pip install --requirement ./requirements/docs.txt --progress-bar off
+        pip list
         cd docs
         make clean
         make html --debug --jobs 2 SPHINXOPTS="-W"

@@ -13,8 +13,8 @@
 # limitations under the License.
 import sys
 
-from flash.data.utils import download_data
-from flash.utils.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+from flash.core.data.utils import download_data
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 from flash.video import VideoClassifier
 
 if not (_PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE):

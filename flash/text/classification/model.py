@@ -13,14 +13,17 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from transformers import BertForSequenceClassification
-from transformers.modeling_outputs import SequenceClassifierOutput
 
 from flash.core.classification import ClassificationTask
-from flash.data.process import Serializer
+from flash.core.data.process import Serializer
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+
+if _TEXT_AVAILABLE:
+    from transformers import BertForSequenceClassification
+    from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
@@ -33,19 +36,24 @@ class TextClassifier(ClassificationTask):
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
+        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
 
     def __init__(
         self,
-        num_classes: int = None,
-        backbone: str = "prajjwal1/bert-tiny",
+        num_classes: int,
+        backbone: str = "prajjwal1/bert-medium",
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
+        learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+        if not _TEXT_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
+
+        self.save_hyperparameters()
+
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
@@ -70,12 +78,35 @@ class TextClassifier(ClassificationTask):
         # see huggingface's BertForSequenceClassification
         return self.model.bert
 
-    def forward(self, batch_dict):
-        return self.model(**batch_dict)
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        position_ids=None,
+        head_mask=None,
+        inputs_embeds=None,
+        labels=None,
+        output_attentions=None,
+        output_hidden_states=None,
+        return_dict=None
+    ):
+        return self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            labels=labels,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict
+        )
 
     def step(self, batch, batch_idx) -> dict:
         output = {}
-        out = self.forward(batch)
+        out = self.forward(**batch)
         loss, logits = out[:2]
         output["loss"] = loss
         output["y_hat"] = logits
@@ -85,5 +116,11 @@ class TextClassifier(ClassificationTask):
         output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
         return output
 
-    def predict_step(self, batch, batch_idx) -> dict:
-        return self.forward(batch)
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(**batch)
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        assert history[-1]["val_accuracy"] > 0.730

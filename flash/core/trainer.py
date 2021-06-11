@@ -11,21 +11,80 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
 import os
 import warnings
-from typing import List, Optional, Union
+from argparse import ArgumentParser, Namespace
+from functools import wraps
+from typing import Callable, List, Optional, Union
 
-from pytorch_lightning import LightningDataModule, LightningModule, Trainer
+import torch
+from pytorch_lightning import LightningDataModule, LightningModule
+from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.trainer.connectors.env_vars_connector import _defaults_from_env_vars
 from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
+import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
 
 
-class Trainer(Trainer):
+def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
+    """Modified version of ``pytorch_lightning.utilities.argparse.from_argparse_args`` which populates ``valid_kwargs``
+    from ``pytorch_lightning.Trainer``."""
+    if isinstance(args, ArgumentParser):
+        args = cls.parse_argparser(args)
+
+    params = vars(args)
+
+    # we only want to pass in valid PLTrainer args, the rest may be user specific
+    valid_kwargs = inspect.signature(PlTrainer.__init__).parameters
+    trainer_kwargs = dict((name, params[name]) for name in valid_kwargs if name in params)
+    trainer_kwargs.update(**kwargs)
+
+    return cls(**trainer_kwargs)
+
+
+def _defaults_from_env_vars(fn: Callable) -> Callable:
+    """Copy of ``pytorch_lightning.trainer.connectors.env_vars_connector._defaults_from_env_vars``. Required to fix
+    build error in readthedocs."""
+
+    @wraps(fn)
+    def insert_env_defaults(self, *args, **kwargs):
+        cls = self.__class__  # get the class
+        if args:  # inace any args passed move them to kwargs
+            # parse only the argument names
+            cls_arg_names = [arg[0] for arg in get_init_arguments_and_types(cls)]
+            # convert args to kwargs
+            kwargs.update({k: v for k, v in zip(cls_arg_names, args)})
+        env_variables = vars(parse_env_variables(cls))
+        # update the kwargs by env variables
+        kwargs = dict(list(env_variables.items()) + list(kwargs.items()))
+
+        # all args were already moved to kwargs
+        return fn(self, **kwargs)
+
+    return insert_env_defaults
+
+
+class Trainer(PlTrainer):
+
+    @_defaults_from_env_vars
+    def __init__(self, *args, **kwargs):
+        if flash._IS_TESTING:
+            if torch.cuda.is_available():
+                kwargs["gpus"] = 1
+                kwargs["max_epochs"] = 3
+                kwargs["limit_train_batches"] = 1.0
+                kwargs["limit_val_batches"] = 1.0
+                kwargs["limit_test_batches"] = 1.0
+                kwargs["fast_dev_run"] = False
+            else:
+                kwargs["fast_dev_run"] = True
+        super().__init__(*args, **kwargs)
 
     @_defaults_from_env_vars
     def __init__(self, *args, **kwargs):
@@ -42,7 +101,7 @@ class Trainer(Trainer):
         datamodule: Optional[LightningDataModule] = None,
     ):
         r"""
-        Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit()
+        Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`
 
         Args:
             datamodule: A instance of :class:`LightningDataModule`.
@@ -70,7 +129,7 @@ class Trainer(Trainer):
     ):
         r"""
 
-        Runs the full optimization routine. Same as pytorch_lightning.Trainer().fit(), but unfreezes layers
+        Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`, but unfreezes layers
         of the backbone throughout training layers of the backbone throughout training.
 
         Args:
@@ -78,21 +137,21 @@ class Trainer(Trainer):
 
             model: Model to fit.
 
-            train_dataloader: A Pytorch DataLoader with training samples. If the model has
+            train_dataloader: A PyTorch DataLoader with training samples. If the model has
                 a predefined train_dataloader method this will be skipped.
 
-            val_dataloaders: Either a single Pytorch Dataloader or a list of them, specifying validation samples.
+            val_dataloaders: Either a single PyTorch Dataloader or a list of them, specifying validation samples.
                 If the model has a predefined val_dataloaders method this will be skipped
 
             strategy: Should either be a string or a finetuning callback subclassing
-                ``pytorch_lightning.callbacks.BaseFinetuning``.
+                :class:`pytorch_lightning.callbacks.BaseFinetuning`.
 
-                Currently, default strategies can be enabled with these strings:
-                    - ``no_freeze``,
-                    - ``freeze``,
-                    - ``freeze_unfreeze``,
-                    - ``unfreeze_milestones``
+                Default strategies can be enabled with these strings:
 
+                - ``"no_freeze"``,
+                - ``"freeze"``,
+                - ``"freeze_unfreeze"``,
+                - ``"unfreeze_milestones"``.
         """
         self._resolve_callbacks(model, strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
@@ -141,3 +200,15 @@ class Trainer(Trainer):
         override_types = new_callbacks_types.intersection(old_callbacks_types)
         new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
         return new_callbacks
+
+    @classmethod
+    def add_argparse_args(cls, *args, **kwargs) -> ArgumentParser:
+        # the lightning trainer implementation does not support subclasses.
+        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        return add_argparse_args(PlTrainer, *args, **kwargs)
+
+    @classmethod
+    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> 'Trainer':
+        # the lightning trainer implementation does not support subclasses.
+        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        return from_argparse_args(Trainer, args, **kwargs)
