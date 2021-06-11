@@ -1,15 +1,12 @@
 from contextlib import suppress
+from io import BytesIO
 from typing import TYPE_CHECKING
 
 from flash.core.serve.dag.task import get_deps
+from flash.core.serve.execution import TaskComposition
 
 with suppress(ImportError):
     import graphviz
-
-if TYPE_CHECKING:  # pragma: no cover
-    from io import BytesIO
-
-    from flash.core.serve.execution import TaskComposition
 
 
 def _dag_to_graphviz(dag, dependencies, request_data, response_data, *, no_optimization=False):
@@ -52,7 +49,7 @@ def _dag_to_graphviz(dag, dependencies, request_data, response_data, *, no_optim
 
 
 def visualize(
-    tc: TaskComposition,
+    tc: 'TaskComposition',
     fhandle: BytesIO = None,
     format: str = "png",
     *,

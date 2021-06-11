@@ -41,7 +41,7 @@ def _validate_exposed_input_parameters_valid(instance):
         )
 
 
-def _validate_subclass_init_signature(cls: Type[ModelComponent]):
+def _validate_subclass_init_signature(cls: Type['ModelComponent']):
     """Raises SyntaxError if the __init__ method is not formatted correctly.
 
     Expects arguments: ['self', 'models', Optional['config']]

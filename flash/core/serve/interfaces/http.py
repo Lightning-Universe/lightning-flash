@@ -99,8 +99,8 @@ def _build_visualization(
 
 
 def _build_dag_json(
-    components: Dict[str, ModelComponent],
-    ep_proto: Optional[EndpointProtocol],
+    components: Dict[str, 'ModelComponent'],
+    ep_proto: Optional['EndpointProtocol'],
     *,
     show_connected_components: bool = True,
 ):
@@ -117,7 +117,7 @@ def _build_dag_json(
     return dag_json
 
 
-def setup_http_app(composition: Composition, debug: bool) -> FastAPI:
+def setup_http_app(composition: 'Composition', debug: bool) -> 'FastAPI':
     from flash import __version__
 
     app = FastAPI(

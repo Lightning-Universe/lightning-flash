@@ -1,5 +1,7 @@
 from typing import Dict, ForwardRef, Optional, Tuple, TYPE_CHECKING
 
+from flash.core.serve.component import ModelComponent
+from flash.core.serve.core import Endpoint
 from flash.core.serve.types import Repeated
 from flash.core.utilities.imports import _PYDANTIC_AVAILABLE
 
@@ -7,10 +9,6 @@ if _PYDANTIC_AVAILABLE:
     from pydantic import BaseModel, create_model
 else:
     BaseModel, create_model = object, None
-
-if TYPE_CHECKING:  # pragma: no cover
-    from flash.core.serve.component import ModelComponent
-    from flash.core.serve.core import Endpoint
 
 RequestModel = ForwardRef("RequestModel")
 ResponseModel = ForwardRef("ResponseModel")
@@ -33,7 +31,7 @@ class EndpointProtocol:
     subclasses of pydantic ``BaseModel``.
     """
 
-    def __init__(self, name: str, endpoint: Endpoint, components: Dict[str, ModelComponent]):
+    def __init__(self, name: str, endpoint: 'Endpoint', components: Dict[str, 'ModelComponent']):
         self._name = name
         self._endpoint = endpoint
         self._component = components

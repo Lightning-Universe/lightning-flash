@@ -133,7 +133,9 @@ class UnprocessedTaskDask:
     output_keys: List[str]
 
 
-def _process_initial(endpoint_protocol: EndpointProtocol, components: Dict[str, ModelComponent]) -> UnprocessedTaskDask:
+def _process_initial(
+    endpoint_protocol: 'EndpointProtocol', components: Dict[str, 'ModelComponent']
+) -> UnprocessedTaskDask:
     """Extract task dsk and payload / results keys and return computable form.
 
     Parameters
@@ -196,10 +198,10 @@ def _process_initial(endpoint_protocol: EndpointProtocol, components: Dict[str, 
 
 
 def build_composition(
-    endpoint_protocol: EndpointProtocol,
-    components: Dict[str, ModelComponent],
-    connections: List[Connection],
-) -> TaskComposition:
+    endpoint_protocol: 'EndpointProtocol',
+    components: Dict[str, 'ModelComponent'],
+    connections: List['Connection'],
+) -> 'TaskComposition':
     r"""Build a composed graph.
 
     Notes on easy sources to introduce bugs.
@@ -340,7 +342,7 @@ def _verify_no_cycles(dsk: Dict[str, tuple], out_keys: List[str], endpoint_name:
         )
 
 
-def connections_from_components_map(components: Dict[str, ModelComponent]) -> List[Dict[str, str]]:
+def connections_from_components_map(components: Dict[str, 'ModelComponent']) -> List[Dict[str, str]]:
     dsk_connections = []
     for con in flatten([comp._gridserve_meta_.connections for comp in components.values()]):
         # value of target key is mapped one-to-one from value of source
@@ -348,7 +350,7 @@ def connections_from_components_map(components: Dict[str, ModelComponent]) -> Li
     return dsk_connections
 
 
-def endpoint_protocol_content(ep_proto: EndpointProtocol) -> EndpointProtoJSON:
+def endpoint_protocol_content(ep_proto: 'EndpointProtocol') -> 'EndpointProtoJSON':
     ep_proto_payload_dsk_key_map = valmap(lambda x: f"{x}.serial", ep_proto.dsk_input_key_map)
     ep_proto_result_key_dsk_map = valmap(lambda x: f"{x}.serial", ep_proto.dsk_output_key_map)
 
@@ -360,7 +362,7 @@ def endpoint_protocol_content(ep_proto: EndpointProtocol) -> EndpointProtoJSON:
     )
 
 
-def merged_dag_content(ep_proto: EndpointProtocol, components: Dict[str, ModelComponent]) -> MergedJSON:
+def merged_dag_content(ep_proto: 'EndpointProtocol', components: Dict[str, 'ModelComponent']) -> 'MergedJSON':
     init = _process_initial(ep_proto, components)
     dsk_connections = connections_from_components_map(components)
     epjson = endpoint_protocol_content(ep_proto)
@@ -392,7 +394,7 @@ def merged_dag_content(ep_proto: EndpointProtocol, components: Dict[str, ModelCo
     )
 
 
-def component_dag_content(components: Dict[str, ModelComponent]) -> ComponentJSON:
+def component_dag_content(components: Dict[str, 'ModelComponent']) -> 'ComponentJSON':
     dsk_connections = connections_from_components_map(components)
     comp_dependencies, comp_dependents, comp_funcnames = {}, {}, {}
 

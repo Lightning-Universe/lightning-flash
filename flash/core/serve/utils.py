@@ -1,11 +1,9 @@
 from importlib.util import find_spec
+from pathlib import Path
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 import requests
 from tqdm import tqdm
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pathlib import Path
 
 
 def fn_outputs_to_keyed_map(serialize_fn_out_keys, fn_output) -> Dict[str, Any]:
