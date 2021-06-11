@@ -39,7 +39,7 @@ This table gives a breakdown of the supported features.
      - No
      - Yes
      - No
-   * - :class:`~flash.text.classification.model.TabularClassifier`
+   * - :class:`~flash.text.classification.model.TextClassifier`
      - No
      - Yes :sup:`*`
      - Yes
@@ -56,4 +56,4 @@ This table gives a breakdown of the supported features.
      - Yes
      - Yes
 
-:sup:`*` Only with ``strict=False``.
+:sup:`*` with ``strict=False``
