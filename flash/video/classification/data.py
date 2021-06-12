@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import numpy as np
 import torch
@@ -192,6 +192,9 @@ class VideoClassificationFiftyOneDataSource(VideoClassificationPathsDataSource):
             decoder=self.decoder,
         )
         return ds
+
+    def predict_load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
 
 class VideoClassificationPreprocess(Preprocess):
