@@ -11,8 +11,6 @@ fastapi>=0.65.2,<0.66.0
 # dependencies rather than installing fastapi[all]
 # https://fastapi.tiangolo.com/#optional-dependencies
 pydantic>=1.6.0,<2.0.0
-# TODO: in 0.14.1 UJSONResponse was removed.
-#       see https://www.starlette.io/release-notes/ for info.
 starlette>=0.14.0
 uvicorn[standard]>=0.12.0,<0.14.0
 aiofiles
