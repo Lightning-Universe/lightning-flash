@@ -79,7 +79,7 @@ class ObjectDetector(Task):
     def __init__(
         self,
         num_classes: int,
-        model: str = "fasterrcnn",
+        model: str = "yolov5s",
         backbone: Optional[str] = None,
         fpn: bool = True,
         pretrained: bool = True,
@@ -98,7 +98,7 @@ class ObjectDetector(Task):
 
         self.save_hyperparameters()
 
-        if model in _models:
+        if model in _models or 'yolov5' in _models:
             model = ObjectDetector.get_model(
                 model, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers,
                 anchor_generator, **kwargs
@@ -145,6 +145,17 @@ class ObjectDetector(Task):
                     num_classes=num_classes,
                     **kwargs
                 )
+
+        elif 'yolov5' in model_name:
+            model, head = ObjectDetector.backbones.get(backbone)(
+                model_name=model_name,
+                pretrained=pretrained_backbone,
+                **kwargs,
+            )
+            print(model)
+            model.head = head
+            model.nc = num_classes
+
         else:
             backbone_model, num_features = ObjectDetector.backbones.get(backbone)(
                 pretrained=pretrained_backbone,
@@ -172,9 +183,15 @@ class ObjectDetector(Task):
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         targets = [{k: v for k, v in t.items()} for t in targets]
 
-        # fasterrcnn takes both images and targets for training, returns loss_dict
-        loss_dict = self.model(images, targets)
-        loss = sum(loss_dict.values())
+        if 'yolov5' in self.model.name:
+            pred = self.model(images)
+            # TODO: integrate loss function
+            loss = None
+            # loss, loss_items = compute_loss(pred, targets)
+        else:
+            # fasterrcnn takes both images and targets for training, returns loss_dict
+            loss_dict = self.model(images, targets)
+            loss = sum(loss_dict.values())
         self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 

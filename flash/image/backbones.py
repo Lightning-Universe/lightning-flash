@@ -200,7 +200,16 @@ def dino_vitb8(*_, **__):
     return backbone, 768
 
 
+def load_yolov5(model_name: str, pretrained: bool = True, *_, **__):
+    model = torch.hub.load('ultralytics/yolov5', model_name, pretrained=pretrained)
+    backbone = model.model.model[:24]
+    head = model.model.model[24]
+    return backbone, head
+
+
 IMAGE_CLASSIFIER_BACKBONES(dino_deits16)
 IMAGE_CLASSIFIER_BACKBONES(dino_deits8)
 IMAGE_CLASSIFIER_BACKBONES(dino_vitb16)
 IMAGE_CLASSIFIER_BACKBONES(dino_vitb8)
+
+OBJ_DETECTION_BACKBONES(load_yolov5, name='yolov5')
