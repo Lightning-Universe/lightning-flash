@@ -6,7 +6,7 @@ graphviz
 tqdm
 # until 1.0 release fastapi docs recommend pinning to MINOR releases.
 # https://fastapi.tiangolo.com/deployment/#fastapi-versions
-fastapi>=0.63.0,<0.64.0
+fastapi>=0.65.2,<0.66.0
 # to have full feature control of fastapi, manually install optional
 # dependencies rather than installing fastapi[all]
 # https://fastapi.tiangolo.com/#optional-dependencies
