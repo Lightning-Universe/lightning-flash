@@ -81,6 +81,7 @@ _GRAPHVIZ_AVAILABLE = _module_available("graphviz")
 _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
+_ICEVISION_AVAILABLE = _module_available("icevision")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
