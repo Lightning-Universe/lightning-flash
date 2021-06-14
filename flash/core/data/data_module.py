@@ -1066,7 +1066,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     @classmethod
-    def from_fiftyone_datasets(
+    def from_fiftyone(
         cls,
         train_dataset: Optional[SampleCollection] = None,
         val_dataset: Optional[SampleCollection] = None,
@@ -1122,7 +1122,7 @@ class DataModule(pl.LightningDataModule):
                 "/path/to/dataset",
                 dataset_type=fo.types.ImageClassificationDirectoryTree,
             )
-            data_module = DataModule.from_fiftyone_datasets(
+            data_module = DataModule.from_fiftyone(
                 train_data = train_dataset,
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,

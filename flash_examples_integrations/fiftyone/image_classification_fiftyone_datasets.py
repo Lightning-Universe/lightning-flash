@@ -40,7 +40,7 @@ test_dataset = fo.Dataset.from_dir(
 )
 
 # 3 Load FiftyOne datasets
-datamodule = ImageClassificationData.from_fiftyone_datasets(
+datamodule = ImageClassificationData.from_fiftyone(
     train_dataset=train_dataset,
     val_dataset=val_dataset,
     test_dataset=test_dataset,
@@ -69,7 +69,7 @@ model = ImageClassifier.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/image_classification_model.pt"
 )
 model.serializer = FiftyOneLabels(return_filepath=False)
-datamodule = ImageClassificationData.from_fiftyone_datasets(
+datamodule = ImageClassificationData.from_fiftyone(
     predict_dataset=test_dataset,
 )
 predictions = trainer.predict(model, datamodule=datamodule)

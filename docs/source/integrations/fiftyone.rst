@@ -69,7 +69,7 @@ ground truth annotations allowing you to perform more complex analysis with
 :ref:`evaluation <fiftyone:evaluating-models>` of your model results.
 
 The
-:meth:`~flash.core.data_module.DataModule.from_fiftyone_datasets`
+:meth:`~flash.core.data_module.DataModule.from_fiftyone`
 method allows you to load your FiftyOne Datasets directly into a
 :class:`~flash.core.data_module.DataModule` to be used for training,
 testing, or inference.
