@@ -28,26 +28,15 @@ Available Callbacks
 *******************
 
 
-BaseDataFetcher
-_______________
+..
+    BaseDataFetcher
+    _______________
 
-.. autoclass:: flash.core.data.callback.BaseDataFetcher
-   :members: enable
+    .. autoclass:: flash.core.data.callback.BaseDataFetcher
+       :members: enable
 
-BaseVisualization
-_________________
+    BaseVisualization
+    _________________
 
-.. autoclass:: flash.core.data.base_viz.BaseVisualization
-   :members:
-
-
-*************
-API reference
-*************
-
-
-FlashCallback
-_____________
-
-.. autoclass:: flash.core.data.callback.FlashCallback
-    :members:
+    .. autoclass:: flash.core.data.base_viz.BaseVisualization
+       :members:

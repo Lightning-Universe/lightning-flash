@@ -46,6 +46,7 @@ def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
 
 class Seq2SeqTask(Task):
     """General Task for Sequence2Sequence.
+
     Args:
         loss_fn: Loss function for training
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.

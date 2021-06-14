@@ -53,20 +53,3 @@ By default, we use the encoder from `SwAV <https://arxiv.org/pdf/2006.09882.pdf>
     embedder = ImageEmbedder(backbone="resnet34")
 
 .. include:: ../common/image_backbones.rst
-
-------
-
-*************
-API reference
-*************
-
-.. _image_embedder_class:
-
-ImageEmbedder
----------------
-
-.. autoclass:: flash.image.ImageEmbedder
-    :members:
-    :exclude-members: forward
-
-.. _image_embedder_data:
