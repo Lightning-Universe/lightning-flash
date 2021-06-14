@@ -305,7 +305,7 @@ class _Postprocessor(torch.nn.Module):
         if self.serializer is not None:
             final_preds = [self.serializer(sample) for sample in final_preds]
 
-        if isinstance(final_preds[0], Tensor):
+        if isinstance(uncollated, Tensor) and isinstance(final_preds[0], Tensor):
             final_preds = torch.stack(final_preds)
         else:
             final_preds = type(final_preds)(final_preds)
