@@ -13,7 +13,7 @@ ______________
 Data
 ====
 
-.. automodule:: flash.tabular.classification.data.data
+.. automodule:: flash.tabular.classification.data
 
 Task
 ====
