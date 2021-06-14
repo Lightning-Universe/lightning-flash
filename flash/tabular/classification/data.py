@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -22,7 +22,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
-from flash.tabular.classification.data.dataset import (
+from flash.tabular.classification.utils import (
     _compute_normalization,
     _generate_codes,
     _pre_transform,
