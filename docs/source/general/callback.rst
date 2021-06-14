@@ -21,22 +21,3 @@ Same as PyTorch Lightning, Callbacks can be provided directly to the Trainer.
 Example::
 
    trainer = Trainer(callbacks=[MyCustomCallback()])
-
-
-*******************
-Available Callbacks
-*******************
-
-
-..
-    BaseDataFetcher
-    _______________
-
-    .. autoclass:: flash.core.data.callback.BaseDataFetcher
-       :members: enable
-
-    BaseVisualization
-    _________________
-
-    .. autoclass:: flash.core.data.base_viz.BaseVisualization
-       :members:
