@@ -96,7 +96,7 @@ def test_tabular_data(tmpdir):
     test_data_frame = TEST_DF_2.copy()
     dm = TabularData.from_data_frame(
         categorical_fields=["category"],
-        numerical_fields=["scalar_b", "scalar_b"],
+        numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
@@ -124,7 +124,7 @@ def test_categorical_target(tmpdir):
 
     dm = TabularData.from_data_frame(
         categorical_fields=["category"],
-        numerical_fields=["scalar_b", "scalar_b"],
+        numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
@@ -148,7 +148,7 @@ def test_from_data_frame(tmpdir):
     test_data_frame = TEST_DF_2.copy()
     dm = TabularData.from_data_frame(
         categorical_fields=["category"],
-        numerical_fields=["scalar_b", "scalar_b"],
+        numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
@@ -175,7 +175,7 @@ def test_from_csv(tmpdir):
 
     dm = TabularData.from_csv(
         categorical_fields=["category"],
-        numerical_fields=["scalar_b", "scalar_b"],
+        numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
         train_file=str(train_csv),
         val_file=str(val_csv),
