@@ -38,7 +38,6 @@ Lightning Flash
    :maxdepth: 1
    :caption: Flash API
 
-   general/model
    general/data
    general/callback
    general/registry
