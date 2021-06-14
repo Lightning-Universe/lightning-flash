@@ -92,27 +92,3 @@ By default, we use the `bert-base-uncased <https://arxiv.org/abs/1810.04805>`_ m
     :hide:
 
     ...
-
-------
-
-*************
-API reference
-*************
-
-.. _text_classifier:
-
-TextClassifier
---------------
-
-.. autoclass:: flash.text.classification.model.TextClassifier
-    :members:
-    :exclude-members: forward
-
-.. _text_classification_data:
-
-TextClassificationData
-----------------------
-
-.. autoclass:: flash.text.classification.data.TextClassificationData
-
-.. automethod:: flash.text.classification.data.TextClassificationData.from_files

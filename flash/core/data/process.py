@@ -19,17 +19,14 @@ import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
-from torch.nn import Module
 from torch.utils.data._utils.collate import default_collate
 
+import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
 from flash.core.data.properties import Properties
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
-
-if TYPE_CHECKING:  # pragma: no-cover
-    from flash.core.data.data_pipeline import DataPipelineState
 
 
 class BasePreprocess(ABC):
@@ -561,7 +558,7 @@ class SerializerMapping(Serializer):
         else:
             raise ValueError("The model output must be a mapping when using a SerializerMapping.")
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
         for serializer in self._serializers.values():
             serializer.attach_data_pipeline_state(data_pipeline_state)
 
@@ -591,6 +588,6 @@ class DeserializerMapping(Deserializer):
         else:
             raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
         for deserializer in self._deserializers.values():
             deserializer.attach_data_pipeline_state(data_pipeline_state)

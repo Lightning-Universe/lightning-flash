@@ -5,7 +5,7 @@ The Backbones
 *************
 
 Now that you've got a way of loading data, you should implement some backbones to use with your :class:`~flash.core.model.Task`.
-Create a :any:`FlashRegistry <registry>` to use with your :class:`~flash.core.model.Task` in `backbones.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/template/classification/backbones.py>`_.
+Create a :class:`~flash.core.registry.FlashRegistry` to use with your :class:`~flash.core.model.Task` in `backbones.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/template/classification/backbones.py>`_.
 
 The registry allows you to register backbones for your task that can be selected by the user.
 The backbones can come from anywhere as long as you can register a function that loads the backbone.

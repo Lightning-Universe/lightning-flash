@@ -12,16 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from inspect import signature
-from typing import Any, Callable, Generic, Iterable, Optional, Sequence, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, Generic, Iterable, Optional, Sequence, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data import Dataset, IterableDataset
 
+import flash
 from flash.core.data.utils import CurrentRunningStageFuncContext
-
-if TYPE_CHECKING:  # pragma: no-cover
-    from flash.core.data.data_pipeline import DataPipeline
-    from flash.core.data.data_source import DataSource
 
 DATA_TYPE = TypeVar('DATA_TYPE')
 
@@ -44,7 +41,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
     def __init__(
         self,
         data: DATA_TYPE,
-        data_source: 'DataSource',
+        data_source: 'flash.core.data.data_source.DataSource',
         running_stage: RunningStage,
     ) -> None:
         super().__init__()

@@ -59,11 +59,3 @@ Flash tasks supports many advanced training functionalities out-of-the-box, such
     flash.Trainer(tpu_cores=8)
 
 You can add to the flash Trainer any argument from the Lightning trainer! Learn more about the Lightning Trainer `here <https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_.
-
-
-Trainer API
------------
-
-.. autoclass:: flash.core.trainer.Trainer
-    :members:
-    :exclude-members: training_step, validation_step, test_step, configure_optimizers, forward
