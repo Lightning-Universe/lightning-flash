@@ -20,11 +20,11 @@ from typing import Tuple
 
 import torch
 from pytorch_lightning import LightningModule
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn as nn
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TIMM_AVAILABLE:
     import timm
