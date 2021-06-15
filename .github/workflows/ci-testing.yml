@@ -63,6 +63,11 @@ jobs:
         brew update
         brew install libomp  # https://github.com/pytorch/pytorch/issues/20030
 
+    - name: Install graphviz
+      if: matrix.topic == 'serve'
+      run: |
+        apt-get install graphviz
+
     - name: Set min. dependencies
       if: matrix.requires == 'minimal'
       run: |
