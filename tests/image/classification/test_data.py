@@ -37,6 +37,7 @@ def _dummy_image_loader(_):
     return torch.rand(3, 196, 196)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def _rand_image(size: Tuple[int, int] = None):
     if size is None:
         _size = np.random.choice([196, 244])

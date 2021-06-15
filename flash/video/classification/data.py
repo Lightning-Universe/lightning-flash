@@ -187,7 +187,8 @@ class VideoClassificationFiftyOneDataSource(
         label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
 
-        filepaths, labels = data.values(["filepath", self.label_field + ".label"])
+        filepaths = data.values("filepath")
+        labels = data.values(self.label_field + ".label"])
         targets = [class_to_label_mapping[lab] for lab in labels]
         labeled_video_paths = LabeledVideoPaths(list(zip(filepaths, targets)))
 
