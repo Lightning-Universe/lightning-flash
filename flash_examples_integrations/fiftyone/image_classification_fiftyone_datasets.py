@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import itertools
+from itertools import chain
 
 import flash
 from flash.core.classification import FiftyOneLabels, Labels, Probabilities
 from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
-from flash.core.integrations.fiftyone import fiftyone_visualize
+from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
 
 import fiftyone as fo
@@ -74,17 +74,13 @@ datamodule = ImageClassificationData.from_fiftyone(
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 
-# 5b Flatten batched predictions
-predictions = list(itertools.chain.from_iterable(predictions))
+predictions = list(chain.from_iterable(predictions)) # flatten batches
 
 # 6 Add predictions to dataset
 test_dataset.set_values("predictions", predictions)
 
 # 7 Visualize labels in the App
 session = fo.launch_app(test_dataset)
-
-# 7b Block until the App is closed
-session.wait()
 
 # 8 Evaluate your model
 results = test_dataset.evaluate_classifications(
@@ -95,3 +91,7 @@ results = test_dataset.evaluate_classifications(
 results.print_report()
 plot = results.plot_confusion_matrix()
 plot.show()
+
+# Only when running this in a script
+# Block until the FiftyOne App is closed
+session.wait()

@@ -2,7 +2,6 @@ from itertools import chain
 from typing import Dict, List, Optional, Union
 
 import flash
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
@@ -20,10 +19,9 @@ else:
     Session = None
 
 
-def fiftyone_visualize(
+def visualize(
     labels: Union[List[Label], List[Dict[str, Label]]],
     filepaths: Optional[List[str]] = None,
-    datamodule: Optional[DataModule] = None,
     wait: Optional[bool] = True,
     label_field: Optional[str] = "predictions",
     **kwargs
@@ -38,8 +36,6 @@ def fiftyone_visualize(
             filepaths and corresponding FiftyOne labels.
         filepaths: A list of filepaths to images or videos corresponding to the
             provided `labels`.
-        datamodule: The datamodule containing the prediction dataset used to
-            generate `labels`.
         wait: A boolean determining whether to launch the FiftyOne session and
             wait until the session is closed or whether to return immediately.
         label_field: The string of the label field in the FiftyOne dataset
@@ -59,12 +55,7 @@ def fiftyone_visualize(
         labels = [lab["predictions"] for lab in labels]
 
     if filepaths is None:
-        if datamodule is None:
-            raise ValueError("Either `filepaths` or `datamodule` arguments are "
-                             "required if filepaths are not provided in `labels`.")
-
-        else:
-            filepaths = [s[DefaultDataKeys.FILEPATH] for s in datamodule.predict_dataset.data]
+        raise ValueError("The `filepaths` argument is required if filepaths are not provided in `labels`.")
 
     dataset = fo.Dataset()
     if filepaths:

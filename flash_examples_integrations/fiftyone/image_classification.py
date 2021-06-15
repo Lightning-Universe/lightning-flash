@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import itertools
+from itertools import chain
 
 import flash
 from flash.core.classification import FiftyOneLabels, Labels, Probabilities
 from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
-from flash.core.integrations.fiftyone import fiftyone_visualize
+from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
 
 # 1 Download data
@@ -56,9 +56,8 @@ model = ImageClassifier.load_from_checkpoint(
 model.serializer = FiftyOneLabels(return_filepath=True)
 predictions = trainer.predict(model, datamodule=datamodule)
 
-# 4b Flatten batched predictions
-predictions = list(itertools.chain.from_iterable(predictions))
+predictions = list(chain.from_iterable(predictions)) # flatten batches
 
 # 5. Visualize predictions in FiftyOne
 # Note: this blocks until the FiftyOne App is closed
-session = fiftyone_visualize(predictions)
+session = visualize(predictions)
