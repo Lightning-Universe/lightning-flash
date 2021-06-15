@@ -13,14 +13,14 @@
 # limitations under the License.
 from itertools import chain
 
+import fiftyone as fo
+
 import flash
 from flash.core.classification import FiftyOneLabels, Labels, Probabilities
 from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
 from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
-
-import fiftyone as fo
 
 # 1 Download data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip")
