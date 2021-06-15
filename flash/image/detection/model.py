@@ -20,8 +20,8 @@ from torch.optim import Optimizer
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from flash.image.backbones import OBJ_DETECTION_BACKBONES
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.image.detection.backbones import OBJECT_DETECTION_BACKBONES, OBJECT_DETECTION_MODELS
 from flash.image.detection.finetuning import ObjectDetectionFineTuning
 
 if _IMAGE_AVAILABLE:
@@ -74,7 +74,8 @@ class ObjectDetector(Task):
 
     """
 
-    backbones: FlashRegistry = OBJ_DETECTION_BACKBONES
+    backbones: FlashRegistry = OBJECT_DETECTION_BACKBONES
+    models: FlashRegistry = OBJECT_DETECTION_MODELS
 
     def __init__(
         self,
@@ -126,6 +127,12 @@ class ObjectDetector(Task):
         anchor_generator,
         **kwargs,
     ):
+        if _ICEVISION_AVAILABLE:
+            model_type, backbone_conf = ObjectDetector.backbones.get(model_name)(backbone, pretrained=pretrained)
+            model = ObjectDetector.models.get('icevision')(model_type, backbone_conf, num_classes, **kwargs)
+            backbone = backbone_conf.backbone
+            return model
+
         if backbone is None:
             # Constructs a model with a ResNet-50-FPN backbone when no backbone is specified.
             if model_name == "fasterrcnn":
