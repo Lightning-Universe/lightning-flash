@@ -47,7 +47,9 @@ class TestSemanticSegmentationLabels:
 
         sample = {
             DefaultDataKeys.PREDS: preds,
-            DefaultDataKeys.METADATA: {"filepath": "something"},
+            DefaultDataKeys.METADATA: {
+                "filepath": "something"
+            },
         }
 
         segmentation = serial.serialize(sample)
