@@ -84,8 +84,7 @@ class SegmentationLabels(Serializer):
             labels_vis = K.utils.tensor_to_image(labels_vis)
             plt.imshow(labels_vis)
             plt.show()
-<<<<<<< HEAD
-        return labels
+        return labels.tolist()
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
@@ -120,6 +119,3 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
             return {"filepath": filepath, "predictions": fo_predictions}
         else:
             return fo_predictions
-=======
-        return labels.tolist()
->>>>>>> upstream/master

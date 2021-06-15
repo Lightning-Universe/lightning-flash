@@ -18,8 +18,8 @@ are supported!
 .. raw:: html
 
   <div style="margin-top: 20px; margin-bottom: 20px">
-    <video controls muted poster="https://voxel51.com/images/fiftyone_poster.png" style="width: 100%;">
-      <source src="https://voxel51.com/images/fiftyone_long_sizzle.mp4" type="video/mp4">
+    <video controls muted poster="https://pl-flash-data.s3.amazonaws.com/assets/fiftyone/fiftyone_poster.png" style="width: 100%;">
+      <source src="https://pl-flash-data.s3.amazonaws.com/assets/fiftyone/fiftyone_long_sizzle.mp4" type="video/mp4">
     </video>
   </div>
 
@@ -42,7 +42,7 @@ Visualizing Flash predictions
 This section shows you how to augment your existing Lightning Flash workflows
 with a couple of lines of code that let you visualize predictions in FiftyOne. 
 You can visualize predictions for classification, object detection, and
-semantic segmentation tasks. Doing so is as easy updating your model to use 
+semantic segmentation tasks. Doing so is as easy as updating your model to use 
 one of the following serializers:
 
 * :class:`FiftyOneLabels(return_filepath=True)<flash.core.classification.FiftyOneLabels>`
@@ -56,7 +56,7 @@ dictionaries containing :ref:`FiftyOne Label<fiftyone:using-labels>` objects
 and filepaths which is the exact output of the FiftyOne serializers when the flag
 ``return_filepath=True`` is specified.
 
-.. literalinclude:: ../../../flash_examples_integrations/fiftyone/image_classification.py
+.. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_classification.py
     :language: python
     :lines: 14-
 
@@ -67,7 +67,7 @@ Using FiftyOne datasets
 
 The above workflow is great for visualizing model predictions. However, if you
 store your data in a FiftyOne Dataset initially, then you can also visualize
-ground truth annotations allowing you to perform more complex analysis with 
+ground truth annotations. This allows you to perform more complex analysis with 
 :ref:`views <fiftyone:using-views>` into your data and
 :ref:`evaluation <fiftyone:evaluating-models>` of your model results.
 
@@ -77,7 +77,7 @@ method allows you to load your FiftyOne Datasets directly into a
 :class:`~flash.core.data.data_module.DataModule` to be used for training,
 testing, or inference.
 
-.. literalinclude:: ../../../flash_examples_integrations/fiftyone/image_classification_fiftyone_datasets.py
+.. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_classification_fiftyone_datasets.py
     :language: python
     :lines: 14-
 
@@ -93,11 +93,11 @@ FiftyOne provides the methods for
 powerful workflows like clustering, similarity search, pre-annotation, and more
 in only a few lines of code.
 
-.. literalinclude:: ../../../flash_examples_integrations/fiftyone/image_embedding.py
+.. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_embedding.py
     :language: python
     :lines: 14-
 
-.. image:: https://user-images.githubusercontent.com/21222883/121972505-45114b00-cd49-11eb-9ef5-9a69fd90bf59.png
+.. image:: https://pl-flash-data.s3.amazonaws.com/assets/fiftyone/embeddings.png
    :alt: embeddings_example
    :align: center
 

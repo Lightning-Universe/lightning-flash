@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 import torch
@@ -34,8 +34,6 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE,
 if _FIFTYONE_AVAILABLE:
     from fiftyone.core.collections import SampleCollection
     from fiftyone.core.labels import Classification
-
-    from flash.core.integrations.fiftyone import get_classes
 else:
     Classification, SampleCollection = None, None
 
@@ -74,6 +72,20 @@ class BaseVideoClassification(object):
         self.decode_audio = decode_audio
         self.decoder = decoder
 
+    def load_data(self, data: str, dataset: Optional[Any] = None) -> 'EncodedVideoDataset':
+        ds = self._make_encoded_video_dataset(data)
+        if self.training:
+            label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in ds._labeled_videos._paths_and_labels}
+            self.set_state(LabelsState(label_to_class_mapping))
+            dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
+        return ds
+
+    def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        video_path = sample[DefaultDataKeys.INPUT]
+        sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(video_path)))
+        sample[DefaultDataKeys.METADATA] = {"filepath": video_path}
+        return sample
+
     def _encoded_video_to_dict(self, video) -> Dict[str, Any]:
         (
             clip_start,
@@ -107,8 +119,13 @@ class BaseVideoClassification(object):
             } if audio_samples is not None else {}),
         }
 
+    def _make_encoded_video_dataset(self, data) -> 'EncodedVideoDataset':
+        raise NotImplementedError(
+            "Subclass must implement _make_encoded_video_dataset()"
+        )
 
-class VideoClassificationPathsDataSource(PathsDataSource, BaseVideoClassification):
+
+class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSource):
 
     def __init__(
         self,
@@ -117,13 +134,15 @@ class VideoClassificationPathsDataSource(PathsDataSource, BaseVideoClassificatio
         decode_audio: bool = True,
         decoder: str = "pyav",
     ):
-        super().__init__(extensions=("mp4", "avi"))
-        BaseVideoClassification.__init__(
-            self,
+        super().__init__(
             clip_sampler,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+        )
+        PathsDataSource.__init__(
+            self,
+            extensions=("mp4", "avi"),
         )
 
     def _make_encoded_video_dataset(self, data) -> 'EncodedVideoDataset':
@@ -136,22 +155,11 @@ class VideoClassificationPathsDataSource(PathsDataSource, BaseVideoClassificatio
         )
         return ds
 
-    def load_data(self, data: str, dataset: Optional[Any] = None) -> 'EncodedVideoDataset':
-        ds = self._make_encoded_video_dataset(data)
-        if self.training:
-            label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in ds._labeled_videos._paths_and_labels}
-            self.set_state(LabelsState(label_to_class_mapping))
-            dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
-        return ds
 
-    def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        video_path = sample[DefaultDataKeys.INPUT]
-        sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(video_path)))
-        sample[DefaultDataKeys.METADATA] = {"filepath": video_path}
-        return sample
-
-
-class VideoClassificationFiftyOneDataSource(VideoClassificationPathsDataSource):
+class VideoClassificationFiftyOneDataSource(
+        BaseVideoClassification,
+        FiftyOneDataSource,
+):
 
     def __init__(
         self,
@@ -160,23 +168,24 @@ class VideoClassificationFiftyOneDataSource(VideoClassificationPathsDataSource):
         decode_audio: bool = True,
         decoder: str = "pyav",
         label_field: str = "ground_truth",
-        **kwargs
     ):
         super().__init__(
             clip_sampler=clip_sampler,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
-            **kwargs
         )
-        self.label_field = label_field
+        FiftyOneDataSource.__init__(
+            self,
+            label_field=label_field,
+        )
 
     @property
     def label_cls(self):
         return Classification
 
     def _make_encoded_video_dataset(self, data: SampleCollection) -> 'EncodedVideoDataset':
-        classes = get_classes(data, self.label_field)
+        classes = self._get_classes(data)
         label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
 
@@ -192,9 +201,6 @@ class VideoClassificationFiftyOneDataSource(VideoClassificationPathsDataSource):
             decoder=self.decoder,
         )
         return ds
-
-    def predict_load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
 
 class VideoClassificationPreprocess(Preprocess):
