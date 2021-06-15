@@ -104,15 +104,3 @@ Example::
     """ out:
     ['adv_inception_v3', 'cspdarknet53', 'cspdarknet53_iabn', 430+.., 'xception71']
     """
-
-
-**************
-Flash Registry
-**************
-
-
-FlashRegistry
-_____________
-
-.. autoclass:: flash.core.registry.FlashRegistry
-   :members:

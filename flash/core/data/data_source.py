@@ -342,11 +342,11 @@ class SequenceDataSource(
 ):
     """The ``SequenceDataSource`` implements default behaviours for data sources which expect the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of tuples (``(input, target)``
-        where target can be ``None``).
+    where target can be ``None``).
 
     Args:
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-        :class:`~flash.core.data.data_source.LabelsState`.
+            :class:`~flash.core.data.data_source.LabelsState`.
     """
 
     def __init__(self, labels: Optional[Sequence[str]] = None):
@@ -383,7 +383,7 @@ class PathsDataSource(SequenceDataSource):
     Args:
         extensions: The file extensions supported by this data source (e.g. ``(".jpg", ".png")``).
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-        :class:`~flash.core.data.data_source.LabelsState`.
+            :class:`~flash.core.data.data_source.LabelsState`.
     """
 
     def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):

@@ -104,27 +104,3 @@ By default, we use a ResNet-50 FPN backbone. You can change the backbone for the
     ...
 
 .. include:: ../common/object_detection_backbones.rst
-
-------
-
-*************
-API reference
-*************
-
-.. _object_detector:
-
-ObjectDetector
---------------
-
-.. autoclass:: flash.image.ObjectDetector
-    :members:
-    :exclude-members: forward
-
-.. _object_detection_data:
-
-ObjectDetectionData
--------------------
-
-.. autoclass:: flash.image.ObjectDetectionData
-
-.. automethod:: flash.image.ObjectDetectionData.from_coco

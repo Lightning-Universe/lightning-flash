@@ -67,6 +67,12 @@ extensions = [
     'sphinx_togglebutton',
 ]
 
+# autodoc: Default to members and undoc-members
+autodoc_default_options = {"members": True}
+
+# autodoc: Don't inherit docstrings (e.g. for nn.Module.forward)
+autodoc_inherit_docstrings = False
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
