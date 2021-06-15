@@ -14,8 +14,11 @@ class TestFiftyOneDetectionLabels:
         assert serial is not None
 
     def test_serialize_fiftyone(self):
+        labels = ['class_1', 'class_2', 'class_3']
         serial = FiftyOneDetectionLabels()
         filepath_serial = FiftyOneDetectionLabels(return_filepath=True)
+        threshold_serial = FiftyOneDetectionLabels(threshold=0.9)
+        labels_serial = FiftyOneDetectionLabels(labels=labels)
 
         sample = {
             DefaultDataKeys.PREDS: [
@@ -35,8 +38,20 @@ class TestFiftyOneDetectionLabels:
         detections = serial.serialize(sample)
         assert len(detections.detections) == 1
         assert detections.detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        assert detections.detections[0].confidence == 0.5
+        assert detections.detections[0].label == "0"
 
         detections = filepath_serial.serialize(sample)
         assert len(detections["predictions"].detections) == 1
         assert detections["predictions"].detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        assert detections["predictions"].detections[0].confidence == 0.5
         assert detections["filepath"] == "something"
+
+        detections = threshold_serial.serialize(sample)
+        assert len(detections.detections) == 0
+
+        detections = labels_serial.serialize(sample)
+        assert len(detections.detections) == 1
+        assert detections.detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        assert detections.detections[0].confidence == 0.5
+        assert detections.detections[0].label == "class_1"
