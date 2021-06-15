@@ -488,8 +488,8 @@ class Task(LightningModule):
         return registry.available_keys()
 
     @classmethod
-    def available_models(cls) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+    def available_heads(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "heads", None)
         if registry is None:
             return []
         return registry.available_keys()

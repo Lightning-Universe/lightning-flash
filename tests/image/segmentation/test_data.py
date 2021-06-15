@@ -306,6 +306,6 @@ class TestSemanticSegmentationData:
         assert labels.dtype == torch.int64
 
         # now train with `fast_dev_run`
-        model = SemanticSegmentation(num_classes=2, backbone="torchvision/fcn_resnet50")
+        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fcn")
         trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
         trainer.finetune(model, dm, strategy="freeze_unfreeze")
