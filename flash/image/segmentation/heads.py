@@ -65,10 +65,10 @@ if _TORCHVISION_AVAILABLE:
             raise MisconfigurationException(
                 f"{type(backbone)} backbone is not currently supported for semantic segmentation."
             )
-        return out_layer, out_inplanes, aux_layer, aux_inplanes
+        return backbone, out_layer, out_inplanes, aux_layer, aux_inplanes
 
     def _load_fcn_deeplabv3(model_name, backbone, num_classes):
-        out_layer, out_inplanes, aux_layer, aux_inplanes = _get_backbone_meta(backbone)
+        backbone, out_layer, out_inplanes, aux_layer, aux_inplanes = _get_backbone_meta(backbone)
 
         return_layers = {out_layer: 'out'}
         backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
@@ -91,7 +91,7 @@ if _TORCHVISION_AVAILABLE:
         )
 
     def _load_lraspp(backbone, num_classes):
-        high_pos, high_channels, low_pos, low_channels = _get_backbone_meta(backbone)
+        backbone, high_pos, high_channels, low_pos, low_channels = _get_backbone_meta(backbone)
         backbone = IntermediateLayerGetter(backbone, return_layers={low_pos: 'low', high_pos: 'high'})
         return LRASPP(backbone, low_channels, high_channels, num_classes)
 
