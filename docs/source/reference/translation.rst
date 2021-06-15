@@ -93,27 +93,3 @@ You can change the model run by passing in the backbone parameter.
     :hide:
 
     ...
-
-------
-
-*************
-API reference
-*************
-
-.. _translation_task:
-
-TranslationTask
----------------
-
-.. autoclass:: flash.text.TranslationTask
-    :members:
-    :exclude-members: forward
-
-.. _translation_data:
-
-TranslationData
----------------
-
-.. autoclass:: flash.text.TranslationData
-
-.. automethod:: flash.text.TranslationData.from_files

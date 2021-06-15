@@ -21,13 +21,23 @@ import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
-from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
     from transformers import AutoTokenizer, default_data_collator
     from transformers.modeling_outputs import SequenceClassifierOutput
+
+
+class TextDeserializer(Deserializer):
+
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
+        self.max_length = max_length
+
+    def deserialize(self, text: str) -> Tensor:
+        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
 
 
 class TextDataSource(DataSource):
@@ -73,20 +83,24 @@ class TextFileDataSource(TextDataSource):
 
         self.filetype = filetype
 
+    def _multilabel_target(self, targets, element):
+        targets = list(element.pop(target) for target in targets)
+        element["labels"] = targets
+        return element
+
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
-        csv_file, input, target = data
+        file, input, target = data
 
         data_files = {}
 
         stage = self.running_stage.value
-        data_files[stage] = str(csv_file)
+        data_files[stage] = str(file)
 
-        # FLASH_TESTING is set in the CI to run faster.
         # FLASH_TESTING is set in the CI to run faster.
         if flash._IS_TESTING and not torch.cuda.is_available():
             try:
@@ -98,26 +112,31 @@ class TextFileDataSource(TextDataSource):
         else:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
-        if self.training:
-            labels = list(sorted(list(set(dataset_dict[stage][target]))))
-            dataset.num_classes = len(labels)
-            self.set_state(LabelsState(labels))
+        if not self.predicting:
+            if isinstance(target, List):
+                # multi-target
+                dataset_dict = dataset_dict.map(partial(self._multilabel_target, target))
+                dataset.num_classes = len(target)
+                self.set_state(LabelsState(target))
+            else:
+                if self.training:
+                    labels = list(sorted(list(set(dataset_dict[stage][target]))))
+                    dataset.num_classes = len(labels)
+                    self.set_state(LabelsState(labels))
 
-        labels = self.get_state(LabelsState)
+                labels = self.get_state(LabelsState)
 
-        # convert labels to ids
-        # if not self.predicting:
-        if labels is not None:
-            labels = labels.labels
-            label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-            dataset_dict = dataset_dict.map(partial(self._transform_label, label_to_class_mapping, target))
+                # convert labels to ids
+                if labels is not None:
+                    labels = labels.labels
+                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
+                    dataset_dict = dataset_dict.map(partial(self._transform_label, label_to_class_mapping, target))
+
+                # Hugging Face models expect target to be named ``labels``.
+                if target != "labels":
+                    dataset_dict.rename_column_(target, "labels")
 
         dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input), batched=True)
-
-        # Hugging Face models expect target to be named ``labels``.
-        if not self.predicting and target != "labels":
-            dataset_dict.rename_column_(target, "labels")
-
         dataset_dict.set_format("torch", columns=columns)
 
         return dataset_dict[stage]
@@ -219,6 +238,7 @@ class TextClassificationPreprocess(Preprocess):
                 "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
             },
             default_data_source="sentences",
+            deserializer=TextDeserializer(backbone, max_length),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

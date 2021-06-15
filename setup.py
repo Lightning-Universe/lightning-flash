@@ -53,6 +53,7 @@ extras = {
         path_dir=_PATH_REQUIRE, file_name="datatype_image_style_transfer.txt"
     ),
     "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
+    "serve": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="serve.txt"),
 }
 
 # remove possible duplicate.

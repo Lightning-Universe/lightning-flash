@@ -66,29 +66,3 @@ Now all we need is to train our task!
 .. literalinclude:: ../../../flash_examples/finetuning/semantic_segmentation.py
     :language: python
     :lines: 14-
-
-------
-
-*************
-API reference
-*************
-
-.. _segmentation:
-
-SemanticSegmentation
---------------------
-
-.. autoclass:: flash.image.SemanticSegmentation
-    :members:
-    :exclude-members: forward
-
-.. _segmentation_data:
-
-SemanticSegmentationData
-------------------------
-
-.. autoclass:: flash.image.SemanticSegmentationData
-
-.. automethod:: flash.image.SemanticSegmentationData.from_folders
-
-.. autoclass:: flash.image.SemanticSegmentationPreprocess

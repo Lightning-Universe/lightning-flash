@@ -91,27 +91,3 @@ By default, we use the `t5 <https://arxiv.org/abs/1910.10683>`_ model for summar
     :hide:
 
     ...
-
-------
-
-*************
-API reference
-*************
-
-.. _summarization_task:
-
-SummarizationTask
------------------
-
-.. autoclass:: flash.text.SummarizationTask
-    :members:
-    :exclude-members: forward
-
-.. _summarization_data:
-
-SummarizationData
------------------
-
-.. autoclass:: flash.text.SummarizationData
-
-.. automethod:: flash.text.SummarizationData.from_files

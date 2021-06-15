@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import base64
 import os
-from dataclasses import dataclass
+from io import BytesIO
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -33,10 +34,9 @@ from flash.core.data.data_source import (
     ImageLabelsMap,
     NumpyDataSource,
     PathsDataSource,
-    SEQUENCE_DATA_TYPE,
     TensorDataSource,
 )
-from flash.core.data.process import Preprocess
+from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
@@ -56,6 +56,7 @@ else:
 if _IMAGE_AVAILABLE:
     import torchvision
     from PIL import Image
+    from PIL import Image as PILImage
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 
 else:
@@ -129,7 +130,9 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             zip(input_data, target_data),
         )
 
-        return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+        data = [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+
+        return data
 
     def predict_load_data(self, data: Union[str, List[str]]):
         return super().predict_load_data(data)
@@ -212,6 +215,21 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         return sample
 
 
+class SemanticSegmentationDeserializer(Deserializer):
+
+    def __init__(self):
+
+        self.to_tensor = torchvision.transforms.ToTensor()
+
+    def deserialize(self, data: str) -> torch.Tensor:
+        encoded_with_padding = (data + "===").encode("ascii")
+        img = base64.b64decode(encoded_with_padding)
+        buffer = BytesIO(img)
+        img = PILImage.open(buffer, mode="r")
+        img = self.to_tensor(img)
+        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.METADATA: img.shape}
+
+
 class SemanticSegmentationPreprocess(Preprocess):
 
     def __init__(
@@ -221,6 +239,7 @@ class SemanticSegmentationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
+        deserializer: Optional['Deserializer'] = None,
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
         **data_source_kwargs: Any,
@@ -254,6 +273,7 @@ class SemanticSegmentationPreprocess(Preprocess):
                 DefaultDataSources.TENSORS: SemanticSegmentationTensorDataSource(),
                 DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
             },
+            deserializer=deserializer or SemanticSegmentationDeserializer(),
             default_data_source=DefaultDataSources.FILES,
         )
 

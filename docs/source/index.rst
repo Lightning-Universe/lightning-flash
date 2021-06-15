@@ -14,6 +14,7 @@ Lightning Flash
    installation
    custom_task
    reference/flash_to_pl
+   reference/flash_to_production
 
 .. toctree::
    :maxdepth: 1
@@ -21,10 +22,11 @@ Lightning Flash
 
    reference/task
    reference/image_classification
+   reference/image_classification_multi_label
    reference/image_embedder
-   reference/multi_label_classification
    reference/summarization
    reference/text_classification
+   reference/text_classification_multi_label
    reference/tabular_classification
    reference/translation
    reference/object_detection
@@ -36,10 +38,10 @@ Lightning Flash
    :maxdepth: 1
    :caption: Flash API
 
-   general/model
    general/data
    general/callback
    general/registry
+   general/serve
 
 
 .. toctree::
@@ -51,6 +53,16 @@ Lightning Flash
    general/predictions
    general/jit
 
+.. toctree::
+   :maxdepth: 1
+   :caption: API Reference
+
+   code/core
+   code/data
+   code/image
+   code/tabular
+   code/text
+   code/video
 
 .. toctree::
    :maxdepth: 1

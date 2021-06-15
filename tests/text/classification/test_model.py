@@ -51,7 +51,7 @@ def test_init_train(tmpdir):
 
 @pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_jit(tmpdir):
-    sample_input = torch.randint(1000, size=(1, 100))
+    sample_input = {"input_ids": torch.randint(1000, size=(1, 100))}
     path = os.path.join(tmpdir, "test.pt")
 
     model = TextClassifier(2, TEST_BACKBONE)
