@@ -37,7 +37,6 @@ def _dummy_image_loader(_):
     return torch.rand(3, 196, 196)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def _rand_image(size: Tuple[int, int] = None):
     if size is None:
         _size = np.random.choice([196, 244])
@@ -387,6 +386,7 @@ def test_from_data(data, from_function):
     assert list(labels.numpy()) == [2, 5]
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_from_fiftyone(tmpdir):
     tmpdir = Path(tmpdir)
@@ -401,25 +401,42 @@ def test_from_fiftyone(tmpdir):
         str(tmpdir / "b_1.png"),
     ]
 
-    train_dataset = fo.Dataset.from_dir(str(tmpdir), dataset_type=fo.types.ImageDirectory)
-    s1 = train_dataset[train_images[0]]
-    s2 = train_dataset[train_images[1]]
+    dataset = fo.Dataset.from_dir(str(tmpdir), dataset_type=fo.types.ImageDirectory)
+    s1 = dataset[train_images[0]]
+    s2 = dataset[train_images[1]]
     s1["test"] = fo.Classification(label="1")
     s2["test"] = fo.Classification(label="2")
     s1.save()
     s2.save()
 
     img_data = ImageClassificationData.from_fiftyone(
-        train_dataset=train_dataset,
+        train_dataset=dataset,
+        test_dataset=dataset,
+        val_dataset=dataset,
         label_field="test",
         batch_size=2,
         num_workers=0,
     )
     assert img_data.train_dataloader() is not None
-    assert img_data.val_dataloader() is None
-    assert img_data.test_dataloader() is None
+    assert img_data.val_dataloader() is not None
+    assert img_data.test_dataloader() is not None
 
+    # check train data
     data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [0, 1]
+
+    # check val data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [0, 1]
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
     imgs, labels = data['input'], data['target']
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, )

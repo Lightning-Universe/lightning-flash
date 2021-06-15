@@ -286,6 +286,7 @@ class TestSemanticSegmentationData:
             train_dataset=dataset,
             val_dataset=dataset,
             test_dataset=dataset,
+            predict_dataset=dataset,
             batch_size=2,
             num_workers=0,
             num_classes=num_classes,
@@ -312,6 +313,11 @@ class TestSemanticSegmentationData:
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
+
+        # check predict data
+        data = next(iter(dm.predict_dataloader()))
+        imgs = data[DefaultDataKeys.INPUT]
+        assert imgs.shape == (2, 3, 196, 196)
 
     def test_map_labels(self, tmpdir):
         tmp_dir = Path(tmpdir)
