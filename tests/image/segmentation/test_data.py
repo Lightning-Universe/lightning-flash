@@ -257,32 +257,28 @@ class TestSemanticSegmentationData:
 
         # create random dummy data
 
-        os.makedirs(str(tmp_dir / "images"))
-        os.makedirs(str(tmp_dir / "targets"))
-
         images = [
-            str(tmp_dir / "images" / "img1.png"),
-            str(tmp_dir / "images" / "img2.png"),
-            str(tmp_dir / "images" / "img3.png"),
-        ]
-
-        targets = [
-            str(tmp_dir / "targets" / "img1.png"),
-            str(tmp_dir / "targets" / "img2.png"),
-            str(tmp_dir / "targets" / "img3.png"),
+            str(tmp_dir / "img1.png"),
+            str(tmp_dir / "img2.png"),
+            str(tmp_dir / "img3.png"),
         ]
 
         num_classes: int = 2
         img_size: Tuple[int, int] = (196, 196)
-        create_random_data(images, targets, img_size, num_classes)
+
+        for img_file in images:
+            _rand_image(img_size).save(img_file)
+
+        targets = [np.array(_rand_labels(img_size, num_classes)) for _ in range(3)]
 
         dataset = fo.Dataset.from_dir(
             str(tmp_dir),
-            dataset_type=fo.types.ImageSegmentationDirectory,
-            data_path="images",
-            labels_path="targets",
-            force_grayscale=True,
+            dataset_type=fo.types.ImageDirectory,
         )
+
+        for idx, sample in enumerate(dataset):
+            sample["ground_truth"] = fo.Segmentation(mask=targets[idx][:, :, 0])
+            sample.save()
 
         # instantiate the data module
 
