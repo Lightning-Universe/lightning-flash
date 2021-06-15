@@ -46,7 +46,7 @@ if _TORCHVISION_AVAILABLE:
         backbone = mobilenetv3.__dict__[model_name](
             pretrained=pretrained,
             _dilated=True,
-        ).features
+        )
         return backbone
 
     for model_name in MOBILENET_MODELS:

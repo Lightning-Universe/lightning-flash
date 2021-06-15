@@ -50,6 +50,7 @@ if _TORCHVISION_AVAILABLE:
             aux_layer = 'layer3'
             aux_inplanes = 1024
         elif isinstance(backbone, MobileNetV3):
+            backbone = backbone.features
             # Gather the indices of blocks which are strided. These are the locations of C1, ..., Cn-1 blocks.
             # The first and last blocks are always included because they are the C0 (conv1) and Cn.
             stage_indices = [0] + [i for i, b in enumerate(backbone) if getattr(b, "_is_cn", False)
