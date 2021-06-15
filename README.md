@@ -559,7 +559,8 @@ gives you the most flexibility because it is simply organized PyTorch.
 
 ## Visualization
 
-Predictions from image and video tasks can be visualized through our integration with [FiftyOne](https://fiftyone.ai) allowing you to understand and analyze how your model is performing.
+Predictions from image and video tasks can be visualized through our integration with [FiftyOne](https://fiftyone.ai) 
+allowing you to better understand and analyze how your model is performing.
 
 ```python
 from flash.core.data.utils import download_data
