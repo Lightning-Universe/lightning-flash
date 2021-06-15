@@ -15,7 +15,13 @@ from typing import Any, Dict, Optional
 
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys, NumpyDataSource, PathsDataSource, TensorDataSource
+from flash.core.data.data_source import (
+    DefaultDataKeys,
+    FiftyOneDataSource,
+    NumpyDataSource,
+    PathsDataSource,
+    TensorDataSource,
+)
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -31,19 +37,46 @@ class ImagePathsDataSource(PathsDataSource):
         super().__init__(extensions=IMG_EXTENSIONS)
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
+        img_path = sample[DefaultDataKeys.INPUT]
+        img = default_loader(img_path)
+        sample[DefaultDataKeys.INPUT] = img
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": (h, w),
+        }
         return sample
 
 
 class ImageTensorDataSource(TensorDataSource):
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = to_pil_image(sample[DefaultDataKeys.INPUT])
+        img = to_pil_image(sample[DefaultDataKeys.INPUT])
+        sample[DefaultDataKeys.INPUT] = img
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = {"size": (h, w)}
         return sample
 
 
 class ImageNumpyDataSource(NumpyDataSource):
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
+        img = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
+        sample[DefaultDataKeys.INPUT] = img
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = {"size": (h, w)}
+        return sample
+
+
+class ImageFiftyOneDataSource(FiftyOneDataSource):
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        img_path = sample[DefaultDataKeys.INPUT]
+        img = default_loader(img_path)
+        sample[DefaultDataKeys.INPUT] = img
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": (h, w),
+        }
         return sample
