@@ -14,6 +14,7 @@
 import os
 from typing import Any, Dict, Optional, Tuple, Union
 
+import numpy as np
 import torch
 
 import flash
@@ -88,15 +89,6 @@ class SegmentationLabels(Serializer):
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
-    """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
-
-    Args:
-        labels_map: A dictionary that map the labels ids to pixel intensities.
-        visualize: Wether to visualize the image labels.
-        return_filepath: Boolean determining whether to return a dict
-            containing filepath and FiftyOne labels (True) or only a
-            list of FiftyOne labels (False)
-    """
 
     def __init__(
         self,
@@ -104,6 +96,15 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
         visualize: bool = False,
         return_filepath: bool = False,
     ):
+        """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
+
+        Args:
+            labels_map: A dictionary that map the labels ids to pixel intensities.
+            visualize: Wether to visualize the image labels.
+            return_filepath: Boolean determining whether to return a dict
+                containing filepath and FiftyOne labels (True) or only a
+                list of FiftyOne labels (False)
+        """
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
@@ -113,7 +114,7 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
 
     def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Dict[str, Any]]:
         labels = super().serialize(sample)
-        fo_predictions = Segmentation(mask=labels.numpy())
+        fo_predictions = Segmentation(mask=np.array(labels))
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
