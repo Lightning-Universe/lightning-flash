@@ -51,7 +51,7 @@ class ImageEmbedder(Task):
     def __init__(
         self,
         embedding_dim: Optional[int] = None,
-        backbone: str = "swav-imagenet",
+        backbone: str = "resnet101",
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
