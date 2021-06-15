@@ -64,8 +64,7 @@ class FiftyOneDetectionLabels(Serializer):
 
     def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DefaultDataKeys.METADATA not in sample:
-            raise ValueError("sample requires DefaultDataKeys.METADATA to use "
-                             "a FiftyOneDetectionLabels serializer.")
+            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels serializer.")
 
         labels = None
         if self._labels is not None:

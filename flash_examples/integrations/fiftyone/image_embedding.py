@@ -20,9 +20,7 @@ from flash.core.data.utils import download_data
 from flash.image import ImageEmbedder
 
 # 1 Download data
-download_data(
-    "https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip"
-)
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip")
 
 # 2 Load data into FiftyOne
 dataset = fo.Dataset.from_dir(

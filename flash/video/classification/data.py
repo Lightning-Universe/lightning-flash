@@ -120,9 +120,7 @@ class BaseVideoClassification(object):
         }
 
     def _make_encoded_video_dataset(self, data) -> 'EncodedVideoDataset':
-        raise NotImplementedError(
-            "Subclass must implement _make_encoded_video_dataset()"
-        )
+        raise NotImplementedError("Subclass must implement _make_encoded_video_dataset()")
 
 
 class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSource):
@@ -157,8 +155,8 @@ class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSourc
 
 
 class VideoClassificationFiftyOneDataSource(
-        BaseVideoClassification,
-        FiftyOneDataSource,
+    BaseVideoClassification,
+    FiftyOneDataSource,
 ):
 
     def __init__(
