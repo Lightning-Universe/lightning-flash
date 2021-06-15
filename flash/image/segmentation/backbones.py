@@ -17,10 +17,10 @@ from functools import partial
 
 import torch.nn as nn
 from deprecate import deprecated
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.backbones import catch_url_error
 
 if _TORCHVISION_AVAILABLE:
