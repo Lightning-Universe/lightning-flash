@@ -74,7 +74,7 @@ datamodule = ImageClassificationData.from_fiftyone(
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 
-predictions = list(chain.from_iterable(predictions)) # flatten batches
+predictions = list(chain.from_iterable(predictions))  # flatten batches
 
 # 6 Add predictions to dataset
 test_dataset.set_values("predictions", predictions)
