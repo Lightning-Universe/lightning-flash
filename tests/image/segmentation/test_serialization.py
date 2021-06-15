@@ -39,14 +39,25 @@ class TestSemanticSegmentationLabels:
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     def test_serialize_fiftyone(self):
         serial = FiftyOneSegmentationLabels()
+        filepath_serial = FiftyOneSegmentationLabels(return_filepath=True)
 
-        sample = torch.zeros(5, 2, 3)
-        sample[1, 1, 2] = 1  # add peak in class 2
-        sample[3, 0, 1] = 1  # add peak in class 4
+        preds = torch.zeros(5, 2, 3)
+        preds[1, 1, 2] = 1  # add peak in class 2
+        preds[3, 0, 1] = 1  # add peak in class 4
 
-        segmentation = serial.serialize({DefaultDataKeys.PREDS: sample})
+        sample = {
+            DefaultDataKeys.PREDS: preds,
+            DefaultDataKeys.METADATA: {"filepath": "something"},
+        }
+
+        segmentation = serial.serialize(sample)
         assert segmentation.mask[1, 2] == 1
         assert segmentation.mask[0, 1] == 3
+
+        segmentation = filepath_serial.serialize(sample)
+        assert segmentation["predictions"].mask[1, 2] == 1
+        assert segmentation["predictions"].mask[0, 1] == 3
+        assert segmentation["filepath"] == "something"
 
     # TODO: implement me
     def test_create_random_labels(self):

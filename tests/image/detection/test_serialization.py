@@ -15,6 +15,7 @@ class TestFiftyOneDetectionLabels:
 
     def test_serialize_fiftyone(self):
         serial = FiftyOneDetectionLabels()
+        filepath_serial = FiftyOneDetectionLabels(return_filepath=True)
 
         sample = {
             DefaultDataKeys.PREDS: [
@@ -34,3 +35,8 @@ class TestFiftyOneDetectionLabels:
         detections = serial.serialize(sample)
         assert len(detections.detections) == 1
         assert detections.detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+
+        detections = filepath_serial.serialize(sample)
+        assert len(detections["predictions"].detections) == 1
+        assert detections["predictions"].detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        assert detections["filepath"] == "something"

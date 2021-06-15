@@ -49,6 +49,13 @@ def test_classification_serializers_fiftyone():
     example_output = {DefaultDataKeys.PREDS: logits, DefaultDataKeys.METADATA: {"filepath": "something"}}  # 3 classes
     labels = ['class_1', 'class_2', 'class_3']
 
+    predictions = FiftyOneLabels(return_filepath=True).serialize(example_output)
+    assert predictions["predictions"].label == '2'
+    assert predictions["filepath"] == "something"
+    predictions = FiftyOneLabels(labels, return_filepath=True).serialize(example_output)
+    assert predictions["predictions"].label == 'class_3'
+    assert predictions["filepath"] == "something"
+
     predictions = FiftyOneLabels(store_logits=True).serialize(example_output)
     assert torch.allclose(torch.tensor(predictions.logits), logits)
     assert torch.allclose(torch.tensor(predictions.confidence), torch.softmax(logits, -1)[-1])

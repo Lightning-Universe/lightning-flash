@@ -68,16 +68,3 @@ def visualize(
     if wait:
         session.wait()
     return session
-
-
-def get_classes(data, label_field: str):
-    classes = data.classes.get(label_field, None)
-
-    if not classes:
-        classes = data.default_classes
-
-    if not classes:
-        label_path = data._get_label_field_path(label_field, "label")[1]
-        classes = data.distinct(label_path)
-
-    return classes
