@@ -40,6 +40,6 @@ if _ICEVISION_AVAILABLE:
     OBJECT_DETECTION_BACKBONES(partial(load_backbone, _yolov5), name='yolov5')
 
     @OBJECT_DETECTION_MODELS(name='icevision')
-    def load_icevision(model_type, backbone_conf, num_classes: int = 1, **kwargs):
+    def load_icevision(model_type, backbone_conf: icevision.backbones.BackboneConfig, num_classes: int = 1, **kwargs):
         model = model_type.model(backbone=backbone_conf, num_classes=num_classes, **kwargs)
         return model

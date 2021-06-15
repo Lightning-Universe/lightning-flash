@@ -81,7 +81,7 @@ class ObjectDetector(Task):
         self,
         num_classes: int,
         model: str = "fasterrcnn",
-        backbone: Optional[str] = None,
+        backbone: Optional[str] = 'resnet18',
         fpn: bool = True,
         pretrained: bool = True,
         pretrained_backbone: bool = True,
