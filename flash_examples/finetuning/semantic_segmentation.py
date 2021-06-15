@@ -44,16 +44,13 @@ print(f"Heads: {SemanticSegmentation.available_heads()}")
 # 3.b Build the model
 model = SemanticSegmentation(
     backbone="mobilenet_v3_large",
-    head="deeplabv3",
+    head="fcn",
     num_classes=datamodule.num_classes,
     serializer=SegmentationLabels(visualize=True),
 )
 
 # 4. Create the trainer.
-trainer = flash.Trainer(
-    max_epochs=1,
-    fast_dev_run=1,
-)
+trainer = flash.Trainer(fast_dev_run=True)
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
