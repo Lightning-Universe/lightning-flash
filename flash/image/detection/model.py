@@ -20,7 +20,7 @@ from torch.optim import Optimizer
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image.backbones import OBJ_DETECTION_BACKBONES
 from flash.image.detection.finetuning import ObjectDetectionFineTuning
 
@@ -38,45 +38,6 @@ if _IMAGE_AVAILABLE:
 
 else:
     AnchorGenerator = None
-
-_icevision_models = {}
-if _ICEVISION_AVAILABLE:
-    import icevision
-
-    # https://airctic.com/0.8.0/models/
-
-    _yolov5_model = icevision.models.ultralytics.yolov5
-    yolov5_backbones = {
-        's': _yolov5_model.small,
-        'm': _yolov5_model.medium,
-        'l': _yolov5_model.large,
-        'xl': _yolov5_model.extra_large,
-    }
-
-    def _load_yolov5(pretrained: bool = True, num_classes: int = 0, model_size: str = 's', **kwargs) -> nn.Module:
-
-        img_size = kwargs.get('img_size', None)
-        if img_size is None:
-            raise UserWarning("YoloV5 requires img_size[int] in argument!")
-
-        backbone = yolov5_backbones[model_size]
-        model = _yolov5_model.model(
-            backbone=backbone(pretrained=pretrained), num_classes=num_classes, img_size=img_size
-        )
-        return model
-
-    def _load_efficientdet(pretrained: bool = True, num_classes: int = 0, **kwargs):
-        img_size = kwargs.get('img_size', None)
-        if img_size is None:
-            raise UserWarning("YoloV5 requires img_size[int] in argument!")
-
-        model_type = icevision.models.ross.efficientdet
-        backbone = model_type.backbones.tf_lite0
-        model = model_type.model(backbone=backbone(pretrained=pretrained), num_classes=num_classes, img_size=img_size)
-        return model
-
-    _icevision_models = {"yolov5": _load_yolov5, "efficientdet": _load_efficientdet}
-    _models.update(_icevision_models)
 
 
 def _evaluate_iou(target, pred):
@@ -176,9 +137,6 @@ class ObjectDetector(Task):
                 in_features = model.roi_heads.box_predictor.cls_score.in_features
                 head = FastRCNNPredictor(in_features, num_classes)
                 model.roi_heads.box_predictor = head
-
-            elif model_name in _icevision_models:
-                model = _icevision_models[model_name](pretrained, num_classes, **kwargs)
             else:
                 model = _models[model_name](pretrained=pretrained, pretrained_backbone=pretrained_backbone)
                 model.head = RetinaNetHead(
