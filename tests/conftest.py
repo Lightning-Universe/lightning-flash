@@ -36,7 +36,7 @@ def patch_decorators_uuid_generator_func(mocker: MockerFixture):
 
 @pytest.fixture(scope="session")
 def original_global_datadir():
-    return pathlib.Path(os.path.realpath(__file__)).parent.joinpath("core").joinpath("serve").joinpath("data")
+    return pathlib.Path(os.path.realpath(__file__)).parent / "core" / "serve" / "data"
 
 
 def prep_global_datadir(tmp_path_factory, original_global_datadir):
