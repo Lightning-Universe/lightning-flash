@@ -29,48 +29,11 @@ from flash.core.utilities.imports import (
     _TORCHVISION_GREATER_EQUAL_0_9,
     _VIDEO_AVAILABLE,
 )
+from tests.examples.utils import run_test
 
 _IMAGE_AVAILABLE = _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9
 
 root = Path(__file__).parent.parent.parent
-
-
-def call_script(
-    filepath: str,
-    args: Optional[List[str]] = None,
-    timeout: Optional[int] = 60 * 5,
-) -> Tuple[int, str, str]:
-    with open(filepath, 'r') as original:
-        data = original.read()
-
-    with open(filepath, 'w') as modified:
-        modified.write("import pytorch_lightning as pl\npl.seed_everything(42)\n" + data)
-
-    if args is None:
-        args = []
-    args = [str(a) for a in args]
-    command = [sys.executable, "-m", "coverage", "run", filepath] + args
-    print(" ".join(command))
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        stdout, stderr = p.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        p.kill()
-        stdout, stderr = p.communicate()
-    stdout = stdout.decode("utf-8")
-    stderr = stderr.decode("utf-8")
-
-    with open(filepath, 'w') as modified:
-        modified.write(data)
-
-    return p.returncode, stdout, stderr
-
-
-def run_test(filepath):
-    code, stdout, stderr = call_script(filepath)
-    print(f"{filepath} STDOUT: {stdout}")
-    print(f"{filepath} STDERR: {stderr}")
-    assert not code
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})

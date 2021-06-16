@@ -27,6 +27,7 @@ from torchmetrics import Accuracy
 
 import flash
 from flash.core.classification import ClassificationTask, Labels
+from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
@@ -153,7 +154,8 @@ class VideoClassifier(ClassificationTask):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         predictions = self(batch["video"])
-        return predictions
+        batch[DefaultDataKeys.PREDS] = predictions
+        return batch
 
     def configure_finetune_callback(self) -> List[Callback]:
         return [VideoClassifierFinetuning()]

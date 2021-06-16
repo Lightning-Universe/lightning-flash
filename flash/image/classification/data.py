@@ -27,7 +27,7 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.classification.transforms import default_transforms, train_default_transforms
-from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+from flash.image.data import ImageFiftyOneDataSource, ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -72,6 +72,7 @@ class ImageClassificationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
+        **data_source_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -81,6 +82,7 @@ class ImageClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.FIFTYONE: ImageFiftyOneDataSource(**data_source_kwargs),
                 DefaultDataSources.FILES: ImagePathsDataSource(),
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
