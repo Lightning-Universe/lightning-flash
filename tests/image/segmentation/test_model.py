@@ -57,7 +57,8 @@ def test_smoke():
 def test_forward(num_classes, img_shape):
     model = SemanticSegmentation(
         num_classes=num_classes,
-        backbone='fcn_resnet50',
+        backbone="resnet50",
+        head="fcn",
     )
 
     B, C, H, W = img_shape
