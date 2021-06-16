@@ -557,6 +557,41 @@ classifier = LinearClassifier(128, 10)
 When you reach the limits of the flexibility provided by Flash, then seamlessly transition to PyTorch Lightning which
 gives you the most flexibility because it is simply organized PyTorch.
 
+## Visualization
+
+Predictions from image and video tasks can be visualized through an [integration with FiftyOne](https://lightning-flash.readthedocs.io/en/latest/integrations/fiftyone.html), allowing you to better understand and analyze how your model is performing.
+
+```python
+from flash.core.data.utils import download_data
+from flash.core.integrations.fiftyone import visualize
+from flash.image import ObjectDetector
+from flash.image.detection.serialization import FiftyOneDetectionLabels
+
+# 1. Download the data
+# Dataset Credit: https://www.kaggle.com/ultralytics/coco128
+download_data(
+    "https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip",
+    "data/",
+)
+
+# 2. Load the model from a checkpoint and use the FiftyOne serializer
+model = ObjectDetector.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/object_detection_model.pt"
+)
+model.serializer = FiftyOneDetectionLabels()
+
+# 3. Detect the object on the images
+filepaths = [
+    "data/coco128/images/train2017/000000000025.jpg",
+    "data/coco128/images/train2017/000000000520.jpg",
+    "data/coco128/images/train2017/000000000532.jpg",
+]
+predictions = model.predict(filepaths)
+
+# 4. Visualize predictions in FiftyOne App
+session = visualize(predictions, filepaths=filepaths)
+```
+
 ## Contribute!
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases. But we're looking for incredible contributors like you to submit new tasks!
 
