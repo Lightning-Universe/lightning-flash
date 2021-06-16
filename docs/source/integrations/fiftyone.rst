@@ -1,6 +1,6 @@
-####################
-FiftyOne Integration
-####################
+########
+FiftyOne
+########
 
 We have collaborated with the team at
 `Voxel51 <https://voxel51.com>`_ to integrate their tool,
