@@ -50,7 +50,7 @@ def visualize(
         predictions: Can be either a list of FiftyOne labels that will be
             matched with the corresponding ``filepaths``, or a list of
             dictionaries with "filepath" and "predictions" keys that contains
-            the filepaths and predictions. The
+            the filepaths and predictions.
         filepaths: A list of filepaths to images or videos corresponding to the
             provided ``predictions``
         label_field: The name of the label field in which to store the
