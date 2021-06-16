@@ -578,7 +578,7 @@ download_data(
 model = ObjectDetector.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/object_detection_model.pt"
 )
-model.serializer = FiftyOneDetectionLabels()  # output FiftyOne format
+model.serializer = FiftyOneDetectionLabels()
 
 # 3. Detect the object on the images
 filepaths = [
