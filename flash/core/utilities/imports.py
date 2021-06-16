@@ -87,6 +87,7 @@ _PIL_AVAILABLE = _module_available("PIL")
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
     _PYSTICHE_GREATER_EQUAL_0_7_2 = _compare_version("pystiche", operator.ge, "0.7.2")
+    _TORCH_GREATER_EQUAL_1_9_0 = _compare_version("torch", operator.ge, "1.9.0")
 
 _IMAGE_STLYE_TRANSFER = _PYSTICHE_AVAILABLE
 _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE

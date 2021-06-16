@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
 from torchmetrics.classification import Accuracy, Precision, Recall
 
 import flash
@@ -44,3 +45,11 @@ trainer.test(model)
 
 # 7. Save it!
 trainer.save_checkpoint("tabular_classification_model.pt")
+
+model.to_package('tabular_package.zip', verbose=True)
+
+model = TabularClassifier.from_package('tabular_package.zip')
+
+import pdb
+
+pdb.set_trace()

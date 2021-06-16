@@ -17,6 +17,7 @@ from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
+import pytorch_lightning
 import pytorch_lightning as pl
 import torch
 import torchmetrics
@@ -43,6 +44,12 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition, expose, ModelComponent
 from flash.core.utilities.apply_func import get_callable_dict
+from flash.core.utilities.imports import _TORCH_GREATER_EQUAL_1_9_0
+
+if _TORCH_GREATER_EQUAL_1_9_0:
+    from torch.package import PackageExporter, PackageImporter
+else:
+    PackageImporter, PackageExporter = None, None
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -630,3 +637,34 @@ class Task(LightningModule):
         composition = Composition(predict=comp)
         composition.serve(host=host, port=port)
         return composition
+
+    def to_package(
+        self,
+        package_path: str,
+        verbose: bool = False,
+    ):
+        if not _TORCH_GREATER_EQUAL_1_9_0:
+            raise ModuleNotFoundError(
+                f"PyTorch version should be at minimum 1.9.0 to use package. Found {torch.__version__}"
+            )
+
+        with PackageExporter(package_path, verbose=verbose) as exporter:
+            #exporter.save_module('pytorch_lightning.callbacks.model_checkpoint', dependencies=False)
+            exporter.save_pickle('models', 'model.pkl', self.trainer.checkpoint_connector.dump_checkpoint())
+
+        exporter_file_structure = exporter.file_structure()
+
+        if verbose:
+            print(exporter_file_structure)
+
+        return exporter
+
+    @classmethod
+    def from_package(cls, package_path: str):
+        if not _TORCH_GREATER_EQUAL_1_9_0:
+            raise ModuleNotFoundError(
+                f"PyTorch version should be at minimum 1.9.0 to use package. Found {torch.__version__}"
+            )
+
+        importer = PackageImporter(package_path)
+        return cls.load_from_checkpoint(importer.load_pickle('models', 'model.pkl'))
