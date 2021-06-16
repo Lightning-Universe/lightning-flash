@@ -82,9 +82,7 @@ def visualize(
 
     dataset = fo.Dataset()
     if filepaths:
-        dataset.add_samples(
-            [fo.Sample(filepath=f, **{label_field: l}) for f, l in zip(filepaths, labels)]
-        )
+        dataset.add_samples([fo.Sample(filepath=f, **{label_field: l}) for f, l in zip(filepaths, labels)])
 
     session = fo.launch_app(dataset, **kwargs)
     if wait:

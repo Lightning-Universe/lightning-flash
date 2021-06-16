@@ -75,9 +75,7 @@ predictions = list(chain.from_iterable(predictions))  # flatten batches
 test_dataset.set_values("predictions", predictions)
 
 # 7 Evaluate your model
-results = test_dataset.evaluate_classifications(
-    "predictions", gt_field="ground_truth", eval_key="eval"
-)
+results = test_dataset.evaluate_classifications("predictions", gt_field="ground_truth", eval_key="eval")
 results.print_report()
 plot = results.plot_confusion_matrix()
 plot.show()
