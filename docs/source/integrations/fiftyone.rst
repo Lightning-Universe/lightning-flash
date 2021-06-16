@@ -144,6 +144,7 @@ FiftyOneSegmentationLabels
 
 .. autoclass:: flash.image.segmentation.serialization.FiftyOneSegmentationLabels
     :members:
+    :noindex:
 
 .. _fiftyone_detection_labels:
 
