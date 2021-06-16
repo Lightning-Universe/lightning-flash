@@ -56,5 +56,5 @@ predictions = trainer.predict(model, datamodule=datamodule)
 predictions = list(chain.from_iterable(predictions))  # flatten batches
 
 # 5 Visualize predictions in FiftyOne App
-# Pass `wait=True` to block execution until App is closed
+# Optional: pass `wait=True` to block execution until App is closed
 session = visualize(predictions)

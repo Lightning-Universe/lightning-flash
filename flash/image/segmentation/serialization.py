@@ -39,15 +39,16 @@ else:
 
 
 class SegmentationLabels(Serializer):
+    """A :class:`.Serializer` which converts the model outputs to the label of
+    the argmax classification per pixel in the image for semantic segmentation
+    tasks.
+
+    Args:
+        labels_map: A dictionary that map the labels ids to pixel intensities.
+        visualize: Wether to visualize the image labels.
+    """
 
     def __init__(self, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None, visualize: bool = False):
-        """A :class:`.Serializer` which converts the model outputs to the label of the argmax classification
-        per pixel in the image for semantic segmentation tasks.
-
-        Args:
-            labels_map: A dictionary that map the labels ids to pixel intensities.
-            visualize: Wether to visualize the image labels.
-        """
         super().__init__()
         self.labels_map = labels_map
         self.visualize = visualize
@@ -89,6 +90,16 @@ class SegmentationLabels(Serializer):
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
+    """A :class:`.Serializer` which converts the model outputs to FiftyOne
+    segmentation format.
+
+    Args:
+        labels_map: A dictionary that map the labels ids to pixel intensities.
+        visualize: Wether to visualize the image labels.
+        return_filepath: Boolean determining whether to return a dict
+            containing filepath and FiftyOne labels (True) or only a list of
+            FiftyOne labels (False)
+    """
 
     def __init__(
         self,
@@ -96,15 +107,6 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
         visualize: bool = False,
         return_filepath: bool = False,
     ):
-        """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
-
-        Args:
-            labels_map: A dictionary that map the labels ids to pixel intensities.
-            visualize: Wether to visualize the image labels.
-            return_filepath: Boolean determining whether to return a dict
-                containing filepath and FiftyOne labels (True) or only a
-                list of FiftyOne labels (False)
-        """
         if not _FIFTYONE_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
 
