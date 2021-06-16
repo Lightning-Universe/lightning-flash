@@ -29,8 +29,8 @@ datamodule = SemanticSegmentationData.from_folders(
     train_folder="data/CameraRGB",
     train_target_folder="data/CameraSeg",
     batch_size=4,
-    val_split=0.3,
-    image_size=(200, 200),  # (600, 800)
+    val_split=0.1,
+    image_size=(200, 200),
     num_classes=21,
 )
 
