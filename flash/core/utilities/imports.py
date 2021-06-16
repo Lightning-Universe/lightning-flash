@@ -64,6 +64,7 @@ def _compare_version(package: str, op, version) -> bool:
 
 
 _TORCH_AVAILABLE = _module_available("torch")
+_BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", operator.lt, "1.9.0")
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
 _TABNET_AVAILABLE = _module_available("pytorch_tabnet")
@@ -75,6 +76,7 @@ _PYTORCHVIDEO_AVAILABLE = _module_available("pytorchvideo")
 _MATPLOTLIB_AVAILABLE = _module_available("matplotlib")
 _TRANSFORMERS_AVAILABLE = _module_available("transformers")
 _PYSTICHE_AVAILABLE = _module_available("pystiche")
+_FIFTYONE_AVAILABLE = _module_available("fiftyone")
 _FASTAPI_AVAILABLE = _module_available("fastapi")
 _PYDANTIC_AVAILABLE = _module_available("pydantic")
 _GRAPHVIZ_AVAILABLE = _module_available("graphviz")

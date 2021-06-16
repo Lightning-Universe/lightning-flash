@@ -85,7 +85,7 @@ Here's how it looks (from `video/classification.data.py <https://github.com/PyTo
 .. literalinclude:: ../../../flash/video/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: VideoClassificationPathsDataSource.load_data
+    :pyobject: BaseVideoClassification.load_data
 
 Preprocess
 ^^^^^^^^^^

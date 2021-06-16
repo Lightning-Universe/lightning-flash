@@ -66,6 +66,13 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Integrations
+
+   integrations/fiftyone
+
+
+.. toctree::
+   :maxdepth: 1
    :caption: Contributing a Task
 
    template/intro

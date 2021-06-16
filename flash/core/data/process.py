@@ -510,7 +510,7 @@ class Postprocess(Properties):
 
 
 class Serializer(Properties):
-    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model ouptut into
+    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model output into
     the desired output format when predicting."""
 
     def __init__(self):

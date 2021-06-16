@@ -15,6 +15,7 @@ import pytest
 import torch
 from pytorch_lightning.utilities import _TORCHVISION_AVAILABLE
 
+from flash.core.utilities.imports import _BOLTS_AVAILABLE
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 
 

@@ -19,9 +19,8 @@ from flash.image import ImageEmbedder
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
-# 2. Create an ImageEmbedder with swav trained on imagenet.
-# Check out SWAV: https://lightning-bolts.readthedocs.io/en/latest/self_supervised_models.html#swav
-embedder = ImageEmbedder(backbone="swav-imagenet", embedding_dim=128)
+# 2. Create an ImageEmbedder with resnet101 trained on imagenet.
+embedder = ImageEmbedder(backbone="resnet101", embedding_dim=128)
 
 # 3. Generate an embedding from an image path.
 embeddings = embedder.predict(["data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg"])

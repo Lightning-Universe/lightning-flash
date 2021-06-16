@@ -14,13 +14,17 @@
 import contextlib
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 import torch
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.utilities.imports import _VIDEO_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
+
+if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
 
 if _VIDEO_AVAILABLE:
     import kornia.augmentation as K
@@ -45,7 +49,7 @@ def create_dummy_video_frames(num_frames: int, height: int, width: int):
 
 # https://github.com/facebookresearch/pytorchvideo/blob/4feccb607d7a16933d485495f91d067f177dd8db/tests/utils.py#L33
 @contextlib.contextmanager
-def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=None):
+def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=None, directory=None):
     """
     Creates a temporary lossless, mp4 video with synthetic content. Uses a context which
     deletes the video after exit.
@@ -54,7 +58,7 @@ def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=No
     video_codec = "libx264rgb"
     options = {"crf": "0"}
     data = create_dummy_video_frames(num_frames, height, width)
-    with tempfile.NamedTemporaryFile(prefix=prefix, suffix=".mp4") as f:
+    with tempfile.NamedTemporaryFile(prefix=prefix, suffix=".mp4", dir=directory) as f:
         f.close()
         io.write_video(f.name, data, fps=fps, video_codec=video_codec, options=options)
         yield f.name, thwc_to_cthw(data).to(torch.float32)
@@ -94,8 +98,33 @@ def mock_encoded_video_dataset_file():
             yield f.name, label_videos, video_duration
 
 
+@contextlib.contextmanager
+def mock_encoded_video_dataset_folder(tmpdir):
+    """
+    Creates a temporary mock encoded video directory tree with 2 videos labeled 1, 2.
+    Returns a directory that to this mock encoded video dataset and the video duration in seconds.
+    """
+    num_frames = 10
+    fps = 5
+
+    tmp_dir = Path(tmpdir)
+    os.makedirs(str(tmp_dir / "c1"))
+    os.makedirs(str(tmp_dir / "c2"))
+
+    with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c1")) as (
+        video_file_name_1,
+        data_1,
+    ):
+        with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")) as (
+            video_file_name_2,
+            data_2,
+        ):
+            video_duration = num_frames / fps
+            yield str(tmp_dir), video_duration
+
+
 @pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
-def test_image_classifier_finetune(tmpdir):
+def test_video_classifier_finetune(tmpdir):
 
     with mock_encoded_video_dataset_file() as (
         mock_csv,
@@ -146,6 +175,76 @@ def test_image_classifier_finetune(tmpdir):
 
         datamodule = VideoClassificationData.from_folders(
             train_folder=mock_csv,
+            clip_sampler="uniform",
+            clip_duration=half_duration,
+            video_sampler=SequentialSampler,
+            decode_audio=False,
+            train_transform=train_transform
+        )
+
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
+
+        trainer = flash.Trainer(fast_dev_run=True)
+
+        trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
+def test_video_classifier_finetune_fiftyone(tmpdir):
+
+    with mock_encoded_video_dataset_folder(tmpdir) as (
+        dir_name,
+        total_duration,
+    ):
+
+        half_duration = total_duration / 2 - 1e-9
+
+        train_dataset = fo.Dataset.from_dir(
+            dir_name,
+            dataset_type=fo.types.VideoClassificationDirectoryTree,
+        )
+        datamodule = VideoClassificationData.from_fiftyone(
+            train_dataset=train_dataset,
+            clip_sampler="uniform",
+            clip_duration=half_duration,
+            video_sampler=SequentialSampler,
+            decode_audio=False,
+        )
+
+        for sample in datamodule.train_dataset.data:
+            expected_t_shape = 5
+            assert sample["video"].shape[1] == expected_t_shape
+
+        assert len(VideoClassifier.available_backbones()) > 5
+
+        train_transform = {
+            "post_tensor_transform": Compose([
+                ApplyTransformToKey(
+                    key="video",
+                    transform=Compose([
+                        UniformTemporalSubsample(8),
+                        RandomShortSideScale(min_size=256, max_size=320),
+                        RandomCrop(244),
+                        RandomHorizontalFlip(p=0.5),
+                    ]),
+                ),
+            ]),
+            "per_batch_transform_on_device": Compose([
+                ApplyTransformToKey(
+                    key="video",
+                    transform=K.VideoSequential(
+                        K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
+                        K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0),
+                        data_format="BCTHW",
+                        same_on_frame=False
+                    )
+                ),
+            ]),
+        }
+
+        datamodule = VideoClassificationData.from_fiftyone(
+            train_dataset=train_dataset,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,

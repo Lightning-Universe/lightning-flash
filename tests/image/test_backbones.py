@@ -14,9 +14,9 @@
 import urllib.error
 
 import pytest
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE, _TORCHVISION_AVAILABLE
+from pytorch_lightning.utilities import _TORCHVISION_AVAILABLE
 
-from flash.core.utilities.imports import _TIMM_AVAILABLE
+from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TIMM_AVAILABLE
 from flash.image.backbones import catch_url_error, IMAGE_CLASSIFIER_BACKBONES
 
 

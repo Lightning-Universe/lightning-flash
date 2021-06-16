@@ -9,11 +9,14 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
+
+if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
 
 
 def build_checkboard(n, m, k=8):
@@ -247,6 +250,74 @@ class TestSemanticSegmentationData:
                 num_workers=0,
                 num_classes=num_classes
             )
+
+    @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
+    def test_from_fiftyone(self, tmpdir):
+        tmp_dir = Path(tmpdir)
+
+        # create random dummy data
+
+        images = [
+            str(tmp_dir / "img1.png"),
+            str(tmp_dir / "img2.png"),
+            str(tmp_dir / "img3.png"),
+        ]
+
+        num_classes: int = 2
+        img_size: Tuple[int, int] = (196, 196)
+
+        for img_file in images:
+            _rand_image(img_size).save(img_file)
+
+        targets = [np.array(_rand_labels(img_size, num_classes)) for _ in range(3)]
+
+        dataset = fo.Dataset.from_dir(
+            str(tmp_dir),
+            dataset_type=fo.types.ImageDirectory,
+        )
+
+        for idx, sample in enumerate(dataset):
+            sample["ground_truth"] = fo.Segmentation(mask=targets[idx][:, :, 0])
+            sample.save()
+
+        # instantiate the data module
+
+        dm = SemanticSegmentationData.from_fiftyone(
+            train_dataset=dataset,
+            val_dataset=dataset,
+            test_dataset=dataset,
+            predict_dataset=dataset,
+            batch_size=2,
+            num_workers=0,
+            num_classes=num_classes,
+        )
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+        assert dm.val_dataloader() is not None
+        assert dm.test_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check val data
+        data = next(iter(dm.val_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check test data
+        data = next(iter(dm.test_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check predict data
+        data = next(iter(dm.predict_dataloader()))
+        imgs = data[DefaultDataKeys.INPUT]
+        assert imgs.shape == (2, 3, 196, 196)
 
     def test_map_labels(self, tmpdir):
         tmp_dir = Path(tmpdir)
