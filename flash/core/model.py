@@ -650,7 +650,7 @@ class Task(LightningModule):
 
         with PackageExporter(package_path, verbose=verbose) as exporter:
             #exporter.save_module('pytorch_lightning.callbacks.model_checkpoint', dependencies=False)
-            exporter.save_pickle('models', 'model.pkl', self.trainer.checkpoint_connector.dump_checkpoint())
+            exporter.save_pickle('models', 'model.pkl', self)
 
         exporter_file_structure = exporter.file_structure()
 
