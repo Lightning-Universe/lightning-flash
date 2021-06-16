@@ -32,16 +32,16 @@ def visualize(
     This method can be used in all of the following environments:
 
     -   **Local Python shell**: The App will launch in a new tab in your
-        default web browser
+        default web browser.
     -   **Remote Python shell**: Pass the ``remote=True`` option to this method
         and then follow the instructions printed to your remote shell to open
-        the App in your browser on your local machine
+        the App in your browser on your local machine.
     -   **Jupyter notebook**: The App will launch in the output of your current
-        cell
+        cell.
     -   **Google Colab**: The App will launch in the output of your current
-        cell
+        cell.
     -   **Python script**: Pass the ``wait=True`` option to block execution of
-        your script until the App is closed
+        your script until the App is closed.
 
     See :ref:`this page <fiftyone:environments>` for more information about
     using the FiftyOne App in different environments.
@@ -52,12 +52,12 @@ def visualize(
             dictionaries with "filepath" and "predictions" keys that contains
             the filepaths and predictions.
         filepaths: A list of filepaths to images or videos corresponding to the
-            provided ``predictions``
+            provided ``predictions``.
         label_field: The name of the label field in which to store the
-            predictions in the FiftyOne dataset
-        wait: Whether to block execution until the FiftyOne App is closed
+            predictions in the FiftyOne dataset.
+        wait: Whether to block execution until the FiftyOne App is closed.
         **kwargs: Optional keyword arguments for
-            :meth:`fiftyone:fiftyone.core.session.launch_app`
+            :meth:`fiftyone:fiftyone.core.session.launch_app`.
 
     Returns:
         a :class:`fiftyone:fiftyone.core.session.Session`

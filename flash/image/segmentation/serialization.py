@@ -98,7 +98,7 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
         visualize: whether to visualize the image labels.
         return_filepath: Boolean determining whether to return a dict
             containing filepath and FiftyOne labels (True) or only a list of
-            FiftyOne labels (False)
+            FiftyOne labels (False).
     """
 
     def __init__(
