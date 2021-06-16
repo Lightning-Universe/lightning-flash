@@ -182,7 +182,7 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
     This is noted because it differes from some of the other metaclass validations
     which will raise an exception at class defiition time.
     """
-    from tests.serve.models import ClassificationInference
+    from tests.core.serve.models import ClassificationInference
 
     class FailedExposedDecorator(ModelComponent):
 

@@ -36,7 +36,7 @@ def patch_decorators_uuid_generator_func(mocker: MockerFixture):
 
 @pytest.fixture(scope="session")
 def original_global_datadir():
-    return pathlib.Path(os.path.realpath(__file__)).parent.joinpath("serve").joinpath("data")
+    return pathlib.Path(os.path.realpath(__file__)).parent / "core" / "serve" / "data"
 
 
 def prep_global_datadir(tmp_path_factory, original_global_datadir):
@@ -69,7 +69,7 @@ if _TORCHVISION_AVAILABLE:
 
     @pytest.fixture(scope="session")
     def lightning_squeezenet1_1_obj():
-        from tests.serve.models import LightningSqueezenet
+        from tests.core.serve.models import LightningSqueezenet
 
         model = LightningSqueezenet()
         model.eval()
@@ -88,7 +88,7 @@ if _TORCHVISION_AVAILABLE:
 
     @pytest.fixture()
     def lightning_squeezenet_checkpoint_path(tmp_path):
-        from tests.serve.models import LightningSqueezenet
+        from tests.core.serve.models import LightningSqueezenet
 
         model = LightningSqueezenet()
         state_dict = {"state_dict": model.state_dict()}

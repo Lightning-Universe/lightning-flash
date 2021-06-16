@@ -11,7 +11,7 @@ if _FASTAPI_AVAILABLE:
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_resnet_18_inference_class(session_global_datadir, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInference
+    from tests.core.serve.models import ClassificationInference
 
     comp = ClassificationInference(lightning_squeezenet1_1_obj)
     composit = Composition(comp=comp, TESTING=True, DEBUG=True)
@@ -39,7 +39,7 @@ def test_resnet_18_inference_class(session_global_datadir, lightning_squeezenet1
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_start_server_with_repeated_exposed(session_global_datadir, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInferenceRepeated
+    from tests.core.serve.models import ClassificationInferenceRepeated
 
     comp = ClassificationInferenceRepeated(lightning_squeezenet1_1_obj)
     composit = Composition(comp=comp, TESTING=True, DEBUG=True)
@@ -65,7 +65,7 @@ def test_start_server_with_repeated_exposed(session_global_datadir, lightning_sq
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_serving_single_component_and_endpoint_no_composition(session_global_datadir, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInference
+    from tests.core.serve.models import ClassificationInference
 
     comp = ClassificationInference(lightning_squeezenet1_1_obj)
     assert hasattr(comp.inputs, "img")
@@ -172,7 +172,7 @@ def test_serving_single_component_and_endpoint_no_composition(session_global_dat
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_serving_composed(session_global_datadir, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInference, SeatClassifier
+    from tests.core.serve.models import ClassificationInference, SeatClassifier
 
     resnet_comp = ClassificationInference(lightning_squeezenet1_1_obj)
     seat_comp = SeatClassifier(lightning_squeezenet1_1_obj, config={"sport": "football"})
@@ -237,7 +237,7 @@ def test_serving_composed(session_global_datadir, lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_composed_does_not_eliminate_endpoint_serialization(session_global_datadir, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInference, SeatClassifier
+    from tests.core.serve.models import ClassificationInference, SeatClassifier
 
     resnet_comp = ClassificationInference(lightning_squeezenet1_1_obj)
     seat_comp = SeatClassifier(lightning_squeezenet1_1_obj, config={"sport": "football"})
@@ -323,7 +323,7 @@ def test_composed_does_not_eliminate_endpoint_serialization(session_global_datad
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInference, SeatClassifier
+    from tests.core.serve.models import ClassificationInference, SeatClassifier
 
     resnet_comp = ClassificationInference(lightning_squeezenet1_1_obj)
     seat_comp = SeatClassifier(lightning_squeezenet1_1_obj, config={"sport": "football"})
@@ -463,7 +463,7 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_cycle_in_connection_fails(session_global_datadir, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInferenceComposable
+    from tests.core.serve.models import ClassificationInferenceComposable
 
     c1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
 
