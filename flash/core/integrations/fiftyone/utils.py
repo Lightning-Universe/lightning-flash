@@ -31,19 +31,16 @@ def visualize(
 
     This method can be used in all of the following environments:
 
-    -   Local Python shell: The App will launch in a new tab in your default
-        web browser
-
-    -   Remote Python shell: Pass the ``remote=True`` option to this method
+    -   **Local Python shell**: The App will launch in a new tab in your
+        default web browser
+    -   **Remote Python shell**: Pass the ``remote=True`` option to this method
         and then follow the instructions printed to your remote shell to open
         the App in your browser on your local machine
-
-    -   Jupyter notebooks: The App will launch in the output of your current
+    -   **Jupyter notebook**: The App will launch in the output of your current
         cell
-
-    -   Google Colab: The App will launch in the output of your current cell
-
-    -   Python scripts: Pass the ``wait=True`` option to block execution of
+    -   **Google Colab**: The App will launch in the output of your current
+        cell
+    -   **Python script**: Pass the ``wait=True`` option to block execution of
         your script until the App is closed
 
     See :ref:`this page <fiftyone:environments>` for more information about

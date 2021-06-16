@@ -46,7 +46,7 @@ datamodule = ImageClassificationData.from_fiftyone(
     test_dataset=test_dataset,
 )
 
-# 4 Fine tune a model
+# 4 Fine tune model
 model = ImageClassifier(
     backbone="resnet18",
     num_classes=datamodule.num_classes,
@@ -66,7 +66,7 @@ trainer.save_checkpoint("image_classification_model.pt")
 
 # 5 Predict from checkpoint on data with ground truth
 model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
-model.serializer = FiftyOneLabels(return_filepath=False)
+model.serializer = FiftyOneLabels(return_filepath=False)  # output FiftyOne format
 datamodule = ImageClassificationData.from_fiftyone(predict_dataset=test_dataset)
 predictions = trainer.predict(model, datamodule=datamodule)
 predictions = list(chain.from_iterable(predictions))  # flatten batches
