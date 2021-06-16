@@ -24,6 +24,7 @@ from flash.core.data.process import Postprocess, Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
+from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.serialization import SegmentationLabels
 
 if _KORNIA_AVAILABLE:
@@ -54,14 +55,15 @@ class SemanticSegmentation(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        backbone: A string or (model, num_features) tuple to use to compute image features,
-            defaults to ``"torchvision/fcn_resnet50"``.
+        backbone: A string or model to use to compute image features.
         backbone_kwargs: Additional arguments for the backbone configuration.
-        pretrained: Use a pretrained backbone, defaults to ``False``.
-        loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.AdamW`.
-        metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.IoU`.
-        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        head: A string or (model, num_features) tuple to use to compute image features.
+        head_kwargs: Additional arguments for the head configuration.
+        pretrained: Use a pretrained backbone.
+        loss_fn: Loss function for training.
+        optimizer: Optimizer to use for training.
+        metrics: Metrics to compute for training and evaluation.
+        learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
@@ -70,11 +72,15 @@ class SemanticSegmentation(ClassificationTask):
 
     backbones: FlashRegistry = SEMANTIC_SEGMENTATION_BACKBONES
 
+    heads: FlashRegistry = SEMANTIC_SEGMENTATION_HEADS
+
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "fcn_resnet50",
+        backbone: Union[str, nn.Module] = "resnet50",
         backbone_kwargs: Optional[Dict] = None,
+        head: str = "fcn",
+        head_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
@@ -113,8 +119,15 @@ class SemanticSegmentation(ClassificationTask):
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        # TODO: pretrained to True causes some issues
-        self.backbone = self.backbones.get(backbone)(num_classes, pretrained=pretrained, **backbone_kwargs)
+        if not head_kwargs:
+            head_kwargs = {}
+
+        if isinstance(backbone, nn.Module):
+            self.backbone = backbone
+        else:
+            self.backbone = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+
+        self.head = self.heads.get(head)(self.backbone, num_classes, **head_kwargs)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
@@ -134,8 +147,7 @@ class SemanticSegmentation(ClassificationTask):
         return batch
 
     def forward(self, x) -> torch.Tensor:
-        # infer the image to the model
-        res = self.backbone(x)
+        res = self.head(x)
 
         # some frameworks like torchvision return a dict.
         # In particular, torchvision segmentation models return the output logits
@@ -145,7 +157,7 @@ class SemanticSegmentation(ClassificationTask):
         elif torch.is_tensor(res):
             out = res
         else:
-            raise NotImplementedError(f"Unsupported output type: {type(out)}")
+            raise NotImplementedError(f"Unsupported output type: {type(res)}")
 
         return out
 
