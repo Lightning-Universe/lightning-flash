@@ -27,13 +27,12 @@ are supported!
 Installation
 ************
 
-In order to utilize this integration with FiftyOne, you will need to
-:ref:`install the tool<fiftyone:installing-fiftyone>`:
+In order to utilize this integration, you will need to
+:ref:`install FiftyOne <fiftyone:installing-fiftyone>`:
 
 .. code:: shell
 
     pip install fiftyone
-
 
 *****************************
 Visualizing Flash predictions
@@ -52,14 +51,30 @@ one of the following serializers:
 The :func:`~flash.core.integrations.fiftyone.visualize` function then lets you visualize
 your predictions in the
 :ref:`FiftyOne App <fiftyone:fiftyone-app>`. This function accepts a list of
-dictionaries containing :ref:`FiftyOne Label<fiftyone:using-labels>` objects
-and filepaths which is the exact output of the FiftyOne serializers when the flag
-``return_filepath=True`` is specified.
+dictionaries containing :ref:`FiftyOne Label <fiftyone:using-labels>` objects
+and filepaths, which is exactly the output of the FiftyOne serializers when the
+``return_filepath=True`` option is specified.
 
 .. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_classification.py
     :language: python
     :lines: 14-
 
+The :func:`~flash.core.integrations.fiftyone.visualize` function can be used in
+all of the following environments:
+
+-   **Local Python shell**: The App will launch in a new tab in your default
+    web browser
+-   **Remote Python shell**: Pass the ``remote=True`` option and then follow
+    the instructions printed to your remote shell to open the App in your
+    browser on your local machine
+-   **Jupyter notebook**: The App will launch in the output of your current
+    cell
+-   **Google Colab**: The App will launch in the output of your current cell
+-   **Python script**: Pass the ``wait=True`` option to block execution of your
+    script until the App is closed
+
+See :ref:`this page <fiftyone:environments>` for more information about
+using the FiftyOne App in different environments.
 
 ***********************
 Using FiftyOne datasets
@@ -73,14 +88,13 @@ ground truth annotations. This allows you to perform more complex analysis with
 
 The
 :meth:`~flash.core.data.data_module.DataModule.from_fiftyone`
-method allows you to load your FiftyOne Datasets directly into a
+method allows you to load your FiftyOne datasets directly into a
 :class:`~flash.core.data.data_module.DataModule` to be used for training,
 testing, or inference.
 
 .. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_classification_fiftyone_datasets.py
     :language: python
     :lines: 14-
-
 
 **********************
 Visualizing embeddings

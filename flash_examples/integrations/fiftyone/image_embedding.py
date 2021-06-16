@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import fiftyone as fo
-import fiftyone.brain as fob
 import numpy as np
 import torch
+
+import fiftyone as fo
+import fiftyone.brain as fob
 
 from flash.core.data.utils import download_data
 from flash.image import ImageEmbedder
@@ -37,12 +38,9 @@ embeddings = np.stack(embedder.predict(filepaths))
 
 # 5 Visualize in FiftyOne App
 results = fob.compute_visualization(dataset, embeddings=embeddings)
-
 session = fo.launch_app(dataset)
-
 plot = results.visualize(labels="ground_truth.label")
 plot.show()
 
-# Only when running this in a script
-# Block until the FiftyOne App is closed
+# Optional: block execution until App is closed
 session.wait()
