@@ -44,6 +44,9 @@ SEMANTIC_SEGMENTATION_HEADS = FlashRegistry("backbones")
 if _TORCHVISION_AVAILABLE:
 
     def _get_backbone_meta(backbone):
+        """Adapted from torchvision.models.segmentation.segmentation._segm_model:
+        https://github.com/pytorch/vision/blob/master/torchvision/models/segmentation/segmentation.py#L25
+        """
         if isinstance(backbone, ResNet):
             out_layer = 'layer4'
             out_inplanes = 2048
@@ -53,8 +56,11 @@ if _TORCHVISION_AVAILABLE:
             backbone = backbone.features
             # Gather the indices of blocks which are strided. These are the locations of C1, ..., Cn-1 blocks.
             # The first and last blocks are always included because they are the C0 (conv1) and Cn.
-            stage_indices = [0] + [i for i, b in enumerate(backbone) if getattr(b, "_is_cn", False)
-                                   ] + [len(backbone) - 1]
+            stage_indices = sum([
+                [0],
+                [i for i, b in enumerate(backbone) if getattr(b, "_is_cn", False)],
+                [len(backbone) - 1],
+            ])
             out_pos = stage_indices[-1]  # use C5 which has output_stride = 16
             out_layer = str(out_pos)
             out_inplanes = backbone[out_pos].out_channels
