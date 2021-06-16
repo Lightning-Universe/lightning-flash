@@ -3,7 +3,7 @@ import torch
 
 from flash.core.serve.types import Label
 from flash.core.utilities.imports import _SERVE_AVAILABLE, _TORCHVISION_AVAILABLE
-from tests.serve.models import ClassificationInferenceComposable, LightningSqueezenet
+from tests.core.serve.models import ClassificationInferenceComposable, LightningSqueezenet
 
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")

@@ -12,7 +12,7 @@ if _FASTAPI_AVAILABLE:
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_composit_endpoint_data(lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInferenceComposable
+    from tests.core.serve.models import ClassificationInferenceComposable
 
     comp = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     composit = Composition(comp=comp)
@@ -64,7 +64,7 @@ def test_composit_endpoint_data(lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_endpoint_errors_on_wrong_key_name(lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInferenceComposable
+    from tests.core.serve.models import ClassificationInferenceComposable
 
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
 
@@ -149,7 +149,7 @@ def test_composition_recieve_wrong_arg_type(lightning_squeezenet1_1_obj):
         _ = Composition(hello="world")
 
     # no endpoints multiple components
-    from tests.serve.models import ClassificationInferenceComposable
+    from tests.core.serve.models import ClassificationInferenceComposable
 
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
@@ -160,7 +160,7 @@ def test_composition_recieve_wrong_arg_type(lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_gridmodel_sequence(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gridmodel):
-    from tests.serve.models import ClassificationInferenceModelSequence
+    from tests.core.serve.models import ClassificationInferenceModelSequence
 
     squeezenet_gm, _ = squeezenet_gridmodel
     model_seq = [squeezenet_gm, squeezenet_gm]
@@ -174,7 +174,7 @@ def test_gridmodel_sequence(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gr
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_gridmodel_mapping(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gridmodel):
-    from tests.serve.models import ClassificationInferenceModelMapping
+    from tests.core.serve.models import ClassificationInferenceModelMapping
 
     squeezenet_gm, _ = squeezenet_gridmodel
     model_map = {"model_one": squeezenet_gm, "model_two": squeezenet_gm}
@@ -188,7 +188,7 @@ def test_gridmodel_mapping(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gri
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_invalid_gridmodel_composition(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gridmodel):
-    from tests.serve.models import ClassificationInferenceModelMapping
+    from tests.core.serve.models import ClassificationInferenceModelMapping
 
     squeezenet_gm, _ = squeezenet_gridmodel
 
@@ -202,7 +202,7 @@ def test_invalid_gridmodel_composition(tmp_path, lightning_squeezenet1_1_obj, sq
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_complex_spec_single_endpoint(tmp_path, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInferenceComposable
+    from tests.core.serve.models import ClassificationInferenceComposable
 
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
@@ -253,7 +253,7 @@ def test_complex_spec_single_endpoint(tmp_path, lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_complex_spec_multiple_endpoints(tmp_path, lightning_squeezenet1_1_obj):
-    from tests.serve.models import ClassificationInferenceComposable
+    from tests.core.serve.models import ClassificationInferenceComposable
 
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
@@ -329,7 +329,7 @@ def test_complex_spec_multiple_endpoints(tmp_path, lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
 def test_start_server_from_composition(tmp_path, squeezenet_gridmodel, session_global_datadir):
-    from tests.serve.models import ClassificationInferenceComposable
+    from tests.core.serve.models import ClassificationInferenceComposable
 
     squeezenet_gm, _ = squeezenet_gridmodel
     comp1 = ClassificationInferenceComposable(squeezenet_gm)

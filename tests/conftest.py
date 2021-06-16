@@ -69,7 +69,7 @@ if _TORCHVISION_AVAILABLE:
 
     @pytest.fixture(scope="session")
     def lightning_squeezenet1_1_obj():
-        from tests.serve.models import LightningSqueezenet
+        from tests.core.serve.models import LightningSqueezenet
 
         model = LightningSqueezenet()
         model.eval()
@@ -88,7 +88,7 @@ if _TORCHVISION_AVAILABLE:
 
     @pytest.fixture()
     def lightning_squeezenet_checkpoint_path(tmp_path):
-        from tests.serve.models import LightningSqueezenet
+        from tests.core.serve.models import LightningSqueezenet
 
         model = LightningSqueezenet()
         state_dict = {"state_dict": model.state_dict()}
