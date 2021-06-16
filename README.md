@@ -559,8 +559,7 @@ gives you the most flexibility because it is simply organized PyTorch.
 
 ## Visualization
 
-Predictions from image and video tasks can be visualized through our integration with [FiftyOne](https://fiftyone.ai) 
-allowing you to better understand and analyze how your model is performing.
+Predictions from image and video tasks can be visualized through an [integration with FiftyOne](https://lightning-flash.readthedocs.io/en/latest/integrations/fiftyone.html), allowing you to better understand and analyze how your model is performing.
 
 ```python
 from flash.core.data.utils import download_data
@@ -579,7 +578,7 @@ download_data(
 model = ObjectDetector.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/object_detection_model.pt"
 )
-model.serializer = FiftyOneDetectionLabels()
+model.serializer = FiftyOneDetectionLabels()  # output FiftyOne format
 
 # 3. Detect the object on the images
 filepaths = [
@@ -589,7 +588,7 @@ filepaths = [
 ]
 predictions = model.predict(filepaths)
 
-# 4. Visualize predictions
+# 4. Visualize predictions in FiftyOne App
 session = visualize(predictions, filepaths=filepaths)
 ```
 
