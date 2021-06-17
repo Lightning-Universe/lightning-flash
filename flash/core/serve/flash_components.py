@@ -1,13 +1,10 @@
-import inspect
-from pathlib import Path
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Mapping, Optional
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 
 from flash import Task
-from flash.core.serve import Composition, expose, GridModel, ModelComponent
-from flash.core.serve.core import FilePath, GridModelValidArgs_T, GridserveScriptLoader
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.serve.core import FilePath, GridserveScriptLoader
 from flash.core.serve.types.base import BaseType
 
 
@@ -34,9 +31,17 @@ class FlashOutputs(BaseType):
     ):
         self._serializer = serializer
 
-    def serialize(self, output) -> Any:  # pragma: no cover
-        result = self._serializer(output)
-        return result
+    def serialize(self, outputs) -> Any:  # pragma: no cover
+        results = []
+        if isinstance(outputs, list) or isinstance(outputs, torch.Tensor):
+            for output in outputs:
+                result = self._serializer(output)
+                if isinstance(result, Mapping):
+                    result = result[DefaultDataKeys.PREDS]
+                results.append(result)
+        if len(results) == 1:
+            return results[0]
+        return results
 
     def deserialize(self, data: str) -> Any:  # pragma: no cover
         return None

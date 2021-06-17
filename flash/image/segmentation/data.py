@@ -227,7 +227,7 @@ class SemanticSegmentationDeserializer(Deserializer):
         buffer = BytesIO(img)
         img = PILImage.open(buffer, mode="r")
         img = self.to_tensor(img)
-        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.METADATA: img.shape}
+        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.METADATA: {"size": img.shape}}
 
 
 class SemanticSegmentationPreprocess(Preprocess):
