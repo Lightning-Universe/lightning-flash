@@ -572,7 +572,7 @@ class Deserializer(Properties):
     @property
     @abstractmethod
     def example_input(self) -> str:
-        raise NotImplementedError
+        pass
 
     def __call__(self, sample: Any) -> Any:
         return self.deserialize(sample)
