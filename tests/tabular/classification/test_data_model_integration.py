@@ -14,7 +14,7 @@
 import pytest
 import pytorch_lightning as pl
 
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TABULAR_TESTING
 from flash.tabular import TabularClassifier, TabularData
 
 if _TABULAR_AVAILABLE:
@@ -30,7 +30,7 @@ if _TABULAR_AVAILABLE:
     )
 
 
-@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 def test_classification(tmpdir):
 
     train_data_frame = TEST_DF_1.copy()

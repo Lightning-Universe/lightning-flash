@@ -14,11 +14,11 @@
 import pytest
 import torch
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text.seq2seq.summarization.metric import RougeMetric
 
 
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_rouge():
     preds = "My name is John".split()
     target = "Is your name John".split()

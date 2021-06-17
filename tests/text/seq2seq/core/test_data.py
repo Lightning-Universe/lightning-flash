@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from pathlib import Path
 
 import pytest
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE
-from flash.text import TextClassificationData
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text.seq2seq.core.data import (
     Seq2SeqBackboneState,
     Seq2SeqCSVDataSource,
@@ -33,7 +31,7 @@ if _TEXT_AVAILABLE:
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 @pytest.mark.parametrize(
     "cls, kwargs",
     [

@@ -9,7 +9,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 
 if _IMAGE_AVAILABLE:
@@ -54,7 +54,7 @@ class TestSemanticSegmentationPreprocess:
         assert prep is not None
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestSemanticSegmentationData:
 
     def test_smoke(self):

@@ -20,7 +20,7 @@ import torch
 from pytorch_lightning import Trainer
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _SERVE_AVAILABLE, _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _SERVE_TESTING, _TABULAR_AVAILABLE, _TABULAR_TESTING
 from flash.tabular import TabularClassifier
 from flash.tabular.classification.data import TabularData
 
@@ -47,7 +47,7 @@ class DummyDataset(torch.utils.data.Dataset):
 # ==============================
 
 
-@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 def test_init_train(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
     model = TabularClassifier(num_classes=10, num_features=16 + 16, embedding_sizes=16 * [(10, 32)])
@@ -55,7 +55,7 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 def test_init_train_no_num(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_num=0), batch_size=16)
     model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=16 * [(10, 32)])
@@ -63,7 +63,7 @@ def test_init_train_no_num(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 def test_init_train_no_cat(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
     model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])
@@ -77,7 +77,7 @@ def test_module_import_error(tmpdir):
         TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])
 
 
-@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 def test_jit(tmpdir):
     model = TabularClassifier(num_classes=10, num_features=8, embedding_sizes=4 * [(10, 32)])
     model.eval()
@@ -95,7 +95,7 @@ def test_jit(tmpdir):
     assert out.shape == torch.Size([1, 10])
 
 
-@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 def test_serve():
     train_data = {"num_col": [1.4, 2.5], "cat_col": ["positive", "negative"], "target": [1, 2]}

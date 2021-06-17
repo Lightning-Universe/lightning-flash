@@ -18,7 +18,7 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING
 from flash.image import ImageClassificationData, ImageClassifier
 
 if _IMAGE_AVAILABLE:
@@ -36,7 +36,7 @@ def _rand_image():
     return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -61,7 +61,7 @@ def test_classification(tmpdir):
     trainer.finetune(model, datamodule=data, strategy="freeze")
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_classification_fiftyone(tmpdir):
     tmpdir = Path(tmpdir)

@@ -18,7 +18,7 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _SERVE_AVAILABLE, _TEXT_AVAILABLE
+from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_TESTING
 from flash.text import TextClassifier
 from flash.text.classification.data import TextClassificationPostprocess, TextClassificationPreprocess
 
@@ -43,7 +43,7 @@ TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_init_train(tmpdir):
     model = TextClassifier(2, TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -51,7 +51,7 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_jit(tmpdir):
     sample_input = {"input_ids": torch.randint(1000, size=(1, 100))}
     path = os.path.join(tmpdir, "test.pt")
@@ -70,7 +70,7 @@ def test_jit(tmpdir):
     assert out.shape == torch.Size([1, 2])
 
 
-@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 def test_serve():
     model = TextClassifier(2, TEST_BACKBONE)

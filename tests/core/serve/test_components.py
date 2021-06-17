@@ -2,11 +2,11 @@ import pytest
 import torch
 
 from flash.core.serve.types import Label
-from flash.core.utilities.imports import _SERVE_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _SERVE_TESTING
 from tests.core.serve.models import ClassificationInferenceComposable, LightningSqueezenet
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_model_compute_call_method(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     img = torch.arange(195075).reshape((1, 255, 255, 3))
@@ -15,7 +15,7 @@ def test_model_compute_call_method(lightning_squeezenet1_1_obj):
     assert out_res.item() == 753
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_model_compute_dependencies(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
@@ -31,7 +31,7 @@ def test_model_compute_dependencies(lightning_squeezenet1_1_obj):
     assert list(comp2._gridserve_meta_.connections) == []
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_inverse_model_compute_component_dependencies(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
@@ -48,7 +48,7 @@ def test_inverse_model_compute_component_dependencies(lightning_squeezenet1_1_ob
     assert list(comp1._gridserve_meta_.connections) == []
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_two_component_invalid_dependencies_fail(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
@@ -83,7 +83,7 @@ def test_two_component_invalid_dependencies_fail(lightning_squeezenet1_1_obj):
         comp1.inputs["tag"] >> foo
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_component_initialization(lightning_squeezenet1_1_obj):
     with pytest.raises(TypeError):
         ClassificationInferenceComposable(wrongname=lightning_squeezenet1_1_obj)
@@ -98,7 +98,7 @@ def test_component_initialization(lightning_squeezenet1_1_obj):
     assert "predicted_tag" in comp.outputs
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_component_parameters(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
@@ -118,7 +118,7 @@ def test_component_parameters(lightning_squeezenet1_1_obj):
     assert first_tag.connections == comp1._gridserve_meta_.connections
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_expose_inputs():
     from flash.core.serve import expose, ModelComponent
     from flash.core.serve.types import Number
@@ -178,7 +178,7 @@ def test_invalid_expose_inputs():
         _ = ComposeClassEmptyExposeInputsType(lr)
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_connection_invalid_raises(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
 
@@ -194,7 +194,7 @@ def test_connection_invalid_raises(lightning_squeezenet1_1_obj):
         comp1.outputs.predicted_tag >> fake_param
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_name(lightning_squeezenet1_1_obj):
     from flash.core.serve import expose, ModelComponent
     from flash.core.serve.types import Number
@@ -211,7 +211,7 @@ def test_invalid_name(lightning_squeezenet1_1_obj):
                 return param
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_config_args(lightning_squeezenet1_1_obj):
     from flash.core.serve import expose, ModelComponent
     from flash.core.serve.types import Number
@@ -239,7 +239,7 @@ def test_invalid_config_args(lightning_squeezenet1_1_obj):
         _ = SomeComponent(lightning_squeezenet1_1_obj, config={"key": lambda x: x})
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_model_args(lightning_squeezenet1_1_obj):
     from flash.core.serve import expose, ModelComponent
     from flash.core.serve.types import Number
@@ -270,7 +270,7 @@ def test_invalid_model_args(lightning_squeezenet1_1_obj):
         _ = SomeComponent({"first": lightning_squeezenet1_1_obj, "second": 233})
 
 
-@pytest.mark.skipif(not (_SERVE_AVAILABLE and _TORCHVISION_AVAILABLE), reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_create_invalid_endpoint(lightning_squeezenet1_1_obj):
     from flash.core.serve import Endpoint
 

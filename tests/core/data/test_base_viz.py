@@ -24,7 +24,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
 from flash.image import ImageClassificationData
 
 if _IMAGE_AVAILABLE:
@@ -74,7 +74,7 @@ class CustomBaseVisualization(BaseVisualization):
         self.per_batch_transform_called = False
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestBaseViz:
 
     def test_base_viz(self, tmpdir):

@@ -29,18 +29,19 @@ from torch.utils.data import DataLoader
 import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
+from flash.core.utilities.imports import (
+    _IMAGE_AVAILABLE,
+    _IMAGE_TESTING,
+    _TABULAR_AVAILABLE,
+    _TABULAR_TESTING,
+    _TEXT_AVAILABLE,
+)
 from flash.image import ImageClassificationData, ImageClassifier
 
 if _TABULAR_AVAILABLE:
     from flash.tabular import TabularClassifier
 else:
     TabularClassifier = None
-
-if _TEXT_AVAILABLE:
-    from flash.text import TextClassifier
-else:
-    TextClassifier = None
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
@@ -105,7 +106,7 @@ def test_classificationtask_task_predict():
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -168,7 +169,7 @@ def test_task_datapipeline_save(tmpdir):
         ImageClassifier,
         "image_classification_model.pt",
         marks=pytest.mark.skipif(
-            not _IMAGE_AVAILABLE,
+            not _IMAGE_TESTING,
             reason="image packages aren't installed",
         )
     ),
@@ -176,7 +177,7 @@ def test_task_datapipeline_save(tmpdir):
         TabularClassifier,
         "tabular_classification_model.pt",
         marks=pytest.mark.skipif(
-            not _TABULAR_AVAILABLE,
+            not _TABULAR_TESTING,
             reason="tabular packages aren't installed",
         )
     ),
@@ -188,7 +189,7 @@ def test_model_download(tmpdir, cls, filename):
         assert isinstance(task, cls)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_available_backbones():
     backbones = ImageClassifier.available_backbones()
     assert "resnet152" in backbones

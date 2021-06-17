@@ -3,11 +3,11 @@ import os
 import pytest
 import torch
 
-from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER
+from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER, _IMAGE_STLYE_TRANSFER_TESTING
 from flash.image.style_transfer import StyleTransfer
 
 
-@pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER, reason="image style transfer libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER_TESTING, reason="image style transfer libraries aren't installed.")
 def test_style_transfer_task():
 
     model = StyleTransfer(
@@ -25,7 +25,7 @@ def test_style_transfer_task_import():
         StyleTransfer()
 
 
-@pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER, reason="image style transfer libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER_TESTING, reason="image style transfer libraries aren't installed.")
 def test_jit(tmpdir):
     path = os.path.join(tmpdir, "test.pt")
 
