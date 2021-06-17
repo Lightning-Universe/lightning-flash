@@ -316,11 +316,7 @@ class _Postprocessor(torch.nn.Module):
                     self.save_fn(pred)
             else:
                 self.save_fn(final_preds)
-        else:
-            # todo (tchaton): Debug the serializer not iterating over a list.
-            if self.is_serving and isinstance(final_preds, list) and len(final_preds) == 1:
-                return final_preds[0]
-            return final_preds
+        return final_preds
 
     def __str__(self) -> str:
         return (

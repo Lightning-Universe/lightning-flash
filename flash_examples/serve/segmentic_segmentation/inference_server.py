@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash.image import SemanticSegmentation
+from flash.image.segmentation.serialization import SegmentationLabels
 
 model = SemanticSegmentation.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/semantic_segmentation_model.pt"
 )
+model.serializer = SegmentationLabels(visualize=False)
 model.serve()
