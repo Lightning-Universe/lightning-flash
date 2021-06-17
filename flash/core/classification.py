@@ -121,7 +121,8 @@ class Classes(ClassificationSerializer):
 
     def serialize(self, sample: Any) -> Union[int, List[int]]:
         sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        sample = torch.tensor(sample)
+        if not torch.is_tensor(sample):
+            sample = torch.tensor(sample)
         if self.multi_label:
             one_hot = (sample.sigmoid() > self.threshold).int().tolist()
             result = []

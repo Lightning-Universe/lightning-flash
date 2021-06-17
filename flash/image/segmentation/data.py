@@ -38,6 +38,7 @@ from flash.core.data.data_source import (
 )
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
@@ -215,19 +216,12 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         return sample
 
 
-class SemanticSegmentationDeserializer(Deserializer):
-
-    def __init__(self):
-
-        self.to_tensor = torchvision.transforms.ToTensor()
+class SemanticSegmentationDeserializer(ImageDeserializer):
 
     def deserialize(self, data: str) -> torch.Tensor:
-        encoded_with_padding = (data + "===").encode("ascii")
-        img = base64.b64decode(encoded_with_padding)
-        buffer = BytesIO(img)
-        img = PILImage.open(buffer, mode="r")
-        img = self.to_tensor(img)
-        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.METADATA: {"size": img.shape}}
+        result = super().deserialize(data)
+        result[DefaultDataKeys.METADATA] = {"size": result[DefaultDataKeys.INPUT].shape}
+        return result
 
 
 class SemanticSegmentationPreprocess(Preprocess):

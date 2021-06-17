@@ -592,7 +592,9 @@ class Task(LightningModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    def serve(self, host: str = "127.0.0.1", port: int = 8000) -> 'Composition':
+    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
+        from fastapi.testclient import TestClient
+
         from flash.core.serve.flash_components import FlashInputs, FlashOutputs
 
         class FlashServeModelComponent(ModelComponent):
@@ -625,6 +627,18 @@ class Task(LightningModule):
                     preds = self.model.predict_step(inputs, 0)
                     preds = self.postprocessor(preds)
                     return preds
+
+        if sanity_check:
+            print("Running sanity check")
+            comp = FlashServeModelComponent(self)
+            composition = Composition(predict=comp, TESTING=True, DEBUG=False)
+            app = composition.serve(host="0.0.0.0", port=8000)
+
+            with TestClient(app) as tc:
+                input_str = self.data_pipeline._deserializer.example_input
+                body = {"session": "UUID", "payload": {"inputs": {"data": input_str}}}
+                resp = tc.post("http://0.0.0.0:8000/predict", json=body)
+                print(f"Sanity check response: {resp.json()}")
 
         comp = FlashServeModelComponent(self)
         composition = Composition(predict=comp)

@@ -51,7 +51,7 @@ print(ImageClassifier.available_backbones())
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Labels())
 
 # 5. Create the trainer
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
+trainer = flash.Trainer(max_epochs=3)
 
 # 6. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
