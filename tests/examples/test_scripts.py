@@ -12,17 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import subprocess
-import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
 from unittest import mock
 
 import pytest
 
 from flash.core.utilities.imports import (
     _IMAGE_AVAILABLE,
-    _PYSTICHE_GREATER_EQUAL_0_7_2,
+    _IMAGE_STLYE_TRANSFER,
     _SKLEARN_AVAILABLE,
     _TABULAR_AVAILABLE,
     _TEXT_AVAILABLE,
@@ -81,7 +78,7 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "finetuning",
             "style_transfer.py",
-            marks=pytest.mark.skipif(not _PYSTICHE_GREATER_EQUAL_0_7_2, reason="pystiche is not installed")
+            marks=pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER, reason="pystiche is not installed")
         ),
         pytest.param(
             "predict",
