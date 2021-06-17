@@ -23,7 +23,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     ImageDeserializer,
@@ -37,9 +37,6 @@ if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
-
-if _TORCHVISION_AVAILABLE:
-    pass
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
