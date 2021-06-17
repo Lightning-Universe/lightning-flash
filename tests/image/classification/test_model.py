@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from unittest import mock
 
 import pytest
 import torch
@@ -21,6 +22,7 @@ from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ImageClassifier
+from flash.image.classification.data import ImageClassificationPreprocess
 
 # ======== Mock functions ========
 
@@ -128,3 +130,13 @@ def test_jit(tmpdir, jitter, args):
     out = model(torch.rand(1, 3, 32, 32))
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2])
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+def test_serve():
+    model = ImageClassifier(2)
+    # TODO: Currently only servable once a preprocess has been attached
+    model._preprocess = ImageClassificationPreprocess()
+    model.eval()
+    model.serve()

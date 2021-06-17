@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 from typing import Tuple
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -136,3 +137,13 @@ def test_jit(tmpdir, jitter, args):
     out = model(torch.rand(1, 3, 32, 32))
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2, 32, 32])
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+def test_serve():
+    model = SemanticSegmentation(2)
+    # TODO: Currently only servable once a preprocess has been attached
+    model._preprocess = SemanticSegmentationPreprocess()
+    model.eval()
+    model.serve()

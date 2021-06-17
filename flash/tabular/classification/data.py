@@ -155,7 +155,6 @@ class TabularDeserializer(Deserializer):
             row[cat_col] = ["test"]
         for num_col in self.num_cols:
             row[num_col] = [0]
-        row[self.target_col] = [1]
         return str(DataFrame.from_dict(row).to_csv())
 
 

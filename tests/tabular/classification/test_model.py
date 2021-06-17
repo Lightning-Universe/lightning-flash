@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from unittest import mock
 
+import pandas as pd
 import pytest
 import torch
 from pytorch_lightning import Trainer
@@ -20,6 +22,7 @@ from pytorch_lightning import Trainer
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular import TabularClassifier
+from flash.tabular.classification.data import TabularData
 
 # ======== Mock functions ========
 
@@ -90,3 +93,20 @@ def test_jit(tmpdir):
     out = model((torch.randint(0, 10, size=(1, 4)), torch.rand(1, 4)))
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 10])
+
+
+@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+def test_serve():
+    train_data = {"num_col": [1.4, 2.5], "cat_col": ["positive", "negative"], "target": [1, 2]}
+    datamodule = TabularData.from_data_frame(
+        "cat_col",
+        "num_col",
+        "target",
+        pd.DataFrame.from_dict(train_data),
+    )
+    model = TabularClassifier.from_data(datamodule)
+    # TODO: Currently only servable once a preprocess has been attached
+    model._preprocess = datamodule.preprocess
+    model.eval()
+    model.serve()

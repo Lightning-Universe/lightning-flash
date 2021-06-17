@@ -220,6 +220,7 @@ class SemanticSegmentationDeserializer(ImageDeserializer):
 
     def deserialize(self, data: str) -> torch.Tensor:
         result = super().deserialize(data)
+        result[DefaultDataKeys.INPUT] = self.to_tensor(result[DefaultDataKeys.INPUT])
         result[DefaultDataKeys.METADATA] = {"size": result[DefaultDataKeys.INPUT].shape}
         return result
 

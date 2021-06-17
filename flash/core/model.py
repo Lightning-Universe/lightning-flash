@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import inspect
+import os
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
@@ -631,7 +632,7 @@ class Task(LightningModule):
         if sanity_check:
             print("Running sanity check")
             comp = FlashServeModelComponent(self)
-            composition = Composition(predict=comp, TESTING=True, DEBUG=False)
+            composition = Composition(predict=comp, TESTING=True, DEBUG=True)
             app = composition.serve(host="0.0.0.0", port=8000)
 
             with TestClient(app) as tc:
@@ -641,6 +642,6 @@ class Task(LightningModule):
                 print(f"Sanity check response: {resp.json()}")
 
         comp = FlashServeModelComponent(self)
-        composition = Composition(predict=comp)
+        composition = Composition(predict=comp, TESTING=os.environ["FLASH_TESTING"] == "1")
         composition.serve(host=host, port=port)
         return composition
