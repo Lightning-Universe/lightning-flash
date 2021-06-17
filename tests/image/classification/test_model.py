@@ -20,7 +20,7 @@ import torch
 from flash import Trainer
 from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _SERVE_AVAILABLE
 from flash.image import ImageClassifier
 from flash.image.classification.data import ImageClassificationPreprocess
 
@@ -132,7 +132,7 @@ def test_jit(tmpdir, jitter, args):
     assert out.shape == torch.Size([1, 2])
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 def test_serve():
     model = ImageClassifier(2)

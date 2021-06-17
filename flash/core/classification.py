@@ -154,7 +154,8 @@ class Labels(Classes):
             self.set_state(LabelsState(labels))
 
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        if isinstance(sample, Dict) and DefaultDataKeys.PREDS in sample:
+            sample = sample[DefaultDataKeys.PREDS]
         sample = torch.tensor(sample)
         labels = None
 

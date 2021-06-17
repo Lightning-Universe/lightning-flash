@@ -22,7 +22,7 @@ import torch
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _SERVE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationPreprocess
 
@@ -139,7 +139,7 @@ def test_jit(tmpdir, jitter, args):
     assert out.shape == torch.Size([1, 2, 32, 32])
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 def test_serve():
     model = SemanticSegmentation(2)

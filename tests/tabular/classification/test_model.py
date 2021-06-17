@@ -20,7 +20,7 @@ import torch
 from pytorch_lightning import Trainer
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _SERVE_AVAILABLE, _TABULAR_AVAILABLE
 from flash.tabular import TabularClassifier
 from flash.tabular.classification.data import TabularData
 
@@ -95,7 +95,7 @@ def test_jit(tmpdir):
     assert out.shape == torch.Size([1, 10])
 
 
-@pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 def test_serve():
     train_data = {"num_col": [1.4, 2.5], "cat_col": ["positive", "negative"], "target": [1, 2]}

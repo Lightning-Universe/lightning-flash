@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from unittest import mock
 
 import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _SERVE_AVAILABLE, _TEXT_AVAILABLE
 from flash.text import TextClassifier
+from flash.text.classification.data import TextClassificationPostprocess, TextClassificationPreprocess
 
 # ======== Mock functions ========
 
@@ -66,3 +68,14 @@ def test_jit(tmpdir):
     out = model(sample_input)["logits"]
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2])
+
+
+@pytest.mark.skipif(not _SERVE_AVAILABLE, reason="serve libraries aren't installed.")
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+def test_serve():
+    model = TextClassifier(2, TEST_BACKBONE)
+    # TODO: Currently only servable once a preprocess and postprocess have been attached
+    model._preprocess = TextClassificationPreprocess(backbone=TEST_BACKBONE)
+    model._postprocess = TextClassificationPostprocess()
+    model.eval()
+    model.serve()

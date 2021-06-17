@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """General utilities"""
-
 import importlib
 import operator
+import os
 from importlib.util import find_spec
 
 from pkg_resources import DistributionNotFound
@@ -94,3 +94,12 @@ _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
 _IMAGE_AVAILABLE = _TORCHVISION_AVAILABLE and _TIMM_AVAILABLE and _KORNIA_AVAILABLE
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
+
+if "FLASH_TEST_TOPIC" in os.environ:
+    topic = os.environ["FLASH_TEST_TOPIC"]
+    _IMAGE_AVAILABLE = topic == "image"
+    _VIDEO_AVAILABLE = topic == "video"
+    _TABULAR_AVAILABLE = topic == "tabular"
+    _TEXT_AVAILABLE = topic == "text"
+    _IMAGE_STLYE_TRANSFER = topic == "image_style_transfer"
+    _SERVE_AVAILABLE = topic == "serve"
