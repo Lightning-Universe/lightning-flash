@@ -152,5 +152,5 @@ jobs:
 
     - name: Uninstall
       run: |
-        pip uninstall lightning-flash
+        pip uninstall lightning-flash -y
       shell: bash
