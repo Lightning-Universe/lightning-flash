@@ -46,7 +46,7 @@ model = SemanticSegmentation(
     backbone="mobilenet_v3_large",
     head="fcn",
     num_classes=datamodule.num_classes,
-    serializer=SegmentationLabels(visualize=True),
+    serializer=SegmentationLabels(visualize=False),
 )
 
 # 4. Create the trainer.

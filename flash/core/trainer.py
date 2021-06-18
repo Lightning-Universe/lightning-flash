@@ -72,7 +72,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 class Trainer(PlTrainer):
 
     @_defaults_from_env_vars
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, serve_sanity_check: bool = True, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
                 kwargs["gpus"] = 1
@@ -84,6 +84,14 @@ class Trainer(PlTrainer):
             else:
                 kwargs["fast_dev_run"] = True
         super().__init__(*args, **kwargs)
+
+        self.serve_sanity_check = serve_sanity_check
+
+    def run_sanity_check(self, ref_model):
+        super().run_sanity_check(ref_model)
+
+        if self.serve_sanity_check and ref_model.is_servable:
+            ref_model.run_serve_sanity_check()
 
     def fit(
         self,

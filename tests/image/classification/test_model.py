@@ -133,7 +133,7 @@ def test_jit(tmpdir, jitter, args):
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = ImageClassifier(2)
     # TODO: Currently only servable once a preprocess has been attached

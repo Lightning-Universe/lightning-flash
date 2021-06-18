@@ -97,7 +97,7 @@ def test_jit(tmpdir):
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@mock.patch("flash._IS_TESTING", True)
 def test_serve():
     train_data = {"num_col": [1.4, 2.5], "cat_col": ["positive", "negative"], "target": [1, 2]}
     datamodule = TabularData.from_data_frame(

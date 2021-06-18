@@ -100,7 +100,7 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@mock.patch("flash._IS_TESTING", True)
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
