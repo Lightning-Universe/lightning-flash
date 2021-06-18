@@ -23,7 +23,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     ImageDeserializer,
@@ -38,10 +38,9 @@ if _MATPLOTLIB_AVAILABLE:
 else:
     plt = None
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
 else:
-
     class Image:
         Image = None
 

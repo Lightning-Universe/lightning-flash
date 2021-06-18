@@ -37,7 +37,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
 from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
@@ -54,7 +54,7 @@ if _MATPLOTLIB_AVAILABLE:
 else:
     plt = None
 
-if _IMAGE_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 

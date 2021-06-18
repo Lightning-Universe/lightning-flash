@@ -17,10 +17,12 @@ import torch
 import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _KORNIA_AVAILABLE
 
-if _IMAGE_AVAILABLE:
+if _KORNIA_AVAILABLE:
     import kornia as K
+
+if _TORCHVISION_AVAILABLE:
     from torchvision.transforms import Compose
 
     from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
