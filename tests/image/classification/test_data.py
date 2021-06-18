@@ -21,12 +21,14 @@ import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
 from flash.image import ImageClassificationData
 from tests.helpers.utils import _IMAGE_TESTING
 
 if _IMAGE_AVAILABLE:
     import torchvision
+
+if _PIL_AVAILABLE:
     from PIL import Image
 
 if _FIFTYONE_AVAILABLE:

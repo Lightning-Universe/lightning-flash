@@ -56,12 +56,12 @@ else:
 
 if _IMAGE_AVAILABLE:
     import torchvision
-    from PIL import Image
-    from PIL import Image as PILImage
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 
+if _PIL_AVAILABLE:
+    from PIL import Image
+    from PIL import Image as PILImage
 else:
-
     class Image:
         Image = None
 

@@ -27,7 +27,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _PIL_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -36,10 +36,9 @@ if _TORCHVISION_AVAILABLE:
 else:
     IMG_EXTENSIONS = []
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image as PILImage
 else:
-
     class Image:
         Image = None
 
