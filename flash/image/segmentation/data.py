@@ -37,7 +37,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
