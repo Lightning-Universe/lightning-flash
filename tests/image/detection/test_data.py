@@ -7,6 +7,7 @@ import pytest
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
+from tests.helpers.utils import _IMAGE_TESTING
 
 if _PIL_AVAILABLE:
     from PIL import Image
