@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _KORNIA_AVAILABLE
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K

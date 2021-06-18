@@ -41,6 +41,7 @@ else:
 if _PIL_AVAILABLE:
     from PIL import Image
 else:
+
     class Image:
         Image = None
 
