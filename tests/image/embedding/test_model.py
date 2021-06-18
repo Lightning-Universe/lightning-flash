@@ -16,8 +16,8 @@ import os
 import pytest
 import torch
 
-from flash.core.utilities.imports import _IMAGE_TESTING
 from flash.image import ImageEmbedder
+from tests.helpers.utils import _IMAGE_TESTING
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

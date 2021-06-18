@@ -19,8 +19,8 @@ from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_TESTING
 from flash.image import ObjectDetector
+from tests.helpers.utils import _IMAGE_TESTING
 
 
 def collate_fn(samples):

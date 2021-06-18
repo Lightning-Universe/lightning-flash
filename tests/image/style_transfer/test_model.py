@@ -3,8 +3,9 @@ import os
 import pytest
 import torch
 
-from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER, _IMAGE_STLYE_TRANSFER_TESTING
+from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER
 from flash.image.style_transfer import StyleTransfer
+from tests.helpers.utils import _IMAGE_STLYE_TRANSFER_TESTING
 
 
 @pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER_TESTING, reason="image style transfer libraries aren't installed.")

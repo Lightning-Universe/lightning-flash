@@ -14,8 +14,8 @@
 import pytest
 import torch
 
-from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text.seq2seq.summarization.metric import RougeMetric
+from tests.helpers.utils import _TEXT_TESTING
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")

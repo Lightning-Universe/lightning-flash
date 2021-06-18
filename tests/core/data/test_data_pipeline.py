@@ -33,7 +33,8 @@ from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from tests.helpers.utils import _IMAGE_TESTING
 
 if _IMAGE_AVAILABLE:
     import torchvision.transforms as T

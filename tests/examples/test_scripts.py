@@ -17,15 +17,15 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import (
+from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+from tests.examples.utils import run_test
+from tests.helpers.utils import (
     _IMAGE_STLYE_TRANSFER_TESTING,
     _IMAGE_TESTING,
-    _SKLEARN_AVAILABLE,
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _VIDEO_TESTING,
 )
-from tests.examples.utils import run_test
 
 root = Path(__file__).parent.parent.parent
 

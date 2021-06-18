@@ -15,7 +15,7 @@ import os
 
 import pytest
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.core.data import (
     Seq2SeqBackboneState,
     Seq2SeqCSVDataSource,
@@ -25,6 +25,7 @@ from flash.text.seq2seq.core.data import (
     Seq2SeqPostprocess,
     Seq2SeqSentencesDataSource,
 )
+from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from transformers.tokenization_utils_base import PreTrainedTokenizerBase

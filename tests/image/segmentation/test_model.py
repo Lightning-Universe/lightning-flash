@@ -22,9 +22,9 @@ import torch
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_TESTING, _SERVE_TESTING
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationPreprocess
+from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
 

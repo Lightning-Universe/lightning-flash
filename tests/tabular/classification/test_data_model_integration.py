@@ -14,8 +14,9 @@
 import pytest
 import pytorch_lightning as pl
 
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TABULAR_TESTING
+from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular import TabularClassifier, TabularData
+from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
     import pandas as pd

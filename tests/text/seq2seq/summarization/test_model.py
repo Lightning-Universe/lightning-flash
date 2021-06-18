@@ -17,8 +17,8 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import SummarizationTask
+from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock functions ========
 

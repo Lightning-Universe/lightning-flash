@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
 from flash.text.classification.data import (
     TextCSVDataSource,
@@ -25,6 +25,7 @@ from flash.text.classification.data import (
     TextJSONDataSource,
     TextSentencesDataSource,
 )
+from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from transformers.tokenization_utils_base import PreTrainedTokenizerBase

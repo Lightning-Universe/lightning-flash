@@ -14,7 +14,6 @@
 import logging
 
 import pytest
-import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 

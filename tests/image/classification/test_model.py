@@ -20,9 +20,9 @@ import torch
 from flash import Trainer
 from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_TESTING, _SERVE_TESTING
 from flash.image import ImageClassifier
 from flash.image.classification.data import ImageClassificationPreprocess
+from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
 

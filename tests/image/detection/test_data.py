@@ -5,8 +5,9 @@ from pathlib import Path
 import pytest
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
+from tests.helpers.utils import _IMAGE_TESTING
 
 if _IMAGE_AVAILABLE:
     from PIL import Image

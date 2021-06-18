@@ -17,8 +17,8 @@ from pathlib import Path
 import pytest
 from pytorch_lightning import Trainer
 
-from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import TextClassificationData, TextClassifier
+from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 

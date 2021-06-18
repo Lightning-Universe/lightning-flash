@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import TranslationData
+from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 

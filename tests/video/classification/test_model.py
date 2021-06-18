@@ -21,7 +21,8 @@ import torch
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, _VIDEO_TESTING
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
+from tests.helpers.utils import _VIDEO_TESTING
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
