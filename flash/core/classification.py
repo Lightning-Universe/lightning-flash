@@ -82,34 +82,43 @@ class ClassificationSerializer(Serializer):
         return self._mutli_label
 
 
-class Logits(ClassificationSerializer):
+class PredsClassificationSerializer(ClassificationSerializer):
+    """A :class:`~flash.core.classification.ClassificationSerializer` which gets the
+    :attr:`~flash.core.data.data_source.DefaultDataKeys.PREDS` from the sample.
+    """
+
+    def serialize(self, sample: Any) -> Any:
+        if isinstance(sample, Mapping) and DefaultDataKeys.PREDS in sample:
+            sample = sample[DefaultDataKeys.PREDS]
+        if not isinstance(sample, torch.Tensor):
+            sample = torch.tensor(sample)
+        return sample
+
+
+class Logits(PredsClassificationSerializer):
     """A :class:`.Serializer` which simply converts the model outputs (assumed to be logits) to a list."""
 
     def serialize(self, sample: Any) -> Any:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        sample = torch.tensor(sample)
-        return sample.tolist()
+        return super().serialize(sample).tolist()
 
 
-class Probabilities(ClassificationSerializer):
+class Probabilities(PredsClassificationSerializer):
     """A :class:`.Serializer` which applies a softmax to the model outputs (assumed to be logits) and converts to a
     list."""
 
     def serialize(self, sample: Any) -> Any:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        sample = torch.tensor(sample)
+        sample = super().serialize(sample)
         if self.multi_label:
             return torch.sigmoid(sample).tolist()
         return torch.softmax(sample, -1).tolist()
 
 
-class Classes(ClassificationSerializer):
+class Classes(PredsClassificationSerializer):
     """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list.
 
     Args:
         multi_label: If true, treats outputs as multi label logits.
-
         threshold: The threshold to use for multi_label classification.
     """
 
@@ -119,9 +128,7 @@ class Classes(ClassificationSerializer):
         self.threshold = threshold
 
     def serialize(self, sample: Any) -> Union[int, List[int]]:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        if not isinstance(sample, torch.Tensor):
-            sample = torch.tensor(sample)
+        sample = super().serialize(sample)
         if self.multi_label:
             one_hot = (sample.sigmoid() > self.threshold).int().tolist()
             result = []
@@ -139,9 +146,7 @@ class Labels(Classes):
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
             provided, will attempt to get them from the :class:`.LabelsState`.
-
         multi_label: If true, treats outputs as multi label logits.
-
         threshold: The threshold to use for multi_label classification.
     """
 
@@ -153,9 +158,6 @@ class Labels(Classes):
             self.set_state(LabelsState(labels))
 
     def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
-        if isinstance(sample, Dict) and DefaultDataKeys.PREDS in sample:
-            sample = sample[DefaultDataKeys.PREDS]
-        sample = torch.tensor(sample)
         labels = None
 
         if self._labels is not None:
