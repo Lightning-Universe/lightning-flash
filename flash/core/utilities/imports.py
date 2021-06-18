@@ -14,12 +14,9 @@
 """General utilities"""
 import importlib
 import operator
-import os
 from importlib.util import find_spec
 
 from pkg_resources import DistributionNotFound
-
-from tests.helpers.utils import _IMAGE_TESTING
 
 try:
     from packaging.version import Version
