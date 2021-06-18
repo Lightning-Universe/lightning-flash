@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-import os
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
@@ -29,6 +28,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
+from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -90,7 +90,7 @@ class Trainer(PlTrainer):
     def run_sanity_check(self, ref_model):
         super().run_sanity_check(ref_model)
 
-        if self.serve_sanity_check and ref_model.is_servable:
+        if self.serve_sanity_check and ref_model.is_servable and _SERVE_AVAILABLE:
             ref_model.run_serve_sanity_check()
 
     def fit(

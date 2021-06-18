@@ -43,6 +43,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
+from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -598,6 +599,8 @@ class Task(LightningModule):
             return [BenchmarkConvergenceCI()]
 
     def run_serve_sanity_check(self):
+        if not _SERVE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 
@@ -617,6 +620,8 @@ class Task(LightningModule):
             print(f"Sanity check response: {resp.json()}")
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
+        if not _SERVE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 
