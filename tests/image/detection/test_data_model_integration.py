@@ -19,6 +19,7 @@ import flash
 from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from flash.image.detection import ObjectDetectionData
+from tests.helpers.utils import _IMAGE_TESTING
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
@@ -32,7 +33,7 @@ if _FIFTYONE_AVAILABLE:
     from tests.image.detection.test_data import _create_synth_fiftyone_dataset
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="pycocotools is not installed for testing")
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
 @pytest.mark.parametrize(["model", "backbone"], [("fasterrcnn", "resnet18")])
 def test_detection(tmpdir, model, backbone):
@@ -56,7 +57,7 @@ def test_detection(tmpdir, model, backbone):
     model.predict(test_images)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed for testing")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed for testing")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 @pytest.mark.parametrize(["model", "backbone"], [("fasterrcnn", "resnet18")])
 def test_detection_fiftyone(tmpdir, model, backbone):

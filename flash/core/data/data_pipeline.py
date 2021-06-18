@@ -119,6 +119,10 @@ class DataPipeline:
         data_pipeline_state._initialized = True  # TODO: Not sure we need this
         return data_pipeline_state
 
+    @property
+    def example_input(self) -> str:
+        return self._deserializer.example_input
+
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
         """

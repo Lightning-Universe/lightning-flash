@@ -25,6 +25,7 @@ from flash.text.classification.data import (
     TextJSONDataSource,
     TextSentencesDataSource,
 )
+from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from transformers.tokenization_utils_base import PreTrainedTokenizerBase
@@ -57,7 +58,7 @@ def json_data(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = TextClassificationData.from_csv("sentence", "label", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
@@ -67,7 +68,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_test_valid(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = TextClassificationData.from_csv(
@@ -89,7 +90,7 @@ def test_test_valid(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
@@ -105,7 +106,7 @@ def test_text_module_not_found_error():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 @pytest.mark.parametrize(
     "cls, kwargs",
     [

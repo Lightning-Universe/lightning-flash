@@ -12,26 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import subprocess
-import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
 from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import (
-    _IMAGE_AVAILABLE,
-    _PYSTICHE_GREATER_EQUAL_0_7_2,
-    _SKLEARN_AVAILABLE,
-    _TABULAR_AVAILABLE,
-    _TEXT_AVAILABLE,
-    _TORCHVISION_GREATER_EQUAL_0_9,
-    _VIDEO_AVAILABLE,
-)
+from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
-
-_IMAGE_AVAILABLE = _IMAGE_AVAILABLE and _TORCHVISION_GREATER_EQUAL_0_9
+from tests.helpers.utils import (
+    _IMAGE_STLYE_TRANSFER_TESTING,
+    _IMAGE_TESTING,
+    _TABULAR_TESTING,
+    _TEXT_TESTING,
+    _VIDEO_TESTING,
+)
 
 root = Path(__file__).parent.parent.parent
 
@@ -43,28 +37,28 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "finetuning",
             "image_classification.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
             "finetuning",
             "image_classification_multi_label.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(
             "finetuning",
             "semantic_segmentation.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
             "finetuning",
             "summarization.py",
-            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
         pytest.param(
             "finetuning",
             "tabular_classification.py",
-            marks=pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed")
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed")
         ),
         # pytest.param("finetuning", "video_classification.py"),
         # pytest.param("finetuning", "text_classification.py"),  # TODO: takes too long
@@ -76,48 +70,48 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "finetuning",
             "translation.py",
-            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
         pytest.param(
             "finetuning",
             "style_transfer.py",
-            marks=pytest.mark.skipif(not _PYSTICHE_GREATER_EQUAL_0_7_2, reason="pystiche is not installed")
+            marks=pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER_TESTING, reason="pystiche is not installed")
         ),
         pytest.param(
             "predict",
             "image_classification.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "image_classification_multi_label.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "semantic_segmentation.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "tabular_classification.py",
-            marks=pytest.mark.skipif(not _TABULAR_AVAILABLE, reason="tabular libraries aren't installed")
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed")
         ),
         # pytest.param("predict", "text_classification.py"),
         pytest.param(
             "predict",
             "image_embedder.py",
-            marks=pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "video_classification.py",
-            marks=pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="video libraries aren't installed")
+            marks=pytest.mark.skipif(not _VIDEO_TESTING, reason="video libraries aren't installed")
         ),
         pytest.param(
             "predict",
             "summarization.py",
-            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
         pytest.param(
             "predict",
@@ -127,7 +121,7 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "predict",
             "translation.py",
-            marks=pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed")
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
     ]
 )

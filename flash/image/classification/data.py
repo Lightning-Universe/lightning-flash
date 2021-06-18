@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import base64
-from io import BytesIO
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -25,41 +23,27 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
 from flash.image.classification.transforms import default_transforms, train_default_transforms
-from flash.image.data import ImageFiftyOneDataSource, ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+from flash.image.data import (
+    ImageDeserializer,
+    ImageFiftyOneDataSource,
+    ImageNumpyDataSource,
+    ImagePathsDataSource,
+    ImageTensorDataSource,
+)
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
 
-if _TORCHVISION_AVAILABLE:
-    import torchvision
-
 if _IMAGE_AVAILABLE:
     from PIL import Image
-    from PIL import Image as PILImage
 else:
 
     class Image:
         Image = None
-
-
-class ImageClassificationDeserializer(Deserializer):
-
-    def __init__(self):
-
-        self.to_tensor = torchvision.transforms.ToTensor()
-
-    def deserialize(self, data: str) -> Dict:
-        encoded_with_padding = (data + "===").encode("ascii")
-        img = base64.b64decode(encoded_with_padding)
-        buffer = BytesIO(img)
-        img = PILImage.open(buffer, mode="r")
-        return {
-            DefaultDataKeys.INPUT: img,
-        }
 
 
 class ImageClassificationPreprocess(Preprocess):
@@ -88,7 +72,7 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
             },
-            deserializer=deserializer or ImageClassificationDeserializer(),
+            deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,
         )
 

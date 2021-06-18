@@ -11,10 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import base64
+from io import BytesIO
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import torch
 
+import flash
 from flash.core.data.data_source import (
     DefaultDataKeys,
     FiftyOneDataSource,
@@ -22,13 +26,43 @@ from flash.core.data.data_source import (
     PathsDataSource,
     TensorDataSource,
 )
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.data.process import Deserializer
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
+    import torchvision
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
     IMG_EXTENSIONS = []
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image as PILImage
+else:
+
+    class Image:
+        Image = None
+
+
+class ImageDeserializer(Deserializer):
+
+    def __init__(self):
+        super().__init__()
+        self.to_tensor = torchvision.transforms.ToTensor()
+
+    def deserialize(self, data: str) -> Dict:
+        encoded_with_padding = (data + "===").encode("ascii")
+        img = base64.b64decode(encoded_with_padding)
+        buffer = BytesIO(img)
+        img = PILImage.open(buffer, mode="r")
+        return {
+            DefaultDataKeys.INPUT: img,
+        }
+
+    @property
+    def example_input(self) -> str:
+        with (Path(flash.ASSETS_ROOT) / "fish.jpg").open("rb") as f:
+            return base64.b64encode(f.read()).decode("UTF-8")
 
 
 class ImagePathsDataSource(PathsDataSource):

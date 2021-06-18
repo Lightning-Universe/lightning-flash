@@ -17,8 +17,8 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationTask
+from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -41,7 +41,7 @@ TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_init_train(tmpdir):
     model = SummarizationTask(TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -49,7 +49,7 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_jit(tmpdir):
     sample_input = {
         "input_ids": torch.randint(1000, size=(1, 32)),

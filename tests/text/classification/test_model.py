@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from unittest import mock
 
 import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
+from flash.text.classification.data import TextClassificationPostprocess, TextClassificationPreprocess
+from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -41,7 +43,7 @@ TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_init_train(tmpdir):
     model = TextClassifier(2, TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -49,7 +51,7 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_jit(tmpdir):
     sample_input = {"input_ids": torch.randint(1000, size=(1, 100))}
     path = os.path.join(tmpdir, "test.pt")
@@ -66,3 +68,14 @@ def test_jit(tmpdir):
     out = model(sample_input)["logits"]
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2])
+
+
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@mock.patch("flash._IS_TESTING", True)
+def test_serve():
+    model = TextClassifier(2, TEST_BACKBONE)
+    # TODO: Currently only servable once a preprocess and postprocess have been attached
+    model._preprocess = TextClassificationPreprocess(backbone=TEST_BACKBONE)
+    model._postprocess = TextClassificationPostprocess()
+    model.eval()
+    model.serve()
