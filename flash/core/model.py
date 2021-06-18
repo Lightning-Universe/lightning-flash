@@ -642,6 +642,6 @@ class Task(LightningModule):
                 print(f"Sanity check response: {resp.json()}")
 
         comp = FlashServeModelComponent(self)
-        composition = Composition(predict=comp, TESTING=os.environ["FLASH_TESTING"] == "1")
+        composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
