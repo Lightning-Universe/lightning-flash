@@ -391,7 +391,7 @@ class Task(LightningModule):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        if type(deserializer) == Deserializer:
+        if deserializer is None or type(deserializer) == Deserializer:
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
