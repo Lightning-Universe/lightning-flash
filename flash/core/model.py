@@ -391,7 +391,8 @@ class Task(LightningModule):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        deserializer = deserializer or getattr(preprocess, "deserializer", None)
+        if type(deserializer) == Deserializer:
+            deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
@@ -400,7 +401,7 @@ class Task(LightningModule):
     @torch.jit.unused
     @property
     def is_servable(self) -> bool:
-        return self.build_data_pipeline()._deserializer is not None
+        return type(self.build_data_pipeline()._deserializer) != Deserializer
 
     @torch.jit.unused
     @property
@@ -608,7 +609,7 @@ class Task(LightningModule):
 
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
-        print("Running sanity check")
+        print("Running serve sanity check")
         comp = build_flash_serve_model_component(self)
         composition = Composition(predict=comp, TESTING=True, DEBUG=True)
         app = composition.serve(host="0.0.0.0", port=8000)

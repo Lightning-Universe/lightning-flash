@@ -48,7 +48,7 @@ def fn_resnet(pretrained: bool = True):
 print(ImageClassifier.available_backbones())
 
 # 4. Build the model
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Labels())
+model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
 # 5. Create the trainer
 trainer = flash.Trainer(max_epochs=3)
