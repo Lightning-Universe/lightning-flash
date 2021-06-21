@@ -119,7 +119,7 @@ print(predictions)
 
 ### Serving
 
-`Serve` is a framework agnostic serving engine ! [Learn more](https://lightning-flash.readthedocs.io/en/latest/reference/flash_to_production.html#) and [check out our examples](flash_examples/serve).
+`Serve` is a framework agnostic serving engine ! [Learn more](https://lightning-flash.readthedocs.io/en/latest/reference/flash_to_production.html#) and [find examples](flash_examples/serve/generic/boston_prediction/inference_server.py).
 
 ```python
 from flash.text import TextClassifier
@@ -127,6 +127,8 @@ from flash.text import TextClassifier
 model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
 model.serve()
 ```
+
+Credits to @rlizzo, @hhsecond, @lantiga, @luiscape for building Flash Serve Engine.
 
 ### Finetuning
 
