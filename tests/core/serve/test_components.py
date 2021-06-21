@@ -27,8 +27,8 @@ def test_model_compute_dependencies(lightning_squeezenet1_1_obj):
         "target_component": "callnum_1",
         "target_key": "tag",
     }]
-    assert list(map(lambda x: x._asdict(), comp1._gridserve_meta_.connections)) == res
-    assert list(comp2._gridserve_meta_.connections) == []
+    assert list(map(lambda x: x._asdict(), comp1._flashserve_meta_.connections)) == res
+    assert list(comp2._flashserve_meta_.connections) == []
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
@@ -44,8 +44,8 @@ def test_inverse_model_compute_component_dependencies(lightning_squeezenet1_1_ob
         "target_component": "callnum_1",
         "target_key": "tag",
     }]
-    assert list(map(lambda x: x._asdict(), comp2._gridserve_meta_.connections)) == res
-    assert list(comp1._gridserve_meta_.connections) == []
+    assert list(map(lambda x: x._asdict(), comp2._flashserve_meta_.connections)) == res
+    assert list(comp1._flashserve_meta_.connections) == []
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
@@ -115,7 +115,7 @@ def test_component_parameters(lightning_squeezenet1_1_obj):
     first_tag >> second_tag
     assert str(first_tag.connections[0]) == ("callnum_1.outputs.predicted_tag >> callnum_2.inputs.tag")
     assert second_tag.connections == []
-    assert first_tag.connections == comp1._gridserve_meta_.connections
+    assert first_tag.connections == comp1._flashserve_meta_.connections
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")

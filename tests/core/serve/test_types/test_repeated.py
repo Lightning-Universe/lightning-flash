@@ -51,13 +51,13 @@ def test_repeated_max_len():
         Repeated(dtype=Label(classes=["classA", "classB"]), max_len=str)
 
 
-def test_repeated_non_grid_dtype():
+def test_repeated_non_serve_dtype():
 
-    class NonGridDtype:
+    class NonServeDtype:
         pass
 
     with pytest.raises(TypeError):
-        Repeated(NonGridDtype())
+        Repeated(NonServeDtype())
 
 
 def test_not_allow_nested_repeated():

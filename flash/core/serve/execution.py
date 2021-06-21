@@ -183,7 +183,7 @@ def _process_initial(
             f"must be renamed in either `inputs` or `outputs`. "
         )
 
-    component_dsk = merge(valmap(attrgetter("_gridserve_meta_.dsk"), components))
+    component_dsk = merge(valmap(attrgetter("_flashserve_meta_.dsk"), components))
     merged_dsk = merge(*(dsk for dsk in component_dsk.values()))
 
     return UnprocessedTaskDask(
@@ -344,7 +344,7 @@ def _verify_no_cycles(dsk: Dict[str, tuple], out_keys: List[str], endpoint_name:
 
 def connections_from_components_map(components: Dict[str, 'ModelComponent']) -> List[Dict[str, str]]:
     dsk_connections = []
-    for con in flatten([comp._gridserve_meta_.connections for comp in components.values()]):
+    for con in flatten([comp._flashserve_meta_.connections for comp in components.values()]):
         # value of target key is mapped one-to-one from value of source
         dsk_connections.append(con._asdict())
     return dsk_connections
@@ -399,10 +399,10 @@ def component_dag_content(components: Dict[str, 'ModelComponent']) -> 'Component
     comp_dependencies, comp_dependents, comp_funcnames = {}, {}, {}
 
     for comp_name, comp in components.items():
-        functions_comp = valmap(functions_of, comp._gridserve_meta_.dsk)
+        functions_comp = valmap(functions_of, comp._flashserve_meta_.dsk)
         function_names_comp = {k: sorted(set(map(funcname, v))) for k, v in functions_comp.items()}
         comp_funcnames[comp_name] = function_names_comp
-        _dependencies, _dependents = get_deps(comp._gridserve_meta_.dsk)
+        _dependencies, _dependents = get_deps(comp._flashserve_meta_.dsk)
         _dependents = dict(_dependents)
         comp_dependencies[comp_name] = _dependencies
         comp_dependents[comp_name] = _dependents

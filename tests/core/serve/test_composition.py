@@ -160,38 +160,38 @@ def test_composition_recieve_wrong_arg_type(lightning_squeezenet1_1_obj):
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-def test_gridmodel_sequence(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gridmodel):
+def test_servable_sequence(tmp_path, lightning_squeezenet1_1_obj, squeezenet_servable):
     from tests.core.serve.models import ClassificationInferenceModelSequence
 
-    squeezenet_gm, _ = squeezenet_gridmodel
+    squeezenet_gm, _ = squeezenet_servable
     model_seq = [squeezenet_gm, squeezenet_gm]
     comp = ClassificationInferenceModelSequence(model_seq)
 
     composit = Composition(comp=comp)
-    assert composit.components["callnum_1"]._gridserve_meta_.models == model_seq
+    assert composit.components["callnum_1"]._flashserve_meta_.models == model_seq
     assert composit.components["callnum_1"].model1 == model_seq[0]
     assert composit.components["callnum_1"].model2 == model_seq[1]
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-def test_gridmodel_mapping(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gridmodel):
+def test_servable_mapping(tmp_path, lightning_squeezenet1_1_obj, squeezenet_servable):
     from tests.core.serve.models import ClassificationInferenceModelMapping
 
-    squeezenet_gm, _ = squeezenet_gridmodel
+    squeezenet_gm, _ = squeezenet_servable
     model_map = {"model_one": squeezenet_gm, "model_two": squeezenet_gm}
     comp = ClassificationInferenceModelMapping(model_map)
 
     composit = Composition(comp=comp)
-    assert composit.components["callnum_1"]._gridserve_meta_.models == model_map
+    assert composit.components["callnum_1"]._flashserve_meta_.models == model_map
     assert composit.components["callnum_1"].model1 == model_map["model_one"]
     assert composit.components["callnum_1"].model2 == model_map["model_two"]
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-def test_invalid_gridmodel_composition(tmp_path, lightning_squeezenet1_1_obj, squeezenet_gridmodel):
+def test_invalid_servable_composition(tmp_path, lightning_squeezenet1_1_obj, squeezenet_servable):
     from tests.core.serve.models import ClassificationInferenceModelMapping
 
-    squeezenet_gm, _ = squeezenet_gridmodel
+    squeezenet_gm, _ = squeezenet_servable
 
     invalid_model_map = {"model_one": squeezenet_gm, "model_two": 235}
     with pytest.raises(TypeError):
@@ -329,10 +329,10 @@ def test_complex_spec_multiple_endpoints(tmp_path, lightning_squeezenet1_1_obj):
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-def test_start_server_from_composition(tmp_path, squeezenet_gridmodel, session_global_datadir):
+def test_start_server_from_composition(tmp_path, squeezenet_servable, session_global_datadir):
     from tests.core.serve.models import ClassificationInferenceComposable
 
-    squeezenet_gm, _ = squeezenet_gridmodel
+    squeezenet_gm, _ = squeezenet_servable
     comp1 = ClassificationInferenceComposable(squeezenet_gm)
     comp2 = ClassificationInferenceComposable(squeezenet_gm)
     comp3 = ClassificationInferenceComposable(squeezenet_gm)

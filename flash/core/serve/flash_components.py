@@ -1,13 +1,11 @@
 import inspect
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Mapping
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 
-from flash import Task
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.serve import expose, ModelComponent
-from flash.core.serve.core import FilePath, GridserveScriptLoader
 from flash.core.serve.types.base import BaseType
 
 
@@ -48,15 +46,6 @@ class FlashOutputs(BaseType):
 
     def deserialize(self, data: str) -> Any:  # pragma: no cover
         return None
-
-
-class FlashServeScriptLoader(GridserveScriptLoader):
-
-    model_cls: Optional[Task] = None
-
-    def __init__(self, location: FilePath):
-        self.location = location
-        self.instance = self.model_cls.load_from_checkpoint(location)
 
 
 def build_flash_serve_model_component(model):

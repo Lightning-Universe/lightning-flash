@@ -19,7 +19,7 @@ def test_resnet_18_inference_class(session_global_datadir, lightning_squeezenet1
     app = composit.serve(host="0.0.0.0", port=8000)
 
     with TestClient(app) as tc:
-        alive = tc.get("http://127.0.0.1:8000/gridserve/alive")
+        alive = tc.get("http://127.0.0.1:8000/flashserve/alive")
         assert alive.status_code == 200
         assert alive.json() == {"alive": True}
 
@@ -71,7 +71,7 @@ def test_serving_single_component_and_endpoint_no_composition(session_global_dat
     comp = ClassificationInference(lightning_squeezenet1_1_obj)
     assert hasattr(comp.inputs, "img")
     assert hasattr(comp.outputs, "prediction")
-    assert list(comp._gridserve_meta_.connections) == []
+    assert list(comp._flashserve_meta_.connections) == []
 
     ep = Endpoint(
         route="/different_route",
@@ -140,7 +140,7 @@ def test_serving_single_component_and_endpoint_no_composition(session_global_dat
         }
         assert expected == success.json()
 
-        res = tc.get("http://127.0.0.1:8000/gridserve/dag_json")
+        res = tc.get("http://127.0.0.1:8000/flashserve/dag_json")
         assert res.status_code == 200
         assert res.json() == {
             "component_dependencies": {
@@ -384,7 +384,7 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
     app = composit.serve(host="0.0.0.0", port=8000)
 
     with TestClient(app) as tc:
-        resp = tc.get("http://127.0.0.1:8000/gridserve/component_dags")
+        resp = tc.get("http://127.0.0.1:8000/flashserve/component_dags")
         assert resp.headers["content-type"] == "text/html; charset=utf-8"
         assert resp.template.name == "dag.html"
         resp = tc.get("http://127.0.0.1:8000/predict_seat/dag")
@@ -473,8 +473,8 @@ def test_cycle_in_connection_fails(session_global_datadir, lightning_squeezenet1
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-def test_composition_from_url_torchscript_gridmodel(tmp_path):
-    from flash.core.serve import expose, GridModel, ModelComponent
+def test_composition_from_url_torchscript_servable(tmp_path):
+    from flash.core.serve import expose, ModelComponent, Servable
     from flash.core.serve.types import Number
     """
     # Tensor x Tensor
@@ -504,7 +504,7 @@ def test_composition_from_url_torchscript_gridmodel(tmp_path):
             """My predict docstring."""
             return self.decoder(self.encoder(inp, inp), inp)
 
-    gm = GridModel(TORCHSCRIPT_DOWNLOAD_URL, download_path=tmp_path / "tmp_download.pt")
+    gm = Servable(TORCHSCRIPT_DOWNLOAD_URL, download_path=tmp_path / "tmp_download.pt")
 
     c_1 = ComponentTwoModels({"encoder": gm, "decoder": gm})
     c_2 = ComponentTwoModels({"encoder": gm, "decoder": gm})

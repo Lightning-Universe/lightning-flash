@@ -23,7 +23,7 @@ class LightningSqueezenet(pl.LightningModule):
         return self.model(x)
 
 
-class LightningSqueezenetGridModel(pl.LightningModule):
+class LightningSqueezenetServable(pl.LightningModule):
 
     def __init__(self, model):
         super().__init__()
