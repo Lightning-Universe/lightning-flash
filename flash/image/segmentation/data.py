@@ -63,16 +63,15 @@ else:
 if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
+else:
+    IMG_EXTENSIONS = None
 
 if _PIL_AVAILABLE:
     from PIL import Image
-    from PIL import Image as PILImage
 else:
 
     class Image:
         Image = None
-
-    IMG_EXTENSIONS = None
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
