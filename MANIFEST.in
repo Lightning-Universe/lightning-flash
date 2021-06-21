@@ -9,7 +9,7 @@ recursive-include flash *.md
 recursive-include flash *.py
 
 # Include assets
-recursive-include flash/assets *
+recursive-include flash/assets *.jpg *.png
 
 # Include the license file
 include LICENSE
