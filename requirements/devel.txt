@@ -6,8 +6,6 @@
 
 -r ./datatype_image.txt
 
--r ./datatype_image_style_transfer.txt
-
 -r ./datatype_tabular.txt
 
 -r ./datatype_text.txt

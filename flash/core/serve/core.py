@@ -8,7 +8,7 @@ import torch
 
 from flash.core.serve.types.base import BaseType
 from flash.core.serve.utils import download_file
-from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, _SERVE_AVAILABLE
+from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, _requires_extras
 
 if _PYDANTIC_AVAILABLE:
     from pydantic import FilePath, HttpUrl, parse_obj_as, ValidationError
@@ -100,15 +100,13 @@ class GridModel:
     *  How to handle ``__init__`` args not recorded in hparams of ``pl.LightningModule``
     """
 
+    @_requires_extras("serve")
     def __init__(
         self,
         *args: GridModelValidArgs_T,
         download_path: Optional[Path] = None,
         script_loader_cls: Type[GridserveScriptLoader] = GridserveScriptLoader
     ):
-        if not _SERVE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
-
         try:
             loc = args[-1]  # last element in args is always loc
             parsed = parse_obj_as(GridModelValidArgs_T, tuple(args))

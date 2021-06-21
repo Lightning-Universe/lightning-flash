@@ -16,14 +16,13 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _requires_extras
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     ImageDeserializer,
@@ -111,6 +110,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
+    @_requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):
@@ -121,13 +121,11 @@ class MatplotlibVisualization(BaseVisualization):
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
+    @_requires_extras("image")
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
-
-        if not _MATPLOTLIB_AVAILABLE:
-            raise MisconfigurationException("You need matplotlib to visualise. Please, pip install matplotlib")
 
         # create figure and set title
         fig, axs = plt.subplots(rows, cols)

@@ -87,6 +87,8 @@ class VideoClassifier(ClassificationTask):
 
     backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES
 
+    required_extras = "video"
+
     def __init__(
         self,
         num_classes: int,
