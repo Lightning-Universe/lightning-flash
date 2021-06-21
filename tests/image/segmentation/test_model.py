@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import re
 from typing import Tuple
 from unittest import mock
 
@@ -152,5 +153,5 @@ def test_serve():
 
 @pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match="lightning-flash[image]"):
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         SemanticSegmentation.load_from_checkpoint("not_a_real_checkpoint.pt")

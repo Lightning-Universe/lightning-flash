@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import re
 from unittest import mock
 
 import pytest
@@ -84,5 +85,5 @@ def test_serve():
 
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match="lightning-flash[text]"):
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[text]'")):
         TextClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

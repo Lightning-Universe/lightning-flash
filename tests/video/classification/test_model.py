@@ -13,6 +13,7 @@
 # limitations under the License.
 import contextlib
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -281,5 +282,5 @@ def test_jit(tmpdir):
 
 @pytest.mark.skipif(_VIDEO_AVAILABLE, reason="video libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match="lightning-flash[video]"):
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[video]'")):
         VideoClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

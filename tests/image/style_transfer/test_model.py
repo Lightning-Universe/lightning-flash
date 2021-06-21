@@ -1,4 +1,5 @@
 import os
+import re
 
 import pytest
 import torch
@@ -45,5 +46,5 @@ def test_jit(tmpdir):
 
 @pytest.mark.skipif(_IMAGE_STYLE_TRANSFER_AVAILABLE, reason="image style transfer libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match="lightning-flash[image_style_transfer]"):
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image_style_transfer]'")):
         StyleTransfer.load_from_checkpoint("not_a_real_checkpoint.pt")
