@@ -119,7 +119,7 @@ print(predictions)
 
 ### Serving
 
-`Serve` is a framework agnostic serving engine ! [Learn more](https://lightning-flash.readthedocs.io/en/latest/reference/flash_to_production.html#) and [check out our examples](flash_examples/serve).
+`Serve` is a framework agnostic serving engine ! [Learn more](https://lightning-flash.readthedocs.io/en/latest/general/serve.html#) and [check out our examples](flash_examples/serve).
 
 ```python
 from flash.text import TextClassifier
