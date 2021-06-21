@@ -23,7 +23,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _requires_extras, _TEXT_AVAILABLE
 from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
@@ -34,6 +34,7 @@ if _TEXT_AVAILABLE:
 
 class Seq2SeqDataSource(DataSource):
 
+    @_requires_extras("text")
     def __init__(
         self,
         backbone: str,
@@ -42,9 +43,6 @@ class Seq2SeqDataSource(DataSource):
         padding: Union[str, bool] = 'max_length'
     ):
         super().__init__()
-
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
@@ -220,6 +218,7 @@ class Seq2SeqBackboneState(ProcessState):
 
 class Seq2SeqPreprocess(Preprocess):
 
+    @_requires_extras("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -235,9 +234,6 @@ class Seq2SeqPreprocess(Preprocess):
         self.max_target_length = max_target_length
         self.max_source_length = max_source_length
         self.padding = padding
-
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         super().__init__(
             train_transform=train_transform,
@@ -290,11 +286,9 @@ class Seq2SeqPreprocess(Preprocess):
 
 class Seq2SeqPostprocess(Postprocess):
 
+    @_requires_extras("text")
     def __init__(self):
         super().__init__()
-
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self._backbone = None
         self._tokenizer = None

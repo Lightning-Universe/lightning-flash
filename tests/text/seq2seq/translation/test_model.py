@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import re
 
 import pytest
 import torch
 
 from flash import Trainer
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TranslationTask
 from flash.text.seq2seq.core.data import Seq2SeqPostprocess
 from flash.text.seq2seq.translation.data import TranslationPreprocess
@@ -81,3 +83,9 @@ def test_serve():
     model._postprocess = Seq2SeqPostprocess()
     model.eval()
     model.serve()
+
+
+@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[text]'")):
+        TranslationTask.load_from_checkpoint("not_a_real_checkpoint.pt")

@@ -78,6 +78,8 @@ class ObjectDetector(Task):
 
     backbones: FlashRegistry = OBJ_DETECTION_BACKBONES
 
+    required_extras: str = "image"
+
     def __init__(
         self,
         num_classes: int,
@@ -95,10 +97,6 @@ class ObjectDetector(Task):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs: Any,
     ):
-
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
-
         self.save_hyperparameters()
 
         if model in _models:
