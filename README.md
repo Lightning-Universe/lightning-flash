@@ -119,12 +119,12 @@ print(predictions)
 
 ### Serving
 
-`Serve` is a framework agnostic serving engine ! [Learn more](https://lightning-flash.readthedocs.io/en/latest/general/serve.html#) and [find examples](flash_examples/serve/generic/boston_prediction/inference_server.py).
+`Serve` is a framework agnostic serving engine ! [Learn more](https://lightning-flash.readthedocs.io/en/latest/general/serve.html#) and [check out our examples](flash_examples/serve).
 
 ```python
-from flash.text import TranslationTask
+from flash.text import TextClassifier
 
-model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
+model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
 model.serve()
 ```
 
