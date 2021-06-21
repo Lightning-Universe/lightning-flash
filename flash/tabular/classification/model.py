@@ -43,6 +43,8 @@ class TabularClassifier(ClassificationTask):
             `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
     """
 
+    required_extras: str = "tabular"
+
     def __init__(
         self,
         num_features: int,
@@ -56,9 +58,6 @@ class TabularClassifier(ClassificationTask):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **tabnet_kwargs,
     ):
-        if not _TABULAR_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[tabular]'")
-
         self.save_hyperparameters()
 
         cat_dims, cat_emb_dim = zip(*embedding_sizes) if len(embedding_sizes) else ([], [])

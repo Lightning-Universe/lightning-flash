@@ -39,6 +39,8 @@ class TextClassifier(ClassificationTask):
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
 
+    required_extras: str = "text"
+
     def __init__(
         self,
         num_classes: int,
@@ -50,9 +52,6 @@ class TextClassifier(ClassificationTask):
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
-
         self.save_hyperparameters()
 
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"

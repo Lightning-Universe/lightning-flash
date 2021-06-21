@@ -7,7 +7,7 @@ import torch
 
 from flash.core.serve.core import GridModel, ParameterContainer
 from flash.core.serve.decorators import BoundMeta, UnboundMeta
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_AVAILABLE
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _requires_extras, _SERVE_AVAILABLE
 
 if _CYTOOLZ_AVAILABLE:
     from cytoolz import first, isiterable, valfilter
@@ -147,11 +147,9 @@ class GridserveMeta(type):
     We keep a mapping of externally used names to classes.
     """
 
+    @_requires_extras("serve")
     def __new__(cls, name, bases, namespace):
         # create new instance of cls in order to apply any @expose class decorations.
-        if not _SERVE_AVAILABLE:
-            return
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
         _tmp_cls = super().__new__(cls, name, bases, namespace)
 
         # determine which methods have been exposed.

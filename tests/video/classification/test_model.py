@@ -13,6 +13,7 @@
 # limitations under the License.
 import contextlib
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
+from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.utils import _VIDEO_TESTING
 
 if _FIFTYONE_AVAILABLE:
@@ -33,8 +35,6 @@ if _VIDEO_AVAILABLE:
     from pytorchvideo.data.utils import thwc_to_cthw
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
     from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
-
-    from flash.video import VideoClassificationData, VideoClassifier
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
@@ -277,3 +277,9 @@ def test_jit(tmpdir):
     out = model(sample_input)
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2])
+
+
+@pytest.mark.skipif(_VIDEO_AVAILABLE, reason="video libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[video]'")):
+        VideoClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

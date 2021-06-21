@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import re
 from unittest import mock
 
 import pytest
@@ -20,6 +21,7 @@ import torch
 from flash import Trainer
 from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ImageClassifier
 from flash.image.classification.data import ImageClassificationPreprocess
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
@@ -140,3 +142,9 @@ def test_serve():
     model._preprocess = ImageClassificationPreprocess()
     model.eval()
     model.serve()
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
+        ImageClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
