@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import inspect
+from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
@@ -84,7 +85,19 @@ def predict_context(func: Callable) -> Callable:
     return wrapper
 
 
-class Task(LightningModule):
+class CheckDependenciesMeta(ABCMeta):
+
+    def __new__(mcs, *args, **kwargs):
+        result = ABCMeta.__new__(mcs, *args, **kwargs)
+        if result.required_extras is not None:
+            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+            result.load_from_checkpoint = _requires_extras(result.required_extras)(result.load_from_checkpoint)
+        result.run_serve_sanity_check = _requires_extras("serve")(result.run_serve_sanity_check)
+        result.serve = _requires_extras("serve")(result.serve)
+        return result
+
+
+class Task(LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
@@ -141,17 +154,6 @@ class Task(LightningModule):
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
-
-    def __new__(cls):
-        if cls.required_extras is not None:
-            result = _requires_extras(cls.required_extras)(super().__new__)(cls)
-            result.load_from_checkpoint = _requires_extras(result.required_extras)(result.load_from_checkpoint)
-        else:
-            result = super().__new__(cls)
-
-        result.run_serve_sanity_check = _requires_extras("serve")(result.run_serve_sanity_check)
-        result.serve = _requires_extras("serve")(result.serve)
-        return result
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
