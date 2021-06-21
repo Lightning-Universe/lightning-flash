@@ -19,7 +19,7 @@ import torchmetrics
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
@@ -91,7 +91,7 @@ class ImageClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            serializer=serializer or Labels(),
         )
 
         self.save_hyperparameters()

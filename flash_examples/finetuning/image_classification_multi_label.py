@@ -59,7 +59,7 @@ model = ImageClassifier(
 )
 
 # 4. Create the trainer
-trainer = flash.Trainer(fast_dev_run=True)
+trainer = flash.Trainer(max_epochs=1)
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")

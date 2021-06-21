@@ -21,12 +21,12 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.detection.backbones import OBJECT_DETECTION_BACKBONES, OBJECT_DETECTION_MODELS
 from flash.image.detection.finetuning import ObjectDetectionFineTuning
 from flash.image.detection.serialization import DetectionLabels
 
-if _IMAGE_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
     from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead

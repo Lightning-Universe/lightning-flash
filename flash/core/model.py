@@ -41,8 +41,9 @@ from flash.core.data.process import (
 )
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
-from flash.core.serve import Composition, expose, ModelComponent
+from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
+from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -390,11 +391,17 @@ class Task(LightningModule):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        deserializer = deserializer or getattr(preprocess, "deserializer", None)
+        if deserializer is None or type(deserializer) == Deserializer:
+            deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
+
+    @torch.jit.unused
+    @property
+    def is_servable(self) -> bool:
+        return type(self.build_data_pipeline()._deserializer) != Deserializer
 
     @torch.jit.unused
     @property
@@ -592,41 +599,39 @@ class Task(LightningModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    def serve(self, host: str = "127.0.0.1", port: int = 8000) -> 'Composition':
-        from flash.core.serve.flash_components import FlashInputs, FlashOutputs
+    def run_serve_sanity_check(self):
+        if not _SERVE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
+        if not self.is_servable:
+            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 
-        class FlashServeModelComponent(ModelComponent):
+        from fastapi.testclient import TestClient
 
-            def __init__(self, model):
-                self.model = model
-                self.model.eval()
-                self.data_pipeline = self.model.build_data_pipeline()
-                self.worker_preprocessor = self.data_pipeline.worker_preprocessor(
-                    RunningStage.PREDICTING, is_serving=True
-                )
-                self.device_preprocessor = self.data_pipeline.device_preprocessor(RunningStage.PREDICTING)
-                self.postprocessor = self.data_pipeline.postprocessor(RunningStage.PREDICTING, is_serving=True)
-                # todo (tchaton) Remove this hack
-                self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
-                self.device = self.model.device
+        from flash.core.serve.flash_components import build_flash_serve_model_component
 
-            @expose(
-                inputs={"inputs": FlashInputs(self.data_pipeline.deserialize_processor())},
-                outputs={"outputs": FlashOutputs(self.data_pipeline.serialize_processor())},
-            )
-            def predict(self, inputs):
-                with torch.no_grad():
-                    inputs = self.worker_preprocessor(inputs)
-                    if self.extra_arguments:
-                        inputs = self.model.transfer_batch_to_device(inputs, self.device, 0)
-                    else:
-                        inputs = self.model.transfer_batch_to_device(inputs, self.device)
-                    inputs = self.device_preprocessor(inputs)
-                    preds = self.model.predict_step(inputs, 0)
-                    preds = self.postprocessor(preds)
-                    return preds
+        print("Running serve sanity check")
+        comp = build_flash_serve_model_component(self)
+        composition = Composition(predict=comp, TESTING=True, DEBUG=True)
+        app = composition.serve(host="0.0.0.0", port=8000)
 
-        comp = FlashServeModelComponent(self)
-        composition = Composition(predict=comp)
+        with TestClient(app) as tc:
+            input_str = self.data_pipeline._deserializer.example_input
+            body = {"session": "UUID", "payload": {"inputs": {"data": input_str}}}
+            resp = tc.post("http://0.0.0.0:8000/predict", json=body)
+            print(f"Sanity check response: {resp.json()}")
+
+    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
+        if not _SERVE_AVAILABLE:
+            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
+        if not self.is_servable:
+            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
+
+        from flash.core.serve.flash_components import build_flash_serve_model_component
+
+        if sanity_check:
+            self.run_serve_sanity_check()
+
+        comp = build_flash_serve_model_component(self)
+        composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

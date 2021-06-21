@@ -29,20 +29,16 @@ from torch.utils.data import DataLoader
 import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
+from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
     from flash.tabular import TabularClassifier
 else:
     TabularClassifier = None
 
-if _TEXT_AVAILABLE:
-    from flash.text import TextClassifier
-else:
-    TextClassifier = None
-
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
 else:
 
@@ -104,8 +100,8 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@mock.patch("flash._IS_TESTING", True)
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -168,7 +164,7 @@ def test_task_datapipeline_save(tmpdir):
         ImageClassifier,
         "image_classification_model.pt",
         marks=pytest.mark.skipif(
-            not _IMAGE_AVAILABLE,
+            not _IMAGE_TESTING,
             reason="image packages aren't installed",
         )
     ),
@@ -176,7 +172,7 @@ def test_task_datapipeline_save(tmpdir):
         TabularClassifier,
         "tabular_classification_model.pt",
         marks=pytest.mark.skipif(
-            not _TABULAR_AVAILABLE,
+            not _TABULAR_TESTING,
             reason="tabular packages aren't installed",
         )
     ),
@@ -188,7 +184,7 @@ def test_model_download(tmpdir, cls, filename):
         assert isinstance(task, cls)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_available_backbones():
     backbones = ImageClassifier.available_backbones()
     assert "resnet152" in backbones
@@ -232,11 +228,7 @@ def test_optimization(tmpdir):
     if _TEXT_AVAILABLE:
         from transformers.optimization import get_linear_schedule_with_warmup
 
-        assert task.available_schedulers() == [
-            'constant_schedule', 'constant_schedule_with_warmup', 'cosine_schedule_with_warmup',
-            'cosine_with_hard_restarts_schedule_with_warmup', 'linear_schedule_with_warmup',
-            'polynomial_decay_schedule_with_warmup'
-        ]
+        assert isinstance(task.available_schedulers(), list)
 
         optim = torch.optim.Adadelta(model.parameters())
         with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):

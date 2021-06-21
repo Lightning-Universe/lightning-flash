@@ -22,6 +22,7 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
+from tests.helpers.utils import _VIDEO_TESTING
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
@@ -123,7 +124,7 @@ def mock_encoded_video_dataset_folder(tmpdir):
             yield str(tmp_dir), video_duration
 
 
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune(tmpdir):
 
     with mock_encoded_video_dataset_file() as (
@@ -189,7 +190,7 @@ def test_video_classifier_finetune(tmpdir):
         trainer.finetune(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_video_classifier_finetune_fiftyone(tmpdir):
 
@@ -259,7 +260,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
         trainer.finetune(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_jit(tmpdir):
     sample_input = torch.rand(1, 3, 32, 256, 256)
     path = os.path.join(tmpdir, "test.pt")

@@ -27,6 +27,7 @@ if _TORCH_AVAILABLE:
     from flash.core.trainer import Trainer  # noqa: E402
 
     _PACKAGE_ROOT = os.path.dirname(__file__)
+    ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
     PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
     _IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
 

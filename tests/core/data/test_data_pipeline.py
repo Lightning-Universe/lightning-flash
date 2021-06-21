@@ -33,10 +33,13 @@ from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from tests.helpers.utils import _IMAGE_TESTING
 
-if _IMAGE_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
+
+if _PIL_AVAILABLE:
     from PIL import Image
 
 
@@ -764,7 +767,7 @@ def test_is_overriden_recursive(tmpdir):
         assert not DataPipeline._is_overriden_recursive("chocolate", preprocess, Preprocess)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
 

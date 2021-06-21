@@ -115,11 +115,11 @@ We get the following output:
 .. testcode::
     :hide:
 
-    assert all([prediction in [0, 1] for prediction in predictions])
+    assert all([prediction in ["positive", "negative"] for prediction in predictions])
 
 .. code-block::
 
-    [1, 1, 0]
+    ["negative", "negative", "positive"]
 
 -------
 

@@ -37,7 +37,14 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _IMAGE_AVAILABLE,
+    _MATPLOTLIB_AVAILABLE,
+    _PIL_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
+)
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
@@ -53,18 +60,18 @@ if _MATPLOTLIB_AVAILABLE:
 else:
     plt = None
 
-if _IMAGE_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     import torchvision
-    from PIL import Image
-    from PIL import Image as PILImage
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
+else:
+    IMG_EXTENSIONS = None
 
+if _PIL_AVAILABLE:
+    from PIL import Image
 else:
 
     class Image:
         Image = None
-
-    IMG_EXTENSIONS = None
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
@@ -215,19 +222,13 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         return sample
 
 
-class SemanticSegmentationDeserializer(Deserializer):
-
-    def __init__(self):
-
-        self.to_tensor = torchvision.transforms.ToTensor()
+class SemanticSegmentationDeserializer(ImageDeserializer):
 
     def deserialize(self, data: str) -> torch.Tensor:
-        encoded_with_padding = (data + "===").encode("ascii")
-        img = base64.b64decode(encoded_with_padding)
-        buffer = BytesIO(img)
-        img = PILImage.open(buffer, mode="r")
-        img = self.to_tensor(img)
-        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.METADATA: img.shape}
+        result = super().deserialize(data)
+        result[DefaultDataKeys.INPUT] = self.to_tensor(result[DefaultDataKeys.INPUT])
+        result[DefaultDataKeys.METADATA] = {"size": result[DefaultDataKeys.INPUT].shape}
+        return result
 
 
 class SemanticSegmentationPreprocess(Preprocess):

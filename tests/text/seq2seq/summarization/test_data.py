@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationData
+from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 
@@ -47,7 +47,7 @@ def json_data(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_csv("input", "target", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
@@ -57,7 +57,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_files(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_csv(
@@ -78,7 +78,7 @@ def test_from_files(tmpdir):
     assert "input_ids" in batch
 
 
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_postprocess_tokenizer(tmpdir):
     """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different backbone is
     used.
@@ -99,7 +99,7 @@ def test_postprocess_tokenizer(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = SummarizationData.from_json("input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)

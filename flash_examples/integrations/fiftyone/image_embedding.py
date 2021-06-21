@@ -29,7 +29,7 @@ dataset = fo.Dataset.from_dir(
 )
 
 # 3 Load model
-embedder = ImageEmbedder(backbone="swav-imagenet", embedding_dim=128)
+embedder = ImageEmbedder(backbone="resnet101", embedding_dim=128)
 
 # 4 Generate embeddings
 filepaths = dataset.values("filepath")
@@ -37,12 +37,9 @@ embeddings = np.stack(embedder.predict(filepaths))
 
 # 5 Visualize in FiftyOne App
 results = fob.compute_visualization(dataset, embeddings=embeddings)
-
 session = fo.launch_app(dataset)
-
 plot = results.visualize(labels="ground_truth.label")
 plot.show()
 
-# Only when running this in a script
-# Block until the FiftyOne App is closed
+# Optional: block execution until App is closed
 session.wait()

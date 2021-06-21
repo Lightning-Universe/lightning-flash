@@ -70,7 +70,6 @@ Lightning Flash
 
    integrations/fiftyone
 
-
 .. toctree::
    :maxdepth: 1
    :caption: Contributing a Task

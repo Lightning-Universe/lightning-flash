@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -568,6 +568,11 @@ class Deserializer(Properties):
 
     def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
         raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def example_input(self) -> str:
+        pass
 
     def __call__(self, sample: Any) -> Any:
         return self.deserialize(sample)

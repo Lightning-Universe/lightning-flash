@@ -5,10 +5,11 @@ from pathlib import Path
 import pytest
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
+from tests.helpers.utils import _IMAGE_TESTING
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
 
 if _FIFTYONE_AVAILABLE:
@@ -120,7 +121,7 @@ def _create_synth_fiftyone_dataset(tmpdir):
     return dataset
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="pycocotools is not installed for testing")
 def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
@@ -166,7 +167,7 @@ def test_image_detector_data_from_coco(tmpdir):
     assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_image_detector_data_from_fiftyone(tmpdir):
 

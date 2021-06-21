@@ -23,8 +23,6 @@ download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
 # 2. Load the model from a checkpoint
 model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
 
-model.serializer = Labels()
-
 # 2a. Classify a few sentences! How was the movie?
 predictions = model.predict([
     "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",

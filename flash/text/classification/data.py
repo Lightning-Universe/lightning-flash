@@ -33,11 +33,16 @@ if _TEXT_AVAILABLE:
 class TextDeserializer(Deserializer):
 
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+        super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
         self.max_length = max_length
 
     def deserialize(self, text: str) -> Tensor:
         return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
+
+    @property
+    def example_input(self) -> str:
+        return "An example input"
 
 
 class TextDataSource(DataSource):

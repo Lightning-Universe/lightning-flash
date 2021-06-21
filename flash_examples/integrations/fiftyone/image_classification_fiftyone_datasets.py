@@ -39,14 +39,14 @@ test_dataset = fo.Dataset.from_dir(
     dataset_type=fo.types.ImageClassificationDirectoryTree,
 )
 
-# 3 Load FiftyOne datasets
+# 3 Load data into Flash
 datamodule = ImageClassificationData.from_fiftyone(
     train_dataset=train_dataset,
     val_dataset=val_dataset,
     test_dataset=test_dataset,
 )
 
-# 4 Fine tune a model
+# 4 Fine tune model
 model = ImageClassifier(
     backbone="resnet18",
     num_classes=datamodule.num_classes,
@@ -66,28 +66,22 @@ trainer.save_checkpoint("image_classification_model.pt")
 
 # 5 Predict from checkpoint on data with ground truth
 model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
-model.serializer = FiftyOneLabels(return_filepath=False)
+model.serializer = FiftyOneLabels(return_filepath=False)  # output FiftyOne format
 datamodule = ImageClassificationData.from_fiftyone(predict_dataset=test_dataset)
 predictions = trainer.predict(model, datamodule=datamodule)
-
 predictions = list(chain.from_iterable(predictions))  # flatten batches
 
 # 6 Add predictions to dataset
 test_dataset.set_values("predictions", predictions)
 
-# 7 Visualize labels in the App
-session = fo.launch_app(test_dataset)
-
-# 8 Evaluate your model
-results = test_dataset.evaluate_classifications(
-    "predictions",
-    gt_field="ground_truth",
-    eval_key="eval",
-)
+# 7 Evaluate your model
+results = test_dataset.evaluate_classifications("predictions", gt_field="ground_truth", eval_key="eval")
 results.print_report()
 plot = results.plot_confusion_matrix()
 plot.show()
 
-# Only when running this in a script
-# Block until the FiftyOne App is closed
+# 8 Visualize results in the App
+session = fo.launch_app(test_dataset)
+
+# Optional: block execution until App is closed
 session.wait()
