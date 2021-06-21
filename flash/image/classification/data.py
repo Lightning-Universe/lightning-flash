@@ -134,9 +134,9 @@ class MatplotlibVisualization(BaseVisualization):
         for i, ax in enumerate(axs.ravel()):
             # unpack images and labels
             if isinstance(data, list):
-                _img, _label = data[i][DefaultDataKeys.INPUT], data[i][DefaultDataKeys.TARGET]
+                _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")
             elif isinstance(data, dict):
-                _img, _label = data[DefaultDataKeys.INPUT][i], data[DefaultDataKeys.TARGET][i]
+                _img, _label = data[DefaultDataKeys.INPUT][i], data.get(DefaultDataKeys.TARGET, [""] * (i + 1))[i]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy
