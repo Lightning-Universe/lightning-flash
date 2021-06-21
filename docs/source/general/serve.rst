@@ -110,7 +110,7 @@ which implements a ``serialize`` and ``deserialize`` function.
 
 .. note:: Grid Serve has already several :class:`~flash.core.serve.types.base.BaseType` built-in such as :class:`~flash.core.serve.types.image.Image` or :class:`~flash.core.serve.types.text.Text`.
 
-.. code-bloc image_classification
+.. code-block::
 
 
     class ClassificationInference(ModelComponent):
@@ -152,7 +152,6 @@ The :class:`~flash.core.serve.GridModel` takes as argument the path to the Torch
 The ``ClassificationInference`` instance will be passed as argument to a :class:`~flash.core.serve.Composition` class.
 
 Once the :class:`~flash.core.serve.Composition` class is instantiated, just call its :func:`~flash.core.serve.Composition.serve` method.
-
 
 .. code-block::
 
@@ -207,3 +206,6 @@ Run this script from another terminal:
     resp = requests.post("http://127.0.0.1:8000/predict", json=body)
     print(resp.json())
     # {'session': 'UUID', 'result': {'prediction': 'goldfish, Carassius auratus'}}
+
+
+Credits to @rlizzo, @hhsecond, @lantiga, @luiscape for building Flash Serve Engine.
