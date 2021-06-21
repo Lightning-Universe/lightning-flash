@@ -90,4 +90,3 @@ def test_serve():
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[text]'")):
         SummarizationTask.load_from_checkpoint("not_a_real_checkpoint.pt")
-
