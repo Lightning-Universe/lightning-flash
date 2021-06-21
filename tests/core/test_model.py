@@ -29,7 +29,7 @@ from torch.utils.data import DataLoader
 import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
 
@@ -38,7 +38,7 @@ if _TABULAR_AVAILABLE:
 else:
     TabularClassifier = None
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
 else:
 
