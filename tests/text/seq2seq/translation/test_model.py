@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 import re
+from unittest import mock
 
 import pytest
 import torch
