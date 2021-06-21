@@ -21,10 +21,10 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image.style_transfer import STYLE_TRANSFER_BACKBONES
 
-if _IMAGE_STLYE_TRANSFER:
+if _IMAGE_AVAILABLE:
     import pystiche.demo
     from pystiche import enc, loss, ops
     from pystiche.image import read_image
@@ -76,6 +76,8 @@ class StyleTransfer(Task):
 
     backbones: FlashRegistry = STYLE_TRANSFER_BACKBONES
 
+    required_extras: str = "image"
+
     def __init__(
         self,
         style_image: Optional[Union[str, torch.Tensor]] = None,
@@ -92,10 +94,6 @@ class StyleTransfer(Task):
         learning_rate: float = 1e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
-
-        if not _IMAGE_STLYE_TRANSFER:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image_style_transfer]'")
-
         self.save_hyperparameters(ignore="style_image")
 
         if style_image is None:

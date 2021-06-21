@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+import re
 from unittest import mock
 
 import pandas as pd
@@ -111,3 +111,9 @@ def test_serve():
     model._preprocess = datamodule.preprocess
     model.eval()
     model.serve()
+
+
+@pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[tabular]'")):
+        TabularClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

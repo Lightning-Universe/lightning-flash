@@ -40,10 +40,6 @@ jobs:
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'image_style_transfer'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
             topic: 'serve'
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
