@@ -24,6 +24,7 @@ from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
     import datasets
@@ -264,6 +265,7 @@ class Seq2SeqPreprocess(Preprocess):
                 ),
             },
             default_data_source="sentences",
+            deserializer=TextDeserializer(backbone, max_source_length)
         )
 
         self.set_state(Seq2SeqBackboneState(self.backbone))
