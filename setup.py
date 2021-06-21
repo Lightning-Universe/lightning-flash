@@ -54,7 +54,7 @@ extras = {
 }
 
 # remove possible duplicate.
-extras["vision"] = list(set(extras["image"] + extras["video"] + extras["image_style_transfer"]))
+extras["vision"] = list(set(extras["image"] + extras["video"]))
 extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
 extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
 

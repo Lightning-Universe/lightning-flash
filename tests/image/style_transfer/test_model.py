@@ -23,7 +23,7 @@ def test_style_transfer_task():
 
 @pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
 def test_style_transfer_task_import():
-    with pytest.raises(ModuleNotFoundError, match="[image_style_transfer]"):
+    with pytest.raises(ModuleNotFoundError, match="[image]"):
         StyleTransfer()
 
 
@@ -46,5 +46,5 @@ def test_jit(tmpdir):
 
 @pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image_style_transfer]'")):
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         StyleTransfer.load_from_checkpoint("not_a_real_checkpoint.pt")
