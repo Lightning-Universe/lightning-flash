@@ -138,7 +138,7 @@ class MatplotlibVisualization(BaseVisualization):
             if isinstance(data, list):
                 _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")
             elif isinstance(data, dict):
-                _img, _label = data[DefaultDataKeys.INPUT][i], data.get(DefaultDataKeys.TARGET, [""]*(i+1))[i]
+                _img, _label = data[DefaultDataKeys.INPUT][i], data.get(DefaultDataKeys.TARGET, [""] * (i + 1))[i]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy
