@@ -143,10 +143,12 @@ class Task(LightningModule):
         self.serializer = serializer
 
     def __new__(cls):
-        result = super().__new__(cls)
-        if result.required_extras is not None:
-            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+        if cls.required_extras is not None:
+            result = _requires_extras(cls.required_extras)(super().__new__)(cls)
             result.load_from_checkpoint = _requires_extras(result.required_extras)(result.load_from_checkpoint)
+        else:
+            result = super().__new__(cls)
+
         result.run_serve_sanity_check = _requires_extras("serve")(result.run_serve_sanity_check)
         result.serve = _requires_extras("serve")(result.serve)
         return result
