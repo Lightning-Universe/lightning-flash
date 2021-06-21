@@ -19,13 +19,7 @@ import pytest
 
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
-from tests.helpers.utils import (
-    _IMAGE_STLYE_TRANSFER_TESTING,
-    _IMAGE_TESTING,
-    _TABULAR_TESTING,
-    _TEXT_TESTING,
-    _VIDEO_TESTING,
-)
+from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 
 root = Path(__file__).parent.parent.parent
 
@@ -75,7 +69,7 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "finetuning",
             "style_transfer.py",
-            marks=pytest.mark.skipif(not _IMAGE_STLYE_TRANSFER_TESTING, reason="pystiche is not installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="pystiche is not installed")
         ),
         pytest.param(
             "predict",
