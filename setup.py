@@ -49,9 +49,6 @@ extras = {
     "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_text.txt"),
     "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_tabular.txt"),
     "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image.txt"),
-    "image_style_transfer": setup_tools._load_requirements(
-        path_dir=_PATH_REQUIRE, file_name="datatype_image_style_transfer.txt"
-    ),
     "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
     "serve": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="serve.txt"),
 }
