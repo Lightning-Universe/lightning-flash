@@ -23,6 +23,7 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
+from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.utils import _VIDEO_TESTING
 
 if _FIFTYONE_AVAILABLE:
@@ -34,8 +35,6 @@ if _VIDEO_AVAILABLE:
     from pytorchvideo.data.utils import thwc_to_cthw
     from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
     from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
-
-    from flash.video import VideoClassificationData, VideoClassifier
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
