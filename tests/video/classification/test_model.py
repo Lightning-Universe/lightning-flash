@@ -277,3 +277,9 @@ def test_jit(tmpdir):
     out = model(sample_input)
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2])
+
+
+@pytest.mark.skipif(_VIDEO_AVAILABLE, reason="video libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match="lightning-flash[video]"):
+        VideoClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

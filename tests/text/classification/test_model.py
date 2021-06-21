@@ -18,6 +18,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
 from flash.text.classification.data import TextClassificationPostprocess, TextClassificationPreprocess
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
@@ -79,3 +80,9 @@ def test_serve():
     model._postprocess = TextClassificationPostprocess()
     model.eval()
     model.serve()
+
+
+@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match="lightning-flash[text]"):
+        TextClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

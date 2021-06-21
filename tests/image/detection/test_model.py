@@ -19,6 +19,7 @@ from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
 
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -97,3 +98,9 @@ def test_jit(tmpdir):
     out = out[1]
 
     assert {"boxes", "labels", "scores"} <= out[0].keys()
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match="lightning-flash[image]"):
+        ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")

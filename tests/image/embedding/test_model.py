@@ -16,6 +16,7 @@ import os
 import pytest
 import torch
 
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ImageEmbedder
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -36,3 +37,9 @@ def test_jit(tmpdir, jitter, args):
     out = model(torch.rand(1, 3, 32, 32))
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 128])
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match="lightning-flash[image]"):
+        ImageEmbedder.load_from_checkpoint("not_a_real_checkpoint.pt")

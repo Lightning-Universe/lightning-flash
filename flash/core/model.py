@@ -43,7 +43,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _SERVE_AVAILABLE
+from flash.core.utilities.imports import _requires_extras
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -84,7 +84,19 @@ def predict_context(func: Callable) -> Callable:
     return wrapper
 
 
-class Task(LightningModule):
+class CheckDependenciesMeta(type):
+
+    def __new__(mcs, *args, **kwargs):
+        result = type.__new__(mcs, *args, **kwargs)
+        if result.required_extras is not None:
+            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+            result.load_from_checkpoint = _requires_extras(result.required_extras)(result.load_from_checkpoint)
+        result.run_serve_sanity_check = _requires_extras("serve")(result.run_serve_sanity_check)
+        result.serve = _requires_extras("serve")(result.serve)
+        return result
+
+
+class Task(LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
@@ -98,6 +110,8 @@ class Task(LightningModule):
     """
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+
+    required_extras: Optional[str] = None
 
     def __init__(
         self,
@@ -600,8 +614,6 @@ class Task(LightningModule):
             return [BenchmarkConvergenceCI()]
 
     def run_serve_sanity_check(self):
-        if not _SERVE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 
@@ -621,8 +633,6 @@ class Task(LightningModule):
             print(f"Sanity check response: {resp.json()}")
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
-        if not _SERVE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 

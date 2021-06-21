@@ -22,6 +22,7 @@ import torch
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationPreprocess
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
@@ -147,3 +148,9 @@ def test_serve():
     model._preprocess = SemanticSegmentationPreprocess()
     model.eval()
     model.serve()
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match="lightning-flash[image]"):
+        SemanticSegmentation.load_from_checkpoint("not_a_real_checkpoint.pt")

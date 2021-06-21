@@ -111,3 +111,9 @@ def test_serve():
     model._preprocess = datamodule.preprocess
     model.eval()
     model.serve()
+
+
+@pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match="lightning-flash[tabular]"):
+        TabularClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

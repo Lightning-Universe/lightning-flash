@@ -17,6 +17,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationTask
 from tests.helpers.utils import _TEXT_TESTING
 
@@ -68,3 +69,9 @@ def test_jit(tmpdir):
 
     out = model(sample_input)
     assert isinstance(out, torch.Tensor)
+
+
+@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match="lightning-flash[text]"):
+        SummarizationTask.load_from_checkpoint("not_a_real_checkpoint.pt")

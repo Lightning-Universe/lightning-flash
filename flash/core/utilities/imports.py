@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """General utilities"""
+import functools
 import importlib
 import operator
 from importlib.util import find_spec
@@ -87,7 +88,7 @@ if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
     _PYSTICHE_GREATER_EQUAL_0_7_2 = _compare_version("pystiche", operator.ge, "0.7.2")
 
-_IMAGE_STLYE_TRANSFER = _PYSTICHE_AVAILABLE
+_IMAGE_STYLE_TRANSFER_AVAILABLE = _PYSTICHE_AVAILABLE
 _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
@@ -101,3 +102,29 @@ _IMAGE_AVAILABLE = all([
     _FIFTYONE_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
+
+_EXTRAS_AVAILABLE = {
+    'image': _IMAGE_AVAILABLE,
+    'image_style_transfer': _IMAGE_STYLE_TRANSFER_AVAILABLE,
+    'tabular': _TABULAR_AVAILABLE,
+    'text': _TEXT_AVAILABLE,
+    'video': _VIDEO_AVAILABLE,
+    'serve': _SERVE_AVAILABLE,
+}
+
+
+def _requires_extras(extras: str):
+
+    def decorator(func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if not _EXTRAS_AVAILABLE[extras]:
+                raise ModuleNotFoundError(
+                    f"Required dependencies not available. Please run: pip install 'lightning-flash[{extras}]'"
+                )
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
