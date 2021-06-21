@@ -11,12 +11,11 @@ pip install lightning-flash
 Optionally, you can install Flash with extra packages for each domain or all domains.
 ```bash
 pip install 'lightning-flash[image]'
-pip install 'lightning-flash[image_style_transfer]'
 pip install 'lightning-flash[tabular]'
 pip install 'lightnign-flash[text]'
 pip install 'lightning-flash[video]'
 
-# image + image_style_transfer + video
+# image + video
 pip install 'lightning-flash[vision]'
 
 # all features

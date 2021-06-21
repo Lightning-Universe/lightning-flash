@@ -14,7 +14,7 @@ from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 if _SKLEARN_AVAILABLE:
     from sklearn import datasets
 else:
-    raise ModuleNotFoundError("Please, pip install scikit-learn")
+    raise ModuleNotFoundError("Please pip install scikit-learn")
 
 seed_everything(42)
 

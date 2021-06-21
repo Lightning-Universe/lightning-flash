@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import base64
 import os
-from io import BytesIO
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -42,6 +40,7 @@ from flash.core.utilities.imports import (
     _IMAGE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
+    _requires_extras,
     _TORCHVISION_AVAILABLE,
 )
 from flash.image.data import ImageDeserializer
@@ -94,9 +93,8 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
 
+    @_requires_extras("image")
     def __init__(self):
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
         super().__init__(IMG_EXTENSIONS)
 
     def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
@@ -176,10 +174,8 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
 class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 
+    @_requires_extras("image")
     def __init__(self, label_field: str = "ground_truth"):
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[image]'")
-
         super().__init__(label_field=label_field)
         self._fo_dataset_name = None
 
@@ -233,6 +229,7 @@ class SemanticSegmentationDeserializer(ImageDeserializer):
 
 class SemanticSegmentationPreprocess(Preprocess):
 
+    @_requires_extras("image")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -255,8 +252,6 @@ class SemanticSegmentationPreprocess(Preprocess):
             image_size: A tuple with the expected output image size.
             **data_source_kwargs: Additional arguments passed on to the data source constructors.
         """
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
         self.image_size = image_size
         self.num_classes = num_classes
         if num_classes:
@@ -472,6 +467,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
     @staticmethod
+    @_requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):
@@ -482,13 +478,11 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
+    @_requires_extras("image")
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
-
-        if not _MATPLOTLIB_AVAILABLE:
-            raise MisconfigurationException("You need matplotlib to visualise. Please, pip install matplotlib")
 
         # create figure and set title
         fig, axs = plt.subplots(rows, cols)
