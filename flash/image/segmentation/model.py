@@ -74,6 +74,8 @@ class SemanticSegmentation(ClassificationTask):
 
     heads: FlashRegistry = SEMANTIC_SEGMENTATION_HEADS
 
+    required_extras: str = "image"
+
     def __init__(
         self,
         num_classes: int,
@@ -90,10 +92,6 @@ class SemanticSegmentation(ClassificationTask):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         postprocess: Optional[Postprocess] = None,
     ) -> None:
-
-        if isinstance(backbone, str) and (not _TORCHVISION_AVAILABLE or not _TIMM_AVAILABLE):
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
-
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
 

@@ -17,8 +17,8 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 from tests.examples.utils import run_test
+from tests.helpers.utils import _IMAGE_TESTING
 
 root = Path(__file__).parent.parent.parent
 
@@ -29,7 +29,7 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "fiftyone",
             "image_classification.py",
-            marks=pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone library isn't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="fiftyone library isn't installed")
         ),
     ]
 )

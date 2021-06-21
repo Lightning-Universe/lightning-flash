@@ -48,6 +48,8 @@ class ImageEmbedder(Task):
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
 
+    required_extras: str = "image"
+
     def __init__(
         self,
         embedding_dim: Optional[int] = None,
@@ -59,9 +61,6 @@ class ImageEmbedder(Task):
         learning_rate: float = 1e-3,
         pooling_fn: Callable = torch.max
     ):
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
-
         super().__init__(
             model=None,
             loss_fn=loss_fn,

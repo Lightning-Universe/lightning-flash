@@ -15,7 +15,6 @@ import os
 
 from flash.core.utilities.imports import (
     _IMAGE_AVAILABLE,
-    _IMAGE_STLYE_TRANSFER,
     _SERVE_AVAILABLE,
     _TABULAR_AVAILABLE,
     _TEXT_AVAILABLE,
@@ -26,7 +25,6 @@ _IMAGE_TESTING = _IMAGE_AVAILABLE
 _VIDEO_TESTING = _VIDEO_AVAILABLE
 _TABULAR_TESTING = _TABULAR_AVAILABLE
 _TEXT_TESTING = _TEXT_AVAILABLE
-_IMAGE_STLYE_TRANSFER_TESTING = _IMAGE_STLYE_TRANSFER
 _SERVE_TESTING = _SERVE_AVAILABLE
 
 if "FLASH_TEST_TOPIC" in os.environ:
@@ -35,5 +33,4 @@ if "FLASH_TEST_TOPIC" in os.environ:
     _VIDEO_TESTING = topic == "video"
     _TABULAR_TESTING = topic == "tabular"
     _TEXT_TESTING = topic == "text"
-    _IMAGE_STLYE_TRANSFER_TESTING = topic == "image_style_transfer"
     _SERVE_TESTING = topic == "serve"

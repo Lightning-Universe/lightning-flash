@@ -56,6 +56,8 @@ class Seq2SeqTask(Task):
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
     """
 
+    required_extras: str = "text"
+
     def __init__(
         self,
         backbone: str = 't5-small',
@@ -66,9 +68,6 @@ class Seq2SeqTask(Task):
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
     ):
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
-
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
