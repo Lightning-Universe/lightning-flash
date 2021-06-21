@@ -84,19 +84,7 @@ def predict_context(func: Callable) -> Callable:
     return wrapper
 
 
-class CheckDependenciesMeta(type):
-
-    def __new__(mcs, *args, **kwargs):
-        result = type.__new__(mcs, *args, **kwargs)
-        if result.required_extras is not None:
-            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
-            result.load_from_checkpoint = _requires_extras(result.required_extras)(result.load_from_checkpoint)
-        result.run_serve_sanity_check = _requires_extras("serve")(result.run_serve_sanity_check)
-        result.serve = _requires_extras("serve")(result.serve)
-        return result
-
-
-class Task(LightningModule, metaclass=CheckDependenciesMeta):
+class Task(LightningModule):
     """A general Task.
 
     Args:
@@ -153,6 +141,15 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
+
+    def __new__(cls):
+        result = super().__new__(cls)
+        if result.required_extras is not None:
+            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+            result.load_from_checkpoint = _requires_extras(result.required_extras)(result.load_from_checkpoint)
+        result.run_serve_sanity_check = _requires_extras("serve")(result.run_serve_sanity_check)
+        result.serve = _requires_extras("serve")(result.serve)
+        return result
 
     def step(self, batch: Any, batch_idx: int) -> Any:
         """
