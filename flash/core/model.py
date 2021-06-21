@@ -91,9 +91,11 @@ class CheckDependenciesMeta(ABCMeta):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
             result.__init__ = _requires_extras(result.required_extras)(result.__init__)
-            result.load_from_checkpoint = classmethod(
-                _requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
-            )
+            load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
+            if load_from_checkpoint is not None:
+                result.load_from_checkpoint = classmethod(
+                    _requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
+                )
         return result
 
 
