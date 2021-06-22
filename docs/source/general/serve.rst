@@ -1,10 +1,10 @@
-#####
-Serve
-#####
+###########
+Flash Serve
+###########
 
 .. _serve:
 
-Serve is a library to easily serve models in production.
+Flash Serve is a library to easily serve models in production.
 
 ***********
 Terminology
@@ -26,8 +26,8 @@ Here are common terms you need to be familiar with:
      - Transform the predictions tensors back to a text encoding.
    * - :class:`~flash.core.serve.ModelComponent`
      - The :class:`~flash.core.serve.ModelComponent` contains the de-serialization, inference and serialization functions.
-   * - :class:`~flash.core.serve.GridModel`
-     - The :class:`~flash.core.serve.GridModel` is an helper track the asset file related to a model
+   * - :class:`~flash.core.serve.Servable`
+     - The :class:`~flash.core.serve.Servable` is an helper track the asset file related to a model
    * - :class:`~flash.core.serve.Composition`
      - The :class:`~flash.core.serve.Composition` defines the computations / endpoints to create & run
    * - :func:`~flash.core.serve.decorators.expose`
@@ -39,9 +39,9 @@ Here are common terms you need to be familiar with:
 Example
 *******
 
-In this tutorial, we will serve a Convolutional Neural Network called Resnet18  from the `PyTorchVision library <https://github.com/pytorch/vision>`_ in 3 steps.
+In this tutorial, we will serve a Resnet18  from the `PyTorchVision library <https://github.com/pytorch/vision>`_ in 3 steps.
 
-The entire tutorial can be found under ``grid-sdk/examples/serve/image_classification``.
+The entire tutorial can be found under ``flash_examples/serve/generic``.
 
 Introduction
 ============
@@ -53,7 +53,7 @@ Traditionally, an inference pipeline is made out of 3 steps:
 * ``inference function``: A function taking the decoded tensors and forward them through the model to produce predictions.
 * ``serialization``: Transform the predictions tensors back as text.
 
-In this example, we will implement only the inference function as Grid Serve already provides some built-in ``de-serialization`` and ``serialization`` functions with :class:`~flash.core.serve.types.image.Image`
+In this example, we will implement only the inference function as Flash Serve already provides some built-in ``de-serialization`` and ``serialization`` functions with :class:`~flash.core.serve.types.image.Image`
 
 
 Step 1 - Create a ModelComponent
@@ -69,7 +69,7 @@ First, we need make the following imports:
     import torch
     import torchvision
 
-    from flash.core.serve import Composition, GridModel, ModelComponent, expose
+    from flash.core.serve import Composition, Servable, ModelComponent, expose
     from flash.core.serve.types import Image, Label
 
 
@@ -98,7 +98,7 @@ Our classify function will take a tensor image, apply some normalization on it, 
 
 The :func:`~flash.core.serve.decorators.expose` is a python decorator extending the decorated function with the ``de-serialization``, ``serialization`` steps.
 
-.. note:: Grid Serve was designed this way to enable several models to be chained together by removing the decorator.
+.. note:: Flash Serve was designed this way to enable several models to be chained together by removing the decorator.
 
 The :func:`~flash.core.serve.decorators.expose` function takes 2 arguments:
 
@@ -108,13 +108,13 @@ The :func:`~flash.core.serve.decorators.expose` function takes 2 arguments:
 A :class:`~flash.core.serve.types.base.BaseType` is a python `dataclass <https://docs.python.org/3/library/dataclasses.html>`_
 which implements a ``serialize`` and ``deserialize`` function.
 
-.. note:: Grid Serve has already several :class:`~flash.core.serve.types.base.BaseType` built-in such as :class:`~flash.core.serve.types.image.Image` or :class:`~flash.core.serve.types.text.Text`.
+.. note:: Flash Serve has already several :class:`~flash.core.serve.types.base.BaseType` built-in such as :class:`~flash.core.serve.types.image.Image` or :class:`~flash.core.serve.types.text.Text`.
 
 .. code-block::
 
 
     class ClassificationInference(ModelComponent):
-        def __init__(self, model: GridModel):
+        def __init__(self, model: Servable):
             self.model = model
 
         @expose(
@@ -147,7 +147,7 @@ Using the `PyTorchVision library <https://github.com/pytorch/vision>`_, we creat
 Step 3 - Serve the model
 ========================
 
-The :class:`~flash.core.serve.GridModel` takes as argument the path to the TorchScripted model and then will be passed to our ``ClassificationInference`` class.
+The :class:`~flash.core.serve.Servable` takes as argument the path to the TorchScripted model and then will be passed to our ``ClassificationInference`` class.
 
 The ``ClassificationInference`` instance will be passed as argument to a :class:`~flash.core.serve.Composition` class.
 
@@ -155,7 +155,7 @@ Once the :class:`~flash.core.serve.Composition` class is instantiated, just call
 
 .. code-block::
 
-    resnet = GridModel("resnet.pt")
+    resnet = Servable("resnet.pt")
     comp = ClassificationInference(resnet)
     composition = Composition(classification=comp)
     composition.serve()

@@ -89,15 +89,15 @@ class Composition(ServerMixin):
         self._uid_comps = {v.uid: v for v in kwarg_comps.values()}
         self._uid_names_map = {v.uid: k for k, v in kwarg_comps.items()}
 
-        self._connections = list(concat([c._gridserve_meta_.connections for c in kwarg_comps.values()]))
+        self._connections = list(concat([c._flashserve_meta_.connections for c in kwarg_comps.values()]))
 
         if len(self._name_endpoints) == 0:
             comp = first(self.components.values())  # one element iterable
-            ep_route = f"/{comp._gridserve_meta_.exposed.__name__}"
+            ep_route = f"/{comp._flashserve_meta_.exposed.__name__}"
             ep_inputs = {k: f"{comp.uid}.inputs.{k}" for k in asdict(comp.inputs).keys()}
             ep_outputs = {k: f"{comp.uid}.outputs.{k}" for k in asdict(comp.outputs).keys()}
             ep = Endpoint(route=ep_route, inputs=ep_inputs, outputs=ep_outputs)
-            self._name_endpoints[f"{comp._gridserve_meta_.exposed.__name__}_ENDPOINT"] = ep
+            self._name_endpoints[f"{comp._flashserve_meta_.exposed.__name__}_ENDPOINT"] = ep
 
         self._name_ep_protos = {}
         for ep_key, ep in self._name_endpoints.items():

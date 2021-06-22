@@ -128,12 +128,12 @@ def setup_http_app(composition: 'Composition', debug: bool) -> 'FastAPI':
     app = FastAPI(
         debug=debug,
         version=__version__,
-        title="GridServe",
+        title="FlashServe",
     )
     # Endpoint Route
-    #   `/gridserve/alive`
+    #   `/flashserve/alive`
     app.get(
-        "/gridserve/alive",
+        "/flashserve/alive",
         name="alive",
         description="If you can reach this endpoint, the server is runnning.",
         response_model=Alive,
@@ -148,18 +148,18 @@ def setup_http_app(composition: 'Composition', debug: bool) -> 'FastAPI':
     templates = Jinja2Templates(directory=str(pth.absolute()))
 
     # Endpoint Route
-    #   `/gridserve/component_dags`
+    #   `/flashserve/component_dags`
     app.get(
-        "/gridserve/component_dags",
+        "/flashserve/component_dags",
         name="component_dags",
         summary="HTML Rendering of Component DAGs",
         response_class=HTMLResponse,
     )(_build_visualization(dsk_composition=_no_optimization_dsk, templates=templates, no_optimization=True))
 
     # Endpoint Route
-    #   `/gridserve/dag_json`
+    #   `/flashserve/dag_json`
     app.get(
-        "/gridserve/dag_json",
+        "/flashserve/dag_json",
         name="components JSON DAG",
         summary="JSON representation of component DAG",
         response_model=ComponentJSON,
