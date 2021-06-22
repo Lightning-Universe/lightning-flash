@@ -14,7 +14,7 @@
 from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
-from pytorch_lightning.utilities.distributed import rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy
