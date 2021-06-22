@@ -72,7 +72,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 class Trainer(PlTrainer):
 
     @_defaults_from_env_vars
-    def __init__(self, *args, serve_sanity_check: bool = True, **kwargs):
+    def __init__(self, *args, serve_sanity_check: bool = False, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
                 kwargs["gpus"] = 1
