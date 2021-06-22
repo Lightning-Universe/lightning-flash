@@ -35,6 +35,7 @@ class TextDeserializer(Deserializer):
     @_requires_extras("text")
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
         super().__init__()
+        self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
         self.max_length = max_length
 
@@ -44,6 +45,15 @@ class TextDeserializer(Deserializer):
     @property
     def example_input(self) -> str:
         return "An example input"
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextDataSource(DataSource):

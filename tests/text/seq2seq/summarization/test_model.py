@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 import re
+from unittest import mock
 
 import pytest
 import torch
@@ -20,7 +21,9 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationTask
-from tests.helpers.utils import _TEXT_TESTING
+from flash.text.seq2seq.core.data import Seq2SeqPostprocess
+from flash.text.seq2seq.summarization.data import SummarizationPreprocess
+from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -70,6 +73,17 @@ def test_jit(tmpdir):
 
     out = model(sample_input)
     assert isinstance(out, torch.Tensor)
+
+
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@mock.patch("flash._IS_TESTING", True)
+def test_serve():
+    model = SummarizationTask(TEST_BACKBONE)
+    # TODO: Currently only servable once a preprocess and postprocess have been attached
+    model._preprocess = SummarizationPreprocess(backbone=TEST_BACKBONE)
+    model._postprocess = Seq2SeqPostprocess()
+    model.eval()
+    model.serve()
 
 
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
