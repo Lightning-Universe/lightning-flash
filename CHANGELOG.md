@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] - YYYY-MM-DD
+
+### Added
+
+
+### Changed
+
+
+### Deprecated
+
+
+### Fixed
+
+
 ## [0.4.0] - 2021-06-22
 
 ### Added
@@ -18,9 +32,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Split `backbone` argument to `SemanticSegmentation` into `backbone` and `head` arguments ([#412](https://github.com/PyTorchLightning/lightning-flash/pull/412))
-
-### Deprecated
-
 
 ### Fixed
 
