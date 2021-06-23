@@ -17,7 +17,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fixed a bug where segmentation backbones would fail in older version of torchvision ([#454](https://github.com/PyTorchLightning/lightning-flash/pull/454))
 
 ## [0.4.0] - 2021-06-22
 
