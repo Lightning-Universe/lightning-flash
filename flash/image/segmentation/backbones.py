@@ -18,14 +18,9 @@ from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.backbones import catch_url_error
 
 if _TORCHVISION_AVAILABLE:
-    from torchvision.models import resnet
+    from torchvision.models import mobilenetv3, resnet
 
-    try:
-        from torchvision.models import mobilenetv3
-        MOBILENET_MODELS = ["mobilenet_v3_large"]
-    except ImportError:
-        MOBILENET_MODELS = []
-
+MOBILENET_MODELS = ["mobilenet_v3_large"]
 RESNET_MODELS = ["resnet50", "resnet101"]
 
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
