@@ -27,6 +27,10 @@ jobs:
             topic: 'image'
           - os: ubuntu-20.04
             python-version: 3.8
+            requires: 'minimal'
+            topic: 'image'
+          - os: ubuntu-20.04
+            python-version: 3.8
             requires: 'latest'
             topic: 'video'
           - os: ubuntu-20.04
