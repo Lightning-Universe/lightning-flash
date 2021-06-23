@@ -36,9 +36,6 @@ if _BOLTS_AVAILABLE:
     else:
         from pl_bolts.models.vision import UNet
 
-RESNET_MODELS = ["resnet50", "resnet101"]
-MOBILENET_MODELS = ["mobilenet_v3_large"]
-
 SEMANTIC_SEGMENTATION_HEADS = FlashRegistry("backbones")
 
 if _TORCHVISION_AVAILABLE:
