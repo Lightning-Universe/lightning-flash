@@ -23,11 +23,16 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
-    from torchvision.models import MobileNetV3, ResNet
+    from torchvision.models import ResNet
     from torchvision.models._utils import IntermediateLayerGetter
     from torchvision.models.segmentation.deeplabv3 import DeepLabHead, DeepLabV3
     from torchvision.models.segmentation.fcn import FCN, FCNHead
     from torchvision.models.segmentation.lraspp import LRASPP
+
+    try:
+        from torchvision.models import MobileNetV3
+    except ImportError:
+        MobileNetV3 = None
 
 if _BOLTS_AVAILABLE:
     if os.getenv("WARN_MISSING_PACKAGE") == "0":
@@ -35,9 +40,6 @@ if _BOLTS_AVAILABLE:
             from pl_bolts.models.vision import UNet
     else:
         from pl_bolts.models.vision import UNet
-
-RESNET_MODELS = ["resnet50", "resnet101"]
-MOBILENET_MODELS = ["mobilenet_v3_large"]
 
 SEMANTIC_SEGMENTATION_HEADS = FlashRegistry("backbones")
 
