@@ -43,7 +43,7 @@ print(f"Heads: {SemanticSegmentation.available_heads()}")
 
 # 3.b Build the model
 model = SemanticSegmentation(
-    backbone="mobilenet_v3_large",
+    backbone="resnet50",
     head="fcn",
     num_classes=datamodule.num_classes,
     serializer=SegmentationLabels(visualize=False),
