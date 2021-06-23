@@ -27,12 +27,16 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.models._utils import IntermediateLayerGetter
     from torchvision.models.segmentation.deeplabv3 import DeepLabHead, DeepLabV3
     from torchvision.models.segmentation.fcn import FCN, FCNHead
-    from torchvision.models.segmentation.lraspp import LRASPP
 
     try:
         from torchvision.models import MobileNetV3
     except ImportError:
         MobileNetV3 = None
+
+    try:
+        from torchvision.models.segmentation.lraspp import LRASPP
+    except ImportError:
+        LRASPP = None
 
 if _BOLTS_AVAILABLE:
     if os.getenv("WARN_MISSING_PACKAGE") == "0":
@@ -100,12 +104,13 @@ if _TORCHVISION_AVAILABLE:
         backbone = IntermediateLayerGetter(backbone, return_layers={low_pos: 'low', high_pos: 'high'})
         return LRASPP(backbone, low_channels, high_channels, num_classes)
 
-    SEMANTIC_SEGMENTATION_HEADS(
-        fn=_load_lraspp,
-        name="lraspp",
-        namespace="image/segmentation",
-        package="torchvision",
-    )
+    if LRASPP is not None:
+        SEMANTIC_SEGMENTATION_HEADS(
+            fn=_load_lraspp,
+            name="lraspp",
+            namespace="image/segmentation",
+            package="torchvision",
+        )
 
 if _BOLTS_AVAILABLE:
 
