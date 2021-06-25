@@ -446,7 +446,6 @@ class DefaultPreprocess(Preprocess):
         data_sources: Optional[Dict[str, 'DataSource']] = None,
         default_data_source: Optional[str] = None,
     ):
-        from flash.core.data.data_source import DataSource
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
