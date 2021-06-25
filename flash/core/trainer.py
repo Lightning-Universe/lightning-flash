@@ -41,7 +41,7 @@ def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
 
     # we only want to pass in valid PLTrainer args, the rest may be user specific
     valid_kwargs = inspect.signature(PlTrainer.__init__).parameters
-    trainer_kwargs = dict((name, params[name]) for name in valid_kwargs if name in params)
+    trainer_kwargs = {name: params[name] for name in valid_kwargs if name in params}
     trainer_kwargs.update(**kwargs)
 
     return cls(**trainer_kwargs)
@@ -195,8 +195,8 @@ class Trainer(PlTrainer):
         """
         if len(new_callbacks) == 0:
             return old_callbacks
-        new_callbacks_types = set(type(c) for c in new_callbacks)
-        old_callbacks_types = set(type(c) for c in old_callbacks)
+        new_callbacks_types = {type(c) for c in new_callbacks}
+        old_callbacks_types = {type(c) for c in old_callbacks}
         override_types = new_callbacks_types.intersection(old_callbacks_types)
         new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
         return new_callbacks
