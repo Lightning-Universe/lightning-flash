@@ -42,14 +42,14 @@ def test_get_callable_name():
 
 def test_get_callable_dict():
     d = get_callable_dict(A())
-    assert type(d["a"]) == A
+    assert type(d["a"]) is A
 
     d = get_callable_dict([A(), b])
-    assert type(d["a"]) == A
+    assert type(d["a"]) is A
     assert d["b"] == b
 
     d = get_callable_dict({"one": A(), "two": b, "three": c})
-    assert type(d["one"]) == A
+    assert type(d["one"]) is A
     assert d["two"] == b
     assert d["three"] == c
 
