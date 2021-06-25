@@ -50,9 +50,13 @@ if __name__ == '__main__':
     train_per_batch_transform_on_device = per_batch_transform_on_device
 
     def make_transform(
-        post_tensor_transform: List[Callable] = post_tensor_transform,
-        per_batch_transform_on_device: List[Callable] = per_batch_transform_on_device
+        post_tensor_transform: List[Callable] = None,
+        per_batch_transform_on_device: List[Callable] = None
     ):
+        if post_tensor_transform is None:
+            post_tensor_transform = post_tensor_transform
+        if per_batch_transform_on_device is None:
+            per_batch_transform_on_device = per_batch_transform_on_device
         return {
             "post_tensor_transform": Compose([
                 ApplyTransformToKey(
