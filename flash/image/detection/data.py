@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TYPE_CHECKING
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
@@ -30,9 +30,11 @@ from flash.image.detection.transforms import default_transforms
 if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
 
+SampleCollection = None
 if _FIFTYONE_AVAILABLE:
-    foc = lazy_import("fiftyone.core.collections")
     fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
 else:
     foc, fol = None, None
 
@@ -119,7 +121,7 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
     def label_cls(self):
         return fol.Detections
 
-    def load_data(self, data: foc.SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         self._validate(data)
 
         data.compute_metadata()

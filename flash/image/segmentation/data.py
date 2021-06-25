@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union, TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -48,11 +48,13 @@ from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
+SampleCollection = None
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
-    foc = lazy_import("fiftyone.core.collections")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
 else:
-    fo, foc = None, None
+    fo = None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -183,7 +185,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
     def label_cls(self):
         return fo.Segmentation
 
-    def load_data(self, data: foc.SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
         self._fo_dataset_name = data.name

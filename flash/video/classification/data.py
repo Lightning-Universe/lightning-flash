@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union, TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -36,11 +36,13 @@ from flash.core.utilities.imports import (
     lazy_import,
 )
 
+SampleCollection = None
 if _FIFTYONE_AVAILABLE:
-    foc = lazy_import("fiftyone.core.collections")
     fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
 else:
-    foc, fol = None, None
+    fol = None
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
@@ -187,7 +189,7 @@ class VideoClassificationFiftyOneDataSource(
     def label_cls(self):
         return fol.Classification
 
-    def _make_encoded_video_dataset(self, data: foc.SampleCollection) -> 'EncodedVideoDataset':
+    def _make_encoded_video_dataset(self, data: SampleCollection) -> 'EncodedVideoDataset':
         classes = self._get_classes(data)
         label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}

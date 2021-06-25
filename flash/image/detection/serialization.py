@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
 from pytorch_lightning.utilities import rank_zero_warn
 
@@ -19,8 +19,11 @@ from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+Detections = None
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
+    if TYPE_CHECKING:
+        from fiftyone import Detections
 else:
     fo = None
 
@@ -62,7 +65,7 @@ class FiftyOneDetectionLabels(Serializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Dict[str, Any]) -> Union[fo.Detections, Dict[str, Any]]:
+    def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DefaultDataKeys.METADATA not in sample:
             raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels serializer.")
 

@@ -1,23 +1,26 @@
 from itertools import chain
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, TYPE_CHECKING
 
 import flash
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+Label, Session = None, None
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
+    if TYPE_CHECKING:
+        from fiftyone import Label, Session
 else:
     fo = None
 
 
 def visualize(
-    predictions: Union[List[fo.Label], List[Dict[str, fo.Label]]],
+    predictions: Union[List[Label], List[Dict[str, Label]]],
     filepaths: Optional[List[str]] = None,
     label_field: Optional[str] = "predictions",
     wait: Optional[bool] = False,
     **kwargs
-) -> Optional[fo.Session]:
+) -> Optional[Session]:
     """Visualizes predictions from a model with a FiftyOne Serializer in the
     :ref:`FiftyOne App <fiftyone:fiftyone-app>`.
 

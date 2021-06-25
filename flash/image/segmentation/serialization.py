@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -27,8 +27,11 @@ from flash.core.utilities.imports import (
     lazy_import,
 )
 
+Segmentation = None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.labels import Segmentation
 else:
     fol = None
 
@@ -119,7 +122,7 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
 
         self.return_filepath = return_filepath
 
-    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[fol.Segmentation, Dict[str, Any]]:
+    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Dict[str, Any]]:
         labels = super().serialize(sample)
         fo_predictions = fol.Segmentation(mask=np.array(labels))
         if self.return_filepath:

@@ -27,6 +27,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -43,11 +44,13 @@ from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+SampleCollection = None
 if _FIFTYONE_AVAILABLE:
-    foc = lazy_import("fiftyone.core.collections")
     fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
 else:
-    foc, fol = None, None
+    fol = None
 
 
 # Credit to the PyTorchVision Team:
@@ -474,7 +477,7 @@ class NumpyDataSource(SequenceDataSource[np.ndarray]):
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``np.ndarray`` objects."""
 
 
-class FiftyOneDataSource(DataSource[foc.SampleCollection]):
+class FiftyOneDataSource(DataSource[SampleCollection]):
     """The ``FiftyOneDataSource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
 
@@ -488,7 +491,7 @@ class FiftyOneDataSource(DataSource[foc.SampleCollection]):
     def label_cls(self):
         return fol.Label
 
-    def load_data(self, data: foc.SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
         label_path = data._get_label_field_path(self.label_field, "label")[1]
@@ -518,7 +521,7 @@ class FiftyOneDataSource(DataSource[foc.SampleCollection]):
         } for f, t in zip(filepaths, targets)]
 
     def predict_load_data(self,
-                          data: foc.SampleCollection,
+                          data: SampleCollection,
                           dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 

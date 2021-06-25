@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union, TYPE_CHECKING
 
 import numpy as np
 import pytorch_lightning as pl
@@ -33,10 +33,10 @@ from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
-if _FIFTYONE_AVAILABLE:
-    foc = lazy_import("fiftyone.core.collections")
+if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
+    from fiftyone.core.collections import SampleCollection
 else:
-    foc = None
+    SampleCollection = None
 
 
 class DataModule(pl.LightningDataModule):
@@ -1071,10 +1071,10 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def from_fiftyone(
         cls,
-        train_dataset: Optional[foc.SampleCollection] = None,
-        val_dataset: Optional[foc.SampleCollection] = None,
-        test_dataset: Optional[foc.SampleCollection] = None,
-        predict_dataset: Optional[foc.SampleCollection] = None,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,

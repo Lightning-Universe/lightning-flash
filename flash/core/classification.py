@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union, TYPE_CHECKING
 
 import torch
 import torch.nn.functional as F
@@ -23,8 +23,11 @@ from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+Classification, Classifications = None, None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
+    from TYPE_CHECKING:
+        from fiftyone.core.labels import Classification, Classifications
 else:
     fol = None
 
@@ -219,7 +222,7 @@ class FiftyOneLabels(ClassificationSerializer):
     def serialize(
         self,
         sample: Any,
-    ) -> Union[fol.Classification, fol.Classifications, Dict[str, Any], Dict[str, Any]]:
+    ) -> Union[Classification, Classifications, Dict[str, Any], Dict[str, Any]]:
         pred = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
         pred = torch.tensor(pred)
 
