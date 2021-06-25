@@ -50,8 +50,7 @@ if __name__ == '__main__':
     train_per_batch_transform_on_device = per_batch_transform_on_device
 
     def make_transform(
-        post_tensor_transform: List[Callable] = None,
-        per_batch_transform_on_device: List[Callable] = None
+        post_tensor_transform: List[Callable] = None, per_batch_transform_on_device: List[Callable] = None
     ):
         if post_tensor_transform is None:
             post_tensor_transform = post_tensor_transform

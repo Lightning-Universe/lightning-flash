@@ -95,9 +95,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
 
         self.filetype = filetype
 
-    def load_data(
-        self, data: Any, columns: List[str] = None
-    ) -> 'datasets.Dataset':
+    def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
         if columns is None:
             columns = ["input_ids", "attention_mask", "labels"]
         file, input, target = data
