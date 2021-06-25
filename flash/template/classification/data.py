@@ -224,8 +224,8 @@ class TemplateData(DataModule):
     def num_features(self) -> Optional[int]:
         """Tries to get the ``num_features`` from each dataset in turn and returns the output."""
         return (
-            getattr(self.train_dataset, "num_features", None) or getattr(self.val_dataset, "num_features", None)
-            or getattr(self.test_dataset, "num_features", None)
+            getattr(self.train_dataset, "num_features", None) or getattr(self.val_dataset, "num_features", None) or
+            getattr(self.test_dataset, "num_features", None)
         )
 
     # OPTIONAL - Everything from this point onwards is an optional extra

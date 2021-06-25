@@ -322,8 +322,8 @@ class DataModule(pl.LightningDataModule):
     @property
     def num_classes(self) -> Optional[int]:
         return (
-            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None)
-            or getattr(self.test_dataset, "num_classes", None)
+            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None) or
+            getattr(self.test_dataset, "num_classes", None)
         )
 
     @property
