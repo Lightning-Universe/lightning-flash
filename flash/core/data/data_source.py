@@ -41,13 +41,13 @@ from torch.utils.data.dataset import Dataset
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.collections import SampleCollection
-    from fiftyone.core.labels import Label
+    foc = lazy_import("fiftyone.core.collections")
+    fol = lazy_import("fiftyone.core.labels")
 else:
-    Label, SampleCollection = None, None
+    foc, fol = None, None
 
 
 # Credit to the PyTorchVision Team:
@@ -474,7 +474,7 @@ class NumpyDataSource(SequenceDataSource[np.ndarray]):
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``np.ndarray`` objects."""
 
 
-class FiftyOneDataSource(DataSource[SampleCollection]):
+class FiftyOneDataSource(DataSource[foc.SampleCollection]):
     """The ``FiftyOneDataSource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
 
@@ -486,9 +486,9 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
     @property
     def label_cls(self):
-        return Label
+        return fol.Label
 
-    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: foc.SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
         label_path = data._get_label_field_path(self.label_field, "label")[1]
@@ -517,7 +517,9 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
             DefaultDataKeys.TARGET: to_idx(t),
         } for f, t in zip(filepaths, targets)]
 
-    def predict_load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(self,
+                          data: foc.SampleCollection,
+                          dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def _validate(self, data):

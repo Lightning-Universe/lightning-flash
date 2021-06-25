@@ -3,29 +3,21 @@ from typing import Dict, List, Optional, Union
 
 import flash
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
 if _FIFTYONE_AVAILABLE:
-    import fiftyone as fo
-    from fiftyone.core.labels import Label
-    from fiftyone.core.sample import Sample
-    from fiftyone.core.session import Session
-    from fiftyone.utils.data.parsers import LabeledImageTupleSampleParser
+    fo = lazy_import("fiftyone")
 else:
     fo = None
-    SampleCollection = None
-    Label = None
-    Sample = None
-    Session = None
 
 
 def visualize(
-    predictions: Union[List[Label], List[Dict[str, Label]]],
+    predictions: Union[List[fo.Label], List[Dict[str, fo.Label]]],
     filepaths: Optional[List[str]] = None,
     label_field: Optional[str] = "predictions",
     wait: Optional[bool] = False,
     **kwargs
-) -> Optional[Session]:
+) -> Optional[fo.Session]:
     """Visualizes predictions from a model with a FiftyOne Serializer in the
     :ref:`FiftyOne App <fiftyone:fiftyone-app>`.
 

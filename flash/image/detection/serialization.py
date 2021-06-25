@@ -17,12 +17,12 @@ from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.labels import Detection, Detections
+    fo = lazy_import("fiftyone")
 else:
-    Detection, Detections = None, None
+    fo = None
 
 
 class DetectionLabels(Serializer):
@@ -62,7 +62,7 @@ class FiftyOneDetectionLabels(Serializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
+    def serialize(self, sample: Dict[str, Any]) -> Union[fo.Detections, Dict[str, Any]]:
         if DefaultDataKeys.METADATA not in sample:
             raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels serializer.")
 
@@ -100,12 +100,12 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 label = str(int(label))
 
-            detections.append(Detection(
+            detections.append(fo.Detection(
                 label=label,
                 bounding_box=box,
                 confidence=confidence,
             ))
-        fo_predictions = Detections(detections=detections)
+        fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}

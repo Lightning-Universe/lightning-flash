@@ -42,17 +42,17 @@ from flash.core.utilities.imports import (
     _PIL_AVAILABLE,
     _requires_extras,
     _TORCHVISION_AVAILABLE,
+    lazy_import,
 )
 from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
 if _FIFTYONE_AVAILABLE:
-    import fiftyone as fo
-    from fiftyone.core.collections import SampleCollection
-    from fiftyone.core.labels import Segmentation
+    fo = lazy_import("fiftyone")
+    foc = lazy_import("fiftyone.core.collections")
 else:
-    fo, Segmentation, SampleCollection = None, None, None
+    fo, foc = None, None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -181,9 +181,9 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 
     @property
     def label_cls(self):
-        return Segmentation
+        return fo.Segmentation
 
-    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: foc.SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
         self._fo_dataset_name = data.name

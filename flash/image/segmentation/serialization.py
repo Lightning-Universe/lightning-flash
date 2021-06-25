@@ -20,12 +20,17 @@ import torch
 import flash
 from flash.core.data.data_source import DefaultDataKeys, ImageLabelsMap
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _KORNIA_AVAILABLE,
+    _MATPLOTLIB_AVAILABLE,
+    lazy_import,
+)
 
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.labels import Segmentation
+    fol = lazy_import("fiftyone.core.labels")
 else:
-    Segmentation = None
+    fol = None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -114,9 +119,9 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
 
         self.return_filepath = return_filepath
 
-    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Dict[str, Any]]:
+    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[fol.Segmentation, Dict[str, Any]]:
         labels = super().serialize(sample)
-        fo_predictions = Segmentation(mask=np.array(labels))
+        fo_predictions = fol.Segmentation(mask=np.array(labels))
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}

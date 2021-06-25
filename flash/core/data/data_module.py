@@ -31,13 +31,12 @@ from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postp
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
 if _FIFTYONE_AVAILABLE:
-    import fiftyone as fo
-    from fiftyone.core.collections import SampleCollection
+    foc = lazy_import("fiftyone.core.collections")
 else:
-    SampleCollection = None
+    foc = None
 
 
 class DataModule(pl.LightningDataModule):
@@ -1072,10 +1071,10 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def from_fiftyone(
         cls,
-        train_dataset: Optional[SampleCollection] = None,
-        val_dataset: Optional[SampleCollection] = None,
-        test_dataset: Optional[SampleCollection] = None,
-        predict_dataset: Optional[SampleCollection] = None,
+        train_dataset: Optional[foc.SampleCollection] = None,
+        val_dataset: Optional[foc.SampleCollection] = None,
+        test_dataset: Optional[foc.SampleCollection] = None,
+        predict_dataset: Optional[foc.SampleCollection] = None,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
