@@ -59,12 +59,11 @@ def default_fused_linear_keys_renamer(keys):
         names = [key_split(x) for x in keys[:0:-1]]
         names.append(keys[0])
         return "-".join(names)
-    elif typ is tuple and len(keys[0]) > 0 and isinstance(keys[0][0], str):
+    if typ is tuple and len(keys[0]) > 0 and isinstance(keys[0][0], str):
         names = [key_split(x) for x in keys[:0:-1]]
         names.append(keys[0][0])
         return ("-".join(names), ) + keys[0][1:]
-    else:
-        return None
+    return None
 
 
 def fuse_linear(dsk, keys=None, dependencies=None, rename_keys=True):
@@ -207,9 +206,9 @@ def fuse_linear(dsk, keys=None, dependencies=None, rename_keys=True):
 def _flat_set(x):
     if x is None:
         return set()
-    elif isinstance(x, set):
+    if isinstance(x, set):
         return x
-    elif not isinstance(x, (list, set)):
+    if not isinstance(x, (list, set)):
         x = [x]
     return set(x)
 
@@ -379,7 +378,7 @@ def default_fused_keys_renamer(keys, max_fused_key_length=120):
         names.append(first_key)
         concatenated_name = "-".join(names)
         return _enforce_max_key_limit(concatenated_name)
-    elif typ is tuple and len(first_key) > 0 and isinstance(first_key[0], str):
+    if typ is tuple and len(first_key) > 0 and isinstance(first_key[0], str):
         first_name = key_split(first_key)
         names = {key_split(k) for k in it}
         names.discard(first_name)

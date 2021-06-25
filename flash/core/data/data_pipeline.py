@@ -57,8 +57,7 @@ class DataPipelineState:
 
         if state_type in self._state:
             return self._state[state_type]
-        else:
-            return None
+        return None
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(initialized={self._initialized}, state={self._state})"
@@ -159,8 +158,7 @@ class DataPipeline:
 
         if not prefix:
             return has_different_code
-        else:
-            return has_different_code or cls._is_overriden_recursive(method_name, process_obj, super_obj)
+        return has_different_code or cls._is_overriden_recursive(method_name, process_obj, super_obj)
 
     @staticmethod
     def _identity(samples: Sequence[Any]) -> Sequence[Any]:
@@ -210,8 +208,7 @@ class DataPipeline:
     def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
         if on_device:
             return self._identity, collate
-        else:
-            return collate, self._identity
+        return collate, self._identity
 
     def _create_collate_preprocessors(
         self,

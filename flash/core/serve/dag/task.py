@@ -78,18 +78,17 @@ def _execute_task(arg, cache):
     """
     if isinstance(arg, list):
         return [_execute_task(a, cache) for a in arg]
-    elif istask(arg):
+    if istask(arg):
         func, args = arg[0], arg[1:]
         # Note: Don't assign the subtask results to a variable. numpy detects
         # temporaries by their reference count and can execute certain
         # operations in-place.
         return func(*(_execute_task(a, cache) for a in args))
-    elif not ishashable(arg):
+    if not ishashable(arg):
         return arg
-    elif arg in cache:
+    if arg in cache:
         return cache[arg]
-    else:
-        return arg
+    return arg
 
 
 def get(dsk: dict, out: Sequence[str], cache: dict = None, sortkeys: List[str] = None):
@@ -340,9 +339,8 @@ def _toposort(dsk, keys=None, returncycle=False, dependencies=None):
                         cycle.reverse()
                         if returncycle:
                             return cycle
-                        else:
-                            cycle = "->".join(str(x) for x in cycle)
-                            raise RuntimeError("Cycle detected in task graph: %s" % cycle)
+                        cycle = "->".join(str(x) for x in cycle)
+                        raise RuntimeError("Cycle detected in task graph: %s" % cycle)
                     next_nodes.append(nxt)
 
             if next_nodes:

@@ -85,10 +85,9 @@ def key_split(s):
                 break
         if len(result) == 32 and re.match(r"[a-f0-9]{32}", result):
             return "data"
-        else:
-            if result[0] == "<":
-                result = result.strip("<>").split()[0].split(".")[-1]
-            return result
+        if result[0] == "<":
+            result = result.strip("<>").split()[0].split(".")[-1]
+        return result
     except Exception:
         return "Other"
 
@@ -96,8 +95,7 @@ def key_split(s):
 def apply(func, args, kwargs=None):
     if kwargs:
         return func(*args, **kwargs)
-    else:
-        return func(*args)
+    return func(*args)
 
 
 def partial_by_order(*args, **kwargs):

@@ -97,7 +97,7 @@ class StyleTransferPreprocess(Preprocess):
                     T.CenterCrop(self.image_size),
                 ),
             )
-        elif self.predicting:
+        if self.predicting:
             return dict(
                 pre_tensor_transform=T.Resize(self.image_size),
                 to_tensor_transform=T.ToTensor(),
