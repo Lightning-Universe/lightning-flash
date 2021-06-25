@@ -698,8 +698,8 @@ def fuse(
                     if not no_new_edges:
                         fudge += 1
                     # Sanity check; don't go too deep if new levels introduce new edge dependencies
-                    if ((num_nodes + fudge) / height <= ave_width and num_single_nodes <= ave_width and
-                        width <= max_width and height <= max_height and  # noqa E129
+                    if ((num_nodes + fudge) / height <= ave_width and num_single_nodes <= ave_width
+                        and width <= max_width and height <= max_height and  # noqa E129
                         (no_new_edges or height < max_depth_new_edges)):  # noqa E129
                         # Perform substitutions as we go
                         val = dsk[parent]
@@ -874,8 +874,8 @@ class SubgraphCallable:
 
     def __eq__(self, other):
         return (
-            type(self) is type(other) and self.name == other.name and self.outkey == other.outkey and
-            set(self.inkeys) == set(other.inkeys)
+            type(self) is type(other) and self.name == other.name and self.outkey == other.outkey
+            and set(self.inkeys) == set(other.inkeys)
         )
 
     def __ne__(self, other):

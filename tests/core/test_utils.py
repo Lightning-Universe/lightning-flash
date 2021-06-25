@@ -29,7 +29,9 @@ def b():
     return True
 
 
-def c(): return True  # noqa: E731
+def c():
+    return True  # noqa: E731
+
 
 # ==============================
 
