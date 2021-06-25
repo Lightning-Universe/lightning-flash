@@ -19,26 +19,37 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
     hooks:
-      - id: trailing-whitespace
       - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-docstring-first
+      - id: check-toml
+      - id: check-case-conflict
+      - id: check-added-large-files
+      - id: detect-private-key
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.9.1
     hooks:
       - id: isort
+        name: imports
+        require_serial: false
 
   - repo: https://github.com/pre-commit/mirrors-yapf
-    rev: 'v0.31.0'
+    rev: v0.31.0
     hooks:
       - id: yapf
-        args: [ --in-place, --parallel ]
+        name: formatting
+        language: python
+        require_serial: false
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+        name: PEP8
 
   - repo: https://github.com/kynan/nbstripout
     rev: 0.4.0
     hooks:
       - id: nbstripout
-
-  #- repo: https://github.com/pre-commit/mirrors-mypy
-  #  rev: v0.790
-  #  hooks:
-  #    - id: mypy
