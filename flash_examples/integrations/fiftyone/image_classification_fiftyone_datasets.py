@@ -16,10 +16,9 @@ from itertools import chain
 import fiftyone as fo
 
 import flash
-from flash.core.classification import FiftyOneLabels, Labels, Probabilities
+from flash.core.classification import FiftyOneLabels, Labels
 from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
-from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
 
 # 1 Download data

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, TYPE_CHECKING, TypeVar
+from typing import Dict, Optional, Type, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 

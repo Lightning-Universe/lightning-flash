@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List
+from typing import List
 
 import pytest
 from pytorch_lightning.trainer.states import RunningStage
@@ -19,9 +19,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DataSource, DefaultDataKeys
-from flash.core.data.process import Preprocess
 
 
 class _AutoDatasetTestDataSource(DataSource):

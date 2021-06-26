@@ -21,7 +21,7 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.backbones import OBJ_DETECTION_BACKBONES
 from flash.image.detection.finetuning import ObjectDetectionFineTuning
 from flash.image.detection.serialization import DetectionLabels
