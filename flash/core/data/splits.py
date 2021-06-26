@@ -25,7 +25,9 @@ class SplitDataset(Dataset):
 
     _INTERNAL_KEYS = ("dataset", "indices", "data")
 
-    def __init__(self, dataset: Any, indices: List[int] = [], use_duplicated_indices: bool = False) -> None:
+    def __init__(self, dataset: Any, indices: List[int] = None, use_duplicated_indices: bool = False) -> None:
+        if indices is None:
+            indices = []
         if not isinstance(indices, list):
             raise MisconfigurationException("indices should be a list")
 
