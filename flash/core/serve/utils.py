@@ -1,6 +1,6 @@
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Any, Dict, Optional
 
 import requests
 from tqdm import tqdm

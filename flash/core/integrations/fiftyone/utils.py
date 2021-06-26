@@ -2,15 +2,12 @@ from itertools import chain
 from typing import Dict, List, Optional, Union
 
 import flash
-from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
     from fiftyone.core.labels import Label
-    from fiftyone.core.sample import Sample
     from fiftyone.core.session import Session
-    from fiftyone.utils.data.parsers import LabeledImageTupleSampleParser
 else:
     fo = None
     SampleCollection = None
