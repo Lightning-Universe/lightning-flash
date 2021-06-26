@@ -320,10 +320,10 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def num_classes(self) -> Optional[int]:
-        num_cls_train = getattr(self.train_dataset, "num_classes", None)
-        num_cls_val = getattr(self.val_dataset, "num_classes", None)
-        num_cls_test = getattr(self.test_dataset, "num_classes", None)
-        return num_cls_train or num_cls_val or num_cls_test
+        n_cls_train = getattr(self.train_dataset, "num_classes", None)
+        n_cls_val = getattr(self.val_dataset, "num_classes", None)
+        n_cls_test = getattr(self.test_dataset, "num_classes", None)
+        return n_cls_train or n_cls_val or n_cls_test
 
     @property
     def data_source(self) -> Optional[DataSource]:
