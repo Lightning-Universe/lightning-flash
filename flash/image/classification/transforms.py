@@ -32,7 +32,7 @@ if _TORCHVISION_AVAILABLE:
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default transforms for image classification: resize the image, convert the image and target to a tensor,
     collate the batch, and apply normalization."""
-    if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
+    if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         return {
             "to_tensor_transform": nn.Sequential(
@@ -66,7 +66,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
 
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """During training, we apply the default transforms with additional ``RandomHorizontalFlip``."""
-    if _KORNIA_AVAILABLE and not os.getenv("FLASH_TESTING", "0") == "1":
+    if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         transforms = {
             "post_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),

@@ -187,9 +187,6 @@ class ObjectDetector(Task):
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
         self.log("val_iou", iou)
 
-    def on_validation_end(self) -> None:
-        return super().on_validation_end()
-
     def test_step(self, batch, batch_idx):
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         # fasterrcnn takes only images for eval() mode
