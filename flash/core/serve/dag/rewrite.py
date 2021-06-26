@@ -8,10 +8,9 @@ def head(task):
 
     if istask(task):
         return task[0]
-    elif isinstance(task, list):
+    if isinstance(task, list):
         return list
-    else:
-        return task
+    return task
 
 
 def args(task):
@@ -19,10 +18,9 @@ def args(task):
 
     if istask(task):
         return task[1:]
-    elif isinstance(task, list):
+    if isinstance(task, list):
         return task
-    else:
-        return ()
+    return ()
 
 
 class Traverser:
@@ -424,6 +422,5 @@ def _process_match(rule, syms):
     for v, s in zip(varlist, syms):
         if v in subs and subs[v] != s:
             return None
-        else:
-            subs[v] = s
+        subs[v] = s
     return subs

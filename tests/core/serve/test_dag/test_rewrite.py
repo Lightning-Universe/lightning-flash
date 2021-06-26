@@ -62,8 +62,7 @@ def repl_list(sd):
     x = sd["x"]
     if isinstance(x, list):
         return x
-    else:
-        return (list, x)
+    return (list, x)
 
 
 rule6 = RewriteRule((list, "x"), repl_list, ("x", ))

@@ -578,7 +578,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
             )
             return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-        elif issubclass(scheduler, _LRScheduler):
+        if issubclass(scheduler, _LRScheduler):
             return scheduler(optimizer, **self.scheduler_kwargs)
         raise MisconfigurationException(
             "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "

@@ -45,8 +45,7 @@ class Properties:
             return self._state[state_type]
         if self._data_pipeline_state is not None:
             return self._data_pipeline_state.get_state(state_type)
-        else:
-            return None
+        return None
 
     def set_state(self, state: ProcessState):
         self._state[type(state)] = state

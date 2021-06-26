@@ -430,8 +430,7 @@ class PathsDataSource(SequenceDataSource):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
                 return self.predict_load_data(data)
-            else:
-                self.set_state(LabelsState(classes))
+            self.set_state(LabelsState(classes))
 
             if dataset is not None:
                 dataset.num_classes = len(classes)

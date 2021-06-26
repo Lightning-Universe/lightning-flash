@@ -109,5 +109,4 @@ class FiftyOneDetectionLabels(Serializer):
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
-        else:
-            return fo_predictions
+        return fo_predictions
