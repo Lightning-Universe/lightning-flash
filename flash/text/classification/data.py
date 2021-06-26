@@ -98,7 +98,7 @@ class TextFileDataSource(TextDataSource):
         self.filetype = filetype
 
     def _multilabel_target(self, targets, element):
-        targets = list(element.pop(target) for target in targets)
+        targets = [element.pop(target) for target in targets]
         element["labels"] = targets
         return element
 
