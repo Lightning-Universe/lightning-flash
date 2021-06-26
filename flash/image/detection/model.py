@@ -172,7 +172,7 @@ class ObjectDetector(Task):
         """The training step. Overrides ``Task.training_step``
         """
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
-        targets = [{k: v for k, v in t.items()} for t in targets]
+        targets = [dict(t.items()) for t in targets]
 
         # fasterrcnn takes both images and targets for training, returns loss_dict
         loss_dict = self.model(images, targets)
