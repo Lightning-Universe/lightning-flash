@@ -29,9 +29,7 @@ def b():
     return True
 
 
-def c():
-    return True
-
+c = lambda: True  # noqa: E731
 
 # ==============================
 
