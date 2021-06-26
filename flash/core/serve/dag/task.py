@@ -275,7 +275,7 @@ def subs(task, key, val):
                 # Can't do a simple equality check, since this may trigger
                 # a FutureWarning from NumPy about array equality
                 # https://github.com/dask/dask/pull/2457
-                if len(arg) == len(key) and all(type(aa) == type(bb) and aa == bb for aa, bb in zip(arg, key)):
+                if len(arg) == len(key) and all(type(aa) is type(bb) and aa == bb for aa, bb in zip(arg, key)):
                     arg = val
 
             except (TypeError, AttributeError):

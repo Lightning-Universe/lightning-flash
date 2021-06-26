@@ -37,7 +37,6 @@ from flash.core.data.data_source import (
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
-    _IMAGE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
     _requires_extras,

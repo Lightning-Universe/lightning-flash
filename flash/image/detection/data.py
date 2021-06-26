@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
-from flash.core.data.process import Preprocess, Serializer
+from flash.core.data.process import Preprocess
 from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
 from flash.image.detection.transforms import default_transforms

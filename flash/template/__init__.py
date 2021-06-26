@@ -1,1 +1,1 @@
-from flash.template.classification import TemplateData, TemplateSKLearnClassifier
+from flash.template.classification import TemplateData, TemplateSKLearnClassifier  # noqa: F401

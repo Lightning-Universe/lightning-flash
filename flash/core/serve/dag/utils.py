@@ -20,10 +20,10 @@ def funcname(func):
     type_name = getattr(type(func), "__name__", None) or ""
 
     # cytoolz.curry
-    if "cytoolz" in module_name and "curry" == type_name:
+    if "cytoolz" in module_name and type_name == "curry":
         return func.func_name[:50]
     # numpy.vectorize objects
-    if "numpy" in module_name and "vectorize" == type_name:
+    if "numpy" in module_name and type_name == "vectorize":
         return ("vectorize_" + funcname(func.pyfunc))[:50]
 
     # All other callables

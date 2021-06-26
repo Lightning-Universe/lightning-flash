@@ -1,5 +1,5 @@
-from flash.text.classification import TextClassificationData, TextClassifier
-from flash.text.seq2seq import (
+from flash.text.classification import TextClassificationData, TextClassifier  # noqa: F401
+from flash.text.seq2seq import (  # noqa: F401
     Seq2SeqData,
     Seq2SeqTask,
     SummarizationData,

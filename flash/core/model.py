@@ -227,7 +227,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
+        x = list(data_pipeline.data_source.generate_dataset(x, running_stage))
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
@@ -408,7 +408,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        if deserializer is None or type(deserializer) == Deserializer:
+        if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
@@ -523,7 +523,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
         if registry is None:
             return []
-        return [v for v in inspect.signature(registry.get(key)).parameters.items()]
+        return list(inspect.signature(registry.get(key)).parameters.items())
 
     @classmethod
     def available_schedulers(cls) -> List[str]:
