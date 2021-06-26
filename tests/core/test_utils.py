@@ -29,15 +29,13 @@ def b():
     return True
 
 
-def c(): return True  # noqa: E731
-
 # ==============================
 
 
 def test_get_callable_name():
     assert get_callable_name(A()) == "a"
     assert get_callable_name(b) == "b"
-    assert get_callable_name(c) == "<lambda>"
+    assert get_callable_name(lambda: True) == "<lambda>"
 
 
 def test_get_callable_dict():
@@ -48,10 +46,9 @@ def test_get_callable_dict():
     assert type(d["a"]) is A
     assert d["b"] == b
 
-    d = get_callable_dict({"one": A(), "two": b, "three": c})
+    d = get_callable_dict({"one": A(), "two": b})
     assert type(d["one"]) is A
     assert d["two"] == b
-    assert d["three"] == c
 
 
 def test_download_data(tmpdir):
