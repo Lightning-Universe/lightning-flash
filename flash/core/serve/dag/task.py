@@ -311,7 +311,7 @@ def _toposort(dsk, keys=None, returncycle=False, dependencies=None):
     seen = set()
 
     if dependencies is None:
-        dependencies = dict((k, get_dependencies(dsk, k)) for k in dsk)
+        dependencies = {k: get_dependencies(dsk, k) for k in dsk}
 
     for key in keys:
         if key in completed:
