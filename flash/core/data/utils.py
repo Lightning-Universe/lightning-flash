@@ -166,7 +166,7 @@ def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
         return True
     if isinstance(value, (list, tuple)):
         return any(_contains_any_tensor(v, dtype=dtype) for v in value)
-    elif isinstance(value, dict):
+    if isinstance(value, dict):
         return any(_contains_any_tensor(v, dtype=dtype) for v in value.values())
     return False
 

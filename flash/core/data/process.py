@@ -310,14 +310,13 @@ class Preprocess(BasePreprocess, Properties):
     def current_transform(self) -> Callable:
         if self.training and self._train_transform:
             return self._get_transform(self._train_transform)
-        elif self.validating and self._val_transform:
+        if self.validating and self._val_transform:
             return self._get_transform(self._val_transform)
-        elif self.testing and self._test_transform:
+        if self.testing and self._test_transform:
             return self._get_transform(self._test_transform)
-        elif self.predicting and self._predict_transform:
+        if self.predicting and self._predict_transform:
             return self._get_transform(self._predict_transform)
-        else:
-            return self._identity
+        return self._identity
 
     @property
     def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
@@ -538,8 +537,7 @@ class Serializer(Properties):
     def __call__(self, sample: Any) -> Any:
         if self._is_enabled:
             return self.serialize(sample)
-        else:
-            return sample
+        return sample
 
 
 class SerializerMapping(Serializer):
@@ -554,8 +552,7 @@ class SerializerMapping(Serializer):
     def serialize(self, sample: Any) -> Any:
         if isinstance(sample, Mapping):
             return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
-        else:
-            raise ValueError("The model output must be a mapping when using a SerializerMapping.")
+        raise ValueError("The model output must be a mapping when using a SerializerMapping.")
 
     def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
         for serializer in self._serializers.values():
@@ -589,8 +586,7 @@ class DeserializerMapping(Deserializer):
     def deserialize(self, sample: Any) -> Any:
         if isinstance(sample, Mapping):
             return {key: deserializer.deserialize(sample[key]) for key, deserializer in self._deserializers.items()}
-        else:
-            raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
+        raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
 
     def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
         for deserializer in self._deserializers.values():

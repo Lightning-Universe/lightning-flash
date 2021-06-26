@@ -55,8 +55,7 @@ def test_numpy_vectorize_funcname():
         "Return a-b if a>b, otherwise return a+b"
         if a > b:
             return a - b
-        else:
-            return a + b
+        return a + b
 
     vfunc = np.vectorize(myfunc)
     assert funcname(vfunc) == "vectorize_myfunc"

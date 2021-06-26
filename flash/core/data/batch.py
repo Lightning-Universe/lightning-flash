@@ -343,13 +343,13 @@ def default_uncollate(batch: Any):
             return batch
         return list(torch.unbind(batch, 0))
 
-    elif isinstance(batch, Mapping):
+    if isinstance(batch, Mapping):
         return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
 
-    elif isinstance(batch, tuple) and hasattr(batch, '_fields'):  # namedtuple
+    if isinstance(batch, tuple) and hasattr(batch, '_fields'):  # namedtuple
         return [batch_type(*default_uncollate(sample)) for sample in zip(*batch)]
 
-    elif isinstance(batch, Sequence) and not isinstance(batch, str):
+    if isinstance(batch, Sequence) and not isinstance(batch, str):
         return [default_uncollate(sample) for sample in batch]
 
     return batch
