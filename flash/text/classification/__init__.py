@@ -11,5 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.text.classification.data import TextClassificationData
-from flash.text.classification.model import TextClassifier
+from flash.text.classification.data import TextClassificationData  # noqa: F401
+from flash.text.classification.model import TextClassifier  # noqa: F401

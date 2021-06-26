@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 import numpy as np
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data import RandomSampler, Sampler
+from torch.utils.data import Sampler
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import (
@@ -28,7 +28,6 @@ from flash.core.data.data_source import (
     PathsDataSource,
 )
 from flash.core.data.process import Preprocess
-from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 if _FIFTYONE_AVAILABLE:
