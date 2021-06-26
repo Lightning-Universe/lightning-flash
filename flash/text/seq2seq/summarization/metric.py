@@ -92,7 +92,7 @@ class RougeMetric(Metric):
         # this is a bug in the upstream pytorch release.
         hash_vals = [self.__class__.__name__]
 
-        for key in self._defaults.keys():
+        for key in self._defaults:
             value = getattr(self, key)
             if isinstance(value, list):
                 value = tuple(value)
