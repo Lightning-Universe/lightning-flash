@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 import pathlib
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 from torch import nn
 
