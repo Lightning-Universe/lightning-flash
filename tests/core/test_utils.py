@@ -30,7 +30,7 @@ def b():
 
 
 def c():
-    return True  # noqa: E731
+    return True
 
 
 # ==============================
