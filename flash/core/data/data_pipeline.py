@@ -244,10 +244,8 @@ class DataPipeline:
             preprocess, f"_{prefix}_collate_in_worker_from_transform", None
         )
 
-        if (
-            collate_in_worker_from_transform is None and per_batch_transform_overriden and
-            per_sample_transform_on_device_overriden
-        ):
+        is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
+        if collate_in_worker_from_transform is None and is_per_overriden:
             raise MisconfigurationException(
                 f'{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` '
                 f'are mutually exclusive for stage {stage}'
