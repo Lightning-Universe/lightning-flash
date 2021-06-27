@@ -24,7 +24,6 @@ class ProcessState:
     """
     Base class for all process states
     """
-    pass
 
 
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
