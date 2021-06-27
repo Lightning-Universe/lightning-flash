@@ -127,32 +127,24 @@ class BaseVisualization(BaseDataFetcher):
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         """Override to visualize preprocess ``load_sample`` output data."""
-        pass
 
     def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
         """Override to visualize preprocess ``pre_tensor_transform`` output data."""
-        pass
 
     def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
         """Override to visualize preprocess ``to_tensor_transform`` output data."""
-        pass
 
     def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
         """Override to visualize preprocess ``post_tensor_transform`` output data."""
-        pass
 
     def show_collate(self, batch: List[Any], running_stage: RunningStage) -> None:
         """Override to visualize preprocess ``collate`` output data."""
-        pass
 
     def show_per_batch_transform(self, batch: List[Any], running_stage: RunningStage) -> None:
         """Override to visualize preprocess ``per_batch_transform`` output data."""
-        pass
 
     def show_per_sample_transform_on_device(self, samples: List[Any], running_stage: RunningStage) -> None:
         """Override to visualize preprocess ``per_sample_transform_on_device`` output data."""
-        pass
 
     def show_per_batch_transform_on_device(self, batch: List[Any], running_stage: RunningStage) -> None:
         """Override to visualize preprocess ``per_batch_transform_on_device`` output data."""
-        pass

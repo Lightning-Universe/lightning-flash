@@ -36,14 +36,12 @@ class BasePreprocess(ABC):
         """
         Override this method to return state_dict
         """
-        pass
 
     @abstractclassmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         """
         Override this method to load from state_dict
         """
-        pass
 
 
 class Preprocess(BasePreprocess, Properties):
