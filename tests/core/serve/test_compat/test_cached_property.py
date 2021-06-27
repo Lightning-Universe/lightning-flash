@@ -132,8 +132,6 @@ class TestCachedProperty:
         class MyClass(metaclass=MyMeta):
             """Test class."""
 
-            pass
-
         with pytest.raises(
             TypeError,
             match="The '__dict__' attribute on 'MyMeta' instance does not support",
@@ -152,7 +150,6 @@ class TestCachedProperty:
                 @cached_property
                 def a(self):  # NOSONAR
                     """Test getter."""
-                    pass
 
                 b = a
 
@@ -188,8 +185,6 @@ class TestCachedProperty:
 
         class Foo:
             """Test class."""
-
-            pass
 
         Foo.cp = cp
 
