@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Tuple, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from pytorch_lightning.utilities import rank_zero_warn
 
@@ -112,5 +112,4 @@ class FiftyOneDetectionLabels(Serializer):
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
-        else:
-            return fo_predictions
+        return fo_predictions

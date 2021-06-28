@@ -35,8 +35,7 @@ class DummyDataset(torch.utils.data.Dataset):
         sample = torch.rand(1, 28, 28)
         if self._predict:
             return sample
-        else:
-            return sample, torch.randint(10, size=(1, )).item()
+        return sample, torch.randint(10, size=(1, )).item()
 
     def __len__(self) -> int:
         return 100

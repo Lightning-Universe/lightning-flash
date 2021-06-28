@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, TYPE_CHECKING, TypeVar
+from typing import Dict, Optional, Type, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 
@@ -24,7 +24,6 @@ class ProcessState:
     """
     Base class for all process states
     """
-    pass
 
 
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
@@ -45,8 +44,7 @@ class Properties:
             return self._state[state_type]
         if self._data_pipeline_state is not None:
             return self._data_pipeline_state.get_state(state_type)
-        else:
-            return None
+        return None
 
     def set_state(self, state: ProcessState):
         self._state[type(state)] = state

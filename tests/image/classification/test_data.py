@@ -210,7 +210,7 @@ def test_from_filepaths_splits(tmpdir):
 
     train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
 
-    train_labels: List[int] = [i for i in range(num_samples)]
+    train_labels: List[int] = list(range(num_samples))
 
     assert len(train_filepaths) == len(train_labels)
 

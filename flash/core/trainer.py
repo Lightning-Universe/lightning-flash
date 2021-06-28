@@ -41,7 +41,7 @@ def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
 
     # we only want to pass in valid PLTrainer args, the rest may be user specific
     valid_kwargs = inspect.signature(PlTrainer.__init__).parameters
-    trainer_kwargs = dict((name, params[name]) for name in valid_kwargs if name in params)
+    trainer_kwargs = {name: params[name] for name in valid_kwargs if name in params}
     trainer_kwargs.update(**kwargs)
 
     return cls(**trainer_kwargs)
@@ -58,7 +58,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
             # parse only the argument names
             cls_arg_names = [arg[0] for arg in get_init_arguments_and_types(cls)]
             # convert args to kwargs
-            kwargs.update({k: v for k, v in zip(cls_arg_names, args)})
+            kwargs.update(dict(zip(cls_arg_names, args)))
         env_variables = vars(parse_env_variables(cls))
         # update the kwargs by env variables
         kwargs = dict(list(env_variables.items()) + list(kwargs.items()))
@@ -195,8 +195,8 @@ class Trainer(PlTrainer):
         """
         if len(new_callbacks) == 0:
             return old_callbacks
-        new_callbacks_types = set(type(c) for c in new_callbacks)
-        old_callbacks_types = set(type(c) for c in old_callbacks)
+        new_callbacks_types = {type(c) for c in new_callbacks}
+        old_callbacks_types = {type(c) for c in old_callbacks}
         override_types = new_callbacks_types.intersection(old_callbacks_types)
         new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
         return new_callbacks

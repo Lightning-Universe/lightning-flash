@@ -47,14 +47,14 @@ class BaseType(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def serialize(self, data):  # pragma: no cover
         """Serialize the incoming data to send it through the network"""
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def deserialize(self, *args, **kwargs):  # pragma: no cover
         """Take the inputs from the network and deserilize/convert them them. Output from
         this method will go to the exposed method as arguments.
         """
-        pass
+        raise NotImplementedError
 
     def packed_deserialize(self, kwargs):
         """Unpacks data (assuming kwargs) and calls deserialize method of child class.

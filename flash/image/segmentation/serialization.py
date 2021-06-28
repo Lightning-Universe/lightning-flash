@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from typing import Any, Dict, Optional, Tuple, Union, TYPE_CHECKING
 
 import numpy as np
@@ -128,5 +127,4 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
-        else:
-            return fo_predictions
+        return fo_predictions

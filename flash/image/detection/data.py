@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TYPE_CHECKING
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
-from flash.core.data.process import Preprocess, Serializer
+from flash.core.data.process import Preprocess
 from flash.core.utilities.imports import (
     _COCO_AVAILABLE,
     _FIFTYONE_AVAILABLE,
@@ -171,7 +171,8 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
 
         return output_data
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+    @staticmethod
+    def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         filepath = sample[DefaultDataKeys.INPUT]
         img = default_loader(filepath)
         sample[DefaultDataKeys.INPUT] = img
@@ -182,7 +183,8 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
         }
         return sample
 
-    def _reformat_bbox(self, xmin, ymin, box_w, box_h, img_w, img_h):
+    @staticmethod
+    def _reformat_bbox(xmin, ymin, box_w, box_h, img_w, img_h):
         xmin *= img_w
         ymin *= img_h
         box_w *= img_w

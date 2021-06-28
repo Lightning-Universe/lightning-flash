@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Sequence, Type, Union
+from typing import Callable, Dict, Mapping, Sequence, Type, Union
 
 
 def get_callable_name(fn_or_class: Union[Callable, object]) -> str:
@@ -21,9 +21,9 @@ def get_callable_name(fn_or_class: Union[Callable, object]) -> str:
 def get_callable_dict(fn: Union[Callable, Mapping, Sequence]) -> Union[Dict, Mapping]:
     if isinstance(fn, Mapping):
         return fn
-    elif isinstance(fn, Sequence):
+    if isinstance(fn, Sequence):
         return {get_callable_name(f): f for f in fn}
-    elif callable(fn):
+    if callable(fn):
         return {get_callable_name(fn): fn}
 
 

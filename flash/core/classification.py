@@ -176,9 +176,8 @@ class Labels(Classes):
             if self.multi_label:
                 return [labels[cls] for cls in classes]
             return labels[classes]
-        else:
-            rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
-            return classes
+        rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
+        return classes
 
 
 class FiftyOneLabels(ClassificationSerializer):
@@ -302,5 +301,4 @@ class FiftyOneLabels(ClassificationSerializer):
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
-        else:
-            return fo_predictions
+        return fo_predictions

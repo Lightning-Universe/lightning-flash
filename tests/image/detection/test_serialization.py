@@ -9,11 +9,13 @@ from flash.image.detection.serialization import FiftyOneDetectionLabels
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 class TestFiftyOneDetectionLabels:
 
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         serial = FiftyOneDetectionLabels()
         assert serial is not None
 
-    def test_serialize_fiftyone(self):
+    @staticmethod
+    def test_serialize_fiftyone():
         labels = ['class_1', 'class_2', 'class_3']
         serial = FiftyOneDetectionLabels()
         filepath_serial = FiftyOneDetectionLabels(return_filepath=True)

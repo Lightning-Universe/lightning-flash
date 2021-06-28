@@ -183,10 +183,12 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         output["y"] = y
         return output
 
-    def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def to_loss_format(x: torch.Tensor) -> torch.Tensor:
         return x
 
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def to_metrics_format(x: torch.Tensor) -> torch.Tensor:
         return x
 
     def forward(self, x: Any) -> Any:
@@ -227,7 +229,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
+        x = list(data_pipeline.data_source.generate_dataset(x, running_stage))
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
@@ -256,7 +258,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             return [optimizer], [self._instantiate_scheduler(optimizer)]
         return optimizer
 
-    def configure_finetune_callback(self) -> List[Callback]:
+    @staticmethod
+    def configure_finetune_callback() -> List[Callback]:
         return []
 
     @staticmethod
@@ -408,7 +411,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        if deserializer is None or type(deserializer) == Deserializer:
+        if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
@@ -523,7 +526,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
         if registry is None:
             return []
-        return [v for v in inspect.signature(registry.get(key)).parameters.items()]
+        return list(inspect.signature(registry.get(key)).parameters.items())
 
     @classmethod
     def available_schedulers(cls) -> List[str]:
@@ -556,7 +559,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             return self.trainer.max_steps
         return max_estimated_steps
 
-    def _compute_warmup(self, num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
+    @staticmethod
+    def _compute_warmup(num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
         if not isinstance(num_warmup_steps, float) or (num_warmup_steps > 1 or num_warmup_steps < 0):
             raise MisconfigurationException(
                 "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
@@ -578,7 +582,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
             )
             return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-        elif issubclass(scheduler, _LRScheduler):
+        if issubclass(scheduler, _LRScheduler):
             return scheduler(optimizer, **self.scheduler_kwargs)
         raise MisconfigurationException(
             "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "

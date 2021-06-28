@@ -37,7 +37,6 @@ from flash.core.data.data_source import (
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
-    _IMAGE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
     _requires_extras,
@@ -162,7 +161,8 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         }
         return sample
 
-    def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
+    @staticmethod
+    def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]
         img = torchvision.io.read_image(img_path).float()
 
@@ -208,7 +208,8 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         }
         return sample
 
-    def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
+    @staticmethod
+    def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]
         img = torchvision.io.read_image(img_path).float()
 

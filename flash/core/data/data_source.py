@@ -198,9 +198,11 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
     sets from the hooks."""
 
-    def load_data(self,
-                  data: DATA_TYPE,
-                  dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
+    @staticmethod
+    def load_data(
+        data: DATA_TYPE,
+        dataset: Optional[Any] = None,
+    ) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
         """Given the ``data`` argument, the ``load_data`` hook produces a sequence or iterable of samples or
         sample metadata. The ``data`` argument can be anything, but this method should return a sequence or iterable of
         mappings from string (e.g. "input", "target", "bbox", etc.) to data (e.g. a target value) or metadata (e.g. a
@@ -227,7 +229,8 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         """
         return data
 
-    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
+    @staticmethod
+    def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
         """Given an element from the output of a call to
         :meth:`~flash.core.data.data_source.DataSource.load_data`, this hook
         should load a single data sample. The keys and values in the ``sample`` argument will be same as the keys and
@@ -383,7 +386,8 @@ class SequenceDataSource(
             DefaultDataKeys.TARGET: target
         } for input, target in zip(inputs, targets)]
 
-    def predict_load_data(self, data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
+    @staticmethod
+    def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: input} for input in data]
 
 
@@ -433,8 +437,7 @@ class PathsDataSource(SequenceDataSource):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
                 return self.predict_load_data(data)
-            else:
-                self.set_state(LabelsState(classes))
+            self.set_state(LabelsState(classes))
 
             if dataset is not None:
                 dataset.num_classes = len(classes)
@@ -520,9 +523,8 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
             DefaultDataKeys.TARGET: to_idx(t),
         } for f, t in zip(filepaths, targets)]
 
-    def predict_load_data(self,
-                          data: SampleCollection,
-                          dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    @staticmethod
+    def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def _validate(self, data):

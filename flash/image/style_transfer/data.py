@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 import pathlib
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 from torch import nn
 
@@ -97,7 +97,7 @@ class StyleTransferPreprocess(Preprocess):
                     T.CenterCrop(self.image_size),
                 ),
             )
-        elif self.predicting:
+        if self.predicting:
             return dict(
                 pre_tensor_transform=T.Resize(self.image_size),
                 to_tensor_transform=T.ToTensor(),

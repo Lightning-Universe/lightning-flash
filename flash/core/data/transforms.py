@@ -54,7 +54,7 @@ class ApplyToKeys(nn.Sequential):
         return x
 
     def __repr__(self):
-        transform = [c for c in self.children()]
+        transform = list(self.children())
 
         keys = self.keys[0] if len(self.keys) == 1 else self.keys
         transform = transform[0] if len(transform) == 1 else transform
