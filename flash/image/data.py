@@ -106,7 +106,8 @@ class ImageNumpyDataSource(NumpyDataSource):
 
 class ImageFiftyOneDataSource(FiftyOneDataSource):
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+    @staticmethod
+    def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]
         img = default_loader(img_path)
         sample[DefaultDataKeys.INPUT] = img

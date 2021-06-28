@@ -76,7 +76,8 @@ class TextDataSource(DataSource):
             ex = ex[input]
         return self.tokenizer(ex, max_length=self.max_length, truncation=True, padding="max_length")
 
-    def _transform_label(self, label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
+    @staticmethod
+    def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
         ex[target] = label_to_class_mapping[ex[target]]
         return ex
 
@@ -97,7 +98,8 @@ class TextFileDataSource(TextDataSource):
 
         self.filetype = filetype
 
-    def _multilabel_target(self, targets, element):
+    @staticmethod
+    def _multilabel_target(targets, element):
         targets = [element.pop(target) for target in targets]
         element["labels"] = targets
         return element

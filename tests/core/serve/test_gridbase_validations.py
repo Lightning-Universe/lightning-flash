@@ -28,11 +28,13 @@ def test_metaclass_raises_if_more_than_one_expose_decorator_applied():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def clasify(self, param):
+            @staticmethod
+            def clasify(param):
                 return param
 
 
@@ -47,7 +49,8 @@ def test_metaclass_raises_if_first_arg_in_init_is_not_model():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
 
@@ -62,7 +65,8 @@ def test_metaclass_raises_if_second_arg_is_not_config():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
 
@@ -77,7 +81,8 @@ def test_metaclass_raises_if_random_parameters_in_init():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
 
@@ -93,7 +98,8 @@ def test_metaclass_raises_uses_restricted_method_name():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
             def inputs(self):
@@ -108,7 +114,8 @@ def test_metaclass_raises_uses_restricted_method_name():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
             def outputs(self):
@@ -123,7 +130,8 @@ def test_metaclass_raises_uses_restricted_method_name():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
             @property
@@ -146,7 +154,8 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
                 self.model = model
 
             @expose(inputs={"param": int}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
     # try in `outputs` field
@@ -158,7 +167,8 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
                 self.model = model
 
             @expose(inputs={"param": Number()}, outputs={"foo": int})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
     # try to pass a class definition, not an instance
@@ -170,7 +180,8 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
                 self.model = model
 
             @expose(inputs={"param": Number}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
 
@@ -191,7 +202,8 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
             self.model = model
 
         @expose(inputs={"NOT_NAMED": Number()}, outputs={"foo": Number()})
-        def predict(self, param):
+        @staticmethod
+        def predict(param):
             return param
 
     comp = ClassificationInference(lightning_squeezenet1_1_obj)
@@ -214,7 +226,8 @@ def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_o
             pass
 
         @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-        def predict(self, param):
+        @staticmethod
+        def predict(param):
             return param
 
     with pytest.raises(ValueError, match="dict of length < 1"):
@@ -235,7 +248,8 @@ def test_ModelComponent_raises_if_model_is_empty_iterable():
             pass
 
         @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-        def predict(self, param):
+        @staticmethod
+        def predict(param):
             return param
 
     with pytest.raises(ValueError, match="must have length >= 1"):

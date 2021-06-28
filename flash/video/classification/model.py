@@ -164,7 +164,8 @@ class VideoClassifier(ClassificationTask):
     def configure_finetune_callback(self) -> List[Callback]:
         return [VideoClassifierFinetuning()]
 
-    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+    @staticmethod
+    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """
         This function is used only for debugging usage with CI
         """

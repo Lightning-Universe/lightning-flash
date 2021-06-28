@@ -8,13 +8,15 @@ from flash.image.segmentation.serialization import FiftyOneSegmentationLabels, S
 
 class TestSemanticSegmentationLabels:
 
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         serial = SegmentationLabels()
         assert serial is not None
         assert serial.labels_map is None
         assert serial.visualize is False
 
-    def test_exception(self):
+    @staticmethod
+    def test_exception():
         serial = SegmentationLabels()
 
         with pytest.raises(Exception):
@@ -25,7 +27,8 @@ class TestSemanticSegmentationLabels:
             sample = torch.zeros(2, 3)
             serial.serialize(sample)
 
-    def test_serialize(self):
+    @staticmethod
+    def test_serialize():
         serial = SegmentationLabels()
 
         sample = torch.zeros(5, 2, 3)
@@ -37,7 +40,8 @@ class TestSemanticSegmentationLabels:
         assert torch.tensor(classes)[0, 1] == 3
 
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
-    def test_serialize_fiftyone(self):
+    @staticmethod
+    def test_serialize_fiftyone():
         serial = FiftyOneSegmentationLabels()
         filepath_serial = FiftyOneSegmentationLabels(return_filepath=True)
 

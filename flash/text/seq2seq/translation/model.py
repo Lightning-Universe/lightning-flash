@@ -74,7 +74,8 @@ class TranslationTask(Seq2SeqTask):
         result = self.bleu(self._postprocess.uncollate(generated_tokens), tgt_lns)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
-    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+    @staticmethod
+    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """
         This function is used only for debugging usage with CI
         """

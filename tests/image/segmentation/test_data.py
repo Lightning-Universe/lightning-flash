@@ -50,7 +50,8 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
 class TestSemanticSegmentationPreprocess:
 
     @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         prep = SemanticSegmentationPreprocess(num_classes=1)
         assert prep is not None
 
@@ -58,11 +59,13 @@ class TestSemanticSegmentationPreprocess:
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestSemanticSegmentationData:
 
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         dm = SemanticSegmentationData()
         assert dm is not None
 
-    def test_from_folders(self, tmpdir):
+    @staticmethod
+    def test_from_folders(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -122,7 +125,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
 
-    def test_from_folders_warning(self, tmpdir):
+    @staticmethod
+    def test_from_folders_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -163,7 +167,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (1, 3, 196, 196)
         assert labels.shape == (1, 196, 196)
 
-    def test_from_files(self, tmpdir):
+    @staticmethod
+    def test_from_files(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -220,7 +225,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
 
-    def test_from_files_warning(self, tmpdir):
+    @staticmethod
+    def test_from_files_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -253,7 +259,8 @@ class TestSemanticSegmentationData:
             )
 
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
-    def test_from_fiftyone(self, tmpdir):
+    @staticmethod
+    def test_from_fiftyone(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -320,7 +327,8 @@ class TestSemanticSegmentationData:
         imgs = data[DefaultDataKeys.INPUT]
         assert imgs.shape == (2, 3, 196, 196)
 
-    def test_map_labels(self, tmpdir):
+    @staticmethod
+    def test_map_labels(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
