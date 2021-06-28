@@ -167,4 +167,5 @@ class SemanticSegmentation(ClassificationTask):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["val_iou"] > 0.2
+        if history[-1]["val_iou"] <= 0.2:
+            raise AssertionError

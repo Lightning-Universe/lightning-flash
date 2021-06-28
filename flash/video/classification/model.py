@@ -169,4 +169,5 @@ class VideoClassifier(ClassificationTask):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["val_accuracy"] > 0.80
+        if history[-1]["val_accuracy"] <= 0.80:
+            raise AssertionError

@@ -77,4 +77,5 @@ class SummarizationTask(Seq2SeqTask):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["rouge1_recall"] > 0.2
+        if history[-1]["rouge1_recall"] <= 0.2:
+            raise AssertionError

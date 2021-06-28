@@ -144,7 +144,8 @@ class DataPipeline:
         Cropped Version of
         https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
         """
-        assert isinstance(process_obj, super_obj)
+        if not isinstance(process_obj, super_obj):
+            raise AssertionError
         if prefix is None and not hasattr(super_obj, method_name):
             raise MisconfigurationException(f"This function doesn't belong to the parent class {super_obj}")
 
@@ -602,7 +603,8 @@ class _StageOrchestrator:
         return outputs
 
     def register_additional_stage(self, stage: RunningStage, stage_func: Optional[Callable] = None):
-        assert stage_func is None or callable(stage_func)
+        if not (stage_func is None or callable(stage_func)):
+            raise AssertionError
 
         self._stage_mapping[stage] = stage_func.to(self.model.device, self.model.dtype)
 

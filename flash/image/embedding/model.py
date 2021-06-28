@@ -76,7 +76,8 @@ class ImageEmbedder(Task):
         self.save_hyperparameters()
         self.backbone_name = backbone
         self.embedding_dim = embedding_dim
-        assert pooling_fn in [torch.mean, torch.max]
+        if pooling_fn not in [torch.mean, torch.max]:
+            raise AssertionError
         self.pooling_fn = pooling_fn
 
         self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained)

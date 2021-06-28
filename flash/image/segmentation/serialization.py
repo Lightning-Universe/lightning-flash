@@ -57,7 +57,8 @@ class SegmentationLabels(Serializer):
         """Function that given an image with labels ids and their pixels intrensity mapping,
            creates a RGB representation for visualisation purposes.
         """
-        assert len(img_labels.shape) == 2, img_labels.shape
+        if len(img_labels.shape) != 2:
+            raise AssertionError(img_labels.shape)
         H, W = img_labels.shape
         out = torch.empty(3, H, W, dtype=torch.uint8)
         for label_id, label_val in labels_map.items():
@@ -75,7 +76,8 @@ class SegmentationLabels(Serializer):
 
     def serialize(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
         preds = sample[DefaultDataKeys.PREDS]
-        assert len(preds.shape) == 3, preds.shape
+        if len(preds.shape) != 3:
+            raise AssertionError(preds.shape)
         labels = torch.argmax(preds, dim=-3)  # HxW
 
         if self.visualize and not flash._IS_TESTING:

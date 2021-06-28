@@ -24,5 +24,6 @@ if _module_available('nltk'):
 def add_newline_to_end_of_each_sentence(x: str) -> str:
     """This was added to get rougeLsum scores matching published rougeL scores for BART and PEGASUS."""
     re.sub("<n>", "", x)  # remove pegasus newline char
-    assert nltk, "nltk must be installed to separate newlines between sentences. (pip install nltk)"
+    if not nltk:
+        raise AssertionError("nltk must be installed to separate newlines between sentences. (pip install nltk)")
     return "\n".join(nltk.sent_tokenize(x))

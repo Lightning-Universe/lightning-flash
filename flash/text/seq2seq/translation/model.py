@@ -79,4 +79,5 @@ class TranslationTask(Seq2SeqTask):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["val_bleu_score"] > 0.6
+        if history[-1]["val_bleu_score"] <= 0.6:
+            raise AssertionError

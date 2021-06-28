@@ -138,7 +138,8 @@ def setup(app):
 # Ignoring Third-party packages
 # https://stackoverflow.com/questions/15889621/sphinx-how-to-exclude-imports-in-automodule
 def _package_list_from_file(pfile):
-    assert os.path.isfile(pfile)
+    if not os.path.isfile(pfile):
+        raise AssertionError
     with open(pfile, 'r') as fp:
         lines = fp.readlines()
     list_pkgs = []
