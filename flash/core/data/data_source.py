@@ -197,7 +197,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
     @staticmethod
     def load_data(data: DATA_TYPE,
-                  dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
+                  dataset: Optional[Any] = None,) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
         """Given the ``data`` argument, the ``load_data`` hook produces a sequence or iterable of samples or
         sample metadata. The ``data`` argument can be anything, but this method should return a sequence or iterable of
         mappings from string (e.g. "input", "target", "bbox", etc.) to data (e.g. a target value) or metadata (e.g. a
