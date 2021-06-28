@@ -98,7 +98,7 @@ class TestDefaultUncollate:
         batch = torch.rand(2, 1)
         output = default_uncollate(batch)
         assert isinstance(output, list)
-        assert all([isinstance(x, torch.Tensor) for x in output])
+        assert all(isinstance(x, torch.Tensor) for x in output)
 
     def test_sequence(self):
         batch = {
