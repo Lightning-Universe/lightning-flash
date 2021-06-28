@@ -202,8 +202,7 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
             self.model = model
 
         @expose(inputs={"NOT_NAMED": Number()}, outputs={"foo": Number()})
-        @staticmethod
-        def predict(param):
+        def predict(self, param):
             return param
 
     comp = ClassificationInference(lightning_squeezenet1_1_obj)
@@ -226,8 +225,7 @@ def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_o
             pass
 
         @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-        @staticmethod
-        def predict(param):
+        def predict(self, param):
             return param
 
     with pytest.raises(ValueError, match="dict of length < 1"):
@@ -248,8 +246,7 @@ def test_ModelComponent_raises_if_model_is_empty_iterable():
             pass
 
         @expose(inputs={"param": Number()}, outputs={"foo": Number()})
-        @staticmethod
-        def predict(param):
+        def predict(self, param):
             return param
 
     with pytest.raises(ValueError, match="must have length >= 1"):
