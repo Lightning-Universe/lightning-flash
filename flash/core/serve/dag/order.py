@@ -382,7 +382,7 @@ def order(dsk, dependencies=None):
                                 if len(min_pool) == 1:
                                     inner_stack = min_pool
                                     seen_update(inner_stack)
-                                elif (10 * item_key > 11 * len(min_pool) * len(min_pool) * min_key):
+                                elif 10 * item_key > 11 * len(min_pool) * len(min_pool) * min_key:
                                     # Put all items in min_pool onto inner_stacks.
                                     # I know this is a weird comparison.  Hear me out.
                                     # Although it is often beneficial to put all of the items in `min_pool`
