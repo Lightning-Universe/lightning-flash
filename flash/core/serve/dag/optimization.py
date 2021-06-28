@@ -877,7 +877,7 @@ class SubgraphCallable:
         return is_eq
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __call__(self, *args):
         if not len(args) == len(self.inkeys):
