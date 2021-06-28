@@ -61,10 +61,12 @@ class ClassificationInference(ModelComponent):
 
         return out.argmax()
 
-    def never_should_run(self):
+    @staticmethod
+    def never_should_run():
         raise RuntimeError()
 
-    def method_from_exposed(self, arg):
+    @staticmethod
+    def method_from_exposed(arg):
         return ("method", arg)
 
 

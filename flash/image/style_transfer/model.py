@@ -129,7 +129,8 @@ class StyleTransfer(Task):
 
         self.perceptual_loss = perceptual_loss
 
-    def default_style_image(self) -> torch.Tensor:
+    @staticmethod
+    def default_style_image() -> torch.Tensor:
         return pystiche.demo.images()["paint"].read(size=256)
 
     @staticmethod

@@ -115,7 +115,8 @@ class TabularClassifier(ClassificationTask):
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
         return model
 
-    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+    @staticmethod
+    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """
         This function is used only for debugging usage with CI
         """

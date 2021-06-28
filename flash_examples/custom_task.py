@@ -78,7 +78,8 @@ class NumpyDataSource(DataSource[Tuple[ND, ND]]):
             dataset.num_inputs = data[0].shape[1]
         return [{DefaultDataKeys.INPUT: x, DefaultDataKeys.TARGET: y} for x, y in zip(*data)]
 
-    def predict_load_data(self, data: ND) -> List[Dict[str, Any]]:
+    @staticmethod
+    def predict_load_data(data: ND) -> List[Dict[str, Any]]:
         return [{DefaultDataKeys.INPUT: x} for x in data]
 
 

@@ -82,16 +82,19 @@ class TestDefaultUncollate:
 
     BATCH_SIZE = 3
 
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         batch = torch.rand(2, 1)
         assert default_uncollate(batch) is not None
 
-    def test_tensor_zero(self):
+    @staticmethod
+    def test_tensor_zero():
         batch = torch.tensor(1)
         output = default_uncollate(batch)
         assert_allclose(batch, output)
 
-    def test_tensor_batch(self):
+    @staticmethod
+    def test_tensor_batch():
         batch = torch.rand(2, 1)
         output = default_uncollate(batch)
         assert isinstance(output, list)

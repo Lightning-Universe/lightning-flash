@@ -133,7 +133,8 @@ def test_invalid_expose_inputs():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={"def": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
         _ = ComposeClassInvalidExposeNameKeyword(lr)
@@ -146,7 +147,8 @@ def test_invalid_expose_inputs():
                 pass
 
             @expose(inputs={"param": Number()}, outputs={12: Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
         _ = ComposeClassInvalidExposeNameType(lr)
@@ -159,7 +161,8 @@ def test_invalid_expose_inputs():
                 pass
 
             @expose(inputs=Number(), outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
         _ = ComposeClassInvalidExposeInputsType(lr)
@@ -172,7 +175,8 @@ def test_invalid_expose_inputs():
                 pass
 
             @expose(inputs={}, outputs={"foo": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
         _ = ComposeClassEmptyExposeInputsType(lr)
@@ -207,7 +211,8 @@ def test_invalid_name(lightning_squeezenet1_1_obj):
                 self.model = model
 
             @expose(inputs={"param": Number()}, outputs={"def": Number()})
-            def predict(self, param):
+            @staticmethod
+            def predict(param):
                 return param
 
 
@@ -223,7 +228,8 @@ def test_invalid_config_args(lightning_squeezenet1_1_obj):
             self.config = config
 
         @expose(inputs={"param": Number()}, outputs={"out": Number()})
-        def predict(self, param):
+        @staticmethod
+        def predict(param):
             return param
 
     # not a dict
@@ -250,7 +256,8 @@ def test_invalid_model_args(lightning_squeezenet1_1_obj):
             self.model = model
 
         @expose(inputs={"param": Number()}, outputs={"out": Number()})
-        def predict(self, param):
+        @staticmethod
+        def predict(param):
             return param
 
     # not a valid object type

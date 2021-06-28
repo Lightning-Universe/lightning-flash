@@ -71,7 +71,8 @@ class CachedCostItemWithSlots:
         self._cost = 1
 
     @cached_property
-    def cost(self):
+    @staticmethod
+    def cost():
         """The cost of the item."""
         raise RuntimeError("never called, slots not supported")
 
@@ -80,19 +81,22 @@ class CachedCostItemWithSlots:
 @pytest.mark.skipif(sys.version_info >= (3, 8), reason="Python 3.8+ uses standard library implementation.")
 class TestCachedProperty:
 
-    def test_cached(self):
+    @staticmethod
+    def test_cached():
         item = CachedCostItem()
         assert item.cost == 2
         assert item.cost == 2  # not 3
 
-    def test_cached_attribute_name_differs_from_func_name(self):
+    @staticmethod
+    def test_cached_attribute_name_differs_from_func_name():
         item = OptionallyCachedCostItem()
         assert item.get_cost() == 2
         assert item.cached_cost == 3
         assert item.get_cost() == 4
         assert item.cached_cost == 3
 
-    def test_threaded(self):
+    @staticmethod
+    def test_threaded():
         go = threading.Event()
         item = CachedCostItemWait(go)
 
@@ -111,7 +115,8 @@ class TestCachedProperty:
 
         assert item.cost == 2
 
-    def test_object_with_slots(self):
+    @staticmethod
+    def test_object_with_slots():
         item = CachedCostItemWithSlots()
         with pytest.raises(
             TypeError,
@@ -119,13 +124,15 @@ class TestCachedProperty:
         ):
             item.cost
 
-    def test_immutable_dict(self):
+    @staticmethod
+    def test_immutable_dict():
 
         class MyMeta(type):
             """Test metaclass."""
 
             @cached_property
-            def prop(self):
+            @staticmethod
+            def prop():
                 """Property impossible to cache standard way."""
                 return True
 
@@ -138,7 +145,8 @@ class TestCachedProperty:
         ):
             MyClass.prop
 
-    def test_reuse_different_names(self):
+    @staticmethod
+    def test_reuse_different_names():
         """Disallow this case because decorated function a would not be cached."""
         with pytest.raises(RuntimeError):
 
@@ -153,7 +161,8 @@ class TestCachedProperty:
 
                 b = a
 
-    def test_reuse_same_name(self):
+    @staticmethod
+    def test_reuse_same_name():
         """Reusing a cached_property on different classes under the same name is OK."""
         counter = 0
 
@@ -180,7 +189,8 @@ class TestCachedProperty:
         assert b.cp == 2
         assert a.cp == 1
 
-    def test_set_name_not_called(self):
+    @staticmethod
+    def test_set_name_not_called():
         cp = cached_property(lambda s: None)
 
         class Foo:
@@ -195,17 +205,20 @@ class TestCachedProperty:
             # noinspection PyStatementEffect,PyUnresolvedReferences
             Foo().cp
 
-    def test_access_from_class(self):
+    @staticmethod
+    def test_access_from_class():
         assert isinstance(CachedCostItem.cost, cached_property)
 
-    def test_doc(self):
+    @staticmethod
+    def test_doc():
         assert CachedCostItem.cost.__doc__ == "The cost of the item."
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Validate, that python 3.8 uses standard implementation")
 class TestPy38Plus:
 
-    def test_is(self):
+    @staticmethod
+    def test_is():
         import functools
 
         # "Python 3.8+ should use standard implementation.")

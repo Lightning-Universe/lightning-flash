@@ -340,7 +340,8 @@ class Preprocess(BasePreprocess, Properties):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
-    def default_transforms(self) -> Optional[Dict[str, Callable]]:
+    @staticmethod
+    def default_transforms() -> Optional[Dict[str, Callable]]:
         """ The default transforms to use. Will be overridden by transforms passed to the ``__init__``. """
         return None
 
@@ -467,28 +468,33 @@ class Postprocess(Properties):
         self._saved_samples = 0
         self._save_path = save_path
 
-    def per_batch_transform(self, batch: Any) -> Any:
+    @staticmethod
+    def per_batch_transform(batch: Any) -> Any:
         """Transforms to apply on a whole batch before uncollation to individual samples.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return batch
 
-    def per_sample_transform(self, sample: Any) -> Any:
+    @staticmethod
+    def per_sample_transform(sample: Any) -> Any:
         """Transforms to apply to a single sample after splitting up the batch.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return sample
 
-    def uncollate(self, batch: Any) -> Any:
+    @staticmethod
+    def uncollate(batch: Any) -> Any:
         """Uncollates a batch into single samples. Tries to preserve the type whereever possible."""
         return default_uncollate(batch)
 
-    def save_data(self, data: Any, path: str) -> None:
+    @staticmethod
+    def save_data(data: Any, path: str) -> None:
         """Saves all data together to a single path.
         """
         torch.save(data, path)
 
-    def save_sample(self, sample: Any, path: str) -> None:
+    @staticmethod
+    def save_sample(sample: Any, path: str) -> None:
         """Saves each sample individually to a given path."""
         torch.save(sample, path)
 
@@ -521,7 +527,8 @@ class Serializer(Properties):
         """Disable serialization."""
         self._is_enabled = False
 
-    def serialize(self, sample: Any) -> Any:
+    @staticmethod
+    def serialize(sample: Any) -> Any:
         """Serialize the given sample into the desired output format.
 
         Args:
