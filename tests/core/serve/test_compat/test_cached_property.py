@@ -71,8 +71,7 @@ class CachedCostItemWithSlots:
         self._cost = 1
 
     @cached_property
-    @staticmethod
-    def cost():
+    def cost(self):
         """The cost of the item."""
         raise RuntimeError("never called, slots not supported")
 
@@ -131,8 +130,7 @@ class TestCachedProperty:
             """Test metaclass."""
 
             @cached_property
-            @staticmethod
-            def prop():
+            def prop(self):
                 """Property impossible to cache standard way."""
                 return True
 
