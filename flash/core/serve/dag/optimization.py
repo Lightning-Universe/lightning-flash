@@ -250,10 +250,7 @@ def inline(dsk, keys=None, inline_constants=True, dependencies=None):
     for key in replaceorder:
         val = dsk[key]
         for dep in keys & dependencies[key]:
-            if dep in keysubs:
-                replace = keysubs[dep]
-            else:
-                replace = dsk[dep]
+            replace = keysubs.get(dep, dsk[dep])
             val = subs(val, dep, replace)
         keysubs[key] = val
 
