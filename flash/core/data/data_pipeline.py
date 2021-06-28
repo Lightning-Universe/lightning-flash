@@ -614,4 +614,4 @@ class _StageOrchestrator:
         return ret_val
 
     def is_empty(self):
-        return all([v is None for v in self._stage_mapping.values()]) or not self._stage_mapping
+        return all(v is None for v in self._stage_mapping.values()) or not self._stage_mapping

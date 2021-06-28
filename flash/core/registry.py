@@ -102,7 +102,7 @@ class FlashRegistry:
 
     def _find_matching_index(self, item: _REGISTERED_FUNCTION) -> Optional[int]:
         for idx, fn in enumerate(self.functions):
-            if all([fn[k] == item[k] for k in ("fn", "name", "metadata")]):
+            if all(fn[k] == item[k] for k in ("fn", "name", "metadata")):
                 return idx
 
     def __call__(
