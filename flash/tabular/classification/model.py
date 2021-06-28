@@ -63,7 +63,7 @@ class TabularClassifier(ClassificationTask):
     ):
         self.save_hyperparameters()
 
-        cat_dims, cat_emb_dim = zip(*embedding_sizes) if len(embedding_sizes) else ([], [])
+        cat_dims, cat_emb_dim = zip(*embedding_sizes) if embedding_sizes else ([], [])
         model = TabNet(
             input_dim=num_features,
             output_dim=num_classes,
