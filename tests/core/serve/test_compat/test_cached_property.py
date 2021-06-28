@@ -65,7 +65,7 @@ class CachedCostItemWait:
 class CachedCostItemWithSlots:
     """Slots implemented without __dict__."""
 
-    __slots__ = "_cost"
+    __slots__ = ["_cost"]
 
     def __init__(self):
         self._cost = 1
