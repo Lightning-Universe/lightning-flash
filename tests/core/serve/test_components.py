@@ -228,8 +228,7 @@ def test_invalid_config_args(lightning_squeezenet1_1_obj):
             self.config = config
 
         @expose(inputs={"param": Number()}, outputs={"out": Number()})
-        @staticmethod
-        def predict(param):
+        def predict(self, param):
             return param
 
     # not a dict
