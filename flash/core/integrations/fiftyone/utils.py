@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Dict, List, Optional, Union, TYPE_CHECKING
+from typing import Dict, List, Optional, TYPE_CHECKING, Union
 
 import flash
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import

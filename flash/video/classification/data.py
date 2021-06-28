@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Type, Union, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -28,12 +28,7 @@ from flash.core.data.data_source import (
     PathsDataSource,
 )
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import (
-    _FIFTYONE_AVAILABLE,
-    _KORNIA_AVAILABLE,
-    _PYTORCHVIDEO_AVAILABLE,
-    lazy_import,
-)
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:

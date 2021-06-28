@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Optional, Tuple, Union, TYPE_CHECKING
+from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -19,12 +19,7 @@ import torch
 import flash
 from flash.core.data.data_source import DefaultDataKeys, ImageLabelsMap
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import (
-    _FIFTYONE_AVAILABLE,
-    _KORNIA_AVAILABLE,
-    _MATPLOTLIB_AVAILABLE,
-    lazy_import,
-)
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE, lazy_import
 
 Segmentation = None
 if _FIFTYONE_AVAILABLE:

@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union, TYPE_CHECKING
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import pytorch_lightning as pl
