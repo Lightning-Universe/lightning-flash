@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type,
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torchmetrics import IoU
+from torchmetrics import IoU, Metric
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
@@ -62,7 +62,10 @@ class SemanticSegmentation(ClassificationTask):
         pretrained: Use a pretrained backbone.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training.
-        metrics: Metrics to compute for training and evaluation.
+        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
+            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
+            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
+            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.IOU`.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
@@ -86,7 +89,7 @@ class SemanticSegmentation(ClassificationTask):
         pretrained: bool = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
-        metrics: Optional[Union[Callable, Mapping, Sequence, None]] = None,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
