@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Dict, List, Optional, Union, TYPE_CHECKING
 
 import flash
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
 Label, Session = None, None
 if _FIFTYONE_AVAILABLE:
