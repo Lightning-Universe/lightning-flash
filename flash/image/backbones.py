@@ -21,7 +21,7 @@ from typing import Tuple
 import torch
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_warn
-from torch import nn as nn
+from torch import nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
