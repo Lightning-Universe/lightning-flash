@@ -1,19 +1,16 @@
 from itertools import chain
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Union
 
 import flash
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+Label, Session = None, None
 if _FIFTYONE_AVAILABLE:
-    import fiftyone as fo
-    from fiftyone.core.labels import Label
-    from fiftyone.core.session import Session
+    fo = lazy_import("fiftyone")
+    if TYPE_CHECKING:
+        from fiftyone import Label, Session
 else:
     fo = None
-    SampleCollection = None
-    Label = None
-    Sample = None
-    Session = None
 
 
 def visualize(

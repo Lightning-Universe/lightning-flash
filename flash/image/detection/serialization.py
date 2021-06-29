@@ -11,18 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+Detections = None
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.labels import Detection, Detections
+    fo = lazy_import("fiftyone")
+    if TYPE_CHECKING:
+        from fiftyone import Detections
 else:
-    Detection, Detections = None, None
+    fo = None
 
 
 class DetectionLabels(Serializer):
@@ -100,12 +103,12 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 label = str(int(label))
 
-            detections.append(Detection(
+            detections.append(fo.Detection(
                 label=label,
                 bounding_box=box,
                 confidence=confidence,
             ))
-        fo_predictions = Detections(detections=detections)
+        fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}

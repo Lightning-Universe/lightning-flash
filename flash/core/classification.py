@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_CHECKING, Union
 
 import torch
 import torch.nn.functional as F
@@ -21,12 +21,15 @@ from pytorch_lightning.utilities import rank_zero_warn
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
 from flash.core.model import Task
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+Classification, Classifications = None, None
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.labels import Classification, Classifications
+    fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.labels import Classification, Classifications
 else:
-    Classification, Classifications = None, None
+    fol = None
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -250,12 +253,12 @@ class FiftyOneLabels(ClassificationSerializer):
             if self.multi_label:
                 classifications = []
                 for idx in classes:
-                    fo_cls = Classification(
+                    fo_cls = fol.Classification(
                         label=labels[idx],
                         confidence=probabilities[idx],
                     )
                     classifications.append(fo_cls)
-                fo_predictions = Classifications(
+                fo_predictions = fol.Classifications(
                     classifications=classifications,
                     logits=logits,
                 )
@@ -264,7 +267,7 @@ class FiftyOneLabels(ClassificationSerializer):
                 if self.threshold is not None and confidence < self.threshold:
                     fo_predictions = None
                 else:
-                    fo_predictions = Classification(
+                    fo_predictions = fol.Classification(
                         label=labels[classes],
                         confidence=confidence,
                         logits=logits,
@@ -275,12 +278,12 @@ class FiftyOneLabels(ClassificationSerializer):
             if self.multi_label:
                 classifications = []
                 for idx in classes:
-                    fo_cls = Classification(
+                    fo_cls = fol.Classification(
                         label=str(idx),
                         confidence=probabilities[idx],
                     )
                     classifications.append(fo_cls)
-                fo_predictions = Classifications(
+                fo_predictions = fol.Classifications(
                     classifications=classifications,
                     logits=logits,
                 )
@@ -289,7 +292,7 @@ class FiftyOneLabels(ClassificationSerializer):
                 if self.threshold is not None and confidence < self.threshold:
                     fo_predictions = None
                 else:
-                    fo_predictions = Classification(
+                    fo_predictions = fol.Classification(
                         label=str(classes),
                         confidence=confidence,
                         logits=logits,

@@ -27,6 +27,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -41,13 +42,15 @@ from torch.utils.data.dataset import Dataset
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
 
+SampleCollection = None
 if _FIFTYONE_AVAILABLE:
-    from fiftyone.core.collections import SampleCollection
-    from fiftyone.core.labels import Label
+    fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
 else:
-    Label, SampleCollection = None, None
+    fol = None
 
 
 # Credit to the PyTorchVision Team:
@@ -489,7 +492,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
     @property
     def label_cls(self):
-        return Label
+        return fol.Label
 
     def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
