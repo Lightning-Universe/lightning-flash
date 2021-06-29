@@ -87,8 +87,15 @@ class Trainer(PlTrainer):
 
         self.serve_sanity_check = serve_sanity_check
 
+    def _run_sanity_check(self, ref_model):
+        if hasattr(super(), "_run_sanity_check"):
+            super()._run_sanity_check(ref_model)
+
+        self.run_sanity_check(ref_model)
+
     def run_sanity_check(self, ref_model):
-        super().run_sanity_check(ref_model)
+        if hasattr(super(), "run_sanity_check"):
+            super().run_sanity_check(ref_model)
 
         if self.serve_sanity_check and ref_model.is_servable and _SERVE_AVAILABLE:
             ref_model.run_serve_sanity_check()
