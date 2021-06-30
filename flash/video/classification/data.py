@@ -281,7 +281,7 @@ class VideoClassificationPreprocess(Preprocess):
     def default_transforms(self) -> Dict[str, Callable]:
         if self.training:
             post_tensor_transform = [
-                RandomCrop(244),
+                RandomCrop(244, pad_if_needed=True),
                 RandomHorizontalFlip(p=0.5),
             ]
         else:
