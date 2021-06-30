@@ -181,6 +181,6 @@ class StyleTransfer(Task):
     def test_step(self, batch: Any, batch_idx: int) -> NoReturn:
         raise_not_supported("test")
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int) -> Any:
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         input_image = batch[DefaultDataKeys.INPUT]
         return self(input_image)

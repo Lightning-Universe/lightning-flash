@@ -16,7 +16,7 @@ import warnings
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from torchmetrics import Metric
+from torchmetrics import Accuracy, F1, Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
@@ -65,10 +65,11 @@ class TextClassifier(ClassificationTask):
         os.environ["PYTHONWARNINGS"] = "ignore"
 
         super().__init__(
+            num_classes,
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            metrics=metrics,
+            metrics=metrics or (F1(num_classes) if multi_label else Accuracy()),
             learning_rate=learning_rate,
             multi_label=multi_label,
             serializer=serializer or Labels(multi_label=multi_label),

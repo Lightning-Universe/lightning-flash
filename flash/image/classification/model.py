@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 import torch
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Metric
+from torchmetrics import Accuracy, F1, Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
@@ -93,7 +93,7 @@ class ImageClassifier(ClassificationTask):
             optimizer_kwargs=optimizer_kwargs,
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
-            metrics=metrics,
+            metrics=metrics or F1(num_classes) if multi_label else Accuracy(),
             learning_rate=learning_rate,
             multi_label=multi_label,
             serializer=serializer or Labels(),

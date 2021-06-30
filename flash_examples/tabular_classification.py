@@ -11,18 +11,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.classification import Labels
+import flash
 from flash.core.data.utils import download_data
-from flash.tabular import TabularClassifier
+from flash.tabular import TabularClassifier, TabularData
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
+# 1. Create the DataModule
+download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
 
-# 2. Load the model from a checkpoint
-model = TabularClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt")
+datamodule = TabularData.from_csv(
+    ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+    "Fare",
+    target_fields="Survived",
+    train_file="data/titanic/titanic.csv",
+    val_split=0.1,
+)
 
-model.serializer = Labels(['Did not survive', 'Survived'])
+# 2. Build the task
+model = TabularClassifier.from_data(datamodule)
 
-# 3. Generate predictions from a sheet file! Who would survive?
+# 3. Create the trainer and train the model
+trainer = flash.Trainer(max_epochs=3)
+trainer.fit(model, datamodule=datamodule)
+
+# 4. Generate predictions from a CSV
 predictions = model.predict("data/titanic/titanic.csv")
 print(predictions)
+
+# 5. Save the model!
+trainer.save_checkpoint("tabular_classification_model.pt")

@@ -11,19 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pytorch_lightning import Trainer
-
+from flash import Trainer
 from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
+# 1. Create the DataModule
+download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "./data/")
 
-# 2. Load the model from a checkpoint
-model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
+datamodule = SummarizationData.from_csv(
+    "input",
+    "target",
+    train_file="data/xsum/train.csv",
+    val_file="data/xsum/valid.csv",
+)
 
-# 2a. Summarize an article!
-predictions = model.predict([
+# 2. Build the task
+model = SummarizationTask()
+
+# 3. Create the trainer and finetune the model
+trainer = Trainer(max_epochs=3)
+trainer.finetune(model, datamodule=datamodule)
+
+# 4. Summarize some text!
+predictions = model.predict(
     """
     Camilla bought a box of mangoes with a Brixton Â£10 note, introduced last year to try to keep the money of local
     people within the community.The couple were surrounded by shoppers as they walked along Electric Avenue.
@@ -44,13 +54,8 @@ predictions = model.predict([
     The trust hopes to restore and refurbish the building,
     where once Jimi Hendrix and The Clash played, as a new community and business centre."
     """
-])
+)
 print(predictions)
 
-# 2b. Or generate summaries from a sheet file!
-datamodule = SummarizationData.from_csv(
-    "input",
-    predict_file="data/xsum/predict.csv",
-)
-predictions = Trainer().predict(model, datamodule=datamodule)
-print(predictions)
+# 5. Save the model!
+trainer.save_checkpoint("summarization_model_xsum.pt")
