@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, TYPE_CHECKING, TypeVar
+from typing import Dict, Optional, Type, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 
-if TYPE_CHECKING:  # pragma: no-cover
-    from flash.core.data.data_pipeline import DataPipelineState
+import flash
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -25,7 +24,6 @@ class ProcessState:
     """
     Base class for all process states
     """
-    pass
 
 
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
@@ -38,7 +36,7 @@ class Properties:
 
         self._running_stage: Optional[RunningStage] = None
         self._current_fn: Optional[str] = None
-        self._data_pipeline_state: Optional['DataPipelineState'] = None
+        self._data_pipeline_state: Optional['flash.core.data.data_pipeline.DataPipelineState'] = None
         self._state: Dict[Type[ProcessState], ProcessState] = {}
 
     def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
@@ -46,15 +44,14 @@ class Properties:
             return self._state[state_type]
         if self._data_pipeline_state is not None:
             return self._data_pipeline_state.get_state(state_type)
-        else:
-            return None
+        return None
 
     def set_state(self, state: ProcessState):
         self._state[type(state)] = state
         if self._data_pipeline_state is not None:
             self._data_pipeline_state.set_state(state)
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
         self._data_pipeline_state = data_pipeline_state
         for state in self._state.values():
             self._data_pipeline_state.set_state(state)

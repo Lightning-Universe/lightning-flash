@@ -204,7 +204,7 @@ _MOCK_TRANSFORM = Mock()
 def test_merge_transforms(base_transforms, additional_transforms, expected_result):
     result = merge_transforms(base_transforms, additional_transforms)
     assert result.keys() == expected_result.keys()
-    for key in result.keys():
+    for key in result:
         if result[key] == _MOCK_TRANSFORM:
             assert expected_result[key] == _MOCK_TRANSFORM
         elif isinstance(result[key], nn.Sequential):

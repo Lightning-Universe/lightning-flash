@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
-from pytorch_lightning.utilities.distributed import rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
 from torch.nn import functional as F
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, Metric
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
@@ -32,7 +32,7 @@ else:
 
 
 class ImageEmbedder(Task):
-    """Task that classifies images.
+    """Task that embeds images.
 
     Args:
         embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
@@ -40,7 +40,10 @@ class ImageEmbedder(Task):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation.
+        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
+            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
+            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
+            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
 
@@ -48,20 +51,19 @@ class ImageEmbedder(Task):
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
 
+    required_extras: str = "image"
+
     def __init__(
         self,
         embedding_dim: Optional[int] = None,
-        backbone: str = "swav-imagenet",
+        backbone: str = "resnet101",
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = (Accuracy()),
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
         learning_rate: float = 1e-3,
         pooling_fn: Callable = torch.max
     ):
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
-
         super().__init__(
             model=None,
             loss_fn=loss_fn,
@@ -86,16 +88,15 @@ class ImageEmbedder(Task):
                 nn.Flatten(),
                 nn.Linear(num_features, embedding_dim),
             )
-            rank_zero_warn('embedding_dim. Remember to finetune first!')
+            rank_zero_warn('Adding linear layer on top of backbone. Remember to finetune first before using!')
 
     def apply_pool(self, x):
-        if self.pooling_fn == torch.max:
-            # torch.max also returns argmax
-            x = self.pooling_fn(x, dim=-1)[0]
-            x = self.pooling_fn(x, dim=-1)[0]
-        else:
-            x = self.pooling_fn(x, dim=-1)
-            x = self.pooling_fn(x, dim=-1)
+        x = self.pooling_fn(x, dim=-1)
+        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+            x = x[0]
+        x = self.pooling_fn(x, dim=-1)
+        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+            x = x[0]
         return x
 
     def forward(self, x) -> torch.Tensor:

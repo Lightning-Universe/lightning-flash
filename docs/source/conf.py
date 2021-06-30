@@ -67,6 +67,12 @@ extensions = [
     'sphinx_togglebutton',
 ]
 
+# autodoc: Default to members and undoc-members
+autodoc_default_options = {"members": True}
+
+# autodoc: Don't inherit docstrings (e.g. for nn.Module.forward)
+autodoc_inherit_docstrings = False
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -92,6 +98,7 @@ intersphinx_mapping = {
     "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
     "pytorchvideo": ("https://pytorchvideo.readthedocs.io/en/latest/", None),
     "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
+    "fiftyone": ("https://voxel51.com/docs/fiftyone/", "fiftyone_objects.inv"),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -152,6 +159,7 @@ PACKAGE_MAPPING = {
     'rouge-score': 'rouge_score',
     'lightning-bolts': 'pl_bolts',
     'pytorch-tabnet': 'pytorch_tabnet',
+    'pyDeprecate': 'deprecate',
 }
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:

@@ -275,80 +275,6 @@ All we need to do is attach our :class:`~flash.core.data.process.Preprocess` cla
         # Set ``preprocess_cls`` with your custom ``preprocess``.
         preprocess_cls = ImageClassificationPreprocess
 
-*************
-API reference
-*************
-
-.. _data_source:
-
-DataSource
-__________
-
-.. autoclass:: flash.core.data.data_source.DataSource
-    :members:
-
-.. autoclass:: flash.core.data.data_source.DefaultDataSources
-    :members:
-    :undoc-members:
-
-.. autoclass:: flash.core.data.data_source.DefaultDataKeys
-    :members:
-    :undoc-members:
-
-
-----------
-
-.. _preprocess:
-
-Preprocess
-__________
-
-.. autoclass:: flash.core.data.process.Preprocess
-    :members:
-
-
-----------
-
-.. _postprocess:
-
-Postprocess
-___________
-
-
-.. autoclass:: flash.core.data.process.Postprocess
-    :members:
-
-
-----------
-
-.. _serializer:
-
-Serializer
-___________
-
-
-.. autoclass:: flash.core.data.process.Serializer
-    :members:
-
-
-----------
-
-.. _datapipeline:
-
-DataPipeline
-____________
-
-.. autoclass:: flash.core.data.data_pipeline.DataPipeline
-    :members:
-
-----------
-
-DataModule
-__________
-
-.. autoclass:: flash.core.data.data_module.DataModule
-    :members:
-
 
 ******************************
 How it works behind the scenes
@@ -393,7 +319,7 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`.
+    # This will be wrapped into a :class:`~flash.core.data.batch._Preprocessor`.
     def collate_fn(samples: Sequence[Any]) -> Any:
 
         # This will be wrapped into a :class:`~flash.core.data.batch._Sequential`
@@ -423,7 +349,7 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.batch._PreProcessor`
+    # This will be wrapped into a :class:`~flash.core.data.batch._Preprocessor`
     def collate_fn(samples: Sequence[Any]) -> Any:
 
         # if ``per_batch_transform`` hook is overridden, those functions below will be no-ops
@@ -459,7 +385,7 @@ Here is the pseudo-code:
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.batch._PostProcessor`
+    # This will be wrapped into a :class:`~flash.core.data.batch._Postprocessor`
     def uncollate_fn(batch: Any) -> Any:
 
         batch = per_batch_transform(batch)

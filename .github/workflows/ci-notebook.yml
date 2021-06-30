@@ -58,6 +58,8 @@ jobs:
         key: flash-datasets_predict
 
     - name: Run Notebooks
+      env:
+          FIFTYONE_DO_NOT_TRACK: true
       run: |
         # jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
         jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb

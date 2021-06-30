@@ -56,29 +56,3 @@ You can make predictions on a pretrained model, that has already been trained fo
 .. literalinclude:: ../../../flash_examples/predict/tabular_classification.py
     :language: python
     :lines: 14-
-
-------
-
-*************
-API reference
-*************
-
-.. _tabular_classifier:
-
-TabularClassifier
------------------
-
-.. autoclass:: flash.tabular.TabularClassifier
-    :members:
-    :exclude-members: forward
-
-.. _tabular_data:
-
-TabularData
------------
-
-.. autoclass:: flash.tabular.TabularData
-
-.. automethod:: flash.tabular.TabularData.from_csv
-
-.. automethod:: flash.tabular.TabularData.from_data_frame

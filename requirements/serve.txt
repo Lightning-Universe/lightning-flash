@@ -1,0 +1,19 @@
+numpy
+pillow
+pyyaml
+cytoolz
+graphviz
+tqdm
+# until 1.0 release fastapi docs recommend pinning to MINOR releases.
+# https://fastapi.tiangolo.com/deployment/#fastapi-versions
+fastapi>=0.65.2,<0.66.0
+# to have full feature control of fastapi, manually install optional
+# dependencies rather than installing fastapi[all]
+# https://fastapi.tiangolo.com/#optional-dependencies
+pydantic>1.8.1,<2.0.0
+starlette==0.14.2
+uvicorn[standard]>=0.12.0,<0.14.0
+aiofiles
+jinja2
+importlib-metadata>=0.12,<3;python_version<"3.8"
+torchvision

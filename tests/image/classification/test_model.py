@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import re
+from unittest import mock
+
 import pytest
 import torch
 
@@ -19,6 +23,8 @@ from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ImageClassifier
+from flash.image.classification.data import ImageClassificationPreprocess
+from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
 
@@ -53,7 +59,7 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
 # ==============================
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone",
     [
@@ -71,13 +77,13 @@ def test_init_train(tmpdir, backbone):
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_non_existent_backbone():
     with pytest.raises(KeyError):
         ImageClassifier(2, "i am never going to implement this lol")
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_freeze():
     model = ImageClassifier(2)
     model.freeze()
@@ -85,7 +91,7 @@ def test_freeze():
         assert p.requires_grad is False
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_unfreeze():
     model = ImageClassifier(2)
     model.unfreeze()
@@ -93,7 +99,7 @@ def test_unfreeze():
         assert p.requires_grad is True
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_multilabel(tmpdir):
 
     num_classes = 4
@@ -108,3 +114,37 @@ def test_multilabel(tmpdir):
     assert (torch.tensor(predictions) < 0).sum() == 0
     assert len(predictions[0]) == num_classes == len(label)
     assert len(torch.unique(label)) <= 2
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32), ))])
+def test_jit(tmpdir, jitter, args):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = ImageClassifier(2)
+    model.eval()
+
+    model = jitter(model, *args)
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(torch.rand(1, 3, 32, 32))
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 2])
+
+
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@mock.patch("flash._IS_TESTING", True)
+def test_serve():
+    model = ImageClassifier(2)
+    # TODO: Currently only servable once a preprocess has been attached
+    model._preprocess = ImageClassificationPreprocess()
+    model.eval()
+    model.serve()
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
+        ImageClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")

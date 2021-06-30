@@ -61,22 +61,3 @@ Finally, create a Flash :class:`flash.core.trainer.Trainer` and pass it the mode
     :hide:
 
     ...
-
-
-------
-
-*************
-API reference
-*************
-
-StyleTransfer
--------------
-
-.. autoclass:: flash.image.StyleTransfer
-    :members:
-    :exclude-members: forward
-
-StyleTransferData
------------------
-
-.. autoclass:: flash.image.StyleTransferData

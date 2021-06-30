@@ -14,7 +14,7 @@ from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 if _SKLEARN_AVAILABLE:
     from sklearn import datasets
 else:
-    raise ModuleNotFoundError("Please, pip install scikit-learn")
+    raise ModuleNotFoundError("Please pip install scikit-learn")
 
 seed_everything(42)
 
@@ -78,7 +78,8 @@ class NumpyDataSource(DataSource[Tuple[ND, ND]]):
             dataset.num_inputs = data[0].shape[1]
         return [{DefaultDataKeys.INPUT: x, DefaultDataKeys.TARGET: y} for x, y in zip(*data)]
 
-    def predict_load_data(self, data: ND) -> List[Dict[str, Any]]:
+    @staticmethod
+    def predict_load_data(data: ND) -> List[Dict[str, Any]]:
         return [{DefaultDataKeys.INPUT: x} for x in data]
 
 

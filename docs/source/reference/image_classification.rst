@@ -93,27 +93,3 @@ By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image c
     task = ImageClassifier(num_classes=2, backbone="resnet34")
 
 .. include:: ../common/image_backbones.rst
-
-------
-
-*************
-API reference
-*************
-
-.. _image_classifier:
-
-ImageClassifier
----------------
-
-.. autoclass:: flash.image.ImageClassifier
-    :members:
-    :exclude-members: forward
-
-.. _image_classification_data:
-
-ImageClassificationData
------------------------
-
-.. autoclass:: flash.image.ImageClassificationData
-
-.. autoclass:: flash.image.ImageClassificationPreprocess

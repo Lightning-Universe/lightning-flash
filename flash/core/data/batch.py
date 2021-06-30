@@ -27,8 +27,8 @@ from flash.core.data.utils import (
     CurrentRunningStageContext,
 )
 
-if TYPE_CHECKING:  # pragma: no-cover
-    from flash.core.data.process import Preprocess
+if TYPE_CHECKING:
+    from flash.core.data.process import Deserializer, Preprocess, Serializer
 
 
 class _Sequential(torch.nn.Module):
@@ -42,8 +42,8 @@ class _Sequential(torch.nn.Module):
     def __init__(
         self,
         preprocess: 'Preprocess',
-        pre_tensor_transform: Callable,
-        to_tensor_transform: Callable,
+        pre_tensor_transform: Optional[Callable],
+        to_tensor_transform: Optional[Callable],
         post_tensor_transform: Callable,
         stage: RunningStage,
         assert_contains_tensor: bool = False,
@@ -66,20 +66,22 @@ class _Sequential(torch.nn.Module):
         self.callback.on_load_sample(sample, self.stage)
 
         with self._current_stage_context:
-            with self._pre_tensor_transform_context:
-                sample = self.pre_tensor_transform(sample)
-                self.callback.on_pre_tensor_transform(sample, self.stage)
+            if self.pre_tensor_transform is not None:
+                with self._pre_tensor_transform_context:
+                    sample = self.pre_tensor_transform(sample)
+                    self.callback.on_pre_tensor_transform(sample, self.stage)
 
-            with self._to_tensor_transform_context:
-                sample = self.to_tensor_transform(sample)
-                self.callback.on_to_tensor_transform(sample, self.stage)
+            if self.to_tensor_transform is not None:
+                with self._to_tensor_transform_context:
+                    sample = self.to_tensor_transform(sample)
+                    self.callback.on_to_tensor_transform(sample, self.stage)
 
-            if self.assert_contains_tensor:
-                if not _contains_any_tensor(sample):
-                    raise MisconfigurationException(
-                        "When ``to_tensor_transform`` is overriden, "
-                        "``DataPipeline`` expects the outputs to be ``tensors``"
-                    )
+                if self.assert_contains_tensor:
+                    if not _contains_any_tensor(sample):
+                        raise MisconfigurationException(
+                            "When ``to_tensor_transform`` is overriden, "
+                            "``DataPipeline`` expects the outputs to be ``tensors``"
+                        )
 
             with self._post_tensor_transform_context:
                 sample = self.post_tensor_transform(sample)
@@ -98,7 +100,56 @@ class _Sequential(torch.nn.Module):
         )
 
 
-class _PreProcessor(torch.nn.Module):
+class _DeserializeProcessor(torch.nn.Module):
+
+    def __init__(
+        self,
+        deserializer: 'Deserializer',
+        preprocess: 'Preprocess',
+        pre_tensor_transform: Callable,
+        to_tensor_transform: Callable,
+    ):
+        super().__init__()
+        self.preprocess = preprocess
+        self.callback = ControlFlow(self.preprocess.callbacks)
+        self.deserializer = convert_to_modules(deserializer)
+        self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
+        self.to_tensor_transform = convert_to_modules(to_tensor_transform)
+
+        self._current_stage_context = CurrentRunningStageContext(RunningStage.PREDICTING, preprocess, reset=False)
+        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", preprocess)
+        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", preprocess)
+
+    def forward(self, sample: str):
+
+        sample = self.deserializer(sample)
+
+        with self._current_stage_context:
+            with self._pre_tensor_transform_context:
+                sample = self.pre_tensor_transform(sample)
+                self.callback.on_pre_tensor_transform(sample, RunningStage.PREDICTING)
+
+            with self._to_tensor_transform_context:
+                sample = self.to_tensor_transform(sample)
+                self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
+
+        return sample
+
+
+class _SerializeProcessor(torch.nn.Module):
+
+    def __init__(
+        self,
+        serializer: 'Serializer',
+    ):
+        super().__init__()
+        self.serializer = convert_to_modules(serializer)
+
+    def forward(self, sample):
+        return self.serializer(sample)
+
+
+class _Preprocessor(torch.nn.Module):
     """
         This class is used to encapsultate the following functions of a Preprocess Object:
         Inside a worker:
@@ -145,8 +196,8 @@ class _PreProcessor(torch.nn.Module):
         self._collate_context = CurrentFuncContext("collate", preprocess)
         self._per_batch_transform_context = CurrentFuncContext(f"per_batch_transform{extension}", preprocess)
 
+    @staticmethod
     def _extract_metadata(
-        self,
         samples: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
         metadata = [s.pop(DefaultDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
@@ -164,6 +215,10 @@ class _PreProcessor(torch.nn.Module):
             if self.apply_per_sample_transform:
                 with self._per_sample_transform_context:
                     _samples = []
+
+                    if isinstance(samples, Mapping):
+                        samples = [samples]
+
                     for sample in samples:
                         sample = self.per_sample_transform(sample)
                         if self.on_device:
@@ -175,7 +230,7 @@ class _PreProcessor(torch.nn.Module):
                 with self._collate_context:
                     samples, metadata = self._extract_metadata(samples)
                     samples = self.collate_fn(samples)
-                    if metadata:
+                    if metadata and isinstance(samples, dict):
                         samples[DefaultDataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
 
@@ -190,7 +245,7 @@ class _PreProcessor(torch.nn.Module):
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown
         return (
-            "_PreProcessor:\n"
+            "_Preprocessor:\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
             f"\t(collate_fn): {str(self.collate_fn)}\n"
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
@@ -200,7 +255,7 @@ class _PreProcessor(torch.nn.Module):
         )
 
 
-class _PostProcessor(torch.nn.Module):
+class _Postprocessor(torch.nn.Module):
     """
         This class is used to encapsultate the following functions of a Postprocess Object:
         Inside main process:
@@ -210,6 +265,7 @@ class _PostProcessor(torch.nn.Module):
             per_sample_transform: Function to transform an individual sample
             save_fn: Function to save all data
             save_per_sample: Function to save an individual sample
+            is_serving: Whether the Postprocessor is used in serving mode.
     """
 
     def __init__(
@@ -219,7 +275,8 @@ class _PostProcessor(torch.nn.Module):
         per_sample_transform: Callable,
         serializer: Optional[Callable],
         save_fn: Optional[Callable] = None,
-        save_per_sample: bool = False
+        save_per_sample: bool = False,
+        is_serving: bool = False,
     ):
         super().__init__()
         self.uncollate_fn = convert_to_modules(uncollate_fn)
@@ -228,11 +285,30 @@ class _PostProcessor(torch.nn.Module):
         self.serializer = convert_to_modules(serializer)
         self.save_fn = convert_to_modules(save_fn)
         self.save_per_sample = convert_to_modules(save_per_sample)
+        self.is_serving = is_serving
+
+    @staticmethod
+    def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
+        if isinstance(batch, Mapping):
+            return batch, batch.get(DefaultDataKeys.METADATA, None)
+        return batch, None
 
     def forward(self, batch: Sequence[Any]):
+        batch, metadata = self._extract_metadata(batch)
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
+        if metadata:
+            for sample, sample_metadata in zip(uncollated, metadata):
+                sample[DefaultDataKeys.METADATA] = sample_metadata
 
-        final_preds = type(uncollated)([self.serializer(self.per_sample_transform(sample)) for sample in uncollated])
+        final_preds = [self.per_sample_transform(sample) for sample in uncollated]
+
+        if self.serializer is not None:
+            final_preds = [self.serializer(sample) for sample in final_preds]
+
+        if isinstance(uncollated, Tensor) and isinstance(final_preds[0], Tensor):
+            final_preds = torch.stack(final_preds)
+        else:
+            final_preds = type(final_preds)(final_preds)
 
         if self.save_fn:
             if self.save_per_sample:
@@ -240,12 +316,11 @@ class _PostProcessor(torch.nn.Module):
                     self.save_fn(pred)
             else:
                 self.save_fn(final_preds)
-        else:
-            return final_preds
+        return final_preds
 
     def __str__(self) -> str:
         return (
-            "_PostProcessor:\n"
+            "_Postprocessor:\n"
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
             f"\t(uncollate_fn): {str(self.uncollate_fn)}\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
@@ -268,13 +343,13 @@ def default_uncollate(batch: Any):
             return batch
         return list(torch.unbind(batch, 0))
 
-    elif isinstance(batch, Mapping):
+    if isinstance(batch, Mapping):
         return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
 
-    elif isinstance(batch, tuple) and hasattr(batch, '_fields'):  # namedtuple
+    if isinstance(batch, tuple) and hasattr(batch, '_fields'):  # namedtuple
         return [batch_type(*default_uncollate(sample)) for sample in zip(*batch)]
 
-    elif isinstance(batch, Sequence) and not isinstance(batch, str):
+    if isinstance(batch, Sequence) and not isinstance(batch, str):
         return [default_uncollate(sample) for sample in batch]
 
     return batch

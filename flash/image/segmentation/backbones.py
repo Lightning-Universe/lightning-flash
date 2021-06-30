@@ -11,24 +11,48 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch.nn as nn
+from functools import partial
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.image.backbones import catch_url_error
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.models import mobilenetv3, resnet
+
+MOBILENET_MODELS = ["mobilenet_v3_large"]
+RESNET_MODELS = ["resnet50", "resnet101"]
 
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
 
-    @SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet50")
-    def load_torchvision_fcn_resnet50(num_classes: int, pretrained: bool = True) -> nn.Module:
-        model = torchvision.models.segmentation.fcn_resnet50(pretrained=pretrained)
-        model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-        return model
+    def _load_resnet(model_name: str, pretrained: bool = True):
+        backbone = resnet.__dict__[model_name](
+            pretrained=pretrained,
+            replace_stride_with_dilation=[False, True, True],
+        )
+        return backbone
 
-    @SEMANTIC_SEGMENTATION_BACKBONES(name="torchvision/fcn_resnet101")
-    def load_torchvision_fcn_resnet101(num_classes: int, pretrained: bool = True) -> nn.Module:
-        model = torchvision.models.segmentation.fcn_resnet101(pretrained=pretrained)
-        model.classifier[-1] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-        return model
+    for model_name in RESNET_MODELS:
+        SEMANTIC_SEGMENTATION_BACKBONES(
+            fn=catch_url_error(partial(_load_resnet, model_name)),
+            name=model_name,
+            namespace="image/segmentation",
+            package="torchvision",
+        )
+
+    def _load_mobilenetv3(model_name: str, pretrained: bool = True):
+        backbone = mobilenetv3.__dict__[model_name](
+            pretrained=pretrained,
+            _dilated=True,
+        )
+        return backbone
+
+    for model_name in MOBILENET_MODELS:
+        SEMANTIC_SEGMENTATION_BACKBONES(
+            fn=catch_url_error(partial(_load_mobilenetv3, model_name)),
+            name=model_name,
+            namespace="image/segmentation",
+            package="torchvision",
+        )

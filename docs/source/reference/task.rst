@@ -15,19 +15,3 @@ Example: Image Classification
 .. literalinclude:: ../../../flash_examples/generic_task.py
     :language: python
     :lines: 14-
-
------
-
-*************
-API reference
-*************
-
-.. _task:
-
-Task
-----
-
-.. autoclass:: flash.core.model.Task
-    :members:
-    :noindex:
-    :exclude-members: forward

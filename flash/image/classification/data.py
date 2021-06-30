@@ -16,23 +16,28 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.data.process import Deserializer, Preprocess
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _requires_extras
 from flash.image.classification.transforms import default_transforms, train_default_transforms
-from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+from flash.image.data import (
+    ImageDeserializer,
+    ImageFiftyOneDataSource,
+    ImageNumpyDataSource,
+    ImagePathsDataSource,
+    ImageTensorDataSource,
+)
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
 else:
 
@@ -49,6 +54,8 @@ class ImageClassificationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
+        deserializer: Optional[Deserializer] = None,
+        **data_source_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -58,11 +65,13 @@ class ImageClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.FIFTYONE: ImageFiftyOneDataSource(**data_source_kwargs),
                 DefaultDataSources.FILES: ImagePathsDataSource(),
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
             },
+            deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,
         )
 
@@ -101,6 +110,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
+    @_requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):
@@ -111,13 +121,11 @@ class MatplotlibVisualization(BaseVisualization):
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
+    @_requires_extras("image")
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
-
-        if not _MATPLOTLIB_AVAILABLE:
-            raise MisconfigurationException("You need matplotlib to visualise. Please, pip install matplotlib")
 
         # create figure and set title
         fig, axs = plt.subplots(rows, cols)
@@ -126,9 +134,9 @@ class MatplotlibVisualization(BaseVisualization):
         for i, ax in enumerate(axs.ravel()):
             # unpack images and labels
             if isinstance(data, list):
-                _img, _label = data[i][DefaultDataKeys.INPUT], data[i][DefaultDataKeys.TARGET]
+                _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")
             elif isinstance(data, dict):
-                _img, _label = data[DefaultDataKeys.INPUT][i], data[DefaultDataKeys.TARGET][i]
+                _img, _label = data[DefaultDataKeys.INPUT][i], data.get(DefaultDataKeys.TARGET, [""] * (i + 1))[i]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy

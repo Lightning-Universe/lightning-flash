@@ -9,11 +9,15 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
+from tests.helpers.utils import _IMAGE_TESTING
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
+
+if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
 
 
 def build_checkboard(n, m, k=8):
@@ -46,19 +50,22 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
 class TestSemanticSegmentationPreprocess:
 
     @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         prep = SemanticSegmentationPreprocess(num_classes=1)
         assert prep is not None
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestSemanticSegmentationData:
 
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         dm = SemanticSegmentationData()
         assert dm is not None
 
-    def test_from_folders(self, tmpdir):
+    @staticmethod
+    def test_from_folders(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -118,7 +125,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
 
-    def test_from_folders_warning(self, tmpdir):
+    @staticmethod
+    def test_from_folders_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -159,7 +167,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (1, 3, 196, 196)
         assert labels.shape == (1, 196, 196)
 
-    def test_from_files(self, tmpdir):
+    @staticmethod
+    def test_from_files(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -216,7 +225,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 196, 196)
         assert labels.shape == (2, 196, 196)
 
-    def test_from_files_warning(self, tmpdir):
+    @staticmethod
+    def test_from_files_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -248,7 +258,77 @@ class TestSemanticSegmentationData:
                 num_classes=num_classes
             )
 
-    def test_map_labels(self, tmpdir):
+    @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
+    @staticmethod
+    def test_from_fiftyone(tmpdir):
+        tmp_dir = Path(tmpdir)
+
+        # create random dummy data
+
+        images = [
+            str(tmp_dir / "img1.png"),
+            str(tmp_dir / "img2.png"),
+            str(tmp_dir / "img3.png"),
+        ]
+
+        num_classes: int = 2
+        img_size: Tuple[int, int] = (196, 196)
+
+        for img_file in images:
+            _rand_image(img_size).save(img_file)
+
+        targets = [np.array(_rand_labels(img_size, num_classes)) for _ in range(3)]
+
+        dataset = fo.Dataset.from_dir(
+            str(tmp_dir),
+            dataset_type=fo.types.ImageDirectory,
+        )
+
+        for idx, sample in enumerate(dataset):
+            sample["ground_truth"] = fo.Segmentation(mask=targets[idx][:, :, 0])
+            sample.save()
+
+        # instantiate the data module
+
+        dm = SemanticSegmentationData.from_fiftyone(
+            train_dataset=dataset,
+            val_dataset=dataset,
+            test_dataset=dataset,
+            predict_dataset=dataset,
+            batch_size=2,
+            num_workers=0,
+            num_classes=num_classes,
+        )
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+        assert dm.val_dataloader() is not None
+        assert dm.test_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check val data
+        data = next(iter(dm.val_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check test data
+        data = next(iter(dm.test_dataloader()))
+        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        assert imgs.shape == (2, 3, 196, 196)
+        assert labels.shape == (2, 196, 196)
+
+        # check predict data
+        data = next(iter(dm.predict_dataloader()))
+        imgs = data[DefaultDataKeys.INPUT]
+        assert imgs.shape == (2, 3, 196, 196)
+
+    @staticmethod
+    def test_map_labels(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -306,6 +386,6 @@ class TestSemanticSegmentationData:
         assert labels.dtype == torch.int64
 
         # now train with `fast_dev_run`
-        model = SemanticSegmentation(num_classes=2, backbone="torchvision/fcn_resnet50")
+        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fcn")
         trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
         trainer.finetune(model, dm, strategy="freeze_unfreeze")

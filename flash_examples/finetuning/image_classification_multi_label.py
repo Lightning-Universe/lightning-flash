@@ -21,7 +21,6 @@ import flash
 from flash.core.classification import Labels
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
-from flash.image.classification.data import ImageClassificationPreprocess
 
 # 1. Download the data
 # This is a subset of the movie poster genre prediction data set from the paper
@@ -59,8 +58,8 @@ model = ImageClassifier(
     metrics=F1(num_classes=len(genres)),
 )
 
-# 4. Create the trainer. Train on 2 gpus for 10 epochs.
-trainer = flash.Trainer(max_epochs=10)
+# 4. Create the trainer
+trainer = flash.Trainer(max_epochs=1)
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")

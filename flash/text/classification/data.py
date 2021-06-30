@@ -21,8 +21,8 @@ import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
-from flash.core.data.process import Postprocess, Preprocess
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.utilities.imports import _requires_extras, _TEXT_AVAILABLE
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
@@ -30,13 +30,37 @@ if _TEXT_AVAILABLE:
     from transformers.modeling_outputs import SequenceClassifierOutput
 
 
+class TextDeserializer(Deserializer):
+
+    @_requires_extras("text")
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+        super().__init__()
+        self.backbone = backbone
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
+        self.max_length = max_length
+
+    def deserialize(self, text: str) -> Tensor:
+        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
+
+    @property
+    def example_input(self) -> str:
+        return "An example input"
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
+
 class TextDataSource(DataSource):
 
+    @_requires_extras("text")
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
-
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
@@ -52,7 +76,8 @@ class TextDataSource(DataSource):
             ex = ex[input]
         return self.tokenizer(ex, max_length=self.max_length, truncation=True, padding="max_length")
 
-    def _transform_label(self, label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
+    @staticmethod
+    def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
         ex[target] = label_to_class_mapping[ex[target]]
         return ex
 
@@ -73,20 +98,25 @@ class TextFileDataSource(TextDataSource):
 
         self.filetype = filetype
 
+    @staticmethod
+    def _multilabel_target(targets, element):
+        targets = [element.pop(target) for target in targets]
+        element["labels"] = targets
+        return element
+
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
-        csv_file, input, target = data
+        file, input, target = data
 
         data_files = {}
 
         stage = self.running_stage.value
-        data_files[stage] = str(csv_file)
+        data_files[stage] = str(file)
 
-        # FLASH_TESTING is set in the CI to run faster.
         # FLASH_TESTING is set in the CI to run faster.
         if flash._IS_TESTING and not torch.cuda.is_available():
             try:
@@ -98,26 +128,31 @@ class TextFileDataSource(TextDataSource):
         else:
             dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
-        if self.training:
-            labels = list(sorted(list(set(dataset_dict[stage][target]))))
-            dataset.num_classes = len(labels)
-            self.set_state(LabelsState(labels))
+        if not self.predicting:
+            if isinstance(target, List):
+                # multi-target
+                dataset_dict = dataset_dict.map(partial(self._multilabel_target, target))
+                dataset.num_classes = len(target)
+                self.set_state(LabelsState(target))
+            else:
+                if self.training:
+                    labels = list(sorted(list(set(dataset_dict[stage][target]))))
+                    dataset.num_classes = len(labels)
+                    self.set_state(LabelsState(labels))
 
-        labels = self.get_state(LabelsState)
+                labels = self.get_state(LabelsState)
 
-        # convert labels to ids
-        # if not self.predicting:
-        if labels is not None:
-            labels = labels.labels
-            label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-            dataset_dict = dataset_dict.map(partial(self._transform_label, label_to_class_mapping, target))
+                # convert labels to ids
+                if labels is not None:
+                    labels = labels.labels
+                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
+                    dataset_dict = dataset_dict.map(partial(self._transform_label, label_to_class_mapping, target))
+
+                # Hugging Face models expect target to be named ``labels``.
+                if target != "labels":
+                    dataset_dict.rename_column_(target, "labels")
 
         dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input), batched=True)
-
-        # Hugging Face models expect target to be named ``labels``.
-        if not self.predicting and target != "labels":
-            dataset_dict.rename_column_(target, "labels")
-
         dataset_dict.set_format("torch", columns=columns)
 
         return dataset_dict[stage]
@@ -192,6 +227,7 @@ class TextSentencesDataSource(TextDataSource):
 
 class TextClassificationPreprocess(Preprocess):
 
+    @_requires_extras("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -201,10 +237,6 @@ class TextClassificationPreprocess(Preprocess):
         backbone: str = "prajjwal1/bert-tiny",
         max_length: int = 128,
     ):
-
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
-
         self.backbone = backbone
         self.max_length = max_length
 
@@ -219,6 +251,7 @@ class TextClassificationPreprocess(Preprocess):
                 "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
             },
             default_data_source="sentences",
+            deserializer=TextDeserializer(backbone, max_length),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

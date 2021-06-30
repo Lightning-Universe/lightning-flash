@@ -20,11 +20,11 @@ from typing import Tuple
 
 import torch
 from pytorch_lightning import LightningModule
-from pytorch_lightning.utilities import _BOLTS_AVAILABLE, rank_zero_warn
-from torch import nn as nn
+from pytorch_lightning.utilities import rank_zero_warn
+from torch import nn
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TIMM_AVAILABLE:
     import timm
@@ -56,11 +56,11 @@ OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
 def catch_url_error(fn):
 
     @functools.wraps(fn)
-    def wrapper(pretrained=False, **kwargs):
+    def wrapper(*args, pretrained=False, **kwargs):
         try:
-            return fn(pretrained=pretrained, **kwargs)
+            return fn(*args, pretrained=pretrained, **kwargs)
         except urllib.error.URLError:
-            result = fn(pretrained=False, **kwargs)
+            result = fn(*args, pretrained=False, **kwargs)
             rank_zero_warn(
                 "Failed to download pretrained weights for the selected backbone. The backbone has been created with"
                 " `pretrained=False` instead. If you are loading from a local checkpoint, this warning can be safely"
@@ -92,14 +92,13 @@ def load_swav_imagenet(
 
 if _TORCHVISION_AVAILABLE:
 
+    def _fn_mobilenet_vgg(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
+        model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
+        backbone = model.features
+        num_features = 512 if model_name in VGG_MODELS else model.classifier[-1].in_features
+        return backbone, num_features
+
     for model_name in MOBILENET_MODELS + VGG_MODELS:
-
-        def _fn_mobilenet_vgg(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-            model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
-            backbone = model.features
-            num_features = 512 if model_name in VGG_MODELS else model.classifier[-1].in_features
-            return backbone, num_features
-
         _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
 
         IMAGE_CLASSIFIER_BACKBONES(
@@ -110,14 +109,22 @@ if _TORCHVISION_AVAILABLE:
             type=_type
         )
 
+    def _fn_resnet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
+        model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
+        backbone = nn.Sequential(*list(model.children())[:-2])
+        num_features = model.fc.in_features
+        return backbone, num_features
+
+    def _fn_resnet_fpn(
+        model_name: str,
+        pretrained: bool = True,
+        trainable_layers: bool = True,
+        **kwargs,
+    ) -> Tuple[nn.Module, int]:
+        backbone = resnet_fpn_backbone(model_name, pretrained=pretrained, trainable_layers=trainable_layers, **kwargs)
+        return backbone, 256
+
     for model_name in RESNET_MODELS:
-
-        def _fn_resnet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-            model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
-            backbone = nn.Sequential(*list(model.children())[:-2])
-            num_features = model.fc.in_features
-            return backbone, num_features
-
         IMAGE_CLASSIFIER_BACKBONES(
             fn=catch_url_error(partial(_fn_resnet, model_name)),
             name=model_name,
@@ -126,17 +133,6 @@ if _TORCHVISION_AVAILABLE:
             type="resnet"
         )
 
-        def _fn_resnet_fpn(
-            model_name: str,
-            pretrained: bool = True,
-            trainable_layers: bool = True,
-            **kwargs,
-        ) -> Tuple[nn.Module, int]:
-            backbone = resnet_fpn_backbone(
-                model_name, pretrained=pretrained, trainable_layers=trainable_layers, **kwargs
-            )
-            return backbone, 256
-
         OBJ_DETECTION_BACKBONES(
             fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),
             name=model_name,
@@ -144,14 +140,13 @@ if _TORCHVISION_AVAILABLE:
             type="resnet-fpn"
         )
 
+    def _fn_densenet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
+        model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
+        backbone = nn.Sequential(*model.features, nn.ReLU(inplace=True))
+        num_features = model.classifier.in_features
+        return backbone, num_features
+
     for model_name in DENSENET_MODELS:
-
-        def _fn_densenet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-            model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
-            backbone = nn.Sequential(*model.features, nn.ReLU(inplace=True))
-            num_features = model.classifier.in_features
-            return backbone, num_features
-
         IMAGE_CLASSIFIER_BACKBONES(
             fn=catch_url_error(partial(_fn_densenet, model_name)),
             name=model_name,
@@ -161,22 +156,21 @@ if _TORCHVISION_AVAILABLE:
         )
 
 if _TIMM_AVAILABLE:
+
+    def _fn_timm(
+        model_name: str,
+        pretrained: bool = True,
+        num_classes: int = 0,
+        **kwargs,
+    ) -> Tuple[nn.Module, int]:
+        backbone = timm.create_model(model_name, pretrained=pretrained, num_classes=num_classes, **kwargs)
+        num_features = backbone.num_features
+        return backbone, num_features
+
     for model_name in timm.list_models():
 
         if model_name in TORCHVISION_MODELS:
             continue
-
-        def _fn_timm(
-            model_name: str,
-            pretrained: bool = True,
-            num_classes: int = 0,
-            global_pool: str = '',
-        ) -> Tuple[nn.Module, int]:
-            backbone = timm.create_model(
-                model_name, pretrained=pretrained, num_classes=num_classes, global_pool=global_pool
-            )
-            num_features = backbone.num_features
-            return backbone, num_features
 
         IMAGE_CLASSIFIER_BACKBONES(
             fn=catch_url_error(partial(_fn_timm, model_name)), name=model_name, namespace="vision", package="timm"

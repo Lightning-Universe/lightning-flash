@@ -12,18 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TYPE_CHECKING
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _COCO_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, lazy_import
 from flash.image.data import ImagePathsDataSource
 from flash.image.detection.transforms import default_transforms
 
 if _COCO_AVAILABLE:
     from pycocotools.coco import COCO
+
+SampleCollection = None
+if _FIFTYONE_AVAILABLE:
+    fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
+else:
+    foc, fol = None, None
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
@@ -86,8 +94,100 @@ class COCODataSource(DataSource[Tuple[str, str]]):
         return data
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = default_loader(sample[DefaultDataKeys.INPUT])
+        filepath = sample[DefaultDataKeys.INPUT]
+        img = default_loader(filepath)
+        sample[DefaultDataKeys.INPUT] = img
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": filepath,
+            "size": (h, w),
+        }
         return sample
+        return sample
+
+
+class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
+
+    def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
+        super().__init__(label_field=label_field)
+        self.iscrowd = iscrowd
+
+    @property
+    def label_cls(self):
+        return fol.Detections
+
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+        self._validate(data)
+
+        data.compute_metadata()
+
+        filepaths = data.values("filepath")
+        widths = data.values("metadata.width")
+        heights = data.values("metadata.height")
+        labels = data.values(self.label_field + ".detections.label")
+        bboxes = data.values(self.label_field + ".detections.bounding_box")
+        iscrowds = data.values(self.label_field + ".detections." + self.iscrowd)
+
+        classes = self._get_classes(data)
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+        if dataset is not None:
+            dataset.num_classes = len(classes)
+
+        output_data = []
+        img_id = 1
+        for fp, w, h, sample_labs, sample_boxes, sample_iscrowd in zip(
+            filepaths, widths, heights, labels, bboxes, iscrowds
+        ):
+            output_boxes = []
+            output_labs = []
+            output_iscrowd = []
+            output_areas = []
+            for lab, box, iscrowd in zip(sample_labs, sample_boxes, sample_iscrowd):
+                output_box, output_area = self._reformat_bbox(box[0], box[1], box[2], box[3], w, h)
+                output_areas.append(output_area)
+                output_labs.append(class_to_idx[lab])
+                output_boxes.append(output_box)
+                if iscrowd is None:
+                    iscrowd = 0
+                output_iscrowd.append(iscrowd)
+            output_data.append(
+                dict(
+                    input=fp,
+                    target=dict(
+                        boxes=output_boxes,
+                        labels=output_labs,
+                        image_id=img_id,
+                        area=output_areas,
+                        iscrowd=output_iscrowd,
+                    )
+                )
+            )
+            img_id += 1
+
+        return output_data
+
+    @staticmethod
+    def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        filepath = sample[DefaultDataKeys.INPUT]
+        img = default_loader(filepath)
+        sample[DefaultDataKeys.INPUT] = img
+        w, h = img.size  # WxH
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": filepath,
+            "size": (h, w),
+        }
+        return sample
+
+    @staticmethod
+    def _reformat_bbox(xmin, ymin, box_w, box_h, img_w, img_h):
+        xmin *= img_w
+        ymin *= img_h
+        box_w *= img_w
+        box_h *= img_h
+        xmax = xmin + box_w
+        ymax = ymin + box_h
+        output_bbox = [xmin, ymin, xmax, ymax]
+        return output_bbox, box_w * box_h
 
 
 class ObjectDetectionPreprocess(Preprocess):
@@ -98,6 +198,7 @@ class ObjectDetectionPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_source_kwargs: Any,
     ):
         super().__init__(
             train_transform=train_transform,
@@ -105,6 +206,7 @@ class ObjectDetectionPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(**data_source_kwargs),
                 DefaultDataSources.FILES: ImagePathsDataSource(),
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 "coco": COCODataSource(),

@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import re
+
 import pytest
 import torch
 from pytorch_lightning import Trainer
@@ -19,6 +22,7 @@ from torch.utils.data import DataLoader, Dataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
+from tests.helpers.utils import _IMAGE_TESTING
 
 
 def collate_fn(samples):
@@ -50,7 +54,7 @@ class DummyDetectionDataset(Dataset):
         return {DefaultDataKeys.INPUT: img, DefaultDataKeys.TARGET: {"boxes": boxes, "labels": labels}}
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_init():
     model = ObjectDetector(num_classes=2)
     model.eval()
@@ -68,10 +72,36 @@ def test_init():
 
 
 @pytest.mark.parametrize("model", ["fasterrcnn", "retinanet"])
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_training(tmpdir, model):
     model = ObjectDetector(num_classes=2, model=model, pretrained=False, pretrained_backbone=False)
     ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
     dl = DataLoader(ds, collate_fn=collate_fn)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, dl)
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_jit(tmpdir):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = ObjectDetector(2)
+    model.eval()
+
+    model = torch.jit.script(model)  # torch.jit.trace doesn't work with torchvision RCNN
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model([torch.rand(3, 32, 32)])
+
+    # torchvision RCNN always returns a (Losses, Detections) tuple in scripting
+    out = out[1]
+
+    assert {"boxes", "labels", "scores"} <= out[0].keys()
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
+        ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")

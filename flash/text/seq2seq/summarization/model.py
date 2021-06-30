@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
+from torchmetrics import Metric
 
 from flash.text.seq2seq.core.model import Seq2SeqTask
 from flash.text.seq2seq.summarization.metric import RougeMetric
@@ -27,7 +27,8 @@ class SummarizationTask(Seq2SeqTask):
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        metrics: Metrics to compute for training and evaluation.
+        metrics: Metrics to compute for training and evaluation. Defauls to calculating the ROUGE metric.
+            Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `3e-4`
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
@@ -37,11 +38,11 @@ class SummarizationTask(Seq2SeqTask):
 
     def __init__(
         self,
-        backbone: str = "sshleifer/tiny-mbart",
+        backbone: str = "sshleifer/distilbart-xsum-1-1",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        learning_rate: float = 1e-5,
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = 4,
         use_stemmer: bool = True,
@@ -69,10 +70,11 @@ class SummarizationTask(Seq2SeqTask):
     def compute_metrics(self, generated_tokens: torch.Tensor, batch: Dict, prefix: str) -> None:
         tgt_lns = self.tokenize_labels(batch["labels"])
         result = self.rouge(self._postprocess.uncollate(generated_tokens), tgt_lns)
-        self.log_dict(result, on_step=False, on_epoch=True)
+        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
 
-    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+    @staticmethod
+    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["val_f1"] > 0.45
+        assert history[-1]["rouge1_recall"] > 0.2

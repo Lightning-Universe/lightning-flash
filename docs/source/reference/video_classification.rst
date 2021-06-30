@@ -60,26 +60,3 @@ Once we download the data using :func:`~flash.core.data.download_data`, all we n
 .. literalinclude:: ../../../flash_examples/finetuning/video_classification.py
     :language: python
     :lines: 14-
-
-
-------
-
-*************
-API reference
-*************
-
-.. _video_classifier:
-
-VideoClassifier
----------------
-
-.. autoclass:: flash.video.VideoClassifier
-    :members:
-    :exclude-members: forward
-
-.. _video_classification_data:
-
-VideoClassificationData
------------------------
-
-.. autoclass:: flash.video.VideoClassificationData

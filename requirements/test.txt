@@ -14,3 +14,4 @@ isort
 yapf
 #mypy
 scikit-learn
+pytest_mock

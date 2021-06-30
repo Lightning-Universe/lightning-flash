@@ -22,16 +22,15 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, IterableDataset
-from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _PostProcessor, _PreProcessor, _Sequential
+from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential, _SerializeProcessor
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import DefaultPreprocess, Postprocess, Preprocess, Serializer
+from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 
-if TYPE_CHECKING:  # pragma: no-cover
+if TYPE_CHECKING:
     from flash.core.model import Task
 
 
@@ -58,8 +57,7 @@ class DataPipelineState:
 
         if state_type in self._state:
             return self._state[state_type]
-        else:
-            return None
+        return None
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(initialized={self._initialized}, state={self._state})"
@@ -95,15 +93,15 @@ class DataPipeline:
         data_source: Optional[DataSource] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
+        deserializer: Optional[Deserializer] = None,
         serializer: Optional[Serializer] = None,
     ) -> None:
         self.data_source = data_source
 
         self._preprocess_pipeline = preprocess or DefaultPreprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
-
         self._serializer = serializer or Serializer()
-
+        self._deserializer = deserializer or Deserializer()
         self._running_stage = None
 
     def initialize(self, data_pipeline_state: Optional[DataPipelineState] = None) -> DataPipelineState:
@@ -119,6 +117,10 @@ class DataPipeline:
         self._serializer.attach_data_pipeline_state(data_pipeline_state)
         data_pipeline_state._initialized = True  # TODO: Not sure we need this
         return data_pipeline_state
+
+    @property
+    def example_input(self) -> str:
+        return self._deserializer.example_input
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
@@ -156,21 +158,26 @@ class DataPipeline:
 
         if not prefix:
             return has_different_code
-        else:
-            return has_different_code or cls._is_overriden_recursive(method_name, process_obj, super_obj)
+        return has_different_code or cls._is_overriden_recursive(method_name, process_obj, super_obj)
 
     @staticmethod
     def _identity(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
 
-    def worker_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
-        return self._create_collate_preprocessors(running_stage)[0]
+    def deserialize_processor(self) -> _DeserializeProcessor:
+        return self._create_collate_preprocessors(RunningStage.PREDICTING)[0]
 
-    def device_preprocessor(self, running_stage: RunningStage) -> _PreProcessor:
-        return self._create_collate_preprocessors(running_stage)[1]
+    def worker_preprocessor(self, running_stage: RunningStage, is_serving: bool = False) -> _Preprocessor:
+        return self._create_collate_preprocessors(running_stage, is_serving=is_serving)[1]
 
-    def postprocessor(self, running_stage: RunningStage) -> _PostProcessor:
-        return self._create_uncollate_postprocessors(running_stage)
+    def device_preprocessor(self, running_stage: RunningStage) -> _Preprocessor:
+        return self._create_collate_preprocessors(running_stage)[2]
+
+    def postprocessor(self, running_stage: RunningStage, is_serving=False) -> _Postprocessor:
+        return self._create_uncollate_postprocessors(running_stage, is_serving=is_serving)
+
+    def serialize_processor(self) -> _SerializeProcessor:
+        return _SerializeProcessor(self._serializer)
 
     @classmethod
     def _resolve_function_hierarchy(
@@ -201,14 +208,14 @@ class DataPipeline:
     def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
         if on_device:
             return self._identity, collate
-        else:
-            return collate, self._identity
+        return collate, self._identity
 
     def _create_collate_preprocessors(
         self,
         stage: RunningStage,
         collate_fn: Optional[Callable] = None,
-    ) -> Tuple[_PreProcessor, _PreProcessor]:
+        is_serving: bool = False,
+    ) -> Tuple[_DeserializeProcessor, _Preprocessor, _Preprocessor]:
 
         original_collate_fn = collate_fn
 
@@ -237,10 +244,8 @@ class DataPipeline:
             preprocess, f"_{prefix}_collate_in_worker_from_transform", None
         )
 
-        if (
-            collate_in_worker_from_transform is None and per_batch_transform_overriden
-            and per_sample_transform_on_device_overriden
-        ):
+        is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
+        if collate_in_worker_from_transform is None and is_per_overriden:
             raise MisconfigurationException(
                 f'{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` '
                 f'are mutually exclusive for stage {stage}'
@@ -254,26 +259,32 @@ class DataPipeline:
             )
 
         worker_collate_fn = worker_collate_fn.collate_fn if isinstance(
-            worker_collate_fn, _PreProcessor
+            worker_collate_fn, _Preprocessor
         ) else worker_collate_fn
 
         assert_contains_tensor = self._is_overriden_recursive(
             "to_tensor_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
         )
 
-        worker_preprocessor = _PreProcessor(
+        deserialize_processor = _DeserializeProcessor(
+            self._deserializer,
+            preprocess,
+            getattr(preprocess, func_names['pre_tensor_transform']),
+            getattr(preprocess, func_names['to_tensor_transform']),
+        )
+        worker_preprocessor = _Preprocessor(
             preprocess, worker_collate_fn,
             _Sequential(
                 preprocess,
-                getattr(preprocess, func_names['pre_tensor_transform']),
-                getattr(preprocess, func_names['to_tensor_transform']),
+                None if is_serving else getattr(preprocess, func_names['pre_tensor_transform']),
+                None if is_serving else getattr(preprocess, func_names['to_tensor_transform']),
                 getattr(preprocess, func_names['post_tensor_transform']),
                 stage,
                 assert_contains_tensor=assert_contains_tensor,
             ), getattr(preprocess, func_names['per_batch_transform']), stage
         )
         worker_preprocessor._original_collate_fn = original_collate_fn
-        device_preprocessor = _PreProcessor(
+        device_preprocessor = _Preprocessor(
             preprocess,
             device_collate_fn,
             getattr(preprocess, func_names['per_sample_transform_on_device']),
@@ -282,11 +293,11 @@ class DataPipeline:
             apply_per_sample_transform=device_collate_fn != self._identity,
             on_device=True,
         )
-        return worker_preprocessor, device_preprocessor
+        return deserialize_processor, worker_preprocessor, device_preprocessor
 
     @staticmethod
     def _model_transfer_to_device_wrapper(
-        func: Callable, preprocessor: _PreProcessor, model: 'Task', stage: RunningStage
+        func: Callable, preprocessor: _Preprocessor, model: 'Task', stage: RunningStage
     ) -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
@@ -296,7 +307,7 @@ class DataPipeline:
         return func
 
     @staticmethod
-    def _model_predict_step_wrapper(func: Callable, postprocessor: _PostProcessor, model: 'Task') -> Callable:
+    def _model_predict_step_wrapper(func: Callable, postprocessor: _Postprocessor, model: 'Task') -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
             _original = func
@@ -336,7 +347,11 @@ class DataPipeline:
         setattr(model, final_name, new_loader)
 
     def _attach_preprocess_to_model(
-        self, model: 'Task', stage: Optional[RunningStage] = None, device_transform_only: bool = False
+        self,
+        model: 'Task',
+        stage: Optional[RunningStage] = None,
+        device_transform_only: bool = False,
+        is_serving: bool = False,
     ) -> None:
         device_collate_fn = torch.nn.Identity()
 
@@ -372,8 +387,8 @@ class DataPipeline:
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                    dl_args['collate_fn'], device_collate_fn = self._create_collate_preprocessors(
-                        stage=stage, collate_fn=dl_args['collate_fn']
+                    _, dl_args['collate_fn'], device_collate_fn = self._create_collate_preprocessors(
+                        stage=stage, collate_fn=dl_args['collate_fn'], is_serving=is_serving
                     )
 
                     if isinstance(dl_args["dataset"], IterableDataset):
@@ -400,7 +415,11 @@ class DataPipeline:
                 self._model_transfer_to_device_wrapper(model.transfer_batch_to_device, device_collate_fn, model, stage)
             )
 
-    def _create_uncollate_postprocessors(self, stage: RunningStage) -> _PostProcessor:
+    def _create_uncollate_postprocessors(
+        self,
+        stage: RunningStage,
+        is_serving: bool = False,
+    ) -> _Postprocessor:
         save_per_sample = None
         save_fn = None
 
@@ -422,27 +441,38 @@ class DataPipeline:
             else:
                 save_fn: Callable = getattr(postprocess, func_names["save_data"])
 
-        return _PostProcessor(
+        return _Postprocessor(
             getattr(postprocess, func_names["uncollate"]),
             getattr(postprocess, func_names["per_batch_transform"]),
             getattr(postprocess, func_names["per_sample_transform"]),
-            serializer=self._serializer,
+            serializer=None if is_serving else self._serializer,
             save_fn=save_fn,
-            save_per_sample=save_per_sample
+            save_per_sample=save_per_sample,
+            is_serving=is_serving,
         )
 
-    def _attach_postprocess_to_model(self, model: 'Task', stage) -> 'Task':
+    def _attach_postprocess_to_model(
+        self,
+        model: 'Task',
+        stage: RunningStage,
+        is_serving: bool = False,
+    ) -> 'Task':
         model.predict_step = self._model_predict_step_wrapper(
-            model.predict_step, self._create_uncollate_postprocessors(stage), model
+            model.predict_step, self._create_uncollate_postprocessors(stage, is_serving=is_serving), model
         )
         return model
 
-    def _attach_to_model(self, model: 'Task', stage: RunningStage = None):
+    def _attach_to_model(
+        self,
+        model: 'Task',
+        stage: RunningStage = None,
+        is_serving: bool = False,
+    ):
         # not necessary to detach. preprocessing and postprocessing for stage will be overwritten.
         self._attach_preprocess_to_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
-            self._attach_postprocess_to_model(model, stage)
+            self._attach_postprocess_to_model(model, RunningStage.PREDICTING, is_serving=is_serving)
 
     def _detach_from_model(self, model: 'Task', stage: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stage)
@@ -491,7 +521,7 @@ class DataPipeline:
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                    if isinstance(dl_args['collate_fn'], _PreProcessor):
+                    if isinstance(dl_args['collate_fn'], _Preprocessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
 
                         if isinstance(dl_args["dataset"], IterableAutoDataset):
@@ -524,9 +554,11 @@ class DataPipeline:
         preprocess: Preprocess = self._preprocess_pipeline
         postprocess: Postprocess = self._postprocess_pipeline
         serializer: Serializer = self._serializer
+        deserializer: Deserializer = self._deserializer
         return (
             f"{self.__class__.__name__}("
             f"data_source={str(data_source)}, "
+            f"deserializer={deserializer}, "
             f"preprocess={preprocess}, "
             f"postprocess={postprocess}, "
             f"serializer={serializer})"
@@ -582,4 +614,4 @@ class _StageOrchestrator:
         return ret_val
 
     def is_empty(self):
-        return all([v is None for v in self._stage_mapping.values()]) or not self._stage_mapping
+        return all(v is None for v in self._stage_mapping.values()) or not self._stage_mapping

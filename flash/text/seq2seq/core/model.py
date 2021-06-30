@@ -15,10 +15,10 @@ import os
 import warnings
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
+from torchmetrics import Metric
 
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
@@ -46,28 +46,28 @@ def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
 
 class Seq2SeqTask(Task):
     """General Task for Sequence2Sequence.
+
     Args:
         loss_fn: Loss function for training
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        metrics: Metrics to compute for training and evaluation.
+        metrics: Metrics to compute for training and evaluation. Changing this argument currently has no effect
         learning_rate: Learning rate to use for training, defaults to `3e-4`
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
     """
+
+    required_extras: str = "text"
 
     def __init__(
         self,
         backbone: str = 't5-small',
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
     ):
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
-
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")

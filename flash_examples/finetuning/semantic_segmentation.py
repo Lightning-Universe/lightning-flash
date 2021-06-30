@@ -29,30 +29,33 @@ datamodule = SemanticSegmentationData.from_folders(
     train_folder="data/CameraRGB",
     train_target_folder="data/CameraSeg",
     batch_size=4,
-    val_split=0.3,
-    image_size=(200, 200),  # (600, 800)
+    val_split=0.1,
+    image_size=(200, 200),
     num_classes=21,
 )
 
 # 2.2 Visualise the samples
 datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
 
-# 3. Build the model
+# 3.a List available backbones and heads
+print(f"Backbones: {SemanticSegmentation.available_backbones()}")
+print(f"Heads: {SemanticSegmentation.available_heads()}")
+
+# 3.b Build the model
 model = SemanticSegmentation(
-    backbone="torchvision/fcn_resnet50",
+    backbone="mobilenet_v3_large",
+    head="fcn",
     num_classes=datamodule.num_classes,
-    serializer=SegmentationLabels(visualize=True)
+    serializer=SegmentationLabels(visualize=False),
 )
 
 # 4. Create the trainer.
-trainer = flash.Trainer(
-    max_epochs=1,
-    fast_dev_run=1,
-)
+trainer = flash.Trainer(fast_dev_run=True)
 
 # 5. Train the model
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
+# 6. Segment a few images!
 predictions = model.predict([
     "data/CameraRGB/F61-1.png",
     "data/CameraRGB/F62-1.png",

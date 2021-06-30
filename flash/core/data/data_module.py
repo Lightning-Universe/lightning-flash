@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -22,14 +22,21 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
+from torch.utils.data.sampler import Sampler
 
 from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+
+if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
+    from fiftyone.core.collections import SampleCollection
+else:
+    SampleCollection = None
 
 
 class DataModule(pl.LightningDataModule):
@@ -58,6 +65,8 @@ class DataModule(pl.LightningDataModule):
         num_workers: The number of workers to use for parallelized loading.
             Defaults to None which equals the number of available CPU threads,
             or 0 for Windows or Darwin platform.
+        sampler: A sampler following the :class:`~torch.utils.data.sampler.Sampler` type.
+            Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
 
     preprocess_cls = DefaultPreprocess
@@ -76,6 +85,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
     ) -> None:
 
         super().__init__()
@@ -118,6 +128,7 @@ class DataModule(pl.LightningDataModule):
             else:
                 num_workers = os.cpu_count()
         self.num_workers = num_workers
+        self.sampler = sampler
 
         self.set_running_stages()
 
@@ -259,11 +270,14 @@ class DataModule(pl.LightningDataModule):
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
-        shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
+        shuffle: bool = False
+        if self.sampler is None:
+            shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
         return DataLoader(
             train_ds,
             batch_size=self.batch_size,
             shuffle=shuffle,
+            sampler=self.sampler,
             num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,
@@ -306,10 +320,10 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def num_classes(self) -> Optional[int]:
-        return (
-            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None)
-            or getattr(self.test_dataset, "num_classes", None)
-        )
+        n_cls_train = getattr(self.train_dataset, "num_classes", None)
+        n_cls_val = getattr(self.val_dataset, "num_classes", None)
+        n_cls_test = getattr(self.test_dataset, "num_classes", None)
+        return n_cls_train or n_cls_val or n_cls_test
 
     @property
     def data_source(self) -> Optional[DataSource]:
@@ -328,7 +342,8 @@ class DataModule(pl.LightningDataModule):
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     def available_data_sources(self) -> Sequence[str]:
-        """Get the list of available data source names for use with this :class:`~flash.core.data.data_module.DataModule`.
+        """Get the list of available data source names for use with this
+        :class:`~flash.core.data.data_module.DataModule`.
 
         Returns:
             The list of data source names.
@@ -349,11 +364,15 @@ class DataModule(pl.LightningDataModule):
                 "`val_split` should be `None` when the dataset is built with an IterableDataset."
             )
 
-        train_num_samples = len(train_dataset)
-        val_num_samples = int(train_num_samples * val_split)
-        val_indices = list(np.random.choice(range(train_num_samples), val_num_samples, replace=False))
-        train_indices = [i for i in range(train_num_samples) if i not in val_indices]
-        return SplitDataset(train_dataset, train_indices), SplitDataset(train_dataset, val_indices)
+        val_num_samples = int(len(train_dataset) * val_split)
+        indices = list(range(len(train_dataset)))
+        np.random.shuffle(indices)
+        val_indices = indices[:val_num_samples]
+        train_indices = indices[val_num_samples:]
+        return (
+            SplitDataset(train_dataset, train_indices, use_duplicated_indices=True),
+            SplitDataset(train_dataset, val_indices, use_duplicated_indices=True),
+        )
 
     @classmethod
     def from_data_source(
@@ -372,6 +391,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given inputs to
@@ -407,6 +427,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -451,6 +472,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
         )
 
     @classmethod
@@ -469,6 +491,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
@@ -497,6 +520,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -527,6 +551,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
             **preprocess_kwargs,
         )
 
@@ -549,6 +574,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given sequences of files using
@@ -580,6 +606,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -611,6 +638,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
             **preprocess_kwargs,
         )
 
@@ -633,6 +661,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
@@ -664,6 +693,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -695,6 +725,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
             **preprocess_kwargs,
         )
 
@@ -717,6 +748,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given numpy array using the
@@ -748,6 +780,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -779,6 +812,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
             **preprocess_kwargs,
         )
 
@@ -800,6 +834,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given JSON files using the
@@ -830,6 +865,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -862,6 +898,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
             **preprocess_kwargs,
         )
 
@@ -883,6 +920,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
@@ -913,6 +951,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -945,6 +984,7 @@ class DataModule(pl.LightningDataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
             **preprocess_kwargs,
         )
 
@@ -964,6 +1004,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
@@ -992,6 +1033,7 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -1009,6 +1051,92 @@ class DataModule(pl.LightningDataModule):
         """
         return cls.from_data_source(
             DefaultDataSources.DATASET,
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_fiftyone(
+        cls,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given FiftyOne Datasets using the
+        :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.FIFTYONE`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            train_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the train data.
+            val_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the validation data.
+            test_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the test data.
+            predict_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the predict data.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            train_dataset = fo.Dataset.from_dir(
+                "/path/to/dataset",
+                dataset_type=fo.types.ImageClassificationDirectoryTree,
+            )
+            data_module = DataModule.from_fiftyone(
+                train_data = train_dataset,
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+            )
+        """
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, `pip install fiftyone`.")
+
+        return cls.from_data_source(
+            DefaultDataSources.FIFTYONE,
             train_dataset,
             val_dataset,
             test_dataset,

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -29,33 +28,50 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import (
     DefaultDataKeys,
     DefaultDataSources,
+    FiftyOneDataSource,
     ImageLabelsMap,
     NumpyDataSource,
     PathsDataSource,
-    SEQUENCE_DATA_TYPE,
     TensorDataSource,
 )
-from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE
+from flash.core.data.process import Deserializer, Preprocess
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _MATPLOTLIB_AVAILABLE,
+    _PIL_AVAILABLE,
+    _requires_extras,
+    _TORCHVISION_AVAILABLE,
+    lazy_import,
+)
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
+
+SampleCollection = None
+if _FIFTYONE_AVAILABLE:
+    fo = lazy_import("fiftyone")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
+else:
+    fo = None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
 
-if _IMAGE_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     import torchvision
-    from PIL import Image
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
+else:
+    IMG_EXTENSIONS = None
 
+if _PIL_AVAILABLE:
+    from PIL import Image
 else:
 
     class Image:
         Image = None
-
-    IMG_EXTENSIONS = None
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
@@ -63,7 +79,7 @@ class SemanticSegmentationNumpyDataSource(NumpyDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.shape
+        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
@@ -72,15 +88,14 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = sample[DefaultDataKeys.INPUT].float()
         sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = img.shape
+        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
 
+    @_requires_extras("image")
     def __init__(self):
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
         super().__init__(IMG_EXTENSIONS)
 
     def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
@@ -121,7 +136,9 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             zip(input_data, target_data),
         )
 
-        return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+        data = [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+
+        return data
 
     def predict_load_data(self, data: Union[str, List[str]]):
         return super().predict_load_data(data)
@@ -136,22 +153,86 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
-        return {
-            DefaultDataKeys.INPUT: img.float(),
-            DefaultDataKeys.TARGET: img_labels.float(),
-            DefaultDataKeys.METADATA: img.shape,
+        sample[DefaultDataKeys.INPUT] = img.float()
+        sample[DefaultDataKeys.TARGET] = img_labels.float()
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
         }
+        return sample
 
-    def predict_load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img = torchvision.io.read_image(sample[DefaultDataKeys.INPUT]).float()
-        return {
-            DefaultDataKeys.INPUT: img,
-            DefaultDataKeys.METADATA: img.shape,
+    @staticmethod
+    def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
+        img_path = sample[DefaultDataKeys.INPUT]
+        img = torchvision.io.read_image(img_path).float()
+
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
         }
+        return sample
+
+
+class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
+
+    @_requires_extras("image")
+    def __init__(self, label_field: str = "ground_truth"):
+        super().__init__(label_field=label_field)
+        self._fo_dataset_name = None
+
+    @property
+    def label_cls(self):
+        return fo.Segmentation
+
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        self._validate(data)
+
+        self._fo_dataset_name = data.name
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+
+    def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
+        _fo_dataset = fo.load_dataset(self._fo_dataset_name)
+
+        img_path = sample[DefaultDataKeys.INPUT]
+        fo_sample = _fo_dataset[img_path]
+
+        img: torch.Tensor = torchvision.io.read_image(img_path)  # CxHxW
+        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask)  # HxW
+
+        sample[DefaultDataKeys.INPUT] = img.float()
+        sample[DefaultDataKeys.TARGET] = img_labels.float()
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
+        }
+        return sample
+
+    @staticmethod
+    def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
+        img_path = sample[DefaultDataKeys.INPUT]
+        img = torchvision.io.read_image(img_path).float()
+
+        sample[DefaultDataKeys.INPUT] = img
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
+        }
+        return sample
+
+
+class SemanticSegmentationDeserializer(ImageDeserializer):
+
+    def deserialize(self, data: str) -> torch.Tensor:
+        result = super().deserialize(data)
+        result[DefaultDataKeys.INPUT] = self.to_tensor(result[DefaultDataKeys.INPUT])
+        result[DefaultDataKeys.METADATA] = {"size": result[DefaultDataKeys.INPUT].shape}
+        return result
 
 
 class SemanticSegmentationPreprocess(Preprocess):
 
+    @_requires_extras("image")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -159,8 +240,10 @@ class SemanticSegmentationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
+        deserializer: Optional['Deserializer'] = None,
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
+        **data_source_kwargs: Any,
     ) -> None:
         """Preprocess pipeline for semantic segmentation tasks.
 
@@ -170,9 +253,8 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform: Dictionary with the set of transforms to apply during testing.
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
+            **data_source_kwargs: Additional arguments passed on to the data source constructors.
         """
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
         self.image_size = image_size
         self.num_classes = num_classes
         if num_classes:
@@ -184,11 +266,13 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.FIFTYONE: SemanticSegmentationFiftyOneDataSource(**data_source_kwargs),
                 DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
                 DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
                 DefaultDataSources.TENSORS: SemanticSegmentationTensorDataSource(),
                 DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
             },
+            deserializer=deserializer or SemanticSegmentationDeserializer(),
             default_data_source=DefaultDataSources.FILES,
         )
 
@@ -281,7 +365,8 @@ class SemanticSegmentationData(DataModule):
             **preprocess_kwargs
         )
 
-        dm.train_dataset.num_classes = num_classes
+        if dm.train_dataset is not None:
+            dm.train_dataset.num_classes = num_classes
         return dm
 
     @classmethod
@@ -385,6 +470,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
     @staticmethod
+    @_requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):
@@ -395,13 +481,11 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
+    @_requires_extras("image")
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
-
-        if not _MATPLOTLIB_AVAILABLE:
-            raise MisconfigurationException("You need matplotlib to visualise. Please, pip install matplotlib")
 
         # create figure and set title
         fig, axs = plt.subplots(rows, cols)

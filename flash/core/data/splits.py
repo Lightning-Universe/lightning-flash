@@ -13,7 +13,7 @@ class SplitDataset(Dataset):
 
         dataset: A dataset to be splitted
         indices: List of indices to expose from the dataset
-        use_duplicated_indices: Wether to allow duplicated indices.
+        use_duplicated_indices: Whether to allow duplicated indices.
 
     Example::
 
@@ -25,7 +25,9 @@ class SplitDataset(Dataset):
 
     _INTERNAL_KEYS = ("dataset", "indices", "data")
 
-    def __init__(self, dataset: Any, indices: List[int] = [], use_duplicated_indices: bool = False) -> None:
+    def __init__(self, dataset: Any, indices: List[int] = None, use_duplicated_indices: bool = False) -> None:
+        if indices is None:
+            indices = []
         if not isinstance(indices, list):
             raise MisconfigurationException("indices should be a list")
 
@@ -41,9 +43,9 @@ class SplitDataset(Dataset):
         self.indices = indices
 
     def __getattr__(self, key: str):
-        if key in self._INTERNAL_KEYS:
-            return getattr(self, key)
-        return getattr(self.dataset, key)
+        if key not in self._INTERNAL_KEYS:
+            return self.dataset.__getattribute__(key)
+        raise AttributeError
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name in self._INTERNAL_KEYS:
