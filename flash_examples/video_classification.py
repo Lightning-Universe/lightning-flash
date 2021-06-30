@@ -22,8 +22,8 @@ from flash.video import VideoClassificationData, VideoClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip", "./data")
 
 datamodule = VideoClassificationData.from_folders(
-    train_folder=os.path.join(flash.PROJECT_ROOT, "flash_examples/data/kinetics/train"),
-    val_folder=os.path.join(flash.PROJECT_ROOT, "flash_examples/data/kinetics/val"),
+    train_folder=os.path.join(os.path.dirname(__file__), "data/kinetics/train"),
+    val_folder=os.path.join(os.path.dirname(__file__), "data/kinetics/val"),
     clip_sampler="uniform",
     clip_duration=1,
     decode_audio=False,
@@ -37,7 +37,7 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
-predictions = model.predict(os.path.join(flash.PROJECT_ROOT, "flash_examples/data/kinetics/predict"))
+predictions = model.predict(os.path.join(os.path.dirname(__file__), "data/kinetics/predict"))
 print(predictions)
 
 # 5. Save the model!
