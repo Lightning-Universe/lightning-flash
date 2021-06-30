@@ -19,7 +19,7 @@ from flash.video import VideoClassificationData, VideoClassifier
 
 # 1. Create the DataModule
 # Find more datasets at https://pytorchvideo.readthedocs.io/en/latest/data.html
-download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
+download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip", "./data")
 
 datamodule = VideoClassificationData.from_folders(
     train_folder=os.path.join(flash.PROJECT_ROOT, "flash_examples/data/kinetics/train"),
