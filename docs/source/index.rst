@@ -21,18 +21,11 @@ Lightning Flash
    :caption: Tasks
 
    reference/task
-   reference/image_classification
-   reference/image_classification_multi_label
    reference/image_embedder
-   reference/summarization
    reference/text_classification
    reference/text_classification_multi_label
-   reference/tabular_classification
-   reference/translation
    reference/object_detection
    reference/video_classification
-   reference/semantic_segmentation
-   reference/style_transfer
 
 .. toctree::
    :maxdepth: 1

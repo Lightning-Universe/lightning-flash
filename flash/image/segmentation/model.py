@@ -41,17 +41,13 @@ class SemanticSegmentationPostprocess(Postprocess):
 
 
 class SemanticSegmentation(ClassificationTask):
-    """Task that performs semantic segmentation on images.
+    """``SemanticSegmentation`` is a :class:`~flash.Task` for semantic segmentation of images.
 
-    Use a built in backbone
+    Here's a simple example:
 
-    Example::
-
-        from flash.image import SemanticSegmentation
-
-        segmentation = SemanticSegmentation(
-            num_classes=21, backbone="torchvision/fcn_resnet50"
-        )
+    .. literalinclude:: ../../../flash_examples/semantic_segmentation.py
+        :language: python
+        :lines: 14-
 
     Args:
         num_classes: Number of classes to classify.
