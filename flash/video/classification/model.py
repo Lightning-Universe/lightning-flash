@@ -119,7 +119,6 @@ class VideoClassifier(ClassificationTask):
             backbone_kwargs = {}
 
         backbone_kwargs["pretrained"] = True if (flash._IS_TESTING and torch.cuda.is_available()) else pretrained
-        backbone_kwargs["map_location"] = torch.device('cpu')
         backbone_kwargs["head_activation"] = None
 
         if isinstance(backbone, nn.Module):

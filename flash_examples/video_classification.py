@@ -31,7 +31,7 @@ datamodule = VideoClassificationData.from_folders(
 )
 
 # 2. Build the task
-model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
+model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3)
