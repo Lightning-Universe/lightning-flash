@@ -17,11 +17,10 @@ from unittest import mock
 
 import pytest
 
+import flash
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING, _VIDEO_TESTING
-
-root = Path(__file__).parent.parent.parent
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -74,4 +73,4 @@ root = Path(__file__).parent.parent.parent
     ]
 )
 def test_example(tmpdir, file):
-    run_test(str(root / "flash_examples" / file))
+    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
