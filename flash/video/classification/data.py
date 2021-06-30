@@ -46,13 +46,8 @@ if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.encoded_video import EncodedVideo
     from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
     from pytorchvideo.data.labeled_video_paths import LabeledVideoPaths
-    from pytorchvideo.transforms import (
-        ApplyTransformToKey,
-        RandomShortSideScale,
-        ShortSideScale,
-        UniformTemporalSubsample,
-    )
-    from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
+    from pytorchvideo.transforms import ApplyTransformToKey, UniformTemporalSubsample
+    from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
 else:
     ClipSampler, EncodedVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
@@ -286,13 +281,12 @@ class VideoClassificationPreprocess(Preprocess):
     def default_transforms(self) -> Dict[str, Callable]:
         if self.training:
             post_tensor_transform = [
-                RandomShortSideScale(min_size=256, max_size=320),
                 RandomCrop(244),
                 RandomHorizontalFlip(p=0.5),
             ]
         else:
             post_tensor_transform = [
-                ShortSideScale(256),
+                CenterCrop(244),
             ]
 
         return {
