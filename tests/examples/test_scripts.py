@@ -29,7 +29,7 @@ root = Path(__file__).parent.parent.parent
     "file",
     [
         pytest.param(
-            "custom_task.py", marks=pytest.mark.skipif(not _VIDEO_TESTING, reason="video libraries aren't installed")
+            "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
         ),
         pytest.param(
             "image_classification.py",
