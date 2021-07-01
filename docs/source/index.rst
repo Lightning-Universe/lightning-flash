@@ -8,7 +8,7 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Get started:
+   :caption: Get started
 
    quickstart
    installation
@@ -18,13 +18,34 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tasks
+   :caption: Image
 
-   reference/task
+   reference/image_classification
+   reference/image_classification_multi_label
    reference/image_embedder
+   reference/object_detection
+   reference/semantic_segmentation
+   reference/style_transfer
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tabular
+
+   reference/tabular_classification
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Text
+
    reference/text_classification
    reference/text_classification_multi_label
-   reference/object_detection
+   reference/summarization
+   reference/translation
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Video
+
    reference/video_classification
 
 .. toctree::
