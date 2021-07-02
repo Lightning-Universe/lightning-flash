@@ -1,3 +1,6 @@
+
+.. _style_transfer:
+
 ##############
 Style Transfer
 ##############

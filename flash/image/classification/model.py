@@ -27,21 +27,11 @@ from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
 class ImageClassifier(ClassificationTask):
-    """The ``ImageClassifier`` is a :class:`~flash.Task` for classifying images.
+    """The ``ImageClassifier`` is a :class:`~flash.Task` for classifying images. For more details, see
+    :ref:`image_classification`. The ``ImageClassifier`` also supports multi-label classification with
+    ``multi_label=True``. For more details, see :ref:`image_classification_multi_label`.
 
-    Here's a simple example:
-
-    .. literalinclude:: ../../../flash_examples/image_classification.py
-        :language: python
-        :lines: 14-
-
-    The ``ImageClassifier`` also supports multi-label classification with ``multi_label=True``:
-
-    .. literalinclude:: ../../../flash_examples/image_classification_multi_label.py
-        :language: python
-        :lines: 14-
-
-    Here's an example showing how you can register custom backbones to use with the ``ImageClassifier``:
+    You can register custom backbones to use with the ``ImageClassifier``:
     ::
 
         from torch import nn

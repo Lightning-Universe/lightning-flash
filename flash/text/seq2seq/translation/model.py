@@ -21,13 +21,8 @@ from flash.text.seq2seq.translation.metric import BLEUScore
 
 
 class TranslationTask(Seq2SeqTask):
-    """The ``TranslationTask`` is a :class:`~flash.Task` for Seq2Seq text translation.
-
-    Here's a simple example:
-
-    .. literalinclude:: ../../../flash_examples/translation.py
-        :language: python
-        :lines: 14-
+    """The ``TranslationTask`` is a :class:`~flash.Task` for Seq2Seq text translation. For more details, see
+    :ref:`translation`.
 
     You can change the backbone to any translation model from `HuggingFace/transformers
     <https://huggingface.co/models?filter=pytorch&pipeline_tag=translation>`__ using the ``backbone`` argument.

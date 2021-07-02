@@ -27,13 +27,8 @@ if _TABULAR_AVAILABLE:
 
 
 class TabularClassifier(ClassificationTask):
-    """The ``TabularClassifier`` is a :class:`~flash.Task` for classifying tabular data.
-
-    Here's a simple example:
-
-    .. literalinclude:: ../../../flash_examples/tabular_classification.py
-        :language: python
-        :lines: 14-
+    """The ``TabularClassifier`` is a :class:`~flash.Task` for classifying tabular data. For more details, see
+    :ref:`tabular_classification`.
 
     Args:
         num_features: Number of columns in table (not including target column).

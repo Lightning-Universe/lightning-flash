@@ -51,13 +51,8 @@ __all__ = ["StyleTransfer"]
 
 
 class StyleTransfer(Task):
-    """``StyleTransfer`` is a :class:`~flash.Task` for transferring the style from one image onto another.
-
-    Here's a simple example:
-
-    .. literalinclude:: ../../../flash_examples/style_transfer.py
-        :language: python
-        :lines: 14-
+    """``StyleTransfer`` is a :class:`~flash.Task` for transferring the style from one image onto another. For more
+    details, see :ref:`style_transfer`.
 
     Args:
         style_image: Image or path to an image to derive the style from.

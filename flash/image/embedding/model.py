@@ -32,7 +32,8 @@ else:
 
 
 class ImageEmbedder(Task):
-    """Task that embeds images.
+    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For more
+    details, see :ref:`image_embedder`.
 
     Args:
         embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.

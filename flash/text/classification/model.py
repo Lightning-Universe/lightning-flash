@@ -28,7 +28,9 @@ if _TEXT_AVAILABLE:
 
 
 class TextClassifier(ClassificationTask):
-    """Task that classifies text.
+    """The ``TextClassifier`` is a :class:`~flash.Task` for classifying text. For more details, see
+    :ref:`text_classification`. The ``TextClassifier`` also supports multi-label classification with
+    ``multi_label=True``. For more details, see :ref:`text_classification_multi_label`.
 
     Args:
         num_classes: Number of classes to classify.

@@ -41,13 +41,8 @@ class SemanticSegmentationPostprocess(Postprocess):
 
 
 class SemanticSegmentation(ClassificationTask):
-    """``SemanticSegmentation`` is a :class:`~flash.Task` for semantic segmentation of images.
-
-    Here's a simple example:
-
-    .. literalinclude:: ../../../flash_examples/semantic_segmentation.py
-        :language: python
-        :lines: 14-
+    """``SemanticSegmentation`` is a :class:`~flash.Task` for semantic segmentation of images. For more details, see
+    :ref:`semantic_segmentation`.
 
     Args:
         num_classes: Number of classes to classify.
