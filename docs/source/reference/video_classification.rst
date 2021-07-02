@@ -6,57 +6,53 @@ Video Classification
 ####################
 
 ********
-The task
+The Task
 ********
 
 Typically, Video Classification refers to the task of producing a label for actions identified in a given video.
+The task is to predict which *class* the video clip belongs to.
 
-The task predicts which ‘class’ the video clip most likely belongs to with a degree of certainty.
-
-A class is a label that describes what action is being performed within the video clip, such as **swimming** , **playing piano**, etc.
-
-For example, we can train the video classifier task on video clips with human actions
-and it will learn to predict the probability that a video contains a certain human action.
-
-Lightning Flash :class:`~flash.video.VideoClassifier` and :class:`~flash.video.VideoClassificationData`
-relies on `PyTorchVideo <https://pytorchvideo.readthedocs.io/en/latest/index.html>`_ internally.
-
-You can use any models from `PyTorchVideo Model Zoo <https://pytorchvideo.readthedocs.io/en/latest/model_zoo.html>`_
-with the :class:`~flash.video.VideoClassifier`.
+Lightning Flash :class:`~flash.video.VideoClassifier` and :class:`~flash.video.VideoClassificationData` classes internally rely on `PyTorchVideo <https://pytorchvideo.readthedocs.io/en/latest/index.html>`_.
 
 ------
 
-**********
-Finetuning
-**********
+*******
+Example
+*******
 
-Let's say you wanted to develop a model that could determine whether a video clip contains a human **swimming** or **playing piano**,
-using the `Kinetics dataset <https://deepmind.com/research/open-source/kinetics>`_.
-Once we download the data using :func:`~flash.core.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.video.VideoClassificationData`.
+Let's develop a model to classifying video clips of Humans performing actions (such as: **archery** , **bowling**, etc.).
+We'll use data from the `Kinetics dataset <https://deepmind.com/research/open-source/kinetics>`_.
+Here's an outline of the folder structure:
 
 .. code-block::
 
     video_dataset
     ├── train
-    │   ├── class_1
-    │   │   ├── a.ext
-    │   │   ├── b.ext
+    │   ├── archery
+    │   │   ├── -1q7jA3DXQM_000005_000015.mp4
+    │   │   ├── -5NN5hdIwTc_000036_000046.mp4
     │   │   ...
-    │   └── class_n
-    │       ├── c.ext
-    │       ├── d.ext
-    │       ...
+    │   ├── bowling
+    │   │   ├── -5ExwuF5IUI_000030_000040.mp4
+    │   │   ├── -7sTNNI1Bcg_000075_000085.mp4
+    │   ... ...
     └── val
-        ├── class_1
-        │   ├── e.ext
-        │   ├── f.ext
+        ├── archery
+        │   ├── 0S-P4lr_c7s_000022_000032.mp4
+        │   ├── 2x1lIrgKxYo_000589_000599.mp4
         │   ...
-        └── class_n
-            ├── g.ext
-            ├── h.ext
-            ...
+        ├── bowling
+        │   ├── 1W7HNDBA4pA_000002_000012.mp4
+        │   ├── 4JxH3S5JwMs_000003_000013.mp4
+        ... ...
 
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.video.VideoClassificationData`.
+We select a pre-trained backbone to use for our :class:`~flash.video.VideoClassifier` and fine-tune on the Kinetics data.
+The backbone can be any model from the `PyTorchVideo Model Zoo <https://pytorchvideo.readthedocs.io/en/latest/model_zoo.html>`_.
+We then use the trained :class:`~flash.video.VideoClassifier` for inference.
+Finally, we save the model.
+Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/finetuning/video_classification.py
+.. literalinclude:: ../../../flash_examples/video_classification.py
     :language: python
     :lines: 14-
