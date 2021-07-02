@@ -39,7 +39,7 @@ The backbone can be any BERT classification model from `HuggingFace/transformers
 
     When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.TextClassifier` and the :class:`~flash.text.TextClassificationData`!
 
-We then use the trained :class:`~flash.text.TextClassifier` for inference.
+Next, we use the trained :class:`~flash.text.TextClassifier` for inference.
 Finally, we save the model.
 Here's the full example:
 
