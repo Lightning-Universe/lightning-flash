@@ -10,7 +10,7 @@ The Task
 ********
 
 Multi-label classification is the task of assigning a number of labels from a fixed set to each data point, which can be in any modality (images in this case).
-Multi-label image classification is supported by the :class:`~flash.image.ImageClassifier` via the ``multi-label`` argument.
+Multi-label image classification is supported by the :class:`~flash.image.classification.model.ImageClassifier` via the ``multi-label`` argument.
 
 ------
 
@@ -38,10 +38,10 @@ Here's an overview:
         ├── tt0326965.jpg
         ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we need to create the :class:`~flash.image.ImageClassificationData`.
-We first create a function (``load_data``) to extract the list of images and associated labels which can then be passed to :meth:`~flash.image.ImageClassificationData.from_files`.
-We select a pre-trained backbone to use for our :class:`~flash.image.ImageClassifier` and fine-tune on the posters data.
-We then use the trained :class:`~flash.image.ImageClassifier` for inference.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we need to create the :class:`~flash.image.classification.data.ImageClassificationData`.
+We first create a function (``load_data``) to extract the list of images and associated labels which can then be passed to :meth:`~flash.image.classification.data.ImageClassificationData.from_files`.
+We select a pre-trained backbone to use for our :class:`~flash.image.classification.model.ImageClassifier` and fine-tune on the posters data.
+We then use the trained :class:`~flash.image.classification.model.ImageClassifier` for inference.
 Finally, we save the model.
 Here's the full example:
 
@@ -55,5 +55,5 @@ Here's the full example:
 Serving
 *******
 
-The :class:`~flash.image.ImageClassifier` is servable.
+The :class:`~flash.image.classification.model.ImageClassifier` is servable.
 For more information, see :ref:`image_classification`.

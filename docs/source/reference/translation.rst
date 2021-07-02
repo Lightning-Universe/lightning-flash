@@ -31,15 +31,15 @@ Each CSV file looks like this:
     ...
 
 In the above the input/target columns represent the English and Romanian translation respectively.
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.TranslationData`.
-We select a pre-trained backbone to use for our :class:`~flash.text.TranslationTask` and finetune on the WMT16 data.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.seq2seq.translation.data.TranslationData`.
+We select a pre-trained backbone to use for our :class:`~flash.text.seq2seq.translation.model.TranslationTask` and finetune on the WMT16 data.
 The backbone can be any Seq2Seq translation model from `HuggingFace/transformers <https://huggingface.co/models?filter=pytorch&pipeline_tag=translation>`_.
 
 .. note::
 
-    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.TranslationData` and the :class:`~flash.text.TranslationTask`!
+    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.seq2seq.translation.data.TranslationData` and the :class:`~flash.text.seq2seq.translation.model.TranslationTask`!
 
-Next, we use the trained :class:`~flash.text.TranslationTask` for inference.
+Next, we use the trained :class:`~flash.text.seq2seq.translation.model.TranslationTask` for inference.
 Finally, we save the model.
 Here's the full example:
 
@@ -53,7 +53,7 @@ Here's the full example:
 Serving
 *******
 
-The :class:`~flash.text.TranslationTask` is servable.
+The :class:`~flash.text.seq2seq.translation.model.TranslationTask` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.Task`.
 Here's an example:
 

@@ -45,9 +45,9 @@ The dataset contains ``train`` and ``validation`` folders, and then each folder 
             ├── 10870992_eebeeb3a12.jpg
             ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.ImageClassificationData`.
-We select a pre-trained backbone to use for our :class:`~flash.image.ImageClassifier` and fine-tune on the hymenoptera data.
-We then use the trained :class:`~flash.image.ImageClassifier` for inference.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.classification.data.ImageClassificationData`.
+We select a pre-trained backbone to use for our :class:`~flash.image.classification.model.ImageClassifier` and fine-tune on the hymenoptera data.
+We then use the trained :class:`~flash.image.classification.model.ImageClassifier` for inference.
 Finally, we save the model.
 Here's the full example:
 
@@ -61,7 +61,7 @@ Here's the full example:
 Serving
 *******
 
-The :class:`~flash.image.ImageClassifier` is servable.
+The :class:`~flash.image.classification.model.ImageClassifier` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.Task`.
 Here's an example:
 

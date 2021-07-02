@@ -31,15 +31,15 @@ Each CSV file looks like this:
     ...
 
 In the above, the input column represents the long articles/documents, and the target is the short description used as the target.
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.SummarizationData`.
-We select a pre-trained backbone to use for our :class:`~flash.text.SummarizationTask` and finetune on the XSUM data.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.seq2seq.summarization.data.SummarizationData`.
+We select a pre-trained backbone to use for our :class:`~flash.text.seq2seq.summarization.model.SummarizationTask` and finetune on the XSUM data.
 The backbone can be any Seq2Seq summarization model from `HuggingFace/transformers <https://huggingface.co/models?filter=pytorch&pipeline_tag=summarization>`_.
 
 .. note::
 
-    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.SummarizationData` and the :class:`~flash.text.SummarizationTask`!
+    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` and the :class:`~flash.text.seq2seq.summarization.model.SummarizationTask`!
 
-Next, we use the trained :class:`~flash.text.SummarizationTask` for inference.
+Next, we use the trained :class:`~flash.text.seq2seq.summarization.model.SummarizationTask` for inference.
 Finally, we save the model.
 Here's the full example:
 
@@ -53,7 +53,7 @@ Here's the full example:
 Serving
 *******
 
-The :class:`~flash.text.SummarizationTask` is servable.
+The :class:`~flash.text.seq2seq.summarization.model.SummarizationTask` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.Task`.
 Here's an example:
 

@@ -12,7 +12,7 @@ The Task
 Typically, Video Classification refers to the task of producing a label for actions identified in a given video.
 The task is to predict which *class* the video clip belongs to.
 
-Lightning Flash :class:`~flash.video.VideoClassifier` and :class:`~flash.video.VideoClassificationData` classes internally rely on `PyTorchVideo <https://pytorchvideo.readthedocs.io/en/latest/index.html>`_.
+Lightning Flash :class:`~flash.video.classification.model.VideoClassifier` and :class:`~flash.video.classification.data.VideoClassificationData` classes internally rely on `PyTorchVideo <https://pytorchvideo.readthedocs.io/en/latest/index.html>`_.
 
 ------
 
@@ -46,10 +46,10 @@ Here's an outline of the folder structure:
         │   ├── 4JxH3S5JwMs_000003_000013.mp4
         ... ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.video.VideoClassificationData`.
-We select a pre-trained backbone to use for our :class:`~flash.video.VideoClassifier` and fine-tune on the Kinetics data.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.video.classification.data.VideoClassificationData`.
+We select a pre-trained backbone to use for our :class:`~flash.video.classification.model.VideoClassifier` and fine-tune on the Kinetics data.
 The backbone can be any model from the `PyTorchVideo Model Zoo <https://pytorchvideo.readthedocs.io/en/latest/model_zoo.html>`_.
-We then use the trained :class:`~flash.video.VideoClassifier` for inference.
+We then use the trained :class:`~flash.video.classification.model.VideoClassifier` for inference.
 Finally, we save the model.
 Here's the full example:
 

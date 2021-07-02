@@ -31,15 +31,15 @@ Here's the structure:
     "Hunters chase what they think is a man through ...",negative
     ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.TextClassificationData`.
-We select a pre-trained backbone to use for our :class:`~flash.text.TextClassifier` and finetune on the IMDB data.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.classification.data.TextClassificationData`.
+We select a pre-trained backbone to use for our :class:`~flash.text.classification.model.TextClassifier` and finetune on the IMDB data.
 The backbone can be any BERT classification model from `HuggingFace/transformers <https://huggingface.co/models?filter=pytorch&pipeline_tag=text-classification>`_.
 
 .. note::
 
-    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.TextClassifier` and the :class:`~flash.text.TextClassificationData`!
+    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.classification.model.TextClassifier` and the :class:`~flash.text.classification.data.TextClassificationData`!
 
-Next, we use the trained :class:`~flash.text.TextClassifier` for inference.
+Next, we use the trained :class:`~flash.text.classification.model.TextClassifier` for inference.
 Finally, we save the model.
 Here's the full example:
 
@@ -53,7 +53,7 @@ Here's the full example:
 Serving
 *******
 
-The :class:`~flash.text.TextClassifier` is servable.
+The :class:`~flash.text.classification.model.TextClassifier` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.Task`.
 Here's an example:
 

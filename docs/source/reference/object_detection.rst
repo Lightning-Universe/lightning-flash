@@ -38,9 +38,9 @@ Here's an outline:
             ├── 000000000025.txt
             ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.image.ObjectDetectionData`.
-We select a pre-trained RetinaNet to use for our :class:`~flash.image.ObjectDetector` and fine-tune on the COCO 128 data.
-We then use the trained :class:`~flash.image.ObjectDetector` for inference.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.image.detection.data.ObjectDetectionData`.
+We select a pre-trained RetinaNet to use for our :class:`~flash.image.detection.model.ObjectDetector` and fine-tune on the COCO 128 data.
+We then use the trained :class:`~flash.image.detection.model.ObjectDetector` for inference.
 Finally, we save the model.
 Here's the full example:
 

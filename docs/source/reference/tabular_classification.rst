@@ -9,7 +9,7 @@ The Task
 ********
 
 Tabular classification is the task of assigning a class to samples of structured or relational data.
-The :class:`~flash.tabular.TabularClassifier` task can be used for classification of samples in more than two classes (multi-class classification).
+The :class:`~flash.tabular.classification.model.TabularClassifier` task can be used for classification of samples in more than two classes (multi-class classification).
 
 ------
 
@@ -29,16 +29,16 @@ The data is provided in CSV files that look like this:
     6,0,3,"Moran, Mr. James",male,,0,0,330877,8.4583,,Q
     ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.TabularData` from our CSV files using the :func:`~flash.tabular.TabularData.from_csv` method.
-From :meth:`the API reference <flash.tabular.TabularData.from_csv>`, we need to provide:
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.classification.data.TabularData` from our CSV files using the :func:`~flash.tabular.classification.data.TabularData.from_csv` method.
+From :meth:`the API reference <flash.tabular.classification.data.TabularData.from_csv>`, we need to provide:
 
 * **cat_cols**- A list of the names of columns that contain categorical data (strings or integers).
 * **num_cols**- A list of the names of columns that contain numerical continuous data (floats).
 * **target**- The name of the column we want to predict.
 * **train_csv**- A CSV file containing the training data converted to a Pandas DataFrame
 
-Next, we create the :class:`~flash.tabular.TabularClassifier` and finetune on the Titanic data.
-We then use the trained :class:`~flash.image.ImageClassifier` for inference.
+Next, we create the :class:`~flash.tabular.classification.model.TabularClassifier` and finetune on the Titanic data.
+We then use the trained :class:`~flash.tabular.classification.model.TabularClassifier` for inference.
 Finally, we save the model.
 Here's the full example:
 
@@ -52,7 +52,7 @@ Here's the full example:
 Serving
 *******
 
-The :class:`~flash.tabular.TabularClassifier` is servable.
+The :class:`~flash.tabular.classification.model.TabularClassifier` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.Task`.
 Here's an example:
 
