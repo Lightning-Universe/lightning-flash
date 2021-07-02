@@ -13,11 +13,11 @@ The :class:`~flash.tabular.TabularClassifier` task can be used for classificatio
 
 ------
 
-********
-The Data
-********
+*******
+Example
+*******
 
-In this example, we'll build a model to predict if passenger survival on the Titanic using `the classic Kaggle data set <https://www.kaggle.com/c/titanic-dataset/data>`_.
+Let's look at training a model to predict if passenger survival on the Titanic using `the classic Kaggle data set <https://www.kaggle.com/c/titanic-dataset/data>`_.
 The data is provided in CSV files that look like this:
 
 .. code-block::
@@ -29,13 +29,7 @@ The data is provided in CSV files that look like this:
     6,0,3,"Moran, Mr. James",male,,0,0,330877,8.4583,,Q
     ...
 
-------
-
-*******
-Example
-*******
-
-Once we download the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.TabularData` from our CSV files using the :func:`~flash.tabular.TabularData.from_csv` method.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.TabularData` from our CSV files using the :func:`~flash.tabular.TabularData.from_csv` method.
 From :any:`the API reference <flash.tabular.TabularData.from_csv>`, we need to provide:
 
 * **cat_cols**- A list of the names of columns that contain categorical data (strings or integers).

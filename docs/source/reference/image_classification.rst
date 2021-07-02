@@ -16,11 +16,11 @@ A class is a label that describes what is in an image, such as ‘car’, ‘hou
 
 ------
 
-********
-The Data
-********
+*******
+Example
+*******
 
-In this example, we will look at the task of predicting whether images contain Ants or Bees using the hymenoptera dataset.
+Let's look at the task of predicting whether images contain Ants or Bees using the hymenoptera dataset.
 The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
 
 .. code-block::
@@ -45,13 +45,7 @@ The dataset contains ``train`` and ``validation`` folders, and then each folder 
             ├── 10870992_eebeeb3a12.jpg
             ...
 
-------
-
-*******
-Example
-*******
-
-Once we download the data using :func:`~flash.core.data.download_data`, all we need is the train folder and validation folder to create the :class:`~flash.image.ImageClassificationData`.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.ImageClassificationData`.
 We select a pre-trained backbone to use for our :class:`~flash.image.ImageClassifier` and fine-tune on the hymenoptera data.
 We then use the trained :class:`~flash.image.ImageClassifier` for inference.
 Finally, we save the model.

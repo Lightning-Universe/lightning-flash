@@ -19,15 +19,15 @@ from flash.text import TextClassificationData, TextClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "./data/")
 
 datamodule = TextClassificationData.from_csv(
+    "review",
+    "sentiment",
     train_file="data/imdb/train.csv",
     val_file="data/imdb/valid.csv",
-    input_fields="review",
-    target_fields="sentiment",
-    batch_size=16,
+    backbone="prajjwal1/bert-medium",
 )
 
 # 2. Build the task
-model = TextClassifier(num_classes=datamodule.num_classes)
+model = TextClassifier(backbone="prajjwal1/bert-medium", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3)

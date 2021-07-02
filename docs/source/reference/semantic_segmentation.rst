@@ -13,11 +13,11 @@ See more: https://paperswithcode.com/task/semantic-segmentation
 
 ------
 
-********
-The Data
-********
+*******
+Example
+*******
 
-For this example, we'll use a data set generated using the `CARLA <http://carla.org/>`_ driving simulator.
+Let's look at an example using a data set generated with the `CARLA <http://carla.org/>`_ driving simulator.
 The data was generated as part of the `Kaggle Lyft Udacity Challenge <https://www.kaggle.com/kumaresanmanickavelu/lyft-udacity-challenge>`_.
 The data contains one folder of images and another folder with the corresponding segmentation masks.
 Here's the structure:
@@ -34,13 +34,7 @@ Here's the structure:
         ├── F61-2.png
             ...
 
-------
-
-*******
-Example
-*******
-
-Once we download the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.SemanticSegmentationData`.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.SemanticSegmentationData`.
 We select a pre-trained ``mobilenet_v3_large`` backbone with an ``fpn`` head to use for our :class:`~flash.image.SemanticSegmentation` task and fine-tune on the CARLA data.
 We then use the trained :class:`~flash.image.SemanticSegmentation` for inference.
 Finally, we save the model.

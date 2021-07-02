@@ -16,19 +16,12 @@ The :class:`~flash.image.style_transfer.StyleTransfer` and :class:`~flash.image.
 
 ------
 
-********
-The Data
-********
-
-For this example, we'll transfer the style from `The Starry Night <https://en.wikipedia.org/wiki/The_Starry_Night>`_ onto the images from the COCO 128 data set from the :ref:`object_detection` Guide.
-
-------
-
 *******
 Example
 *******
 
-Once we download the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.style_transfer.StyleTransferData`.
+Let's look at transferring the style from `The Starry Night <https://en.wikipedia.org/wiki/The_Starry_Night>`_ onto the images from the COCO 128 data set from the :ref:`object_detection` Guide.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.style_transfer.StyleTransferData`.
 Next, we create our :class:`~flash.style_transfer.StyleTransfer` task with the desired style image and fit on the COCO 128 images.
 We then use the trained :class:`~flash.style_transfer.StyleTransfer` for inference.
 Finally, we save the model.
