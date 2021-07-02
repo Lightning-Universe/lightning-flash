@@ -1,0 +1,73 @@
+.. _tabular_classification:
+
+######################
+Tabular Classification
+######################
+
+********
+The Task
+********
+
+Tabular classification is the task of assigning a class to samples of structured or relational data.
+The :class:`~flash.tabular.TabularClassifier` task can be used for classification of samples in more than two classes (multi-class classification).
+
+------
+
+********
+The Data
+********
+
+In this example, we'll build a model to predict if passenger survival on the Titanic using `the classic Kaggle data set <https://www.kaggle.com/c/titanic-dataset/data>`_.
+The data is provided in CSV files that look like this:
+
+.. code-block::
+
+    PassengerId,Survived,Pclass,Name,Sex,Age,SibSp,Parch,Ticket,Fare,Cabin,Embarked
+    1,0,3,"Braund, Mr. Owen Harris",male,22,1,0,A/5 21171,7.25,,S
+    3,1,3,"Heikkinen, Miss. Laina",female,26,0,0,STON/O2. 3101282,7.925,,S
+    5,0,3,"Allen, Mr. William Henry",male,35,0,0,373450,8.05,,S
+    6,0,3,"Moran, Mr. James",male,,0,0,330877,8.4583,,Q
+    ...
+
+------
+
+*******
+Example
+*******
+
+Once we download the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.TabularData` from our CSV files using the :func:`~flash.tabular.TabularData.from_csv` method.
+From :any:`the API reference <flash.tabular.TabularData.from_csv>`, we need to provide:
+
+* **cat_cols**- A list of the names of columns that contain categorical data (strings or integers).
+* **num_cols**- A list of the names of columns that contain numerical continuous data (floats).
+* **target**- The name of the column we want to predict.
+* **train_csv**- A CSV file containing the training data converted to a Pandas DataFrame
+
+Next, we create the :class:`~flash.tabular.TabularClassifier` and finetune on the Titanic data.
+We then use the trained :class:`~flash.image.ImageClassifier` for inference.
+Finally, we save the model.
+Here's the full example:
+
+.. literalinclude:: ../../../flash_examples/tabular_classification.py
+    :language: python
+    :lines: 14-
+
+------
+
+*******
+Serving
+*******
+
+The :class:`~flash.tabular.TabularClassifier` is servable.
+This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+Here's an example:
+
+.. literalinclude:: ../../../flash_examples/serve/tabular_classification/inference_server.py
+    :language: python
+    :lines: 14-
+
+You can now perform inference from your client like this:
+
+.. literalinclude:: ../../../flash_examples/serve/tabular_classification/client.py
+    :language: python
+    :lines: 14-

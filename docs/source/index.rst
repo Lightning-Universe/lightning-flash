@@ -8,13 +8,22 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Get started
+   :caption: Getting started
 
    quickstart
    installation
    custom_task
    reference/flash_to_pl
    reference/flash_to_production
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Guides
+
+   general/training
+   general/finetuning
+   general/predictions
+   general/jit
 
 .. toctree::
    :maxdepth: 1
@@ -50,22 +59,18 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Integrations
+
+   integrations/fiftyone
+
+.. toctree::
+   :maxdepth: 1
    :caption: Flash API
 
    general/data
    general/callback
    general/registry
    general/serve
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Common Use Cases
-
-   general/training
-   general/finetuning
-   general/predictions
-   general/jit
 
 .. toctree::
    :maxdepth: 1
@@ -77,12 +82,6 @@ Lightning Flash
    code/tabular
    code/text
    code/video
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Integrations
-
-   integrations/fiftyone
 
 .. toctree::
    :maxdepth: 1
