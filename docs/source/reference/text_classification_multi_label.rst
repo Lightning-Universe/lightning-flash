@@ -13,12 +13,6 @@ Multi-label text classification is supported by the :class:`~flash.text.TextClas
 
 -----
 
-********
-The data
-********
-
-------
-
 *******
 Example
 *******
