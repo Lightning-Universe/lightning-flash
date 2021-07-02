@@ -30,7 +30,7 @@ class TranslationTask(Seq2SeqTask):
         :lines: 14-
 
     You can change the backbone to any translation model from `HuggingFace/transformers
-    <https://huggingface.co/models?filter=pytorch&pipeline_tag=translation>`_ using the ``backbone`` argument.
+    <https://huggingface.co/models?filter=pytorch&pipeline_tag=translation>`__ using the ``backbone`` argument.
 
     .. note:: When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.Task` and the
         :class:`~flash.core.data.data_module.DataModule` object! Since this is a Seq2Seq task, make sure you use a

@@ -30,7 +30,7 @@ The data is provided in CSV files that look like this:
     ...
 
 Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.TabularData` from our CSV files using the :func:`~flash.tabular.TabularData.from_csv` method.
-From :any:`the API reference <flash.tabular.TabularData.from_csv>`, we need to provide:
+From :meth:`the API reference <flash.tabular.TabularData.from_csv>`, we need to provide:
 
 * **cat_cols**- A list of the names of columns that contain categorical data (strings or integers).
 * **num_cols**- A list of the names of columns that contain numerical continuous data (floats).
