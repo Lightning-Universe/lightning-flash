@@ -226,14 +226,6 @@ class Preprocess(BasePreprocess, Properties):
     def deserializer(self) -> Optional['Deserializer']:
         return self._deserializer
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
 
