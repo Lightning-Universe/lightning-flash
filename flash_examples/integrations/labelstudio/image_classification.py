@@ -1,9 +1,8 @@
 from itertools import chain
 
-from flash.core.data.utils import download_data
-
 import flash
 from flash.core.classification import Labels
+from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
 from flash.image import ImageClassificationData, ImageClassifier
 

@@ -556,6 +556,7 @@ class LabelStudioDataset(Dataset):
         *js: json of export file
         *img_folder: path to image folder of label studio
     """
+
     def __init__(self, js, img_folder, val=False):
         self._raw_data = js
         self._img_folder = img_folder
@@ -601,8 +602,7 @@ class LabelStudioDataset(Dataset):
         sorted_labels = sorted(list(self.classes))
         # checking index of class
         label = sorted_labels.index(r['label'])
-        result = {DefaultDataKeys.INPUT: sample,
-                  DefaultDataKeys.TARGET: label}
+        result = {DefaultDataKeys.INPUT: sample, DefaultDataKeys.TARGET: label}
         return result
 
     def __len__(self):
