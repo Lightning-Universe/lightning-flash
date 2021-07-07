@@ -15,30 +15,31 @@ import flash
 from flash.core.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "data/")
+# 1. Create the DataModule
+download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "./data/")
 
-# 2. Load the data
 datamodule = TextClassificationData.from_csv(
+    "review",
+    "sentiment",
     train_file="data/imdb/train.csv",
     val_file="data/imdb/valid.csv",
-    test_file="data/imdb/test.csv",
-    input_fields="review",
-    target_fields="sentiment",
-    batch_size=16,
+    backbone="prajjwal1/bert-medium",
 )
 
-# 3. Build the model
-model = TextClassifier(num_classes=datamodule.num_classes)
+# 2. Build the task
+model = TextClassifier(backbone="prajjwal1/bert-medium", num_classes=datamodule.num_classes)
 
-# 4. Create the trainer
-trainer = flash.Trainer(fast_dev_run=True)
-
-# 5. Fine-tune the model
+# 3. Create the trainer and finetune the model
+trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-# 6. Test model
-trainer.test(model)
+# 4. Classify a few sentences! How was the movie?
+predictions = model.predict([
+    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+    "The worst movie in the history of cinema.",
+    "I come from Bulgaria where it 's almost impossible to have a tornado.",
+])
+print(predictions)
 
-# 7. Save it!
+# 5. Save the model!
 trainer.save_checkpoint("text_classification_model.pt")

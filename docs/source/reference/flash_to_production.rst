@@ -7,7 +7,7 @@ Flash makes it simple to deploy models in production.
 Server Side
 ^^^^^^^^^^^
 
-.. literalinclude:: ../../../flash_examples/serve/segmentic_segmentation/inference_server.py
+.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/inference_server.py
     :language: python
     :lines: 14-
 
@@ -15,7 +15,7 @@ Server Side
 Client Side
 ^^^^^^^^^^^
 
-.. literalinclude:: ../../../flash_examples/serve/segmentic_segmentation/client.py
+.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/client.py
     :language: python
     :lines: 14-
 

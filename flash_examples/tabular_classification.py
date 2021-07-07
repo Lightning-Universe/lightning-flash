@@ -11,36 +11,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from torchmetrics.classification import Accuracy, Precision, Recall
-
 import flash
 from flash.core.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularData
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
+# 1. Create the DataModule
+download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
 
-# 2. Load the data
 datamodule = TabularData.from_csv(
     ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
     "Fare",
     target_fields="Survived",
-    train_file="./data/titanic/titanic.csv",
-    test_file="./data/titanic/test.csv",
-    val_split=0.25,
+    train_file="data/titanic/titanic.csv",
+    val_split=0.1,
 )
 
-# 3. Build the model
-model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
+# 2. Build the task
+model = TabularClassifier.from_data(datamodule)
 
-# 4. Create the trainer
-trainer = flash.Trainer(fast_dev_run=True)
-
-# 5. Train the model
+# 3. Create the trainer and train the model
+trainer = flash.Trainer(max_epochs=3)
 trainer.fit(model, datamodule=datamodule)
 
-# 6. Test model
-trainer.test(model)
+# 4. Generate predictions from a CSV
+predictions = model.predict("data/titanic/titanic.csv")
+print(predictions)
 
-# 7. Save it!
+# 5. Save the model!
 trainer.save_checkpoint("tabular_classification_model.pt")

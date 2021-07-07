@@ -5,35 +5,23 @@ Summarization
 #############
 
 ********
-The task
+The Task
 ********
 
-Summarization is the task of summarizing text from a larger document/article into a short sentence/description. For example, taking a web article and describing the topic in a short sentence.
-This task is a subset of `Sequence to Sequence tasks <https://paperswithcode.com/method/seq2seq>`_, which requires the model to generate a variable length sequence given an input sequence. In our case the article would be our input sequence, and the short description/sentence would be the output sequence from the model.
+Summarization is the task of summarizing text from a larger document/article into a short sentence/description.
+For example, taking a web article and describing the topic in a short sentence.
+This task is a subset of `Sequence to Sequence tasks <https://paperswithcode.com/method/seq2seq>`_, which require the model to generate a variable length sequence given an input sequence.
+In our case the article would be our input sequence, and the short description/sentence would be the output sequence from the model.
 
 -----
 
-*********
-Inference
-*********
+*******
+Example
+*******
 
-The :class:`~flash.text.SummarizationTask` is already pre-trained on `XSUM <https://arxiv.org/abs/1808.08745>`_, a dataset of online British Broadcasting Corporation articles.
-
-Use the :class:`~flash.text.SummarizationTask` pretrained model for inference on any string sequence using :class:`~flash.text.SummarizationTask` `predict` method:
-
-.. literalinclude:: ../../../flash_examples/predict/summarization.py
-    :language: python
-    :lines: 14-
-
-For more advanced inference options, see :ref:`predictions`.
-
------
-
-**********
-Finetuning
-**********
-
-Say you want to finetune to your own summarization data. We use the XSUM dataset as an example which contains a ``train.csv`` and ``valid.csv``, structured like so:
+Let's look at an example.
+We'll use the XSUM dataset, which contains a ``train.csv`` and ``valid.csv``.
+Each CSV file looks like this:
 
 .. code-block::
 
@@ -42,52 +30,39 @@ Say you want to finetune to your own summarization data. We use the XSUM dataset
     "Knight was shot in the leg by an unknown gunman at Miami's Shore Club where West was holding a pre-MTV Awards...",Hip hop star Kanye West is being sued by Death Row Records founder Suge Knight over a shooting at a beach party in August 2005.
     ...
 
-In the above the input column represents the long articles/documents, and the target is the short description used as the target.
+In the above, the input column represents the long articles/documents, and the target is the short description used as the target.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.seq2seq.summarization.data.SummarizationData`.
+We select a pre-trained backbone to use for our :class:`~flash.text.seq2seq.summarization.model.SummarizationTask` and finetune on the XSUM data.
+The backbone can be any Seq2Seq summarization model from `HuggingFace/transformers <https://huggingface.co/models?filter=pytorch&pipeline_tag=summarization>`_.
 
-.. literalinclude:: ../../../flash_examples/finetuning/summarization.py
+.. note::
+
+    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` and the :class:`~flash.text.seq2seq.summarization.model.SummarizationTask`!
+
+Next, we use the trained :class:`~flash.text.seq2seq.summarization.model.SummarizationTask` for inference.
+Finally, we save the model.
+Here's the full example:
+
+.. literalinclude:: ../../../flash_examples/summarization.py
     :language: python
     :lines: 14-
 
-----
-
-To run the example:
-
-.. code-block:: bash
-
-    python flash_examples/finetuning/summarization.py
-
-
 ------
 
-*********************
-Changing the backbone
-*********************
-By default, we use the `t5 <https://arxiv.org/abs/1910.10683>`_ model for summarization. You can change the model run by the task to any summarization model from `HuggingFace/transformers <https://huggingface.co/models?filter=summarization,pytorch>`_ by passing in a backbone parameter.
+*******
+Serving
+*******
 
-.. note:: When changing the backbone, make sure you pass in the same backbone to the Task and the Data object! Since this is a Seq2Seq task, make sure you use a Seq2Seq model.
+The :class:`~flash.text.seq2seq.summarization.model.SummarizationTask` is servable.
+This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+Here's an example:
 
-.. testsetup::
+.. literalinclude:: ../../../flash_examples/serve/summarization/inference_server.py
+    :language: python
+    :lines: 14-
 
-    from flash.core.data.utils import download_data
-    from flash.text import SummarizationData, SummarizationTask
+You can now perform inference from your client like this:
 
-    download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
-
-.. testcode::
-
-    # use google/mt5-small, covering 101 languages
-    datamodule = SummarizationData.from_csv(
-        "input",
-        "target",
-        train_file="data/xsum/train.csv",
-        val_file="data/xsum/valid.csv",
-        test_file="data/xsum/test.csv",
-        backbone="google/mt5-small",
-    )
-
-    model = SummarizationTask(backbone="google/mt5-small")
-
-.. testoutput::
-    :hide:
-
-    ...
+.. literalinclude:: ../../../flash_examples/serve/summarization/client.py
+    :language: python
+    :lines: 14-

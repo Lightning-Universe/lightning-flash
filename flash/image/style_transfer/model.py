@@ -51,13 +51,8 @@ __all__ = ["StyleTransfer"]
 
 
 class StyleTransfer(Task):
-    """Task that transfer the style from an image onto another.
-
-    Example::
-
-        from flash.image.style_transfer import StyleTransfer
-
-        model = StyleTransfer(image_style)
+    """``StyleTransfer`` is a :class:`~flash.Task` for transferring the style from one image onto another. For more
+    details, see :ref:`style_transfer`.
 
     Args:
         style_image: Image or path to an image to derive the style from.
@@ -181,6 +176,6 @@ class StyleTransfer(Task):
     def test_step(self, batch: Any, batch_idx: int) -> NoReturn:
         raise_not_supported("test")
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int) -> Any:
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         input_image = batch[DefaultDataKeys.INPUT]
         return self(input_image)

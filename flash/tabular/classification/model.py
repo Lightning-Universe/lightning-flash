@@ -27,7 +27,8 @@ if _TABULAR_AVAILABLE:
 
 
 class TabularClassifier(ClassificationTask):
-    """Task that classifies table rows.
+    """The ``TabularClassifier`` is a :class:`~flash.Task` for classifying tabular data. For more details, see
+    :ref:`tabular_classification`.
 
     Args:
         num_features: Number of columns in table (not including target column).
