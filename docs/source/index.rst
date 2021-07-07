@@ -27,7 +27,7 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Image
+   :caption: Image and Video
 
    reference/image_classification
    reference/image_classification_multi_label
@@ -35,6 +35,7 @@ Lightning Flash
    reference/object_detection
    reference/semantic_segmentation
    reference/style_transfer
+   reference/video_classification
 
 .. toctree::
    :maxdepth: 1
@@ -50,12 +51,6 @@ Lightning Flash
    reference/text_classification_multi_label
    reference/summarization
    reference/translation
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Video
-
-   reference/video_classification
 
 .. toctree::
    :maxdepth: 1
