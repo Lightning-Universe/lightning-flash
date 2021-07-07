@@ -27,6 +27,7 @@ from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
+    from torchvision.datasets import FakeData
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -443,3 +444,32 @@ def test_from_fiftyone(tmpdir):
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, )
     assert sorted(list(labels.numpy())) == [0, 1]
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_from_datasets():
+    img_data = ImageClassificationData.from_datasets(
+        train_dataset=FakeData(size=3, num_classes=2),
+        val_dataset=FakeData(size=3, num_classes=2),
+        test_dataset=FakeData(size=3, num_classes=2),
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
+    # check validation data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
