@@ -14,16 +14,23 @@
 import numpy as np
 from sklearn import datasets
 
-from flash import Trainer
+import flash
 from flash.template import TemplateData, TemplateSKLearnClassifier
 
-# 1. Download the data
-data_bunch = datasets.load_iris()
+# 1. Create the DataModule
+datamodule = TemplateData.from_sklearn(
+    train_bunch=datasets.load_iris(),
+    val_split=0.1,
+)
 
-# 2. Load the model from a checkpoint
-model = TemplateSKLearnClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/template_model.pt")
+# 2. Build the task
+model = TemplateSKLearnClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
 
-# 3. Classify a few examples
+# 3. Create the trainer and train the model
+trainer = flash.Trainer(max_epochs=3)
+trainer.fit(model, datamodule=datamodule)
+
+# 4. Classify a few examples
 predictions = model.predict([
     np.array([4.9, 3.0, 1.4, 0.2]),
     np.array([6.9, 3.2, 5.7, 2.3]),
@@ -31,8 +38,5 @@ predictions = model.predict([
 ])
 print(predictions)
 
-# 4. Or generate predictions from a whole dataset!
-datamodule = TemplateData.from_sklearn(predict_bunch=data_bunch)
-
-predictions = Trainer().predict(model, datamodule=datamodule)
-print(predictions)
+# 5. Save the model!
+trainer.save_checkpoint("template_model.pt")

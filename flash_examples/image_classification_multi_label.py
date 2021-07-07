@@ -15,20 +15,15 @@ import os.path as osp
 from typing import List, Tuple
 
 import pandas as pd
-from torchmetrics import F1
 
 import flash
-from flash.core.classification import Labels
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 
-# 1. Download the data
-# This is a subset of the movie poster genre prediction data set from the paper
-# “Movie Genre Classification based on Poster Images with Deep Neural Networks” by Wei-Ta Chu and Hung-Jui Guo.
-# Please consider citing their paper if you use it. More here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
-download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "data/")
-
-# 2. Load the data
+# 1. Create the DataModule
+# Data set from the paper “Movie Genre Classification based on Poster Images with Deep Neural Networks”.
+# More info here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
+download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip")
 genres = ["Action", "Romance", "Crime", "Thriller", "Adventure"]
 
 
@@ -39,42 +34,27 @@ def load_data(data: str, root: str = 'data/movie_posters') -> Tuple[List[str], L
 
 
 train_files, train_targets = load_data('train')
-test_files, test_targets = load_data('test')
-
 datamodule = ImageClassificationData.from_files(
     train_files=train_files,
     train_targets=train_targets,
-    test_files=test_files,
-    test_targets=test_targets,
-    val_split=0.1,  # Use 10 % of the train dataset to generate validation one.
+    val_split=0.1,
     image_size=(128, 128),
 )
 
-# 3. Build the model
-model = ImageClassifier(
-    backbone="resnet18",
-    num_classes=len(genres),
-    multi_label=True,
-    metrics=F1(num_classes=len(genres)),
-)
+# 2. Build the task
+model = ImageClassifier(backbone="resnet18", num_classes=len(genres), multi_label=True)
 
-# 4. Create the trainer
-trainer = flash.Trainer(max_epochs=1)
-
-# 5. Train the model
+# 3. Create the trainer and finetune the model
+trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-# 6. Predict what's on a few images!
-# Serialize predictions as labels, low threshold to see more predictions.
-model.serializer = Labels(genres, multi_label=True, threshold=0.25)
-
+# 4. Predict the genre of a few movies!
 predictions = model.predict([
     "data/movie_posters/predict/tt0085318.jpg",
     "data/movie_posters/predict/tt0089461.jpg",
     "data/movie_posters/predict/tt0097179.jpg",
 ])
-
 print(predictions)
 
-# 7. Save it!
+# 7. Save the model!
 trainer.save_checkpoint("image_classification_multi_label_model.pt")

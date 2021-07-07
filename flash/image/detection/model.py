@@ -53,9 +53,8 @@ def _evaluate_iou(target, pred):
 
 
 class ObjectDetector(Task):
-    """Object detection task
-
-    Ref: Lightning Bolts https://github.com/PyTorchLightning/lightning-bolts
+    """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
+    :ref:`object_detection`.
 
     Args:
         num_classes: the number of classes for detection, including background

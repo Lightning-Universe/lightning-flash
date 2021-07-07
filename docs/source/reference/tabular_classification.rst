@@ -5,21 +5,20 @@ Tabular Classification
 ######################
 
 ********
-The task
+The Task
 ********
 
-Tabular classification is the task of assigning a class to samples of structured or relational data. The Flash Tabular Classification task can be used for multi-class classification, or classification of samples in more than two classes. In the following example, the Tabular data is structured into rows and columns, where columns represent properties or features. The task will learn to predict a single target column.
+Tabular classification is the task of assigning a class to samples of structured or relational data.
+The :class:`~flash.tabular.classification.model.TabularClassifier` task can be used for classification of samples in more than two classes (multi-class classification).
 
------
+------
 
-**********
-Finetuning
-**********
+*******
+Example
+*******
 
-Say we want to build a model to predict if a passenger survived on the
-Titanic. We can organize our data in ``.csv`` files
-(exportable from Excel, but you can find the kaggle dataset `here <https://www.kaggle.com/c/titanic-dataset/data>`_):
-
+Let's look at training a model to predict if passenger survival on the Titanic using `the classic Kaggle data set <https://www.kaggle.com/c/titanic-dataset/data>`_.
+The data is provided in CSV files that look like this:
 
 .. code-block::
 
@@ -30,29 +29,39 @@ Titanic. We can organize our data in ``.csv`` files
     6,0,3,"Moran, Mr. James",male,,0,0,330877,8.4583,,Q
     ...
 
-We can use the Flash Tabular classification task to predict the probability a passenger survived (1 means survived, 0 otherwise), using the feature columns.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.classification.data.TabularData` from our CSV files using the :func:`~flash.tabular.classification.data.TabularData.from_csv` method.
+From :meth:`the API reference <flash.tabular.classification.data.TabularData.from_csv>`, we need to provide:
 
-We can create :class:`~flash.tabular.TabularData` from csv files using the :func:`~flash.tabular.TabularData.from_csv` method. We will pass in:
+* **cat_cols**- A list of the names of columns that contain categorical data (strings or integers).
+* **num_cols**- A list of the names of columns that contain numerical continuous data (floats).
+* **target**- The name of the column we want to predict.
+* **train_csv**- A CSV file containing the training data converted to a Pandas DataFrame
 
-* **cat_cols**- a list of the names of columns that contain categorical data (strings or integers)
-* **num_cols**- a list of the names of columns that contain numerical continuous data (floats)
-* **target**- the name of the column we want to predict
-* **train_csv**- csv file containing the training data converted to a Pandas DataFrame
+Next, we create the :class:`~flash.tabular.classification.model.TabularClassifier` and finetune on the Titanic data.
+We then use the trained :class:`~flash.tabular.classification.model.TabularClassifier` for inference.
+Finally, we save the model.
+Here's the full example:
 
-Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Data module we created.
-
-.. literalinclude:: ../../../flash_examples/finetuning/tabular_classification.py
+.. literalinclude:: ../../../flash_examples/tabular_classification.py
     :language: python
     :lines: 14-
 
------
+------
 
-*********
-Inference
-*********
+*******
+Serving
+*******
 
-You can make predictions on a pretrained model, that has already been trained for the titanic task:
+The :class:`~flash.tabular.classification.model.TabularClassifier` is servable.
+This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+Here's an example:
 
-.. literalinclude:: ../../../flash_examples/predict/tabular_classification.py
+.. literalinclude:: ../../../flash_examples/serve/tabular_classification/inference_server.py
+    :language: python
+    :lines: 14-
+
+You can now perform inference from your client like this:
+
+.. literalinclude:: ../../../flash_examples/serve/tabular_classification/client.py
     :language: python
     :lines: 14-

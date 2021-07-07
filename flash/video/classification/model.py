@@ -118,7 +118,6 @@ class VideoClassifier(ClassificationTask):
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        # todo (tchaton): Force pretrained when running CI Benchmarking.
         backbone_kwargs["pretrained"] = True if (flash._IS_TESTING and torch.cuda.is_available()) else pretrained
         backbone_kwargs["head_activation"] = None
 
