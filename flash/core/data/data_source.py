@@ -27,6 +27,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -41,6 +42,15 @@ from torch.utils.data.dataset import Dataset
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+
+SampleCollection = None
+if _FIFTYONE_AVAILABLE:
+    fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        from fiftyone.core.collections import SampleCollection
+else:
+    fol = None
 
 
 # Credit to the PyTorchVision Team:
@@ -145,6 +155,7 @@ class DefaultDataSources(LightningEnum):
     CSV = "csv"
     JSON = "json"
     DATASET = "dataset"
+    FIFTYONE = "fiftyone"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -187,9 +198,11 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
     sets from the hooks."""
 
-    def load_data(self,
-                  data: DATA_TYPE,
-                  dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
+    @staticmethod
+    def load_data(
+        data: DATA_TYPE,
+        dataset: Optional[Any] = None,
+    ) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
         """Given the ``data`` argument, the ``load_data`` hook produces a sequence or iterable of samples or
         sample metadata. The ``data`` argument can be anything, but this method should return a sequence or iterable of
         mappings from string (e.g. "input", "target", "bbox", etc.) to data (e.g. a target value) or metadata (e.g. a
@@ -216,8 +229,10 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         """
         return data
 
-    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        """Given an element from the output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`, this hook
+    @staticmethod
+    def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
+        """Given an element from the output of a call to
+        :meth:`~flash.core.data.data_source.DataSource.load_data`, this hook
         should load a single data sample. The keys and values in the ``sample`` argument will be same as the keys and
         values in the outputs of :meth:`~flash.core.data.data_source.DataSource.load_data`.
 
@@ -278,8 +293,8 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         data: Optional[DATA_TYPE],
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
-        """Generate a single dataset with the given input to :meth:`~flash.core.data.data_source.DataSource.load_data` for
-        the given ``running_stage``.
+        """Generate a single dataset with the given input to
+        :meth:`~flash.core.data.data_source.DataSource.load_data` for the given ``running_stage``.
 
         Args:
             data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the dataset.
@@ -319,20 +334,18 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
 
-class DatasetDataSource(DataSource):
+class DatasetDataSource(DataSource[Dataset]):
+    """The ``DatasetDataSource`` implements default behaviours for data sources which expect the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
 
-    def load_data(self, dataset: Dataset, auto_dataset: AutoDataset) -> Dataset:
-        if self.training:
-            # store a sample to infer the shape
-            parameters = signature(self.load_sample).parameters
-            if len(parameters) > 1 and AutoDataset.DATASET_KEY in parameters:
-                auto_dataset.sample = self.load_sample(dataset[0], self)
-            else:
-                auto_dataset.sample = self.load_sample(dataset[0])
-        return dataset
+    Args:
+        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
+            :class:`~flash.core.data.data_source.LabelsState`.
+    """
 
-    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any]) -> Any:
-        # wrap everything within `.INPUT`.
+    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+        if isinstance(sample, tuple) and len(sample) == 2:
+            return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
         return {DefaultDataKeys.INPUT: sample}
 
 
@@ -371,7 +384,8 @@ class SequenceDataSource(
             DefaultDataKeys.TARGET: target
         } for input, target in zip(inputs, targets)]
 
-    def predict_load_data(self, data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
+    @staticmethod
+    def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: input} for input in data]
 
 
@@ -421,8 +435,7 @@ class PathsDataSource(SequenceDataSource):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
                 return self.predict_load_data(data)
-            else:
-                self.set_state(LabelsState(classes))
+            self.set_state(LabelsState(classes))
 
             if dataset is not None:
                 dataset.num_classes = len(classes)
@@ -445,10 +458,12 @@ class PathsDataSource(SequenceDataSource):
         if not isinstance(data, list):
             data = [data]
 
+        data = [{DefaultDataKeys.INPUT: input} for input in data]
+
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),
-                super().predict_load_data(data),
+                data,
             )
         )
 
@@ -461,3 +476,70 @@ class TensorDataSource(SequenceDataSource[torch.Tensor]):
 class NumpyDataSource(SequenceDataSource[np.ndarray]):
     """The ``NumpyDataSource`` is a ``SequenceDataSource`` which expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``np.ndarray`` objects."""
+
+
+class FiftyOneDataSource(DataSource[SampleCollection]):
+    """The ``FiftyOneDataSource`` expects the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
+
+    def __init__(self, label_field: str = "ground_truth"):
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
+        super().__init__()
+        self.label_field = label_field
+
+    @property
+    def label_cls(self):
+        return fol.Label
+
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        self._validate(data)
+
+        label_path = data._get_label_field_path(self.label_field, "label")[1]
+
+        filepaths = data.values("filepath")
+        targets = data.values(label_path)
+
+        classes = self._get_classes(data)
+
+        if dataset is not None:
+            dataset.num_classes = len(classes)
+
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
+
+        if targets and isinstance(targets[0], list):
+
+            def to_idx(t):
+                return [class_to_idx[x] for x in t]
+        else:
+
+            def to_idx(t):
+                return class_to_idx[t]
+
+        return [{
+            DefaultDataKeys.INPUT: f,
+            DefaultDataKeys.TARGET: to_idx(t),
+        } for f, t in zip(filepaths, targets)]
+
+    @staticmethod
+    def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+
+    def _validate(self, data):
+        label_type = data._get_label_field_type(self.label_field)
+        if not issubclass(label_type, self.label_cls):
+            raise ValueError(
+                "Expected field '%s' to have type %s; found %s" % (self.label_field, self.label_cls, label_type)
+            )
+
+    def _get_classes(self, data):
+        classes = data.classes.get(self.label_field, None)
+
+        if not classes:
+            classes = data.default_classes
+
+        if not classes:
+            label_path = data._get_label_field_path(self.label_field, "label")[1]
+            classes = data.distinct(label_path)
+
+        return classes

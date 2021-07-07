@@ -21,13 +21,19 @@ import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image import ImageClassificationData
+from tests.helpers.utils import _IMAGE_TESTING
 
-if _IMAGE_AVAILABLE:
-    import kornia as K
+if _TORCHVISION_AVAILABLE:
     import torchvision
+    from torchvision.datasets import FakeData
+
+if _PIL_AVAILABLE:
     from PIL import Image
+
+if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
 
 
 def _dummy_image_loader(_):
@@ -41,7 +47,7 @@ def _rand_image(size: Tuple[int, int] = None):
     return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_filepaths_smoke(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -72,7 +78,7 @@ def test_from_filepaths_smoke(tmpdir):
     assert sorted(list(labels.numpy())) == [1, 2]
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_filepaths_list_image_paths(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -119,7 +125,7 @@ def test_from_filepaths_list_image_paths(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -154,7 +160,7 @@ def test_from_filepaths_visualise(tmpdir):
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -190,7 +196,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
     dm.show_val_batch("per_batch_transform")
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_filepaths_splits(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -205,7 +211,7 @@ def test_from_filepaths_splits(tmpdir):
 
     train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
 
-    train_labels: List[int] = [i for i in range(num_samples)]
+    train_labels: List[int] = list(range(num_samples))
 
     assert len(train_filepaths) == len(train_labels)
 
@@ -235,7 +241,7 @@ def test_from_filepaths_splits(tmpdir):
     run(_to_tensor)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_folders_only_train(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -259,7 +265,7 @@ def test_from_folders_only_train(tmpdir):
     assert img_data.test_dataloader() is None
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_folders_train_val(tmpdir):
 
     train_dir = Path(tmpdir / "train")
@@ -298,7 +304,7 @@ def test_from_folders_train_val(tmpdir):
     assert list(labels.numpy()) == [0, 0]
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_filepaths_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -340,7 +346,7 @@ def test_from_filepaths_multilabel(tmpdir):
     torch.testing.assert_allclose(labels, torch.tensor(test_labels))
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
     "data,from_function",
     [
@@ -381,3 +387,89 @@ def test_from_data(data, from_function):
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, )
     assert list(labels.numpy()) == [2, 5]
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
+def test_from_fiftyone(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a_1.png")
+    _rand_image().save(tmpdir / "b_1.png")
+
+    train_images = [
+        str(tmpdir / "a_1.png"),
+        str(tmpdir / "b_1.png"),
+    ]
+
+    dataset = fo.Dataset.from_dir(str(tmpdir), dataset_type=fo.types.ImageDirectory)
+    s1 = dataset[train_images[0]]
+    s2 = dataset[train_images[1]]
+    s1["test"] = fo.Classification(label="1")
+    s2["test"] = fo.Classification(label="2")
+    s1.save()
+    s2.save()
+
+    img_data = ImageClassificationData.from_fiftyone(
+        train_dataset=dataset,
+        test_dataset=dataset,
+        val_dataset=dataset,
+        label_field="test",
+        batch_size=2,
+        num_workers=0,
+    )
+    assert img_data.train_dataloader() is not None
+    assert img_data.val_dataloader() is not None
+    assert img_data.test_dataloader() is not None
+
+    # check train data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [0, 1]
+
+    # check val data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [0, 1]
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data['input'], data['target']
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+    assert sorted(list(labels.numpy())) == [0, 1]
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_from_datasets():
+    img_data = ImageClassificationData.from_datasets(
+        train_dataset=FakeData(size=3, num_classes=2),
+        val_dataset=FakeData(size=3, num_classes=2),
+        test_dataset=FakeData(size=3, num_classes=2),
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
+    # check validation data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )

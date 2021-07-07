@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-import os
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
@@ -29,6 +28,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
+from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -41,7 +41,7 @@ def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
 
     # we only want to pass in valid PLTrainer args, the rest may be user specific
     valid_kwargs = inspect.signature(PlTrainer.__init__).parameters
-    trainer_kwargs = dict((name, params[name]) for name in valid_kwargs if name in params)
+    trainer_kwargs = {name: params[name] for name in valid_kwargs if name in params}
     trainer_kwargs.update(**kwargs)
 
     return cls(**trainer_kwargs)
@@ -58,7 +58,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
             # parse only the argument names
             cls_arg_names = [arg[0] for arg in get_init_arguments_and_types(cls)]
             # convert args to kwargs
-            kwargs.update({k: v for k, v in zip(cls_arg_names, args)})
+            kwargs.update(dict(zip(cls_arg_names, args)))
         env_variables = vars(parse_env_variables(cls))
         # update the kwargs by env variables
         kwargs = dict(list(env_variables.items()) + list(kwargs.items()))
@@ -72,7 +72,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 class Trainer(PlTrainer):
 
     @_defaults_from_env_vars
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, serve_sanity_check: bool = False, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
                 kwargs["gpus"] = 1
@@ -84,6 +84,21 @@ class Trainer(PlTrainer):
             else:
                 kwargs["fast_dev_run"] = True
         super().__init__(*args, **kwargs)
+
+        self.serve_sanity_check = serve_sanity_check
+
+    def _run_sanity_check(self, ref_model):
+        if hasattr(super(), "_run_sanity_check"):
+            super()._run_sanity_check(ref_model)
+
+        self.run_sanity_check(ref_model)
+
+    def run_sanity_check(self, ref_model):
+        if hasattr(super(), "run_sanity_check"):
+            super().run_sanity_check(ref_model)
+
+        if self.serve_sanity_check and ref_model.is_servable and _SERVE_AVAILABLE:
+            ref_model.run_serve_sanity_check()
 
     def fit(
         self,
@@ -187,8 +202,8 @@ class Trainer(PlTrainer):
         """
         if len(new_callbacks) == 0:
             return old_callbacks
-        new_callbacks_types = set(type(c) for c in new_callbacks)
-        old_callbacks_types = set(type(c) for c in old_callbacks)
+        new_callbacks_types = {type(c) for c in new_callbacks}
+        old_callbacks_types = {type(c) for c in old_callbacks}
         override_types = new_callbacks_types.intersection(old_callbacks_types)
         new_callbacks.extend(c for c in old_callbacks if type(c) not in override_types)
         return new_callbacks

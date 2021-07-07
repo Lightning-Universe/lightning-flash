@@ -26,7 +26,8 @@ if _SKLEARN_AVAILABLE:
 class TestTemplatePreprocess:
     """Tests ``TemplatePreprocess``."""
 
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         """A simple test that the class can be instantiated."""
         prep = TemplatePreprocess()
         assert prep is not None
@@ -39,7 +40,8 @@ class TestTemplateData:
     num_classes: int = 3
     num_features: int = 4
 
-    def test_smoke(self):
+    @staticmethod
+    def test_smoke():
         """A simple test that the class can be instantiated."""
         dm = TemplateData()
         assert dm is not None
@@ -83,7 +85,8 @@ class TestTemplateData:
         assert rows.shape == (2, self.num_features)
         assert targets.shape == (2, )
 
-    def test_from_sklearn(self):
+    @staticmethod
+    def test_from_sklearn():
         """Tests that ``TemplateData`` is properly created when using the ``from_sklearn`` method."""
         data = datasets.load_iris()
 

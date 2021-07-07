@@ -5,9 +5,9 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import torch
 
-from flash.core.serve.core import GridModel, ParameterContainer
+from flash.core.serve.core import ParameterContainer, Servable
 from flash.core.serve.decorators import BoundMeta, UnboundMeta
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_AVAILABLE
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _requires_extras, _SERVE_AVAILABLE
 
 if _CYTOOLZ_AVAILABLE:
     from cytoolz import first, isiterable, valfilter
@@ -21,7 +21,7 @@ _FLASH_SERVE_RESERVED_NAMES = ("inputs", "outputs", "uid")
 
 def _validate_exposed_input_parameters_valid(instance):
     """Raises RuntimeError if exposed parameters != method argument names."""
-    spec = inspect.getfullargspec(instance._gridserve_meta_.exposed)
+    spec = inspect.getfullargspec(instance._flashserve_meta_.exposed)
 
     exposed_args = spec.args[1:]  # do not include `self` arg
     if spec.varargs:
@@ -31,12 +31,12 @@ def _validate_exposed_input_parameters_valid(instance):
     if spec.kwonlyargs:
         exposed_args.extend(spec.kwonlyargs)
 
-    diff = set(exposed_args).symmetric_difference(instance._gridserve_meta_.inputs.keys())
+    diff = set(exposed_args).symmetric_difference(instance._flashserve_meta_.inputs.keys())
     if len(diff) > 0:
         raise RuntimeError(
             f"Methods decorated by `@expose` must list all method arguments in `inputs` "
             f"parameter passed to `expose`. Expected: exposed method args = `{exposed_args}` "
-            f"recieved input keys passed to `expose` = `{instance._gridserve_meta_.inputs.keys()}`. "
+            f"recieved input keys passed to `expose` = `{instance._flashserve_meta_.inputs.keys()}`. "
             f"Difference = `{diff}`."
         )
 
@@ -69,12 +69,12 @@ def _validate_subclass_init_signature(cls: Type['ModelComponent']):
             raise SyntaxError(f"__init__ can only set 'config' as second param, not `{param}`")
 
 
-_GridModelType = Union[GridModel, torch.nn.Module]
-_GridModel_t = (GridModel, torch.nn.Module)
+_ServableType = Union[Servable, torch.nn.Module]
+_Servable_t = (Servable, torch.nn.Module)
 
 
 def _validate_model_args(
-    args: Union[_GridModelType, List[_GridModelType], Tuple[_GridModelType, ...], Dict[str, _GridModelType], ]
+    args: Union[_ServableType, List[_ServableType], Tuple[_ServableType, ...], Dict[str, _ServableType]]
 ) -> None:
     """Validator for machine learning models
 
@@ -94,15 +94,15 @@ def _validate_model_args(
         raise ValueError(f"Iterable args={args} must have length >= 1")
 
     if isinstance(args, (list, tuple)):
-        if not all((isinstance(x, _GridModel_t) for x in args)):
-            raise TypeError(f"One of arg in args={args} is not type {_GridModel_t}")
+        if not all((isinstance(x, _Servable_t) for x in args)):
+            raise TypeError(f"One of arg in args={args} is not type {_Servable_t}")
     elif isinstance(args, dict):
         if not all((isinstance(x, str) for x in args.keys())):
             raise TypeError(f"One of keys in args={args.keys()} is not type {str}")
-        if not all((isinstance(x, _GridModel_t) for x in args.values())):
-            raise TypeError(f"One of values in args={args} is not type {_GridModel_t}")
-    elif not isinstance(args, _GridModel_t):
-        raise TypeError(f"Args must be instance, list/tuple, or mapping of {_GridModel_t}")
+        if not all((isinstance(x, _Servable_t) for x in args.values())):
+            raise TypeError(f"One of values in args={args} is not type {_Servable_t}")
+    elif not isinstance(args, _Servable_t):
+        raise TypeError(f"Args must be instance, list/tuple, or mapping of {_Servable_t}")
 
 
 def _validate_config_args(config: Optional[Dict[str, Union[str, int, float, bytes]]]) -> None:
@@ -142,20 +142,18 @@ def _validate_config_args(config: Optional[Dict[str, Union[str, int, float, byte
 # ------------------- ModelComponent and Metaclass Validators------------------------
 
 
-class GridserveMeta(type):
+class FlashServeMeta(type):
     """
     We keep a mapping of externally used names to classes.
     """
 
+    @_requires_extras("serve")
     def __new__(cls, name, bases, namespace):
         # create new instance of cls in order to apply any @expose class decorations.
-        if not _SERVE_AVAILABLE:
-            return
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
         _tmp_cls = super().__new__(cls, name, bases, namespace)
 
         # determine which methods have been exposed.
-        ex_meths = valfilter(lambda x: hasattr(x, "gridserve_meta"), _tmp_cls.__dict__)
+        ex_meths = valfilter(lambda x: hasattr(x, "flashserve_meta"), _tmp_cls.__dict__)
         if _tmp_cls.__name__ != "ModelComponent":
             if len(ex_meths) != 1:
                 raise SyntaxError(
@@ -164,9 +162,9 @@ class GridserveMeta(type):
                     f"decorations on method_names=`{list(ex_meths.keys())}`"
                 )
 
-            # alter namespace to insert gridserve info as bound components of class.
+            # alter namespace to insert flash serve info as bound components of class.
             exposed = first(ex_meths.values())
-            namespace["_gridserve_meta_"] = exposed.gridserve_meta
+            namespace["_flashserve_meta_"] = exposed.flashserve_meta
             namespace["__call__"] = wraps(exposed)(exposed, )
 
         new_cls = super().__new__(cls, name, bases, namespace)
@@ -187,15 +185,15 @@ class GridserveMeta(type):
         created by calling metaclass __prepare__ -> __new__ -> __init__
         """
         klass = super().__call__(*args, **kwargs)
-        klass._gridserve_meta_ = replace(klass._gridserve_meta_)
+        klass._flashserve_meta_ = replace(klass._flashserve_meta_)
         _validate_exposed_input_parameters_valid(klass)
-        klass.__gridserve_init__(*args, **kwargs)
+        klass.__flashserve_init__(*args, **kwargs)
         return klass
 
 
 if _SERVE_AVAILABLE:
 
-    class ModelComponent(metaclass=GridserveMeta):
+    class ModelComponent(metaclass=FlashServeMeta):
         """Represents a computation which is decorated by `@expose`.
 
         A component is how we represent the main unit of work; it is a set of
@@ -209,12 +207,12 @@ if _SERVE_AVAILABLE:
         necessary to find and initialize its dependencies (assets) and itself.
         """
 
-        _gridserve_meta_: Optional[Union[BoundMeta, UnboundMeta]] = None
+        _flashserve_meta_: Optional[Union[BoundMeta, UnboundMeta]] = None
 
-        def __gridserve_init__(self, models, *, config=None):
+        def __flashserve_init__(self, models, *, config=None):
             """Do a bunch of setup
 
-            instance's __gridserve_init__ calls subclass __init__ in turn.
+            instance's __flashserve_init__ calls subclass __init__ in turn.
             """
             _validate_model_args(models)
             _validate_config_args(config)
@@ -224,12 +222,12 @@ if _SERVE_AVAILABLE:
             except TypeError:
                 self.__init__(models)
 
-            bound_fn = getattr(self, self._gridserve_meta_.exposed.__name__)
+            bound_fn = getattr(self, self._flashserve_meta_.exposed.__name__)
             self.__call__ = bound_fn
-            self._gridserve_meta_ = BoundMeta(
+            self._flashserve_meta_ = BoundMeta(
                 exposed=bound_fn,
-                inputs=self._gridserve_meta_.inputs,
-                outputs=self._gridserve_meta_.outputs,
+                inputs=self._flashserve_meta_.inputs,
+                outputs=self._flashserve_meta_.outputs,
                 models=models,
             )
 
@@ -237,15 +235,15 @@ if _SERVE_AVAILABLE:
 
         @property
         def inputs(self) -> ParameterContainer:
-            return self._gridserve_meta_.inp_attr_dict
+            return self._flashserve_meta_.inp_attr_dict
 
         @property
         def outputs(self) -> ParameterContainer:
-            return self._gridserve_meta_.out_attr_dict
+            return self._flashserve_meta_.out_attr_dict
 
         @property
         def uid(self) -> str:
-            return self._gridserve_meta_.uid
+            return self._flashserve_meta_.uid
 
 else:
     ModelComponent = object

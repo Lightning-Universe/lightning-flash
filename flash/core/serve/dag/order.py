@@ -39,7 +39,7 @@ which a sequential scheduler would visit each node.
 There are several ways in which we might order our keys.  This is a nuanced
 process that has to take into account many different kinds of workflows, and
 operate efficiently in linear time.  We strongly recommend that readers look at
-the docstrings of tests in gridserve/dag/tests/test_order.py.  These
+the docstrings of tests in flash/tests/core/serve/test_dag/test_order.py.  These
 tests usually have graph types laid out very carefully to show the kinds of
 situations that often arise, and the order we would like to be determined.
 
@@ -382,7 +382,7 @@ def order(dsk, dependencies=None):
                                 if len(min_pool) == 1:
                                     inner_stack = min_pool
                                     seen_update(inner_stack)
-                                elif (10 * item_key > 11 * len(min_pool) * len(min_pool) * min_key):
+                                elif 10 * item_key > 11 * len(min_pool) * len(min_pool) * min_key:
                                     # Put all items in min_pool onto inner_stacks.
                                     # I know this is a weird comparison.  Hear me out.
                                     # Although it is often beneficial to put all of the items in `min_pool`

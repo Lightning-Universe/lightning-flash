@@ -18,11 +18,15 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
+from tests.helpers.utils import _IMAGE_TESTING
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
+
+if _FIFTYONE_AVAILABLE:
+    import fiftyone as fo
 
 
 def _dummy_image_loader(_):
@@ -33,7 +37,7 @@ def _rand_image():
     return Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -53,6 +57,42 @@ def test_classification(tmpdir):
         batch_size=2,
         image_size=(64, 64),
     )
+    model = ImageClassifier(num_classes=2, backbone="resnet18")
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.finetune(model, datamodule=data, strategy="freeze")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
+def test_classification_fiftyone(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "b").mkdir()
+    _rand_image().save(tmpdir / "a_1.png")
+    _rand_image().save(tmpdir / "b_1.png")
+
+    train_images = [
+        str(tmpdir / "a_1.png"),
+        str(tmpdir / "b_1.png"),
+    ]
+
+    train_dataset = fo.Dataset.from_dir(str(tmpdir), dataset_type=fo.types.ImageDirectory)
+    s1 = train_dataset[train_images[0]]
+    s2 = train_dataset[train_images[1]]
+    s1["test"] = fo.Classification(label="1")
+    s2["test"] = fo.Classification(label="2")
+    s1.save()
+    s2.save()
+
+    data = ImageClassificationData.from_fiftyone(
+        train_dataset=train_dataset,
+        label_field="test",
+        batch_size=2,
+        num_workers=0,
+        image_size=(64, 64),
+    )
+
     model = ImageClassifier(num_classes=2, backbone="resnet18")
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, datamodule=data, strategy="freeze")

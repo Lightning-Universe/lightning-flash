@@ -115,11 +115,11 @@ We get the following output:
 .. testcode::
     :hide:
 
-    assert all([prediction in [0, 1] for prediction in predictions])
+    assert all([prediction in ["positive", "negative"] for prediction in predictions])
 
 .. code-block::
 
-    [1, 1, 0]
+    ["negative", "negative", "positive"]
 
 -------
 
@@ -145,7 +145,6 @@ When you have enough data, you're likely better off training from scratch instea
 A few Built-in Tasks
 ====================
 
-- :doc:`General Task <reference/task>`
 - :doc:`ImageClassification <reference/image_classification>`
 - :doc:`ImageEmbedder <reference/image_embedder>`
 - :doc:`TextClassification <reference/text_classification>`

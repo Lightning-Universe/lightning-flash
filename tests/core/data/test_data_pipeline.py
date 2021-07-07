@@ -33,10 +33,13 @@ from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from tests.helpers.utils import _IMAGE_TESTING
 
-if _IMAGE_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
+
+if _PIL_AVAILABLE:
     from PIL import Image
 
 
@@ -51,7 +54,8 @@ class DummyDataset(torch.utils.data.Dataset):
 
 class TestDataPipelineState:
 
-    def test_str(self):
+    @staticmethod
+    def test_str():
         state = DataPipelineState()
         state.set_state(ProcessState())
 
@@ -60,14 +64,16 @@ class TestDataPipelineState:
             "state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
         )
 
-    def test_warning(self):
+    @staticmethod
+    def test_warning():
         state = DataPipelineState()
         state._initialized = True
 
         with pytest.warns(UserWarning, match="data pipeline has already been initialized"):
             state.set_state(ProcessState())
 
-    def test_get_state(self):
+    @staticmethod
+    def test_get_state():
         state = DataPipelineState()
         assert state.get_state(ProcessState) is None
 
@@ -403,7 +409,8 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert self.predict_step.__self__ == self
             self._saved_predict_step = self.predict_step
 
-        def _compare_pre_processor(self, p1, p2):
+        @staticmethod
+        def _compare_pre_processor(p1, p2):
             p1_seq = p1.per_sample_transform
             p2_seq = p2.per_sample_transform
             assert p1_seq.pre_tensor_transform.func == p2_seq.pre_tensor_transform.func
@@ -412,8 +419,9 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert p1.collate_fn.func == p2.collate_fn.func
             assert p1.per_batch_transform.func == p2.per_batch_transform.func
 
+        @staticmethod
         def _assert_stage_orchestrator_state(
-            self, stage_mapping: Dict, current_running_stage: RunningStage, cls=_Preprocessor
+            stage_mapping: Dict, current_running_stage: RunningStage, cls=_Preprocessor
         ):
             assert isinstance(stage_mapping[current_running_stage], cls)
             assert stage_mapping[current_running_stage]
@@ -764,7 +772,7 @@ def test_is_overriden_recursive(tmpdir):
         assert not DataPipeline._is_overriden_recursive("chocolate", preprocess, Preprocess)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
 

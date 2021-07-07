@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import inspect
+from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
@@ -41,8 +42,9 @@ from flash.core.data.process import (
 )
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
-from flash.core.serve import Composition, expose, ModelComponent
+from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
+from flash.core.utilities.imports import _requires_extras
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -83,7 +85,21 @@ def predict_context(func: Callable) -> Callable:
     return wrapper
 
 
-class Task(LightningModule):
+class CheckDependenciesMeta(ABCMeta):
+
+    def __new__(mcs, *args, **kwargs):
+        result = ABCMeta.__new__(mcs, *args, **kwargs)
+        if result.required_extras is not None:
+            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+            load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
+            if load_from_checkpoint is not None:
+                result.load_from_checkpoint = classmethod(
+                    _requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
+                )
+        return result
+
+
+class Task(LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
@@ -97,6 +113,8 @@ class Task(LightningModule):
     """
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+
+    required_extras: Optional[str] = None
 
     def __init__(
         self,
@@ -165,10 +183,12 @@ class Task(LightningModule):
         output["y"] = y
         return output
 
-    def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def to_loss_format(x: torch.Tensor) -> torch.Tensor:
         return x
 
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def to_metrics_format(x: torch.Tensor) -> torch.Tensor:
         return x
 
     def forward(self, x: Any) -> Any:
@@ -209,7 +229,7 @@ class Task(LightningModule):
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        x = [x for x in data_pipeline.data_source.generate_dataset(x, running_stage)]
+        x = list(data_pipeline.data_source.generate_dataset(x, running_stage))
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
@@ -238,7 +258,8 @@ class Task(LightningModule):
             return [optimizer], [self._instantiate_scheduler(optimizer)]
         return optimizer
 
-    def configure_finetune_callback(self) -> List[Callback]:
+    @staticmethod
+    def configure_finetune_callback() -> List[Callback]:
         return []
 
     @staticmethod
@@ -390,11 +411,17 @@ class Task(LightningModule):
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 
-        deserializer = deserializer or getattr(preprocess, "deserializer", None)
+        if deserializer is None or type(deserializer) is Deserializer:
+            deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
+
+    @torch.jit.unused
+    @property
+    def is_servable(self) -> bool:
+        return type(self.build_data_pipeline()._deserializer) != Deserializer
 
     @torch.jit.unused
     @property
@@ -488,8 +515,8 @@ class Task(LightningModule):
         return registry.available_keys()
 
     @classmethod
-    def available_models(cls) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "models", None)
+    def available_heads(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "heads", None)
         if registry is None:
             return []
         return registry.available_keys()
@@ -499,7 +526,7 @@ class Task(LightningModule):
         registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
         if registry is None:
             return []
-        return [v for v in inspect.signature(registry.get(key)).parameters.items()]
+        return list(inspect.signature(registry.get(key)).parameters.items())
 
     @classmethod
     def available_schedulers(cls) -> List[str]:
@@ -532,7 +559,8 @@ class Task(LightningModule):
             return self.trainer.max_steps
         return max_estimated_steps
 
-    def _compute_warmup(self, num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
+    @staticmethod
+    def _compute_warmup(num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
         if not isinstance(num_warmup_steps, float) or (num_warmup_steps > 1 or num_warmup_steps < 0):
             raise MisconfigurationException(
                 "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
@@ -554,7 +582,7 @@ class Task(LightningModule):
                 num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
             )
             return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-        elif issubclass(scheduler, _LRScheduler):
+        if issubclass(scheduler, _LRScheduler):
             return scheduler(optimizer, **self.scheduler_kwargs)
         raise MisconfigurationException(
             "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
@@ -592,41 +620,37 @@ class Task(LightningModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    def serve(self, host: str = "127.0.0.1", port: int = 8000) -> 'Composition':
-        from flash.core.serve.flash_components import FlashInputs, FlashOutputs
+    @_requires_extras("serve")
+    def run_serve_sanity_check(self):
+        if not self.is_servable:
+            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 
-        class FlashServeModelComponent(ModelComponent):
+        from fastapi.testclient import TestClient
 
-            def __init__(self, model):
-                self.model = model
-                self.model.eval()
-                self.data_pipeline = self.model.build_data_pipeline()
-                self.worker_preprocessor = self.data_pipeline.worker_preprocessor(
-                    RunningStage.PREDICTING, is_serving=True
-                )
-                self.device_preprocessor = self.data_pipeline.device_preprocessor(RunningStage.PREDICTING)
-                self.postprocessor = self.data_pipeline.postprocessor(RunningStage.PREDICTING, is_serving=True)
-                # todo (tchaton) Remove this hack
-                self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
-                self.device = self.model.device
+        from flash.core.serve.flash_components import build_flash_serve_model_component
 
-            @expose(
-                inputs={"inputs": FlashInputs(self.data_pipeline.deserialize_processor())},
-                outputs={"outputs": FlashOutputs(self.data_pipeline.serialize_processor())},
-            )
-            def predict(self, inputs):
-                with torch.no_grad():
-                    inputs = self.worker_preprocessor(inputs)
-                    if self.extra_arguments:
-                        inputs = self.model.transfer_batch_to_device(inputs, self.device, 0)
-                    else:
-                        inputs = self.model.transfer_batch_to_device(inputs, self.device)
-                    inputs = self.device_preprocessor(inputs)
-                    preds = self.model.predict_step(inputs, 0)
-                    preds = self.postprocessor(preds)
-                    return preds
+        print("Running serve sanity check")
+        comp = build_flash_serve_model_component(self)
+        composition = Composition(predict=comp, TESTING=True, DEBUG=True)
+        app = composition.serve(host="0.0.0.0", port=8000)
 
-        comp = FlashServeModelComponent(self)
-        composition = Composition(predict=comp)
+        with TestClient(app) as tc:
+            input_str = self.data_pipeline._deserializer.example_input
+            body = {"session": "UUID", "payload": {"inputs": {"data": input_str}}}
+            resp = tc.post("http://0.0.0.0:8000/predict", json=body)
+            print(f"Sanity check response: {resp.json()}")
+
+    @_requires_extras("serve")
+    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
+        if not self.is_servable:
+            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
+
+        from flash.core.serve.flash_components import build_flash_serve_model_component
+
+        if sanity_check:
+            self.run_serve_sanity_check()
+
+        comp = build_flash_serve_model_component(self)
+        composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

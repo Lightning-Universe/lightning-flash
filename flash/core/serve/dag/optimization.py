@@ -59,12 +59,11 @@ def default_fused_linear_keys_renamer(keys):
         names = [key_split(x) for x in keys[:0:-1]]
         names.append(keys[0])
         return "-".join(names)
-    elif typ is tuple and len(keys[0]) > 0 and isinstance(keys[0][0], str):
+    if typ is tuple and len(keys[0]) > 0 and isinstance(keys[0][0], str):
         names = [key_split(x) for x in keys[:0:-1]]
         names.append(keys[0][0])
         return ("-".join(names), ) + keys[0][1:]
-    else:
-        return None
+    return None
 
 
 def fuse_linear(dsk, keys=None, dependencies=None, rename_keys=True):
@@ -207,9 +206,9 @@ def fuse_linear(dsk, keys=None, dependencies=None, rename_keys=True):
 def _flat_set(x):
     if x is None:
         return set()
-    elif isinstance(x, set):
+    if isinstance(x, set):
         return x
-    elif not isinstance(x, (list, set)):
+    if not isinstance(x, (list, set)):
         x = [x]
     return set(x)
 
@@ -246,15 +245,12 @@ def inline(dsk, keys=None, inline_constants=True, dependencies=None):
 
     # Keys may depend on other keys, so determine replace order with toposort.
     # The values stored in `keysubs` do not include other keys.
-    replaceorder = toposort(dict((k, dsk[k]) for k in keys if k in dsk), dependencies=dependencies)
+    replaceorder = toposort({k: dsk[k] for k in keys if k in dsk}, dependencies=dependencies)
     keysubs = {}
     for key in replaceorder:
         val = dsk[key]
         for dep in keys & dependencies[key]:
-            if dep in keysubs:
-                replace = keysubs[dep]
-            else:
-                replace = dsk[dep]
+            replace = keysubs.get(dep, dsk[dep])
             val = subs(val, dep, replace)
         keysubs[key] = val
 
@@ -379,7 +375,7 @@ def default_fused_keys_renamer(keys, max_fused_key_length=120):
         names.append(first_key)
         concatenated_name = "-".join(names)
         return _enforce_max_key_limit(concatenated_name)
-    elif typ is tuple and len(first_key) > 0 and isinstance(first_key[0], str):
+    if typ is tuple and len(first_key) > 0 and isinstance(first_key[0], str):
         first_name = key_split(first_key)
         names = {key_split(k) for k in it}
         names.discard(first_name)
@@ -698,9 +694,9 @@ def fuse(
                     if not no_new_edges:
                         fudge += 1
                     # Sanity check; don't go too deep if new levels introduce new edge dependencies
-                    if ((num_nodes + fudge) / height <= ave_width and num_single_nodes <= ave_width
-                        and width <= max_width and height <= max_height  # noqa E129
-                        and (no_new_edges or height < max_depth_new_edges)):  # noqa E129
+                    is_width = num_single_nodes <= ave_width and width <= max_width
+                    is_height = height <= max_height and (no_new_edges or height < max_depth_new_edges)
+                    if (num_nodes + fudge) / height <= ave_width and is_width and is_height:
                         # Perform substitutions as we go
                         val = dsk[parent]
                         children_deps = set()
@@ -873,13 +869,12 @@ class SubgraphCallable:
         return self.name
 
     def __eq__(self, other):
-        return (
-            type(self) is type(other) and self.name == other.name and self.outkey == other.outkey
-            and set(self.inkeys) == set(other.inkeys)
-        )
+        is_key = self.outkey == other.outkey and set(self.inkeys) == set(other.inkeys)
+        is_eq = type(self) is type(other) and self.name == other.name and is_key
+        return is_eq
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self.__eq__(other)
 
     def __call__(self, *args):
         if not len(args) == len(self.inkeys):

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from io import StringIO
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -123,7 +124,7 @@ class TabularDeserializer(Deserializer):
         classes: Optional[List[str]] = None,
         is_regression: bool = True
     ):
-
+        super().__init__()
         self.cat_cols = cat_cols
         self.num_cols = num_cols
         self.target_col = target_col
@@ -134,20 +135,8 @@ class TabularDeserializer(Deserializer):
         self.classes = classes
         self.is_regression = is_regression
 
-    @staticmethod
-    def _convert_row(row):
-        _row = []
-        for c in row:
-            try:
-                _row.append(float(c))
-            except Exception:
-                _row.append(c)
-        return _row
-
     def deserialize(self, data: str) -> Any:
-        columns = data.split("\n")[0].split(',')
-        df = pd.DataFrame([TabularDeserializer._convert_row(x.split(',')[1:]) for x in data.split('\n')[1:-1]],
-                          columns=columns)
+        df = pd.read_csv(StringIO(data))
         df = _pre_transform([df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col,
                             self.target_codes)[0]
 
@@ -158,6 +147,15 @@ class TabularDeserializer(Deserializer):
         num_vars = np.stack(num_vars, 1)
 
         return [{DefaultDataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
+
+    @property
+    def example_input(self) -> str:
+        row = {}
+        for cat_col in self.cat_cols:
+            row[cat_col] = ["test"]
+        for num_col in self.num_cols:
+            row[num_col] = [0]
+        return str(DataFrame.from_dict(row).to_csv())
 
 
 class TabularPreprocess(Preprocess):

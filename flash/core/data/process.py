@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -36,14 +36,12 @@ class BasePreprocess(ABC):
         """
         Override this method to return state_dict
         """
-        pass
 
     @abstractclassmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         """
         Override this method to load from state_dict
         """
-        pass
 
 
 class Preprocess(BasePreprocess, Properties):
@@ -228,14 +226,6 @@ class Preprocess(BasePreprocess, Properties):
     def deserializer(self) -> Optional['Deserializer']:
         return self._deserializer
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return None
-
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
 
@@ -310,14 +300,13 @@ class Preprocess(BasePreprocess, Properties):
     def current_transform(self) -> Callable:
         if self.training and self._train_transform:
             return self._get_transform(self._train_transform)
-        elif self.validating and self._val_transform:
+        if self.validating and self._val_transform:
             return self._get_transform(self._val_transform)
-        elif self.testing and self._test_transform:
+        if self.testing and self._test_transform:
             return self._get_transform(self._test_transform)
-        elif self.predicting and self._predict_transform:
+        if self.predicting and self._predict_transform:
             return self._get_transform(self._predict_transform)
-        else:
-            return self._identity
+        return self._identity
 
     @property
     def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
@@ -343,7 +332,8 @@ class Preprocess(BasePreprocess, Properties):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
-    def default_transforms(self) -> Optional[Dict[str, Callable]]:
+    @staticmethod
+    def default_transforms() -> Optional[Dict[str, Callable]]:
         """ The default transforms to use. Will be overridden by transforms passed to the ``__init__``. """
         return None
 
@@ -446,7 +436,6 @@ class DefaultPreprocess(Preprocess):
         data_sources: Optional[Dict[str, 'DataSource']] = None,
         default_data_source: Optional[str] = None,
     ):
-        from flash.core.data.data_source import DataSource
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
@@ -471,28 +460,33 @@ class Postprocess(Properties):
         self._saved_samples = 0
         self._save_path = save_path
 
-    def per_batch_transform(self, batch: Any) -> Any:
+    @staticmethod
+    def per_batch_transform(batch: Any) -> Any:
         """Transforms to apply on a whole batch before uncollation to individual samples.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return batch
 
-    def per_sample_transform(self, sample: Any) -> Any:
+    @staticmethod
+    def per_sample_transform(sample: Any) -> Any:
         """Transforms to apply to a single sample after splitting up the batch.
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return sample
 
-    def uncollate(self, batch: Any) -> Any:
+    @staticmethod
+    def uncollate(batch: Any) -> Any:
         """Uncollates a batch into single samples. Tries to preserve the type whereever possible."""
         return default_uncollate(batch)
 
-    def save_data(self, data: Any, path: str) -> None:
+    @staticmethod
+    def save_data(data: Any, path: str) -> None:
         """Saves all data together to a single path.
         """
         torch.save(data, path)
 
-    def save_sample(self, sample: Any, path: str) -> None:
+    @staticmethod
+    def save_sample(sample: Any, path: str) -> None:
         """Saves each sample individually to a given path."""
         torch.save(sample, path)
 
@@ -510,7 +504,7 @@ class Postprocess(Properties):
 
 
 class Serializer(Properties):
-    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model ouptut into
+    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model output into
     the desired output format when predicting."""
 
     def __init__(self):
@@ -525,7 +519,8 @@ class Serializer(Properties):
         """Disable serialization."""
         self._is_enabled = False
 
-    def serialize(self, sample: Any) -> Any:
+    @staticmethod
+    def serialize(sample: Any) -> Any:
         """Serialize the given sample into the desired output format.
 
         Args:
@@ -539,8 +534,7 @@ class Serializer(Properties):
     def __call__(self, sample: Any) -> Any:
         if self._is_enabled:
             return self.serialize(sample)
-        else:
-            return sample
+        return sample
 
 
 class SerializerMapping(Serializer):
@@ -555,8 +549,7 @@ class SerializerMapping(Serializer):
     def serialize(self, sample: Any) -> Any:
         if isinstance(sample, Mapping):
             return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
-        else:
-            raise ValueError("The model output must be a mapping when using a SerializerMapping.")
+        raise ValueError("The model output must be a mapping when using a SerializerMapping.")
 
     def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
         for serializer in self._serializers.values():
@@ -567,6 +560,11 @@ class Deserializer(Properties):
     """"""
 
     def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def example_input(self) -> str:
         raise NotImplementedError
 
     def __call__(self, sample: Any) -> Any:
@@ -585,8 +583,7 @@ class DeserializerMapping(Deserializer):
     def deserialize(self, sample: Any) -> Any:
         if isinstance(sample, Mapping):
             return {key: deserializer.deserialize(sample[key]) for key, deserializer in self._deserializers.items()}
-        else:
-            raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
+        raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
 
     def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
         for deserializer in self._deserializers.values():

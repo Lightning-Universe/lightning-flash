@@ -1,6 +1,5 @@
 from contextlib import suppress
 from io import BytesIO
-from typing import TYPE_CHECKING
 
 from flash.core.serve.dag.task import get_deps
 from flash.core.serve.execution import TaskComposition

@@ -17,7 +17,7 @@ import numpy as np
 from torch import tensor
 from torchmetrics import Metric
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _requires_extras, _TEXT_AVAILABLE
 from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_sentence
 
 if _TEXT_AVAILABLE:
@@ -52,6 +52,7 @@ class RougeMetric(Metric):
          'rougeLsum_recall': 0.25}
     """
 
+    @_requires_extras("text")
     def __init__(
         self,
         rouge_newline_sep: bool = False,
@@ -59,8 +60,6 @@ class RougeMetric(Metric):
         rouge_keys: Tuple[str] = ("rouge1", "rouge2", "rougeL", "rougeLsum"),
     ):
         super().__init__()
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.rouge_newline_sep = rouge_newline_sep
         self.rouge_keys = rouge_keys
@@ -93,7 +92,7 @@ class RougeMetric(Metric):
         # this is a bug in the upstream pytorch release.
         hash_vals = [self.__class__.__name__]
 
-        for key in self._defaults.keys():
+        for key in self._defaults:
             value = getattr(self, key)
             if isinstance(value, list):
                 value = tuple(value)

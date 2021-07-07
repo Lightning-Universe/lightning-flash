@@ -22,16 +22,21 @@ import numpy as np
 import pandas as pd
 import torch
 from pytorch_lightning.trainer.states import RunningStage
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _requires_extras, _TORCHVISION_AVAILABLE
 from flash.image.classification.transforms import default_transforms, train_default_transforms
-from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+from flash.image.data import (
+    ImageDeserializer,
+    ImageFiftyOneDataSource,
+    ImageNumpyDataSource,
+    ImagePathsDataSource,
+    ImageTensorDataSource,
+)
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -42,9 +47,8 @@ if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision.datasets.folder import default_loader
 
-if _IMAGE_AVAILABLE:
+if _PIL_AVAILABLE:
     from PIL import Image
-    from PIL import Image as PILImage
 else:
 
     class Image:
@@ -130,7 +134,7 @@ class ImageClassificationDeserializer(Deserializer):
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
-        img = PILImage.open(buffer, mode="r")
+        img = Image.open(buffer, mode="r")
         return {
             DefaultDataKeys.INPUT: img,
         }
@@ -146,6 +150,7 @@ class ImageClassificationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
+        **data_source_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -155,6 +160,7 @@ class ImageClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
+                DefaultDataSources.FIFTYONE: ImageFiftyOneDataSource(**data_source_kwargs),
                 DefaultDataSources.FILES: ImagePathsDataSource(),
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
@@ -162,7 +168,7 @@ class ImageClassificationPreprocess(Preprocess):
                 "data_frame": ImageClassificationDataFrameDataSource(),
                 DefaultDataSources.CSV: ImageClassificationCSVDataSource(),
             },
-            deserializer=deserializer or ImageClassificationDeserializer(),
+            deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,
         )
 
@@ -193,100 +199,6 @@ class ImageClassificationData(DataModule):
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return MatplotlibVisualization(*args, **kwargs)
 
-    @classmethod
-    def from_csv(
-        cls,
-        input_fields: Union[str, Sequence[str]],
-        target_fields: Optional[Union[str, Sequence[str]]] = None,
-        train_file: Optional[str] = None,
-        val_file: Optional[str] = None,
-        test_file: Optional[str] = None,
-        predict_file: Optional[str] = None,
-        train_root: Optional[str] = None,
-        val_root: Optional[str] = None,
-        test_root: Optional[str] = None,
-        predict_root: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: Optional[int] = None,
-        sampler: Optional[Sampler] = None,
-        **preprocess_kwargs: Any,
-    ) -> 'DataModule':
-        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV files
-        using the :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
-        :class:`~flash.core.data.process.Preprocess`.
-
-        Args:
-            input_fields: The field or fields (columns) in the CSV file to use for the input.
-            target_fields: The field or fields (columns) in the CSV file to use for the target.
-            train_file: The CSV file containing the training data.
-            val_file: The CSV file containing the validation data.
-            test_file: The CSV file containing the testing data.
-            predict_file: The CSV file containing the data to use when predicting.
-            train_root: The root directory to look for train image files in.
-            val_root: The root directory to look for validation image files in.
-            test_root: The root directory to look for test image files in.
-            predict_root: The root directory to look for predict image files in.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_csv(
-                "image_id",
-                "target",
-                train_file="train_data.csv",
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
-        """
-        return cls.from_data_source(
-            DefaultDataSources.CSV,
-            (train_file, input_fields, target_fields, train_root),
-            (val_file, input_fields, target_fields, val_root),
-            (test_file, input_fields, target_fields, test_root),
-            (predict_file, input_fields, target_fields, predict_root),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            preprocess=preprocess,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **preprocess_kwargs,
-        )
-
 
 class MatplotlibVisualization(BaseVisualization):
     """Process and show the image batch and its associated label using matplotlib.
@@ -295,6 +207,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
+    @_requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):
@@ -305,13 +218,11 @@ class MatplotlibVisualization(BaseVisualization):
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
+    @_requires_extras("image")
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
-
-        if not _MATPLOTLIB_AVAILABLE:
-            raise MisconfigurationException("You need matplotlib to visualise. Please, pip install matplotlib")
 
         # create figure and set title
         fig, axs = plt.subplots(rows, cols)
@@ -320,9 +231,9 @@ class MatplotlibVisualization(BaseVisualization):
         for i, ax in enumerate(axs.ravel()):
             # unpack images and labels
             if isinstance(data, list):
-                _img, _label = data[i][DefaultDataKeys.INPUT], data[i][DefaultDataKeys.TARGET]
+                _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")
             elif isinstance(data, dict):
-                _img, _label = data[DefaultDataKeys.INPUT][i], data[DefaultDataKeys.TARGET][i]
+                _img, _label = data[DefaultDataKeys.INPUT][i], data.get(DefaultDataKeys.TARGET, [""] * (i + 1))[i]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy

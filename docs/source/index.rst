@@ -8,7 +8,7 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Get started:
+   :caption: Getting started
 
    quickstart
    installation
@@ -18,35 +18,7 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tasks
-
-   reference/task
-   reference/image_classification
-   reference/image_classification_multi_label
-   reference/image_embedder
-   reference/summarization
-   reference/text_classification
-   reference/text_classification_multi_label
-   reference/tabular_classification
-   reference/translation
-   reference/object_detection
-   reference/video_classification
-   reference/semantic_segmentation
-   reference/style_transfer
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Flash API
-
-   general/data
-   general/callback
-   general/registry
-   general/serve
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Common Use Cases
+   :caption: Guides
 
    general/training
    general/finetuning
@@ -55,8 +27,45 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Image and Video
+
+   reference/image_classification
+   reference/image_classification_multi_label
+   reference/image_embedder
+   reference/object_detection
+   reference/semantic_segmentation
+   reference/style_transfer
+   reference/video_classification
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tabular
+
+   reference/tabular_classification
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Text
+
+   reference/text_classification
+   reference/text_classification_multi_label
+   reference/summarization
+   reference/translation
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Integrations
+
+   integrations/fiftyone
+
+.. toctree::
+   :maxdepth: 1
    :caption: API Reference
 
+   general/data
+   general/callback
+   general/registry
+   general/serve
    code/core
    code/data
    code/image

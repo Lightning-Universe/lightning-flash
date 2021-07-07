@@ -15,11 +15,11 @@ from types import FunctionType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
-import torchmetrics
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
+from torchmetrics import Accuracy, F1, Metric
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
@@ -27,28 +27,26 @@ from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
 class ImageClassifier(ClassificationTask):
-    """Task that classifies images.
+    """The ``ImageClassifier`` is a :class:`~flash.Task` for classifying images. For more details, see
+    :ref:`image_classification`. The ``ImageClassifier`` also supports multi-label classification with
+    ``multi_label=True``. For more details, see :ref:`image_classification_multi_label`.
 
-    Use a built in backbone
+    You can register custom backbones to use with the ``ImageClassifier``:
+    ::
 
-    Example::
-
-        from flash.image import ImageClassifier
-
-        classifier = ImageClassifier(backbone='resnet18')
-
-    Or your own backbone (num_features is the number of features produced by your backbone)
-
-    Example::
-
-        from flash.image import ImageClassifier
         from torch import nn
+        import torchvision
+        from flash.image import ImageClassifier
 
-        # use any backbone
-        some_backbone = nn.Conv2D(...)
-        num_out_features = 1024
-        classifier = ImageClassifier(backbone=(some_backbone, num_out_features))
-
+        # This is useful to create new backbone and make them accessible from `ImageClassifier`
+        @ImageClassifier.backbones(name="resnet18")
+        def fn_resnet(pretrained: bool = True):
+            model = torchvision.models.resnet18(pretrained)
+            # remove the last two layers & turn it into a Sequential model
+            backbone = nn.Sequential(*list(model.children())[:-2])
+            num_features = model.fc.in_features
+            # backbones need to return the num_features to build the head
+            return backbone, num_features
 
     Args:
         num_classes: Number of classes to classify.
@@ -56,13 +54,18 @@ class ImageClassifier(ClassificationTask):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation, defaults to :class:`torchmetrics.Accuracy`.
+        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
+            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
+            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
+            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+
+    required_extras: str = "image"
 
     def __init__(
         self,
@@ -76,7 +79,7 @@ class ImageClassifier(ClassificationTask):
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
@@ -88,10 +91,10 @@ class ImageClassifier(ClassificationTask):
             optimizer_kwargs=optimizer_kwargs,
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
-            metrics=metrics,
+            metrics=metrics or F1(num_classes) if multi_label else Accuracy(),
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            serializer=serializer or Labels(),
         )
 
         self.save_hyperparameters()
@@ -120,8 +123,10 @@ class ImageClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        batch[DefaultDataKeys.PREDS] = super().predict_step((batch[DefaultDataKeys.INPUT]),
+                                                            batch_idx,
+                                                            dataloader_idx=dataloader_idx)
+        return batch
 
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)

@@ -78,18 +78,17 @@ def _execute_task(arg, cache):
     """
     if isinstance(arg, list):
         return [_execute_task(a, cache) for a in arg]
-    elif istask(arg):
+    if istask(arg):
         func, args = arg[0], arg[1:]
         # Note: Don't assign the subtask results to a variable. numpy detects
         # temporaries by their reference count and can execute certain
         # operations in-place.
         return func(*(_execute_task(a, cache) for a in args))
-    elif not ishashable(arg):
+    if not ishashable(arg):
         return arg
-    elif arg in cache:
+    if arg in cache:
         return cache[arg]
-    else:
-        return arg
+    return arg
 
 
 def get(dsk: dict, out: Sequence[str], cache: dict = None, sortkeys: List[str] = None):
@@ -276,7 +275,7 @@ def subs(task, key, val):
                 # Can't do a simple equality check, since this may trigger
                 # a FutureWarning from NumPy about array equality
                 # https://github.com/dask/dask/pull/2457
-                if len(arg) == len(key) and all(type(aa) == type(bb) and aa == bb for aa, bb in zip(arg, key)):
+                if len(arg) == len(key) and all(type(aa) is type(bb) and aa == bb for aa, bb in zip(arg, key)):
                     arg = val
 
             except (TypeError, AttributeError):
@@ -312,7 +311,7 @@ def _toposort(dsk, keys=None, returncycle=False, dependencies=None):
     seen = set()
 
     if dependencies is None:
-        dependencies = dict((k, get_dependencies(dsk, k)) for k in dsk)
+        dependencies = {k: get_dependencies(dsk, k) for k in dsk}
 
     for key in keys:
         if key in completed:
@@ -340,9 +339,8 @@ def _toposort(dsk, keys=None, returncycle=False, dependencies=None):
                         cycle.reverse()
                         if returncycle:
                             return cycle
-                        else:
-                            cycle = "->".join(str(x) for x in cycle)
-                            raise RuntimeError("Cycle detected in task graph: %s" % cycle)
+                        cycle = "->".join(str(x) for x in cycle)
+                        raise RuntimeError("Cycle detected in task graph: %s" % cycle)
                     next_nodes.append(nxt)
 
             if next_nodes:

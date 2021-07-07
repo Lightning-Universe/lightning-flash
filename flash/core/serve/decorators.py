@@ -5,7 +5,7 @@ from types import FunctionType, MethodType
 from typing import Dict, List, Sequence, Tuple, Union
 from uuid import uuid4
 
-from flash.core.serve.core import Connection, GridModel, make_param_dict, make_parameter_container, ParameterContainer
+from flash.core.serve.core import Connection, make_param_dict, make_parameter_container, ParameterContainer, Servable
 from flash.core.serve.types.base import BaseType
 from flash.core.serve.utils import fn_outputs_to_keyed_map
 from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE
@@ -29,7 +29,7 @@ class UnboundMeta:
 @dataclass(unsafe_hash=True)
 class BoundMeta(UnboundMeta):
 
-    models: Union[List['GridModel'], Tuple['GridModel', ...], Dict[str, 'GridModel']]
+    models: Union[List['Servable'], Tuple['Servable', ...], Dict[str, 'Servable']]
     uid: str = field(default_factory=lambda: uuid4().hex, init=False)
     out_attr_dict: ParameterContainer = field(default=None, init=False)
     inp_attr_dict: ParameterContainer = field(default=None, init=False)
@@ -133,7 +133,7 @@ def expose(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType]):
     inputs
         accepts a dictionary mapping keys to decorated method parameter
         names (must be one to one mapping) with values corresponding to
-        an instantiated specification of a Gridserve Data Type (ie.
+        an instantiated specification of a Flash Serve Data Type (ie.
         ``Number()``, ``Image()``, ``Text()``, etc...)
     outputs
         accepts a dictionary mapping outputs of the decorated method to
@@ -157,7 +157,7 @@ def expose(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType]):
 
         @wraps(fn)
         def wrapped(func):
-            func.gridserve_meta = UnboundMeta(exposed=func, inputs=inputs, outputs=outputs)
+            func.flashserve_meta = UnboundMeta(exposed=func, inputs=inputs, outputs=outputs)
             return func
 
         return wrapped(fn)

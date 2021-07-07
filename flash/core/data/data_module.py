@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import platform
-from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -28,9 +28,15 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+
+if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
+    from fiftyone.core.collections import SampleCollection
+else:
+    SampleCollection = None
 
 
 class DataModule(pl.LightningDataModule):
@@ -314,10 +320,10 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def num_classes(self) -> Optional[int]:
-        return (
-            getattr(self.train_dataset, "num_classes", None) or getattr(self.val_dataset, "num_classes", None)
-            or getattr(self.test_dataset, "num_classes", None)
-        )
+        n_cls_train = getattr(self.train_dataset, "num_classes", None)
+        n_cls_val = getattr(self.val_dataset, "num_classes", None)
+        n_cls_test = getattr(self.test_dataset, "num_classes", None)
+        return n_cls_train or n_cls_val or n_cls_test
 
     @property
     def data_source(self) -> Optional[DataSource]:
@@ -336,7 +342,8 @@ class DataModule(pl.LightningDataModule):
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     def available_data_sources(self) -> Sequence[str]:
-        """Get the list of available data source names for use with this :class:`~flash.core.data.data_module.DataModule`.
+        """Get the list of available data source names for use with this
+        :class:`~flash.core.data.data_module.DataModule`.
 
         Returns:
             The list of data source names.
@@ -1058,5 +1065,90 @@ class DataModule(pl.LightningDataModule):
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_fiftyone(
+        cls,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given FiftyOne Datasets using the
+        :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.FIFTYONE`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            train_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the train data.
+            val_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the validation data.
+            test_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the test data.
+            predict_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the predict data.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            train_dataset = fo.Dataset.from_dir(
+                "/path/to/dataset",
+                dataset_type=fo.types.ImageClassificationDirectoryTree,
+            )
+            data_module = DataModule.from_fiftyone(
+                train_data = train_dataset,
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+            )
+        """
+        if not _FIFTYONE_AVAILABLE:
+            raise ModuleNotFoundError("Please, `pip install fiftyone`.")
+
+        return cls.from_data_source(
+            DefaultDataSources.FIFTYONE,
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
             **preprocess_kwargs,
         )

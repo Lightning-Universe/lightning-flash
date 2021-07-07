@@ -16,6 +16,7 @@ import warnings
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
+from torchmetrics import Accuracy, F1, Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
@@ -27,17 +28,24 @@ if _TEXT_AVAILABLE:
 
 
 class TextClassifier(ClassificationTask):
-    """Task that classifies text.
+    """The ``TextClassifier`` is a :class:`~flash.Task` for classifying text. For more details, see
+    :ref:`text_classification`. The ``TextClassifier`` also supports multi-label classification with
+    ``multi_label=True``. For more details, see :ref:`text_classification_multi_label`.
 
     Args:
         num_classes: Number of classes to classify.
         backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        metrics: Metrics to compute for training and evaluation.
+        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
+            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
+            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
+            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
+
+    required_extras: str = "text"
 
     def __init__(
         self,
@@ -45,14 +53,11 @@ class TextClassifier(ClassificationTask):
         backbone: str = "prajjwal1/bert-medium",
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
-
         self.save_hyperparameters()
 
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
@@ -65,7 +70,7 @@ class TextClassifier(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            metrics=metrics,
+            metrics=metrics or (F1(num_classes) if multi_label else Accuracy()),
             learning_rate=learning_rate,
             multi_label=multi_label,
             serializer=serializer or Labels(multi_label=multi_label),

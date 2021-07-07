@@ -20,10 +20,10 @@ def funcname(func):
     type_name = getattr(type(func), "__name__", None) or ""
 
     # cytoolz.curry
-    if "cytoolz" in module_name and "curry" == type_name:
+    if "cytoolz" in module_name and type_name == "curry":
         return func.func_name[:50]
     # numpy.vectorize objects
-    if "numpy" in module_name and "vectorize" == type_name:
+    if "numpy" in module_name and type_name == "vectorize":
         return ("vectorize_" + funcname(func.pyfunc))[:50]
 
     # All other callables
@@ -85,10 +85,9 @@ def key_split(s):
                 break
         if len(result) == 32 and re.match(r"[a-f0-9]{32}", result):
             return "data"
-        else:
-            if result[0] == "<":
-                result = result.strip("<>").split()[0].split(".")[-1]
-            return result
+        if result[0] == "<":
+            result = result.strip("<>").split()[0].split(".")[-1]
+        return result
     except Exception:
         return "Other"
 
@@ -96,8 +95,7 @@ def key_split(s):
 def apply(func, args, kwargs=None):
     if kwargs:
         return func(*args, **kwargs)
-    else:
-        return func(*args)
+    return func(*args)
 
 
 def partial_by_order(*args, **kwargs):

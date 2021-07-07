@@ -13,21 +13,30 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
+from torchmetrics import Metric
 
 from flash.text.seq2seq.core.model import Seq2SeqTask
 from flash.text.seq2seq.translation.metric import BLEUScore
 
 
 class TranslationTask(Seq2SeqTask):
-    """Task for Sequence2Sequence Translation.
+    """The ``TranslationTask`` is a :class:`~flash.Task` for Seq2Seq text translation. For more details, see
+    :ref:`translation`.
+
+    You can change the backbone to any translation model from `HuggingFace/transformers
+    <https://huggingface.co/models?filter=pytorch&pipeline_tag=translation>`__ using the ``backbone`` argument.
+
+    .. note:: When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.Task` and the
+        :class:`~flash.core.data.data_module.DataModule` object! Since this is a Seq2Seq task, make sure you use a
+        Seq2Seq model.
 
     Args:
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        metrics: Metrics to compute for training and evaluation.
+        metrics: Metrics to compute for training and evaluation. Defauls to calculating the BLEU metric.
+            Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `1e-5`
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
@@ -40,7 +49,7 @@ class TranslationTask(Seq2SeqTask):
         backbone: str = "t5-small",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[pl.metrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-5,
         val_target_max_length: Optional[int] = 128,
         num_beams: Optional[int] = 4,
@@ -73,7 +82,8 @@ class TranslationTask(Seq2SeqTask):
         result = self.bleu(self._postprocess.uncollate(generated_tokens), tgt_lns)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
-    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+    @staticmethod
+    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """
         This function is used only for debugging usage with CI
         """

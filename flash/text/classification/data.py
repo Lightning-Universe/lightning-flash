@@ -22,7 +22,7 @@ from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _requires_extras, _TEXT_AVAILABLE
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
@@ -32,21 +32,35 @@ if _TEXT_AVAILABLE:
 
 class TextDeserializer(Deserializer):
 
+    @_requires_extras("text")
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+        super().__init__()
+        self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
         self.max_length = max_length
 
     def deserialize(self, text: str) -> Tensor:
         return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
 
+    @property
+    def example_input(self) -> str:
+        return "An example input"
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class TextDataSource(DataSource):
 
+    @_requires_extras("text")
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
-
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
 
         self.backbone = backbone
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
@@ -62,7 +76,8 @@ class TextDataSource(DataSource):
             ex = ex[input]
         return self.tokenizer(ex, max_length=self.max_length, truncation=True, padding="max_length")
 
-    def _transform_label(self, label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
+    @staticmethod
+    def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
         ex[target] = label_to_class_mapping[ex[target]]
         return ex
 
@@ -83,8 +98,9 @@ class TextFileDataSource(TextDataSource):
 
         self.filetype = filetype
 
-    def _multilabel_target(self, targets, element):
-        targets = list(element.pop(target) for target in targets)
+    @staticmethod
+    def _multilabel_target(targets, element):
+        targets = [element.pop(target) for target in targets]
         element["labels"] = targets
         return element
 
@@ -211,6 +227,7 @@ class TextSentencesDataSource(TextDataSource):
 
 class TextClassificationPreprocess(Preprocess):
 
+    @_requires_extras("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -220,10 +237,6 @@ class TextClassificationPreprocess(Preprocess):
         backbone: str = "prajjwal1/bert-tiny",
         max_length: int = 128,
     ):
-
-        if not _TEXT_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[text]'")
-
         self.backbone = backbone
         self.max_length = max_length
 

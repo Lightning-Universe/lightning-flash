@@ -18,13 +18,15 @@ from torch import nn, tensor
 from torch.optim import Optimizer
 
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.backbones import OBJ_DETECTION_BACKBONES
 from flash.image.detection.finetuning import ObjectDetectionFineTuning
+from flash.image.detection.serialization import DetectionLabels
 
-if _IMAGE_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
     from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead
@@ -51,9 +53,8 @@ def _evaluate_iou(target, pred):
 
 
 class ObjectDetector(Task):
-    """Object detection task
-
-    Ref: Lightning Bolts https://github.com/PyTorchLightning/lightning-bolts
+    """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
+    :ref:`object_detection`.
 
     Args:
         num_classes: the number of classes for detection, including background
@@ -67,6 +68,7 @@ class ObjectDetector(Task):
             Only applicable for `fasterrcnn`.
         loss: the function(s) to update the model with. Has no effect for torchvision detection models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
+            Changing this argument currently has no effect.
         optimizer: The optimizer to use for training. Can either be the actual class or the class name.
         pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
             Has no effect for custom models.
@@ -75,6 +77,8 @@ class ObjectDetector(Task):
     """
 
     backbones: FlashRegistry = OBJ_DETECTION_BACKBONES
+
+    required_extras: str = "image"
 
     def __init__(
         self,
@@ -90,12 +94,9 @@ class ObjectDetector(Task):
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.AdamW,
         learning_rate: float = 1e-3,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs: Any,
     ):
-
-        if not _IMAGE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[image]'")
-
         self.save_hyperparameters()
 
         if model in _models:
@@ -112,6 +113,7 @@ class ObjectDetector(Task):
             metrics=metrics,
             learning_rate=learning_rate,
             optimizer=optimizer,
+            serializer=serializer or DetectionLabels(),
         )
 
     @staticmethod
@@ -170,7 +172,7 @@ class ObjectDetector(Task):
         """The training step. Overrides ``Task.training_step``
         """
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
-        targets = [{k: v for k, v in t.items()} for t in targets]
+        targets = [dict(t.items()) for t in targets]
 
         # fasterrcnn takes both images and targets for training, returns loss_dict
         loss_dict = self.model(images, targets)
@@ -185,9 +187,6 @@ class ObjectDetector(Task):
         iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
         self.log("val_iou", iou)
 
-    def on_validation_end(self) -> None:
-        return super().on_validation_end()
-
     def test_step(self, batch, batch_idx):
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         # fasterrcnn takes only images for eval() mode
@@ -197,7 +196,8 @@ class ObjectDetector(Task):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         images = batch[DefaultDataKeys.INPUT]
-        return self(images)
+        batch[DefaultDataKeys.PREDS] = self(images)
+        return batch
 
     def configure_finetune_callback(self):
         return [ObjectDetectionFineTuning(train_bn=True)]

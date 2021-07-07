@@ -8,7 +8,7 @@ import torch
 
 from flash.core.serve.types.base import BaseType
 from flash.core.serve.utils import download_file
-from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, _SERVE_AVAILABLE
+from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, _requires_extras
 
 if _PYDANTIC_AVAILABLE:
     from pydantic import FilePath, HttpUrl, parse_obj_as, ValidationError
@@ -60,10 +60,10 @@ class Endpoint:
             self.outputs[k] = str(v)
 
 
-# -------------------------------- Grid Model ---------------------------------
+# -------------------------------- Servable ---------------------------------
 
 
-class GridserveScriptLoader:
+class FlashServeScriptLoader:
 
     __slots__ = ("location", "instance")
 
@@ -76,14 +76,14 @@ class GridserveScriptLoader:
         return self.instance(*args, **kwargs)
 
 
-GridModelValidArgs_T = Union[Tuple[Type[pl.LightningModule], Union[HttpUrl, FilePath]], Tuple[HttpUrl],
-                             Tuple[FilePath], ]
+ServableValidArgs_T = Union[Tuple[Type[pl.LightningModule], Union[HttpUrl, FilePath]], Tuple[HttpUrl],
+                            Tuple[FilePath], ]
 
 
-class GridModel:
+class Servable:
     """Wrapper around a model object to enable serving at scale.
 
-    Create GM from either (LM, LOCATION) or (LOCATION,)
+    Create a ``Servable`` from either (LM, LOCATION) or (LOCATION,)
 
     Parameters
     ----------
@@ -100,18 +100,16 @@ class GridModel:
     *  How to handle ``__init__`` args not recorded in hparams of ``pl.LightningModule``
     """
 
+    @_requires_extras("serve")
     def __init__(
         self,
-        *args: GridModelValidArgs_T,
+        *args: ServableValidArgs_T,
         download_path: Optional[Path] = None,
-        script_loader_cls: Type[GridserveScriptLoader] = GridserveScriptLoader
+        script_loader_cls: Type[FlashServeScriptLoader] = FlashServeScriptLoader
     ):
-        if not _SERVE_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install 'lightning-flash[serve]'")
-
         try:
             loc = args[-1]  # last element in args is always loc
-            parsed = parse_obj_as(GridModelValidArgs_T, tuple(args))
+            parsed = parse_obj_as(ServableValidArgs_T, tuple(args))
         except ValidationError:
             if args[0].__qualname__ != script_loader_cls.__qualname__:
                 raise
@@ -343,14 +341,14 @@ def make_param_dict(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType],
         Element[0] == Input parameter dict
         Element[1] == Output parameter dict.
     """
-    gridserve_inp_params, gridserve_out_params = {}, {}
+    flashserve_inp_params, flashserve_out_params = {}, {}
     for inp_key, inp_dtype in inputs.items():
-        gridserve_inp_params[inp_key] = Parameter(
+        flashserve_inp_params[inp_key] = Parameter(
             name=inp_key, datatype=inp_dtype, component_uid=component_uid, position="inputs"
         )
 
     for out_key, out_dtype in outputs.items():
-        gridserve_out_params[out_key] = Parameter(
+        flashserve_out_params[out_key] = Parameter(
             name=out_key, datatype=out_dtype, component_uid=component_uid, position="outputs"
         )
-    return gridserve_inp_params, gridserve_out_params
+    return flashserve_inp_params, flashserve_out_params

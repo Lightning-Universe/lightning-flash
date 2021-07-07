@@ -1,13 +1,15 @@
 import os
+import re
 
 import pytest
 import torch
 
-from flash.core.utilities.imports import _IMAGE_STLYE_TRANSFER, _PYSTICHE_GREATER_EQUAL_0_7_2
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image.style_transfer import StyleTransfer
+from tests.helpers.utils import _IMAGE_TESTING
 
 
-@pytest.mark.skipif(not _PYSTICHE_GREATER_EQUAL_0_7_2, reason="image style transfer libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_style_transfer_task():
 
     model = StyleTransfer(
@@ -19,13 +21,13 @@ def test_style_transfer_task():
     assert model.perceptual_loss.style_loss.score_weight == 11
 
 
-@pytest.mark.skipif(_IMAGE_STLYE_TRANSFER, reason="image style transfer libraries are installed.")
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
 def test_style_transfer_task_import():
-    with pytest.raises(ModuleNotFoundError, match="[image_style_transfer]"):
+    with pytest.raises(ModuleNotFoundError, match="[image]"):
         StyleTransfer()
 
 
-@pytest.mark.skipif(not _PYSTICHE_GREATER_EQUAL_0_7_2, reason="image style transfer libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_jit(tmpdir):
     path = os.path.join(tmpdir, "test.pt")
 
@@ -40,3 +42,9 @@ def test_jit(tmpdir):
     out = model(torch.rand(1, 3, 32, 32))
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 3, 32, 32])
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_load_from_checkpoint_dependency_error():
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
+        StyleTransfer.load_from_checkpoint("not_a_real_checkpoint.pt")

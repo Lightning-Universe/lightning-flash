@@ -230,7 +230,7 @@ class _Preprocessor(torch.nn.Module):
                 with self._collate_context:
                     samples, metadata = self._extract_metadata(samples)
                     samples = self.collate_fn(samples)
-                    if metadata:
+                    if metadata and isinstance(samples, dict):
                         samples[DefaultDataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
 
@@ -316,11 +316,7 @@ class _Postprocessor(torch.nn.Module):
                     self.save_fn(pred)
             else:
                 self.save_fn(final_preds)
-        else:
-            # todo (tchaton): Debug the serializer not iterating over a list.
-            if self.is_serving and isinstance(final_preds, list) and len(final_preds) == 1:
-                return final_preds[0]
-            return final_preds
+        return final_preds
 
     def __str__(self) -> str:
         return (
@@ -347,13 +343,13 @@ def default_uncollate(batch: Any):
             return batch
         return list(torch.unbind(batch, 0))
 
-    elif isinstance(batch, Mapping):
+    if isinstance(batch, Mapping):
         return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
 
-    elif isinstance(batch, tuple) and hasattr(batch, '_fields'):  # namedtuple
+    if isinstance(batch, tuple) and hasattr(batch, '_fields'):  # namedtuple
         return [batch_type(*default_uncollate(sample)) for sample in zip(*batch)]
 
-    elif isinstance(batch, Sequence) and not isinstance(batch, str):
+    if isinstance(batch, Sequence) and not isinstance(batch, str):
         return [default_uncollate(sample) for sample in batch]
 
     return batch

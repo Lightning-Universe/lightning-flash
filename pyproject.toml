@@ -1,0 +1,2 @@
+[tool.autopep8]
+ignore = ["E731"]
