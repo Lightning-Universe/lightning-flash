@@ -334,20 +334,18 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
 
-class DatasetDataSource(DataSource):
+class DatasetDataSource(DataSource[Dataset]):
+    """The ``DatasetDataSource`` implements default behaviours for data sources which expect the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
 
-    def load_data(self, dataset: Dataset, auto_dataset: AutoDataset) -> Dataset:
-        if self.training:
-            # store a sample to infer the shape
-            parameters = signature(self.load_sample).parameters
-            if len(parameters) > 1 and AutoDataset.DATASET_KEY in parameters:
-                auto_dataset.sample = self.load_sample(dataset[0], self)
-            else:
-                auto_dataset.sample = self.load_sample(dataset[0])
-        return dataset
+    Args:
+        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
+            :class:`~flash.core.data.data_source.LabelsState`.
+    """
 
-    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any]) -> Any:
-        # wrap everything within `.INPUT`.
+    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+        if isinstance(sample, tuple) and len(sample) == 2:
+            return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
         return {DefaultDataKeys.INPUT: sample}
 
 
