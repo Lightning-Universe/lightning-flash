@@ -29,8 +29,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelStudioDataset, LabelStudioDataSource, \
-    PathsDataSource
+from flash.core.data.data_source import DataSource, DefaultDataSources, LabelStudioDataset
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE

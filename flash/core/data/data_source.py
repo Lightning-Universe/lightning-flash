@@ -607,10 +607,3 @@ class LabelStudioDataset(Dataset):
 
     def __len__(self):
         return len(self.results)
-
-    def items(self):
-        item = []
-        for anno in self.results:
-            for label in anno['result']:
-                item.append((anno['file_upload'], label))
-        return item
