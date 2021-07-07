@@ -38,6 +38,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
+from torchvision.datasets.folder import default_loader
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
@@ -156,6 +157,7 @@ class DefaultDataSources(LightningEnum):
     JSON = "json"
     DATASET = "dataset"
     FIFTYONE = "fiftyone"
+    LABELSTUDIO = "labelstudio"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -543,3 +545,72 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
             classes = data.distinct(label_path)
 
         return classes
+
+
+class LabelStudioDataset(Dataset):
+    r"""Dataset wrapping label studio annotations.
+
+    Each sample will be retrieved by checking result field of the annotation.
+
+    Args:
+        *js: json of export file
+        *img_folder: path to image folder of label studio
+    """
+    def __init__(self, js, img_folder, val=False):
+        self._raw_data = js
+        self._img_folder = img_folder
+        self.results = list()
+        self.classes = set()
+        # iterate through all tasks in exported data
+        for task in self._raw_data:
+            for annotation in task['annotations']:
+                # Adding ground_truth annotation to separate dataset
+                result = annotation['result']
+                for res in result:
+                    t = res['type']
+                    for label in res['value'][t]:
+                        # check if labeling result is a list of labels
+                        if isinstance(label, list):
+                            for sublabel in label:
+                                self.classes.add(sublabel)
+                                temp = dict()
+                                temp['file_upload'] = task['file_upload']
+                                temp['label'] = sublabel
+                                if annotation['ground_truth'] & val:
+                                    self.results.append(temp)
+                                elif not annotation['ground_truth'] or not val:
+                                    self.results.append(temp)
+                        else:
+                            self.classes.add(label)
+                            temp = dict()
+                            temp['file_upload'] = task['file_upload']
+                            temp['label'] = label
+                            if annotation['ground_truth'] & val:
+                                self.results.append(temp)
+                            elif not annotation['ground_truth'] or not val:
+                                self.results.append(temp)
+        self.num_classes = len(self.classes)
+
+    def __getitem__(self, idx):
+        r = self.results[idx]
+        # extracting path to file
+        p = os.path.join(self._img_folder, r['file_upload'])
+        # loading image
+        sample = default_loader(p)
+        # casting to list and sorting classes
+        sorted_labels = sorted(list(self.classes))
+        # checking index of class
+        label = sorted_labels.index(r['label'])
+        result = {DefaultDataKeys.INPUT: sample,
+                  DefaultDataKeys.TARGET: label}
+        return result
+
+    def __len__(self):
+        return len(self.results)
+
+    def items(self):
+        item = []
+        for anno in self.results:
+            for label in anno['result']:
+                item.append((anno['file_upload'], label))
+        return item
