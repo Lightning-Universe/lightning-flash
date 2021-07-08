@@ -7,26 +7,21 @@ flash.core
     :local:
     :backlinks: top
 
-Models and Backbones
-____________________
-
-The Task
-========
+Models
+______
 
 .. automodule:: flash.core.model
+    :exclude-members: Task
 
 .. autoclass:: flash.core.classification.ClassificationTask
 
-Fitting and Finetuning
-______________________
-
 Trainer
-=======
+_______
 
 .. automodule:: flash.core.trainer
 
-Finetuning Callbacks
-====================
+Finetuning
+__________
 
 .. automodule:: flash.core.finetuning
 
@@ -34,3 +29,10 @@ Registry
 ________
 
 .. automodule:: flash.core.registry
+
+Utilities
+_________
+
+.. automodule:: flash.core.utilities.apply_func
+
+.. automodule:: flash.core.utilities.imports
