@@ -495,6 +495,7 @@ def single_target_csv(image_tmpdir):
     return str(image_tmpdir / "metadata.csv")
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_csv_single_target(single_target_csv):
     img_data = ImageClassificationData.from_csv(
         "image",
@@ -522,6 +523,7 @@ def multi_target_csv(image_tmpdir):
     return str(image_tmpdir / "metadata.csv")
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_csv_multi_target(multi_target_csv):
     img_data = ImageClassificationData.from_csv(
         "image",
@@ -548,6 +550,7 @@ def bad_csv_multi_image(image_tmpdir):
     return str(image_tmpdir / "metadata.csv")
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_bad_csv_multi_image(bad_csv_multi_image):
     with pytest.raises(ValueError, match="Found multiple matches"):
         img_data = ImageClassificationData.from_csv(
@@ -570,6 +573,7 @@ def bad_csv_no_image(image_tmpdir):
     return str(image_tmpdir / "metadata.csv")
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_bad_csv_no_image(bad_csv_no_image):
     with pytest.raises(ValueError, match="Found no matches"):
         img_data = ImageClassificationData.from_csv(
