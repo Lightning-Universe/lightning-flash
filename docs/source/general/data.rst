@@ -22,7 +22,7 @@ Here are common terms you need to be familiar with:
    * - Term
      - Definition
    * - :class:`~flash.core.data.process.Deserializer`
-     - The :class:`~flash.core.data.process.Deserializer` provides a single :meth:`~flash.core.data.process.Deslerializer.deserialize` method.
+     - The :class:`~flash.core.data.process.Deserializer` provides a single :meth:`~flash.core.data.process.Deserializer.deserialize` method.
    * - :class:`~flash.core.data.data_module.DataModule`
      - The :class:`~flash.core.data.data_module.DataModule` contains the datasets, transforms and dataloaders.
    * - :class:`~flash.core.data.data_pipeline.DataPipeline`
