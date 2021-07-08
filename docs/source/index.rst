@@ -66,6 +66,7 @@ Lightning Flash
    general/callback
    general/registry
    general/serve
+   code/flash
    code/core
    code/data
    code/image
