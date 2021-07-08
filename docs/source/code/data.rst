@@ -14,6 +14,7 @@ Data Module
 ===========
 
 .. automodule:: flash.core.data.data_module
+    :noindex:
 
 Data Sources
 ============
@@ -34,6 +35,7 @@ Data Pipeline Components
 .. automodule:: flash.core.data.properties
 
 .. automodule:: flash.core.data.process
+    :noindex:
 
 Transforms
 __________
