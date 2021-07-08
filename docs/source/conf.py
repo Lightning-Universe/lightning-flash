@@ -52,7 +52,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    # 'sphinx.ext.todo',
+    'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
