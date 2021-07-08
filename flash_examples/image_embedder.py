@@ -11,18 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.classification import Labels
 from flash.core.data.utils import download_data
-from flash.tabular import TabularClassifier
+from flash.image import ImageEmbedder
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
-# 2. Load the model from a checkpoint
-model = TabularClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/tabular_classification_model.pt")
+# 2. Build the task
+embedder = ImageEmbedder(backbone="resnet101")
 
-model.serializer = Labels(['Did not survive', 'Survived'])
-
-# 3. Generate predictions from a sheet file! Who would survive?
-predictions = model.predict("data/titanic/titanic.csv")
-print(predictions)
+# 3. Generate an embedding from an image path.
+embeddings = embedder.predict(["data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg"])

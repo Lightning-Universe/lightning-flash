@@ -16,7 +16,7 @@ import warnings
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from torchmetrics import Metric
+from torchmetrics import Accuracy, F1, Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
@@ -28,7 +28,9 @@ if _TEXT_AVAILABLE:
 
 
 class TextClassifier(ClassificationTask):
-    """Task that classifies text.
+    """The ``TextClassifier`` is a :class:`~flash.Task` for classifying text. For more details, see
+    :ref:`text_classification`. The ``TextClassifier`` also supports multi-label classification with
+    ``multi_label=True``. For more details, see :ref:`text_classification_multi_label`.
 
     Args:
         num_classes: Number of classes to classify.
@@ -68,7 +70,7 @@ class TextClassifier(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            metrics=metrics,
+            metrics=metrics or (F1(num_classes) if multi_label else Accuracy()),
             learning_rate=learning_rate,
             multi_label=multi_label,
             serializer=serializer or Labels(multi_label=multi_label),

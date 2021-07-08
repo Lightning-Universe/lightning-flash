@@ -21,7 +21,15 @@ from flash.text.seq2seq.summarization.metric import RougeMetric
 
 
 class SummarizationTask(Seq2SeqTask):
-    """Task for Seq2Seq Summarization.
+    """The ``SummarizationTask`` is a :class:`~flash.Task` for Seq2Seq text summarization. For more details, see
+    :ref:`summarization`.
+
+    You can change the backbone to any summarization model from `HuggingFace/transformers
+    <https://huggingface.co/models?filter=pytorch&pipeline_tag=summarization>`_ using the ``backbone`` argument.
+
+    .. note:: When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.Task` and the
+        :class:`~flash.core.data.data_module.DataModule` object! Since this is a Seq2Seq task, make sure you use a
+        Seq2Seq model.
 
     Args:
         backbone: backbone model to use for the task.

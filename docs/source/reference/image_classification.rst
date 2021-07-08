@@ -6,37 +6,22 @@ Image Classification
 ####################
 
 ********
-The task
+The Task
 ********
-The task of identifying what is in an image is called image classification. Typically, Image Classification is used to identify images containing a single object. The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.  A class is a label that describes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc. For example, we can train the image classifier task on images of ants and it will learn to predict the probability that an image contains an ant.
+
+The task of identifying what is in an image is called image classification.
+Typically, Image Classification is used to identify images containing a single object.
+The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.
+A class is a label that describes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc.
 
 ------
 
-*********
-Inference
-*********
+*******
+Example
+*******
 
-The :class:`~flash.image.ImageClassifier` is already pre-trained on `ImageNet <http://www.image-net.org/>`_, a dataset of over 14 million images.
-
-
-Use the :class:`~flash.image.ImageClassifier` pretrained model for inference on any string sequence using :func:`~flash.image.ImageClassifier.predict`:
-
-.. literalinclude:: ../../../flash_examples/predict/image_classification.py
-    :language: python
-    :lines: 14-
-
-For more advanced inference options, see :ref:`predictions`.
-
-------
-
-**********
-Finetuning
-**********
-
-Lets say you wanted to develope a model that could determine whether an image contains **ants** or **bees**, using the hymenoptera dataset.
-Once we download the data using :func:`~flash.core.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.image.ImageClassificationData`.
-
-.. note:: The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
+Let's look at the task of predicting whether images contain Ants or Bees using the hymenoptera dataset.
+The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
 
 .. code-block::
 
@@ -60,36 +45,32 @@ Once we download the data using :func:`~flash.core.data.download_data`, all we n
             ├── 10870992_eebeeb3a12.jpg
             ...
 
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.classification.data.ImageClassificationData`.
+We select a pre-trained backbone to use for our :class:`~flash.image.classification.model.ImageClassifier` and fine-tune on the hymenoptera data.
+We then use the trained :class:`~flash.image.classification.model.ImageClassifier` for inference.
+Finally, we save the model.
+Here's the full example:
 
-Now all we need is to train our task!
-
-.. literalinclude:: ../../../flash_examples/finetuning/image_classification.py
+.. literalinclude:: ../../../flash_examples/image_classification.py
     :language: python
     :lines: 14-
 
 ------
 
-*********************
-Changing the backbone
-*********************
-By default, we use a `ResNet-18 <https://arxiv.org/abs/1512.03385>`_ for image classification. You can change the model run by the task by passing in a different backbone.
+*******
+Serving
+*******
 
-.. testsetup::
+The :class:`~flash.image.classification.model.ImageClassifier` is servable.
+This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+Here's an example:
 
-    from flash.core.data.utils import download_data
-    from flash.image import ImageClassificationData, ImageClassifier
+.. literalinclude:: ../../../flash_examples/serve/image_classification/inference_server.py
+    :language: python
+    :lines: 14-
 
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
+You can now perform inference from your client like this:
 
-.. testcode::
-
-    # 1. organize the data
-    data = ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/",
-        val_folder="data/hymenoptera_data/val/",
-    )
-
-    # 2. build the task
-    task = ImageClassifier(num_classes=2, backbone="resnet34")
-
-.. include:: ../common/image_backbones.rst
+.. literalinclude:: ../../../flash_examples/serve/image_classification/client.py
+    :language: python
+    :lines: 14-

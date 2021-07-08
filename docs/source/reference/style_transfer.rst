@@ -1,9 +1,12 @@
+
+.. _style_transfer:
+
 ##############
 Style Transfer
 ##############
 
 ********
-The task
+The Task
 ********
 
 The Neural Style Transfer Task is an optimization method which extract the style from an image and apply it another image while preserving its content.
@@ -12,52 +15,21 @@ The goal is that the output image looks like the content image, but â€œpaintedâ€
 .. image:: https://raw.githubusercontent.com/pystiche/pystiche/master/docs/source/graphics/banner/banner.jpg
     :alt: style_transfer_example
 
-Lightning Flash :class:`~flash.image.style_transfer.StyleTransfer` and
-:class:`~flash.image.style_transfer.StyleTransferData` internally rely on `pystiche <https://pystiche.org>`_ as
-backend.
+The :class:`~flash.image.style_transfer.model.StyleTransfer` and :class:`~flash.image.style_transfer.data.StyleTransferData` classes internally rely on `pystiche <https://pystiche.org>`_.
 
 ------
 
-***
-Fit
-***
+*******
+Example
+*******
 
-First, you would have to import the :class:`~flash.image.style_transfer.StyleTransfer`
-and :class:`~flash.image.style_transfer.StyleTransferData` from Flash.
+Let's look at transferring the style from `The Starry Night <https://en.wikipedia.org/wiki/The_Starry_Night>`_ onto the images from the COCO 128 data set from the :ref:`object_detection` Guide.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.style_transfer.data.StyleTransferData`.
+Next, we create our :class:`~flash.image.style_transfer.model.StyleTransfer` task with the desired style image and fit on the COCO 128 images.
+We then use the trained :class:`~flash.image.style_transfer.model.StyleTransfer` for inference.
+Finally, we save the model.
+Here's the full example:
 
-.. testcode:: style_transfer
-
-    import flash
-    from flash.core.data.utils import download_data
-    from flash.image.style_transfer import StyleTransfer, StyleTransferData
-    import pystiche
-
-
-Then, download some content images and create a :class:`~flash.image.style_transfer.StyleTransferData` DataModule.
-
-.. testcode:: style_transfer
-
-    download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
-
-    data_module = StyleTransferData.from_folders(train_folder="data/coco128/images", batch_size=4)
-
-
-Select a style image and pass it to the `StyleTransfer` task.
-
-.. testcode:: style_transfer
-
-    style_image = pystiche.demo.images()["paint"].read(size=256)
-
-    model = StyleTransfer(style_image)
-
-Finally, create a Flash :class:`flash.core.trainer.Trainer` and pass it the model and datamodule.
-
-.. testcode:: style_transfer
-
-    trainer = flash.Trainer(max_epochs=2)
-    trainer.fit(model, data_module)
-
-.. testoutput:: style_transfer
-    :hide:
-
-    ...
+.. literalinclude:: ../../../flash_examples/style_transfer.py
+    :language: python
+    :lines: 14-

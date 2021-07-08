@@ -14,53 +14,41 @@
 import flash
 from flash.core.data.utils import download_data
 from flash.image import SemanticSegmentation, SemanticSegmentationData
-from flash.image.segmentation.serialization import SegmentationLabels
 
-# 1. Download the data
-# This is a Dataset with Semantic Segmentation Labels generated via CARLA self-driving simulator.
-# The data was generated as part of the Lyft Udacity Challenge.
+# 1. Create the DataModule
+# The data was generated with the  CARLA self-driving simulator as part of the Kaggle Lyft Udacity Challenge.
 # More info here: https://www.kaggle.com/kumaresanmanickavelu/lyft-udacity-challenge
 download_data(
-    "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip", "data/"
+    "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
+    "./data"
 )
 
-# 2.1 Load the data
 datamodule = SemanticSegmentationData.from_folders(
     train_folder="data/CameraRGB",
     train_target_folder="data/CameraSeg",
-    batch_size=4,
     val_split=0.1,
     image_size=(200, 200),
     num_classes=21,
 )
 
-# 2.2 Visualise the samples
-datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
-
-# 3.a List available backbones and heads
-print(f"Backbones: {SemanticSegmentation.available_backbones()}")
-print(f"Heads: {SemanticSegmentation.available_heads()}")
-
-# 3.b Build the model
+# 2. Build the task
 model = SemanticSegmentation(
     backbone="mobilenet_v3_large",
     head="fcn",
     num_classes=datamodule.num_classes,
-    serializer=SegmentationLabels(visualize=False),
 )
 
-# 4. Create the trainer.
-trainer = flash.Trainer(fast_dev_run=True)
-
-# 5. Train the model
+# 3. Create the trainer and finetune the model
+trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-# 6. Segment a few images!
+# 4. Segment a few images!
 predictions = model.predict([
     "data/CameraRGB/F61-1.png",
     "data/CameraRGB/F62-1.png",
     "data/CameraRGB/F63-1.png",
 ])
+print(predictions)
 
-# 7. Save it!
+# 5. Save the model!
 trainer.save_checkpoint("semantic_segmentation_model.pt")

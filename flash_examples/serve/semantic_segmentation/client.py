@@ -18,7 +18,7 @@ import requests
 
 import flash
 
-with (Path(flash.ASSETS_ROOT) / "fish.jpg").open("rb") as f:
+with (Path(flash.ASSETS_ROOT) / "road.png").open("rb") as f:
     imgstr = base64.b64encode(f.read()).decode("UTF-8")
 
 body = {"session": "UUID", "payload": {"inputs": {"data": imgstr}}}

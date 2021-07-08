@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import base64
-from pathlib import Path
+from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys
 
-import requests
 
-with Path("input.png").open("rb") as f:
-    imgstr = base64.b64encode(f.read()).decode("UTF-8")
+def test_dataset_data_source():
+    data_source = DatasetDataSource()
 
-body = {"session": "UUID", "payload": {"inputs": {"data": imgstr}}}
-resp = requests.post("http://127.0.0.1:8000/predict", json=body)
-print(resp.json())
+    input, target = 'test', 3
+
+    assert data_source.load_sample((input, target)) == {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target}
+    assert data_source.load_sample(input) == {DefaultDataKeys.INPUT: input}

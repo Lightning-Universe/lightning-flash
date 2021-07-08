@@ -11,20 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash import Trainer
-from flash.core.classification import Probabilities
+import flash
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
+# 1. Create the DataModule
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
-# 2. Load the model from a checkpoint
-model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+datamodule = ImageClassificationData.from_folders(
+    train_folder="data/hymenoptera_data/train/",
+    val_folder="data/hymenoptera_data/val/",
+)
 
-# 3a. Predict what's on a few images! ants or bees?
+# 2. Build the task
+model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
-model.serializer = Probabilities()
+# 3. Create the trainer and finetune the model
+trainer = flash.Trainer(max_epochs=3)
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+
+# 4. Predict what's on a few images! ants or bees?
 predictions = model.predict([
     "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
     "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
@@ -32,8 +38,5 @@ predictions = model.predict([
 ])
 print(predictions)
 
-# 3b. Or generate predictions with a whole folder!
-datamodule = ImageClassificationData.from_folders(predict_folder="data/hymenoptera_data/predict/")
-
-predictions = Trainer().predict(model, datamodule=datamodule)
-print(predictions)
+# 5. Save the model!
+trainer.save_checkpoint("image_classification_model.pt")
