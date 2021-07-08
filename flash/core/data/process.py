@@ -462,6 +462,10 @@ class DefaultPreprocess(Preprocess):
 
 
 class Postprocess(Properties):
+    """
+    The :class:`~flash.core.data.process.Postprocess` encapsulates all the data processing logic that should run after
+    the model.
+    """
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()
