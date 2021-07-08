@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import csv
 from pathlib import Path
 from typing import Any, List, Tuple
 
@@ -473,3 +474,109 @@ def test_from_datasets():
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, )
+
+
+@pytest.fixture
+def image_tmpdir(tmpdir):
+    (tmpdir / "train").mkdir()
+    Image.new("RGB", (128, 128)).save(str(tmpdir / "train" / "image_1.png"))
+    Image.new("RGB", (128, 128)).save(str(tmpdir / "train" / "image_2.png"))
+    return tmpdir / "train"
+
+
+@pytest.fixture
+def single_target_csv(image_tmpdir):
+    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
+        fieldnames = ["image", "target"]
+        writer = csv.DictWriter(csvfile, fieldnames)
+        writer.writeheader()
+        writer.writerow({"image": "image_1", "target": "Ants"})
+        writer.writerow({"image": "image_2", "target": "Bees"})
+    return str(image_tmpdir / "metadata.csv")
+
+
+def test_from_csv_single_target(single_target_csv):
+    img_data = ImageClassificationData.from_csv(
+        "image",
+        "target",
+        train_file=single_target_csv,
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, )
+
+
+@pytest.fixture
+def multi_target_csv(image_tmpdir):
+    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
+        fieldnames = ["image", "target_1", "target_2"]
+        writer = csv.DictWriter(csvfile, fieldnames)
+        writer.writeheader()
+        writer.writerow({"image": "image_1", "target_1": 1, "target_2": 0})
+        writer.writerow({"image": "image_2", "target_1": 1, "target_2": 1})
+    return str(image_tmpdir / "metadata.csv")
+
+
+def test_from_csv_multi_target(multi_target_csv):
+    img_data = ImageClassificationData.from_csv(
+        "image",
+        ["target_1", "target_2"],
+        train_file=multi_target_csv,
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 2)
+
+
+@pytest.fixture
+def bad_csv_multi_image(image_tmpdir):
+    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
+        fieldnames = ["image", "target"]
+        writer = csv.DictWriter(csvfile, fieldnames)
+        writer.writeheader()
+        writer.writerow({"image": "image", "target": "Ants"})
+    return str(image_tmpdir / "metadata.csv")
+
+
+def test_from_bad_csv_multi_image(bad_csv_multi_image):
+    with pytest.raises(ValueError, match="Found multiple matches"):
+        img_data = ImageClassificationData.from_csv(
+            "image",
+            ["target"],
+            train_file=bad_csv_multi_image,
+            batch_size=1,
+            num_workers=0,
+        )
+        _ = next(iter(img_data.train_dataloader()))
+
+
+@pytest.fixture
+def bad_csv_no_image(image_tmpdir):
+    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
+        fieldnames = ["image", "target"]
+        writer = csv.DictWriter(csvfile, fieldnames)
+        writer.writeheader()
+        writer.writerow({"image": "image_3", "target": "Ants"})
+    return str(image_tmpdir / "metadata.csv")
+
+
+def test_from_bad_csv_no_image(bad_csv_no_image):
+    with pytest.raises(ValueError, match="Found no matches"):
+        img_data = ImageClassificationData.from_csv(
+            "image",
+            ["target"],
+            train_file=bad_csv_no_image,
+            batch_size=1,
+            num_workers=0,
+        )
+        _ = next(iter(img_data.train_dataloader()))
