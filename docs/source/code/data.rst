@@ -10,12 +10,6 @@ flash.core.data
 Data Loading
 ____________
 
-Data Module
-===========
-
-.. automodule:: flash.core.data.data_module
-    :exclude-members: DataModule
-
 Data Sources
 ============
 
