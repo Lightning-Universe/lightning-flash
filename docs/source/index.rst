@@ -69,6 +69,7 @@ Lightning Flash
    code/flash
    code/core
    code/data
+   code/serve
    code/image
    code/tabular
    code/text
