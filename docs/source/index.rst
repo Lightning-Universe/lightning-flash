@@ -25,7 +25,6 @@ Lightning Flash
    general/predictions
    general/jit
    general/data
-   general/callback
    general/registry
    general/serve
 
