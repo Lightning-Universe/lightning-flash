@@ -14,12 +14,13 @@ Data Module
 ===========
 
 .. automodule:: flash.core.data.data_module
-    :noindex:
+    :exclude-members: DataModule
 
 Data Sources
 ============
 
 .. automodule:: flash.core.data.data_source
+    :exclude-members: DataSource
 
 Data Processing
 _______________
@@ -35,7 +36,7 @@ Data Pipeline Components
 .. automodule:: flash.core.data.properties
 
 .. automodule:: flash.core.data.process
-    :noindex:
+    :exclude-members: Postprocess, Preprocess, Serializer
 
 Transforms
 __________
