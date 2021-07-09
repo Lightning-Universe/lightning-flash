@@ -73,7 +73,7 @@ First, we need make the following imports:
     from flash.core.serve.types import Image, Label
 
 
-.. image:: ../_static/images/data_serving_flow.png
+.. image:: https://pl-flash-data.s3.amazonaws.com/assets/serve/data_serving_flow.png
   :width: 100%
   :alt: Data Serving Flow
 
@@ -175,14 +175,14 @@ Just run:
 
 And you should see this in your terminal
 
-.. image:: ../_static/images/inference_server.png
+.. image:: https://pl-flash-data.s3.amazonaws.com/assets/serve/inference_server.png
   :width: 100%
   :alt: Data Serving Flow
 
 
 You should also see an Swagger UI already built for you at ``http://127.0.0.1:8000/docs``
 
-.. image:: ../_static/images/swagger_ui.png
+.. image:: https://pl-flash-data.s3.amazonaws.com/assets/serve/swagger_ui.png
   :width: 100%
   :alt: Data Serving Flow
 
