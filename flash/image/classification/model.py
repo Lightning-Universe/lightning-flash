@@ -141,4 +141,4 @@ class ImageClassifier(ClassificationTask):
         if self.hparams.multi_label:
             assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
         else:
-            assert history[-1]["val_accuracy"] > 0.90, history[-1]["val_accuracy"]
+            assert history[-1]["val_accuracy"] > 0.85, history[-1]["val_accuracy"]
