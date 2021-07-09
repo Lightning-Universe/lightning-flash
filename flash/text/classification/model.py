@@ -97,10 +97,10 @@ class TextClassifier(ClassificationTask):
             x = x.logits
         return super().to_metrics_format(x)
 
-    def step(self, batch, batch_idx) -> dict:
+    def step(self, batch, batch_idx, metrics) -> dict:
         target = batch.pop("labels")
         batch = (batch, target)
-        return super().step(batch, batch_idx)
+        return super().step(batch, batch_idx, metrics)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self(batch)
