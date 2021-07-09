@@ -52,6 +52,7 @@ jobs:
         # python -m pip install "pip==20.1"
         pip install '.[all]'
         pip install '.[test]' --upgrade-strategy only-if-needed
+        pip install --upgrade torchtext
         pip list
       displayName: 'Install dependencies'
 
