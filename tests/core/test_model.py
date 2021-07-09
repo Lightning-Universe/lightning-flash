@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import math
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
@@ -20,6 +21,7 @@ import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
+from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
@@ -66,6 +68,34 @@ class PredictDummyDataset(DummyDataset):
 class DummyPostprocess(Postprocess):
 
     pass
+
+
+class FixedDataset(torch.utils.data.Dataset):
+
+    def __init__(self, targets):
+        super().__init__()
+
+        self.targets = targets
+
+    def __getitem__(self, index: int) -> Tuple[Tensor, Number]:
+        return torch.rand(1), self.targets[index]
+
+    def __len__(self) -> int:
+        return len(self.targets)
+
+
+class OnesModel(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        self.layer = nn.Linear(1, 2)
+        self.register_buffer('zeros', torch.zeros(2))
+        self.register_buffer('zero_one', torch.tensor([0.0, 1.0]))
+
+    def forward(self, x):
+        x = self.layer(x)
+        return x * self.zeros + self.zero_one
 
 
 # ================================
@@ -249,3 +279,19 @@ def test_optimization(tmpdir):
         assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
         expected = get_linear_schedule_with_warmup.__name__
         assert scheduler[0].lr_lambdas[0].__qualname__.split('.')[0] == expected
+
+
+def test_classification_task_metrics():
+    train_dataset = FixedDataset([0, 1])
+    val_dataset = FixedDataset([1, 1])
+
+    model = OnesModel()
+
+    class CheckAccuracy(Callback):
+
+        def on_train_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+            assert math.isclose(trainer.callback_metrics['train_accuracy_epoch'], 0.5)
+
+    task = ClassificationTask(model)
+    trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy())
+    trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))

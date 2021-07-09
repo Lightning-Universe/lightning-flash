@@ -146,8 +146,8 @@ class VideoClassifier(ClassificationTask):
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()
 
-    def step(self, batch: Any, batch_idx: int) -> Any:
-        return super().step((batch["video"], batch["label"]), batch_idx)
+    def step(self, batch: Any, batch_idx: int, metrics) -> Any:
+        return super().step((batch["video"], batch["label"]), batch_idx, metrics)
 
     def forward(self, x: Any) -> Any:
         x = self.backbone(x)
