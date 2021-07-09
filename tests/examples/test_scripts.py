@@ -59,10 +59,10 @@ from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING,
             "text_classification.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
-        pytest.param(
-            "text_classification_multi_label.py",
-            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
-        ),
+        # pytest.param(
+        #     "text_classification_multi_label.py",
+        #     marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+        # ),
         pytest.param(
             "translation.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
