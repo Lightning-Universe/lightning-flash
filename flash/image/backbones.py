@@ -16,15 +16,16 @@ import os
 import urllib.error
 import warnings
 from functools import partial
-from typing import Tuple
+from typing import Tuple, Union
 
 import torch
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
+from torch.hub import load_state_dict_from_url
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TIMM_AVAILABLE:
     import timm
@@ -33,21 +34,11 @@ if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-if _BOLTS_AVAILABLE:
-    if os.getenv("WARN_MISSING_PACKAGE") == "0":
-        with warnings.catch_warnings(record=True) as w:
-            from pl_bolts.models.self_supervised import SimCLR, SwAV
-    else:
-        from pl_bolts.models.self_supervised import SimCLR, SwAV
-
-ROOT_S3_BUCKET = "https://pl-bolts-weights.s3.us-east-2.amazonaws.com"
-
 MOBILENET_MODELS = ["mobilenet_v2"]
 VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
 RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnext50_32x4d", "resnext101_32x8d"]
 DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
 TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS
-BOLTS_MODELS = ["simclr-imagenet", "swav-imagenet"]
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
@@ -71,26 +62,14 @@ def catch_url_error(fn):
     return wrapper
 
 
-@IMAGE_CLASSIFIER_BACKBONES(name="simclr-imagenet", namespace="vision", package="bolts")
-def load_simclr_imagenet(path_or_url: str = f"{ROOT_S3_BUCKET}/simclr/bolts_simclr_imagenet/simclr_imagenet.ckpt", **_):
-    simclr: LightningModule = SimCLR.load_from_checkpoint(path_or_url, strict=False)
-    # remove the last two layers & turn it into a Sequential model
-    backbone = nn.Sequential(*list(simclr.encoder.children())[:-2])
-    return backbone, 2048
-
-
-@IMAGE_CLASSIFIER_BACKBONES(name="swav-imagenet", namespace="vision", package="bolts")
-def load_swav_imagenet(
-    path_or_url: str = f"{ROOT_S3_BUCKET}/swav/swav_imagenet/swav_imagenet.pth.tar",
-    **_,
-) -> Tuple[nn.Module, int]:
-    swav: LightningModule = SwAV.load_from_checkpoint(path_or_url, strict=True)
-    # remove the last two layers & turn it into a Sequential model
-    backbone = nn.Sequential(*list(swav.model.children())[:-2])
-    return backbone, 2048
-
-
 if _TORCHVISION_AVAILABLE:
+
+    RESNET50_WEIGHTS_PATHS = {
+        "supervised": None,
+        "simclr": "https://dl.fbaipublicfiles.com/vissl/model_zoo/simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/model_final_checkpoint_phase799.torch",
+        "swav": "https://dl.fbaipublicfiles.com/vissl/model_zoo/swav_in1k_rn50_800ep_swav_8node_resnet_27_07_20.a0a6b676/model_final_checkpoint_phase799.torch",
+        "barlow-twins": "https://dl.fbaipublicfiles.com/vissl/model_zoo/barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch",
+    }
 
     def _fn_mobilenet_vgg(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
         model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
@@ -109,10 +88,42 @@ if _TORCHVISION_AVAILABLE:
             type=_type
         )
 
-    def _fn_resnet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
-        model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
+    def _fn_resnet(
+        model_name: str,
+        pretrained: Union[bool, str] = True,
+        weights_paths: dict = {"supervised": None}
+    ) -> Tuple[nn.Module, int]:
+        # load according to pretrained if a bool is specified, else set to False
+        if isinstance(pretrained, bool):
+            pretrained_flag = pretrained
+        else:
+            pretrained_flag = False
+
+        model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained_flag)
         backbone = nn.Sequential(*list(model.children())[:-2])
         num_features = model.fc.in_features
+
+        model_weights = None
+        if isinstance(pretrained, str):
+            if pretrained in weights_paths:
+                device = next(model.parameters()).get_device()
+                model_weights = load_state_dict_from_url(
+                    weights_paths[pretrained],
+                    map_location=torch.device('cpu') if device is -1 else torch.device(device)
+                )
+
+                # add logic here for loading resnet weights from other libraries
+                if "classy_state_dict" in model_weights.keys():
+                    model_weights = model_weights["classy_state_dict"]["base_model"]["model"]["trunk"]
+                    model_weights = {
+                        key.replace("_feature_blocks.", "") if "_feature_blocks." in key else key: val
+                        for (key, val) in model_weights.items()
+                    }
+                else:
+                    raise KeyError('Model state dict loaded from unrecognized url/path.')
+            else:
+                raise KeyError('Unrecognized pretrained model.')
+
         return backbone, num_features
 
     def _fn_resnet_fpn(
@@ -125,13 +136,24 @@ if _TORCHVISION_AVAILABLE:
         return backbone, 256
 
     for model_name in RESNET_MODELS:
-        IMAGE_CLASSIFIER_BACKBONES(
-            fn=catch_url_error(partial(_fn_resnet, model_name)),
-            name=model_name,
-            namespace="vision",
-            package="torchvision",
-            type="resnet"
-        )
+        if model_name == 'resnet50':
+            IMAGE_CLASSIFIER_BACKBONES(
+                fn=catch_url_error(partial(_fn_resnet, model_name=model_name, weights_paths=RESNET50_WEIGHTS_PATHS)),
+                name=model_name,
+                namespace="vision",
+                package="multiple",
+                type="resnet",
+                weights_paths=RESNET50_WEIGHTS_PATHS
+            )
+        else:
+            IMAGE_CLASSIFIER_BACKBONES(
+                fn=catch_url_error(partial(_fn_resnet, model_name=model_name)),
+                name=model_name,
+                namespace="vision",
+                package="torchvision",
+                type="resnet",
+                weights_paths={"supervised": None}
+            )
 
         OBJ_DETECTION_BACKBONES(
             fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),
