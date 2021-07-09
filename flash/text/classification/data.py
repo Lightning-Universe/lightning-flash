@@ -14,7 +14,6 @@
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-import torch
 from torch import Tensor
 
 import flash
@@ -118,10 +117,10 @@ class TextFileDataSource(TextDataSource):
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if flash._IS_TESTING and not torch.cuda.is_available():
+        if flash._IS_TESTING:
             try:
                 dataset_dict = DatasetDict({
-                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                    stage: load_dataset(self.filetype, data_files=data_files, split=f'{stage}[:20]')
                 })
             except Exception:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
