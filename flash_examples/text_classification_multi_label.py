@@ -26,6 +26,7 @@ datamodule = TextClassificationData.from_csv(
     train_file="data/jigsaw_toxic_comments/train.csv",
     val_split=0.1,
     backbone="unitary/toxic-bert",
+    batch_size=128,
 )
 
 # 2. Build the task
