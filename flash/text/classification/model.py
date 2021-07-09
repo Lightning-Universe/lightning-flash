@@ -110,6 +110,6 @@ class TextClassifier(ClassificationTask):
         This function is used only for debugging usage with CI
         """
         if self.hparams.multi_label:
-            assert history[-1]["val_f1"] > 0.45, history[-1]["val_f1"]
+            assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
         else:
-            assert history[-1]["val_accuracy"] > 0.73, history[-1]["val_accuracy"]
+            assert history[-1]["val_accuracy"] > 0.70, history[-1]["val_accuracy"]

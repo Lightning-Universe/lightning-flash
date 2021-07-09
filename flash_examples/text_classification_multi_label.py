@@ -26,7 +26,6 @@ datamodule = TextClassificationData.from_csv(
     train_file="data/jigsaw_toxic_comments/train.csv",
     val_split=0.1,
     backbone="unitary/toxic-bert",
-    batch_size=128,
 )
 
 # 2. Build the task
@@ -37,7 +36,7 @@ model = TextClassifier(
 )
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Generate predictions for a few comments!
