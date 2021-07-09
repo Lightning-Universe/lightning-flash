@@ -88,11 +88,9 @@ if _TORCHVISION_AVAILABLE:
             type=_type
         )
 
-    def _fn_resnet(
-        model_name: str,
-        pretrained: Union[bool, str] = True,
-        weights_paths: dict = {"supervised": None}
-    ) -> Tuple[nn.Module, int]:
+    def _fn_resnet(model_name: str,
+                   pretrained: Union[bool, str] = True,
+                   weights_paths: dict = {"supervised": None}) -> Tuple[nn.Module, int]:
         # load according to pretrained if a bool is specified, else set to False
         if isinstance(pretrained, bool):
             pretrained_flag = pretrained
