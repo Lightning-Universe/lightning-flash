@@ -168,4 +168,4 @@ class VideoClassifier(ClassificationTask):
         """
         This function is used only for debugging usage with CI
         """
-        assert history[-1]["val_accuracy"] > 0.80
+        assert history[-1]["val_accuracy"] > 0.70
