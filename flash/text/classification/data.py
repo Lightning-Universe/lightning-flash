@@ -120,7 +120,7 @@ class TextFileDataSource(TextDataSource):
         if flash._IS_TESTING:
             try:
                 dataset_dict = DatasetDict({
-                    stage: load_dataset(self.filetype, data_files=data_files, split=f'{stage}[:20]')
+                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
                 })
             except Exception:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
