@@ -7,28 +7,41 @@ flash.core
     :local:
     :backlinks: top
 
-Models
-______
+Core Tasks
+__________
 
-.. automodule:: flash.core.model
-    :exclude-members: Task
+ClassificationTask
+==================
 
 .. autoclass:: flash.core.classification.ClassificationTask
 
-Trainer
-_______
+Finetuning Callbacks
+____________________
 
-.. automodule:: flash.core.trainer
+FlashBaseFinetuning
+===================
 
-Finetuning
-__________
+.. autoclass:: flash.core.finetuning.FlashBaseFinetuning
 
-.. automodule:: flash.core.finetuning
+FreezeUnfreeze
+==============
 
-Registry
-________
+.. autoclass:: flash.core.finetuning.FreezeUnfreeze
 
-.. automodule:: flash.core.registry
+NoFreeze
+========
+
+.. autoclass:: flash.core.finetuning.NoFreeze
+
+UnfreezeMilestones
+==================
+
+.. autoclass:: flash.core.finetuning.UnfreezeMilestones
+
+FlashRegistry
+_____________
+
+.. autoclass:: flash.core.registry.FlashRegistry
 
 Utilities
 _________
@@ -36,3 +49,5 @@ _________
 .. automodule:: flash.core.utilities.apply_func
 
 .. automodule:: flash.core.utilities.imports
+
+.. autofunction:: flash.core.model.predict_context
