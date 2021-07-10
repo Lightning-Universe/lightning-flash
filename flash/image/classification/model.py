@@ -94,7 +94,7 @@ class ImageClassifier(ClassificationTask):
             metrics=metrics or F1(num_classes) if multi_label else Accuracy(),
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer or Labels(),
+            serializer=serializer or Labels(multi_label=multi_label),
         )
 
         self.save_hyperparameters()
