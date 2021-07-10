@@ -140,7 +140,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self.optimizer_kwargs = optimizer_kwargs or {}
         self.scheduler_kwargs = scheduler_kwargs or {}
 
-        self.metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
+        self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
+        self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
@@ -157,7 +158,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self.deserializer = deserializer
         self.serializer = serializer
 
-    def step(self, batch: Any, batch_idx: int) -> Any:
+    def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """
         The training/validation/test step. Override for custom behavior.
         """
@@ -168,7 +169,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         y_hat = self.to_metrics_format(output["y_hat"])
-        for name, metric in self.metrics.items():
+        for name, metric in metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
@@ -195,16 +196,16 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         return self.model(x)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        output = self.step(batch, batch_idx)
+        output = self.step(batch, batch_idx, self.train_metrics)
         self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
         return output["loss"]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx)
+        output = self.step(batch, batch_idx, self.val_metrics)
         self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx)
+        output = self.step(batch, batch_idx, self.val_metrics)
         self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
     @predict_context
