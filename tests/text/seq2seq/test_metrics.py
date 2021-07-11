@@ -14,7 +14,16 @@
 import pytest
 import torch
 
-from flash.text.seq2seq.translation.metric import BLEUScore
+from flash.text.seq2seq.metrics import BLEUScore, RougeMetric
+from tests.helpers.utils import _TEXT_TESTING
+
+
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_rouge():
+    preds = "My name is John".split()
+    target = "Is your name John".split()
+    metric = RougeMetric()
+    assert torch.allclose(torch.tensor(metric(preds, target)["rouge1_recall"]).float(), torch.tensor(0.25), 1e-4)
 
 
 @pytest.mark.parametrize("smooth, expected", [(False, 0.7598), (True, 0.8091)])

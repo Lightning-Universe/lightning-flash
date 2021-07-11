@@ -17,7 +17,7 @@ import torch
 from torchmetrics import Metric
 
 from flash.text.seq2seq.core.model import Seq2SeqTask
-from flash.text.seq2seq.summarization.metric import RougeMetric
+from flash.text.seq2seq.metrics import RougeMetric
 
 
 class SummarizationTask(Seq2SeqTask):
