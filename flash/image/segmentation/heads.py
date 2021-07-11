@@ -13,21 +13,12 @@
 # limitations under the License.
 import os
 import warnings
-from functools import partial
 
 import torch.nn as nn
 from pytorch_lightning.utilities import rank_zero_warn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _BOLTS_AVAILABLE, _TORCHVISION_AVAILABLE
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.models import MobileNetV3, ResNet
-    from torchvision.models._utils import IntermediateLayerGetter
-    from torchvision.models.segmentation.deeplabv3 import DeepLabHead, DeepLabV3
-    from torchvision.models.segmentation.fcn import FCN, FCNHead
-    from torchvision.models.segmentation.lraspp import LRASPP
+from flash.core.utilities.imports import _BOLTS_AVAILABLE, _SEGMENTATION_MODELS_AVAILABLE
 
 if _BOLTS_AVAILABLE:
     if os.getenv("WARN_MISSING_PACKAGE") == "0":
@@ -36,71 +27,10 @@ if _BOLTS_AVAILABLE:
     else:
         from pl_bolts.models.vision import UNet
 
+if _SEGMENTATION_MODELS_AVAILABLE:
+    pass
+
 SEMANTIC_SEGMENTATION_HEADS = FlashRegistry("backbones")
-
-if _TORCHVISION_AVAILABLE:
-
-    def _get_backbone_meta(backbone):
-        """Adapted from torchvision.models.segmentation.segmentation._segm_model:
-        https://github.com/pytorch/vision/blob/master/torchvision/models/segmentation/segmentation.py#L25
-        """
-        if isinstance(backbone, ResNet):
-            out_layer = 'layer4'
-            out_inplanes = 2048
-            aux_layer = 'layer3'
-            aux_inplanes = 1024
-        elif isinstance(backbone, MobileNetV3):
-            backbone = backbone.features
-            # Gather the indices of blocks which are strided. These are the locations of C1, ..., Cn-1 blocks.
-            # The first and last blocks are always included because they are the C0 (conv1) and Cn.
-            stage_indices = [i for i, b in enumerate(backbone) if getattr(b, "_is_cn", False)]
-            stage_indices = [0] + stage_indices + [len(backbone) - 1]
-            out_pos = stage_indices[-1]  # use C5 which has output_stride = 16
-            out_layer = str(out_pos)
-            out_inplanes = backbone[out_pos].out_channels
-            aux_pos = stage_indices[-4]  # use C2 here which has output_stride = 8
-            aux_layer = str(aux_pos)
-            aux_inplanes = backbone[aux_pos].out_channels
-        else:
-            raise MisconfigurationException(
-                f"{type(backbone)} backbone is not currently supported for semantic segmentation."
-            )
-        return backbone, out_layer, out_inplanes, aux_layer, aux_inplanes
-
-    def _load_fcn_deeplabv3(model_name, backbone, num_classes):
-        backbone, out_layer, out_inplanes, aux_layer, aux_inplanes = _get_backbone_meta(backbone)
-
-        return_layers = {out_layer: 'out'}
-        backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
-
-        model_map = {
-            "deeplabv3": (DeepLabHead, DeepLabV3),
-            "fcn": (FCNHead, FCN),
-        }
-        classifier = model_map[model_name][0](out_inplanes, num_classes)
-        base_model = model_map[model_name][1]
-
-        return base_model(backbone, classifier, None)
-
-    for model_name in ["fcn", "deeplabv3"]:
-        SEMANTIC_SEGMENTATION_HEADS(
-            fn=partial(_load_fcn_deeplabv3, model_name),
-            name=model_name,
-            namespace="image/segmentation",
-            package="torchvision",
-        )
-
-    def _load_lraspp(backbone, num_classes):
-        backbone, high_pos, high_channels, low_pos, low_channels = _get_backbone_meta(backbone)
-        backbone = IntermediateLayerGetter(backbone, return_layers={low_pos: 'low', high_pos: 'high'})
-        return LRASPP(backbone, low_channels, high_channels, num_classes)
-
-    SEMANTIC_SEGMENTATION_HEADS(
-        fn=_load_lraspp,
-        name="lraspp",
-        namespace="image/segmentation",
-        package="torchvision",
-    )
 
 if _BOLTS_AVAILABLE:
 
@@ -111,3 +41,7 @@ if _BOLTS_AVAILABLE:
     SEMANTIC_SEGMENTATION_HEADS(
         fn=_load_bolts_unet, name="unet", namespace="image/segmentation", package="bolts", type="unet"
     )
+
+if _SEGMENTATION_MODELS_AVAILABLE:
+    pass
+    # def _load_

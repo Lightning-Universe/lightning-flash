@@ -12,47 +12,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
+from typing import Callable, Optional, Union
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from flash.image.backbones import catch_url_error
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
 
-if _TORCHVISION_AVAILABLE:
-    from torchvision.models import mobilenetv3, resnet
+if _SEGMENTATION_MODELS_AVAILABLE:
+    import segmentation_models_pytorch as smp
 
-MOBILENET_MODELS = ["mobilenet_v3_large"]
-RESNET_MODELS = ["resnet50", "resnet101"]
+    SMP_MODEL_CLASS = [
+        smp.Unet, smp.UnetPlusPlus, smp.MAnet, smp.Linknet, smp.FPN, smp.PSPNet, smp.DeepLabV3, smp.DeepLabV3Plus,
+        smp.PAN
+    ]
+    SMP_MODELS = {a.__name__.lower(): a for a in SMP_MODEL_CLASS}
 
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
-if _TORCHVISION_AVAILABLE:
+if _SEGMENTATION_MODELS_AVAILABLE:
 
-    def _load_resnet(model_name: str, pretrained: bool = True):
-        backbone = resnet.__dict__[model_name](
-            pretrained=pretrained,
-            replace_stride_with_dilation=[False, True, True],
+    def _load_smp_model(
+        model_name: str,
+        encoder_name: str,
+        pretrained: Union[bool, str] = True,
+        in_channels: int = 3,
+        num_classes: int = 1,
+        weights: Optional[str] = None,
+        **kwargs
+    ) -> Callable:
+
+        if model_name not in SMP_MODELS:
+            raise NotImplementedError(f"{model_name} is not implemented! Supported models -> {SMP_MODELS}")
+
+        if pretrained and weights is not None:
+            raise UserWarning("can't set both pretrained and weights!")
+
+        if pretrained:
+            weights = "imagenet"
+
+        return smp.create_model(
+            arch=model_name,
+            encoder_name=encoder_name,
+            encoder_weights=weights,
+            in_channels=in_channels,
+            classes=num_classes,
+            **kwargs,
         )
-        return backbone
 
-    for model_name in RESNET_MODELS:
+    for model_name in SMP_MODELS:
         SEMANTIC_SEGMENTATION_BACKBONES(
-            fn=catch_url_error(partial(_load_resnet, model_name)),
+            fn=partial(_load_smp_model, model_name=model_name),
             name=model_name,
             namespace="image/segmentation",
-            package="torchvision",
-        )
-
-    def _load_mobilenetv3(model_name: str, pretrained: bool = True):
-        backbone = mobilenetv3.__dict__[model_name](
-            pretrained=pretrained,
-            _dilated=True,
-        )
-        return backbone
-
-    for model_name in MOBILENET_MODELS:
-        SEMANTIC_SEGMENTATION_BACKBONES(
-            fn=catch_url_error(partial(_load_mobilenetv3, model_name)),
-            name=model_name,
-            namespace="image/segmentation",
-            package="torchvision",
+            package="segmentation_models.pytorch"
         )
