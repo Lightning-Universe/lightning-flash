@@ -26,8 +26,6 @@ if _PYSTICHE_AVAILABLE:
 
     MLE_FN_PATTERN = re.compile(r"^(?P<name>\w+?)_multi_layer_encoder$")
 
-    STYLE_TRANSFER_BACKBONES = FlashRegistry("backbones")
-
     for mle_fn in dir(enc):
         match = MLE_FN_PATTERN.match(mle_fn)
         if not match:
