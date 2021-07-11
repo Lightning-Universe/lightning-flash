@@ -58,7 +58,7 @@ Task
 Metric
 ******
 
-.. automodule:: flash.text.seq2seq.summarization.metric
+.. automodule:: flash.text.seq2seq.metrics.RougeMetric
 
 .. automodule:: flash.text.seq2seq.summarization.utils
 
@@ -78,4 +78,4 @@ Task
 Metric
 ******
 
-.. automodule:: flash.text.seq2seq.translation.metric
+.. automodule:: flash.text.seq2seq.metrics.BLEUScore
