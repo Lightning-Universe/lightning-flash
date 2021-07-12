@@ -16,8 +16,8 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type,
 import torch
 from torchmetrics import Metric
 
+from flash.text.seq2seq.core.metrics import BLEUScore
 from flash.text.seq2seq.core.model import Seq2SeqTask
-from flash.text.seq2seq.translation.metric import BLEUScore
 
 
 class TranslationTask(Seq2SeqTask):

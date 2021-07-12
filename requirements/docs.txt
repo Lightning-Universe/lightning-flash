@@ -1,4 +1,4 @@
-sphinx>=4.0
+sphinx>=4.0,<4.1
 recommonmark  # fails with badges
 m2r  # fails with multi-line text
 nbsphinx>=0.8
