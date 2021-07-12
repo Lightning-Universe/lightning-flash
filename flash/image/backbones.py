@@ -64,11 +64,14 @@ def catch_url_error(fn):
 
 if _TORCHVISION_AVAILABLE:
 
+    HTTPS_VISSL = "https://dl.fbaipublicfiles.com/vissl/model_zoo/"
     RESNET50_WEIGHTS_PATHS = {
         "supervised": None,
-        "simclr": "https://dl.fbaipublicfiles.com/vissl/model_zoo/simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/model_final_checkpoint_phase799.torch",
-        "swav": "https://dl.fbaipublicfiles.com/vissl/model_zoo/swav_in1k_rn50_800ep_swav_8node_resnet_27_07_20.a0a6b676/model_final_checkpoint_phase799.torch",
-        "barlow-twins": "https://dl.fbaipublicfiles.com/vissl/model_zoo/barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch",
+        "simclr": HTTPS_VISSL + "simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/"
+            "model_final_checkpoint_phase799.torch",
+        "swav": HTTPS_VISSL + "swav_in1k_rn50_800ep_swav_8node_resnet_27_07_20.a0a6b676/"
+            "model_final_checkpoint_phase799.torch",
+        "barlow-twins": HTTPS_VISSL + "barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch",
     }
 
     def _fn_mobilenet_vgg(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
