@@ -65,14 +65,14 @@ Lightning Flash
    :maxdepth: 1
    :caption: API Reference
 
-   code/flash
-   code/core
-   code/data
-   code/serve
-   code/image
-   code/tabular
-   code/text
-   code/video
+   api/flash
+   api/core
+   api/data
+   api/serve
+   api/image
+   api/tabular
+   api/text
+   api/video
 
 .. toctree::
    :maxdepth: 1

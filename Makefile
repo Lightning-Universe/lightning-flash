@@ -12,7 +12,7 @@ test: clean
 	python -m coverage run --source flash -m pytest flash tests -v --flake8
 	python -m coverage report
 
-docs: clean
+docs:
 	pip install --quiet -r requirements/docs.txt
 	python -m sphinx -b html -W --keep-going docs/source docs/build
 
@@ -23,5 +23,6 @@ clean:
 	rm -rf $(shell find . -name "mlruns")
 	rm -rf .mypy_cache
 	rm -rf .pytest_cache
+	rm -rf **/__pycache__
 	rm -rf ./docs/build
 	rm -rf ./docs/source/**/generated
