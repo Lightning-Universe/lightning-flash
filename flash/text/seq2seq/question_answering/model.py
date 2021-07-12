@@ -21,8 +21,8 @@ from flash.text.seq2seq.core.model import Seq2SeqTask
 
 
 class QuestionAnsweringTask(Seq2SeqTask):
-    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for Seq2Seq text question answering. For more details, see
-    :ref:`question_answering`.
+    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for Seq2Seq text question answering. For more details,
+    see :ref:`question_answering`.
 
     You can change the backbone to any question answering model from `HuggingFace/transformers
     <https://huggingface.co/models?filter=pytorch&pipeline_tag=question-answering>`_ using the ``backbone`` argument.
@@ -70,10 +70,6 @@ class QuestionAnsweringTask(Seq2SeqTask):
             rouge_newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
-
-    @property
-    def task(self) -> str:
-        return "question_answering"
 
     def compute_metrics(self, generated_tokens: torch.Tensor, batch: Dict, prefix: str) -> None:
         tgt_lns = self.tokenize_labels(batch["labels"])
