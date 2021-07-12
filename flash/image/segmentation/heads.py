@@ -11,37 +11,46 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import warnings
-
-import torch.nn as nn
-from pytorch_lightning.utilities import rank_zero_warn
+from functools import partial
+from typing import Callable
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _BOLTS_AVAILABLE, _SEGMENTATION_MODELS_AVAILABLE
-
-if _BOLTS_AVAILABLE:
-    if os.getenv("WARN_MISSING_PACKAGE") == "0":
-        with warnings.catch_warnings(record=True) as w:
-            from pl_bolts.models.vision import UNet
-    else:
-        from pl_bolts.models.vision import UNet
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
 
 if _SEGMENTATION_MODELS_AVAILABLE:
-    pass
+    import segmentation_models_pytorch as smp
+
+    SMP_MODEL_CLASS = [
+        smp.Unet, smp.UnetPlusPlus, smp.MAnet, smp.Linknet, smp.FPN, smp.PSPNet, smp.DeepLabV3, smp.DeepLabV3Plus,
+        smp.PAN
+    ]
+    SMP_MODELS = {a.__name__.lower(): a for a in SMP_MODEL_CLASS}
 
 SEMANTIC_SEGMENTATION_HEADS = FlashRegistry("backbones")
 
-if _BOLTS_AVAILABLE:
-
-    def _load_bolts_unet(_, num_classes: int, **kwargs) -> nn.Module:
-        rank_zero_warn("The UNet model does not require a backbone, so the backbone will be ignored.", UserWarning)
-        return UNet(num_classes, **kwargs)
-
-    SEMANTIC_SEGMENTATION_HEADS(
-        fn=_load_bolts_unet, name="unet", namespace="image/segmentation", package="bolts", type="unet"
-    )
-
 if _SEGMENTATION_MODELS_AVAILABLE:
-    pass
-    # def _load_
+
+    def _load_smp_head(
+        head: str,
+        num_classes: int = 1,
+        in_channels: int = 3,
+        **_,
+    ) -> Callable:
+
+        if head not in SMP_MODELS:
+            raise NotImplementedError(f"{head} is not implemented! Supported heads -> {SMP_MODELS.keys()}")
+
+        return partial(
+            smp.create_model,
+            arch=head,
+            classes=num_classes,
+            in_channels=in_channels,
+        )
+
+    for model_name in SMP_MODELS:
+        SEMANTIC_SEGMENTATION_HEADS(
+            partial(_load_smp_head, head=model_name),
+            name=model_name,
+            namespace="image/segmentation",
+            package="segmentation_models.pytorch"
+        )

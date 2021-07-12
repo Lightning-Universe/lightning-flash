@@ -114,13 +114,12 @@ class SemanticSegmentation(ClassificationTask):
         if not head_kwargs:
             head_kwargs = {}
 
+        self.head = self.heads.get(head)(num_classes=num_classes, **head_kwargs)
+
         if isinstance(backbone, nn.Module):
             self.backbone = backbone
         else:
-            self.backbone = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
-
-        # self.head = self.heads.get(head)(self.backbone, num_classes, **head_kwargs)
-        self.head = None
+            self.backbone = self.backbones.get(backbone)(self.head, pretrained=pretrained, **backbone_kwargs)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
