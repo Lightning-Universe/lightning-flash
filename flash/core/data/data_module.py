@@ -15,9 +15,11 @@ import os
 import platform
 from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
+import networkx as nx
 import numpy as np
 import pytorch_lightning as pl
 import torch
+import torch_geometric
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
@@ -730,6 +732,112 @@ class DataModule(pl.LightningDataModule):
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_data_sequence(
+        cls,
+        train_data: Optional[Collection[torch_geometric.data.Data]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[torch_geometric.data.Data]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[torch_geometric.data.Data]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[torch_geometric.data.Data]] = None,
+        train_transform: Optional[Dict[torch_geometric.transforms]] = None,
+        val_transform: Optional[Dict[torch_geometric.transforms]] = None,
+        test_transform: Optional[Dict[torch_geometric.transforms]] = None,
+        predict_transform: Optional[Dict[torch_geometric.transforms]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
+        :class:`~flash.core.data.data_source.DataSource`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.TENSOR`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            train_data: A torch_geometric Data object or collection of objects to use as the train inputs.
+            train_targets: A sequence of targets (one per train input) to use as the train targets.
+            val_data: A torch_geometric Data object or collection of objects to use as the validation inputs.
+            val_targets: A sequence of targets (one per validation input) to use as the validation targets.
+            test_data: A torch_geometric Data object or collection of objects to use as the test inputs.
+            test_targets: A sequence of targets (one per test input) to use as the test targets.
+            predict_data: A torch_geometric Data object or collection of objects to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_pygdatasequence(
+                train_files=[
+                    torch_geometric.data.Data(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(3,2))),
+                    torch_geometric.data.Data(torch_geometric.utils.from_networkx(nx.tetrahedral_graph()))
+                    torch_geometric.data.Data(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(4,1))),
+                ],
+                train_targets=[1, 0, 1],
+                train_transform={
+                    torch_geometric.transforms.Cartesian(),
+                },
+            )
+        """
+        if not train_targets and train_data:
+            train_targets = []
+            for dat in train_data:
+                train_targets.append(dat.y)
+                dat.y = None
+
+        if not val_targets and val_data:
+            val_targets = []
+            for dat in val_data:
+                val_targets.append(dat.y)
+                dat.y = None
+
+        if not test_targets and test_data:
+            test_targets = []
+            for dat in test_data:
+                test_targets.append(dat.y)
+                dat.y = None
+
+        return cls.from_data_source(
+            DefaultDataSources.SEQUENCE,
+            (train_data, train_targets),
+            (val_data, val_targets),
+            (test_data, test_targets),
+            predict_data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
             **preprocess_kwargs,
         )
 
