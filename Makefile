@@ -12,7 +12,7 @@ test: clean
 	python -m coverage run --source flash -m pytest flash tests -v --flake8
 	python -m coverage report
 
-docs:
+docs: clean
 	pip install --quiet -r requirements/docs.txt
 	python -m sphinx -b html -W --keep-going docs/source docs/build
 
