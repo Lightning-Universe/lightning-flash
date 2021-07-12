@@ -25,4 +25,3 @@ clean:
 	rm -rf .pytest_cache
 	rm -rf ./docs/build
 	rm -rf ./docs/source/**/generated
-	rm -rf ./docs/source/api
