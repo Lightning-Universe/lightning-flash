@@ -57,7 +57,9 @@ predictions = model.predict(dataset[:3])
 print(predictions)
 
 # 4b
-predictions = model.predict([torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(random.randint(1, 10), random.randint(1, 10)))])
+predictions = model.predict([
+    torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(random.randint(1, 10), random.randint(1, 10)))
+])
 print(predictions)
 
 # 5. Save the model!
