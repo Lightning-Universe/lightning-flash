@@ -62,14 +62,13 @@ if _SEGMENTATION_MODELS_AVAILABLE:
             **kwargs,
         )
 
-
-for model_name in SMP_MODELS:
-    SEMANTIC_SEGMENTATION_HEADS(
-        partial(_load_smp_head, head=model_name),
-        name=model_name,
-        namespace="image/segmentation",
-        package="segmentation_models.pytorch"
-    )
+    for model_name in SMP_MODELS:
+        SEMANTIC_SEGMENTATION_HEADS(
+            partial(_load_smp_head, head=model_name),
+            name=model_name,
+            namespace="image/segmentation",
+            package="segmentation_models.pytorch"
+        )
 
 if _TORCHVISION_AVAILABLE:
 
