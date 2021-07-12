@@ -1,9 +1,14 @@
-from typing import Any, Callable, Dict, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import Deserializer
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
+from flash.core.data.states import PreprocessFn, TransformFn
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+
+if _POINTCLOUD_AVAILABLE:
+    from open3d.ml.torch.dataloaders import TorchDataloader
 
 
 class PointCloudClassificationDatasetDataSource(DataSource):
@@ -20,11 +25,22 @@ class PointCloudClassificationDatasetDataSource(DataSource):
 
         return range(len(data))
 
-    @staticmethod
-    def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
+    def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
+
+        if not isinstance(dataset.dataset, TorchDataloader):
+            dataset.dataset = TorchDataloader(
+                dataset.dataset,
+                preprocess=self.get_state(PreprocessFn).preprocess,
+                transform=self.get_state(TransformFn).transform,
+                use_cache=False,
+            )
+
+        sample = dataset.dataset[index]
+
         return {
-            DefaultDataKeys.INPUT: dataset.dataset.get_data(sample)["point"],
-            DefaultDataKeys.TARGET: dataset.dataset.get_data(sample)["label"]
+            DefaultDataKeys.INPUT: sample['data']['point'],
+            DefaultDataKeys.TARGET: sample['data']['label'],
+            DefaultDataKeys.METADATA: sample["attr"],
         }
 
 

@@ -151,6 +151,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
+        self._data_source: Optional[DataSource] = None
 
         # TODO: create enum values to define what are the exact states
         self._data_pipeline_state: Optional[DataPipelineState] = None
@@ -407,7 +408,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 getattr(data_pipeline, '_serializer', None),
             )
 
-        data_source = data_source or old_data_source
+        data_source = data_source or old_data_source or self._data_source
 
         if isinstance(data_source, str):
             if preprocess is None:
@@ -449,6 +450,9 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
+
+        self._data_source = getattr(data_pipeline, 'data_source', None)
+
         # self._preprocess.state_dict()
         if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore

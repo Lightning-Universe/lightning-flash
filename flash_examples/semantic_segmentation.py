@@ -12,43 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.data.utils import download_data
-from flash.image import SemanticSegmentation, SemanticSegmentationData
+from flash.core.pipeline import Pipeline
+from flash.pointcloud import PointCloudSegmentation, PointCloudSegmentationData
+from flash.pointcloud.segmentation.datasets import SemanticKITTIDataset
 
 # 1. Create the DataModule
-# The data was generated with the  CARLA self-driving simulator as part of the Kaggle Lyft Udacity Challenge.
-# More info here: https://www.kaggle.com/kumaresanmanickavelu/lyft-udacity-challenge
-download_data(
-    "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
-    "./data"
-)
+# construct a dataset by specifying dataset_path
+dataset = SemanticKITTIDataset("data")
 
-datamodule = SemanticSegmentationData.from_folders(
-    train_folder="data/CameraRGB",
-    train_target_folder="data/CameraSeg",
-    val_split=0.1,
-    image_size=(200, 200),
-    num_classes=21,
+datamodule = PointCloudSegmentationData.from_datasets(
+    train_dataset=dataset.get_split("training"),
+    val_dataset=dataset.get_split("val"),
 )
 
 # 2. Build the task
-model = SemanticSegmentation(
-    backbone="mobilenet_v3_large",
-    head="fcn",
-    num_classes=datamodule.num_classes,
-)
+model = PointCloudSegmentation(backbone="randlanet_s3dis", num_classes=datamodule.num_classes)
+pipeline = Pipeline(model, datamodule)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3)
-trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+trainer.finetune(pipeline, strategy="freeze")
 
-# 4. Segment a few images!
+# 4. Predict what's on a few PointClouds! ants or bees?
 predictions = model.predict([
-    "data/CameraRGB/F61-1.png",
-    "data/CameraRGB/F62-1.png",
-    "data/CameraRGB/F63-1.png",
+    "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
+    "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
+    "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
 ])
 print(predictions)
 
 # 5. Save the model!
-trainer.save_checkpoint("semantic_segmentation_model.pt")
+trainer.save_checkpoint("PointCloud_classification_model.pt")

@@ -21,7 +21,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
-from flash.core.data.states import CollateFn
+from flash.core.data.states import CollateFn, PreprocessFn, TransformFn
 from flash.core.registry import FlashRegistry
 from flash.pointcloud.classification.backbones import POINTCLOUD_CLASSIFIER_BACKBONES
 
@@ -88,34 +88,24 @@ class PointCloudClassifier(ClassificationTask):
         else:
             self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
 
+            self.set_state(PreprocessFn(self.backbone.preprocess))
+            self.set_state(TransformFn(self.backbone.transform))
             self.set_state(CollateFn(collate_fn))
 
         self.head = nn.Linear(out_features, num_classes)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the training step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.training_step`."""
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the validation step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.validation_step`."""
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the test step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.test_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key from
-        the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
         batch = (batch[DefaultDataKeys.INPUT])
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
