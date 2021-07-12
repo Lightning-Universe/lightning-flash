@@ -119,7 +119,8 @@ if _TORCHVISION_AVAILABLE:
             else:
                 raise KeyError(
                     "Requested weights for {0} not available,"
-                    " choose from one of {1}".format(model_name, list(weights_paths.keys())))
+                    " choose from one of {1}".format(model_name, list(weights_paths.keys()))
+                )
 
         return backbone, num_features
 
@@ -143,10 +144,14 @@ if _TORCHVISION_AVAILABLE:
         )
 
         if model_name == 'resnet50':
-            clf_kwargs.update(dict(
-                fn=catch_url_error(partial(_fn_resnet, model_name=model_name, weights_paths=RESNET50_WEIGHTS_PATHS)),
-                package="multiple",
-                weights_paths=RESNET50_WEIGHTS_PATHS)
+            clf_kwargs.update(
+                dict(
+                    fn=catch_url_error(
+                        partial(_fn_resnet, model_name=model_name, weights_paths=RESNET50_WEIGHTS_PATHS)
+                    ),
+                    package="multiple",
+                    weights_paths=RESNET50_WEIGHTS_PATHS
+                )
             )
         IMAGE_CLASSIFIER_BACKBONES(**clf_kwargs)
 
