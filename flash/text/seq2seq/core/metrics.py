@@ -25,7 +25,7 @@ from torch import tensor
 from torchmetrics import Metric
 
 from flash.core.utilities.imports import _requires_extras, _TEXT_AVAILABLE
-from flash.text.seq2seq.summarization.utils import add_newline_to_end_of_each_sentence
+from flash.text.seq2seq.core.utils import add_newline_to_end_of_each_sentence
 
 if _TEXT_AVAILABLE:
     from rouge_score import rouge_scorer

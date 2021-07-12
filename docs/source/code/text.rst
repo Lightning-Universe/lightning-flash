@@ -41,6 +41,12 @@ Finetuning
 
 .. automodule:: flash.text.seq2seq.core.finetuning
 
+Metrics
+*******
+
+.. automodule:: flash.text.seq2seq.core.metrics
+.. automodule:: flash.text.seq2seq.core.utils
+
 Summarization
 =============
 
@@ -55,13 +61,6 @@ Task
 
 .. automodule:: flash.text.seq2seq.summarization.model
 
-Metric
-******
-
-.. automodule:: flash.text.seq2seq.metrics.RougeMetric
-
-.. automodule:: flash.text.seq2seq.summarization.utils
-
 Translation
 ===========
 
@@ -74,8 +73,3 @@ Task
 ****
 
 .. automodule:: flash.text.seq2seq.translation.model
-
-Metric
-******
-
-.. automodule:: flash.text.seq2seq.metrics.BLEUScore
