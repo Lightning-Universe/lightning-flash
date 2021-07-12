@@ -17,6 +17,7 @@ if _PYTORCH_GEOMETRIC_AVAILABLE:
 else:
     raise ModuleNotFoundError("Please, pip install -e '.[graph]'")
 
+# 1. Create the DataModule
 dataset = TUDataset("data", name='IMDB-BINARY').shuffle()
 num_features = 136
 transform = {
@@ -32,9 +33,10 @@ dm = GraphClassificationData.from_datasets(
     predict_transform=transform,
     num_features=num_features,
 )
+# 2. Build the task
 model = GraphClassifier(num_features=num_features, num_classes=dm.num_classes)
 
-# Alternatively, we may just pass a tuple of one list of torch_geometric.Data objects and another with the labels
+# 1b. Alternatively, we may just pass a tuple of one list of torch_geometric.Data objects and another with the labels
 dm = GraphClassificationData.from_pygdatasequence(
     train_data=[
         torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(random.randint(1, 10), random.randint(1, 10))),
@@ -43,10 +45,20 @@ dm = GraphClassificationData.from_pygdatasequence(
     ],
     train_targets=[0, 1, 0]
 )
+# 2b.
 model = GraphClassifier(num_features=1, num_classes=1)
 
+# 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1)
 trainer.fit(model, datamodule=dm)
 
-# 7. Save it!
+# 4. Predict what's on the first 3 graphs
+predictions = model.predict(dataset[:3])
+print(predictions)
+
+# 4b
+predictions = model.predict([torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(random.randint(1, 10), random.randint(1, 10)))])
+print(predictions)
+
+# 5. Save the model!
 trainer.save_checkpoint("graph_classification.pt")
