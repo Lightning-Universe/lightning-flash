@@ -9,8 +9,8 @@ if _POINTCLOUD_AVAILABLE:
 _SEGMENTATION_DATASET = FlashRegistry("dataset")
 
 
-def executor(download_script, preprocess_script, dataset_path):
-    if not os.path.exists(dataset_path):
+def executor(download_script, preprocess_script, dataset_path, name):
+    if not os.path.exists(os.path.join(dataset_path, name)):
         os.system(f'bash -c "bash <(curl -s {download_script}) {dataset_path}"')
         if preprocess_script:
             os.system(f'bash -c "bash <(curl -s {preprocess_script}) {dataset_path}"')
@@ -18,11 +18,12 @@ def executor(download_script, preprocess_script, dataset_path):
 
 @_SEGMENTATION_DATASET
 def lyft(dataset_path):
+    name = "Lyft"
     executor(
         "https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/scripts/download_datasets/download_lyft.sh",
-        "https://github.com/intel-isl/Open3D-ML/blob/master/scripts/preprocess_lyft.py", dataset_path
+        "https://github.com/intel-isl/Open3D-ML/blob/master/scripts/preprocess_lyft.py", dataset_path, name
     )
-    return Lyft(dataset_path)
+    return Lyft(os.path.join(dataset_path, name))
 
 
 def LyftDataset(dataset_path):
@@ -31,12 +32,14 @@ def LyftDataset(dataset_path):
 
 @_SEGMENTATION_DATASET
 def semantickitti(dataset_path):
+    name = "SemanticKITTI"
     executor(
         "https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/scripts/download_datasets/download_semantickitti.sh",  # noqa E501
         None,
-        dataset_path
+        dataset_path,
+        name
     )
-    return SemanticKITTI(dataset_path)
+    return SemanticKITTI(os.path.join(dataset_path, name))
 
 
 def SemanticKITTIDataset(dataset_path):
