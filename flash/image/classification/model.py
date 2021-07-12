@@ -134,8 +134,8 @@ class ImageClassifier(ClassificationTask):
         )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        with self.strategy.log_to(self):
-            return self.strategy.training_step(batch, batch_idx)
+        with self.training_strategy.log_to(self):
+            return self.training_strategy.training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         with self.base_strategy.log_to(self):
