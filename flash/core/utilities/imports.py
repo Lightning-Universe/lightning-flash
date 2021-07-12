@@ -84,6 +84,7 @@ _GRAPHVIZ_AVAILABLE = _module_available("graphviz")
 _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
+_ASTROID_AVAILABLE = _module_available("asteroid")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -109,6 +110,7 @@ _EXTRAS_AVAILABLE = {
     'text': _TEXT_AVAILABLE,
     'video': _VIDEO_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
+    'astroid': _ASTROID_AVAILABLE,
 }
 
 
