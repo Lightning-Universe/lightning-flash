@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
 from torch.utils.data.sampler import Sampler
 
+import flash
 from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
@@ -89,6 +90,9 @@ class DataModule(pl.LightningDataModule):
     ) -> None:
 
         super().__init__()
+
+        if flash._IS_TESTING and torch.cuda.is_available():
+            batch_size = 16
 
         self._data_source: DataSource = data_source
         self._preprocess: Optional[Preprocess] = preprocess
