@@ -119,7 +119,7 @@ class SemanticSegmentation(ClassificationTask):
         else:
             self.backbone = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
-        self.head = self.heads.get(head)(
+        self.head: nn.Module = self.heads.get(head)(
             backbone=self.backbone, num_classes=num_classes, pretrained=pretrained, **head_kwargs
         )
 
@@ -141,8 +141,7 @@ class SemanticSegmentation(ClassificationTask):
         return batch
 
     def forward(self, x) -> torch.Tensor:
-        # res = self.head(x)
-        res = self.backbone(x)
+        res = self.head(x)
 
         # some frameworks like torchvision return a dict.
         # In particular, torchvision segmentation models return the output logits
