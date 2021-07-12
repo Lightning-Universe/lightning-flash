@@ -104,6 +104,8 @@ class GraphClassifier(ClassificationTask):
         conv_cls: kind of convolution used in model, defaults to GCNConv
     """
 
+    backbones: FlashRegistry = GRAPH_CLASSIFIER_BACKBONES
+
     def __init__(
         self,
         num_features: int,

@@ -49,7 +49,6 @@ class GraphClassificationPreprocess(Preprocess):
             predict_transform=predict_transform,
             data_sources={
                 DefaultDataSources.DATASET: GraphDatasetSource(),
-                DefaultDataSources.PYGDATASEQUENCE: GraphSequenceDataSource()
             },
             default_data_source=DefaultDataSources.DATASET,
         )
