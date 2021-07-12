@@ -66,8 +66,7 @@ def run_test(filepath):
     "file",
     [
         pytest.param(
-            "custom_task.py", 
-            marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+            "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
         ),
         pytest.param(
             "image_classification.py",
@@ -87,10 +86,9 @@ def run_test(filepath):
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
-            "summarization.py", 
-            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+            "summarization.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
-        pytest.param(    
+        pytest.param(
             "finetuning",
             "template.py",
             marks=pytest.mark.skipif(not _PYTORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed")
@@ -104,10 +102,7 @@ def run_test(filepath):
             "tabular_classification.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed")
         ),
-        pytest.param(
-            "template.py", 
-            marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
-        ),
+        pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
         pytest.param(
             "text_classification.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
