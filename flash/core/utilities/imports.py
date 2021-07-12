@@ -84,6 +84,7 @@ _GRAPHVIZ_AVAILABLE = _module_available("graphviz")
 _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
+_OPEN3D_AVAILABLE = _module_available("open3d")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -102,12 +103,14 @@ _IMAGE_AVAILABLE = all([
     _PYSTICHE_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
+_POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
     'image': _IMAGE_AVAILABLE,
     'tabular': _TABULAR_AVAILABLE,
     'text': _TEXT_AVAILABLE,
     'video': _VIDEO_AVAILABLE,
+    'pointcloud': _POINTCLOUD_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
 }
 

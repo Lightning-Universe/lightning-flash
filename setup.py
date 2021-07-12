@@ -50,12 +50,13 @@ extras = {
     "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_tabular.txt"),
     "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image.txt"),
     "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
+    "pointcloud": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_pointcloud.txt"),
     "serve": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="serve.txt"),
 }
 
 # remove possible duplicate.
 extras["vision"] = list(set(extras["image"] + extras["video"]))
-extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
+extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["pointcloud"]))
 extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
