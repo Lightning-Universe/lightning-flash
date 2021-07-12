@@ -113,17 +113,7 @@ class ImageClassifier(ClassificationTask):
         else:
             self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
-        self.base_strategy: Task = self.strategies.get("supervised")(
-            self.backbone,
-            num_features,
-            num_classes,
-            head=head,
-            loss_fn=loss_fn,
-            metrics=metrics,
-            multi_label=multi_label,
-        )
-
-        self.training_strategy: Task = self.strategies.get(training_strategy)(
+        self.strategy: Task = self.strategies.get(training_strategy)(
             self.backbone,
             num_features,
             num_classes,
@@ -134,16 +124,16 @@ class ImageClassifier(ClassificationTask):
         )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        with self.training_strategy.log_to(self):
-            return self.training_strategy.training_step(batch, batch_idx)
+        with self.strategy.log_to(self):
+            return self.strategy.training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        with self.base_strategy.log_to(self):
-            return self.base_strategy.training_step(batch, batch_idx)
+        with self.strategy.log_to(self):
+            return self.strategy.training_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        with self.base_strategy.log_to(self):
-            return self.base_strategy.training_step(batch, batch_idx)
+        with self.strategy.log_to(self):
+            return self.strategy.training_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DefaultDataKeys.PREDS] = super().predict_step((batch[DefaultDataKeys.INPUT]),
@@ -152,7 +142,7 @@ class ImageClassifier(ClassificationTask):
         return batch
 
     def forward(self, x) -> torch.Tensor:
-        return self.base_strategy.forward(x)
+        return self.strategy.forward(x)
 
     @classmethod
     def available_pretrained_weights(cls, backbone: str):
