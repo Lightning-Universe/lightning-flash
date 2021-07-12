@@ -55,23 +55,4 @@ Here's the full example:
     :language: python
     :lines: 14-
 
-------
-
-*******
-Serving
-*******
-
-The :class:`~flash.image.classification.model.ImageClassifier` is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
-Here's an example:
-
-.. literalinclude:: ../../../flash_examples/serve/image_classification/inference_server.py
-    :language: python
-    :lines: 14-
-
-You can now perform inference from your client like this:
-
-.. literalinclude:: ../../../flash_examples/serve/image_classification/client.py
-    :language: python
-    :lines: 14-
 {"mode":"full","isActive":false}
