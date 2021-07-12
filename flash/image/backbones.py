@@ -92,17 +92,14 @@ if _TORCHVISION_AVAILABLE:
                    pretrained: Union[bool, str] = True,
                    weights_paths: dict = {"supervised": None}) -> Tuple[nn.Module, int]:
         # load according to pretrained if a bool is specified, else set to False
-        if isinstance(pretrained, bool):
-            pretrained_flag = pretrained
-        else:
-            pretrained_flag = False
+        pretrained_flag = (pretrained and isinstance(pretrained, bool)) or (pretrained == "supervised")
 
         model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained_flag)
         backbone = nn.Sequential(*list(model.children())[:-2])
         num_features = model.fc.in_features
 
         model_weights = None
-        if isinstance(pretrained, str):
+        if not pretrained_flag and isinstance(pretrained, str):
             if pretrained in weights_paths:
                 device = next(model.parameters()).get_device()
                 model_weights = load_state_dict_from_url(
@@ -118,9 +115,11 @@ if _TORCHVISION_AVAILABLE:
                         for (key, val) in model_weights.items()
                     }
                 else:
-                    raise KeyError('Model state dict loaded from unrecognized url/path.')
+                    raise KeyError('Unrecognized state dict. Logic for loading the current state dict missing.')
             else:
-                raise KeyError('Unrecognized pretrained model.')
+                raise KeyError(
+                    "Requested weights for {0} not available,"
+                    " choose from one of {1}".format(model_name, list(weights_paths.keys())))
 
         return backbone, num_features
 
@@ -134,24 +133,22 @@ if _TORCHVISION_AVAILABLE:
         return backbone, 256
 
     for model_name in RESNET_MODELS:
+        clf_kwargs = dict(
+            fn=catch_url_error(partial(_fn_resnet, model_name=model_name)),
+            name=model_name,
+            namespace="vision",
+            package="torchvision",
+            type="resnet",
+            weights_paths={"supervised": None}
+        )
+
         if model_name == 'resnet50':
-            IMAGE_CLASSIFIER_BACKBONES(
+            clf_kwargs.update(dict(
                 fn=catch_url_error(partial(_fn_resnet, model_name=model_name, weights_paths=RESNET50_WEIGHTS_PATHS)),
-                name=model_name,
-                namespace="vision",
                 package="multiple",
-                type="resnet",
-                weights_paths=RESNET50_WEIGHTS_PATHS
+                weights_paths=RESNET50_WEIGHTS_PATHS)
             )
-        else:
-            IMAGE_CLASSIFIER_BACKBONES(
-                fn=catch_url_error(partial(_fn_resnet, model_name=model_name)),
-                name=model_name,
-                namespace="vision",
-                package="torchvision",
-                type="resnet",
-                weights_paths={"supervised": None}
-            )
+        IMAGE_CLASSIFIER_BACKBONES(**clf_kwargs)
 
         OBJ_DETECTION_BACKBONES(
             fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),

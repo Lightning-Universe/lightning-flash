@@ -24,7 +24,9 @@ datamodule = ImageClassificationData.from_folders(
 )
 
 # 2. Build the task
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+print(ImageClassifier.available_pretrained_weights('resnet50'))
+model = ImageClassifier(backbone="resnet50", pretrained='abcd', num_classes=datamodule.num_classes)
+exit(-1)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3)
