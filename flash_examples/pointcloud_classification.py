@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
+from flash.core.pipeline import Pipeline
 from flash.pointcloud import PointCloudClassificationData, PointCloudClassifier
 from flash.pointcloud.classification.datasets import ShapenetDataset
 
@@ -20,16 +21,17 @@ from flash.pointcloud.classification.datasets import ShapenetDataset
 dataset = ShapenetDataset("data")
 
 datamodule = PointCloudClassificationData.from_datasets(
-    train_folder="data/hymenoptera_data/train/",
-    val_folder="data/hymenoptera_data/val/",
+    train_dataset=dataset.get_split("training"),
+    val_dataset=dataset.get_split("val"),
 )
 
 # 2. Build the task
-model = PointCloudClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+model = PointCloudClassifier(backbone="randlanet_s3dis", num_classes=datamodule.num_classes)
+pipeline = Pipeline(model, datamodule)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3)
-trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+trainer.finetune(pipeline, strategy="freeze")
 
 # 4. Predict what's on a few PointClouds! ants or bees?
 predictions = model.predict([

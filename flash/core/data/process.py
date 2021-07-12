@@ -26,6 +26,7 @@ from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
 from flash.core.data.properties import Properties
+from flash.core.data.states import CollateFn
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 
 
@@ -361,6 +362,11 @@ class Preprocess(BasePreprocess, Properties):
 
     def collate(self, samples: Sequence) -> Any:
         """ Transform to convert a sequence of samples to a collated batch. """
+
+        collate_fn = self.get_state(CollateFn)
+        if collate_fn is not None:
+            return collate_fn.collate_fn(samples)
+
         current_transform = self.current_transform
         if current_transform is self._identity:
             return self._default_collate(samples)

@@ -40,6 +40,7 @@ from flash.core.data.process import (
     Serializer,
     SerializerMapping,
 )
+from flash.core.data.properties import ProcessState
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
@@ -153,6 +154,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
 
         # TODO: create enum values to define what are the exact states
         self._data_pipeline_state: Optional[DataPipelineState] = None
+
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
 
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
@@ -416,6 +419,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
+        self._data_pipeline_state = DataPipelineState()
+        self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
@@ -655,3 +660,20 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
+
+    def get_state(self, state_type):
+        if state_type in self._state:
+            return self._state[state_type]
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        return None
+
+    def set_state(self, state: ProcessState):
+        self._state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
+        self._data_pipeline_state = data_pipeline_state
+        for state in self._state.values():
+            self._data_pipeline_state.set_state(state)

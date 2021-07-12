@@ -21,8 +21,9 @@ from torch.optim.lr_scheduler import _LRScheduler
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
+from flash.core.data.states import CollateFn
 from flash.core.registry import FlashRegistry
-from flash.template.classification.backbones import TEMPLATE_BACKBONES
+from flash.pointcloud.classification.backbones import POINTCLOUD_CLASSIFIER_BACKBONES
 
 
 class PointCloudClassifier(ClassificationTask):
@@ -47,13 +48,12 @@ class PointCloudClassifier(ClassificationTask):
         serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
     """
 
-    backbones: FlashRegistry = TEMPLATE_BACKBONES
+    backbones: FlashRegistry = POINTCLOUD_CLASSIFIER_BACKBONES
 
     def __init__(
         self,
-        num_features: int,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "mlp-128",
+        backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
         backbone_kwargs: Optional[Dict] = None,
         loss_fn: Optional[Callable] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
@@ -81,12 +81,14 @@ class PointCloudClassifier(ClassificationTask):
         self.save_hyperparameters()
 
         if not backbone_kwargs:
-            backbone_kwargs = {}
+            backbone_kwargs = {"num_classes": num_classes}
 
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.backbone, out_features = self.backbones.get(backbone)(num_features=num_features, **backbone_kwargs)
+            self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+
+            self.set_state(CollateFn(collate_fn))
 
         self.head = nn.Linear(out_features, num_classes)
 

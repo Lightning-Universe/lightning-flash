@@ -10,9 +10,10 @@ _SEGMENTATION_DATASET = FlashRegistry("dataset")
 
 
 def executor(download_script, preprocess_script, dataset_path):
-    os.system(f'bash -c "bash <(curl -s {download_script}) {dataset_path}"')
-    if preprocess_script:
-        os.system(f'bash -c "bash <(curl -s {preprocess_script}) {dataset_path}"')
+    if not os.path.exists(dataset_path):
+        os.system(f'bash -c "bash <(curl -s {download_script}) {dataset_path}"')
+        if preprocess_script:
+            os.system(f'bash -c "bash <(curl -s {preprocess_script}) {dataset_path}"')
 
 
 @_SEGMENTATION_DATASET

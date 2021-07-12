@@ -2,22 +2,30 @@ from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import Deserializer
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 
 
 class PointCloudClassificationDatasetDataSource(DataSource):
 
-    @staticmethod
     def load_data(
+        self,
         data: Any,
         dataset: Optional[Any] = None,
     ) -> Any:
-        return data
+        if self.training:
+            dataset.num_classes = len(data.dataset.label_to_names)
+
+        dataset.dataset = data
+
+        return range(len(data))
 
     @staticmethod
     def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        return sample
+        return {
+            DefaultDataKeys.INPUT: dataset.dataset.get_data(sample)["point"],
+            DefaultDataKeys.TARGET: dataset.dataset.get_data(sample)["label"]
+        }
 
 
 class PointCloudClassificationPreprocess(Preprocess):
