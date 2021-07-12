@@ -22,15 +22,15 @@ from tests.helpers.utils import _TEXT_TESTING
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 
 TEST_CSV_DATA = """input,target
-this is a sentence one,this is a translated sentence one
-this is a sentence two,this is a translated sentence two
-this is a sentence three,this is a translated sentence three
+this is a question one,this is an answer one
+this is a question two,this is an answer two
+this is a question three,this is an answer three
 """
 
 TEST_JSON_DATA = """
-{"input": "this is a sentence one","target":"this is a translated sentence one"}
-{"input": "this is a sentence two","target":"this is a translated sentence two"}
-{"input": "this is a sentence three","target":"this is a translated sentence three"}
+{"input": "this is a question one","target":"this is an answer one"}
+{"input": "this is a question two","target":"this is an answer two"}
+{"input": "this is a question three","target":"this is an answer three"}
 """
 
 
