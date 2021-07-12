@@ -12,41 +12,65 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Callable, Optional, Union
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.image.backbones import catch_url_error
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.models import mobilenetv3, resnet
 
 if _SEGMENTATION_MODELS_AVAILABLE:
     import segmentation_models_pytorch as smp
 
     ENCODERS = smp.encoders.get_encoder_names()
 
+MOBILENET_MODELS = ["mobilenet_v3_large"]
+RESNET_MODELS = ["resnet50", "resnet101"]
+
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
+
+if _TORCHVISION_AVAILABLE:
+
+    def _load_resnet(model_name: str, pretrained: bool = True):
+        backbone = resnet.__dict__[model_name](
+            pretrained=pretrained,
+            replace_stride_with_dilation=[False, True, True],
+        )
+        return backbone
+
+    for model_name in RESNET_MODELS:
+        SEMANTIC_SEGMENTATION_BACKBONES(
+            fn=catch_url_error(partial(_load_resnet, model_name)),
+            name=model_name,
+            namespace="image/segmentation",
+            package="torchvision",
+        )
+
+    def _load_mobilenetv3(model_name: str, pretrained: bool = True):
+        backbone = mobilenetv3.__dict__[model_name](
+            pretrained=pretrained,
+            _dilated=True,
+        )
+        return backbone
+
+    for model_name in MOBILENET_MODELS:
+        SEMANTIC_SEGMENTATION_BACKBONES(
+            fn=catch_url_error(partial(_load_mobilenetv3, model_name)),
+            name=model_name,
+            namespace="image/segmentation",
+            package="torchvision",
+        )
 
 if _SEGMENTATION_MODELS_AVAILABLE:
 
-    def _load_smp_model(
-        head: Callable,
-        backbone: str,
-        pretrained: Union[bool, str] = True,
-        weights: Optional[str] = None,
-        **kwargs
-    ) -> Callable:
-
-        if pretrained and weights is not None:
-            raise UserWarning("can't set both pretrained and weights!")
-
-        if pretrained:
-            weights = "imagenet"
-
-        return head(
-            encoder_name=backbone,
-            encoder_weights=weights,
-            **kwargs,
-        )
+    def _load_smp_backbone(backbone: str, **_) -> str:
+        return backbone
 
     for encoder_name in ENCODERS:
         SEMANTIC_SEGMENTATION_BACKBONES(
-            partial(_load_smp_model, backbone=encoder_name), name=encoder_name, namespace="image/segmentation"
+            partial(_load_smp_backbone, backbone=encoder_name),
+            backbone=encoder_name,
+            name=encoder_name,
+            namespace="image/segmentation"
         )
