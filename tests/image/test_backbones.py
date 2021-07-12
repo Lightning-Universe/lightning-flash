@@ -32,6 +32,17 @@ def test_image_classifier_backbones_registry(backbone, expected_num_features):
     assert num_features == expected_num_features
 
 
+@pytest.mark.parametrize(["backbone", "pretrained", "expected_num_features"], [
+    pytest.param("resnet50", "supervised", 2048, marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")),
+    pytest.param("resnet50", "simclr", 2048, marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")),
+])
+def test_pretrained_weights_registry(backbone, pretrained, expected_num_features):
+    backbone_fn = IMAGE_CLASSIFIER_BACKBONES.get(backbone)
+    backbone_model, num_features = backbone_fn(pretrained=pretrained)
+    assert backbone_model
+    assert num_features == expected_num_features
+
+
 def test_pretrained_backbones_catch_url_error():
 
     def raise_error_if_pretrained(pretrained=False):
