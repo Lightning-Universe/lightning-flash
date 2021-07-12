@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-import os
 import urllib.error
-import warnings
 from functools import partial
 from typing import Tuple, Union
 
 import torch
-from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
 from torch.hub import load_state_dict_from_url
