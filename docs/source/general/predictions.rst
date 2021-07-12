@@ -56,7 +56,7 @@ Serializing predictions
 =======================
 
 To change how predictions are serialized you can attach a :class:`~flash.core.data.process.Serializer` to your
-:class:`~flash.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
+:class:`~flash.core.model.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
 reference below).
 
 
