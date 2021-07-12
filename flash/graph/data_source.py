@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Sequence, Tuple, Union
+
 from torch.utils.data import Dataset
 
 from flash.core.data.auto_dataset import AutoDataset

@@ -36,7 +36,7 @@ class GraphClassificationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        num_features: int = 128 #todo: do we want to add backbone here as in text?
+        num_features: int = 128  #todo: do we want to add backbone here as in text?
     ):
         self.num_features = num_features
         if not _PYTORCH_GEOMETRIC_AVAILABLE:
