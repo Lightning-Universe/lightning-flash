@@ -18,7 +18,7 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
-from flash.graph.data_source import GraphDatasetSource, GraphSequenceDataSource
+from flash.graph.data_source import GraphDatasetSource
 
 if _PYTORCH_GEOMETRIC_AVAILABLE:
     import networkx as nx
