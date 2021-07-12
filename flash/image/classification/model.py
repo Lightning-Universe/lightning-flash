@@ -53,7 +53,8 @@ class ImageClassifier(ClassificationTask):
     Args:
         num_classes: Number of classes to classify.
         backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
-        pretrained: Use a pretrained backbone, defaults to ``True``.
+        pretrained: A bool or string to specify the pretrained weights of the backbone, defaults to ``True``
+            which loads the default supervised pretrained weights.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
@@ -78,7 +79,7 @@ class ImageClassifier(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         training_strategy: str = "supervised",
         head: Optional[Union[FunctionType, nn.Module]] = None,
-        pretrained: bool = True,
+        pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
@@ -152,6 +153,16 @@ class ImageClassifier(ClassificationTask):
 
     def forward(self, x) -> torch.Tensor:
         return self.base_strategy.forward(x)
+
+    @classmethod
+    def available_pretrained_weights(cls, backbone: str):
+        result = cls.backbones.get(backbone, with_metadata=True)
+        pretrained_weights = None
+
+        if "weights_paths" in result["metadata"]:
+            pretrained_weights = list(result["metadata"]["weights_paths"].keys())
+
+        return pretrained_weights
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """
