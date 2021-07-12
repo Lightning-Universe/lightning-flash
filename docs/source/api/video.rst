@@ -10,12 +10,16 @@ flash.video
 Classification
 ______________
 
-Data
-====
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
 
-.. automodule:: flash.video.classification.data
+    ~flash.video.classification.model.VideoClassifier
+    ~flash.video.classification.data.VideoClassificationData
 
-Task
-====
-
-.. automodule:: flash.video.classification.model
+    flash.video.classification.data.BaseVideoClassification
+    flash.video.classification.data.VideoClassificationFiftyOneDataSource
+    flash.video.classification.data.VideoClassificationPathsDataSource
+    flash.video.classification.data.VideoClassificationPreprocess
+    flash.video.classification.model.VideoClassifierFinetuning

@@ -3,12 +3,9 @@ flash.image
 ###########
 
 .. contents::
-    :depth: 2
+    :depth: 1
     :local:
     :backlinks: top
-
-Tasks
-=====
 
 Classification
 ______________
@@ -23,6 +20,14 @@ ______________
     ~flash.image.classification.data.ImageClassificationPreprocess
 
     flash.image.classification.data.MatplotlibVisualization
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template:
+
+    flash.image.classification.transforms.default_transforms
+    flash.image.classification.transforms.train_default_transforms
 
 Detection
 _________
@@ -42,6 +47,14 @@ _________
     flash.image.detection.model.ObjectDetector
     flash.image.detection.serialization.DetectionLabels
     flash.image.detection.serialization.FiftyOneDetectionLabels
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template:
+
+    flash.image.detection.transforms.collate
+    flash.image.detection.transforms.default_transforms
 
 Embedding
 _________
@@ -75,6 +88,14 @@ ____________
     flash.image.segmentation.serialization.FiftyOneSegmentationLabels
     flash.image.segmentation.serialization.SegmentationLabels
 
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    flash.image.segmentation.transforms.default_transforms
+    flash.image.segmentation.transforms.prepare_target
+    flash.image.segmentation.transforms.train_default_transforms
+
 Style Transfer
 ______________
 
@@ -87,8 +108,14 @@ ______________
     ~flash.image.style_transfer.data.StyleTransferData
     ~flash.image.style_transfer.data.StyleTransferPreprocess
 
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.image.style_transfer.utils.raise_not_supported
+
 flash.image.data
-================
+________________
 
 .. autosummary::
     :toctree: generated/
@@ -100,3 +127,16 @@ flash.image.data
     ~flash.image.data.ImageNumpyDataSource
     ~flash.image.data.ImagePathsDataSource
     ~flash.image.data.ImageTensorDataSource
+
+flash.image.backbones
+_____________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.image.backbones.catch_url_error
+    ~flash.image.backbones.dino_deits16
+    ~flash.image.backbones.dino_deits8
+    ~flash.image.backbones.dino_vitb16
+    ~flash.image.backbones.dino_vitb8

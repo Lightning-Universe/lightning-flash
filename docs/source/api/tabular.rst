@@ -3,19 +3,26 @@ flash.tabular
 #############
 
 .. contents::
-    :depth: 1
+    :depth: 2
     :local:
     :backlinks: top
 
+Tasks
+_____
+
 Classification
-______________
+==============
 
-Data
-====
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
 
-.. automodule:: flash.tabular.classification.data
+    ~flash.tabular.classification.model.TabularClassifier
+    ~flash.tabular.classification.data.TabularData
 
-Task
-====
-
-.. automodule:: flash.tabular.classification.model
+    flash.tabular.classification.data.TabularCSVDataSource
+    flash.tabular.classification.data.TabularDataFrameDataSource
+    flash.tabular.classification.data.TabularDeserializer
+    flash.tabular.classification.data.TabularPostprocess
+    flash.tabular.classification.data.TabularPreprocess

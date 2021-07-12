@@ -10,66 +10,82 @@ flash.text
 Classification
 ______________
 
-Data
-====
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
 
-.. automodule:: flash.text.classification.data
+    ~flash.text.classification.model.TextClassifier
+    ~flash.text.classification.data.TextClassificationData
 
-Task
-====
+    flash.text.classification.data.TextClassificationPostprocess
+    flash.text.classification.data.TextClassificationPreprocess
+    flash.text.classification.data.TextCSVDataSource
+    flash.text.classification.data.TextDataSource
+    flash.text.classification.data.TextDeserializer
+    flash.text.classification.data.TextFileDataSource
+    flash.text.classification.data.TextJSONDataSource
+    flash.text.classification.data.TextSentencesDataSource
 
-.. automodule:: flash.text.classification.model
+Question Answering
+__________________
 
-Seq2Seq
-_______
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
 
-General
-=======
+    ~flash.text.seq2seq.question_answering.model.QuestionAnsweringTask
+    ~flash.text.seq2seq.question_answering.data.QuestionAnsweringData
 
-Data
-****
-
-.. automodule:: flash.text.seq2seq.core.data
-
-Task
-****
-
-.. automodule:: flash.text.seq2seq.core.model
-
-Finetuning
-**********
-
-.. automodule:: flash.text.seq2seq.core.finetuning
-
-Metrics
-*******
-
-.. automodule:: flash.text.seq2seq.core.metrics
-.. automodule:: flash.text.seq2seq.core.utils
+    flash.text.seq2seq.question_answering.data.QuestionAnsweringPreprocess
 
 Summarization
-=============
+_____________
 
-Data
-****
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
 
-.. automodule:: flash.text.seq2seq.summarization.data
-    :members: SummarizationData
+    ~flash.text.seq2seq.summarization.model.SummarizationTask
+    ~flash.text.seq2seq.summarization.data.SummarizationData
 
-Task
-****
-
-.. automodule:: flash.text.seq2seq.summarization.model
+    flash.text.seq2seq.summarization.data.SummarizationPreprocess
 
 Translation
-===========
+___________
 
-Data
-****
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
 
-.. automodule:: flash.text.seq2seq.translation.data
+    ~flash.text.seq2seq.translation.model.TranslationTask
+    ~flash.text.seq2seq.translation.data.TranslationData
 
-Task
-****
+    flash.text.seq2seq.translation.data.TranslationPreprocess
 
-.. automodule:: flash.text.seq2seq.translation.model
+General Seq2Seq
+_______________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.text.seq2seq.core.model.Seq2SeqTask
+    ~flash.text.seq2seq.core.data.Seq2SeqData
+    ~flash.text.seq2seq.core.finetuning.Seq2SeqFreezeEmbeddings
+
+    flash.text.seq2seq.core.data.Seq2SeqBackboneState
+    flash.text.seq2seq.core.data.Seq2SeqCSVDataSource
+    flash.text.seq2seq.core.data.Seq2SeqDataSource
+    flash.text.seq2seq.core.data.Seq2SeqFileDataSource
+    flash.text.seq2seq.core.data.Seq2SeqJSONDataSource
+    flash.text.seq2seq.core.data.Seq2SeqPostprocess
+    flash.text.seq2seq.core.data.Seq2SeqPreprocess
+    flash.text.seq2seq.core.data.Seq2SeqSentencesDataSource
+    flash.text.seq2seq.core.metrics.BLEUScore
+    flash.text.seq2seq.core.metrics.RougeBatchAggregator
+    flash.text.seq2seq.core.metrics.RougeMetric
