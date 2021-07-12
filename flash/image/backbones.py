@@ -68,9 +68,9 @@ if _TORCHVISION_AVAILABLE:
     RESNET50_WEIGHTS_PATHS = {
         "supervised": None,
         "simclr": HTTPS_VISSL + "simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/"
-            "model_final_checkpoint_phase799.torch",
+        "model_final_checkpoint_phase799.torch",
         "swav": HTTPS_VISSL + "swav_in1k_rn50_800ep_swav_8node_resnet_27_07_20.a0a6b676/"
-            "model_final_checkpoint_phase799.torch",
+        "model_final_checkpoint_phase799.torch",
         "barlow-twins": HTTPS_VISSL + "barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch",
     }
 
