@@ -14,6 +14,7 @@
 import functools
 import inspect
 from abc import ABCMeta
+from contextlib import contextmanager
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
@@ -655,3 +656,14 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
+
+    @contextmanager
+    def log_to(self, task: 'Task'):
+        """Context manager to cause redirect calls to ``log`` from this ``TrainingStrategy`` to the given ``Task``."""
+        old_log = self.log
+        old_log_dict = self.log_dict
+        self.log = task.log
+        self.log_dict = task.log_dict
+        yield
+        self.log = old_log
+        self.log_dict = old_log_dict
