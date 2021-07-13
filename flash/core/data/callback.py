@@ -10,6 +10,16 @@ from flash.core.data.utils import _STAGES_PREFIX
 
 
 class FlashCallback(Callback):
+    """``FlashCallback`` is an extension of :class:`pytorch_lightning.callbacks.Callback`.
+
+    A callback is a self-contained program that can be reused across projects. Flash and Lightning have a callback
+    system to execute callbacks when needed. Callbacks should capture any NON-ESSENTIAL logic that is NOT required for
+    your lightning module to run.
+
+    Same as PyTorch Lightning, Callbacks can be provided directly to the Trainer::
+
+        trainer = Trainer(callbacks=[MyCustomCallback()])
+    """
 
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
         """Called once a sample has been loaded using ``load_sample``."""
