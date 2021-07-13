@@ -236,8 +236,8 @@ class ObjectDetectionData(DataModule):
 
     preprocess_cls = ObjectDetectionPreprocess
 
-    @requires("pycocotools")
     @classmethod
+    @requires("pycocotools")
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
