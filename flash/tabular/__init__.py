@@ -1,3 +1,11 @@
-from flash.tabular.classification import TabularClassificationData, TabularClassifier  # noqa: F401
-from flash.tabular.data import TabularData  # noqa: F401
-from flash.tabular.regression import TabularRegressionData  # noqa: F401
+from flash.tabular.classification.data import TabularClassificationData
+from flash.tabular.classification.model import TabularClassifier
+from flash.tabular.data import TabularData
+from flash.tabular.regression.data import TabularRegressionData
+
+__all__ = [
+    "TabularClassificationData",
+    "TabularClassifier",
+    "TabularData",
+    "TabularRegressionData",
+]
