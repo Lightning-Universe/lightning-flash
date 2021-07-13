@@ -54,6 +54,12 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Audio
+
+   reference/audio_source_separation
+
+.. toctree::
+   :maxdepth: 1
    :caption: Integrations
 
    integrations/fiftyone
@@ -72,6 +78,7 @@ Lightning Flash
    code/tabular
    code/text
    code/video
+   code/audio
 
 .. toctree::
    :maxdepth: 1
