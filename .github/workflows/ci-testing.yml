@@ -19,40 +19,40 @@ jobs:
         os: [ubuntu-20.04, macOS-10.15, windows-2019]
         python-version: [3.6, 3.8]
         requires: ['minimal', 'latest']
-        topic: ['devel']
+        topic: [['devel']]
         include:
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'image'
+            topic: ['image']
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'minimal'
-            topic: 'image'
+            topic: ['image']
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'image,image_extras'
+            topic: ['image','image_extras']
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'video'
+            topic: ['video']
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'video,video_extras'
+            topic: ['video','video_extras']
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'tabular'
+            topic: ['tabular']
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'text'
+            topic: ['text']
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
-            topic: 'serve'
+            topic: ['serve']
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
@@ -72,7 +72,7 @@ jobs:
         brew install libomp  # https://github.com/pytorch/pytorch/issues/20030
 
     - name: Install graphviz
-      if: matrix.topic == 'serve'
+      if: matrix.topic == ['serve']
       run: |
         sudo apt-get install graphviz
 
@@ -109,13 +109,13 @@ jobs:
       run: |
         python --version
         pip --version
-        pip install '.[${{ matrix.topic }}]' --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install '.[${{ join(matrix.topic,',') }}]' --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install '.[test]' --pre --upgrade
         pip list
       shell: bash
 
     - name: Install serve test dependencies
-      if: matrix.topic == 'serve'
+      if: matrix.topic == ['serve']
       run: |
         pip install '.[all]' --pre --upgrade
 
@@ -128,7 +128,7 @@ jobs:
 
     - name: Tests
       env:
-        FLASH_TEST_TOPIC: ${{ matrix.topic }}
+        FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
         # tox --sitepackages
