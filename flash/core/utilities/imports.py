@@ -84,6 +84,7 @@ _GRAPHVIZ_AVAILABLE = _module_available("graphviz")
 _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
+_SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -100,6 +101,7 @@ _IMAGE_AVAILABLE = all([
     _COCO_AVAILABLE,
     _FIFTYONE_AVAILABLE,
     _PYSTICHE_AVAILABLE,
+    _SEGMENTATION_MODELS_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 
