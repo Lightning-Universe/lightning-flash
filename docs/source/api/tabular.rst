@@ -18,10 +18,29 @@ ______________
     :template: classtemplate.rst
 
     ~classification.model.TabularClassifier
-    ~classification.data.TabularData
+    ~classification.data.TabularClassificationData
 
-    classification.data.TabularCSVDataSource
-    classification.data.TabularDataFrameDataSource
-    classification.data.TabularDeserializer
-    classification.data.TabularPostprocess
-    classification.data.TabularPreprocess
+Regression
+__________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~regression.data.TabularRegressionData
+
+flash.tabular.data
+__________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~data.TabularData
+    ~data.TabularDataFrameDataSource
+    ~data.TabularCSVDataSource
+    ~data.TabularDeserializer
+    ~data.TabularPreprocess
+    ~data.TabularPostprocess
