@@ -20,7 +20,7 @@ This technology is among the most studied in audio signal processing today and b
 Example
 *******
 
-Let's look ate the task of seperating a mixture into two voice sounds.
+Let's look at the task of seperating a mixture into two voice sounds.
 The dataset containes ``train/mix_clean``, ``train/s1`` and ``train/s1``. You put one of ``.wav`` files form ``train/mix_clean`` and hope to be seperated into like in ``train/s1`` and ``train/s2``.
 
 .. code-block::
