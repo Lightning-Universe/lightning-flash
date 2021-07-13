@@ -31,10 +31,10 @@ trainer = flash.Trainer(max_epochs=2)
 # trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few audios! ants or bees?
-predictions = model.predict([
-    "data/hymenoptera_data/val/bees/65038344_52a45d090d.wav",       # To-Do : Add a right file name
-    "data/hymenoptera_data/val/bees/590318879_68cf112861.wav",
-    "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.wav",
+predictions = model.predict([                                                   # To-Do : list or string?
+    "MiniLibriMix/val/mix_clean/100-121669-0026_718-129597-0003.wav",
+    "MiniLibriMix/val/mix_clean/1025-92820-0032_8410-278217-0015.wav",
+    "MiniLibriMix/val/mix_clean/1027-125140-0032_8388-275212-0023.wav",
 ])
 print(predictions)
 
