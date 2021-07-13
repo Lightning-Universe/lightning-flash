@@ -22,7 +22,13 @@ import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _IMAGE_AVAILABLE,
+    _MATPLOTLIB_AVAILABLE,
+    _PIL_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
+)
 from flash.image import ImageClassificationData
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -126,7 +132,8 @@ def test_from_filepaths_list_image_paths(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -162,6 +169,7 @@ def test_from_filepaths_visualise(tmpdir):
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 
