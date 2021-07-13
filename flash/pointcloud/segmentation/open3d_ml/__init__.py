@@ -50,7 +50,8 @@ def register_open_3d_ml(register: FlashRegistry):
                 pl_load(os.path.join(ROOT_URL, "randlanet_semantickitti_202009090354utc.pth"), map_location='cpu'),
                 strict=False
             )
-            return model
+            model.fc = torch.nn.Identity()
+            return model, 32, get_collate_fn(model)
 
         @register
         def randlanet_toronto3d(*args, **kwargs) -> RandLANet:
@@ -60,7 +61,8 @@ def register_open_3d_ml(register: FlashRegistry):
                 pl_load(os.path.join(ROOT_URL, "randlanet_toronto3d_202010091306utc.pth"), map_location='cpu'),
                 strict=False
             )
-            return model
+            model.fc = torch.nn.Identity()
+            return model, 32, get_collate_fn(model)
 
         @register
         def randlanet_s3dis(*args, num_classes: int, use_area_5: bool = False, **kwargs):

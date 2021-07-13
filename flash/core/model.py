@@ -28,8 +28,10 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
+from torch.utils.data import DataLoader, Sampler
 
 import flash
+from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import (
@@ -120,7 +122,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def __init__(
         self,
         model: Optional[nn.Module] = None,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
+        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = torch.nn.functional.cross_entropy,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
@@ -234,7 +236,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        x = list(data_pipeline.data_source.generate_dataset(x, running_stage))
+        dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
+        x = list(self.process_predict_dataset(dataset, 1, 0, False, lambda x: x, convert_to_dataloader=False))
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
@@ -681,3 +684,115 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self._data_pipeline_state = data_pipeline_state
         for state in self._state.values():
             self._data_pipeline_state.set_state(state)
+
+    def _process_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        convert_to_dataloader: bool = True,
+    ) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            collate_fn=collate_fn
+        )
+
+    def process_train_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        convert_to_dataloader: bool = True
+    ) -> Union[DataLoader, BaseAutoDataset]:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            convert_to_dataloader=convert_to_dataloader
+        )

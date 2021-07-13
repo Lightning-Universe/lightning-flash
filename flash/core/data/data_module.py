@@ -275,37 +275,79 @@ class DataModule(pl.LightningDataModule):
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
+        collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
+        sampler = self.sampler
+        drop_last = False
+        pin_memory = True
+
         if self.sampler is None:
             shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
+
+        if isinstance(getattr(self, "model", None), flash.Task):
+            return self.model.process_train_dataset(
+                train_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                shuffle=shuffle,
+                drop_last=drop_last,
+                collate_fn=collate_fn,
+                sampler=sampler
+            )
+
         return DataLoader(
             train_ds,
             batch_size=self.batch_size,
             shuffle=shuffle,
-            sampler=self.sampler,
+            sampler=sampler,
             num_workers=self.num_workers,
-            pin_memory=True,
-            drop_last=True,
-            collate_fn=self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
+            pin_memory=pin_memory,
+            drop_last=drop_last,
+            collate_fn=collate_fn
         )
 
     def _val_dataloader(self) -> DataLoader:
         val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
+        collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
+        pin_memory = True
+
+        if isinstance(getattr(self, "model", None), flash.Task):
+            return self.model.process_val_dataset(
+                val_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                collate_fn=collate_fn
+            )
+
         return DataLoader(
             val_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
-            collate_fn=self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
+            pin_memory=pin_memory,
+            collate_fn=collate_fn
         )
 
     def _test_dataloader(self) -> DataLoader:
         test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
+        collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
+        pin_memory = True
+
+        if isinstance(getattr(self, "model", None), flash.Task):
+            return self.model.process_test_dataset(
+                test_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                collate_fn=collate_fn
+            )
+
         return DataLoader(
             test_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
-            collate_fn=self._resolve_collate_fn(test_ds, RunningStage.TESTING)
+            pin_memory=pin_memory,
+            collate_fn=collate_fn
         )
 
     def _predict_dataloader(self) -> DataLoader:
@@ -314,12 +356,21 @@ class DataModule(pl.LightningDataModule):
             batch_size = self.batch_size
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
+
+        collate_fn = self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
+        pin_memory = True
+
+        if isinstance(getattr(self, "model", None), flash.Task):
+            return self.model.process_test_dataset(
+                predict_ds,
+                batch_size=batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                collate_fn=collate_fn
+            )
+
         return DataLoader(
-            predict_ds,
-            batch_size=batch_size,
-            num_workers=self.num_workers,
-            pin_memory=True,
-            collate_fn=self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
+            predict_ds, batch_size=batch_size, num_workers=self.num_workers, pin_memory=True, collate_fn=collate_fn
         )
 
     @property

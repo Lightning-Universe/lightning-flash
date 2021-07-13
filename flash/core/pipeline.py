@@ -11,7 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Callable, Optional
+
+from torch.utils.data import DataLoader, Sampler
+
 from flash import DataModule, Task
+from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 
 
@@ -24,6 +29,7 @@ class Pipeline(Task):
         model.data_pipeline = datamodule.data_pipeline
         self.model = model
         self.datamodule = datamodule
+        datamodule.model = model
 
     @property
     def data_pipeline(self) -> 'DataPipeline':
@@ -56,17 +62,108 @@ class Pipeline(Task):
         return self.model.configure_finetune_callback()
 
     def train_dataloader(self):
-        return self.train_dataloader()
+        return self.datamodule.train_dataloader()
 
     def val_dataloader(self):
-        return self.val_dataloader()
+        return self.datamodule.val_dataloader()
 
     def test_dataloader(self):
-        return self.test_dataloader()
+        return self.datamodule.test_dataloader()
 
     def predict_dataloader(self):
-        return self.predict_dataloader()
+        return self.datamodule.predict_dataloader()
 
     def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
         for state in self._state.values():
             self._data_pipeline_state.set_state(state)
+
+    def process_train_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self.model.process_train_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self.model.process_val_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self.model.process_test_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        convert_to_dataloader: bool = True,
+    ) -> DataLoader:
+
+        return self.model.process_predict_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            convert_to_dataloader=convert_to_dataloader
+        )

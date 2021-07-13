@@ -16,17 +16,26 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type
 import torch
 import torchmetrics
 from torch import nn
+from torch.nn import functional as F
 from torch.optim.lr_scheduler import _LRScheduler
+from torch.utils.data import DataLoader, Sampler
+from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask, Labels
+from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
+from flash.core.data.states import CollateFn
 from flash.core.registry import FlashRegistry
-from flash.template.classification.backbones import TEMPLATE_BACKBONES
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
+
+if _POINTCLOUD_AVAILABLE:
+    from open3d.ml.torch.dataloaders import TorchDataloader
 
 
 class PointCloudSegmentation(ClassificationTask):
-    """The ``PointCloudSegmentation`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
+    """The ``PointCloudClassifier`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
     pointcloud data.
 
     Args:
@@ -47,15 +56,14 @@ class PointCloudSegmentation(ClassificationTask):
         serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
     """
 
-    backbones: FlashRegistry = TEMPLATE_BACKBONES
+    backbones: FlashRegistry = POINTCLOUD_SEGMENTATION_BACKBONES
 
     def __init__(
         self,
-        num_features: int,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "mlp-128",
+        backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
         backbone_kwargs: Optional[Dict] = None,
-        loss_fn: Optional[Callable] = None,
+        loss_fn: Optional[Callable] = torch.nn.functional.cross_entropy,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
@@ -65,6 +73,12 @@ class PointCloudSegmentation(ClassificationTask):
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
+        if not _POINTCLOUD_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
+
+        if metrics is None:
+            metrics = IoU(num_classes=num_classes)
+
         super().__init__(
             model=None,
             loss_fn=loss_fn,
@@ -81,43 +95,79 @@ class PointCloudSegmentation(ClassificationTask):
         self.save_hyperparameters()
 
         if not backbone_kwargs:
-            backbone_kwargs = {}
+            backbone_kwargs = {"num_classes": num_classes}
 
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.backbone, out_features = self.backbones.get(backbone)(num_features=num_features, **backbone_kwargs)
+            self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.set_state(CollateFn(collate_fn))
 
         self.head = nn.Linear(out_features, num_classes)
 
+    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+        return F.softmax(self.to_loss_format(x))
+
+    def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
+        return x.view(-1, x.shape[-1])
+
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the training step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.training_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the validation step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.validation_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the test step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.test_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key from
-        the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
-        batch = (batch[DefaultDataKeys.INPUT])
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
+        return batch
 
     def forward(self, x) -> torch.Tensor:
         """First call the backbone, then the model head."""
+        # hack to enable backbone to work properly.
+        self.backbone.device = self.device
         x = self.backbone(x)
         return self.head(x)
+
+    def _process_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        convert_to_dataloader: bool = True,
+    ) -> Union[DataLoader, BaseAutoDataset]:
+
+        if not _POINTCLOUD_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
+
+        dataset.dataset = TorchDataloader(
+            dataset.dataset,
+            preprocess=self.backbone.preprocess,
+            transform=self.backbone.transform,
+            use_cache=True,
+        )
+
+        if convert_to_dataloader:
+            return DataLoader(
+                dataset,
+                batch_size=batch_size,
+                num_workers=num_workers,
+                pin_memory=pin_memory,
+                collate_fn=collate_fn,
+                shuffle=shuffle,
+                drop_last=drop_last,
+                sampler=sampler,
+            )
+
+        else:
+            return dataset

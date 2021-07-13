@@ -31,16 +31,17 @@ def LyftDataset(dataset_path):
 
 
 @_SEGMENTATION_DATASET
-def semantickitti(dataset_path):
-    name = "SemanticKITTI"
-    executor(
-        "https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/scripts/download_datasets/download_semantickitti.sh",  # noqa E501
-        None,
-        dataset_path,
-        name
-    )
-    return SemanticKITTI(os.path.join(dataset_path, name))
+def semantickitti(dataset_path, download, **kwargs):
+    name = "SemanticKitti"
+    if download:
+        executor(
+            "https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/scripts/download_datasets/download_semantickitti.sh",  # noqa E501
+            None,
+            dataset_path,
+            name
+        )
+    return SemanticKITTI(os.path.join(dataset_path, name), **kwargs)
 
 
-def SemanticKITTIDataset(dataset_path):
-    return _SEGMENTATION_DATASET.get("semantickitti")(dataset_path)
+def SemanticKITTIDataset(dataset_path, download: bool = True, **kwargs):
+    return _SEGMENTATION_DATASET.get("semantickitti")(dataset_path, download, **kwargs)

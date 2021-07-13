@@ -1,23 +1,61 @@
-from typing import Any, Callable, Dict, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import Deserializer
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+
+if _POINTCLOUD_AVAILABLE:
+    from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesDataset
 
 
 class PointCloudSegmentationDatasetDataSource(DataSource):
 
-    @staticmethod
     def load_data(
+        self,
         data: Any,
         dataset: Optional[Any] = None,
     ) -> Any:
-        return data
+        if self.training:
+            dataset.num_classes = len(data.dataset.label_to_names)
 
-    @staticmethod
-    def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        return sample
+        dataset.dataset = data
+
+        return range(len(data))
+
+    def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
+
+        sample = dataset.dataset[index]
+
+        return {
+            DefaultDataKeys.INPUT: sample['data'],
+            DefaultDataKeys.METADATA: sample["attr"],
+        }
+
+
+class PointCloudSegmentationFoldersDataSource(DataSource):
+
+    def load_data(
+        self,
+        folder: Any,
+        dataset: Optional[Any] = None,
+    ) -> Any:
+
+        sequence_dataset = SequencesDataset(folder, use_cache=True, predicting=self.predicting)
+        dataset.dataset = sequence_dataset
+        if self.training:
+            dataset.num_classes = sequence_dataset.num_classes
+        return range(len(sequence_dataset))
+
+    def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
+
+        sample = dataset.dataset[index]
+
+        return {
+            DefaultDataKeys.INPUT: sample['data'],
+            # DefaultDataKeys.METADATA: sample["attr"],
+        }
 
 
 class PointCloudSegmentationPreprocess(Preprocess):
@@ -41,9 +79,10 @@ class PointCloudSegmentationPreprocess(Preprocess):
             predict_transform=predict_transform,
             data_sources={
                 DefaultDataSources.DATASET: PointCloudSegmentationDatasetDataSource(**data_source_kwargs),
+                DefaultDataSources.FOLDERS: PointCloudSegmentationFoldersDataSource(**data_source_kwargs),
             },
             deserializer=deserializer,
-            default_data_source=DefaultDataSources.DATASET,
+            default_data_source=DefaultDataSources.FOLDERS,
         )
 
     def get_state_dict(self):
