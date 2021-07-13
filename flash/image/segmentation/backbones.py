@@ -23,8 +23,6 @@ if _TORCHVISION_AVAILABLE:
 if _SEGMENTATION_MODELS_AVAILABLE:
     import segmentation_models_pytorch as smp
 
-    ENCODERS = smp.encoders.get_encoder_names()
-
 MOBILENET_MODELS = ["mobilenet_v3_large"]
 RESNET_MODELS = ["resnet50", "resnet101"]
 
@@ -63,6 +61,8 @@ if _TORCHVISION_AVAILABLE:
         )
 
 if _SEGMENTATION_MODELS_AVAILABLE:
+
+    ENCODERS = smp.encoders.get_encoder_names()
 
     def _load_smp_backbone(backbone: str, **_) -> str:
         return backbone
