@@ -11,14 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Union, List, Dict, Callable, Any
-
-from flash.core.data.data_module import DataModule
-
-from flash.core.data.process import Preprocess
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from flash.core.data.callback import BaseDataFetcher
-
+from flash.core.data.data_module import DataModule
+from flash.core.data.process import Preprocess
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 
 if _PANDAS_AVAILABLE:
@@ -31,26 +28,27 @@ from flash.tabular.data import TabularData
 
 
 class TabularRegressionData(TabularData):
+
     @classmethod
     def from_data_frame(
-            cls,
-            categorical_fields: Optional[Union[str, List[str]]],
-            numerical_fields: Optional[Union[str, List[str]]],
-            target_fields: Optional[str] = None,
-            train_data_frame: Optional[DataFrame] = None,
-            val_data_frame: Optional[DataFrame] = None,
-            test_data_frame: Optional[DataFrame] = None,
-            predict_data_frame: Optional[DataFrame] = None,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            data_fetcher: Optional[BaseDataFetcher] = None,
-            preprocess: Optional[Preprocess] = None,
-            val_split: Optional[float] = None,
-            batch_size: int = 4,
-            num_workers: Optional[int] = None,
-            **preprocess_kwargs: Any,
+        cls,
+        categorical_fields: Optional[Union[str, List[str]]],
+        numerical_fields: Optional[Union[str, List[str]]],
+        target_fields: Optional[str] = None,
+        train_data_frame: Optional[DataFrame] = None,
+        val_data_frame: Optional[DataFrame] = None,
+        test_data_frame: Optional[DataFrame] = None,
+        predict_data_frame: Optional[DataFrame] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given data frames.
 
@@ -140,24 +138,24 @@ class TabularRegressionData(TabularData):
 
     @classmethod
     def from_csv(
-            cls,
-            categorical_fields: Optional[Union[str, List[str]]],
-            numerical_fields: Optional[Union[str, List[str]]],
-            target_fields: Optional[str] = None,
-            train_file: Optional[str] = None,
-            val_file: Optional[str] = None,
-            test_file: Optional[str] = None,
-            predict_file: Optional[str] = None,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            data_fetcher: Optional[BaseDataFetcher] = None,
-            preprocess: Optional[Preprocess] = None,
-            val_split: Optional[float] = None,
-            batch_size: int = 4,
-            num_workers: Optional[int] = None,
-            **preprocess_kwargs: Any,
+        cls,
+        categorical_fields: Optional[Union[str, List[str]]],
+        numerical_fields: Optional[Union[str, List[str]]],
+        target_fields: Optional[str] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given CSV files.
 
