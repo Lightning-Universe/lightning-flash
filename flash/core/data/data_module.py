@@ -1072,8 +1072,8 @@ class DataModule(pl.LightningDataModule):
             **preprocess_kwargs,
         )
 
-    @requires("fiftyone")
     @classmethod
+    @requires("fiftyone")
     def from_fiftyone(
         cls,
         train_dataset: Optional[SampleCollection] = None,

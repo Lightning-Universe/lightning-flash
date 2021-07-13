@@ -405,8 +405,8 @@ class MatplotlibVisualization(BaseVisualization):
     max_cols: int = 4  # maximum number of columns we accept
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
-    @requires_extras("image")
     @staticmethod
+    @requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):

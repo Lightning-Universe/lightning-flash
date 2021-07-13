@@ -470,8 +470,8 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         self.block_viz_window: bool = True  # parameter to allow user to block visualisation windows
         self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
-    @requires_extras("image")
     @staticmethod
+    @requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):

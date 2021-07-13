@@ -486,8 +486,8 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         super().__init__()
         self.label_field = label_field
 
-    @requires("fiftyone")
     @property
+    @requires("fiftyone")
     def label_cls(self):
         return fol.Label
 
@@ -521,8 +521,8 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
             DefaultDataKeys.TARGET: to_idx(t),
         } for f, t in zip(filepaths, targets)]
 
-    @requires("fiftyone")
     @staticmethod
+    @requires("fiftyone")
     def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
