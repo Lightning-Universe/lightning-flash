@@ -14,12 +14,11 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
+from datasets import load_metric
 from torchmetrics import Metric
 
 from flash.text.seq2seq.core.metrics import RougeMetric
 from flash.text.seq2seq.core.model import Seq2SeqTask
-
-from datasets import load_metric
 
 
 class QuestionAnsweringTask(Seq2SeqTask):
