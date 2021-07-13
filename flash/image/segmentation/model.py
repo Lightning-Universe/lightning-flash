@@ -122,6 +122,7 @@ class SemanticSegmentation(ClassificationTask):
         self.head: nn.Module = self.heads.get(head)(
             backbone=self.backbone, num_classes=num_classes, pretrained=pretrained, **head_kwargs
         )
+        self.backbone = self.head.encoder
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
