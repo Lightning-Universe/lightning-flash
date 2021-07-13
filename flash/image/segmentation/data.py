@@ -239,7 +239,7 @@ class SemanticSegmentationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: Tuple[int, int] = (196, 196),
+        image_size: Tuple[int, int] = (128, 128),
         deserializer: Optional['Deserializer'] = None,
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,

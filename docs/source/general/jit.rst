@@ -28,7 +28,7 @@ This table gives a breakdown of the supported features.
      - Yes
      - Yes
    * - :class:`~flash.image.segmentation.model.SemanticSegmentation`
-     - Yes
+     - No
      - Yes
      - Yes
    * - :class:`~flash.image.style_transfer.model.StyleTransfer`

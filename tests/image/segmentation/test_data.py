@@ -351,7 +351,7 @@ class TestSemanticSegmentationData:
         }
 
         num_classes: int = len(labels_map.keys())
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (256, 256)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -379,13 +379,13 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 256, 256)
+        assert labels.shape == (2, 256, 256)
         assert labels.min().item() == 0
         assert labels.max().item() == 1
         assert labels.dtype == torch.int64
 
         # now train with `fast_dev_run`
-        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fcn")
+        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fpn")
         trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
         trainer.finetune(model, dm, strategy="freeze_unfreeze")

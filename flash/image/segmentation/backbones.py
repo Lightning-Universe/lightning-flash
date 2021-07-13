@@ -29,9 +29,9 @@ if _SEGMENTATION_MODELS_AVAILABLE:
         return backbone
 
     for encoder_name in ENCODERS:
+        short_name = encoder_name
+        if short_name.startswith("timm-"):
+            short_name = encoder_name[5:]
         SEMANTIC_SEGMENTATION_BACKBONES(
-            partial(_load_smp_backbone, backbone=encoder_name),
-            backbone=encoder_name,
-            name=encoder_name,
-            namespace="image/segmentation"
+            partial(_load_smp_backbone, backbone=encoder_name), name=short_name, namespace="image/segmentation"
         )
