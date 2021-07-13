@@ -16,4 +16,3 @@ from flash.tabular.data import TabularData
 
 class TabularRegressionData(TabularData):
     is_regression = True
-
