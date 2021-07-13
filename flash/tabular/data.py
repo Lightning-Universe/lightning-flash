@@ -245,6 +245,8 @@ class TabularData(DataModule):
     preprocess_cls = TabularPreprocess
     postprocess_cls = TabularPostprocess
 
+    is_regression: Optional[bool] = None
+
     @property
     def codes(self) -> Dict[str, str]:
         return self._data_source.codes
@@ -343,7 +345,6 @@ class TabularData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        is_regression: bool = False,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given data frames.
@@ -372,8 +373,6 @@ class TabularData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            is_regression: If ``True``, targets will be formatted as floating point. If ``False``, targets will be
-                formatted as integers.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -430,7 +429,7 @@ class TabularData(DataModule):
             codes=codes,
             target_codes=target_codes,
             classes=classes,
-            is_regression=is_regression,
+            is_regression=cls.is_regression,
             **preprocess_kwargs,
         )
 
@@ -453,7 +452,6 @@ class TabularData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        is_regression: bool = False,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given CSV files.
@@ -482,8 +480,6 @@ class TabularData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            is_regression: If ``True``, targets will be formatted as floating point. If ``False``, targets will be
-                formatted as integers.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -507,7 +503,7 @@ class TabularData(DataModule):
             val_data_frame=pd.read_csv(val_file) if val_file is not None else None,
             test_data_frame=pd.read_csv(test_file) if test_file is not None else None,
             predict_data_frame=pd.read_csv(predict_file) if predict_file is not None else None,
-            is_regression=is_regression,
+            is_regression=cls.is_regression,
             preprocess=preprocess,
             val_split=val_split,
             batch_size=batch_size,
