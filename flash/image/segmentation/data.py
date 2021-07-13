@@ -39,9 +39,10 @@ from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
-    _requires_extras,
     _TORCHVISION_AVAILABLE,
     lazy_import,
+    requires,
+    requires_extras,
 )
 from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
@@ -94,7 +95,7 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
 
-    @_requires_extras("image")
+    @requires_extras("image")
     def __init__(self):
         super().__init__(IMG_EXTENSIONS)
 
@@ -176,7 +177,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
 class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 
-    @_requires_extras("image")
+    @requires_extras("image")
     def __init__(self, label_field: str = "ground_truth"):
         super().__init__(label_field=label_field)
         self._fo_dataset_name = None
@@ -232,7 +233,7 @@ class SemanticSegmentationDeserializer(ImageDeserializer):
 
 class SemanticSegmentationPreprocess(Preprocess):
 
-    @_requires_extras("image")
+    @requires_extras("image")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -469,8 +470,8 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         self.block_viz_window: bool = True  # parameter to allow user to block visualisation windows
         self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
+    @requires_extras("image")
     @staticmethod
-    @_requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):
@@ -481,7 +482,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
-    @_requires_extras("image")
+    @requires("matplotlib")
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
