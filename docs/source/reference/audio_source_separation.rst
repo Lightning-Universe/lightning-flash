@@ -9,11 +9,6 @@ Audio Source Separation
 The Task
 ********
 
-The task of identifying what is in an image is called image classification.
-Typically, Image Classification is used to identify images containing a single object.
-The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.
-A class is a label that describes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc.
-
 Audio Source Separation is the process of separating a mixture (e.g. a pop band recording) into isolated sounds from individual sources (e.g. just the lead vocals).
 This is essential to robust speech processing in real-world acoustic environments.
 This technology is among the most studied in audio signal processing today and bear a critical role in the success of hearing aids, hands-free phones, voice command and other noise-robust audio analysis systems, and music post-production software.
@@ -25,8 +20,8 @@ This technology is among the most studied in audio signal processing today and b
 Example
 *******
 
-Let's look at the task of predicting whether images contain Ants or Bees using the hymenoptera dataset.
-The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
+Let's look ate the task of seperating a mixture into two voice sounds.
+The dataset containes ``train/mix_clean``, ``train/s1`` and ``train/s1``. You put one of ``.wav`` files form ``train/mix_clean`` and hope to be seperated into like in ``train/s1`` and ``train/s2``.
 
 .. code-block::
 
@@ -59,6 +54,13 @@ The dataset contains ``train`` and ``validation`` folders, and then each folder 
      ┃ ┃ ┣ 📜1028-133395-0008_5115-26947-0044.wav
      ┃ ┃ ┣ ...
      ┃ ┣ 📂s1
+     ┃ ┃ ┣ 📜100-121669-0026_718-129597-0003.wav
+     ┃ ┃ ┣ 📜1025-92820-0032_8410-278217-0015.wav
+     ┃ ┃ ┣ 📜1027-125140-0032_8388-275212-0023.wav
+     ┃ ┃ ┣ 📜1027-125140-0051_3025-12971-0056.wav
+     ┃ ┃ ┣ 📜1028-133395-0008_5115-26947-0044.wav
+     ┃ ┃ ┣ ...
+     ┃ ┗ 📂s2
      ┃ ┃ ┣ 📜100-121669-0026_718-129597-0003.wav
      ┃ ┃ ┣ 📜1025-92820-0032_8410-278217-0015.wav
      ┃ ┃ ┣ 📜1027-125140-0032_8388-275212-0023.wav
@@ -102,7 +104,6 @@ The dataset contains ``train`` and ``validation`` folders, and then each folder 
      ┃ ┃ ┣ 📜1462-170138-0002_3576-138058-0015.wav
      ┃ ┃ ┣ ...
 
-
 Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.classification.data.ImageClassificationData`.
 We select a pre-trained backbone to use for our :class:`~flash.image.classification.model.ImageClassifier` and fine-tune on the hymenoptera data.
 We then use the trained :class:`~flash.image.classification.model.ImageClassifier` for inference.
@@ -114,3 +115,17 @@ Here's the full example:
     :lines: 14-
 
 {"mode":"full","isActive":false}
+
+
+
+
+
+<To be deleted>
+The task of identifying what is in an image is called image classification.
+Typically, Image Classification is used to identify images containing a single object.
+The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.
+A class is a label that describes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc.
+
+
+Let's look at the task of predicting whether images contain Ants or Bees using the hymenoptera dataset.
+The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
