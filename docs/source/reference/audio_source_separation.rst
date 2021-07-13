@@ -113,19 +113,3 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/audio_source_separation.py
     :language: python
     :lines: 14-
-
-{"mode":"full","isActive":false}
-
-
-
-
-
-<To be deleted>
-The task of identifying what is in an image is called image classification.
-Typically, Image Classification is used to identify images containing a single object.
-The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.
-A class is a label that describes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc.
-
-
-Let's look at the task of predicting whether images contain Ants or Bees using the hymenoptera dataset.
-The dataset contains ``train`` and ``validation`` folders, and then each folder contains a **bees** folder, with pictures of bees, and an **ants** folder with images of, you guessed it, ants.
