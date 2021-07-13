@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Callable
+from typing import Optional
+
+from torch import nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
@@ -36,8 +38,9 @@ if _SEGMENTATION_MODELS_AVAILABLE:
         pretrained: bool = True,
         num_classes: int = 1,
         in_channels: int = 3,
+        weights_path: Optional[str] = None,
         **kwargs,
-    ) -> Callable:
+    ) -> nn.Module:
 
         if head not in SMP_MODELS:
             raise NotImplementedError(f"{head} is not implemented! Supported heads -> {SMP_MODELS.keys()}")
@@ -45,6 +48,7 @@ if _SEGMENTATION_MODELS_AVAILABLE:
         encoder_weights = None
         if pretrained:
             encoder_weights = "imagenet"
+        encoder_weights = encoder_weights or weights_path
 
         return smp.create_model(
             arch=head,
