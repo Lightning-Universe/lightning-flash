@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Dict, Callable, List, Any
+from typing import Any, Callable, Dict, List, Optional
 
 from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
@@ -25,21 +25,22 @@ from flash.tabular.data import TabularData, TabularPreprocess
 
 
 class TabularClassificationPreprocess(TabularPreprocess):
+
     def __init__(
-            self,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            cat_cols: Optional[List[str]] = None,
-            num_cols: Optional[List[str]] = None,
-            target_col: Optional[str] = None,
-            mean: Optional[DataFrame] = None,
-            std: Optional[DataFrame] = None,
-            codes: Optional[Dict[str, Any]] = None,
-            target_codes: Optional[Dict[str, Any]] = None,
-            classes: Optional[List[str]] = None,
-            deserializer: Optional[Deserializer] = None
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        cat_cols: Optional[List[str]] = None,
+        num_cols: Optional[List[str]] = None,
+        target_col: Optional[str] = None,
+        mean: Optional[DataFrame] = None,
+        std: Optional[DataFrame] = None,
+        codes: Optional[Dict[str, Any]] = None,
+        target_codes: Optional[Dict[str, Any]] = None,
+        classes: Optional[List[str]] = None,
+        deserializer: Optional[Deserializer] = None
     ):
         super(TabularClassificationPreprocess, self).__init__(
             train_transform=train_transform,
