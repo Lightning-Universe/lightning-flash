@@ -13,12 +13,12 @@
 # limitations under the License.
 import flash
 from flash.core.data.utils import download_data
-from flash.tabular import TabularClassifier, TabularData
+from flash.tabular import TabularClassificationData, TabularClassifier
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
 
-datamodule = TabularData.from_csv(
+datamodule = TabularClassificationData.from_csv(
     ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
     "Fare",
     target_fields="Survived",
