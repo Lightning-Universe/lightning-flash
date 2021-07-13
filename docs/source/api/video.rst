@@ -7,6 +7,8 @@ flash.video
     :local:
     :backlinks: top
 
+.. currentmodule:: flash.video
+
 Classification
 ______________
 
@@ -15,11 +17,11 @@ ______________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.video.classification.model.VideoClassifier
-    ~flash.video.classification.data.VideoClassificationData
+    ~classification.model.VideoClassifier
+    ~classification.data.VideoClassificationData
 
-    flash.video.classification.data.BaseVideoClassification
-    flash.video.classification.data.VideoClassificationFiftyOneDataSource
-    flash.video.classification.data.VideoClassificationPathsDataSource
-    flash.video.classification.data.VideoClassificationPreprocess
-    flash.video.classification.model.VideoClassifierFinetuning
+    classification.data.BaseVideoClassification
+    classification.data.VideoClassificationFiftyOneDataSource
+    classification.data.VideoClassificationPathsDataSource
+    classification.data.VideoClassificationPreprocess
+    classification.model.VideoClassifierFinetuning

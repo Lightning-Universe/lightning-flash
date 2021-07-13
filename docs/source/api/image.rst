@@ -7,6 +7,8 @@ flash.image
     :local:
     :backlinks: top
 
+.. currentmodule:: flash.image
+
 Classification
 ______________
 
@@ -15,19 +17,19 @@ ______________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.image.classification.model.ImageClassifier
-    ~flash.image.classification.data.ImageClassificationData
-    ~flash.image.classification.data.ImageClassificationPreprocess
+    ~classification.model.ImageClassifier
+    ~classification.data.ImageClassificationData
+    ~classification.data.ImageClassificationPreprocess
 
-    flash.image.classification.data.MatplotlibVisualization
+    classification.data.MatplotlibVisualization
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template:
 
-    flash.image.classification.transforms.default_transforms
-    flash.image.classification.transforms.train_default_transforms
+    classification.transforms.default_transforms
+    classification.transforms.train_default_transforms
 
 Detection
 _________
@@ -37,24 +39,24 @@ _________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.image.detection.model.ObjectDetector
-    ~flash.image.detection.data.ObjectDetectionData
+    ~detection.model.ObjectDetector
+    ~detection.data.ObjectDetectionData
 
-    flash.image.detection.data.COCODataSource
-    flash.image.detection.data.ObjectDetectionFiftyOneDataSource
-    flash.image.detection.data.ObjectDetectionPreprocess
-    flash.image.detection.finetuning.ObjectDetectionFineTuning
-    flash.image.detection.model.ObjectDetector
-    flash.image.detection.serialization.DetectionLabels
-    flash.image.detection.serialization.FiftyOneDetectionLabels
+    detection.data.COCODataSource
+    detection.data.ObjectDetectionFiftyOneDataSource
+    detection.data.ObjectDetectionPreprocess
+    detection.finetuning.ObjectDetectionFineTuning
+    detection.model.ObjectDetector
+    detection.serialization.DetectionLabels
+    detection.serialization.FiftyOneDetectionLabels
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template:
 
-    flash.image.detection.transforms.collate
-    flash.image.detection.transforms.default_transforms
+    detection.transforms.collate
+    detection.transforms.default_transforms
 
 Embedding
 _________
@@ -64,7 +66,7 @@ _________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.image.embedding.model.ImageEmbedder
+    ~embedding.model.ImageEmbedder
 
 Segmentation
 ____________
@@ -74,27 +76,27 @@ ____________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.image.segmentation.model.SemanticSegmentation
-    ~flash.image.segmentation.data.SemanticSegmentationData
-    ~flash.image.segmentation.data.SemanticSegmentationPreprocess
+    ~segmentation.model.SemanticSegmentation
+    ~segmentation.data.SemanticSegmentationData
+    ~segmentation.data.SemanticSegmentationPreprocess
 
-    flash.image.segmentation.data.SegmentationMatplotlibVisualization
-    flash.image.segmentation.data.SemanticSegmentationNumpyDataSource
-    flash.image.segmentation.data.SemanticSegmentationTensorDataSource
-    flash.image.segmentation.data.SemanticSegmentationPathsDataSource
-    flash.image.segmentation.data.SemanticSegmentationFiftyOneDataSource
-    flash.image.segmentation.data.SemanticSegmentationDeserializer
-    flash.image.segmentation.model.SemanticSegmentationPostprocess
-    flash.image.segmentation.serialization.FiftyOneSegmentationLabels
-    flash.image.segmentation.serialization.SegmentationLabels
+    segmentation.data.SegmentationMatplotlibVisualization
+    segmentation.data.SemanticSegmentationNumpyDataSource
+    segmentation.data.SemanticSegmentationTensorDataSource
+    segmentation.data.SemanticSegmentationPathsDataSource
+    segmentation.data.SemanticSegmentationFiftyOneDataSource
+    segmentation.data.SemanticSegmentationDeserializer
+    segmentation.model.SemanticSegmentationPostprocess
+    segmentation.serialization.FiftyOneSegmentationLabels
+    segmentation.serialization.SegmentationLabels
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    flash.image.segmentation.transforms.default_transforms
-    flash.image.segmentation.transforms.prepare_target
-    flash.image.segmentation.transforms.train_default_transforms
+    segmentation.transforms.default_transforms
+    segmentation.transforms.prepare_target
+    segmentation.transforms.train_default_transforms
 
 Style Transfer
 ______________
@@ -104,15 +106,15 @@ ______________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.image.style_transfer.model.StyleTransfer
-    ~flash.image.style_transfer.data.StyleTransferData
-    ~flash.image.style_transfer.data.StyleTransferPreprocess
+    ~style_transfer.model.StyleTransfer
+    ~style_transfer.data.StyleTransferData
+    ~style_transfer.data.StyleTransferPreprocess
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    ~flash.image.style_transfer.utils.raise_not_supported
+    ~style_transfer.utils.raise_not_supported
 
 flash.image.data
 ________________
@@ -122,11 +124,11 @@ ________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.image.data.ImageDeserializer
-    ~flash.image.data.ImageFiftyOneDataSource
-    ~flash.image.data.ImageNumpyDataSource
-    ~flash.image.data.ImagePathsDataSource
-    ~flash.image.data.ImageTensorDataSource
+    ~data.ImageDeserializer
+    ~data.ImageFiftyOneDataSource
+    ~data.ImageNumpyDataSource
+    ~data.ImagePathsDataSource
+    ~data.ImageTensorDataSource
 
 flash.image.backbones
 _____________________
@@ -135,8 +137,8 @@ _____________________
     :toctree: generated/
     :nosignatures:
 
-    ~flash.image.backbones.catch_url_error
-    ~flash.image.backbones.dino_deits16
-    ~flash.image.backbones.dino_deits8
-    ~flash.image.backbones.dino_vitb16
-    ~flash.image.backbones.dino_vitb8
+    ~backbones.catch_url_error
+    ~backbones.dino_deits16
+    ~backbones.dino_deits8
+    ~backbones.dino_vitb16
+    ~backbones.dino_vitb8

@@ -7,6 +7,8 @@ flash.text
     :local:
     :backlinks: top
 
+.. currentmodule:: flash.text
+
 Classification
 ______________
 
@@ -15,17 +17,17 @@ ______________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.text.classification.model.TextClassifier
-    ~flash.text.classification.data.TextClassificationData
+    ~classification.model.TextClassifier
+    ~classification.data.TextClassificationData
 
-    flash.text.classification.data.TextClassificationPostprocess
-    flash.text.classification.data.TextClassificationPreprocess
-    flash.text.classification.data.TextCSVDataSource
-    flash.text.classification.data.TextDataSource
-    flash.text.classification.data.TextDeserializer
-    flash.text.classification.data.TextFileDataSource
-    flash.text.classification.data.TextJSONDataSource
-    flash.text.classification.data.TextSentencesDataSource
+    classification.data.TextClassificationPostprocess
+    classification.data.TextClassificationPreprocess
+    classification.data.TextCSVDataSource
+    classification.data.TextDataSource
+    classification.data.TextDeserializer
+    classification.data.TextFileDataSource
+    classification.data.TextJSONDataSource
+    classification.data.TextSentencesDataSource
 
 Question Answering
 __________________
@@ -35,10 +37,10 @@ __________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.text.seq2seq.question_answering.model.QuestionAnsweringTask
-    ~flash.text.seq2seq.question_answering.data.QuestionAnsweringData
+    ~seq2seq.question_answering.model.QuestionAnsweringTask
+    ~seq2seq.question_answering.data.QuestionAnsweringData
 
-    flash.text.seq2seq.question_answering.data.QuestionAnsweringPreprocess
+    seq2seq.question_answering.data.QuestionAnsweringPreprocess
 
 Summarization
 _____________
@@ -48,10 +50,10 @@ _____________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.text.seq2seq.summarization.model.SummarizationTask
-    ~flash.text.seq2seq.summarization.data.SummarizationData
+    ~seq2seq.summarization.model.SummarizationTask
+    ~seq2seq.summarization.data.SummarizationData
 
-    flash.text.seq2seq.summarization.data.SummarizationPreprocess
+    seq2seq.summarization.data.SummarizationPreprocess
 
 Translation
 ___________
@@ -61,10 +63,10 @@ ___________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.text.seq2seq.translation.model.TranslationTask
-    ~flash.text.seq2seq.translation.data.TranslationData
+    ~seq2seq.translation.model.TranslationTask
+    ~seq2seq.translation.data.TranslationData
 
-    flash.text.seq2seq.translation.data.TranslationPreprocess
+    seq2seq.translation.data.TranslationPreprocess
 
 General Seq2Seq
 _______________
@@ -74,18 +76,18 @@ _______________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.text.seq2seq.core.model.Seq2SeqTask
-    ~flash.text.seq2seq.core.data.Seq2SeqData
-    ~flash.text.seq2seq.core.finetuning.Seq2SeqFreezeEmbeddings
+    ~seq2seq.core.model.Seq2SeqTask
+    ~seq2seq.core.data.Seq2SeqData
+    ~seq2seq.core.finetuning.Seq2SeqFreezeEmbeddings
 
-    flash.text.seq2seq.core.data.Seq2SeqBackboneState
-    flash.text.seq2seq.core.data.Seq2SeqCSVDataSource
-    flash.text.seq2seq.core.data.Seq2SeqDataSource
-    flash.text.seq2seq.core.data.Seq2SeqFileDataSource
-    flash.text.seq2seq.core.data.Seq2SeqJSONDataSource
-    flash.text.seq2seq.core.data.Seq2SeqPostprocess
-    flash.text.seq2seq.core.data.Seq2SeqPreprocess
-    flash.text.seq2seq.core.data.Seq2SeqSentencesDataSource
-    flash.text.seq2seq.core.metrics.BLEUScore
-    flash.text.seq2seq.core.metrics.RougeBatchAggregator
-    flash.text.seq2seq.core.metrics.RougeMetric
+    seq2seq.core.data.Seq2SeqBackboneState
+    seq2seq.core.data.Seq2SeqCSVDataSource
+    seq2seq.core.data.Seq2SeqDataSource
+    seq2seq.core.data.Seq2SeqFileDataSource
+    seq2seq.core.data.Seq2SeqJSONDataSource
+    seq2seq.core.data.Seq2SeqPostprocess
+    seq2seq.core.data.Seq2SeqPreprocess
+    seq2seq.core.data.Seq2SeqSentencesDataSource
+    seq2seq.core.metrics.BLEUScore
+    seq2seq.core.metrics.RougeBatchAggregator
+    seq2seq.core.metrics.RougeMetric

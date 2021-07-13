@@ -7,22 +7,21 @@ flash.tabular
     :local:
     :backlinks: top
 
-Tasks
-_____
+.. currentmodule:: flash.tabular
 
 Classification
-==============
+______________
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.tabular.classification.model.TabularClassifier
-    ~flash.tabular.classification.data.TabularData
+    ~classification.model.TabularClassifier
+    ~classification.data.TabularData
 
-    flash.tabular.classification.data.TabularCSVDataSource
-    flash.tabular.classification.data.TabularDataFrameDataSource
-    flash.tabular.classification.data.TabularDeserializer
-    flash.tabular.classification.data.TabularPostprocess
-    flash.tabular.classification.data.TabularPreprocess
+    classification.data.TabularCSVDataSource
+    classification.data.TabularDataFrameDataSource
+    classification.data.TabularDeserializer
+    classification.data.TabularPostprocess
+    classification.data.TabularPreprocess
