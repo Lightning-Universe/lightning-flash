@@ -163,7 +163,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def __setattr__(self, key, value):
         if isinstance(value, LightningModule):
             self._children.append(key)
-        if isinstance(value, pl.Trainer) or "current_fx_name" in key:
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
+        if isinstance(value, pl.Trainer) or key in patched_attributes:
             if hasattr(self, "_children"):
                 for child in self._children:
                     setattr(getattr(self, child), key, value)
