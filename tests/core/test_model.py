@@ -98,6 +98,32 @@ class OnesModel(nn.Module):
         return x * self.zeros + self.zero_one
 
 
+class Parent(ClassificationTask):
+
+    def __init__(self, child):
+        super().__init__()
+
+        self.child = child
+
+    def training_step(self, batch, batch_idx):
+        return self.child.training_step(batch, batch_idx)
+
+    def validation_step(self, batch, batch_idx):
+        return self.child.validation_step(batch, batch_idx)
+
+    def test_step(self, batch, batch_idx):
+        return self.child.test_step(batch, batch_idx)
+
+    def forward(self, x):
+        return self.child(x)
+
+
+class GrandParent(Parent):
+
+    def __init__(self, child):
+        super().__init__(Parent(child))
+
+
 # ================================
 
 
@@ -113,32 +139,14 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     assert "test_nll_loss" in result[0]
 
 
-def test_nested_task(tmpdir):
+@pytest.mark.parametrize("task", [Parent, GrandParent])
+def test_nested_tasks(tmpdir, task):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     val_dl = torch.utils.data.DataLoader(DummyDataset())
     child_task = ClassificationTask(model, loss_fn=F.nll_loss)
 
-    class Parent(ClassificationTask):
-
-        def __init__(self, child):
-            super().__init__()
-
-            self.child = child
-
-        def training_step(self, batch, batch_idx):
-            return self.child.training_step(batch, batch_idx)
-
-        def validation_step(self, batch, batch_idx):
-            return self.child.validation_step(batch, batch_idx)
-
-        def test_step(self, batch, batch_idx):
-            return self.child.test_step(batch, batch_idx)
-
-        def forward(self, x):
-            return self.child(x)
-
-    parent_task = Parent(child_task)
+    parent_task = task(child_task)
 
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(parent_task, train_dl, val_dl)
