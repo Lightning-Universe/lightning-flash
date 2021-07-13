@@ -14,6 +14,11 @@ Typically, Image Classification is used to identify images containing a single o
 The task predicts which ‘class’ the image most likely belongs to with a degree of certainty.
 A class is a label that describes what is in an image, such as ‘car’, ‘house’, ‘cat’ etc.
 
+Audio Source Separation is the process of separating a mixture (e.g. a pop band recording) into isolated sounds from individual sources (e.g. just the lead vocals).
+This is essential to robust speech processing in real-world acoustic environments.
+This technology is among the most studied in audio signal processing today and bear a critical role in the success of hearing aids, hands-free phones, voice command and other noise-robust audio analysis systems, and music post-production software.
+
+
 ------
 
 *******
