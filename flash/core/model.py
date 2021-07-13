@@ -158,6 +158,18 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self.deserializer = deserializer
         self.serializer = serializer
 
+        self._children = []
+
+    def __setattr__(self, key, value):
+        if isinstance(value, LightningModule):
+            self._children.append(key)
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
+        if isinstance(value, pl.Trainer) or key in patched_attributes:
+            if hasattr(self, "_children"):
+                for child in self._children:
+                    setattr(getattr(self, child), key, value)
+        super().__setattr__(key, value)
+
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """
         The training/validation/test step. Override for custom behavior.
