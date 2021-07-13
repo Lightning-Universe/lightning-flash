@@ -245,7 +245,7 @@ class TabularData(DataModule):
     preprocess_cls = TabularPreprocess
     postprocess_cls = TabularPostprocess
 
-    is_regression: Optional[bool] = None
+    is_regression: bool = False
 
     @property
     def codes(self) -> Dict[str, str]:
@@ -503,7 +503,6 @@ class TabularData(DataModule):
             val_data_frame=pd.read_csv(val_file) if val_file is not None else None,
             test_data_frame=pd.read_csv(test_file) if test_file is not None else None,
             predict_data_frame=pd.read_csv(predict_file) if predict_file is not None else None,
-            is_regression=cls.is_regression,
             preprocess=preprocess,
             val_split=val_split,
             batch_size=batch_size,
