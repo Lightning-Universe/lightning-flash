@@ -117,7 +117,7 @@ class SemanticSegmentation(ClassificationTask):
         if isinstance(backbone, nn.Module):
             self.backbone = backbone
         else:
-            self.backbone = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+            self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
 
         self.head: nn.Module = self.heads.get(head)(
             backbone=self.backbone, num_classes=num_classes, pretrained=pretrained, **head_kwargs
