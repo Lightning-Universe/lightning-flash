@@ -19,6 +19,8 @@ from torchmetrics import Metric
 from flash.text.seq2seq.core.metrics import RougeMetric
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
+from datasets import load_metric
+
 
 class QuestionAnsweringTask(Seq2SeqTask):
     """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for Seq2Seq text question answering. For more details,
@@ -46,7 +48,7 @@ class QuestionAnsweringTask(Seq2SeqTask):
 
     def __init__(
         self,
-        backbone: str = "t5-small",
+        backbone: str = "valhalla/t5-base-qa-qg-hl",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
@@ -70,11 +72,14 @@ class QuestionAnsweringTask(Seq2SeqTask):
             rouge_newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
+        self.squad_v2 = load_metric("squad_v2")
 
     def compute_metrics(self, generated_tokens: torch.Tensor, batch: Dict, prefix: str) -> None:
         tgt_lns = self.tokenize_labels(batch["labels"])
         result = self.rouge(self._postprocess.uncollate(generated_tokens), tgt_lns)
+        results = self.squad_v2.compute(self._postprocess.uncollate(generated_tokens), tgt_lns)
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(results, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
