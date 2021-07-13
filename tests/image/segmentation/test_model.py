@@ -56,7 +56,7 @@ def test_smoke():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.parametrize("num_classes", [8, 256])
-@pytest.mark.parametrize("img_shape", [(1, 3, 224, 192), (2, 3, 127, 212)])
+@pytest.mark.parametrize("img_shape", [(1, 3, 224, 192), (2, 3, 128, 256)])
 def test_forward(num_classes, img_shape):
     model = SemanticSegmentation(
         num_classes=num_classes,
@@ -103,7 +103,7 @@ def test_unfreeze():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_predict_tensor():
-    img = torch.rand(1, 3, 10, 20)
+    img = torch.rand(1, 3, 32, 32)
     model = SemanticSegmentation(2)
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
@@ -114,7 +114,7 @@ def test_predict_tensor():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_predict_numpy():
-    img = np.ones((1, 3, 10, 20))
+    img = np.ones((1, 3, 32, 32))
     model = SemanticSegmentation(2)
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
