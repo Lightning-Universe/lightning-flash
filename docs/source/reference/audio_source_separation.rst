@@ -110,7 +110,7 @@ We then use the trained :class:`~flash.image.classification.model.ImageClassifie
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/image_classification.py
+.. literalinclude:: ../../../flash_examples/audio_source_separation.py
     :language: python
     :lines: 14-
 
