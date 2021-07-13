@@ -9,7 +9,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -333,7 +333,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 128, 128)
 
     @staticmethod
-    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
     def test_map_labels(tmpdir):
         tmp_dir = Path(tmpdir)
 
