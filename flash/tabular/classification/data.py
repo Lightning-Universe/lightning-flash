@@ -29,6 +29,8 @@ from flash.tabular.data import TabularData
 
 class TabularClassificationData(TabularData):
 
+       is_regression = False
+
     @classmethod
     def from_data_frame(
         cls,
