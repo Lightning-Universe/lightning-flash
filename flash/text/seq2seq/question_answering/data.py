@@ -24,7 +24,7 @@ class QuestionAnsweringPreprocess(Seq2SeqPreprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "t5-small",
+        backbone: str = "valhalla/t5-base-qa-qg-hl",
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = 'max_length'
