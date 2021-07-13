@@ -54,7 +54,7 @@ Serving
 *******
 
 The :class:`~flash.text.seq2seq.summarization.model.SummarizationTask` is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
 .. literalinclude:: ../../../flash_examples/serve/summarization/inference_server.py
