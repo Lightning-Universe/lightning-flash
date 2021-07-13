@@ -124,16 +124,13 @@ class ImageClassifier(ClassificationTask):
         )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        with self.strategy.log_to(self):
-            return self.strategy.training_step(batch, batch_idx)
+        return self.strategy.training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        with self.strategy.log_to(self):
-            return self.strategy.training_step(batch, batch_idx)
+        return self.strategy.training_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        with self.strategy.log_to(self):
-            return self.strategy.training_step(batch, batch_idx)
+        return self.strategy.training_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DefaultDataKeys.PREDS] = super().predict_step((batch[DefaultDataKeys.INPUT]),

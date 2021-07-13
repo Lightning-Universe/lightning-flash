@@ -14,7 +14,6 @@
 import functools
 import inspect
 from abc import ABCMeta
-from contextlib import contextmanager
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
@@ -158,6 +157,17 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
+
+        self._children = []
+
+    def __setattr__(self, key, value):
+        if isinstance(value, Task):
+            self._children.append(key)
+        if isinstance(value, pl.Trainer) or "current_fx_name" in key:
+            if hasattr(self, "_children"):
+                for child in self._children:
+                    setattr(getattr(self, child), key, value)
+        super().__setattr__(key, value)
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """
@@ -656,14 +666,3 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
-
-    @contextmanager
-    def log_to(self, task: 'Task'):
-        """Context manager to cause redirect calls to ``log`` from this ``TrainingStrategy`` to the given ``Task``."""
-        old_log = self.log
-        old_log_dict = self.log_dict
-        self.log = task.log
-        self.log_dict = task.log_dict
-        yield
-        self.log = old_log
-        self.log_dict = old_log_dict
