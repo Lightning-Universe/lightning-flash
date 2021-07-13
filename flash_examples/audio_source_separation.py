@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.data.utils import download_data
 from flash.audio import AudioSourceSeparationData, AudioSourceSeparator
+from flash.core.data.utils import download_data
 
 # 1. Create the DataModule
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")      # To-Do : Add a right path
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")  # To-Do : Add a right path
 
 datamodule = AudioSourceSeparationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
@@ -24,7 +24,7 @@ datamodule = AudioSourceSeparationData.from_folders(
 )
 
 # 2. Build the task
-model = AudioSourceSeparator(backbone="ConvTasNet", n_src=datamodule.n_src)       # To-Do : lower case, or not?
+model = AudioSourceSeparator(backbone="ConvTasNet", n_src=datamodule.n_src)  # To-Do : lower case, or not?
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=2)
