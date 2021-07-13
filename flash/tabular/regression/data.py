@@ -32,7 +32,6 @@ class TabularRegressionData(TabularData):
     is_regression: True
 
     @classmethod
-
     def from_data_frame(
         cls,
         categorical_fields: Optional[Union[str, List[str]]],
