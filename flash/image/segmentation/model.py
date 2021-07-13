@@ -75,7 +75,7 @@ class SemanticSegmentation(ClassificationTask):
         num_classes: int,
         backbone: Union[str, nn.Module] = "resnet50",
         backbone_kwargs: Optional[Dict] = None,
-        head: str = "fcn",
+        head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Optional[Callable] = None,

@@ -61,7 +61,7 @@ def test_forward(num_classes, img_shape):
     model = SemanticSegmentation(
         num_classes=num_classes,
         backbone="resnet50",
-        head="fcn",
+        head="fpn",
     )
 
     B, C, H, W = img_shape
