@@ -22,7 +22,7 @@ import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image import ImageClassificationData
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -390,6 +390,7 @@ def test_from_data(data, from_function):
     assert list(labels.numpy()) == [2, 5]
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_from_fiftyone(tmpdir):
     tmpdir = Path(tmpdir)

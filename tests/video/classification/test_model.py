@@ -190,6 +190,7 @@ def test_video_classifier_finetune(tmpdir):
         trainer.finetune(model, datamodule=datamodule)
 
 
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_video_classifier_finetune_fiftyone(tmpdir):
 
