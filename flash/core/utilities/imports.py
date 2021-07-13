@@ -114,17 +114,15 @@ def _requires(module_path: str, module_available: bool):
 
     def decorator(func):
 
-        if not module_available:
-
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if not module_available:
                 raise ModuleNotFoundError(
                     f"Required dependencies not available. Please run: pip install '{module_path}'"
                 )
+            return func(*args, **kwargs)
 
-            return wrapper
-        else:
-            return func
+        return wrapper
 
     return decorator
 
