@@ -85,6 +85,7 @@ _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _ASTEROID_AVAILABLE = _module_available("asteroid")
+# TO-DO : Add Team 4: Audio Classification's dependcies here
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -103,6 +104,10 @@ _IMAGE_AVAILABLE = all([
     _PYSTICHE_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
+_AUDIO_AVAILABLE = all([
+    _ASTEROID_AVAILABLE,
+    # TO-DO : Add Team 4: Audio Classification's dependcies here
+])
 
 _EXTRAS_AVAILABLE = {
     'image': _IMAGE_AVAILABLE,
@@ -110,7 +115,7 @@ _EXTRAS_AVAILABLE = {
     'text': _TEXT_AVAILABLE,
     'video': _VIDEO_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
-    'astroid': _ASTEROID_AVAILABLE,
+    'audio': _AUDIO_AVAILABLE,
 }
 
 
