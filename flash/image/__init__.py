@@ -6,7 +6,8 @@ from flash.image.detection.model import ObjectDetector
 from flash.image.embedding.model import ImageEmbedder
 from flash.image.segmentation.data import SemanticSegmentationData
 from flash.image.segmentation.model import SemanticSegmentation
-from flash.image.style_transfer import StyleTransfer, StyleTransferData
+from flash.image.style_transfer.data import StyleTransferData
+from flash.image.style_transfer.model import StyleTransfer
 
 __all__ = [
     "ImageClassificationData",
