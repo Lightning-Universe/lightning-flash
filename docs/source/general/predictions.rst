@@ -56,7 +56,7 @@ Serializing predictions
 =======================
 
 To change how predictions are serialized you can attach a :class:`~flash.core.data.process.Serializer` to your
-:class:`~flash.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
+:class:`~flash.core.model.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
 reference below).
 
 
@@ -80,47 +80,3 @@ reference below).
 	predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
 	print(predictions)
 	# out: [[0.5926494598388672, 0.40735048055648804]]
-
-
-------
-
-
-******************************************
-Classification serializers - API reference
-******************************************
-
-.. _logits:
-
-Logits
----------------
-
-.. autoclass:: flash.core.classification.Logits
-	:members:
-	:exclude-members: serialize
-
-.. _probabilities:
-
-Probabilities
------------------------
-
-.. autoclass:: flash.core.classification.Probabilities
-	:members:
-	:exclude-members: serialize
-
-.. _classes:
-
-Classes
------------------------
-
-.. autoclass:: flash.core.classification.Classes
-	:members:
-	:exclude-members: serialize
-
-.. _labels:
-
-Labels
------------------------
-
-.. autoclass:: flash.core.classification.Labels
-	:members:
-	:exclude-members: serialize
