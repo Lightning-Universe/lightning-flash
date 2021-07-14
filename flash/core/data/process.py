@@ -363,6 +363,7 @@ class Preprocess(BasePreprocess, Properties):
     def collate(self, samples: Sequence) -> Any:
         """ Transform to convert a sequence of samples to a collated batch. """
 
+        # the model can provide a custom ``collate_fn``.
         collate_fn = self.get_state(CollateFn)
         if collate_fn is not None:
             return collate_fn.collate_fn(samples)

@@ -157,6 +157,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # TODO: create enum values to define what are the exact states
         self._data_pipeline_state: Optional[DataPipelineState] = None
 
+        # model own internal state shared with the data pipeline.
         self._state: Dict[Type[ProcessState], ProcessState] = {}
 
         # Explicitly set the serializer to call the setter
@@ -204,6 +205,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
 
     @staticmethod
     def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """This function is used to filter some labels or predictions which aren't conform."""
         return y, y_hat
 
     @staticmethod

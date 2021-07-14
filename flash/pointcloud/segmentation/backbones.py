@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash.core.registry import FlashRegistry
-from flash.pointcloud.segmentation.open3d_ml import register_open_3d_ml
+from flash.pointcloud.segmentation.open3d_ml.backbones import register_open_3d_ml
 
 POINTCLOUD_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
