@@ -15,11 +15,9 @@ import os
 import platform
 from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
-import networkx as nx
 import numpy as np
 import pytorch_lightning as pl
 import torch
-import torch_geometric
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset

@@ -57,8 +57,8 @@ extras = {
     "graph": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_graph.txt"),
 }
 
-extras["vision"] = list(set(extras["image"] + extras["video"] + extras["image_style_transfer"]))
-extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"] + extras["graph"]))
+extras["vision"] = list(set(extras["image"] + extras["video"]))
+extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
 extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /

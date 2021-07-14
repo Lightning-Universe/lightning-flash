@@ -93,7 +93,7 @@ class AutoDataset(BaseAutoDataset[Sequence], Dataset):
     must be a ``Sequence`` (it must have a length)."""
 
     def __getitem__(self, index: int) -> Any:
-        return self._call_load_sample(self.data[int(index)])
+        return self._call_load_sample(self.data[index])
 
     def __len__(self) -> int:
         return len(self.data)
