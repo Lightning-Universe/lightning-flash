@@ -57,6 +57,12 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: PointCloud
+
+   reference/pointcloud_segmentation
+
+.. toctree::
+   :maxdepth: 1
    :caption: Integrations
 
    integrations/fiftyone
@@ -70,6 +76,7 @@ Lightning Flash
    api/data
    api/serve
    api/image
+   api/pointcloud
    api/tabular
    api/text
    api/video

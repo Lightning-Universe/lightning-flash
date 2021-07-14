@@ -11,21 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 import torchmetrics
+from pytorch_lightning import Callback, LightningModule
 from torch import nn
 from torch.nn import functional as F
+from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
+import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
+from flash.core.finetuning import BaseFinetuning
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
@@ -33,6 +37,33 @@ from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACK
 if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.modules.losses.semseg_loss import filter_valid_label
     from open3d.ml.torch.dataloaders import TorchDataloader
+
+
+class PointCloudSegmentationFinetuning(BaseFinetuning):
+
+    def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
+        super().__init__()
+        self.num_layers = num_layers
+        self.train_bn = train_bn
+        self.unfreeze_epoch = unfreeze_epoch
+
+    def freeze_before_training(self, pl_module: LightningModule) -> None:
+        self.freeze(modules=list(pl_module.backbone.children())[:-self.num_layers], train_bn=self.train_bn)
+
+    def finetune_function(
+        self,
+        pl_module: LightningModule,
+        epoch: int,
+        optimizer: Optimizer,
+        opt_idx: int,
+    ) -> None:
+        if epoch != self.unfreeze_epoch:
+            return
+        self.unfreeze_and_add_param_group(
+            modules=list(pl_module.backbone.children())[-self.num_layers:],
+            optimizer=optimizer,
+            train_bn=self.train_bn,
+        )
 
 
 class PointCloudSegmentationSerializer(Serializer):
@@ -68,6 +99,7 @@ class PointCloudSegmentation(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
         backbone_kwargs: Optional[Dict] = None,
+        head: Optional[nn.Module] = None,
         loss_fn: Optional[Callable] = torch.nn.functional.cross_entropy,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
@@ -106,9 +138,12 @@ class PointCloudSegmentation(ClassificationTask):
             self.backbone, out_features = backbone
         else:
             self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            # replace latest layer
+            if not flash._IS_TESTING:
+                self.backbone.fc = nn.Identity()
             self.set_state(CollateFn(collate_fn))
 
-        self.head = nn.Linear(out_features, num_classes)
+        self.head = nn.Identity() if flash._IS_TESTING else (head or nn.Linear(out_features, num_classes))
 
     def apply_filtering(self, labels, scores):
         scores, labels = filter_valid_label(scores, labels, self.hparams.num_classes, [0], self.device)
@@ -143,7 +178,10 @@ class PointCloudSegmentation(ClassificationTask):
         """First call the backbone, then the model head."""
         # hack to enable backbone to work properly.
         self.backbone.device = self.device
-        return self.backbone(x)
+        x = self.backbone(x)
+        if self.head is not None:
+            x = self.head(x)
+        return x
 
     def _process_dataset(
         self,
@@ -184,3 +222,6 @@ class PointCloudSegmentation(ClassificationTask):
 
         else:
             return dataset
+
+    def configure_finetune_callback(self) -> List[Callback]:
+        return [PointCloudSegmentationFinetuning()]
