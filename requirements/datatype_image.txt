@@ -7,3 +7,4 @@ matplotlib
 pycocotools>=2.0.2 ; python_version >= "3.7"
 fiftyone
 pystiche>=0.7.2
+segmentation-models-pytorch

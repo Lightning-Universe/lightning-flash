@@ -36,19 +36,17 @@ class NoFreeze(BaseFinetuning):
 
 
 class FlashBaseFinetuning(BaseFinetuning):
+    """
+    FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
+
+    Override :meth:`.finetune_function` to put your unfreeze logic.
+    """
 
     def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True):
-        r"""
-
-        FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
-
-        Override ``finetune_function`` to put your unfreeze logic.
-
+        """
         Args:
             attr_names: Name(s) of the module attributes of the model to be frozen.
-
             train_bn: Whether to train Batch Norm layer
-
         """
         super().__init__()
 

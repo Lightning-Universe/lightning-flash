@@ -86,7 +86,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -110,20 +110,20 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
     @staticmethod
     def test_from_folders_warning(tmpdir):
@@ -145,7 +145,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -164,8 +164,8 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (1, 3, 196, 196)
-        assert labels.shape == (1, 196, 196)
+        assert imgs.shape == (1, 3, 128, 128)
+        assert labels.shape == (1, 128, 128)
 
     @staticmethod
     def test_from_files(tmpdir):
@@ -186,7 +186,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -210,20 +210,20 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
     @staticmethod
     def test_from_files_warning(tmpdir):
@@ -244,7 +244,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -272,7 +272,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
 
         for img_file in images:
             _rand_image(img_size).save(img_file)
@@ -307,25 +307,25 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check predict data
         data = next(iter(dm.predict_dataloader()))
         imgs = data[DefaultDataKeys.INPUT]
-        assert imgs.shape == (2, 3, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
 
     @staticmethod
     def test_map_labels(tmpdir):
@@ -351,7 +351,7 @@ class TestSemanticSegmentationData:
         }
 
         num_classes: int = len(labels_map.keys())
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -379,13 +379,13 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
         assert labels.min().item() == 0
         assert labels.max().item() == 1
         assert labels.dtype == torch.int64
 
         # now train with `fast_dev_run`
-        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fcn")
+        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fpn")
         trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
         trainer.finetune(model, dm, strategy="freeze_unfreeze")
