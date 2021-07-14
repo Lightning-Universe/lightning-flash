@@ -13,9 +13,13 @@
 # limitations under the License.
 from unittest.mock import patch
 
+import pytest
+
 from flash.pointcloud.segmentation.datasets import LyftDataset, SemanticKITTIDataset
+from tests.helpers.utils import _POINTCLOUD_TESTING
 
 
+@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 @patch("flash.pointcloud.segmentation.datasets.os.system")
 def test_datasets(mock_system):
 
