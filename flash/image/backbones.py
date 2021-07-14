@@ -104,7 +104,7 @@ if _TORCHVISION_AVAILABLE:
                 device = next(model.parameters()).get_device()
                 model_weights = load_state_dict_from_url(
                     weights_paths[pretrained],
-                    map_location=torch.device('cpu') if device is -1 else torch.device(device)
+                    map_location=torch.device('cpu') if device == -1 else torch.device(device)
                 )
 
                 # add logic here for loading resnet weights from other libraries
@@ -121,6 +121,9 @@ if _TORCHVISION_AVAILABLE:
                     "Requested weights for {0} not available,"
                     " choose from one of {1}".format(model_name, list(weights_paths.keys()))
                 )
+
+        if model_weights is not None:
+            model.load_state_dict(model_weights, strict=False)
 
         return backbone, num_features
 

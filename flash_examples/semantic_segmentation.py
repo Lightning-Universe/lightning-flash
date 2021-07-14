@@ -27,14 +27,14 @@ datamodule = SemanticSegmentationData.from_folders(
     train_folder="data/CameraRGB",
     train_target_folder="data/CameraSeg",
     val_split=0.1,
-    image_size=(200, 200),
+    image_size=(256, 256),
     num_classes=21,
 )
 
 # 2. Build the task
 model = SemanticSegmentation(
-    backbone="mobilenet_v3_large",
-    head="fcn",
+    backbone="mobilenetv3_large_100",
+    head="fpn",
     num_classes=datamodule.num_classes,
 )
 

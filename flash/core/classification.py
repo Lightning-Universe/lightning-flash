@@ -21,7 +21,7 @@ from pytorch_lightning.utilities import rank_zero_warn
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
 from flash.core.model import Task
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 Classification, Classifications = None, None
 if _FIFTYONE_AVAILABLE:
@@ -195,6 +195,7 @@ class FiftyOneLabels(ClassificationSerializer):
             list of FiftyOne labels (False)
     """
 
+    @requires("fiftyone")
     def __init__(
         self,
         labels: Optional[List[str]] = None,
@@ -203,9 +204,6 @@ class FiftyOneLabels(ClassificationSerializer):
         store_logits: bool = False,
         return_filepath: bool = False,
     ):
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
-
         if multi_label and threshold is None:
             threshold = 0.5
 
