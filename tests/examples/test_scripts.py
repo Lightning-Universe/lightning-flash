@@ -20,7 +20,14 @@ import pytest
 import flash
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
-from tests.helpers.utils import _GRAPH_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING, _VIDEO_TESTING
+from tests.helpers.utils import (
+    _GRAPH_TESTING,
+    _IMAGE_TESTING,
+    _POINTCLOUD_TESTING,
+    _TABULAR_TESTING,
+    _TEXT_TESTING,
+    _VIDEO_TESTING,
+)
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -69,6 +76,10 @@ from tests.helpers.utils import _GRAPH_TESTING, _IMAGE_TESTING, _TABULAR_TESTING
         pytest.param(
             "video_classification.py",
             marks=pytest.mark.skipif(not _VIDEO_TESTING, reason="video libraries aren't installed")
+        ),
+        pytest.param(
+            "pointcloud_segmentation.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
         ),
         pytest.param(
             "graph_classification.py",
