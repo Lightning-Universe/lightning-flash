@@ -839,6 +839,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
+        field: str = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given JSON files using the
@@ -889,10 +890,10 @@ class DataModule(pl.LightningDataModule):
         """
         return cls.from_data_source(
             DefaultDataSources.JSON,
-            (train_file, input_fields, target_fields),
-            (val_file, input_fields, target_fields),
-            (test_file, input_fields, target_fields),
-            (predict_file, input_fields, target_fields),
+            (train_file, input_fields, target_fields, field),
+            (val_file, input_fields, target_fields, field),
+            (test_file, input_fields, target_fields, field),
+            (predict_file, input_fields, target_fields, field),
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
