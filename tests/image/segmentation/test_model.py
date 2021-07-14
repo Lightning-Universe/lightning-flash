@@ -158,5 +158,5 @@ def test_load_from_checkpoint_dependency_error():
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_available_pretrained_weights(backbone):
+def test_available_pretrained_weights():
     assert SemanticSegmentation.available_pretrained_weights("resnet18") == ['imagenet', 'ssl', 'swsl']
