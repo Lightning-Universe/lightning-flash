@@ -75,6 +75,9 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api/
+docs/notebooks/
+docs/source/api/generated/
 
 # PyBuilder
 target/
@@ -133,8 +136,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-docs/notebooks/
-docs/api/
 titanic.csv
 .vscode
 .venv

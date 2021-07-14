@@ -75,7 +75,7 @@ class SemanticSegmentation(ClassificationTask):
         num_classes: int,
         backbone: Union[str, nn.Module] = "resnet50",
         backbone_kwargs: Optional[Dict] = None,
-        head: str = "fcn",
+        head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Optional[Callable] = None,
@@ -117,9 +117,12 @@ class SemanticSegmentation(ClassificationTask):
         if isinstance(backbone, nn.Module):
             self.backbone = backbone
         else:
-            self.backbone = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+            self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
 
-        self.head = self.heads.get(head)(self.backbone, num_classes, **head_kwargs)
+        self.head: nn.Module = self.heads.get(head)(
+            backbone=self.backbone, num_classes=num_classes, pretrained=pretrained, **head_kwargs
+        )
+        self.backbone = self.head.encoder
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])

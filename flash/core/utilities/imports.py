@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""General utilities"""
 import functools
 import importlib
 import operator
@@ -85,6 +84,8 @@ _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
+_ASTEROID_AVAILABLE = _module_available("asteroid")
+_SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -97,13 +98,14 @@ _IMAGE_AVAILABLE = all([
     _TIMM_AVAILABLE,
     _PIL_AVAILABLE,
     _KORNIA_AVAILABLE,
-    _MATPLOTLIB_AVAILABLE,
-    _COCO_AVAILABLE,
-    _FIFTYONE_AVAILABLE,
     _PYSTICHE_AVAILABLE,
+    _SEGMENTATION_MODELS_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE
+_AUDIO_AVAILABLE = all([
+    _ASTEROID_AVAILABLE,
+])
 
 _EXTRAS_AVAILABLE = {
     'image': _IMAGE_AVAILABLE,
@@ -112,24 +114,34 @@ _EXTRAS_AVAILABLE = {
     'video': _VIDEO_AVAILABLE,
     'pointcloud': _POINTCLOUD_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
+    'audio': _AUDIO_AVAILABLE,
 }
 
 
-def _requires_extras(extras: str):
+def _requires(module_path: str, module_available: bool):
 
     def decorator(func):
+        if not module_available:
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            if not _EXTRAS_AVAILABLE[extras]:
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
                 raise ModuleNotFoundError(
-                    f"Required dependencies not available. Please run: pip install 'lightning-flash[{extras}]'"
+                    f"Required dependencies not available. Please run: pip install '{module_path}'"
                 )
-            return func(*args, **kwargs)
 
-        return wrapper
+            return wrapper
+        else:
+            return func
 
     return decorator
+
+
+def requires(module_path: str):
+    return _requires(module_path, _module_available(module_path))
+
+
+def requires_extras(extras: str):
+    return _requires(f"lightning-flash[{extras}]", _EXTRAS_AVAILABLE[extras])
 
 
 def lazy_import(module_name, callback=None):

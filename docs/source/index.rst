@@ -24,6 +24,9 @@ Lightning Flash
    general/finetuning
    general/predictions
    general/jit
+   general/data
+   general/registry
+   general/serve
 
 .. toctree::
    :maxdepth: 1
@@ -62,16 +65,14 @@ Lightning Flash
    :maxdepth: 1
    :caption: API Reference
 
-   general/data
-   general/callback
-   general/registry
-   general/serve
-   code/core
-   code/data
-   code/image
-   code/tabular
-   code/text
-   code/video
+   api/flash
+   api/core
+   api/data
+   api/serve
+   api/image
+   api/tabular
+   api/text
+   api/video
 
 .. toctree::
    :maxdepth: 1
