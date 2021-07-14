@@ -27,8 +27,8 @@ from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
 class GraphClassifier(ClassificationTask):
-    """Task that classifies graphs.
-    Some documentation https://1176-333857397-gh.circle-artifacts.com/0/html/custom_task.html
+    """The ``GraphClassifier`` is a :class:`~flash.Task` for classifying graphs. For more details, see
+    :ref:`graph_classification`.
 
     Args:
         num_classes: Number of classes to classify.
