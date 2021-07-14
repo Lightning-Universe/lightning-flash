@@ -20,6 +20,7 @@ from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
 from flash.image.segmentation import SemanticSegmentation
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
+from tests.helpers.utils import _IMAGE_TESTING
 
 
 @pytest.mark.parametrize(
@@ -42,6 +43,7 @@ def test_semantic_segmentation_heads_registry(head):
     assert res.shape[1] == 10
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @unittest.mock.patch("flash.image.segmentation.heads.smp")
 def test_pretrained_weights(mock_smp):
     mock_smp.create_model = unittest.mock.MagicMock()
