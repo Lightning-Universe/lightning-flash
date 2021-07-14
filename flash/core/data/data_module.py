@@ -84,7 +84,7 @@ class DataModule(pl.LightningDataModule):
         postprocess: Optional[Postprocess] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
-        batch_size: int = 1,
+        batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
     ) -> None:
@@ -276,7 +276,7 @@ class DataModule(pl.LightningDataModule):
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
-        drop_last = False
+        drop_last = True
         pin_memory = True
 
         if self.sampler is None:
