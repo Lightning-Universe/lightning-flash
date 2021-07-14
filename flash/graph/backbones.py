@@ -35,11 +35,13 @@ GRAPH_CLASSIFICATION_BACKBONES = FlashRegistry("backbones")
 
 AUTOENCODER_MODELS = ["arga", "argva", "gae", " vgae"]
 ENCODER_MODELS = ["DeepGraphInfomax"]
-MODELS = ["AttentiveFP", "GraphUNet", "RENet", "SignedGCN", "SchNet", "TGNMemory", "DimeNet", "LabelPropagation"]
+OTHER_MODELS = ["RENet", "SignedGCN", "SchNet", "TGNMemory", "LabelPropagation"]
 POSTPROCESSING_MODELS = ["correct_and_smooth"]
 RESIDUAL_MODELS = ["deep_GCN_layer", "JumpingKnowledge"]
 META_MODELS = ["GNN_explainer"]
 EMBEDING_MODELS = ["MetaPath2Vec", "Path2Vec"]
+
+CLASSIFICATION_MODELS = ["AttentiveFP", "GraphUNet", "DimeNet"]
 
 
 # MODELS
@@ -59,6 +61,7 @@ def load_GraphUNet(in_channels, hidden_channels, out_channels, depth, pool_ratio
     """GraphUNet backbone from torch geometric"""
     return models.GraphUNet(in_channels, hidden_channels, out_channels, depth, pool_ratios, sum_res, act)
 
+## OTHER MODELS
 @GRAPH_CLASSIFICATION_BACKBONES(name="RENet", namespace="graph/classification") #todo: how to add more tasks?
 def load_RENet(num_nodes, num_rels, hidden_channels, seq_len, num_layers=1, dropout=0.0, bias=True):
     """RENet backbone from torch geometric"""

@@ -72,8 +72,9 @@ class GraphClassifier(ClassificationTask):
 
         if isinstance(backbone, tuple):
             self.backbone, num_out_features = backbone
-        else:
-            self.backbone, num_out_features = self.backbones.get(backbone)(**backbone_kwargs)
+        else: #todo: num_out_features is out_channels. Are there models that do not support this?
+            self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
+            num_out_features = backbone.out_channels
 
         head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
         self.head = head or nn.Sequential(nn.Linear(num_out_features, num_classes), )
