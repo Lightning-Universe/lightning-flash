@@ -25,7 +25,7 @@ from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.graph.backbones import GRAPH_BACKBONES
+from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
 from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
 
 if _PYTORCH_GEOMETRIC_AVAILABLE:
@@ -105,7 +105,7 @@ class GraphClassifier(ClassificationTask):
         model: GraphNN used, defaults to BaseGraphModel.
         conv_cls: kind of convolution used in model, defaults to GCNConv
     """
-    backbones: FlashRegistry = GRAPH_BACKBONES
+    backbones: FlashRegistry = GRAPH_CLASSIFICATION_BACKBONES
 
     required_extras: str = "graph"
 
