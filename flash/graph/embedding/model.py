@@ -101,15 +101,15 @@ class GraphEmbedder(Task):
         return x
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch, batch.y)
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch, batch.y)
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch, batch.y)
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:

@@ -121,8 +121,6 @@ class GraphClassifier(ClassificationTask):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
-        conv_cls: Type[MessagePassing] = GCNConv,
-        **conv_kwargs
     ):
 
         self.save_hyperparameters()
@@ -148,15 +146,15 @@ class GraphClassifier(ClassificationTask):
         self.head = head or nn.Sequential(nn.Linear(num_out_features, num_classes), )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch, batch.y)
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch, batch.y)
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch, batch.y)
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
