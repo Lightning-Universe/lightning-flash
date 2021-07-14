@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
+from typing import Union
 
 from torch import nn
 
@@ -34,7 +35,7 @@ if _SEGMENTATION_MODELS_AVAILABLE:
     def _load_smp_head(
         head: str,
         backbone: str,
-        pretrained: bool = True,
+        pretrained: Union[bool, str] = True,
         num_classes: int = 1,
         in_channels: int = 3,
         **kwargs,
@@ -44,8 +45,10 @@ if _SEGMENTATION_MODELS_AVAILABLE:
             raise NotImplementedError(f"{head} is not implemented! Supported heads -> {SMP_MODELS.keys()}")
 
         encoder_weights = None
-        if pretrained:
+        if pretrained is True:
             encoder_weights = "imagenet"
+        elif isinstance(pretrained, str):
+            encoder_weights = pretrained
 
         return smp.create_model(
             arch=head,
