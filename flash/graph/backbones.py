@@ -23,9 +23,9 @@ from torch import nn
 from torch.hub import load_state_dict_from_url
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 
-if _PYTORCH_GEOMETRIC_AVAILABLE:
+if _TORCH_GEOMETRIC_AVAILABLE:
     import torch_geometric
     import torch_geometric.nn.models as models 
 
@@ -40,7 +40,6 @@ POSTPROCESSING_MODELS = ["correct_and_smooth"]
 RESIDUAL_MODELS = ["deep_GCN_layer", "JumpingKnowledge"]
 META_MODELS = ["GNN_explainer"]
 EMBEDING_MODELS = ["MetaPath2Vec", "Path2Vec"]
-backbone = torch.hub.load('facebookresearch/dino:main', 'dino_deits16')
 
 
 # MODELS

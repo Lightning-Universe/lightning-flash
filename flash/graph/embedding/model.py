@@ -24,12 +24,12 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.model import Task
-from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 from flash.graph.classification.data import GraphClassificationPreprocess
 from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
 
 
-if _PYTORCH_GEOMETRIC_AVAILABLE:
+if _TORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
     MessagePassing = type(object)

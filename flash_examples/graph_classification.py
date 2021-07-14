@@ -22,14 +22,15 @@ else:
     raise ModuleNotFoundError("Please, pip install -e '.[graph]'")
 
 # 1. Create the DataModule
-dataset = TUDataset(root="data", name="KKI")
+dataset = TUDataset(root="data", name="KKI").shuffle()
 
 datamodule = GraphClassificationData.from_datasets(
     train_dataset=dataset,
     val_split=0.1,
 )
 # 2. Build the task
-model = GraphClassifier(num_classes=datamodule.num_classes)
+backbone_kwargs = {'in_channels': datamodule.num_features, 'out_channels': 64, 'hidden_channels': 512, 'depth': 4}
+model = GraphClassifier(num_classes=datamodule.num_classes, backbone_kwargs=backbone_kwargs)
 
 # 3. Create the trainer and fit the model
 trainer = flash.Trainer(max_epochs=3)
