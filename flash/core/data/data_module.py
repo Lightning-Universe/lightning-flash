@@ -32,7 +32,7 @@ from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postp
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
 
 if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
     from fiftyone.core.collections import SampleCollection
@@ -1097,6 +1097,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     @classmethod
+    @requires("fiftyone")
     def from_fiftyone(
         cls,
         train_dataset: Optional[SampleCollection] = None,
@@ -1160,9 +1161,6 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, `pip install fiftyone`.")
-
         return cls.from_data_source(
             DefaultDataSources.FIFTYONE,
             train_dataset,
