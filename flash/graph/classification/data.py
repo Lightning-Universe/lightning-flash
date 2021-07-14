@@ -21,6 +21,7 @@ from flash.graph.data import GraphDatasetDataSource
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.data.batch import Batch
+    from torch_geometric.transforms import NormalizeFeatures
 
 
 class GraphClassificationPreprocess(Preprocess):
@@ -32,10 +33,7 @@ class GraphClassificationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        num_features: int = 128,
     ):
-        self.num_features = num_features
-
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
@@ -48,7 +46,7 @@ class GraphClassificationPreprocess(Preprocess):
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {**self.transforms, "num_features": self.num_features}
+        return self.transforms
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
@@ -56,10 +54,17 @@ class GraphClassificationPreprocess(Preprocess):
 
     @staticmethod
     def default_transforms() -> Optional[Dict[str, Callable]]:
-        return {"collate": Batch.from_data_list}
+        return {"pre_tensor_transform": NormalizeFeatures(), "collate": Batch.from_data_list}
 
 
 class GraphClassificationData(DataModule):
     """Data module for graph classification tasks."""
 
     preprocess_cls = GraphClassificationPreprocess
+
+    @property
+    def num_features(self):
+        n_cls_train = getattr(self.train_dataset, "num_features", None)
+        n_cls_val = getattr(self.val_dataset, "num_features", None)
+        n_cls_test = getattr(self.test_dataset, "num_features", None)
+        return n_cls_train or n_cls_val or n_cls_test

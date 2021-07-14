@@ -57,6 +57,12 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Graph
+
+   reference/graph_classification
+
+.. toctree::
+   :maxdepth: 1
    :caption: Integrations
 
    integrations/fiftyone

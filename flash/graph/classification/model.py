@@ -15,7 +15,6 @@ from types import FunctionType
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, Type, Union, Dict
 
 import torch
-from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import Linear
@@ -30,8 +29,8 @@ from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 if _TORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
-    MessagePassing = type(object)
-    GCNConv = object
+    MessagePassing = None
+    GCNConv = None
 
 
 class GraphBlock(nn.Module):
@@ -42,8 +41,8 @@ class GraphBlock(nn.Module):
         self.norm = BatchNorm(nc_output)
         self.act = act
 
-    def forward(self, x, edge_index, batch):
-        x = self.conv(x, edge_index)
+    def forward(self, x, edge_index, edge_weight):
+        x = self.conv(x, edge_index, edge_weight=edge_weight)
         x = self.norm(x)
         return self.act(x)
 
@@ -73,15 +72,16 @@ class BaseGraphModel(nn.Module):
             graph_block = GraphBlock(nc_input, nc_output, conv_cls, act, **conv_kwargs)
             self.blocks.append(graph_block)
 
-        self.lin = Linear(nc_output, num_classes, act, **conv_kwargs)
+        self.lin = Linear(nc_output, num_classes)
 
-    def forward(self, x, edge_index, batch):
+    def forward(self, data):
+        x, edge_index, edge_weight = data.x, data.edge_index, data.edge_attr
         # 1. Obtain node embeddings
         for block in self.blocks:
-            x = block(x, edge_index, batch)
+            x = block(x, edge_index, edge_weight)
 
         # 2. Readout layer
-        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+        x = global_mean_pool(x, data.batch)  # [batch_size, hidden_channels]
 
         # 3. Apply a final classifier
         x = F.dropout(x, p=0.5, training=self.training)
@@ -108,6 +108,8 @@ class GraphClassifier(ClassificationTask):
 
     required_extras: str = "graph"
 
+    required_extras = "graph"
+
     def __init__(
         self,
         num_classes: int,
@@ -117,7 +119,7 @@ class GraphClassifier(ClassificationTask):
         hidden_channels: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
+        metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         conv_cls: Type[MessagePassing] = GCNConv,
         **conv_kwargs
