@@ -88,6 +88,7 @@ _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch"
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
+_NETWORKX_AVAILABLE = _module_available("networkx")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -109,7 +110,7 @@ _AUDIO_AVAILABLE = all([
 ])
 _GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
 
-_GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
+_GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE and _NETWORKX_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
     'image': _IMAGE_AVAILABLE,
