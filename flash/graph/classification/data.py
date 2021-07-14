@@ -14,30 +14,27 @@
 from typing import Any, Callable, Dict, Optional, Sequence
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
 from flash.graph.data import GraphDatasetDataSource
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     from torch_geometric.data.batch import Batch
-
-# See https://1176-333857397-gh.circle-artifacts.com/0/html/task_template.html
 
 
 class GraphClassificationPreprocess(Preprocess):
 
+    @requires_extras("graph")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        num_features: int = 128  # todo: do we want to add backbone here as in text?
+        num_features: int = 128,
     ):
         self.num_features = num_features
-        if not _TORCH_GEOMETRIC_AVAILABLE:
-            raise ModuleNotFoundError("Please, pip install -e '.[graph]'")
 
         super().__init__(
             train_transform=train_transform,
@@ -58,7 +55,7 @@ class GraphClassificationPreprocess(Preprocess):
         return cls(**state_dict)
 
     def collate(self, samples: Sequence) -> Any:
-        return {DefaultDataKeys.INPUT: Batch.from_data_list([s[DefaultDataKeys.INPUT] for s in samples])}
+        return Batch.from_data_list(samples)
 
 
 class GraphClassificationData(DataModule):

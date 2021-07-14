@@ -11,24 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
+from typing import Any, Mapping, Optional
 
 from torch.utils.data import Dataset
 
 from flash.core.data.data_source import DatasetDataSource
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
 
-if _TORCH_GEOMETRIC_AVAILABLE:
-    from torch_geometric.data import Dataset as PyGDataset
+if _GRAPH_AVAILABLE:
+    from torch_geometric.data import Data
+    from torch_geometric.data import Dataset as TorchGeometricDataset
 
 
 class GraphDatasetDataSource(DatasetDataSource):
 
     @requires_extras("graph")
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
-        data = super().load_data(data, dataset)
+        data = super().load_data(data, dataset=dataset)
         if self.training:
-            if isinstance(data, PyGDataset):
+            if isinstance(data, TorchGeometricDataset):
                 dataset.num_classes = data.num_classes
                 dataset.num_features = data.num_features
         return data
+
+    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+        if isinstance(sample, Data):
+            return sample
+        return super().load_sample(sample, dataset=dataset)
