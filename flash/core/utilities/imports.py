@@ -86,6 +86,9 @@ _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
 _ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
+_TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
+_TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
+_TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -106,6 +109,7 @@ _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE
 _AUDIO_AVAILABLE = all([
     _ASTEROID_AVAILABLE,
 ])
+_GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
     'image': _IMAGE_AVAILABLE,
@@ -115,6 +119,7 @@ _EXTRAS_AVAILABLE = {
     'pointcloud': _POINTCLOUD_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
     'audio': _AUDIO_AVAILABLE,
+    'graph': _GRAPH_AVAILABLE,
 }
 
 

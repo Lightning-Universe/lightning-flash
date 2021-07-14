@@ -57,6 +57,10 @@ jobs:
             python-version: 3.8
             requires: 'latest'
             topic: ['serve']
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: ['graph']
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
@@ -113,6 +117,7 @@ jobs:
       run: |
         python --version
         pip --version
+        pip install torch>=1.8
         pip install '.[${{ join(matrix.topic,',') }}]' --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install '.[test]' --pre --upgrade
         pip list
