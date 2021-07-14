@@ -83,6 +83,7 @@ _GRAPHVIZ_AVAILABLE = _module_available("graphviz")
 _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
+_ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
 
 if Version:
@@ -103,6 +104,9 @@ _IMAGE_AVAILABLE = all([
     _SEGMENTATION_MODELS_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
+_AUDIO_AVAILABLE = all([
+    _ASTEROID_AVAILABLE,
+])
 
 _EXTRAS_AVAILABLE = {
     'image': _IMAGE_AVAILABLE,
@@ -110,6 +114,7 @@ _EXTRAS_AVAILABLE = {
     'text': _TEXT_AVAILABLE,
     'video': _VIDEO_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
+    'audio': _AUDIO_AVAILABLE,
 }
 
 
