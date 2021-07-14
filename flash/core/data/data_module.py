@@ -942,13 +942,13 @@ class DataModule(pl.LightningDataModule):
             # In the case where the data is of the form:
             # {
             #     "version": 0.0.x,
-            #     "data": {
+            #     "data": [
             #         {
             #             "input_field" : "input_data",
             #             "target_field" : "target_output"
             #         },
             #         ...
-            #     }
+            #     ]
             # }
 
             data_module = DataModule.from_json(
