@@ -290,7 +290,7 @@ class _Postprocessor(torch.nn.Module):
     @staticmethod
     def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
         if isinstance(batch, Mapping):
-            return batch, batch.get(DefaultDataKeys.METADATA, None)
+            return batch, batch.pop(DefaultDataKeys.METADATA, None)
         return batch, None
 
     def forward(self, batch: Sequence[Any]):
@@ -331,7 +331,6 @@ class _Postprocessor(torch.nn.Module):
 def default_uncollate(batch: Any):
     """
     This function is used to uncollate a batch into samples.
-
     Examples:
         >>> a, b = default_uncollate(torch.rand((2,1)))
     """

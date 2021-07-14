@@ -170,6 +170,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         """
         x, y = batch
         y_hat = self(x)
+        y, y_hat = self.apply_filtering(y, y_hat)
         output = {"y_hat": y_hat}
         y_hat = self.to_loss_format(output["y_hat"])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
@@ -189,6 +190,10 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         output["logs"] = logs
         output["y"] = y
         return output
+
+    @staticmethod
+    def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        return y, y_hat
 
     @staticmethod
     def to_loss_format(x: torch.Tensor) -> torch.Tensor:

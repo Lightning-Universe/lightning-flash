@@ -283,8 +283,8 @@ class DataModule(pl.LightningDataModule):
         if self.sampler is None:
             shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
 
-        if isinstance(getattr(self, "model", None), flash.Task):
-            return self.model.process_train_dataset(
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_train_dataset(
                 train_ds,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
@@ -311,8 +311,8 @@ class DataModule(pl.LightningDataModule):
         collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
         pin_memory = True
 
-        if isinstance(getattr(self, "model", None), flash.Task):
-            return self.model.process_val_dataset(
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_val_dataset(
                 val_ds,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
@@ -333,8 +333,8 @@ class DataModule(pl.LightningDataModule):
         collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
         pin_memory = True
 
-        if isinstance(getattr(self, "model", None), flash.Task):
-            return self.model.process_test_dataset(
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_test_dataset(
                 test_ds,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
@@ -360,8 +360,8 @@ class DataModule(pl.LightningDataModule):
         collate_fn = self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
         pin_memory = True
 
-        if isinstance(getattr(self, "model", None), flash.Task):
-            return self.model.process_test_dataset(
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_test_dataset(
                 predict_ds,
                 batch_size=batch_size,
                 num_workers=self.num_workers,

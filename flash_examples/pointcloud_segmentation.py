@@ -13,33 +13,33 @@
 # limitations under the License.
 import flash
 from flash.core.data.utils import download_data
-from flash.core.pipeline import Pipeline
-from flash.pointcloud import PointCloudSegmentation, PointCloudSegmentationData
+from flash.pointcloud import launch_app, PointCloudSegmentation, PointCloudSegmentationData
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/
-download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiSmall.zip", "data/")
+download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiTiny.zip", "data/")
 
 datamodule = PointCloudSegmentationData.from_folders(
-    train_folder="data/SemanticKittiSmall/train",
-    val_folder='data/SemanticKittiSmall/val',
-    num_workers=2,
-    batch_size=2,
+    train_folder="data/SemanticKittiTiny/train",
+    val_folder='data/SemanticKittiTiny/val',
 )
 
 # 2. Build the task
 model = PointCloudSegmentation(backbone="randlanet_semantic_kitti", num_classes=datamodule.num_classes)
-pipeline = Pipeline(model, datamodule)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(fast_dev_run=True, gpus=1)
-trainer.fit(pipeline)
+trainer = flash.Trainer(max_epochs=1, limit_train_batches=0, limit_val_batches=1, num_sanity_val_steps=0)
+trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?
-predictions = pipeline.predict([
-    "data/SemanticKittiSmall/val/02/scans/000000.bin",
-    "data/SemanticKittiSmall/val/02/scans/000001.bin",
+predictions = model.predict([
+    "data/SemanticKittiTiny/predict/000000.bin",
+    "data/SemanticKittiTiny/predict/000001.bin",
 ])
 
 # 5. Save the model!
 trainer.save_checkpoint("pointcloud_segmentation_model.pt")
+
+# 6. Visualize
+app = launch_app(datamodule)
+app.show_predictions(predictions)
