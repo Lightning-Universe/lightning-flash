@@ -79,6 +79,7 @@ Lightning Flash
    api/tabular
    api/text
    api/video
+   api/graph
 
 .. toctree::
    :maxdepth: 1
