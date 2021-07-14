@@ -1,3 +1,4 @@
+from flash.graph.embedding.model import GraphEmbedder
 import random
 
 import networkx as nx
@@ -34,7 +35,7 @@ dm = GraphClassificationData.from_datasets(
     num_features=num_features,
 )
 # 2. Build the task
-model = GraphClassifier(num_classes=dm.num_classes)
+model = GraphEmbedder(num_classes=dm.num_classes)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1)

@@ -111,7 +111,6 @@ class GraphClassifier(ClassificationTask):
 
     def __init__(
         self,
-        num_features: int,
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "GraphUNet",
         backbone_kwargs: Optional[Dict] = {'depth': 4},
@@ -140,12 +139,12 @@ class GraphClassifier(ClassificationTask):
         self.save_hyperparameters()
 
         if isinstance(backbone, tuple):
-            self.backbone, num_features = backbone
+            self.backbone, num_out_features = backbone
         else:
-            self.backbone, num_features = self.backbones.get(backbone)(pretrained=False, **backbone_kwargs)
+            self.backbone, num_out_features = self.backbones.get(backbone)(pretrained=False, **backbone_kwargs)
 
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
+        head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
+        self.head = head or nn.Sequential(nn.Linear(num_out_features, num_classes), )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])

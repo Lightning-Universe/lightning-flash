@@ -22,6 +22,8 @@ Task
 
 .. automodule:: flash.graph.classification.model
 
+.. automodule:: flash.graph.embedder.model
+
 General
 _______
 
