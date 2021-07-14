@@ -81,10 +81,10 @@ class AudioDataSource(DataSource):
         return ex
 
     def load_data(
-            self,
-            data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
-            dataset: Optional[Any] = None,
-            columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
+        self,
+        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        dataset: Optional[Any] = None,
+        columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
         file, input, target = data
 
@@ -115,13 +115,13 @@ class AudioDataSource(DataSource):
 class SpeechRecognitionPreprocess(Preprocess):
 
     def __init__(
-            self,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            backbone: str = "facebook/wav2vec2-base-960h",
-            max_length: int = 128,
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        backbone: str = "facebook/wav2vec2-base-960h",
+        max_length: int = 128,
     ):
         self.backbone = backbone
         self.max_length = max_length
@@ -167,7 +167,11 @@ class SpeechRecognitionPreprocess(Preprocess):
 
 class SpeechRecognitionPostprocess(Postprocess):
 
-    def __init__(self, save_path: Optional[str] = None, backbone: str = "facebook/wav2vec2-base-960h",):
+    def __init__(
+        self,
+        save_path: Optional[str] = None,
+        backbone: str = "facebook/wav2vec2-base-960h",
+    ):
         super().__init__(save_path=save_path)
         self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(backbone)
 

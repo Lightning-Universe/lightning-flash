@@ -28,12 +28,12 @@ if _TEXT_AVAILABLE:
 class SpeechRecognition(Task):
 
     def __init__(
-            self,
-            backbone: str = "facebook/wav2vec2-base-960h",
-            loss_fn: Optional[Callable] = None,
-            optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-            learning_rate: float = 1e-2,
-            serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        self,
+        backbone: str = "facebook/wav2vec2-base-960h",
+        loss_fn: Optional[Callable] = None,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        learning_rate: float = 1e-2,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
         self.save_hyperparameters()
 
