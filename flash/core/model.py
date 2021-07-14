@@ -714,15 +714,17 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         sampler: Optional[Sampler] = None,
         convert_to_dataloader: bool = True,
     ) -> DataLoader:
-        return DataLoader(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            collate_fn=collate_fn
-        )
+        if convert_to_dataloader:
+            return DataLoader(
+                dataset,
+                batch_size=batch_size,
+                num_workers=num_workers,
+                pin_memory=pin_memory,
+                shuffle=shuffle,
+                drop_last=drop_last,
+                collate_fn=collate_fn
+            )
+        return dataset
 
     def process_train_dataset(
         self,
