@@ -62,7 +62,7 @@ Serving
 *******
 
 The :class:`~flash.image.classification.model.ImageClassifier` is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
 .. literalinclude:: ../../../flash_examples/serve/image_classification/inference_server.py

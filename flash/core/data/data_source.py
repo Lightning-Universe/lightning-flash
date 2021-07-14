@@ -42,7 +42,7 @@ from torch.utils.data.dataset import Dataset
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -484,15 +484,15 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
 
     def __init__(self, label_field: str = "ground_truth"):
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
         super().__init__()
         self.label_field = label_field
 
     @property
+    @requires("fiftyone")
     def label_cls(self):
         return fol.Label
 
+    @requires("fiftyone")
     def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
@@ -523,6 +523,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         } for f, t in zip(filepaths, targets)]
 
     @staticmethod
+    @requires("fiftyone")
     def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
