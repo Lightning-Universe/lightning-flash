@@ -107,7 +107,7 @@ if _POINTCLOUD_AVAILABLE:
             if isinstance(data, list):
                 if not all(isfile(p) for p in data):
                     raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
-                root_dir = split(self.path_list[0])[0]
+                root_dir = split(data[0])[0]
             elif isinstance(data, str):
                 if not isdir(data) and not isfile(data):
                     raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")

@@ -122,7 +122,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def __init__(
         self,
         model: Optional[nn.Module] = None,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = torch.nn.functional.cross_entropy,
+        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
@@ -153,7 +153,6 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
-        self._data_source: Optional[DataSource] = None
 
         # TODO: create enum values to define what are the exact states
         self._data_pipeline_state: Optional[DataPipelineState] = None
@@ -254,7 +253,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
-        x = list(self.process_predict_dataset(dataset, 1, 0, False, lambda x: x, convert_to_dataloader=False))
+        x = list(self.process_predict_dataset(dataset, convert_to_dataloader=False))
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
@@ -428,7 +427,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 getattr(data_pipeline, '_serializer', None),
             )
 
-        data_source = data_source or old_data_source or self._data_source
+        data_source = data_source or old_data_source
 
         if isinstance(data_source, str):
             if preprocess is None:
@@ -440,7 +439,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
-        self._data_pipeline_state = DataPipelineState()
+        self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
@@ -470,8 +469,6 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
-
-        self._data_source = getattr(data_pipeline, 'data_source', None)
 
         # self._preprocess.state_dict()
         if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
@@ -697,10 +694,9 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         if self._data_pipeline_state is not None:
             self._data_pipeline_state.set_state(state)
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
-        self._data_pipeline_state = data_pipeline_state
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
         for state in self._state.values():
-            self._data_pipeline_state.set_state(state)
+            data_pipeline_state.set_state(state)
 
     def _process_dataset(
         self,
@@ -795,10 +791,10 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def process_predict_dataset(
         self,
         dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        batch_size: int = 1,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        collate_fn: Callable = lambda x: x,
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,

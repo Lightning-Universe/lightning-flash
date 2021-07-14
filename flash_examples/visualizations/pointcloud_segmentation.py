@@ -13,7 +13,7 @@
 # limitations under the License.
 import flash
 from flash.core.data.utils import download_data
-from flash.pointcloud import PointCloudSegmentation, PointCloudSegmentationData
+from flash.pointcloud import launch_app, PointCloudSegmentation, PointCloudSegmentationData
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/
@@ -28,7 +28,7 @@ datamodule = PointCloudSegmentationData.from_folders(
 model = PointCloudSegmentation(backbone="randlanet_semantic_kitti", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1, num_sanity_val_steps=0)
+trainer = flash.Trainer(max_epochs=1, limit_train_batches=0, limit_val_batches=0, num_sanity_val_steps=0)
 trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?
@@ -39,3 +39,7 @@ predictions = model.predict([
 
 # 5. Save the model!
 trainer.save_checkpoint("pointcloud_segmentation_model.pt")
+
+# 6. Optional Visualize
+app = launch_app(datamodule)
+app.show_predictions(predictions)
