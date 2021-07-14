@@ -32,6 +32,11 @@ if _SEGMENTATION_MODELS_AVAILABLE:
         short_name = encoder_name
         if short_name.startswith("timm-"):
             short_name = encoder_name[5:]
+
+        available_weights = smp.encoders.encoders[encoder_name]["pretrained_settings"].keys()
         SEMANTIC_SEGMENTATION_BACKBONES(
-            partial(_load_smp_backbone, backbone=encoder_name), name=short_name, namespace="image/segmentation"
+            partial(_load_smp_backbone, backbone=encoder_name),
+            name=short_name,
+            namespace="image/segmentation",
+            weights_paths=available_weights,
         )
