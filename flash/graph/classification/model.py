@@ -14,20 +14,18 @@
 from typing import Any, Callable, List, Mapping, Sequence, Type, Union
 
 import torch
-from pytorch_lightning.metrics import Accuracy
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
-from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 
 if _TORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
-    MessagePassing = type(object)
-    GCNConv = object
+    MessagePassing = None
+    GCNConv = None
 
 
 class GraphBlock(nn.Module):
@@ -38,8 +36,8 @@ class GraphBlock(nn.Module):
         self.norm = BatchNorm(nc_output)
         self.act = act
 
-    def forward(self, x, edge_index, batch):
-        x = self.conv(x, edge_index)
+    def forward(self, x, edge_index, edge_weight):
+        x = self.conv(x, edge_index, edge_weight=edge_weight)
         x = self.norm(x)
         return self.act(x)
 
@@ -68,15 +66,16 @@ class BaseGraphModel(nn.Module):
             graph_block = GraphBlock(nc_input, nc_output, conv_cls, act, **conv_kwargs)
             self.blocks.append(graph_block)
 
-        self.lin = Linear(nc_output, num_classes, act, **conv_kwargs)
+        self.lin = Linear(nc_output, num_classes)
 
-    def forward(self, x, edge_index, batch):
+    def forward(self, data):
+        x, edge_index, edge_weight = data.x, data.edge_index, data.edge_attr
         # 1. Obtain node embeddings
         for block in self.blocks:
-            x = block(x, edge_index, batch)
+            x = block(x, edge_index, edge_weight)
 
         # 2. Readout layer
-        x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
+        x = global_mean_pool(x, data.batch)  # [batch_size, hidden_channels]
 
         # 3. Apply a final classifier
         x = F.dropout(x, p=0.5, training=self.training)
@@ -100,6 +99,8 @@ class GraphClassifier(ClassificationTask):
         conv_cls: kind of convolution used in model, defaults to GCNConv
     """
 
+    required_extras = "graph"
+
     def __init__(
         self,
         num_features: int,
@@ -107,7 +108,7 @@ class GraphClassifier(ClassificationTask):
         hidden_channels: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
+        metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         model: torch.nn.Module = None,
         conv_cls: Type[MessagePassing] = GCNConv,
@@ -131,32 +132,16 @@ class GraphClassifier(ClassificationTask):
         )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (
-            batch[DefaultDataKeys.INPUT],
-            batch[DefaultDataKeys.INPUT].y,
-        )
+        batch = (batch, batch.y)
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (
-            batch[DefaultDataKeys.INPUT],
-            batch[DefaultDataKeys.INPUT].y,
-        )
+        batch = (batch, batch.y)
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (
-            batch[DefaultDataKeys.INPUT],
-            batch[DefaultDataKeys.INPUT].y,
-        )
+        batch = (batch, batch.y)
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return super().predict_step(batch[DefaultDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
-
-    def forward(self, data) -> Any:
-        edge_index = data.edge_index
-        if not edge_index:
-            edge_index = data.adj_t
-        x = self.model(data.x, edge_index, data.batch)
-        return x
+        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)

@@ -28,7 +28,7 @@ class GraphDatasetDataSource(DatasetDataSource):
     @requires_extras("graph")
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
         data = super().load_data(data, dataset=dataset)
-        if self.training:
+        if not self.predicting:
             if isinstance(data, TorchGeometricDataset):
                 dataset.num_classes = data.num_classes
                 dataset.num_features = data.num_features
