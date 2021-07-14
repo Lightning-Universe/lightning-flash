@@ -11,26 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from typing import Sequence, Tuple, Union
+from typing import Any
 
 from torch.utils.data import Dataset
 
-from flash.core.data.auto_dataset import AutoDataset
-from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, SequenceDataSource
-from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
+from flash.core.data.data_source import DatasetDataSource
+from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE, requires_extras
 
-if _PYTORCH_GEOMETRIC_AVAILABLE:
-    from torch_geometric.data import Data as PyGData
+if _TORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.data import Dataset as PyGDataset
 
 
-class GraphDatasetSource(DatasetDataSource):
+class GraphDatasetDataSource(DatasetDataSource):
 
-    def load_data(self, dataset: Dataset, auto_dataset: AutoDataset) -> Dataset:
-        data = super().load_data(dataset, auto_dataset)
+    @requires_extras("graph")
+    def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
+        data = super().load_data(data, dataset)
         if self.training:
-            if isinstance(dataset, PyGDataset):
-                auto_dataset.num_classes = dataset.num_classes
-                auto_dataset.num_features = dataset.num_features
+            if isinstance(data, PyGDataset):
+                dataset.num_classes = data.num_classes
+                dataset.num_features = data.num_features
         return data

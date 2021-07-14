@@ -34,3 +34,4 @@ if "FLASH_TEST_TOPIC" in os.environ:
     _TABULAR_TESTING = topic == "tabular"
     _TEXT_TESTING = topic == "text"
     _SERVE_TESTING = topic == "serve"
+    _GRAPH_TESTING = topic == "graph"

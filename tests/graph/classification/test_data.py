@@ -11,27 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import random
 from pathlib import Path
 
 import networkx as nx
 import pytest
-from torch.functional import Tensor
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess
 
-if _PYTORCH_GEOMETRIC_AVAILABLE:
+if _TORCH_GEOMETRIC_AVAILABLE:
     import torch_geometric
-    from torch_geometric.data import data as PyGData
-    from torch_geometric.data import Dataset, download_url
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
 
 
-@pytest.mark.skipif(not _PYTORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed.")
+@pytest.mark.skipif(not _TORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed.")
 class TestTemplatePreprocess:
     """Tests ``TemplatePreprocess``."""
 
@@ -41,7 +37,7 @@ class TestTemplatePreprocess:
         assert prep is not None
 
 
-@pytest.mark.skipif(not _PYTORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed")
+@pytest.mark.skipif(not _TORCH_GEOMETRIC_AVAILABLE, reason="pytorch geometric isn't installed")
 class TestGraphClassificationData:
     """Tests ``estGraphClassificationData``."""
 

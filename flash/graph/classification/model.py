@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from types import FunctionType
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, List, Mapping, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
 from pytorch_lightning.metrics import Accuracy
 from torch import nn
@@ -23,11 +21,9 @@ from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
-from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 
-if _PYTORCH_GEOMETRIC_AVAILABLE:
+if _TORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
     MessagePassing = type(object)

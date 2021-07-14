@@ -7,8 +7,3 @@ numpy
 pandas<1.3.0
 packaging
 tqdm
-networkx
-torch_geometric
-torch_sparse
-torch_scatter
-torch-spline-conv
