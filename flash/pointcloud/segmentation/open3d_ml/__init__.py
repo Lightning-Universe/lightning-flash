@@ -43,6 +43,27 @@ def register_open_3d_ml(register: FlashRegistry):
             return batcher.collate_fn
 
         @register
+        def randlanet_s3dis(*args, use_fold_5: bool = True, **kwargs) -> RandLANet:
+            cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_s3dis.yml"))
+            model = RandLANet(**cfg.model)
+            if use_fold_5:
+                weight_url = os.path.join(ROOT_URL, "randlanet_s3dis_area5_202010091333utc.pth")
+            else:
+                weight_url = os.path.join(ROOT_URL, "randlanet_s3dis_202010091238.pth")
+            model.load_state_dict(pl_load(weight_url, map_location='cpu')['model_state_dict'])
+            return model, 32, get_collate_fn(model)
+
+        @register
+        def randlanet_toronto3d(*args, **kwargs) -> RandLANet:
+            cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_toronto3d.yml"))
+            model = RandLANet(**cfg.model)
+            model.load_state_dict(
+                pl_load(os.path.join(ROOT_URL, "randlanet_toronto3d_202010091306utc.pth"),
+                        map_location='cpu')['model_state_dict'],
+            )
+            return model, 32, get_collate_fn(model)
+
+        @register
         def randlanet_semantic_kitti(*args, **kwargs) -> RandLANet:
             cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_semantickitti.yml"))
             model = RandLANet(**cfg.model)
@@ -50,4 +71,9 @@ def register_open_3d_ml(register: FlashRegistry):
                 pl_load(os.path.join(ROOT_URL, "randlanet_semantickitti_202009090354utc.pth"),
                         map_location='cpu')['model_state_dict'],
             )
+            return model, 32, get_collate_fn(model)
+
+        @register
+        def randlanet(*args, **kwargs) -> RandLANet:
+            model = RandLANet(*args, **kwargs)
             return model, 32, get_collate_fn(model)

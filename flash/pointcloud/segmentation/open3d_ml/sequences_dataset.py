@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 from os.path import basename, dirname, exists, isdir, isfile, join, split
-from typing import Sequence
 
 import numpy as np
 import yaml
@@ -104,12 +103,28 @@ if _POINTCLOUD_AVAILABLE:
                 for scan_name in os.listdir(scan_dir):
                     self.path_list.append(join(scan_dir, scan_name))
 
-        def on_predict(self, inputs):
-            if isinstance(inputs, Sequence) and not all(isfile(p) for p in inputs):
-                raise MisconfigurationException("The predict function takes only a list of paths")
-            self.path_list = inputs
+        def on_predict(self, data):
+            if isinstance(data, list):
+                if not all(isfile(p) for p in data):
+                    raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+                root_dir = split(self.path_list[0])[0]
+            elif isinstance(data, str):
+                if not isdir(data) and not isfile(data):
+                    raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+                if isdir(data):
+                    root_dir = data
+                    data = [os.path.join(root_dir, f) for f in os.listdir(root_dir) if ".bin" in f]
+                elif isfile(data):
+                    root_dir = dirname(data)
+                    data = [data]
+                else:
+                    raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+            else:
+                raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+
+            self.path_list = data
             self.split = "predict"
-            self.load_meta(split(self.path_list[0])[0])
+            self.load_meta(root_dir)
 
         def get_label_to_names(self):
             """Returns a label to names dictonary object.
