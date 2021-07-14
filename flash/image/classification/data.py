@@ -427,7 +427,10 @@ class MatplotlibVisualization(BaseVisualization):
         fig, axs = plt.subplots(rows, cols)
         fig.suptitle(title)
 
-        for i, ax in enumerate(axs.ravel()):
+        if not isinstance(axs, np.ndarray):
+            axs = [axs]
+
+        for i, ax in enumerate(axs):
             # unpack images and labels
             if isinstance(data, list):
                 _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")
