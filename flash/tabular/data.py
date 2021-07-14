@@ -166,6 +166,7 @@ class TabularPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        data_sources: Optional[Dict[str, Callable]] = None,
         cat_cols: Optional[List[str]] = None,
         num_cols: Optional[List[str]] = None,
         target_col: Optional[str] = None,
@@ -192,7 +193,7 @@ class TabularPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            data_sources=data_sources or {
                 DefaultDataSources.CSV: TabularCSVDataSource(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
