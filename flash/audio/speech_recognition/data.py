@@ -13,8 +13,7 @@
 # limitations under the License.
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, List, Optional, Union
-from typing import Callable, Mapping, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import soundfile as sf
 import torch
