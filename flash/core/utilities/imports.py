@@ -86,7 +86,6 @@ _PIL_AVAILABLE = _module_available("PIL")
 _ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
 
-
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
 
