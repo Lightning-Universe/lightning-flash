@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Optional
 
 from torch import nn
 
@@ -38,7 +37,6 @@ if _SEGMENTATION_MODELS_AVAILABLE:
         pretrained: bool = True,
         num_classes: int = 1,
         in_channels: int = 3,
-        weights_path: Optional[str] = None,
         **kwargs,
     ) -> nn.Module:
 
@@ -48,7 +46,6 @@ if _SEGMENTATION_MODELS_AVAILABLE:
         encoder_weights = None
         if pretrained:
             encoder_weights = "imagenet"
-        encoder_weights = encoder_weights or weights_path
 
         return smp.create_model(
             arch=head,
