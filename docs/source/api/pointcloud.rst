@@ -17,8 +17,9 @@ ____________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~segmentation.data.PointCloudSegmentationData
-    ~segmentation.data.PointCloudSegmentationPreprocess
-    ~segmentation.data.PointCloudSegmentationFoldersDataSource
-    ~segmentation.data.PointCloudSegmentationDatasetDataSource
     ~segmentation.model.PointCloudSegmentation
+    ~segmentation.data.PointCloudSegmentationData
+
+    segmentation.data.PointCloudSegmentationPreprocess
+    segmentation.data.PointCloudSegmentationFoldersDataSource
+    segmentation.data.PointCloudSegmentationDatasetDataSource
