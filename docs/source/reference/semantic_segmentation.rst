@@ -51,7 +51,7 @@ Serving
 *******
 
 The :class:`~flash.image.segmentation.model.SemanticSegmentation` task is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
 .. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/inference_server.py
