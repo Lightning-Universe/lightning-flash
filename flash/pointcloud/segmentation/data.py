@@ -4,7 +4,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import Deserializer
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, requires_extras
 
 if _POINTCLOUD_AVAILABLE:
     from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesDataset
@@ -36,6 +36,7 @@ class PointCloudSegmentationDatasetDataSource(DataSource):
 
 class PointCloudSegmentationFoldersDataSource(DataSource):
 
+    @requires_extras("pointcloud")
     def load_data(
         self,
         folder: Any,
@@ -49,6 +50,7 @@ class PointCloudSegmentationFoldersDataSource(DataSource):
 
         return range(len(sequence_dataset))
 
+    @requires_extras("pointcloud")
     def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
 
         sample = dataset.dataset[index]
