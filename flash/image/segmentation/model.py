@@ -77,7 +77,7 @@ class SemanticSegmentation(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
-        pretrained: bool = True,
+        pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
@@ -155,6 +155,16 @@ class SemanticSegmentation(ClassificationTask):
             raise NotImplementedError(f"Unsupported output type: {type(res)}")
 
         return out
+
+    @classmethod
+    def available_pretrained_weights(cls, backbone: str):
+        result = cls.backbones.get(backbone, with_metadata=True)
+        pretrained_weights = None
+
+        if "weights_paths" in result["metadata"]:
+            pretrained_weights = list(result["metadata"]["weights_paths"])
+
+        return pretrained_weights
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
