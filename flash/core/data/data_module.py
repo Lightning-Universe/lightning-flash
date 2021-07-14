@@ -871,6 +871,7 @@ class DataModule(pl.LightningDataModule):
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            field: To specify the field that holds the data in the JSON file.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -886,6 +887,28 @@ class DataModule(pl.LightningDataModule):
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,
                 },
+            )
+
+            # In the case where the data is of the form:
+            # {
+            #     "version": 0.0.x,
+            #     "data": {
+            #         {
+            #             "input_field" : "input_data",
+            #             "target_field" : "target_output"
+            #         },
+            #         ...
+            #     }
+            # }
+
+            data_module = DataModule.from_json(
+                "input",
+                "target",
+                train_file="train_data.json",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+                feild="data"
             )
         """
         return cls.from_data_source(
