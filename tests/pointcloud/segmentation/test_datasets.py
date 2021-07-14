@@ -11,31 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
-import torch
+from unittest.mock import patch
 
-from flash.pointcloud.segmentation import PointCloudSegmentation
+import pytest
+
+from flash.pointcloud.segmentation.datasets import LyftDataset, SemanticKITTIDataset
 from tests.helpers.utils import _POINTCLOUD_TESTING
 
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
-def test_backbones():
+@patch("flash.pointcloud.segmentation.datasets.os.system")
+def test_datasets(mock_system):
 
-    backbones = PointCloudSegmentation.available_backbones()
-    assert backbones == ['randlanet', 'randlanet_s3dis', 'randlanet_semantic_kitti', 'randlanet_toronto3d']
+    LyftDataset("data")
+    assert mock_system.call_count == 2
+    assert "lyft" in mock_system.call_args_list[0][0][0]
+    assert "data" in mock_system.call_args_list[0][0][0]
+    assert "lyft" in mock_system.call_args_list[1][0][0]
+    assert "data" in mock_system.call_args_list[1][0][0]
 
-
-@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
-@pytest.mark.parametrize(
-    "backbone",
-    [
-        "randlanet",
-        "randlanet_s3dis",
-        "randlanet_toronto3d",
-        "randlanet_semantic_kitti",
-    ],
-)
-def test_models(backbone):
-    num_classes = 13
-    model = PointCloudSegmentation(backbone=backbone, num_classes=num_classes)
-    assert model.head.weight.shape == torch.Size([13, 32])
+    mock_system.reset_mock()
+    SemanticKITTIDataset("data")
+    assert mock_system.call_count == 1
+    assert "semantickitti" in mock_system.call_args_list[0][0][0]
+    assert "data" in mock_system.call_args_list[0][0][0]
