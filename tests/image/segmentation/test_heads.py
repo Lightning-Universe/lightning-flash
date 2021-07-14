@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import unittest.mock
+
 import pytest
 import torch
 
 from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
+from flash.image.segmentation import SemanticSegmentation
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 
@@ -37,3 +40,25 @@ def test_semantic_segmentation_heads_registry(head):
     if isinstance(res, dict):
         res = res["out"]
     assert res.shape[1] == 10
+
+
+@unittest.mock.patch("flash.image.segmentation.heads.smp")
+def test_pretrained_weights(mock_smp):
+    mock_smp.create_model = unittest.mock.MagicMock()
+    available_weights = SemanticSegmentation.available_pretrained_weights("resnet18")
+    backbone = SEMANTIC_SEGMENTATION_BACKBONES.get("resnet18")()
+    SEMANTIC_SEGMENTATION_HEADS.get("unet")(backbone=backbone, num_classes=10, pretrained=True)
+
+    kwargs = {
+        'arch': 'unet',
+        'classes': 10,
+        'encoder_name': 'resnet18',
+        'in_channels': 3,
+        "encoder_weights": "imagenet"
+    }
+    mock_smp.create_model.assert_called_with(**kwargs)
+
+    for weight in available_weights:
+        SEMANTIC_SEGMENTATION_HEADS.get("unet")(backbone=backbone, num_classes=10, pretrained=weight)
+        kwargs["encoder_weights"] = weight
+        mock_smp.create_model.assert_called_with(**kwargs)
