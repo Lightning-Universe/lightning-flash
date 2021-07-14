@@ -12,6 +12,8 @@ The task predicts which ‘class’ the graph belongs to.
 A class is a label that indicates the kind of graph.
 For example, a label may indicate whether one molecule interacts with another.
 
+The :class:`~flash.graph.classification.model.GraphClassifier` and :class:`~flash.graph.classification.data.GraphClassificationData` classes internally rely on `pytorch-geometric <https://github.com/rusty1s/pytorch_geometric>`_.
+
 ------
 
 *******
