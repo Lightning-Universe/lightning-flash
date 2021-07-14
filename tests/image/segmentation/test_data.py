@@ -9,7 +9,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -49,22 +49,23 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
 
 class TestSemanticSegmentationPreprocess:
 
-    @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     @staticmethod
+    @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     def test_smoke():
         prep = SemanticSegmentationPreprocess(num_classes=1)
         assert prep is not None
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestSemanticSegmentationData:
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_smoke():
         dm = SemanticSegmentationData()
         assert dm is not None
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_folders(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -126,6 +127,7 @@ class TestSemanticSegmentationData:
         assert labels.shape == (2, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_folders_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -168,6 +170,7 @@ class TestSemanticSegmentationData:
         assert labels.shape == (1, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_files(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -226,6 +229,7 @@ class TestSemanticSegmentationData:
         assert labels.shape == (2, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_files_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -258,8 +262,9 @@ class TestSemanticSegmentationData:
                 num_classes=num_classes
             )
 
-    @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     def test_from_fiftyone(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -328,6 +333,8 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
     def test_map_labels(tmpdir):
         tmp_dir = Path(tmpdir)
 
