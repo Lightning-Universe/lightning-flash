@@ -45,10 +45,10 @@ if _SEGMENTATION_MODELS_AVAILABLE:
             raise NotImplementedError(f"{head} is not implemented! Supported heads -> {SMP_MODELS.keys()}")
 
         encoder_weights = None
-        if pretrained is True:
-            encoder_weights = "imagenet"
-        elif isinstance(pretrained, str):
+        if isinstance(pretrained, str):
             encoder_weights = pretrained
+        elif pretrained:
+            encoder_weights = "imagenet"
 
         return smp.create_model(
             arch=head,
