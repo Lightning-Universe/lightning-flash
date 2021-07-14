@@ -55,9 +55,10 @@ class SpeechRecognition(Task):
         self.save_hyperparameters()
 
     def forward(self, batch: Dict[str, torch.Tensor]):
-        return self.model(input_ids=batch["input_ids"])
+        return self.model(batch["input_values"], labels=batch["labels"])
 
     def step(self, batch, batch_idx, metrics) -> dict:
         out = self(batch)
-        prediction = torch.argmax(out.logits, dim=-1)
-        return prediction
+        out["logs"] = {'loss': out.loss}
+        return out
+
