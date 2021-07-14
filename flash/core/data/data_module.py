@@ -839,7 +839,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
-        field: str = None,
+        field: Optional[str] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given JSON files using the
