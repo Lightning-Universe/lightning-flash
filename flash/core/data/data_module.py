@@ -276,7 +276,10 @@ class DataModule(pl.LightningDataModule):
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
-        drop_last = True
+        if isinstance(train_ds, IterableAutoDataset):
+            drop_last = False
+        else:
+            drop_last = len(train_ds) > self.batch_size
         pin_memory = True
 
         if self.sampler is None:
