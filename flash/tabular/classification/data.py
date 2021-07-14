@@ -21,20 +21,21 @@ if _PANDAS_AVAILABLE:
 else:
     DataFrame = object
 
-from flash.tabular.data import TabularData, TabularPreprocess, TabularDataFrameDataSource
+from flash.tabular.data import TabularData, TabularDataFrameDataSource, TabularPreprocess
 
 
 class TabularClassificationDataFrameDataSource(TabularDataFrameDataSource):
+
     def __init__(
-            self,
-            cat_cols: Optional[List[str]] = None,
-            num_cols: Optional[List[str]] = None,
-            target_col: Optional[str] = None,
-            mean: Optional[DataFrame] = None,
-            std: Optional[DataFrame] = None,
-            codes: Optional[Dict[str, Any]] = None,
-            target_codes: Optional[Dict[str, Any]] = None,
-            classes: Optional[List[str]] = None
+        self,
+        cat_cols: Optional[List[str]] = None,
+        num_cols: Optional[List[str]] = None,
+        target_col: Optional[str] = None,
+        mean: Optional[DataFrame] = None,
+        std: Optional[DataFrame] = None,
+        codes: Optional[Dict[str, Any]] = None,
+        target_codes: Optional[Dict[str, Any]] = None,
+        classes: Optional[List[str]] = None
     ):
         super(TabularClassificationDataFrameDataSource, self).__init__(
             cat_cols=cat_cols,

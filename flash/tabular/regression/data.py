@@ -22,25 +22,27 @@ if _PANDAS_AVAILABLE:
 else:
     DataFrame = object
 
-from flash.tabular.data import TabularData, TabularPreprocess, TabularDataFrameDataSource
 from pytorch_forecasting import TimeSeriesDataSet
+
+from flash.tabular.data import TabularData, TabularDataFrameDataSource, TabularPreprocess
 
 
 class TabularRegressionDataFrameDataSource(TabularDataFrameDataSource):
+
     def __init__(
-            self,
-            time_idx: str,
-            target: Union[str, List[str]],
-            group_ids: List[str],
-            cat_cols: Optional[List[str]] = None,
-            num_cols: Optional[List[str]] = None,
-            target_col: Optional[str] = None,
-            mean: Optional[DataFrame] = None,
-            std: Optional[DataFrame] = None,
-            codes: Optional[Dict[str, Any]] = None,
-            target_codes: Optional[Dict[str, Any]] = None,
-            classes: Optional[List[str]] = None,
-            **data_source_kwargs: Any
+        self,
+        time_idx: str,
+        target: Union[str, List[str]],
+        group_ids: List[str],
+        cat_cols: Optional[List[str]] = None,
+        num_cols: Optional[List[str]] = None,
+        target_col: Optional[str] = None,
+        mean: Optional[DataFrame] = None,
+        std: Optional[DataFrame] = None,
+        codes: Optional[Dict[str, Any]] = None,
+        target_codes: Optional[Dict[str, Any]] = None,
+        classes: Optional[List[str]] = None,
+        **data_source_kwargs: Any
     ):
         self.time_idx = time_idx
         self.target = target
@@ -59,28 +61,29 @@ class TabularRegressionDataFrameDataSource(TabularDataFrameDataSource):
         )
 
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
-        return TimeSeriesDataSet(data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target,
-                                 **self.data_source_kwargs)
+        return TimeSeriesDataSet(
+            data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target, **self.data_source_kwargs
+        )
 
 
 class TabularRegressionPreprocess(TabularPreprocess):
 
     def __init__(
-            self,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            cat_cols: Optional[List[str]] = None,
-            num_cols: Optional[List[str]] = None,
-            target_col: Optional[str] = None,
-            mean: Optional[DataFrame] = None,
-            std: Optional[DataFrame] = None,
-            codes: Optional[Dict[str, Any]] = None,
-            target_codes: Optional[Dict[str, Any]] = None,
-            classes: Optional[List[str]] = None,
-            deserializer: Optional[Deserializer] = None,
-            **data_source_kwargs: Any
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        cat_cols: Optional[List[str]] = None,
+        num_cols: Optional[List[str]] = None,
+        target_col: Optional[str] = None,
+        mean: Optional[DataFrame] = None,
+        std: Optional[DataFrame] = None,
+        codes: Optional[Dict[str, Any]] = None,
+        target_codes: Optional[Dict[str, Any]] = None,
+        classes: Optional[List[str]] = None,
+        deserializer: Optional[Deserializer] = None,
+        **data_source_kwargs: Any
     ):
         super(TabularRegressionPreprocess, self).__init__(
             train_transform=train_transform,
@@ -89,7 +92,15 @@ class TabularRegressionPreprocess(TabularPreprocess):
             predict_transform=predict_transform,
             data_sources={
                 "data_frame": TabularRegressionDataFrameDataSource(
-                    cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression=True,
+                    cat_cols,
+                    num_cols,
+                    target_col,
+                    mean,
+                    std,
+                    codes,
+                    target_codes,
+                    classes,
+                    is_regression=True,
                     **data_source_kwargs
                 ),
             },
@@ -112,32 +123,32 @@ class TabularRegressionData(TabularData):
 
     @classmethod
     def from_data_frame(
-            cls,
-            group_ids: Optional[List[str]] = None,
-            target: Optional[str] = None,
-            time_idx: Optional[str] = None,
-            categorical_fields: Optional[Union[str, List[str]]] = None,
-            numerical_fields: Optional[Union[str, List[str]]] = None,
-            target_fields: Optional[str] = None,
-            train_data_frame: Optional[DataFrame] = None,
-            val_data_frame: Optional[DataFrame] = None,
-            test_data_frame: Optional[DataFrame] = None,
-            predict_data_frame: Optional[DataFrame] = None,
-            min_encoder_length: Optional[int] = None,
-            max_encoder_length: Optional[int] = None,
-            min_prediction_length: Optional[int] = None,
-            max_prediction_length: Optional[int] = None,
-            time_varying_unknown_reals: Optional[List[str]] = None,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            data_fetcher: Optional[BaseDataFetcher] = None,
-            preprocess: Optional[TabularRegressionPreprocess] = None,
-            val_split: Optional[float] = None,
-            batch_size: int = None,
-            num_workers: Optional[int] = None,
-            **preprocess_kwargs: Any,
+        cls,
+        group_ids: Optional[List[str]] = None,
+        target: Optional[str] = None,
+        time_idx: Optional[str] = None,
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
+        target_fields: Optional[str] = None,
+        train_data_frame: Optional[DataFrame] = None,
+        val_data_frame: Optional[DataFrame] = None,
+        test_data_frame: Optional[DataFrame] = None,
+        predict_data_frame: Optional[DataFrame] = None,
+        min_encoder_length: Optional[int] = None,
+        max_encoder_length: Optional[int] = None,
+        min_prediction_length: Optional[int] = None,
+        max_prediction_length: Optional[int] = None,
+        time_varying_unknown_reals: Optional[List[str]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[TabularRegressionPreprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = None,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
     ):
         super().from_data_frame(
             time_idx=time_idx,
