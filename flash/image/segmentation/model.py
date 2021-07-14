@@ -77,7 +77,7 @@ class SemanticSegmentation(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
-        pretrained: bool = True,
+        pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
