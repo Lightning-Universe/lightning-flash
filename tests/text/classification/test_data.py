@@ -44,6 +44,12 @@ TEST_JSON_DATA = """
 {"sentence": "this is a sentence three","lab":0}
 """
 
+TEST_JSON_DATA_FIELD = """{"data": [
+{"sentence": "this is a sentence one","lab":0},
+{"sentence": "this is a sentence two","lab":1},
+{"sentence": "this is a sentence three","lab":0}]}
+"""
+
 
 def csv_data(tmpdir):
     path = Path(tmpdir) / "data.csv"
@@ -54,6 +60,12 @@ def csv_data(tmpdir):
 def json_data(tmpdir):
     path = Path(tmpdir) / "data.json"
     path.write_text(TEST_JSON_DATA)
+    return path
+
+
+def json_data_with_field(tmpdir):
+    path = Path(tmpdir) / "data.json"
+    path.write_text(TEST_JSON_DATA_FIELD)
     return path
 
 
@@ -94,6 +106,18 @@ def test_test_valid(tmpdir):
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
+    batch = next(iter(dm.train_dataloader()))
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_json_with_field(tmpdir):
+    json_path = json_data_with_field(tmpdir)
+    dm = TextClassificationData.from_json(
+        "sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, field="data"
+    )
     batch = next(iter(dm.train_dataloader()))
     assert batch["labels"].item() in [0, 1]
     assert "input_ids" in batch
