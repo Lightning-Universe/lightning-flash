@@ -40,6 +40,6 @@ predictions = model.predict([
 # 5. Save the model!
 trainer.save_checkpoint("pointcloud_segmentation_model.pt")
 
-# 6. Visualize
+# 6. Optional Visualize
 app = launch_app(datamodule)
 app.show_predictions(predictions)

@@ -31,7 +31,7 @@ from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
 from flash.core.finetuning import BaseFinetuning
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
 if _POINTCLOUD_AVAILABLE:
@@ -94,7 +94,8 @@ class PointCloudSegmentation(ClassificationTask):
 
     backbones: FlashRegistry = POINTCLOUD_SEGMENTATION_BACKBONES
 
-    @requires_extras("pointcloud")
+    required_extras: str = "pointcloud"
+
     def __init__(
         self,
         num_classes: int,

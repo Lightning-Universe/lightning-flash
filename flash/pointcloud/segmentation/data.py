@@ -50,7 +50,6 @@ class PointCloudSegmentationFoldersDataSource(DataSource):
 
         return range(len(sequence_dataset))
 
-    @requires_extras("pointcloud")
     def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
 
         sample = dataset.dataset[index]
