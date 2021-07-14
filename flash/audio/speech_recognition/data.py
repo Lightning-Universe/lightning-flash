@@ -65,7 +65,7 @@ class AudioDataSource(DataSource):
     def prepare_dataset(self, batch):
         # check that all files have the correct sampling rate
         assert (
-                len(set(batch["sampling_rate"])) == 1
+            len(set(batch["sampling_rate"])) == 1
         ), f"Make sure all inputs have the same sampling rate of {self.processor.feature_extractor.sampling_rate}."
 
         batch["input_values"] = self.processor(batch["speech"], sampling_rate=batch["sampling_rate"][0]).input_values
