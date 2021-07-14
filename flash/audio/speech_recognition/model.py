@@ -61,4 +61,3 @@ class SpeechRecognition(Task):
         out = self(batch)
         out["logs"] = {'loss': out.loss}
         return out
-

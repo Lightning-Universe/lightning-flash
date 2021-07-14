@@ -118,7 +118,6 @@ class AudioDataSource(DataSource):
         return self.load_data(data, dataset, columns=["input_values"])
 
 
-
 @dataclass
 class DataCollatorCTCWithPadding:
     """
@@ -180,6 +179,7 @@ class DataCollatorCTCWithPadding:
         batch["labels"] = labels
 
         return batch
+
 
 class SpeechRecognitionPreprocess(Preprocess):
 
