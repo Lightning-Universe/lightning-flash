@@ -26,8 +26,16 @@ def test_backbones():
 
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
-def test_models():
-
+@pytest.mark.parametrize(
+    "backbone",
+    [
+        "randlanet",
+        "randlanet_s3dis",
+        "randlanet_toronto3d",
+        "randlanet_semantic_kitti",
+    ],
+)
+def test_models(backbone):
     num_classes = 13
-    model = PointCloudSegmentation(backbone="randlanet", num_classes=num_classes)
+    model = PointCloudSegmentation(backbone=backbone, num_classes=num_classes)
     assert model.head.weight.shape == torch.Size([13, 32])
