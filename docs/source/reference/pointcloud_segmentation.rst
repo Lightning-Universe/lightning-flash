@@ -1,9 +1,9 @@
 
 .. _pointcloud_segmentation:
 
-#######################
-PointCloud Segmentation
-#######################
+########################
+Point Cloud Segmentation
+########################
 
 ********
 The Task
