@@ -1,6 +1,7 @@
 from flash.tabular.classification import (  # noqa: F401
     TabularClassificationData,
     TabularClassificationPreprocess,
+    TabularClassificationDataFrameDataSource,
     TabularClassifier,
 )
 from flash.tabular.data import TabularData  # noqa: F401
