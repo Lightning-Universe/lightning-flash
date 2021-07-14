@@ -24,14 +24,14 @@ datamodule = AudioSourceSeparationData.from_folders(
 )
 
 # 2. Build the task
-model = AudioSourceSeparator(backbone="ConvTasNet", n_src=datamodule.n_src)  # To-Do : lower case, or not?
+model = AudioSourceSeparator(backbone="convtasnet", n_src=datamodule.n_src)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=2)
 # trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few audios! ants or bees?
-predictions = model.predict([                                                   # To-Do : list or string?
+predictions = model.predict([                                                   # To-Do : check if model.predict can have both list and string.
     "MiniLibriMix/val/mix_clean/100-121669-0026_718-129597-0003.wav",
     "MiniLibriMix/val/mix_clean/1025-92820-0032_8410-278217-0015.wav",
     "MiniLibriMix/val/mix_clean/1027-125140-0032_8388-275212-0023.wav",
