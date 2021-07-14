@@ -84,8 +84,8 @@ class BaseGraphModel(nn.Module):
 
 
 class GraphClassifier(ClassificationTask):
-    """Task that classifies graphs.
-    Some documentation https://1176-333857397-gh.circle-artifacts.com/0/html/custom_task.html
+    """The ``GraphClassifier`` is a :class:`~flash.Task` for classifying graphs. For more details, see
+    :ref:`graph_classification`.
 
     Args:
         num_features: Number of columns in table (not including target column).
