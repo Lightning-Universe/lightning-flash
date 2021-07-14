@@ -13,6 +13,7 @@
 # limitations under the License.
 from os.path import join
 
+import pytest
 import torch
 from pytorch_lightning import seed_everything
 
@@ -20,8 +21,10 @@ from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.utils import download_data
 from flash.pointcloud.segmentation import PointCloudSegmentation, PointCloudSegmentationData
+from tests.helpers.utils import _POINTCLOUD_TESTING
 
 
+@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 def test_pointcloud_segmentation_data(tmpdir):
 
     seed_everything(52)

@@ -11,17 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
 import torch
 
 from flash.pointcloud.segmentation import PointCloudSegmentation
+from tests.helpers.utils import _POINTCLOUD_TESTING
 
 
+@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 def test_backbones():
 
     backbones = PointCloudSegmentation.available_backbones()
     assert backbones == ['randlanet', 'randlanet_s3dis', 'randlanet_semantic_kitti', 'randlanet_toronto3d']
 
 
+@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 def test_models():
 
     num_classes = 13
