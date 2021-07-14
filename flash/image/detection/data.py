@@ -18,7 +18,13 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, lazy_import
+from flash.core.utilities.imports import (
+    _COCO_AVAILABLE,
+    _FIFTYONE_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
+    lazy_import,
+    requires,
+)
 from flash.image.data import ImagePathsDataSource
 from flash.image.detection.transforms import default_transforms
 
@@ -39,6 +45,7 @@ if _TORCHVISION_AVAILABLE:
 
 class COCODataSource(DataSource[Tuple[str, str]]):
 
+    @requires("pycocotools")
     def load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         root, ann_file = data
 
@@ -230,6 +237,7 @@ class ObjectDetectionData(DataModule):
     preprocess_cls = ObjectDetectionPreprocess
 
     @classmethod
+    @requires("pycocotools")
     def from_coco(
         cls,
         train_folder: Optional[str] = None,

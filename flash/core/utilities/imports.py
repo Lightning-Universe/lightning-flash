@@ -97,9 +97,6 @@ _IMAGE_AVAILABLE = all([
     _TIMM_AVAILABLE,
     _PIL_AVAILABLE,
     _KORNIA_AVAILABLE,
-    _MATPLOTLIB_AVAILABLE,
-    _COCO_AVAILABLE,
-    _FIFTYONE_AVAILABLE,
     _PYSTICHE_AVAILABLE,
     _SEGMENTATION_MODELS_AVAILABLE,
 ])
@@ -118,21 +115,30 @@ _EXTRAS_AVAILABLE = {
 }
 
 
-def _requires_extras(extras: str):
+def _requires(module_path: str, module_available: bool):
 
     def decorator(func):
+        if not module_available:
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            if not _EXTRAS_AVAILABLE[extras]:
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
                 raise ModuleNotFoundError(
-                    f"Required dependencies not available. Please run: pip install 'lightning-flash[{extras}]'"
+                    f"Required dependencies not available. Please run: pip install '{module_path}'"
                 )
-            return func(*args, **kwargs)
 
-        return wrapper
+            return wrapper
+        else:
+            return func
 
     return decorator
+
+
+def requires(module_path: str):
+    return _requires(module_path, _module_available(module_path))
+
+
+def requires_extras(extras: str):
+    return _requires(f"lightning-flash[{extras}]", _EXTRAS_AVAILABLE[extras])
 
 
 def lazy_import(module_name, callback=None):

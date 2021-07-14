@@ -27,7 +27,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _PIL_AVAILABLE, _requires_extras, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE, requires_extras
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -46,7 +46,7 @@ else:
 
 class ImageDeserializer(Deserializer):
 
-    @_requires_extras("image")
+    @requires_extras("image")
     def __init__(self):
         super().__init__()
         self.to_tensor = torchvision.transforms.ToTensor()
@@ -68,7 +68,7 @@ class ImageDeserializer(Deserializer):
 
 class ImagePathsDataSource(PathsDataSource):
 
-    @_requires_extras("image")
+    @requires_extras("image")
     def __init__(self):
         super().__init__(extensions=IMG_EXTENSIONS)
 
