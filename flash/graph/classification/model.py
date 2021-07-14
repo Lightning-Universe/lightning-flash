@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, Type, Union, Dict
 
 import pytorch_lightning as pl
 import torch
@@ -25,6 +25,7 @@ from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
+from flash.graph.backbones import GRAPH_BACKBONES
 from flash.core.utilities.imports import _PYTORCH_GEOMETRIC_AVAILABLE
 
 if _PYTORCH_GEOMETRIC_AVAILABLE:
@@ -49,6 +50,7 @@ class GraphBlock(nn.Module):
 
 
 class BaseGraphModel(nn.Module):
+    '''Deprecated in favour of GraphUNet'''
 
     def __init__(
         self,
@@ -103,17 +105,22 @@ class GraphClassifier(ClassificationTask):
         model: GraphNN used, defaults to BaseGraphModel.
         conv_cls: kind of convolution used in model, defaults to GCNConv
     """
+    backbones: FlashRegistry = GRAPH_BACKBONES
+
+    required_extras: str = "graph"
 
     def __init__(
         self,
         num_features: int,
         num_classes: int,
+        backbone: Union[str, Tuple[nn.Module, int]] = "GraphUNet",
+        backbone_kwargs: Optional[Dict] = {'depth': 4},
+        head: Optional[Union[FunctionType, nn.Module]] = None,
         hidden_channels: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
         learning_rate: float = 1e-3,
-        model: torch.nn.Module = None,
         conv_cls: Type[MessagePassing] = GCNConv,
         **conv_kwargs
     ):
@@ -123,44 +130,41 @@ class GraphClassifier(ClassificationTask):
         if isinstance(hidden_channels, int):
             hidden_channels = [hidden_channels]
 
-        if not model:
-            model = BaseGraphModel(num_features, hidden_channels, num_classes, conv_cls, **conv_kwargs)
-
         super().__init__(
-            model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
         )
 
+        self.save_hyperparameters()
+
+        if isinstance(backbone, tuple):
+            self.backbone, num_features = backbone
+        else:
+            self.backbone, num_features = self.backbones.get(backbone)(pretrained=False, **backbone_kwargs)
+
+        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
+        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
+
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (
-            batch[DefaultDataKeys.INPUT],
-            batch[DefaultDataKeys.INPUT].y,
-        )
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (
-            batch[DefaultDataKeys.INPUT],
-            batch[DefaultDataKeys.INPUT].y,
-        )
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (
-            batch[DefaultDataKeys.INPUT],
-            batch[DefaultDataKeys.INPUT].y,
-        )
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return super().predict_step(batch[DefaultDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
+        batch[DefaultDataKeys.PREDS] = super().predict_step((batch[DefaultDataKeys.INPUT]),
+                                                            batch_idx,
+                                                            dataloader_idx=dataloader_idx)
+        return batch
 
-    def forward(self, data) -> Any:
-        edge_index = data.edge_index
-        if not edge_index:
-            edge_index = data.adj_t
-        x = self.model(data.x, edge_index, data.batch)
-        return x
+    def forward(self, x) -> torch.Tensor:
+        x = self.backbone(x)
+        return self.head(x)
