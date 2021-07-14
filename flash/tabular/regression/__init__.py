@@ -1,1 +1,5 @@
-from flash.tabular.regression.data import TabularRegressionData, TabularRegressionPreprocess  # noqa: F401
+from flash.tabular.regression.data import (  # noqa: F401
+    TabularRegressionData,
+    TabularRegressionPreprocess,
+    TabularRegressionDataFrameDataSource
+)

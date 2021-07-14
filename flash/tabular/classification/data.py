@@ -21,7 +21,32 @@ if _PANDAS_AVAILABLE:
 else:
     DataFrame = object
 
-from flash.tabular.data import TabularData, TabularPreprocess
+from flash.tabular.data import TabularData, TabularPreprocess, TabularDataFrameDataSource
+
+
+class TabularClassificationDataFrameDataSource(TabularDataFrameDataSource):
+    def __init__(
+            self,
+            cat_cols: Optional[List[str]] = None,
+            num_cols: Optional[List[str]] = None,
+            target_col: Optional[str] = None,
+            mean: Optional[DataFrame] = None,
+            std: Optional[DataFrame] = None,
+            codes: Optional[Dict[str, Any]] = None,
+            target_codes: Optional[Dict[str, Any]] = None,
+            classes: Optional[List[str]] = None
+    ):
+        super(TabularClassificationDataFrameDataSource, self).__init__(
+            cat_cols=cat_cols,
+            num_cols=num_cols,
+            target_col=target_col,
+            mean=mean,
+            std=std,
+            codes=codes,
+            target_codes=target_codes,
+            classes=classes,
+            is_regression=False
+        )
 
 
 class TabularClassificationPreprocess(TabularPreprocess):
