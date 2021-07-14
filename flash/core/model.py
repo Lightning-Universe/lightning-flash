@@ -44,7 +44,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _requires_extras
+from flash.core.utilities.imports import requires_extras
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -90,11 +90,11 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+            result.__init__ = requires_extras(result.required_extras)(result.__init__)
             load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
             if load_from_checkpoint is not None:
                 result.load_from_checkpoint = classmethod(
-                    _requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
+                    requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
                 )
         return result
 
@@ -157,6 +157,18 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
+
+        self._children = []
+
+    def __setattr__(self, key, value):
+        if isinstance(value, LightningModule):
+            self._children.append(key)
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
+        if isinstance(value, pl.Trainer) or key in patched_attributes:
+            if hasattr(self, "_children"):
+                for child in self._children:
+                    setattr(getattr(self, child), key, value)
+        super().__setattr__(key, value)
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """
@@ -621,7 +633,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    @_requires_extras("serve")
+    @requires_extras("serve")
     def run_serve_sanity_check(self):
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
@@ -641,7 +653,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             resp = tc.post("http://0.0.0.0:8000/predict", json=body)
             print(f"Sanity check response: {resp.json()}")
 
-    @_requires_extras("serve")
+    @requires_extras("serve")
     def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")

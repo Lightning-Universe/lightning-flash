@@ -32,8 +32,8 @@ from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
-    """Modified version of ``pytorch_lightning.utilities.argparse.from_argparse_args`` which populates ``valid_kwargs``
-    from ``pytorch_lightning.Trainer``."""
+    """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
+    ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
     if isinstance(args, ArgumentParser):
         args = cls.parse_argparser(args)
 
@@ -210,12 +210,15 @@ class Trainer(PlTrainer):
 
     @classmethod
     def add_argparse_args(cls, *args, **kwargs) -> ArgumentParser:
+        """See :func:`pytorch_lightning.utilities.argparse.add_argparse_args`."""
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return add_argparse_args(PlTrainer, *args, **kwargs)
 
     @classmethod
     def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> 'Trainer':
+        """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
+        ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)

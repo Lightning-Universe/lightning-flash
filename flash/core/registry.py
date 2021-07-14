@@ -22,10 +22,7 @@ _REGISTERED_FUNCTION = Dict[str, Any]
 
 
 class FlashRegistry:
-    """
-    This class is used to register function or ``functools.partial`` class to a registry.
-
-    """
+    """This class is used to register function or :class:`functools.partial` class to a registry."""
 
     def __init__(self, name: str, verbose: bool = False) -> None:
         self.name = name

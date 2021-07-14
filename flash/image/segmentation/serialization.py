@@ -19,7 +19,14 @@ import torch
 import flash
 from flash.core.data.data_source import DefaultDataKeys, ImageLabelsMap
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE, lazy_import
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _KORNIA_AVAILABLE,
+    _MATPLOTLIB_AVAILABLE,
+    lazy_import,
+    requires,
+    requires_extras,
+)
 
 Segmentation = None
 if _FIFTYONE_AVAILABLE:
@@ -50,6 +57,7 @@ class SegmentationLabels(Serializer):
         visualize: Wether to visualize the image labels.
     """
 
+    @requires_extras("image")
     def __init__(self, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None, visualize: bool = False):
         super().__init__()
         self.labels_map = labels_map
@@ -76,18 +84,22 @@ class SegmentationLabels(Serializer):
             labels_map[i] = torch.randint(0, 255, (3, ))
         return labels_map
 
+    @requires("matplotlib")
+    def _visualize(self, labels):
+        if self.labels_map is None:
+            self.labels_map = self.get_state(ImageLabelsMap).labels_map
+        labels_vis = self.labels_to_image(labels, self.labels_map)
+        labels_vis = K.utils.tensor_to_image(labels_vis)
+        plt.imshow(labels_vis)
+        plt.show()
+
     def serialize(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
         preds = sample[DefaultDataKeys.PREDS]
         assert len(preds.shape) == 3, preds.shape
         labels = torch.argmax(preds, dim=-3)  # HxW
 
         if self.visualize and not flash._IS_TESTING:
-            if self.labels_map is None:
-                self.labels_map = self.get_state(ImageLabelsMap).labels_map
-            labels_vis = self.labels_to_image(labels, self.labels_map)
-            labels_vis = K.utils.tensor_to_image(labels_vis)
-            plt.imshow(labels_vis)
-            plt.show()
+            self._visualize(labels)
         return labels.tolist()
 
 
@@ -103,15 +115,13 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
             FiftyOne labels (False).
     """
 
+    @requires("fiftyone")
     def __init__(
         self,
         labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None,
         visualize: bool = False,
         return_filepath: bool = False,
     ):
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
-
         super().__init__(labels_map=labels_map, visualize=visualize)
 
         self.return_filepath = return_filepath
