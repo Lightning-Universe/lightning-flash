@@ -13,6 +13,7 @@
 # limitations under the License.
 import pytest
 
+from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess
 from tests.helpers.utils import _GRAPH_TESTING
@@ -92,10 +93,22 @@ class TestGraphClassificationData:
             val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
-            train_transform={"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
-            val_transform={"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
-            test_transform={"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
-            predict_transform={"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+            train_transform=merge_transforms(
+                GraphClassificationPreprocess.default_transforms(),
+                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+            ),
+            val_transform=merge_transforms(
+                GraphClassificationPreprocess.default_transforms(),
+                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+            ),
+            test_transform=merge_transforms(
+                GraphClassificationPreprocess.default_transforms(),
+                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+            ),
+            predict_transform=merge_transforms(
+                GraphClassificationPreprocess.default_transforms(),
+                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+            ),
             batch_size=2,
         )
         assert dm is not None

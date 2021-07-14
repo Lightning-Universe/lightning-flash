@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, Optional
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
@@ -54,8 +54,9 @@ class GraphClassificationPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    def collate(self, samples: Sequence) -> Any:
-        return Batch.from_data_list(samples)
+    @staticmethod
+    def default_transforms() -> Optional[Dict[str, Callable]]:
+        return {"collate": Batch.from_data_list}
 
 
 class GraphClassificationData(DataModule):
