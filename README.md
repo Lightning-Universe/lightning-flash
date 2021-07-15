@@ -260,13 +260,13 @@ To illustrate, say we want to build a model to predict if a passenger survived o
 from torchmetrics.classification import Accuracy, Precision, Recall
 import flash
 from flash.core.data.utils import download_data
-from flash.tabular import TabularClassifier, TabularClassificationData
+from flash.tabular import TabularClassifier, TabularData
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 
 # 2. Load the data
-datamodule = TabularClassificationData.from_csv(
+datamodule = TabularData.from_csv(
     ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
     "Fare",
     target_fields="Survived",

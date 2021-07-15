@@ -15,7 +15,7 @@ import pytest
 import pytorch_lightning as pl
 
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.tabular import TabularClassificationData, TabularClassifier
+from flash.tabular import TabularClassifier, TabularData
 from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
@@ -37,7 +37,7 @@ def test_classification(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_1.copy()
     test_data_frame = TEST_DF_1.copy()
-    data = TabularClassificationData.from_data_frame(
+    data = TabularData.from_data_frame(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",

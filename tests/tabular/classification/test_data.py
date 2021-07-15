@@ -23,7 +23,7 @@ from flash.core.utilities.imports import _PANDAS_AVAILABLE
 if _PANDAS_AVAILABLE:
     import pandas as pd
 
-    from flash.tabular import TabularClassificationData
+    from flash.tabular import TabularData
     from flash.tabular.classification.utils import _categorize, _normalize
 
     TEST_DF_1 = pd.DataFrame(
@@ -73,19 +73,19 @@ def test_emb_sizes():
     self.codes = {"category": [None, "a", "b", "c"]}
     self.cat_cols = ["category"]
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularData.emb_sizes.__get__(self)  # pylint: disable=E1101
     assert es == [(4, 16)]
 
     self.codes = {}
     self.cat_cols = []
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularData.emb_sizes.__get__(self)  # pylint: disable=E1101
     assert es == []
 
     self.codes = {"large": ["a"] * 100_000, "larger": ["b"] * 1_000_000}
     self.cat_cols = ["large", "larger"]
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularData.emb_sizes.__get__(self)  # pylint: disable=E1101
     assert es == [(100_000, 17), (1_000_000, 31)]
 
 
@@ -94,7 +94,7 @@ def test_tabular_data(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
     test_data_frame = TEST_DF_2.copy()
-    dm = TabularClassificationData.from_data_frame(
+    dm = TabularData.from_data_frame(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
@@ -122,7 +122,7 @@ def test_categorical_target(tmpdir):
         # change int label to string
         df["label"] = df["label"].astype(str)
 
-    dm = TabularClassificationData.from_data_frame(
+    dm = TabularData.from_data_frame(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
@@ -146,7 +146,7 @@ def test_from_data_frame(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
     test_data_frame = TEST_DF_2.copy()
-    dm = TabularClassificationData.from_data_frame(
+    dm = TabularData.from_data_frame(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
@@ -173,7 +173,7 @@ def test_from_csv(tmpdir):
     TEST_DF_2.to_csv(val_csv)
     TEST_DF_2.to_csv(test_csv)
 
-    dm = TabularClassificationData.from_csv(
+    dm = TabularData.from_csv(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
@@ -196,7 +196,7 @@ def test_from_csv(tmpdir):
 def test_empty_inputs():
     train_data_frame = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
-        TabularClassificationData.from_data_frame(
+        TabularData.from_data_frame(
             numerical_fields=None,
             categorical_fields=None,
             target_fields="label",
