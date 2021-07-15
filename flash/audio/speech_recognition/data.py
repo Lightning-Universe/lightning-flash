@@ -34,11 +34,10 @@ if _TEXT_AVAILABLE:
 
 class AudioDeserializer(Deserializer):
 
-    def __init__(self, backbone: str, max_length: int):
+    def __init__(self, backbone: str):
         super().__init__()
         self.backbone = backbone
         self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(backbone)
-        self.max_length = max_length
 
     def deserialize(self, sample: Any) -> Tensor:
         return self.tokenizer(sample["speech"], sampling_rate=sample["sampling_rate"][0]).input_values
@@ -49,7 +48,7 @@ class AudioDeserializer(Deserializer):
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
-        state.pop("processor")
+        state.pop("tokenizer")
         return state
 
     def __setstate__(self, state):
@@ -59,12 +58,10 @@ class AudioDeserializer(Deserializer):
 
 class AudioDataSource(DataSource):
 
-    def __init__(self, backbone: str, max_length: int = 128):
+    def __init__(self, backbone: str):
         super().__init__()
 
         self.backbone = backbone
-        self.processor = Wav2Vec2Processor.from_pretrained(backbone)
-        self.max_length = max_length
 
     def load_data(
         self,
@@ -81,15 +78,6 @@ class AudioDataSource(DataSource):
         dataset_dict = load_dataset("timit_asr")  # todo
         return dataset_dict[stage]
 
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = Wav2Vec2Processor.from_pretrained(self.backbone)
-
     def predict_load_data(self, data: Any, dataset: AutoDataset):
         return self.load_data(data, dataset, columns=["input_values"])
 
@@ -103,10 +91,8 @@ class SpeechRecognitionPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         backbone: str = "facebook/wav2vec2-base-960h",
-        max_length: int = 128,
     ):
         self.backbone = backbone
-        self.max_length = max_length
 
         super().__init__(
             train_transform=train_transform,
@@ -114,10 +100,10 @@ class SpeechRecognitionPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                "timit": AudioDataSource(self.backbone, max_length=max_length),
+                "timit": AudioDataSource(self.backbone),
             },
             default_data_source=DefaultDataSources.DATASET,
-            deserializer=AudioDeserializer(backbone, max_length),
+            deserializer=AudioDeserializer(backbone),
         )
         self.processor = Wav2Vec2Processor.from_pretrained(backbone)
         self.collator = DataCollatorCTCWithPadding(processor=self.processor, padding=True)
@@ -126,7 +112,6 @@ class SpeechRecognitionPreprocess(Preprocess):
         return {
             **self.transforms,
             "backbone": self.backbone,
-            "max_length": self.max_length,
         }
 
     @classmethod

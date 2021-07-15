@@ -21,5 +21,5 @@ model = SpeechRecognition()
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1, gpus=1, profiler='simple', limit_train_batches=100)
-trainer.finetune(model, strategy='no_freeze')
+trainer.finetune(model, datamodule=datamodule, strategy='no_freeze')
 trainer.test(model, datamodule=datamodule)
