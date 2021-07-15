@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.audio.speech_recognition import SpeechRecognition, SpeechRecognitionData
+from flash.audio import SpeechRecognition, SpeechRecognitionData
 
 # # 1. Create the DataModule
 # download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
