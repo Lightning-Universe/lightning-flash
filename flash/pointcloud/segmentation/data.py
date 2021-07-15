@@ -25,7 +25,6 @@ class PointCloudSegmentationDatasetDataSource(DataSource):
         return range(len(data))
 
     def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
-
         sample = dataset.dataset[index]
 
         return {
@@ -42,7 +41,6 @@ class PointCloudSegmentationFoldersDataSource(DataSource):
         folder: Any,
         dataset: Optional[Any] = None,
     ) -> Any:
-
         sequence_dataset = SequencesDataset(folder, use_cache=True, predicting=self.predicting)
         dataset.dataset = sequence_dataset
         if self.training:
@@ -51,7 +49,6 @@ class PointCloudSegmentationFoldersDataSource(DataSource):
         return range(len(sequence_dataset))
 
     def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
-
         sample = dataset.dataset[index]
 
         return {
@@ -70,7 +67,6 @@ class PointCloudSegmentationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
-        **data_source_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -80,8 +76,8 @@ class PointCloudSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASET: PointCloudSegmentationDatasetDataSource(**data_source_kwargs),
-                DefaultDataSources.FOLDERS: PointCloudSegmentationFoldersDataSource(**data_source_kwargs),
+                DefaultDataSources.DATASET: PointCloudSegmentationDatasetDataSource(),
+                DefaultDataSources.FOLDERS: PointCloudSegmentationFoldersDataSource(),
             },
             deserializer=deserializer,
             default_data_source=DefaultDataSources.FOLDERS,
@@ -94,7 +90,7 @@ class PointCloudSegmentationPreprocess(Preprocess):
         return {}
 
     @classmethod
-    def load_state_dict(cls, state_dict, strict: bool):
+    def load_state_dict(cls, state_dict, strict: bool = False):
         pass
 
 

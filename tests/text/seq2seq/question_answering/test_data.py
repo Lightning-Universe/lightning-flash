@@ -33,6 +33,12 @@ TEST_JSON_DATA = """
 {"input": "this is a question three","target":"this is an answer three"}
 """
 
+TEST_JSON_DATA_FIELD = """{"data": [
+{"input": "this is a question one","target":"this is an answer one"},
+{"input": "this is a question two","target":"this is an answer two"},
+{"input": "this is a question three","target":"this is an answer three"}]}
+"""
+
 
 def csv_data(tmpdir):
     path = Path(tmpdir) / "data.csv"
@@ -43,6 +49,12 @@ def csv_data(tmpdir):
 def json_data(tmpdir):
     path = Path(tmpdir) / "data.json"
     path.write_text(TEST_JSON_DATA)
+    return path
+
+
+def json_data_with_field(tmpdir):
+    path = Path(tmpdir) / "data.json"
+    path.write_text(TEST_JSON_DATA_FIELD)
     return path
 
 
@@ -103,6 +115,18 @@ def test_postprocess_tokenizer(tmpdir):
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = QuestionAnsweringData.from_json("input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
+    batch = next(iter(dm.train_dataloader()))
+    assert "labels" in batch
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_json_with_field(tmpdir):
+    json_path = json_data_with_field(tmpdir)
+    dm = QuestionAnsweringData.from_json(
+        "input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, field="data"
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
