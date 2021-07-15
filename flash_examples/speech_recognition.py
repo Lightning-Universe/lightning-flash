@@ -14,11 +14,12 @@
 import flash
 from flash.audio.speech_recognition import SpeechRecognition, SpeechRecognitionData
 
-datamodule = SpeechRecognitionData.from_data_source("timit", test_data='test', num_workers=0)
+datamodule = SpeechRecognitionData.from_data_source("timit", test_data='test', train_data='train', num_workers=4)
 
 # 2. Build the task
 model = SpeechRecognition()
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3, gpus=1)
+trainer = flash.Trainer(max_epochs=1, gpus=1, profiler='simple', limit_train_batches=100)
+trainer.finetune(model, strategy='no_freeze')
 trainer.test(model, datamodule=datamodule)

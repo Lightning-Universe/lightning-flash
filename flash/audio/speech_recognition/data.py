@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
+import datasets
+import pandas as pd
 import soundfile as sf
 import torch
 from torch import Tensor
@@ -26,7 +29,7 @@ from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 
 if _TEXT_AVAILABLE:
-    from datasets import load_dataset
+    from datasets import Dataset, load_dataset
     from transformers import Wav2Vec2CTCTokenizer, Wav2Vec2Processor
 
 
@@ -64,27 +67,6 @@ class AudioDataSource(DataSource):
         self.processor = Wav2Vec2Processor.from_pretrained(backbone)
         self.max_length = max_length
 
-    def _prepare_dataset(self, batch):
-        # check that all files have the correct sampling rate
-        assert (
-            len(set(batch["sampling_rate"])) == 1
-        ), f"Make sure all inputs have the same sampling rate of {self.processor.feature_extractor.sampling_rate}."
-
-        batch["input_values"] = self.processor(batch["speech"], sampling_rate=batch["sampling_rate"][0]).input_values
-
-        if not self.predicting:
-            with self.processor.as_target_processor():
-                batch["labels"] = self.processor(batch["target_text"]).input_ids
-        return batch
-
-    @staticmethod
-    def speech_file_to_array_fn(batch):
-        speech_array, sampling_rate = sf.read(batch["file"])
-        batch["speech"] = speech_array
-        batch["sampling_rate"] = sampling_rate
-        batch["target_text"] = batch["text"]
-        return batch
-
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
@@ -98,10 +80,6 @@ class AudioDataSource(DataSource):
         # data_files[stage] = str(file)
 
         dataset_dict = load_dataset("timit_asr")  # todo
-        dataset_dict = dataset_dict.map(AudioDataSource.speech_file_to_array_fn, num_proc=4)
-        dataset_dict = dataset_dict.map(partial(self._prepare_dataset), batched=True)
-        dataset_dict.set_format("torch", columns=columns)
-
         return dataset_dict[stage]
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
@@ -124,7 +102,8 @@ class DataCollatorCTCWithPadding:
     Args:
         processor (:class:`~transformers.Wav2Vec2Processor`)
             The processor used for proccessing the data.
-        padding (:obj:`bool`, :obj:`str` or :class:`~transformers.tokenization_utils_base.PaddingStrategy`, `optional`, defaults to :obj:`True`):
+        padding (:obj:`bool`, :obj:`str` or :class:`~transformers.tokenization_utils_base.PaddingStrategy`,
+            `optional`, defaults to :obj:`True`):
             Select a strategy to pad the returned sequences (according to the model's padding side and padding index)
             among:
             * :obj:`True` or :obj:`'longest'`: Pad to the longest sequence in the batch (or no padding if only a single
@@ -219,12 +198,42 @@ class SpeechRecognitionPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls(**state_dict)
 
+    def _prepare_dataset(self, batch: Any) -> Any:
+        # check that all files have the correct sampling rate
+        assert (
+            len(set(batch["sampling_rate"])) == 1
+        ), f"Make sure all inputs have the same sampling rate of {self.processor.feature_extractor.sampling_rate}."
+
+        batch["input_values"] = self.processor(batch["speech"], sampling_rate=batch["sampling_rate"][0]).input_values
+
+        if not self.predicting:
+            with self.processor.as_target_processor():
+                batch["labels"] = self.processor(batch["target_text"]).input_ids
+        return batch
+
+    def _speech_file_to_array_fn(self, batch: Any) -> Any:
+        speech_array, sampling_rate = sf.read(batch["file"])
+        batch["speech"] = speech_array
+        batch["sampling_rate"] = sampling_rate
+        if not self.predicting:
+            batch["target_text"] = batch["text"]
+        return batch
+
+    def _convert_to_batch(self, batch: Any) -> Dataset:
+        self._disable_tqdm_bars()
+        batch = Dataset.from_pandas(pd.DataFrame(batch))
+        columns = ["input_values", "labels"]
+        batch = batch.map(partial(self._speech_file_to_array_fn))
+        batch = batch.map(partial(self._prepare_dataset), batched=True)
+        batch.set_format("torch", columns=columns)
+        return batch
+
+    def _disable_tqdm_bars(self):
+        datasets.logging.get_verbosity = lambda: logging.NOTSET
+
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
-        # data_collator = DataCollatorCTCWithPadding(processor=processor, padding=True)
-
-        if isinstance(samples, dict):
-            samples = [samples]
+        samples = self._convert_to_batch(samples)
         return self.collator(samples)
 
 

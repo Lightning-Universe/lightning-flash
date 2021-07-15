@@ -16,6 +16,7 @@ import warnings
 from typing import Any, Callable, Dict, Mapping, Optional, Type, Union
 
 import torch
+import torch.nn as nn
 
 from flash import Task
 from flash.core.data.process import Serializer
@@ -35,29 +36,25 @@ class SpeechRecognition(Task):
         learning_rate: float = 1e-2,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
-        self.save_hyperparameters()
-
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
-
         super().__init__(
-            model=None,
+            model=Wav2Vec2ForCTC.from_pretrained(backbone),
             loss_fn=loss_fn,
             optimizer=optimizer,
             learning_rate=learning_rate,
             serializer=serializer,
         )
-        self.model = Wav2Vec2ForCTC.from_pretrained(backbone)
 
         self.save_hyperparameters()
 
     def forward(self, batch: Dict[str, torch.Tensor]):
-        return self.model(batch["input_values"], labels=batch["labels"])
+        return self.model(batch["input_values"])
 
-    def step(self, batch, batch_idx, metrics) -> dict:
-        out = self(batch)
+    def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
+        out = self.model(batch["input_values"], labels=batch["labels"])
         out["logs"] = {'loss': out.loss}
         return out
