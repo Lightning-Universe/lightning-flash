@@ -27,7 +27,13 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _requires_extras, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import (
+    _MATPLOTLIB_AVAILABLE,
+    _PIL_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
+    requires,
+    requires_extras,
+)
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     ImageDeserializer,
@@ -400,7 +406,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
-    @_requires_extras("image")
+    @requires_extras("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):
@@ -411,7 +417,7 @@ class MatplotlibVisualization(BaseVisualization):
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
-    @_requires_extras("image")
+    @requires("matplotlib")
     def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
@@ -421,7 +427,10 @@ class MatplotlibVisualization(BaseVisualization):
         fig, axs = plt.subplots(rows, cols)
         fig.suptitle(title)
 
-        for i, ax in enumerate(axs.ravel()):
+        if not isinstance(axs, np.ndarray):
+            axs = [axs]
+
+        for i, ax in enumerate(axs):
             # unpack images and labels
             if isinstance(data, list):
                 _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")

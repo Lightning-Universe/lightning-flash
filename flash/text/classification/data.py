@@ -22,7 +22,7 @@ from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _requires_extras, _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
@@ -32,7 +32,7 @@ if _TEXT_AVAILABLE:
 
 class TextDeserializer(Deserializer):
 
-    @_requires_extras("text")
+    @requires_extras("text")
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
         super().__init__()
         self.backbone = backbone
@@ -58,7 +58,7 @@ class TextDeserializer(Deserializer):
 
 class TextDataSource(DataSource):
 
-    @_requires_extras("text")
+    @requires_extras("text")
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
 
@@ -110,7 +110,10 @@ class TextFileDataSource(TextDataSource):
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
-        file, input, target = data
+        if self.filetype == 'json':
+            file, input, target, field = data
+        else:
+            file, input, target = data
 
         data_files = {}
 
@@ -120,13 +123,25 @@ class TextFileDataSource(TextDataSource):
         # FLASH_TESTING is set in the CI to run faster.
         if flash._IS_TESTING and not torch.cuda.is_available():
             try:
-                dataset_dict = DatasetDict({
-                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-                })
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'],
+                                            field=field)[0]
+                    })
+                else:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                    })
             except Exception:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files)
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+                else:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+            if self.filetype == 'json' and field is not None:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+            else:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
         if not self.predicting:
             if isinstance(target, List):
@@ -227,7 +242,7 @@ class TextSentencesDataSource(TextDataSource):
 
 class TextClassificationPreprocess(Preprocess):
 
-    @_requires_extras("text")
+    @requires_extras("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
