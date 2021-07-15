@@ -1,4 +1,3 @@
-from flash.graph.embedding.model import GraphEmbedder
 import random
 
 import networkx as nx
@@ -8,6 +7,7 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData
+from flash.graph.embedding.model import GraphEmbedder
 
 if _GRAPH_AVAILABLE:
     import torch_geometric.transforms as T
@@ -17,7 +17,6 @@ else:
 
 # 1. Create the DataModule
 dataset = TUDataset(root="data", name="KKI").shuffle()
-
 '''
 transform = {
     "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.OneHotDegree(dataset.num_features - 1)),

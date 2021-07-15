@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, Type, Union, Dict
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
@@ -23,8 +23,9 @@ from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
+
 
 class GraphClassifier(ClassificationTask):
     """The ``GraphClassifier`` is a :class:`~flash.Task` for classifying graphs. For more details, see
@@ -72,7 +73,7 @@ class GraphClassifier(ClassificationTask):
 
         if isinstance(backbone, tuple):
             self.backbone, num_out_features = backbone
-        else: #todo: num_out_features is out_channels. Are there models that do not support this?
+        else:  #todo: num_out_features is out_channels. Are there models that do not support this?
             self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
             num_out_features = backbone.out_channels
 

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union, Dict
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from pytorch_lightning.utilities import rank_zero_warn
@@ -22,18 +22,18 @@ from torchmetrics import Accuracy, Metric
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
-from flash.core.registry import FlashRegistry
 from flash.core.model import Task
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
-from flash.graph.classification.data import GraphClassificationPreprocess
 from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
-
+from flash.graph.classification.data import GraphClassificationPreprocess
 
 if _TORCH_GEOMETRIC_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
     MessagePassing = type(object)
     GCNConv = object
+
 
 class GraphEmbedder(Task):
     """The ``GraphEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from graphs. For more
