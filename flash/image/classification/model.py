@@ -25,7 +25,7 @@ from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.image.classification.strategies import IMAGE_CLASSIFIER_STRATEGIES
+from flash.image.classification.strategy import IMAGE_CLASSIFIER_STRATEGIES
 
 
 class ImageClassifier(ClassificationTask):
