@@ -29,7 +29,7 @@ datamodule = GraphClassificationData.from_datasets(
     val_split=0.1,
 )
 # 2. Build the task
-backbone_kwargs = {'in_channels': datamodule.num_features, 'out_channels': 64, 'hidden_channels': 512, 'depth': 4}
+backbone_kwargs = {'in_channels': datamodule.num_features, 'hidden_channels': 512, 'num_layers': 4}
 model = GraphClassifier(num_classes=datamodule.num_classes, backbone_kwargs=backbone_kwargs)
 
 # 3. Create the trainer and fit the model
