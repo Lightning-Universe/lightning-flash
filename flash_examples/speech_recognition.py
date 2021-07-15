@@ -14,7 +14,7 @@
 import flash
 from flash.audio.speech_recognition import SpeechRecognition, SpeechRecognitionData
 
-datamodule = SpeechRecognitionData.from_data_source("timit", test_data='test', train_data='train', num_workers=4)
+datamodule = SpeechRecognitionData.from_timit(num_workers=4)
 
 # 2. Build the task
 model = SpeechRecognition()
