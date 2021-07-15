@@ -22,8 +22,10 @@ from torchmetrics import Accuracy, F1, Metric
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
+from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.classification.strategies import IMAGE_CLASSIFIER_STRATEGIES
 
 
 class ImageClassifier(ClassificationTask):
@@ -66,6 +68,8 @@ class ImageClassifier(ClassificationTask):
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
 
+    strategies: FlashRegistry = IMAGE_CLASSIFIER_STRATEGIES
+
     required_extras: str = "image"
 
     def __init__(
@@ -73,6 +77,7 @@ class ImageClassifier(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
         backbone_kwargs: Optional[Dict] = None,
+        training_strategy: str = "supervised",
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
@@ -108,20 +113,24 @@ class ImageClassifier(ClassificationTask):
         else:
             self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(nn.Linear(num_features, num_classes), )
+        self.strategy: Task = self.strategies.get(training_strategy)(
+            self.backbone,
+            num_features,
+            num_classes,
+            head=head,
+            loss_fn=loss_fn,
+            metrics=metrics,
+            multi_label=multi_label,
+        )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
+        return self.strategy.training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
+        return self.strategy.training_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
+        return self.strategy.training_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DefaultDataKeys.PREDS] = super().predict_step((batch[DefaultDataKeys.INPUT]),
@@ -130,10 +139,7 @@ class ImageClassifier(ClassificationTask):
         return batch
 
     def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
-        if x.dim() == 4:
-            x = x.mean(-1).mean(-1)
-        return self.head(x)
+        return self.strategy.forward(x)
 
     @classmethod
     def available_pretrained_weights(cls, backbone: str):
