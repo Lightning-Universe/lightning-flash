@@ -51,8 +51,8 @@ class GraphClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone_kwargs: Optional[Dict],
         backbone: Union[str, Tuple[nn.Module, int]] = "GraphUNet",
+        backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
