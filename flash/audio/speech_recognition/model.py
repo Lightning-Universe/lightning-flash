@@ -20,9 +20,9 @@ import torch.nn as nn
 
 from flash import Task
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
 
-if _TEXT_AVAILABLE:
+if _SPEECH_RECOGNITION_AVAILABLE:
     from transformers import Wav2Vec2ForCTC
 
 
