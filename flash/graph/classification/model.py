@@ -78,7 +78,7 @@ class GraphClassifier(ClassificationTask):
             num_out_features = backbone.hidden_channels
 
         head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or default_head(num_out_features, num_classes) 
+        self.head = head or default_head(num_out_features, num_classes)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
@@ -102,12 +102,13 @@ class GraphClassifier(ClassificationTask):
         x = self.backbone(x)
         return self.head(x)
 
+
 class default_head(torch.nn.Module):
-    def __init__(self, hidden_channels, num_classes, dropout = 0.5):
+
+    def __init__(self, hidden_channels, num_classes, dropout=0.5):
         self.lin1 = Linear(hidden_channels, hidden_channels)
         self.lin2 = Linear(hidden_channels, num_classes)
         self.dropout = dropout
-
 
     def reset_parameters(self):
         self.lin1.reset_parameters()
