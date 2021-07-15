@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 import datasets
 import pandas as pd
 import soundfile as sf
+import torch
 from torch import Tensor
 from torch.utils.data import Sampler
 
@@ -27,14 +28,14 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
 
-if _TEXT_AVAILABLE:
+if _SPEECH_RECOGNITION_AVAILABLE:
     from datasets import Dataset, load_dataset
     from transformers import Wav2Vec2CTCTokenizer, Wav2Vec2Processor
 
 
-class AudioDeserializer(Deserializer):
+class SpeechRecognitionDeserializer(Deserializer):
 
     def __init__(self, backbone: str):
         super().__init__()
@@ -58,7 +59,7 @@ class AudioDeserializer(Deserializer):
         self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(self.backbone)
 
 
-class AudioDataSource(DataSource):
+class SpeechRecognitionDataSource(DataSource):
 
     def __init__(self, backbone: str, filetype: Optional[str] = None):
         super().__init__()
@@ -67,44 +68,60 @@ class AudioDataSource(DataSource):
 
     def load_data(
         self,
-        file: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
-        columns: Union[List[str], Tuple[str]] = ("input_values", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
+        file, input, target = data
         stage = self.running_stage.value
         dataset_dict = load_dataset(self.filetype, data_files={stage: str(file)})
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset, columns=["input_values"])
+        return self.load_data(data, dataset)
 
 
-class TimitDataSource(AudioDataSource):
+class TimitDataSource(SpeechRecognitionDataSource):
 
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
-        columns: Union[List[str], Tuple[str]] = ("input_values", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
         stage = self.running_stage.value
         dataset_dict = load_dataset("timit_asr")
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset, columns=["input_values"])
+        return self.load_data(data, dataset)
 
 
-class AudioCSVDataSource(AudioDataSource):
+class SpeechRecognitionCSVDataSource(SpeechRecognitionDataSource):
 
     def __init__(self, backbone: str):
         super().__init__(backbone, filetype='csv')
 
 
-class AudioJSONDataSource(AudioDataSource):
+class SpeechRecognitionJSONDataSource(SpeechRecognitionDataSource):
 
     def __init__(self, backbone: str):
         super().__init__(backbone, filetype='json')
+
+
+class SpeechRecognitionFilesSource(DataSource):
+
+    def __init__(self, backbone: str, filetype: Optional[str] = None):
+        super().__init__()
+        self.filetype = filetype
+        self.backbone = backbone
+
+    def load_data(
+        self,
+        files: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        dataset: Optional[Any] = None,
+    ) -> Union[Sequence[Mapping[str, Any]]]:
+        if isinstance(files, str):
+            files = [files]
+        return [dict(file=file) for file in files]
 
 
 class SpeechRecognitionPreprocess(Preprocess):
@@ -125,12 +142,13 @@ class SpeechRecognitionPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: AudioCSVDataSource(self.backbone),
-                DefaultDataSources.JSON: AudioJSONDataSource(self.backbone),
+                DefaultDataSources.CSV: SpeechRecognitionCSVDataSource(self.backbone),
+                DefaultDataSources.JSON: SpeechRecognitionJSONDataSource(self.backbone),
                 "timit": TimitDataSource(self.backbone),
+                DefaultDataSources.FILES: SpeechRecognitionFilesSource(self.backbone)
             },
-            default_data_source=DefaultDataSources.DATASET,
-            deserializer=AudioDeserializer(backbone),
+            default_data_source=DefaultDataSources.FILES,
+            deserializer=SpeechRecognitionDeserializer(backbone),
         )
         self.processor = Wav2Vec2Processor.from_pretrained(backbone)
         self.collator = DataCollatorCTCWithPadding(processor=self.processor, padding=True)
@@ -169,7 +187,9 @@ class SpeechRecognitionPreprocess(Preprocess):
     def _convert_to_batch(self, batch: Any) -> Dataset:
         self._disable_tqdm_bars()
         batch = Dataset.from_pandas(pd.DataFrame(batch))
-        columns = ["input_values", "labels"]
+        columns = ["input_values"]
+        if not self.predicting:
+            columns += ["labels"]
         batch = batch.map(partial(self._speech_file_to_array_fn))
         batch = batch.map(partial(self._prepare_dataset), batched=True)
         batch.set_format("torch", columns=columns)
@@ -195,8 +215,10 @@ class SpeechRecognitionPostprocess(Postprocess):
         self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(backbone)
 
     def per_batch_transform(self, batch: Any) -> Any:
-        transcription = self.tokenizer.batch_decode(batch)[0]
-        return transcription
+        # converts logits into greedy transcription
+        pred_ids = torch.argmax(batch.logits, dim=-1)
+        transcriptions = self.tokenizer.batch_decode(pred_ids)
+        return transcriptions
 
 
 class SpeechRecognitionData(DataModule):

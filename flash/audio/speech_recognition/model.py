@@ -54,6 +54,9 @@ class SpeechRecognition(Task):
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(batch["input_values"])
 
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch)
+
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         out = self.model(batch["input_values"], labels=batch["labels"])
         out["logs"] = {'loss': out.loss}

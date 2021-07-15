@@ -47,7 +47,6 @@ class DataCollatorCTCWithPadding:
         # split inputs and labels since they have to be of different lengths and need
         # different padding methods
         input_features = [{"input_values": feature["input_values"]} for feature in features]
-        label_features = [{"input_ids": feature["labels"]} for feature in features]
 
         batch = self.processor.pad(
             input_features,
@@ -56,18 +55,23 @@ class DataCollatorCTCWithPadding:
             pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors="pt",
         )
-        with self.processor.as_target_processor():
-            labels_batch = self.processor.pad(
-                label_features,
-                padding=self.padding,
-                max_length=self.max_length_labels,
-                pad_to_multiple_of=self.pad_to_multiple_of_labels,
-                return_tensors="pt",
-            )
 
-        # replace padding with -100 to ignore loss correctly
-        labels = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
+        label_features = [{"input_ids": feature.get("labels")} for feature in features]
+        # check to ensure labels exist to collate
+        labels_exist = not any(x['input_ids'] is None for x in label_features)
+        if labels_exist:
+            with self.processor.as_target_processor():
+                labels_batch = self.processor.pad(
+                    label_features,
+                    padding=self.padding,
+                    max_length=self.max_length_labels,
+                    pad_to_multiple_of=self.pad_to_multiple_of_labels,
+                    return_tensors="pt",
+                )
 
-        batch["labels"] = labels
+            # replace padding with -100 to ignore loss correctly
+            labels = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
+
+            batch["labels"] = labels
 
         return batch

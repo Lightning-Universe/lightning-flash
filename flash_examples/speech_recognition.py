@@ -14,12 +14,27 @@
 import flash
 from flash.audio.speech_recognition import SpeechRecognition, SpeechRecognitionData
 
-datamodule = SpeechRecognitionData.from_timit(num_workers=4)
+# # 1. Create the DataModule
+# download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
+#
+datamodule = SpeechRecognitionData.from_json(
+    input_fields="file",
+    target_fields="text",
+    train_file="data/train.json",
+    test_file="data/test.json",
+    num_workers=4,
+)
 
 # 2. Build the task
-model = SpeechRecognition()
+model = SpeechRecognition(learning_rate=1e-5)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1, gpus=1, profiler='simple', limit_train_batches=100)
+trainer = flash.Trainer(max_epochs=1, gpus=1)
 trainer.finetune(model, datamodule=datamodule, strategy='no_freeze')
-trainer.test(model, datamodule=datamodule)
+
+# 4. Predict on audio files!
+predictions = model.predict(["data/example.wav"])
+print(predictions)
+
+# 5. Save the model!
+trainer.save_checkpoint("speech_recognition_model.pt")
