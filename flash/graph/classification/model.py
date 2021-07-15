@@ -73,12 +73,12 @@ class GraphClassifier(ClassificationTask):
 
         if isinstance(backbone, tuple):
             self.backbone, num_out_features = backbone
-        else:  #todo: num_out_features is out_channels. Are there models that do not support this?
+        else:
             self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
-            num_out_features = backbone.out_channels
+            num_out_features = backbone.hidden_channels
 
         head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(nn.Linear(num_out_features, num_classes), )
+        self.head = head or default_head(num_out_features, num_classes) 
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
@@ -101,3 +101,20 @@ class GraphClassifier(ClassificationTask):
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
         return self.head(x)
+
+class default_head(torch.nn.Module):
+    def __init__(self, hidden_channels, num_classes, dropout = 0.5):
+        self.lin1 = Linear(hidden_channels, hidden_channels)
+        self.lin2 = Linear(hidden_channels, num_classes)
+        self.dropout = dropout
+
+
+    def reset_parameters(self):
+        self.lin1.reset_parameters()
+        self.lin2.reset_parameters()
+
+    def forward(self, x):
+        x = F.relu(self.lin1(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.lin2(x)
+        return F.log_softmax(x, dim=-1)

@@ -84,20 +84,11 @@ class GraphEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone, num_out_features = self.backbones.get(backbone)(pretrained=pretrained)
+        self.backbone = self.backbones.get(backbone)(pretrained=pretrained)
 
-        if embedding_dim is None:
-            self.head = nn.Identity()
-        else:
-            self.head = nn.Sequential(
-                nn.Flatten(),
-                nn.Linear(num_out_features, embedding_dim),
-            )
-            rank_zero_warn('Adding linear layer on top of backbone. Remember to finetune first before using!')
 
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
-        x = self.head(x)
         return x
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
