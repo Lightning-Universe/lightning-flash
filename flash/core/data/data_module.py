@@ -84,7 +84,7 @@ class DataModule(pl.LightningDataModule):
         postprocess: Optional[Postprocess] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
-        batch_size: int = 1,
+        batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
     ) -> None:
@@ -275,37 +275,81 @@ class DataModule(pl.LightningDataModule):
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
+        collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
+        if isinstance(train_ds, IterableAutoDataset):
+            drop_last = False
+        else:
+            drop_last = len(train_ds) > self.batch_size
+        pin_memory = True
+
         if self.sampler is None:
             shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
+
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_train_dataset(
+                train_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                shuffle=shuffle,
+                drop_last=drop_last,
+                collate_fn=collate_fn,
+                sampler=self.sampler
+            )
+
         return DataLoader(
             train_ds,
             batch_size=self.batch_size,
             shuffle=shuffle,
             sampler=self.sampler,
             num_workers=self.num_workers,
-            pin_memory=True,
-            drop_last=True,
-            collate_fn=self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
+            pin_memory=pin_memory,
+            drop_last=drop_last,
+            collate_fn=collate_fn
         )
 
     def _val_dataloader(self) -> DataLoader:
         val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
+        collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
+        pin_memory = True
+
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_val_dataset(
+                val_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                collate_fn=collate_fn
+            )
+
         return DataLoader(
             val_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
-            collate_fn=self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
+            pin_memory=pin_memory,
+            collate_fn=collate_fn
         )
 
     def _test_dataloader(self) -> DataLoader:
         test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
+        collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
+        pin_memory = True
+
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_test_dataset(
+                test_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                collate_fn=collate_fn
+            )
+
         return DataLoader(
             test_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
-            collate_fn=self._resolve_collate_fn(test_ds, RunningStage.TESTING)
+            pin_memory=pin_memory,
+            collate_fn=collate_fn
         )
 
     def _predict_dataloader(self) -> DataLoader:
@@ -314,12 +358,21 @@ class DataModule(pl.LightningDataModule):
             batch_size = self.batch_size
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
+
+        collate_fn = self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
+        pin_memory = True
+
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            return self.trainer.lightning_module.process_test_dataset(
+                predict_ds,
+                batch_size=batch_size,
+                num_workers=self.num_workers,
+                pin_memory=pin_memory,
+                collate_fn=collate_fn
+            )
+
         return DataLoader(
-            predict_ds,
-            batch_size=batch_size,
-            num_workers=self.num_workers,
-            pin_memory=True,
-            collate_fn=self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
+            predict_ds, batch_size=batch_size, num_workers=self.num_workers, pin_memory=True, collate_fn=collate_fn
         )
 
     @property
@@ -839,6 +892,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
+        field: Optional[str] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given JSON files using the
@@ -870,6 +924,7 @@ class DataModule(pl.LightningDataModule):
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            field: To specify the field that holds the data in the JSON file.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -886,13 +941,35 @@ class DataModule(pl.LightningDataModule):
                     "to_tensor_transform": torch.as_tensor,
                 },
             )
+
+            # In the case where the data is of the form:
+            # {
+            #     "version": 0.0.x,
+            #     "data": [
+            #         {
+            #             "input_field" : "input_data",
+            #             "target_field" : "target_output"
+            #         },
+            #         ...
+            #     ]
+            # }
+
+            data_module = DataModule.from_json(
+                "input",
+                "target",
+                train_file="train_data.json",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+                feild="data"
+            )
         """
         return cls.from_data_source(
             DefaultDataSources.JSON,
-            (train_file, input_fields, target_fields),
-            (val_file, input_fields, target_fields),
-            (test_file, input_fields, target_fields),
-            (predict_file, input_fields, target_fields),
+            (train_file, input_fields, target_fields, field),
+            (val_file, input_fields, target_fields, field),
+            (test_file, input_fields, target_fields, field),
+            (predict_file, input_fields, target_fields, field),
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,

@@ -16,6 +16,7 @@ import os
 from flash.core.utilities.imports import (
     _GRAPH_AVAILABLE,
     _IMAGE_AVAILABLE,
+    _POINTCLOUD_AVAILABLE,
     _SERVE_AVAILABLE,
     _TABULAR_AVAILABLE,
     _TEXT_AVAILABLE,
@@ -27,6 +28,7 @@ _VIDEO_TESTING = _VIDEO_AVAILABLE
 _TABULAR_TESTING = _TABULAR_AVAILABLE
 _TEXT_TESTING = _TEXT_AVAILABLE
 _SERVE_TESTING = _SERVE_AVAILABLE
+_POINTCLOUD_TESTING = _POINTCLOUD_AVAILABLE
 _GRAPH_TESTING = _GRAPH_AVAILABLE
 
 if "FLASH_TEST_TOPIC" in os.environ:
@@ -36,4 +38,5 @@ if "FLASH_TEST_TOPIC" in os.environ:
     _TABULAR_TESTING = topic == "tabular"
     _TEXT_TESTING = topic == "text"
     _SERVE_TESTING = topic == "serve"
+    _POINTCLOUD_TESTING = topic == "pointcloud"
     _GRAPH_TESTING = topic == "graph"
