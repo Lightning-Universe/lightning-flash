@@ -86,7 +86,6 @@ class GraphEmbedder(Task):
 
         self.backbone = self.backbones.get(backbone)(pretrained=pretrained)
 
-
     def forward(self, x) -> torch.Tensor:
         x = self.backbone(x)
         return x
