@@ -7,9 +7,7 @@ from torchmetrics import Accuracy, F1, Metric
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.registry import FlashRegistry
-
-IMAGE_CLASSIFIER_STRATEGIES = FlashRegistry("strategies")
+from flash.image.classification.strategy import IMAGE_CLASSIFIER_STRATEGIES
 
 
 @IMAGE_CLASSIFIER_STRATEGIES(name="supervised")
