@@ -68,6 +68,7 @@ _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", o
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
 _TABNET_AVAILABLE = _module_available("pytorch_tabnet")
+_FORECASTING_AVAILABLE = _module_available("pytorch_forecasting")
 _KORNIA_AVAILABLE = _module_available("kornia")
 _COCO_AVAILABLE = _module_available("pycocotools")
 _TIMM_AVAILABLE = _module_available("timm")
@@ -94,7 +95,7 @@ if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
 
 _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
-_TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
+_TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
 _IMAGE_AVAILABLE = all([
     _TORCHVISION_AVAILABLE,
