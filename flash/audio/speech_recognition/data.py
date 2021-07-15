@@ -17,7 +17,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import datasets
 import pandas as pd
-import soundfile as sf
 import torch
 from torch import Tensor
 from torch.utils.data import Sampler
@@ -31,6 +30,7 @@ from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
 
 if _SPEECH_RECOGNITION_AVAILABLE:
+    import soundfile as sf
     from datasets import Dataset, load_dataset
     from transformers import Wav2Vec2CTCTokenizer, Wav2Vec2Processor
 

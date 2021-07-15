@@ -1,1 +1,2 @@
 asteroid>=0.5.1
+soundfile>=0.10.2

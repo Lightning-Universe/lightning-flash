@@ -86,6 +86,7 @@ _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
 _ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
+_SOUNDFILE_AVAILABLE = _module_available("soundfile")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
@@ -94,7 +95,7 @@ if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
 
 _TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
-_SPEECH_RECOGNITION_AVAILABLE = _TRANSFORMERS_AVAILABLE
+_SPEECH_RECOGNITION_AVAILABLE = _TRANSFORMERS_AVAILABLE and _SOUNDFILE_AVAILABLE
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
 _IMAGE_AVAILABLE = all([
