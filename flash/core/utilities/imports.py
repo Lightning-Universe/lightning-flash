@@ -89,6 +89,7 @@ _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch"
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
+_ICEVISION_AVAILABLE = _module_available("icevision")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -103,6 +104,7 @@ _IMAGE_AVAILABLE = all([
     _KORNIA_AVAILABLE,
     _PYSTICHE_AVAILABLE,
     _SEGMENTATION_MODELS_AVAILABLE,
+    _ICEVISION_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE

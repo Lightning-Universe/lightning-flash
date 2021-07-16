@@ -23,16 +23,22 @@ datamodule = ObjectDetectionData.from_coco(
     train_folder="data/coco128/images/train2017/",
     train_ann_file="data/coco128/annotations/instances_train2017.json",
     val_split=0.1,
+    predict_folder="data/coco128/images/train2017/",
+    image_size=(256, 256),
 )
 
 # 2. Build the task
-model = ObjectDetector(model="retinanet", num_classes=datamodule.num_classes)
+print(ObjectDetector.available_heads())
+print(ObjectDetector.available_backbones("efficientdet"))
+
+model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=(256, 256))
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
-trainer.finetune(model, datamodule=datamodule)
+trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
+print(trainer.predict(model, datamodule=datamodule))
 predictions = model.predict([
     "data/coco128/images/train2017/000000000625.jpg",
     "data/coco128/images/train2017/000000000626.jpg",

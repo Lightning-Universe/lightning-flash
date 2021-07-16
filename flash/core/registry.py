@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
-from types import FunctionType
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
@@ -76,7 +74,7 @@ class FlashRegistry:
         override: bool = False,
         metadata: Optional[Dict[str, Any]] = None
     ):
-        if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
+        if not callable(fn):
             raise MisconfigurationException(f"You can only register a function, found: {fn}")
 
         name = name or fn.__name__

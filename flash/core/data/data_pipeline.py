@@ -223,6 +223,7 @@ class DataPipeline:
         prefix: str = _STAGES_PREFIX[stage]
 
         if collate_fn is not None:
+            preprocess._original_default_collate = preprocess._default_collate
             preprocess._default_collate = collate_fn
 
         func_names: Dict[str, str] = {
@@ -485,6 +486,10 @@ class DataPipeline:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
         elif isinstance(stage, RunningStage):
             stages = [stage]
+
+        self._preprocess_pipeline._default_collate = getattr(
+            self._preprocess_pipeline, "_original_default_collate", self._preprocess_pipeline._default_collate
+        )
 
         for stage in stages:
 

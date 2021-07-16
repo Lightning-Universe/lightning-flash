@@ -11,25 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, TYPE_CHECKING
+
+import numpy as np
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
+from flash.core.data.data_source import DefaultDataKeys, FiftyOneDataSource
 from flash.core.data.process import Preprocess
 from flash.core.utilities.imports import (
     _COCO_AVAILABLE,
     _FIFTYONE_AVAILABLE,
+    _ICEVISION_AVAILABLE,
     _TORCHVISION_AVAILABLE,
     lazy_import,
-    requires,
 )
 from flash.image.data import ImagePathsDataSource
 from flash.image.detection.transforms import default_transforms
 
 if _COCO_AVAILABLE:
-    from pycocotools.coco import COCO
+    pass
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -42,75 +43,102 @@ else:
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
 
+if _ICEVISION_AVAILABLE:
+    from icevision.core import BaseRecord, ClassMapRecordComponent, ImageRecordComponent, tasks
+    from icevision.data import SingleSplitSplitter
+    from icevision.parsers import Parser
 
-class COCODataSource(DataSource[Tuple[str, str]]):
 
-    @requires("pycocotools")
+class IceVisionPathsDataSource(ImagePathsDataSource):
+
+    def __init__(self, parser: Type[Parser]):
+        self.parser = parser
+
     def load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         root, ann_file = data
 
-        coco = COCO(ann_file)
+        parser = self.parser(ann_file, root)
+        dataset.num_classes = len(parser.class_map)
+        records = parser.parse(data_splitter=SingleSplitSplitter())
+        return [{DefaultDataKeys.INPUT: record} for record in records[0]]
 
-        categories = coco.loadCats(coco.getCatIds())
-        if categories:
-            dataset.num_classes = categories[-1]["id"] + 1
+    def predict_load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+        return super().predict_load_data(data, dataset)
 
-        img_ids = list(sorted(coco.imgs.keys()))
-        paths = coco.loadImgs(img_ids)
-
-        data = []
-
-        for img_id, path in zip(img_ids, paths):
-            path = path["file_name"]
-
-            ann_ids = coco.getAnnIds(imgIds=img_id)
-            annotations = coco.loadAnns(ann_ids)
-
-            boxes, labels, areas, iscrowd = [], [], [], []
-
-            # Ref: https://github.com/pytorch/vision/blob/master/references/detection/coco_utils.py
-            if self.training and all(any(o <= 1 for o in obj["bbox"][2:]) for obj in annotations):
-                continue
-
-            for obj in annotations:
-                xmin = obj["bbox"][0]
-                ymin = obj["bbox"][1]
-                xmax = xmin + obj["bbox"][2]
-                ymax = ymin + obj["bbox"][3]
-
-                bbox = [xmin, ymin, xmax, ymax]
-                keep = (bbox[3] > bbox[1]) & (bbox[2] > bbox[0])
-                if keep:
-                    boxes.append(bbox)
-                    labels.append(obj["category_id"])
-                    areas.append(obj["area"])
-                    iscrowd.append(obj["iscrowd"])
-
-            data.append(
-                dict(
-                    input=os.path.join(root, path),
-                    target=dict(
-                        boxes=boxes,
-                        labels=labels,
-                        image_id=img_id,
-                        area=areas,
-                        iscrowd=iscrowd,
-                    )
-                )
-            )
-        return data
+        # coco = COCO(ann_file)
+        #
+        # categories = coco.loadCats(coco.getCatIds())
+        # if categories:
+        #     dataset.num_classes = categories[-1]["id"] + 1
+        #
+        # img_ids = list(sorted(coco.imgs.keys()))
+        # paths = coco.loadImgs(img_ids)
+        #
+        # data = []
+        #
+        # for img_id, path in zip(img_ids, paths):
+        #     path = path["file_name"]
+        #
+        #     ann_ids = coco.getAnnIds(imgIds=img_id)
+        #     annotations = coco.loadAnns(ann_ids)
+        #
+        #     boxes, labels, areas, iscrowd = [], [], [], []
+        #
+        #     # Ref: https://github.com/pytorch/vision/blob/master/references/detection/coco_utils.py
+        #     if self.training and all(any(o <= 1 for o in obj["bbox"][2:]) for obj in annotations):
+        #         continue
+        #
+        #     for obj in annotations:
+        #         xmin = obj["bbox"][0]
+        #         ymin = obj["bbox"][1]
+        #         xmax = xmin + obj["bbox"][2]
+        #         ymax = ymin + obj["bbox"][3]
+        #
+        #         bbox = [xmin, ymin, xmax, ymax]
+        #         keep = (bbox[3] > bbox[1]) & (bbox[2] > bbox[0])
+        #         if keep:
+        #             boxes.append(bbox)
+        #             labels.append(obj["category_id"])
+        #             areas.append(obj["area"])
+        #             iscrowd.append(obj["iscrowd"])
+        #
+        #     data.append(
+        #         dict(
+        #             input=os.path.join(root, path),
+        #             target=dict(
+        #                 boxes=boxes,
+        #                 labels=labels,
+        #                 image_id=img_id,
+        #                 area=areas,
+        #                 iscrowd=iscrowd,
+        #             )
+        #         )
+        #     )
+        # return data
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        filepath = sample[DefaultDataKeys.INPUT]
-        img = default_loader(filepath)
-        sample[DefaultDataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {
-            "filepath": filepath,
-            "size": (h, w),
-        }
-        return sample
-        return sample
+        # TODO: get image size for metadata
+        # sample[DefaultDataKeys.INPUT] = sample[DefaultDataKeys.INPUT].load()
+        return sample[DefaultDataKeys.INPUT].load()
+        # filepath = sample[DefaultDataKeys.INPUT]
+        # img = default_loader(filepath)
+        # sample[DefaultDataKeys.INPUT] = img
+        # w, h = img.size  # WxH
+        # sample[DefaultDataKeys.METADATA] = {
+        #     "filepath": filepath,
+        #     "size": (h, w),
+        # }
+        # return sample
+        # return sample
+
+    def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        image = np.array(sample[DefaultDataKeys.INPUT])
+        record = BaseRecord([ImageRecordComponent()])
+        # record.set_record_id(i)
+        record.set_img(image)
+        record.add_component(ClassMapRecordComponent(task=tasks.detection))
+        return record
 
 
 class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
@@ -205,21 +233,26 @@ class ObjectDetectionPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
         **data_source_kwargs: Any,
     ):
+        self.image_size = image_size
+
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(**data_source_kwargs),
-                DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
-                "coco": COCODataSource(),
+                # DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(**data_source_kwargs),
+                # DefaultDataSources.FILES: ObjectDetectionPathsDataSource(),
+                # DefaultDataSources.FOLDERS: ObjectDetectionPathsDataSource(),
+                # "coco": COCODataSource(),
             },
-            default_data_source=DefaultDataSources.FILES,
+            default_data_source="coco",
         )
+
+        self._default_collate = self._identity
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {**self.transforms}
@@ -229,7 +262,10 @@ class ObjectDetectionPreprocess(Preprocess):
         return cls(**state_dict)
 
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_transforms()
+        return default_transforms(self.image_size)
+
+    def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_transforms(self.image_size)
 
 
 class ObjectDetectionData(DataModule):
@@ -237,7 +273,6 @@ class ObjectDetectionData(DataModule):
     preprocess_cls = ObjectDetectionPreprocess
 
     @classmethod
-    @requires("pycocotools")
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
@@ -246,9 +281,11 @@ class ObjectDetectionData(DataModule):
         val_ann_file: Optional[str] = None,
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
+        predict_folder: Optional[str] = None,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
@@ -298,6 +335,7 @@ class ObjectDetectionData(DataModule):
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,
             (test_folder, test_ann_file) if test_folder else None,
+            predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,

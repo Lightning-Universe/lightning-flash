@@ -363,12 +363,13 @@ class DataModule(pl.LightningDataModule):
         pin_memory = True
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            return self.trainer.lightning_module.process_test_dataset(
+            return self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
                 batch_size=batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
-                collate_fn=collate_fn
+                collate_fn=collate_fn,
+                convert_to_dataloader=True,
             )
 
         return DataLoader(
