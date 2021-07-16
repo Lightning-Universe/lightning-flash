@@ -16,7 +16,6 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-import datasets
 import pandas as pd
 import torch
 from torch import Tensor
@@ -32,6 +31,7 @@ from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE, requires_extras
 
 if _SPEECH_RECOGNITION_AVAILABLE:
+    import datasets
     import soundfile as sf
     from datasets import Dataset, load_dataset
     from transformers import Wav2Vec2CTCTokenizer, Wav2Vec2Processor

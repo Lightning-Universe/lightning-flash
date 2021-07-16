@@ -57,6 +57,12 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Audio
+
+   reference/speech_recognition
+
+.. toctree::
+   :maxdepth: 1
    :caption: Point Cloud
 
    reference/pointcloud_segmentation
@@ -81,6 +87,7 @@ Lightning Flash
    api/core
    api/data
    api/serve
+   api/audio
    api/image
    api/pointcloud
    api/tabular
