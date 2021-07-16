@@ -33,120 +33,107 @@ GRAPH_CLASSIFICATION_BACKBONES = FlashRegistry("backbones")
 
 # todo: how to pass arguments to the models:
 
-AUTOENCODER_MODELS = ["arga", "argva", "gae", " vgae"]
-ENCODER_MODELS = ["DeepGraphInfomax"]
-OTHER_MODELS = ["RENet", "SignedGCN", "SchNet", "TGNMemory", "LabelPropagation"]
-POSTPROCESSING_MODELS = ["correct_and_smooth"]
-RESIDUAL_MODELS = ["deep_GCN_layer", "JumpingKnowledge"]
-META_MODELS = ["GNN_explainer"]
-EMBEDING_MODELS = ["MetaPath2Vec", "Path2Vec"]
-
-CLASSIFICATION_MODELS = ["AttentiveFP", "GraphUNet", "DimeNet"]
+MODELS = ["GCN", "GCNWithJK", "GraphSAGE", "GraphSAGEWithJK", "GAT", "GATWithJK", "GATv2", "GATv2WithJK", "GIN", "GINWithJK", "GINE", "GINEWithJK"]
 
 # MODELS
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="AttentiveFP", namespace="graph/classification")  #todo: how to add more tasks?
-def load_AttentiveFP(
+@GRAPH_CLASSIFICATION_BACKBONES(name="GCN", namespace="graph/classification")  #todo: how to add more tasks?
+def load_GCN(
     in_channels: int,
     hidden_channels: int,
-    out_channels: int,
-    edge_dim: int,
     num_layers: int,
-    num_timesteps: int,
-    dropout: float = 0.0
 ):
-    """Attentive FP backbone from torch geometric"""
-    return models.AttentiveFP(in_channels, hidden_channels, out_channels, edge_dim, num_layers, num_timesteps, dropout)
+    """GCN backbone from torch geometric"""
+    return models.GCN(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="DimeNet", namespace="graph/classification")  #todo: how to add more tasks?
-def load_DimeNet(
-    hidden_channels,
-    out_channels,
-    num_blocks,
-    num_bilinear,
-    num_spherical,
-    num_radial,
-    cutoff=5.0,
-    envelope_exponent=5,
-    num_before_skip=1,
-    num_after_skip=2,
-    num_output_layers=3,
-    act=ReLU
+@GRAPH_CLASSIFICATION_BACKBONES(name="GCNWithJK", namespace="graph/classification")
+def load_GCNWithJK(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+    num_workers: int,
 ):
-    """DimeNet backbone from torch geometric"""
-    return models.DimeNet(
-        hidden_channels, out_channels, num_blocks, num_bilinear, num_spherical, num_radial, cutoff, envelope_exponent,
-        num_before_skip, num_after_skip, num_output_layers, act
-    )
+    """GCN backbone with JK from torch geometric"""
+    return models.GCNWithJK(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="GraphUNet", namespace="graph/classification")  #todo: how to add more tasks?
-def load_GraphUNet(in_channels, hidden_channels, out_channels, depth, pool_ratios=0.5, sum_res=True, act=ReLU):
-    """GraphUNet backbone from torch geometric"""
-    return models.GraphUNet(in_channels, hidden_channels, out_channels, depth, pool_ratios, sum_res, act)
-
-
-## OTHER MODELS
-@GRAPH_CLASSIFICATION_BACKBONES(name="RENet", namespace="graph/classification")  #todo: how to add more tasks?
-def load_RENet(num_nodes, num_rels, hidden_channels, seq_len, num_layers=1, dropout=0.0, bias=True):
-    """RENet backbone from torch geometric"""
-    return models.RENet(num_nodes, num_rels, hidden_channels, seq_len, num_layers, dropout, bias)
-
-
-@GRAPH_CLASSIFICATION_BACKBONES(name="SchNet", namespace="graph/classification")  #todo: how to add more tasks?
-def load_SchNet(
-    hidden_channels=128,
-    num_filters=128,
-    num_interactions=6,
-    num_gaussians=50,
-    cutoff=10.0,
-    readout='add',
-    dipole=False,
-    mean=None,
-    std=None,
-    atomref=None
+@GRAPH_CLASSIFICATION_BACKBONES(name="GraphSAGE", namespace="graph/classification")
+def load_GraphSAGE(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
 ):
-    """SchNet backbone from torch geometric"""
-    return models.SchNet(
-        hidden_channels, num_filters, num_interactions, num_gaussians, cutoff, readout, dipole, mean, std, atomref
-    )
+    """GraphSAGE backbone from torch geometric"""
+    return models.GraphSAGE(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="SignedGCM", namespace="graph/classification")  #todo: how to add more tasks?
-def load_SignedGCN(in_channels, hidden_channels, num_layers, lamb=5, bias=True):
-    """SignedGCN backbone from torch geometric"""
-    return models.SignedGCN(in_channels, hidden_channels, num_layers, lamb, bias)
+@GRAPH_CLASSIFICATION_BACKBONES(name="GraphSAGEWithJK", namespace="graph/classification")
+def load_GraphSAGEWithJK(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+):
+    """GraphSAGE backbone with JK from torch geometric"""
+    return models.GraphSAGEWithJK(in_channels, hidden_channels, num_layers)
 
 
-'''@GRAPH_CLASSIFICATION_BACKBONES(name="LabelPropagation", namespace="graph/classification") #todo: how to add more tasks?
-def load_LabelPropagation(num_layers: int, alpha: float):
-    """LabelPropagation backbone from torch geometric"""
-    return models.LabelPropagation(num_layers, alpha)'''
-
-# AUTOENCODER MODELS
-
-
-@GRAPH_CLASSIFICATION_BACKBONES(name="ARGVA", namespace="graph/classification")  #todo: how to add more tasks?
-def load_ARGVA(encoder, discriminator, decoder=None):
-    """ARGVA backbone from torch geometric"""
-    return models.ARGVA(encoder, discriminator, decoder)
+@GRAPH_CLASSIFICATION_BACKBONES(name="GAT", namespace="graph/classification")
+def load_GAT(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+):
+    """GAT backbone from torch geometric"""
+    return models.GAT(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="ARGA", namespace="graph/classification")  #todo: how to add more tasks?
-def load_ARGA(encoder, discriminator, decoder=None):
-    """ARGA backbone from torch geometric"""
-    return models.ARGA(encoder, discriminator, decoder)
+@GRAPH_CLASSIFICATION_BACKBONES(name="GATWithJK", namespace="graph/classification")
+def load_GATWithJK(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+):
+    """GAT backbone with JK from torch geometric"""
+    return models.GATWithJK(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="GAE", namespace="graph/classification")  #todo: how to add more tasks?
-def load_GAE(encoder, decoder=None):
-    """GAE backbone from torch geometric"""
-    return models.GAE(encoder, decoder)
+@GRAPH_CLASSIFICATION_BACKBONES(name="GIN", namespace="graph/classification")
+def load_GIN(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+):
+    """GIN backbone from torch geometric"""
+    return models.GIN(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="VGAE", namespace="graph/classification")  #todo: how to add more tasks?
-def load_VGAE(encoder, decoder=None):
-    """VGAE backbone from torch geometric"""
-    return models.VGAE(encoder, decoder)
+@GRAPH_CLASSIFICATION_BACKBONES(name="GINWithJK", namespace="graph/classification")
+def load_GINWithJK(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+):
+    """GIN backbone with JK from torch geometric"""
+    return models.GINWithJK(in_channels, hidden_channels, num_layers)
+
+
+@GRAPH_CLASSIFICATION_BACKBONES(name="GINE", namespace="graph/classification")
+def load_GINE(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+):
+    """GINE backbone from torch geometric"""
+    return models.GINE(in_channels, hidden_channels, num_layers)
+
+
+@GRAPH_CLASSIFICATION_BACKBONES(name="GINEWithJK", namespace="graph/classification")
+def load_GINEWithJK(
+    in_channels: int,
+    hidden_channels: int,
+    num_layers: int,
+):
+    """GINE backbone with JK from torch geometric"""
+    return models.GINEWithJK(in_channels, hidden_channels, num_layers)
