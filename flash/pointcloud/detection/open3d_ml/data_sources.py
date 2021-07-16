@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import BaseDataFormat, DataSource
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.datasets.kitti import DataProcessing, KITTI
@@ -180,7 +180,6 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
         if isinstance(folder, str) and not isdir(folder):
             raise MisconfigurationException(msg)
 
-    @requires_extras("pointcloud")
     def load_data(
         self,
         data: Any,
@@ -216,7 +215,6 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
         if isinstance(data, list) and not all(isfile(p) for p in data):
             raise MisconfigurationException(msg)
 
-    @requires_extras("pointcloud")
     def predict_load_data(
         self,
         data: Any,
@@ -227,7 +225,6 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
 
         return self.loader.predict_load_data(data, dataset)
 
-    @requires_extras("pointcloud")
     def predict_load_sample(
         self,
         metadata: Any,
