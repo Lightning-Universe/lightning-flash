@@ -176,6 +176,14 @@ class DefaultDataKeys(LightningEnum):
         return hash(self.value)
 
 
+class BaseDataFormat(LightningEnum):
+
+    pass
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+
 class MockDataset:
     """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``. This is passed to
     :meth:`~flash.core.data.data_source.DataSource.load_data` so that attributes can be set on the generated

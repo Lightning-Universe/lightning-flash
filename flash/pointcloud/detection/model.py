@@ -18,19 +18,17 @@ import torchmetrics
 from pytorch_lightning import Callback
 from torch import nn
 from torch.nn import functional as F
-from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
 import flash
-from flash.core.classification import ClassificationTask
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
-from flash.core.finetuning import BaseFinetuning
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
 
@@ -70,21 +68,21 @@ class PointCloudObjectDetector(flash.Task):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
+        backbone: Union[str, Tuple[nn.Module, int]] = "pointpillars_kitti",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
-        loss_fn: Optional[Callable] = torch.nn.functional.cross_entropy,
+        loss_fn: Optional[Callable] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
-        multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudObjectDetectorSerializer(),
+        lambda_loss_cls: float = 1.,
+        lambda_loss_bbox: float = 1.,
+        lambda_loss_dir: float = 1.,
     ):
-        if metrics is None:
-            metrics = IoU(num_classes=num_classes)
 
         super().__init__(
             model=None,
@@ -95,47 +93,40 @@ class PointCloudObjectDetector(flash.Task):
             scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
-            multi_label=multi_label,
             serializer=serializer,
         )
 
         self.save_hyperparameters()
 
-        if not backbone_kwargs:
-            backbone_kwargs = {"num_classes": num_classes}
+        if backbone_kwargs is None:
+            backbone_kwargs = {}
 
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
-            # replace latest layer
-            if not flash._IS_TESTING:
-                self.backbone.fc = nn.Identity()
+            self.model, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.backbone = self.model.backbone
+            self.neck = self.model.neck
             self.set_state(CollateFn(collate_fn))
+            self.loss_fn = get_callable_dict(self.model.loss)
 
-        self.head = nn.Identity() if flash._IS_TESTING else (head or nn.Linear(out_features, num_classes))
+        #self.model.bbox_head.conv_cls = self.head = nn.Conv2d(out_features, num_classes, kernel_size=(1, 1), stride=(1, 1))
 
-    def apply_filtering(self, labels, scores):
-        scores, labels = filter_valid_label(scores, labels, self.hparams.num_classes, [0], self.device)
-        return labels, scores
-
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
-        return F.softmax(self.to_loss_format(x))
-
-    def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
-        return x.reshape(-1, x.shape[-1])
+    def compute_loss(self, losses: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        losses = losses["loss"]
+        return (
+            self.hparams.lambda_loss_cls * losses["loss_cls"] + self.hparams.lambda_loss_bbox * losses["loss_bbox"] +
+            self.hparams.lambda_loss_dir * losses["loss_dir"]
+        )
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
-        return super().training_step(batch, batch_idx)
+        return super().training_step((batch, batch), batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
-        return super().validation_step(batch, batch_idx)
+        super().validation_step((batch, batch), batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
-        return super().test_step(batch, batch_idx)
+        super().validation_step((batch, batch), batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
@@ -147,11 +138,8 @@ class PointCloudObjectDetector(flash.Task):
     def forward(self, x) -> torch.Tensor:
         """First call the backbone, then the model head."""
         # hack to enable backbone to work properly.
-        self.backbone.device = self.device
-        x = self.backbone(x)
-        if self.head is not None:
-            x = self.head(x)
-        return x
+        self.model.device = self.device
+        return self.model(x)
 
     def _process_dataset(
         self,
@@ -169,14 +157,8 @@ class PointCloudObjectDetector(flash.Task):
         if not _POINTCLOUD_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
 
-        if not isinstance(dataset.dataset, TorchDataloader):
-
-            dataset.dataset = TorchDataloader(
-                dataset.dataset,
-                preprocess=self.backbone.preprocess,
-                transform=self.backbone.transform,
-                use_cache=False,
-            )
+        dataset.preprocess_fn = self.model.preprocess
+        dataset.transform_fn = self.model.transform
 
         if convert_to_dataloader:
             return DataLoader(
@@ -192,6 +174,3 @@ class PointCloudObjectDetector(flash.Task):
 
         else:
             return dataset
-
-    def configure_finetune_callback(self) -> List[Callback]:
-        return [PointCloudObjectDetectorFinetuning()]

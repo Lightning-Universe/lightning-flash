@@ -22,58 +22,56 @@ from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 ROOT_URL = "https://storage.googleapis.com/open3d-releases/model-zoo/"
 
+if _POINTCLOUD_AVAILABLE:
+    import open3d
+    import open3d.ml as _ml3d
+    from open3d._ml3d.torch.dataloaders.concat_batcher import ObjectDetectBatch
+    from open3d.ml.torch.dataloaders import ConcatBatcher, DefaultBatcher
+    from open3d.ml.torch.models import PointPillars, PointRCNN
+else:
+    ObjectDetectBatch = object
+
+
+class ObjectDetectBatchCollator(ObjectDetectBatch):
+
+    def __init__(self, batches):
+        self.num_batches = len(batches)
+        super().__init__(batches)
+
+    def to(self, device):
+        super().to(device)
+        return self
+
+    def __len__(self):
+        return self.num_batches
+
 
 def register_open_3d_ml(register: FlashRegistry):
-    if _POINTCLOUD_AVAILABLE:
-        import open3d
-        import open3d.ml as _ml3d
-        from open3d.ml.torch.dataloaders import ConcatBatcher, DefaultBatcher
-        from open3d.ml.torch.models import RandLANet
 
-        CONFIG_PATH = os.path.join(os.path.dirname(open3d.__file__), "_ml3d/configs")
+    CONFIG_PATH = os.path.join(os.path.dirname(open3d.__file__), "_ml3d/configs")
 
-        def get_collate_fn(model) -> Callable:
-            batcher_name = model.cfg.batcher
-            if batcher_name == 'DefaultBatcher':
-                batcher = DefaultBatcher()
-            elif batcher_name == 'ConcatBatcher':
-                batcher = ConcatBatcher(torch, model.__class__.__name__)
-            else:
-                batcher = None
-            return batcher.collate_fn
+    def get_collate_fn(model) -> Callable:
+        batcher_name = model.cfg.batcher
+        if batcher_name == 'DefaultBatcher':
+            batcher = DefaultBatcher()
+        elif batcher_name == 'ConcatBatcher':
+            batcher = ConcatBatcher(torch, model.__class__.__name__)
+        elif batcher_name == 'ObjectDetectBatchCollator':
+            return ObjectDetectBatchCollator
+        return batcher.collate_fn
 
-        @register
-        def randlanet_s3dis(*args, use_fold_5: bool = True, **kwargs) -> RandLANet:
-            cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_s3dis.yml"))
-            model = RandLANet(**cfg.model)
-            if use_fold_5:
-                weight_url = os.path.join(ROOT_URL, "randlanet_s3dis_area5_202010091333utc.pth")
-            else:
-                weight_url = os.path.join(ROOT_URL, "randlanet_s3dis_202010091238.pth")
-            model.load_state_dict(pl_load(weight_url, map_location='cpu')['model_state_dict'])
-            return model, 32, get_collate_fn(model)
+    @register(parameters=PointPillars.__init__)
+    def pointpillars_kitti(*args, **kwargs) -> PointPillars:
+        cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "pointpillars_kitti.yml"))
+        cfg.model.device = "cpu"
+        model = PointPillars(**cfg.model)
+        weight_url = os.path.join(ROOT_URL, "pointpillars_kitti_202012221652utc.pth")
+        model.load_state_dict(pl_load(weight_url, map_location='cpu')['model_state_dict'], )
+        model.cfg.batcher = "ObjectDetectBatchCollator"
+        return model, 384, get_collate_fn(model)
 
-        @register
-        def randlanet_toronto3d(*args, **kwargs) -> RandLANet:
-            cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_toronto3d.yml"))
-            model = RandLANet(**cfg.model)
-            model.load_state_dict(
-                pl_load(os.path.join(ROOT_URL, "randlanet_toronto3d_202010091306utc.pth"),
-                        map_location='cpu')['model_state_dict'],
-            )
-            return model, 32, get_collate_fn(model)
-
-        @register
-        def randlanet_semantic_kitti(*args, **kwargs) -> RandLANet:
-            cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_semantickitti.yml"))
-            model = RandLANet(**cfg.model)
-            model.load_state_dict(
-                pl_load(os.path.join(ROOT_URL, "randlanet_semantickitti_202009090354utc.pth"),
-                        map_location='cpu')['model_state_dict'],
-            )
-            return model, 32, get_collate_fn(model)
-
-        @register
-        def randlanet(*args, **kwargs) -> RandLANet:
-            model = RandLANet(*args, **kwargs)
-            return model, 32, get_collate_fn(model)
+    @register(parameters=PointPillars.__init__)
+    def pointpillars(*args, **kwargs) -> PointPillars:
+        model = PointPillars(*args, **kwargs)
+        model.cfg.batcher = "ObjectDetectBatch"
+        return model, get_collate_fn(model)

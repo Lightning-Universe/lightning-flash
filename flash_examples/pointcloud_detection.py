@@ -14,21 +14,18 @@
 import flash
 from flash.core.data.utils import download_data
 from flash.pointcloud import PointCloudObjectDetector, PointCloudObjectDetectorData
-from flash.pointcloud.detection.datasets import KITTIDataset
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/
-#download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiTiny.zip", "data/")
+# download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_Tiny.zip", "data/")
 
-dataset = KITTIDataset("data")
-
-datamodule = PointCloudObjectDetectorData.from_datasets(
-    train_dataset=dataset.get_split("training"),
-    val_dataset=dataset.get_split("val"),
+datamodule = PointCloudObjectDetectorData.from_folders(
+    train_folder="data/KITTI_Tiny/kitti/train",
+    val_folder="data/KITTI_Tiny/kitti/val",
 )
 
 # 2. Build the task
-model = PointCloudSegmentation(backbone="randlanet_semantic_kitti", num_classes=datamodule.num_classes)
+model = PointCloudObjectDetector(backbone="pointpillars_kitti", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1, num_sanity_val_steps=0)
@@ -36,8 +33,8 @@ trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?
 predictions = model.predict([
-    "data/SemanticKittiTiny/predict/000000.bin",
-    "data/SemanticKittiTiny/predict/000001.bin",
+    "data/KITTI_Tiny/Kitti/predict/scans/000000.bin",
+    "data/KITTI_Tiny/Kitti/predict/scans/000001.bin",
 ])
 
 # 5. Save the model!
