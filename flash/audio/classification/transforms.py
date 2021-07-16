@@ -33,8 +33,8 @@ if _AUDIO_AVAILABLE:
 
 
 def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms for audio classification for spectrograms: resize the spectrogram, convert the spectrogram and target to a tensor,
-    and collate the batch."""
+    """The default transforms for audio classification for spectrograms: resize the spectrogram, 
+    convert the spectrogram and target to a tensor, and collate the batch."""
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         return {
