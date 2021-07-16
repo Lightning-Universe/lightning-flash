@@ -120,6 +120,7 @@ _EXTRAS_AVAILABLE = {
     'video': _VIDEO_AVAILABLE,
     'pointcloud': _POINTCLOUD_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
+    'speech': _SPEECH_RECOGNITION_AVAILABLE,
     'audio': _AUDIO_AVAILABLE,
     'graph': _GRAPH_AVAILABLE,
 }

@@ -25,25 +25,32 @@ from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
+from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE, requires_extras
 
 if _SPEECH_RECOGNITION_AVAILABLE:
     import soundfile as sf
     from datasets import Dataset, load_dataset
     from transformers import Wav2Vec2CTCTokenizer, Wav2Vec2Processor
 
+INPUT_FIELD = "file"
+TARGET_FIELD = "text"
+
 
 class SpeechRecognitionDeserializer(Deserializer):
 
+    @requires_extras("speech")
     def __init__(self, backbone: str):
         super().__init__()
         self.backbone = backbone
         self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(backbone)
 
-    def deserialize(self, sample: Any) -> Tensor:
-        return self.tokenizer(sample["speech"], sampling_rate=sample["sampling_rate"][0]).input_values
+    def deserialize(self, sample: Any) -> Dict:
+        return {
+            DefaultDataKeys.INPUT: self.tokenizer(sample["speech"],
+                                                  sampling_rate=sample["sampling_rate"][0]).input_values,
+        }
 
     @property
     def example_input(self) -> str:
@@ -71,9 +78,16 @@ class SpeechRecognitionDataSource(DataSource):
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
     ) -> Union[Sequence[Mapping[str, Any]]]:
-        file, input, target = data
+        if self.filetype == 'json':
+            file, input, target, field = data
+        else:
+            file, input, target = data
         stage = self.running_stage.value
         dataset_dict = load_dataset(self.filetype, data_files={stage: str(file)})
+        if input != INPUT_FIELD:
+            dataset_dict.rename_column_(input, INPUT_FIELD)
+        if target != TARGET_FIELD:
+            dataset_dict.rename_column_(target, TARGET_FIELD)
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
@@ -121,11 +135,12 @@ class SpeechRecognitionFilesSource(DataSource):
     ) -> Union[Sequence[Mapping[str, Any]]]:
         if isinstance(files, str):
             files = [files]
-        return [dict(file=file) for file in files]
+        return [{INPUT_FIELD: file} for file in files]
 
 
 class SpeechRecognitionPreprocess(Preprocess):
 
+    @requires_extras("speech")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -177,11 +192,11 @@ class SpeechRecognitionPreprocess(Preprocess):
         return batch
 
     def _speech_file_to_array_fn(self, batch: Any) -> Any:
-        speech_array, sampling_rate = sf.read(batch["file"])
+        speech_array, sampling_rate = sf.read(batch[INPUT_FIELD])
         batch["speech"] = speech_array
         batch["sampling_rate"] = sampling_rate
         if not self.predicting:
-            batch["target_text"] = batch["text"]
+            batch["target_text"] = batch[TARGET_FIELD]
         return batch
 
     def _convert_to_batch(self, batch: Any) -> Dataset:
@@ -206,6 +221,7 @@ class SpeechRecognitionPreprocess(Preprocess):
 
 class SpeechRecognitionPostprocess(Postprocess):
 
+    @requires_extras("speech")
     def __init__(
         self,
         save_path: Optional[str] = None,
