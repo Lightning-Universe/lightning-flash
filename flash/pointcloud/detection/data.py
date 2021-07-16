@@ -17,6 +17,9 @@ if _POINTCLOUD_AVAILABLE:
 else:
     PointCloudObjectDetectorFoldersDataSource = object()
 
+    class PointCloudObjectDetectionDataFormat:
+        KITTI = None
+
 
 class PointCloudObjectDetectorDatasetDataSource(DataSource):
 
