@@ -61,6 +61,10 @@ jobs:
             python-version: 3.8
             requires: 'latest'
             topic: ['graph']
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: ['speech']
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
