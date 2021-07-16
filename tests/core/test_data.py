@@ -49,7 +49,7 @@ def test_dataloaders():
         dm.test_dataloader(),
     ]:
         x, y = next(iter(dl))
-        assert x.shape == (1, 1, 28, 28)
+        assert x.shape == (4, 1, 28, 28)
 
 
 def test_cpu_count_none():

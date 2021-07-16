@@ -57,6 +57,12 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Point Cloud
+
+   reference/pointcloud_segmentation
+
+.. toctree::
+   :maxdepth: 1
    :caption: Graph
 
    reference/graph_classification
@@ -76,6 +82,7 @@ Lightning Flash
    api/data
    api/serve
    api/image
+   api/pointcloud
    api/tabular
    api/text
    api/video

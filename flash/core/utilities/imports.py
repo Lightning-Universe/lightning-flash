@@ -83,11 +83,13 @@ _GRAPHVIZ_AVAILABLE = _module_available("graphviz")
 _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
+_OPEN3D_AVAILABLE = _module_available("open3d")
 _ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
+_NETWORKX_AVAILABLE = _module_available("networkx")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -104,16 +106,19 @@ _IMAGE_AVAILABLE = all([
     _SEGMENTATION_MODELS_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
+_POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE
 _AUDIO_AVAILABLE = all([
     _ASTEROID_AVAILABLE,
 ])
-_GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
+
+_GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE and _NETWORKX_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
     'image': _IMAGE_AVAILABLE,
     'tabular': _TABULAR_AVAILABLE,
     'text': _TEXT_AVAILABLE,
     'video': _VIDEO_AVAILABLE,
+    'pointcloud': _POINTCLOUD_AVAILABLE,
     'serve': _SERVE_AVAILABLE,
     'audio': _AUDIO_AVAILABLE,
     'graph': _GRAPH_AVAILABLE,
