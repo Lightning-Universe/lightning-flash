@@ -33,7 +33,10 @@ GRAPH_CLASSIFICATION_BACKBONES = FlashRegistry("backbones")
 
 # todo: how to pass arguments to the models:
 
-MODELS = ["GCN", "GCNWithJK", "GraphSAGE", "GraphSAGEWithJK", "GAT", "GATWithJK", "GATv2", "GATv2WithJK", "GIN", "GINWithJK", "GINE", "GINEWithJK"]
+MODELS = [
+    "GCN", "GCNWithJK", "GraphSAGE", "GraphSAGEWithJK", "GAT", "GATWithJK", "GATv2", "GATv2WithJK", "GIN", "GINWithJK",
+    "GINE", "GINEWithJK"
+]
 
 # MODELS
 
