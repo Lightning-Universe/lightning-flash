@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.data.utils import download_data
 from flash.audio import AudioClassificationData
-from flash.image import ImageClassifier
+from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
+from flash.image import ImageClassifier
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/urban8k_images.zip", "./data")

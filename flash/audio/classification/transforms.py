@@ -19,7 +19,7 @@ from torch import nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, _AUDIO_AVAILABLE
+from flash.core.utilities.imports import _AUDIO_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -33,7 +33,7 @@ if _AUDIO_AVAILABLE:
 
 
 def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms for audio classification for spectrograms: resize the spectrogram, 
+    """The default transforms for audio classification for spectrograms: resize the spectrogram,
     convert the spectrogram and target to a tensor, and collate the batch."""
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly

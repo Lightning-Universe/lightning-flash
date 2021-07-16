@@ -71,4 +71,4 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/audio_classification.py
     :language: python
     :lines: 14-
-    
+

@@ -20,9 +20,9 @@ import pytest
 import torch
 import torch.nn as nn
 
+from flash.audio import AudioClassificationData
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.audio import AudioClassificationData
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from tests.helpers.utils import _IMAGE_TESTING
 
