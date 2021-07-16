@@ -13,10 +13,11 @@
 # limitations under the License.
 import flash
 from flash.audio import SpeechRecognition, SpeechRecognitionData
+from flash.core.data.utils import download_data
 
 # # 1. Create the DataModule
-# download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
-#
+download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
+
 datamodule = SpeechRecognitionData.from_json(
     input_fields="file",
     target_fields="text",
