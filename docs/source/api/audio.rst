@@ -1,6 +1,6 @@
-#############
-flash.tabular
-#############
+###########
+flash.audio
+###########
 
 .. contents::
     :depth: 1
@@ -18,5 +18,4 @@ ______________
     :template: classtemplate.rst
 
     ~classification.data.AudioClassificationData
-
-    classification.data.AudioClassificationPreprocess
+    ~classification.data.AudioClassificationPreprocess
