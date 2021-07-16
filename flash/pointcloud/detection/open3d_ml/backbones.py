@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from abc import ABC
 from typing import Callable
 
 import torch
@@ -29,8 +30,8 @@ if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.models.point_pillars import PointPillars
     from open3d.ml.torch.dataloaders import DefaultBatcher
 else:
-    ObjectDetectBatch = object()
-    PointPillars = object()
+    ObjectDetectBatch = ABC
+    PointPillars = ABC
 
 
 class ObjectDetectBatchCollator(ObjectDetectBatch):
