@@ -103,14 +103,13 @@ class VideoObjectDetector(Task):
         if time_stamp_range:
             time_stamp_range = range(*time_stamp_range)
         else:
-            time_stamp_range = range(data.duration)
+            time_stamp_range = range(int(data.duration))
 
         for time_stamp in time_stamp_range:
             inp_img = self._extract_clip(data, time_stamp, clip_duration)
             predicted_boxes = self.image_detector_forward(inp_img)
 
             if len(predicted_boxes) == 0:
-                self.log("Skipping clip no frames detected at time stamp: ", time_stamp)
                 continue
 
             inputs, inp_boxes = self.prepare_video_forward(inp_img, predicted_boxes)
