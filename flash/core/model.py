@@ -196,17 +196,18 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             else:
                 logs[name] = metric(y_hat, y)
 
+        logs.update(losses)
         if len(losses.values()) > 1:
             logs["total_loss"] = sum(losses.values())
             return logs["total_loss"], logs
 
-        logs["loss"] = output["loss"] = self.compute_loss(losses)
+        output["loss"] = self.compute_loss(losses)
         output["logs"] = logs
         output["y"] = y
         return output
 
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
-        return sum(losses.values())
+        return list(losses.values())[0]
 
     @staticmethod
     def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
