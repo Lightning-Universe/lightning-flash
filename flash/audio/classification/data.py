@@ -18,12 +18,14 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
+from flash.core.utilities.imports import requires_extras
 from flash.image.classification.data import MatplotlibVisualization
 from flash.image.data import ImageDeserializer, ImagePathsDataSource
 
 
 class AudioClassificationPreprocess(Preprocess):
 
+    @requires_extras(["audio", "image"])
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]],
@@ -53,7 +55,12 @@ class AudioClassificationPreprocess(Preprocess):
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {**self.transforms, "image_size": self.image_size}
+        return {
+            **self.transforms,
+            "spectrogram_size": self.spectrogram_size,
+            "time_mask_param": self.time_mask_param,
+            "freq_mask_param": self.freq_mask_param,
+        }
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):

@@ -24,7 +24,7 @@ from flash.audio import AudioClassificationData
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
-from tests.helpers.utils import _IMAGE_TESTING
+from tests.helpers.utils import _AUDIO_TESTING
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -40,7 +40,7 @@ def _rand_image(size: Tuple[int, int] = None):
     return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_smoke(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -71,7 +71,7 @@ def test_from_filepaths_smoke(tmpdir):
     assert sorted(list(labels.numpy())) == [1, 2]
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_list_image_paths(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -118,7 +118,7 @@ def test_from_filepaths_list_image_paths(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -153,7 +153,7 @@ def test_from_filepaths_visualise(tmpdir):
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -189,7 +189,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
     dm.show_val_batch("per_batch_transform")
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_splits(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -234,7 +234,7 @@ def test_from_filepaths_splits(tmpdir):
     run(_to_tensor)
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_folders_only_train(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -258,7 +258,7 @@ def test_from_folders_only_train(tmpdir):
     assert spectrograms_data.test_dataloader() is None
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_folders_train_val(tmpdir):
 
     train_dir = Path(tmpdir / "train")
@@ -297,7 +297,7 @@ def test_from_folders_train_val(tmpdir):
     assert list(labels.numpy()) == [0, 0]
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 

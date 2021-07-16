@@ -30,9 +30,8 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Audio, Image and Video
+   :caption: Image and Video
 
-   reference/audio_classification
    reference/image_classification
    reference/image_classification_multi_label
    reference/image_embedder
@@ -40,6 +39,12 @@ Lightning Flash
    reference/semantic_segmentation
    reference/style_transfer
    reference/video_classification
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Audio
+
+   reference/audio_classification
 
 .. toctree::
    :maxdepth: 1

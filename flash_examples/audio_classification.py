@@ -38,13 +38,6 @@ predictions = model.predict([
     "data/urban8k_images/test/air_conditioner/13230-0-0-5.wav.jpg",
     "data/urban8k_images/test/children_playing/9223-2-0-15.wav.jpg",
     "data/urban8k_images/test/jackhammer/22883-7-10-0.wav.jpg",
-    "data/urban8k_images/test/street_music/7390-9-0-6.wav.jpg",
-    "data/urban8k_images/test/car_horn/7389-1-0-6.wav.jpg",
-    "data/urban8k_images/test/dog_bark/344-3-4-0.wav.jpg",
-    "data/urban8k_images/test/drilling/22962-4-0-0.wav.jpg",
-    "data/urban8k_images/test/engine_idling/6988-5-0-2.wav.jpg",
-    "data/urban8k_images/test/gun_shot/7063-6-0-0.wav.jpg",
-    "data/urban8k_images/test/siren/22601-8-0-9.wav.jpg",
 ])
 print(predictions)
 

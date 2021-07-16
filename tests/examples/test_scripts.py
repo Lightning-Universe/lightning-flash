@@ -21,6 +21,7 @@ import flash
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
+    _AUDIO_TESTING,
     _GRAPH_TESTING,
     _IMAGE_TESTING,
     _POINTCLOUD_TESTING,
@@ -36,6 +37,10 @@ from tests.helpers.utils import (
     [
         pytest.param(
             "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+        ),
+        pytest.param(
+            "audio_classification.py",
+            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed")
         ),
         pytest.param(
             "image_classification.py",

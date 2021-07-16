@@ -19,7 +19,7 @@ from torch import nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -28,7 +28,7 @@ if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision import transforms as T
 
-if _AUDIO_AVAILABLE:
+if _TORCHAUDIO_AVAILABLE:
     from torchaudio import transforms as TAudio
 
 

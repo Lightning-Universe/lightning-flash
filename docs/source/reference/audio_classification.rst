@@ -26,28 +26,28 @@ The dataset contains ``train``, ``val``  and ``test`` folders, and then each fol
 .. code-block::
 
     urban8k_images
-    ├── test
-    │   ├── air_conditioner
-    │   ├── car_horn
-    │   ├── children_playing
-    │   ├── dog_bark
-    │   ├── drilling
-    │   ├── engine_idling
-    │   ├── gun_shot
-    │   ├── jackhammer
-    │   ├── siren
-    │   └── street_music
     ├── train
-    │   ├── air_conditioner
-    │   ├── car_horn
-    │   ├── children_playing
-    │   ├── dog_bark
-    │   ├── drilling
-    │   ├── engine_idling
-    │   ├── gun_shot
-    │   ├── jackhammer
-    │   ├── siren
-    │   └── street_music
+    │   ├── air_conditioner
+    │   ├── car_horn
+    │   ├── children_playing
+    │   ├── dog_bark
+    │   ├── drilling
+    │   ├── engine_idling
+    │   ├── gun_shot
+    │   ├── jackhammer
+    │   ├── siren
+    │   └── street_music
+    ├── test
+    │   ├── air_conditioner
+    │   ├── car_horn
+    │   ├── children_playing
+    │   ├── dog_bark
+    │   ├── drilling
+    │   ├── engine_idling
+    │   ├── gun_shot
+    │   ├── jackhammer
+    │   ├── siren
+    │   └── street_music
     └── val
         ├── air_conditioner
         ├── car_horn
