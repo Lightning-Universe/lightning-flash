@@ -200,8 +200,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             logs["total_loss"] = sum(losses.values())
             return logs["total_loss"], logs
 
-        logs["loss"] = loss = self.compute_loss(losses)
-        output["loss"] = loss
+        logs["loss"] = output["loss"] = self.compute_loss(losses)
         output["logs"] = logs
         output["y"] = y
         return output

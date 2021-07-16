@@ -135,6 +135,10 @@ class PointCloudObjectDetectorData(DataModule):
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
+            scans_folder_name: The name of the pointcloud scan folder
+            labels_folder_name: The name of the pointcloud scan labels folder
+            calibrations_folder_name: The name of the pointcloud scan calibration folder
+            data_format: Format in which the data are stored.
 
         Returns:
             The constructed data module.
