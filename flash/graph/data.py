@@ -20,7 +20,7 @@ from networkx.readwrite.json_graph.cytoscape import cytoscape_graph
 from networkx.readwrite.json_graph.jit import jit_graph
 from networkx.readwrite.json_graph.node_link import node_link_graph
 
-GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
+_GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
 
 from torch.utils.data import Dataset
 
@@ -69,12 +69,12 @@ class GraphPathsDataSource(PathsDataSource):
 
     @requires_extras("graph")
     def __init__(self):
-        super().__init__(extensions=GRAPH_EXTENSIONS)
+        super().__init__(extensions=_GRAPH_EXTENSIONS)
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None, json_data_loader = None) -> Dict[str, Any]:
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None, json_data_type = None) -> Dict[str, Any]:
         '''json_data_type requied only if data format is .json'''
         graph_path = sample[DefaultDataKeys.INPUT]
-        graph = self.default_loader(graph_path, json_data_loader)
+        graph = self.default_loader(graph_path, json_data_type)
         sample[DefaultDataKeys.INPUT] = from_networkx(graph)
         sample[DefaultDataKeys.METADATA] = {
             "filepath": graph_path,

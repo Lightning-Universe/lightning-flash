@@ -789,17 +789,17 @@ class DataModule(pl.LightningDataModule):
     @classmethod
     def from_data_sequence(
         cls,
-        train_data: Optional[Collection[torch_geometric.data.Data]] = None,
+        train_data: Optional[Collection[Any]] = None,
         train_targets: Optional[Collection[Any]] = None,
-        val_data: Optional[Collection[torch_geometric.data.Data]] = None,
+        val_data: Optional[Collection[Any]] = None,
         val_targets: Optional[Sequence[Any]] = None,
-        test_data: Optional[Collection[torch_geometric.data.Data]] = None,
+        test_data: Optional[Collection[Any]] = None,
         test_targets: Optional[Sequence[Any]] = None,
-        predict_data: Optional[Collection[torch_geometric.data.Data]] = None,
-        train_transform: Optional[Dict[torch_geometric.transforms]] = None,
-        val_transform: Optional[Dict[torch_geometric.transforms]] = None,
-        test_transform: Optional[Dict[torch_geometric.transforms]] = None,
-        predict_transform: Optional[Dict[torch_geometric.transforms]] = None,
+        predict_data: Optional[Collection[Any]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
@@ -846,9 +846,9 @@ class DataModule(pl.LightningDataModule):
 
             data_module = DataModule.from_pygdatasequence(
                 train_files=[
-                    torch_geometric.data.Data(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(3,2))),
-                    torch_geometric.data.Data(torch_geometric.utils.from_networkx(nx.tetrahedral_graph()))
-                    torch_geometric.data.Data(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(4,1))),
+                    Any(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(3,2))),
+                    Any(torch_geometric.utils.from_networkx(nx.tetrahedral_graph()))
+                    Any(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(4,1))),
                 ],
                 train_targets=[1, 0, 1],
                 train_transform={
