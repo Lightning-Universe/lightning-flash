@@ -32,9 +32,9 @@ def test_pointcloud_object_detection_data(tmpdir):
 
     seed_everything(52)
 
-    download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_micro.zip", "data")
+    download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_micro.zip", tmpdir)
 
-    dm = PointCloudObjectDetectorData.from_folders(train_folder=join("data", "KITTI_micro", "Kitti", "train"), )
+    dm = PointCloudObjectDetectorData.from_folders(train_folder=join(tmpdir, "KITTI_micro", "Kitti", "train"), )
 
     class MockModel(PointCloudObjectDetector):
 
