@@ -124,8 +124,9 @@ class PointCloudObjectDetector(flash.Task):
             self.hparams.lambda_loss_dir * losses["loss_dir"]
         )
 
-    def compute_logs(self, losses: Dict[str, torch.Tensor]) -> Dict[str, Any]:
-        return {"loss": self.compute_loss(losses)}
+    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
+        logs.update({"loss": self.compute_loss(losses)})
+        return logs
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         return super().training_step((batch, batch), batch_idx)
