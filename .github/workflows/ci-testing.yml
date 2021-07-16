@@ -136,6 +136,7 @@ jobs:
       if: matrix.topic[0] == 'audio'
       run: |
         sudo apt-get install libsndfile1
+        pip install matplotlib
         pip install '.[image]' --pre --upgrade
 
     - name: Cache datasets
