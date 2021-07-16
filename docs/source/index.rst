@@ -42,6 +42,12 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Audio
+
+   reference/audio_classification
+
+.. toctree::
+   :maxdepth: 1
    :caption: Tabular
 
    reference/tabular_classification
@@ -66,6 +72,7 @@ Lightning Flash
    :caption: Point Cloud
 
    reference/pointcloud_segmentation
+   reference/pointcloud_object_detection
 
 .. toctree::
    :maxdepth: 1
@@ -89,6 +96,7 @@ Lightning Flash
    api/serve
    api/audio
    api/image
+   api/audio
    api/pointcloud
    api/tabular
    api/text

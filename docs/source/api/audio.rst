@@ -9,6 +9,17 @@ flash.audio
 
 .. currentmodule:: flash.audio
 
+Classification
+______________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~classification.data.AudioClassificationData
+    ~classification.data.AudioClassificationPreprocess
+
 Speech Recognition
 __________________
 

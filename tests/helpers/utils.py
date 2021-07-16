@@ -32,6 +32,7 @@ _SERVE_TESTING = _SERVE_AVAILABLE
 _AUDIO_TESTING = _AUDIO_AVAILABLE
 _POINTCLOUD_TESTING = _POINTCLOUD_AVAILABLE
 _GRAPH_TESTING = _GRAPH_AVAILABLE
+_AUDIO_TESTING = _AUDIO_AVAILABLE
 
 if "FLASH_TEST_TOPIC" in os.environ:
     topic = os.environ["FLASH_TEST_TOPIC"]
@@ -43,3 +44,4 @@ if "FLASH_TEST_TOPIC" in os.environ:
     _AUDIO_TESTING = topic == "audio"
     _POINTCLOUD_TESTING = topic == "pointcloud"
     _GRAPH_TESTING = topic == "graph"
+    _AUDIO_TESTING = topic == "audio"
