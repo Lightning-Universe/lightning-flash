@@ -23,7 +23,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _requires_extras, _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
 from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
@@ -34,7 +34,7 @@ if _TEXT_AVAILABLE:
 
 class Seq2SeqDataSource(DataSource):
 
-    @_requires_extras("text")
+    @requires_extras("text")
     def __init__(
         self,
         backbone: str,
@@ -98,7 +98,10 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
     def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
         if columns is None:
             columns = ["input_ids", "attention_mask", "labels"]
-        file, input, target = data
+        if self.filetype == 'json':
+            file, input, target, field = data
+        else:
+            file, input, target = data
         data_files = {}
         stage = self._running_stage.value
         data_files[stage] = str(file)
@@ -106,13 +109,25 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         # FLASH_TESTING is set in the CI to run faster.
         if flash._IS_TESTING:
             try:
-                dataset_dict = DatasetDict({
-                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-                })
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'],
+                                            field=field)[0]
+                    })
+                else:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                    })
             except Exception:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files)
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+                else:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+            if self.filetype == 'json' and field is not None:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+            else:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
         dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input, target=target), batched=True)
         dataset_dict.set_format(columns=columns)
@@ -218,7 +233,7 @@ class Seq2SeqBackboneState(ProcessState):
 
 class Seq2SeqPreprocess(Preprocess):
 
-    @_requires_extras("text")
+    @requires_extras("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -286,7 +301,7 @@ class Seq2SeqPreprocess(Preprocess):
 
 class Seq2SeqPostprocess(Postprocess):
 
-    @_requires_extras("text")
+    @requires_extras("text")
     def __init__(self):
         super().__init__()
 

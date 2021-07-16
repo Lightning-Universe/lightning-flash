@@ -260,13 +260,13 @@ To illustrate, say we want to build a model to predict if a passenger survived o
 from torchmetrics.classification import Accuracy, Precision, Recall
 import flash
 from flash.core.data.utils import download_data
-from flash.tabular import TabularClassifier, TabularData
+from flash.tabular import TabularClassifier, TabularClassificationData
 
 # 1. Download the data
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
 
 # 2. Load the data
-datamodule = TabularData.from_csv(
+datamodule = TabularClassificationData.from_csv(
     ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
     "Fare",
     target_fields="Survived",
@@ -605,7 +605,7 @@ For help or questions, join our huge community on [Slack](https://join.slack.com
 ## Citations
 We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffee, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
 
-Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), [timm](https://github.com/rwightman/pytorch-image-models), and [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/) for the `vision`, `text`, and `tabular` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
+Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), [timm](https://github.com/rwightman/pytorch-image-models), [open3d-ml](https://github.com/intel-isl/Open3D-ML) for pointcloud, [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/), and [asteroid](https://github.com/asteroid-team/asteroid) for the `vision`, `text`, `tabular`, and `audio` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
 
 ## License
 Please observe the Apache 2.0 license that is listed in this repository. In addition

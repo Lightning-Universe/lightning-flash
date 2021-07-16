@@ -28,8 +28,10 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
+from torch.utils.data import DataLoader, Sampler
 
 import flash
+from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import (
@@ -40,11 +42,12 @@ from flash.core.data.process import (
     Serializer,
     SerializerMapping,
 )
+from flash.core.data.properties import ProcessState
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _requires_extras
+from flash.core.utilities.imports import requires_extras
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -90,11 +93,11 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+            result.__init__ = requires_extras(result.required_extras)(result.__init__)
             load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
             if load_from_checkpoint is not None:
                 result.load_from_checkpoint = classmethod(
-                    _requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
+                    requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
                 )
         return result
 
@@ -154,9 +157,24 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # TODO: create enum values to define what are the exact states
         self._data_pipeline_state: Optional[DataPipelineState] = None
 
+        # model own internal state shared with the data pipeline.
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
+
+        self._children = []
+
+    def __setattr__(self, key, value):
+        if isinstance(value, LightningModule):
+            self._children.append(key)
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
+        if isinstance(value, pl.Trainer) or key in patched_attributes:
+            if hasattr(self, "_children"):
+                for child in self._children:
+                    setattr(getattr(self, child), key, value)
+        super().__setattr__(key, value)
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """
@@ -164,6 +182,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         """
         x, y = batch
         y_hat = self(x)
+        y, y_hat = self.apply_filtering(y, y_hat)
         output = {"y_hat": y_hat}
         y_hat = self.to_loss_format(output["y_hat"])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
@@ -183,6 +202,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         output["logs"] = logs
         output["y"] = y
         return output
+
+    @staticmethod
+    def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """This function is used to filter some labels or predictions which aren't conform."""
+        return y, y_hat
 
     @staticmethod
     def to_loss_format(x: torch.Tensor) -> torch.Tensor:
@@ -230,7 +254,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        x = list(data_pipeline.data_source.generate_dataset(x, running_stage))
+        dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
+        x = list(self.process_predict_dataset(dataset, convert_to_dataloader=False))
         x = data_pipeline.worker_preprocessor(running_stage)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
@@ -416,6 +441,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
+        self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+        self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
@@ -444,6 +471,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             getattr(data_pipeline, '_postprocess_pipeline', None),
             getattr(data_pipeline, '_serializer', None),
         )
+
         # self._preprocess.state_dict()
         if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
@@ -621,7 +649,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    @_requires_extras("serve")
+    @requires_extras("serve")
     def run_serve_sanity_check(self):
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
@@ -641,7 +669,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             resp = tc.post("http://0.0.0.0:8000/predict", json=body)
             print(f"Sanity check response: {resp.json()}")
 
-    @_requires_extras("serve")
+    @requires_extras("serve")
     def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
@@ -655,3 +683,133 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
+
+    def get_state(self, state_type):
+        if state_type in self._state:
+            return self._state[state_type]
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        return None
+
+    def set_state(self, state: ProcessState):
+        self._state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+        for state in self._state.values():
+            data_pipeline_state.set_state(state)
+
+    def _process_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        convert_to_dataloader: bool = True,
+    ) -> DataLoader:
+        if convert_to_dataloader:
+            return DataLoader(
+                dataset,
+                batch_size=batch_size,
+                num_workers=num_workers,
+                pin_memory=pin_memory,
+                shuffle=shuffle,
+                drop_last=drop_last,
+                collate_fn=collate_fn
+            )
+        return dataset
+
+    def process_train_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int = 1,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        collate_fn: Callable = lambda x: x,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        convert_to_dataloader: bool = True
+    ) -> Union[DataLoader, BaseAutoDataset]:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            convert_to_dataloader=convert_to_dataloader
+        )

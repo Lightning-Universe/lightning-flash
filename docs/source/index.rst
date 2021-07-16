@@ -24,6 +24,9 @@ Lightning Flash
    general/finetuning
    general/predictions
    general/jit
+   general/data
+   general/registry
+   general/serve
 
 .. toctree::
    :maxdepth: 1
@@ -55,6 +58,18 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Point Cloud
+
+   reference/pointcloud_segmentation
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Graph
+
+   reference/graph_classification
+
+.. toctree::
+   :maxdepth: 1
    :caption: Integrations
 
    integrations/fiftyone
@@ -63,16 +78,16 @@ Lightning Flash
    :maxdepth: 1
    :caption: API Reference
 
-   general/data
-   general/callback
-   general/registry
-   general/serve
-   code/core
-   code/data
-   code/image
-   code/tabular
-   code/text
-   code/video
+   api/flash
+   api/core
+   api/data
+   api/serve
+   api/image
+   api/pointcloud
+   api/tabular
+   api/text
+   api/video
+   api/graph
 
 .. toctree::
    :maxdepth: 1

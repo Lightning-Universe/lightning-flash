@@ -75,9 +75,9 @@ class SemanticSegmentation(ClassificationTask):
         num_classes: int,
         backbone: Union[str, nn.Module] = "resnet50",
         backbone_kwargs: Optional[Dict] = None,
-        head: str = "fcn",
+        head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
-        pretrained: bool = True,
+        pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
@@ -117,9 +117,12 @@ class SemanticSegmentation(ClassificationTask):
         if isinstance(backbone, nn.Module):
             self.backbone = backbone
         else:
-            self.backbone = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+            self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
 
-        self.head = self.heads.get(head)(self.backbone, num_classes, **head_kwargs)
+        self.head: nn.Module = self.heads.get(head)(
+            backbone=self.backbone, num_classes=num_classes, pretrained=pretrained, **head_kwargs
+        )
+        self.backbone = self.head.encoder
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
@@ -152,6 +155,16 @@ class SemanticSegmentation(ClassificationTask):
             raise NotImplementedError(f"Unsupported output type: {type(res)}")
 
         return out
+
+    @classmethod
+    def available_pretrained_weights(cls, backbone: str):
+        result = cls.backbones.get(backbone, with_metadata=True)
+        pretrained_weights = None
+
+        if "weights_paths" in result["metadata"]:
+            pretrained_weights = list(result["metadata"]["weights_paths"])
+
+        return pretrained_weights
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
