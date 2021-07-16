@@ -27,8 +27,9 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
-   :caption: Image and Video
+   :caption: Audio, Image and Video
 
+   reference/audio_classification
    reference/image_classification
    reference/image_classification_multi_label
    reference/image_embedder
