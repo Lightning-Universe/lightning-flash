@@ -13,7 +13,7 @@
 # limitations under the License.
 from os.path import basename, dirname, exists, isdir, isfile, join
 from posix import listdir
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -65,12 +65,15 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
             )
 
         dataset.num_classes = len(self.meta["label_to_names"])
+        dataset.label_to_names = self.meta["label_to_names"]
+        dataset.color_map = self.meta["color_map"]
 
     def load_data(self, folder: str, dataset: Optional[BaseAutoDataset]):
         sub_directories = listdir(folder)
         if len(sub_directories) != 3:
             raise MisconfigurationException(
-                f"Using KITTI Format, the {folder} should contains 3 directories for ``calibrations``, ``labels`` and ``scans``."
+                f"Using KITTI Format, the {folder} should contains 3 directories "
+                "for ``calibrations``, ``labels`` and ``scans``."
             )
 
         assert self.scans_folder_name in sub_directories
@@ -81,19 +84,21 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         labels_dir = join(folder, self.labels_folder_name)
         calibrations_dir = join(folder, self.calibrations_folder_name)
 
-        scans_path = [join(scans_dir, f) for f in listdir(scans_dir)]
-        labels_path = [join(labels_dir, f) for f in listdir(labels_dir)]
-        calibrations_path = [join(calibrations_dir, f) for f in listdir(calibrations_dir)]
+        scan_paths = [join(scans_dir, f) for f in listdir(scans_dir)]
+        label_paths = [join(labels_dir, f) for f in listdir(labels_dir)]
+        calibration_paths = [join(calibrations_dir, f) for f in listdir(calibrations_dir)]
 
-        assert len(scans_path) == len(labels_path) == len(calibrations_path)
+        assert len(scan_paths) == len(label_paths) == len(calibration_paths)
 
         self.load_meta(dirname(folder), dataset)
+
+        dataset.path_list = scan_paths
 
         return [{
             "scan_path": scan_path,
             "label_path": label_path,
             "calibration_path": calibration_path
-        } for scan_path, label_path, calibration_path, in zip(scans_path, labels_path, calibrations_path)]
+        } for scan_path, label_path, calibration_path, in zip(scan_paths, label_paths, calibration_paths)]
 
     def load_sample(
         self, sample: Dict[str, str], dataset: Optional[BaseAutoDataset] = None, has_label: bool = True
@@ -130,6 +135,8 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
 
         def clean_fn(path: str) -> str:
             return path.replace(self.scans_folder_name, self.calibrations_folder_name).replace(".bin", ".txt")
+
+        dataset.path_list = scan_paths
 
         return [{"scan_path": scan_path, "calibration_path": clean_fn(scan_path)} for scan_path in scan_paths]
 

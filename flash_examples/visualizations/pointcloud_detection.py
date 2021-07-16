@@ -17,7 +17,7 @@ from flash.pointcloud.detection import launch_app, PointCloudObjectDetector, Poi
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/
-# download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_Tiny.zip", "data/")
+download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_tiny.zip", "data/")
 
 datamodule = PointCloudObjectDetectorData.from_folders(
     train_folder="data/KITTI_Tiny/kitti/train",
@@ -32,10 +32,12 @@ trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1
 trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?
-predictions = model.predict([
-    "data/KITTI_Tiny/Kitti/predict/scans/000000.bin",
-    "data/KITTI_Tiny/Kitti/predict/scans/000001.bin",
-])
+predictions = model.predict(["data/KITTI_Tiny/Kitti/predict/scans/000000.bin"])
 
 # 5. Save the model!
 trainer.save_checkpoint("pointcloud_segmentation_model.pt")
+
+# 6. Optional Visualize
+app = launch_app(datamodule)
+# app.show_train_dataset()
+app.show_predictions(predictions)

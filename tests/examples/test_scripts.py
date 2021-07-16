@@ -82,6 +82,10 @@ from tests.helpers.utils import (
             marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
         ),
         pytest.param(
+            "pointcloud_detection.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+        ),
+        pytest.param(
             "graph_classification.py",
             marks=pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed")
         ),

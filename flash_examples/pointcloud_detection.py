@@ -17,7 +17,7 @@ from flash.pointcloud import PointCloudObjectDetector, PointCloudObjectDetectorD
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/
-# download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_Tiny.zip", "data/")
+download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_tiny.zip", "data/")
 
 datamodule = PointCloudObjectDetectorData.from_folders(
     train_folder="data/KITTI_Tiny/kitti/train",

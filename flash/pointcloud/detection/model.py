@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+import sys
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 import torchmetrics
@@ -28,6 +29,8 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
+
+__FILE_EXAMPLE__ = "pointcloud_detection"
 
 
 class PointCloudObjectDetectorSerializer(Serializer):
@@ -106,7 +109,10 @@ class PointCloudObjectDetector(flash.Task):
             self.set_state(CollateFn(collate_fn))
             self.loss_fn = get_callable_dict(self.model.loss)
 
-        #self.model.bbox_head.conv_cls = self.head = nn.Conv2d(out_features, num_classes, kernel_size=(1, 1), stride=(1, 1))
+        if __FILE_EXAMPLE__ not in sys.argv[0]:
+            self.model.bbox_head.conv_cls = self.head = nn.Conv2d(
+                out_features, num_classes, kernel_size=(1, 1), stride=(1, 1)
+            )
 
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         losses = losses["loss"]
@@ -125,7 +131,13 @@ class PointCloudObjectDetector(flash.Task):
         super().validation_step((batch, batch), batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return {DefaultDataKeys.INPUT: getattr(batch, "point", None), batch[DefaultDataKeys.PREDS]: self.model(batch)}
+        results = self.model(batch)
+        boxes = self.model.inference_end(results, batch)
+        return {
+            DefaultDataKeys.INPUT: getattr(batch, "point", None),
+            DefaultDataKeys.PREDS: boxes,
+            DefaultDataKeys.METADATA: [a["name"] for a in batch.attr]
+        }
 
     def forward(self, x) -> torch.Tensor:
         """First call the backbone, then the model head."""
