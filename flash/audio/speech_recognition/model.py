@@ -19,7 +19,9 @@ import torch
 import torch.nn as nn
 
 from flash import Task
+from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.core.data.process import Serializer
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
 
 if _SPEECH_RECOGNITION_AVAILABLE:
@@ -27,6 +29,7 @@ if _SPEECH_RECOGNITION_AVAILABLE:
 
 
 class SpeechRecognition(Task):
+    backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
 
     def __init__(
         self,
@@ -41,8 +44,10 @@ class SpeechRecognition(Task):
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
+        model = self.backbones.get(backbone
+                                   )() if backbone in self.backbones else Wav2Vec2ForCTC.from_pretrained(backbone)
         super().__init__(
-            model=Wav2Vec2ForCTC.from_pretrained(backbone),
+            model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
             learning_rate=learning_rate,
