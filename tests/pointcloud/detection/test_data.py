@@ -41,7 +41,7 @@ def test_pointcloud_object_detection_data(tmpdir):
         def training_step(self, batch, batch_idx: int):
             assert isinstance(batch, ObjectDetectBatchCollator)
             assert batch.point[0].shape == torch.Size([20188, 4])
-            assert batch.point[1].shape == torch.Size([18268, 4])
+            assert batch.point[1].shape == torch.Size([18826, 4])
             assert batch.bboxes[0].shape == torch.Size([1, 7])
             assert batch.attr[0]["name"] == '000000.bin'
             assert batch.attr[1]["name"] == '000001.bin'
