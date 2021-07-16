@@ -61,6 +61,7 @@ Lightning Flash
    :caption: Point Cloud
 
    reference/pointcloud_segmentation
+   reference/pointcloud_object_detection
 
 .. toctree::
    :maxdepth: 1
