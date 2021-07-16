@@ -15,12 +15,9 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import torch
 import torchmetrics
-from pytorch_lightning import Callback
 from torch import nn
-from torch.nn import functional as F
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
-from torchmetrics import IoU
 
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
@@ -31,9 +28,6 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
-
-if _POINTCLOUD_AVAILABLE:
-    from open3d.ml.torch.dataloaders import TorchDataloader
 
 
 class PointCloudObjectDetectorSerializer(Serializer):
@@ -108,6 +102,8 @@ class PointCloudObjectDetector(flash.Task):
             self.backbone = self.model.backbone
             self.neck = self.model.neck
             self.set_state(CollateFn(collate_fn))
+            self.set_state(CollateFn(collate_fn))
+            self.set_state(CollateFn(collate_fn))
             self.loss_fn = get_callable_dict(self.model.loss)
 
         #self.model.bbox_head.conv_cls = self.head = nn.Conv2d(out_features, num_classes, kernel_size=(1, 1), stride=(1, 1))
@@ -129,11 +125,7 @@ class PointCloudObjectDetector(flash.Task):
         super().validation_step((batch, batch), batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
-        batch[DefaultDataKeys.TARGET] = batch[DefaultDataKeys.INPUT]['labels']
-        # drop sub-sampled pointclouds
-        batch[DefaultDataKeys.INPUT] = batch[DefaultDataKeys.INPUT]['xyz'][0]
-        return batch
+        return {DefaultDataKeys.INPUT: getattr(batch, "point", None), batch[DefaultDataKeys.PREDS]: self.model(batch)}
 
     def forward(self, x) -> torch.Tensor:
         """First call the backbone, then the model head."""

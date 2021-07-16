@@ -27,8 +27,8 @@ def register_open_3d_ml(register: FlashRegistry):
     if _POINTCLOUD_AVAILABLE:
         import open3d
         import open3d.ml as _ml3d
-        from open3d.ml.torch.dataloaders import ConcatBatcher, DefaultBatcher
-        from open3d.ml.torch.models import RandLANet
+        from open3d._ml3d.torch.dataloaders import ConcatBatcher, DefaultBatcher
+        from open3d._ml3d.torch.models import RandLANet
 
         CONFIG_PATH = os.path.join(os.path.dirname(open3d.__file__), "_ml3d/configs")
 

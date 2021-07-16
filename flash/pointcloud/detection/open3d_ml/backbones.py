@@ -25,11 +25,12 @@ ROOT_URL = "https://storage.googleapis.com/open3d-releases/model-zoo/"
 if _POINTCLOUD_AVAILABLE:
     import open3d
     import open3d.ml as _ml3d
-    from open3d._ml3d.torch.dataloaders.concat_batcher import ObjectDetectBatch
-    from open3d.ml.torch.dataloaders import ConcatBatcher, DefaultBatcher
-    from open3d.ml.torch.models import PointPillars, PointRCNN
+    from open3d._ml3d.torch.dataloaders.concat_batcher import ConcatBatcher, ObjectDetectBatch
+    from open3d._ml3d.torch.models.point_pillars import PointPillars
+    from open3d.ml.torch.dataloaders import DefaultBatcher
 else:
-    ObjectDetectBatch = object
+    ObjectDetectBatch = object()
+    PointPillars = object()
 
 
 class ObjectDetectBatchCollator(ObjectDetectBatch):

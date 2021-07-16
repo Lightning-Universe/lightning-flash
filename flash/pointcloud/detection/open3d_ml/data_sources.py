@@ -95,10 +95,14 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
             "calibration_path": calibration_path
         } for scan_path, label_path, calibration_path, in zip(scans_path, labels_path, calibrations_path)]
 
-    def load_sample(self, sample: Dict[str, str], dataset: Optional[BaseAutoDataset] = None) -> Any:
+    def load_sample(
+        self, sample: Dict[str, str], dataset: Optional[BaseAutoDataset] = None, has_label: bool = True
+    ) -> Any:
         pc = KITTI.read_lidar(sample["scan_path"])
         calib = KITTI.read_calib(sample["calibration_path"])
-        label = KITTI.read_label(sample["label_path"], calib)
+        label = None
+        if has_label:
+            label = KITTI.read_label(sample["label_path"], calib)
 
         reduced_pc = DataProcessing.remove_outside_points(pc, calib['world_cam'], calib['cam_img'], self.image_size)
 
@@ -106,7 +110,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
             "name": basename(sample["scan_path"]),
             "path": sample["scan_path"],
             "calibration_path": sample["calibration_path"],
-            "label_path": sample["label_path"],
+            "label_path": sample["label_path"] if has_label else None,
             "split": "val",
         }
 
@@ -115,13 +119,31 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
             'full_point': pc,
             'feat': None,
             'calib': calib,
-            'bounding_boxes': label,
+            'bounding_boxes': label if has_label else None,
             'attr': attr
         }
         return data, attr
 
+    def load_files(self, scan_paths: Union[str, List[str]], dataset: Optional[BaseAutoDataset] = None):
+        if isinstance(scan_paths, str):
+            scan_paths = [scan_paths]
+
+        def clean_fn(path: str) -> str:
+            return path.replace(self.scans_folder_name, self.calibrations_folder_name).replace(".bin", ".txt")
+
+        return [{"scan_path": scan_path, "calibration_path": clean_fn(scan_path)} for scan_path in scan_paths]
+
     def predict_load_data(self, data, dataset: Optional[BaseAutoDataset] = None):
-        pass
+        if (isinstance(data, str) and isfile(data)) or (isinstance(data, list) and all(isfile(p) for p in data)):
+            return self.load_files(data, dataset)
+        elif isinstance(data, str) and isdir(data):
+            raise NotImplementedError
+
+    def predict_load_sample(self, data, dataset: Optional[BaseAutoDataset] = None):
+        data, attr = self.load_sample(data, dataset, has_label=False)
+        # hack to prevent manipulation of labels
+        attr["split"] = "test"
+        return data, attr
 
 
 class PointCloudObjectDetectorFoldersDataSource(DataSource):
@@ -178,13 +200,13 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
 
     def _validate_predict_data(self, data: Union[str, List[str]]) -> None:
         msg = f"The provided predict data should be a either a folder or a single/list of scan path(s). Found {data}."
-        if not isinstance(data, str) or isinstance(data, list):
+        if not isinstance(data, str) and not isinstance(data, list):
             raise MisconfigurationException(msg)
 
         if isinstance(data, str) and (not isfile(data) or not isdir(data)):
             raise MisconfigurationException(msg)
 
-        if isinstance(data, Sequence) and not all(isfile(p) for p in data):
+        if isinstance(data, list) and not all(isfile(p) for p in data):
             raise MisconfigurationException(msg)
 
     @requires_extras("pointcloud")
@@ -197,3 +219,22 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
         self._validate_predict_data(data)
 
         return self.loader.predict_load_data(data, dataset)
+
+    @requires_extras("pointcloud")
+    def predict_load_sample(
+        self,
+        metadata: Any,
+        dataset: Optional[BaseAutoDataset] = None,
+    ) -> Any:
+
+        data, metadata = self.loader.predict_load_sample(metadata, dataset)
+
+        preprocess_fn = getattr(dataset, "preprocess_fn", None)
+        if preprocess_fn:
+            data = preprocess_fn(data, metadata)
+
+        transform_fn = getattr(dataset, "transform_fn", None)
+        if transform_fn:
+            data = transform_fn(data, metadata)
+
+        return {"data": data, "attr": metadata}
