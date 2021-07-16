@@ -42,6 +42,12 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :caption: Audio
+
+   reference/audio_classification
+
+.. toctree::
+   :maxdepth: 1
    :caption: Tabular
 
    reference/tabular_classification
