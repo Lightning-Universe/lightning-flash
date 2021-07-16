@@ -68,13 +68,14 @@ class GraphSequenceDataSource(SequenceDataSource):
 class GraphPathsDataSource(PathsDataSource):
 
     @requires_extras("graph")
-    def __init__(self):
+    def __init__(self, json_data_type = None):
         super().__init__(extensions=_GRAPH_EXTENSIONS)
+        self.json_data_type = json_data_type
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None, json_data_type = None) -> Dict[str, Any]:
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         '''json_data_type requied only if data format is .json'''
         graph_path = sample[DefaultDataKeys.INPUT]
-        graph = self.default_loader(graph_path, json_data_type)
+        graph = self.default_loader(graph_path, self.json_data_type)
         sample[DefaultDataKeys.INPUT] = from_networkx(graph)
         sample[DefaultDataKeys.METADATA] = {
             "filepath": graph_path,
@@ -84,7 +85,7 @@ class GraphPathsDataSource(PathsDataSource):
         }
         return sample
 
-    def default_loader(self, path: str, json_data_type = None) -> Any:
+    def default_loader(self, path: str) -> Any:
         if path.endswith(".gexf"):
             return read_gexf(path)
         elif path.endswith(".gml"):
@@ -105,15 +106,15 @@ class GraphPathsDataSource(PathsDataSource):
             return read_adjlist(path)
         elif path.endswith(".json"):
             data = json.load(open(path))
-            if json_data_type == "node_link":
+            if self.json_data_type == "node_link":
                 return node_link_graph(data)
-            elif json_data_type == "adjacency":
+            elif self.json_data_type == "adjacency":
                 return adjacency_graph(data)
-            elif json_data_type == "cytoscape":
+            elif self.json_data_type == "cytoscape":
                 return cytoscape_graph(data)
-            elif json_data_type == "jit":
+            elif self.json_data_type == "jit":
                 return jit_graph(data)
-            elif json_data_type == "tree":
+            elif self.json_data_type == "tree":
                 return tree_graph(data)
         else:
             raise ValueError("Unknown graph file format: {}".format(path))
