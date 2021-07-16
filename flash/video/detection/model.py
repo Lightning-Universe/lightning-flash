@@ -3,12 +3,6 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from pytorchvideo.data.encoded_video import EncodedVideo
-from pytorchvideo.transforms.functional import (
-    clip_boxes_to_image,
-    short_side_scale_with_boxes,
-    uniform_temporal_subsample,
-)
 from torch import nn
 from torchvision.transforms._functional_video import normalize
 
@@ -20,7 +14,13 @@ _VIDEO_DETECTION_BACKBONES = FlashRegistry("backbones")
 _IMAGE_DETECTOR_BACKBONES = FlashRegistry("backbones")
 
 if _PYTORCHVIDEO_AVAILABLE:
+    from pytorchvideo.data.encoded_video import EncodedVideo
     from pytorchvideo.models import hub
+    from pytorchvideo.transforms.functional import (
+        clip_boxes_to_image,
+        short_side_scale_with_boxes,
+        uniform_temporal_subsample,
+    )
 
     for fn_name in dir(hub):
         if "__" not in fn_name:
