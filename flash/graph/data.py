@@ -12,22 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Sequence, Tuple, Union, Any, Dict, Optional
 import copy
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
 
 from torch.utils.data import Dataset
 
 from flash.core.data.auto_dataset import AutoDataset
-from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, SequenceDataSource, PathsDataSource
+from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
 
 if _GRAPH_AVAILABLE:
+    from networkx.readwrite import (
+        read_adjlist,
+        read_edgelist,
+        read_gexf,
+        read_gml,
+        read_gpickle,
+        read_graphml,
+        read_leda,
+        read_pajek,
+        read_yaml,
+    )
     from torch_geometric.data import Data as PyGData
     from torch_geometric.data import Dataset as PyGDataset
-    from networkx.readwrite import (read_gexf, read_gml, read_gpickle, read_graphml, read_leda, read_yaml, read_pajek, read_edgelist, read_adjlist)
     from torch_geometric.utils import from_networkx
+
 
 class GraphDatasetSource(DatasetDataSource):
 
@@ -38,6 +49,7 @@ class GraphDatasetSource(DatasetDataSource):
                 auto_dataset.num_classes = dataset.num_classes
                 auto_dataset.num_features = dataset.num_features
         return data
+
 
 class GraphSequenceDataSource(SequenceDataSource):
 
@@ -51,7 +63,7 @@ class GraphSequenceDataSource(SequenceDataSource):
         data_list_x = copy(data_list)
         for data_list_xi in data_list_x:
             data_list_xi.y = None
-        
+
         # Create data_list
         data_list = (data_list_x, data_list_y)
         data = super().load_data(data_list)
@@ -75,10 +87,12 @@ class GraphPathsDataSource(PathsDataSource):
             "num_edges": graph.number_of_edges(),
             "num_features": len(list(graph.nodes(data=True))[0][1].keys()),
         }
-        sample[DefaultDataKeys.TARGET] = None #todo: take it from name of file or from folder?
+        sample[DefaultDataKeys.TARGET] = None  #todo: take it from name of file or from folder?
         return sample
 
-    def default_loader(self, path: str) -> Any: #todo: missing json support: https://networkx.org/documentation/stable/reference/readwrite/json_graph.html
+    def default_loader(
+        self, path: str
+    ) -> Any:  #todo: missing json support: https://networkx.org/documentation/stable/reference/readwrite/json_graph.html
         if path.endswith(".gexf"):
             return read_gexf(path)
         elif path.endswith(".gml"):

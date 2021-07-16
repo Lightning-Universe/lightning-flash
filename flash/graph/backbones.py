@@ -119,6 +119,7 @@ def load_SignedGCN(in_channels, hidden_channels, num_layers, lamb=5, bias=True):
     """SignedGCN backbone from torch geometric"""
     return models.SignedGCN(in_channels, hidden_channels, num_layers, lamb, bias)
 
+
 '''@GRAPH_CLASSIFICATION_BACKBONES(name="LabelPropagation", namespace="graph/classification") #todo: how to add more tasks?
 def load_LabelPropagation(num_layers: int, alpha: float):
     """LabelPropagation backbone from torch geometric"""
@@ -143,6 +144,7 @@ def load_ARGA(encoder, discriminator, decoder=None):
 def load_GAE(encoder, decoder=None):
     """GAE backbone from torch geometric"""
     return models.GAE(encoder, decoder)
+
 
 @GRAPH_CLASSIFICATION_BACKBONES(name="VGAE", namespace="graph/classification")  #todo: how to add more tasks?
 def load_VGAE(encoder, decoder=None):
