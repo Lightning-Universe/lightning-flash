@@ -14,6 +14,11 @@
 
 from typing import Sequence, Tuple, Union, Any, Dict, Optional
 import copy
+import json
+from networkx.readwrite.json_graph.adjacency import adjacency_graph
+from networkx.readwrite.json_graph.cytoscape import cytoscape_graph
+from networkx.readwrite.json_graph.jit import jit_graph
+from networkx.readwrite.json_graph.node_link import node_link_graph
 
 GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
 
@@ -26,7 +31,8 @@ from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
 if _GRAPH_AVAILABLE:
     from torch_geometric.data import Data as PyGData
     from torch_geometric.data import Dataset as PyGDataset
-    from networkx.readwrite import (read_gexf, read_gml, read_gpickle, read_graphml, read_leda, read_yaml, read_pajek, read_edgelist, read_adjlist)
+    from networkx.readwrite import (read_gexf, read_gml, read_gpickle, read_graphml, read_leda, read_yaml, read_pajek, read_edgelist, read_adjlist,
+                                    node_link_graph, adjacency_graph, cytoscape_graph, tree_graph, jit_graph)
     from torch_geometric.utils import from_networkx
 
 class GraphDatasetSource(DatasetDataSource):
@@ -65,9 +71,10 @@ class GraphPathsDataSource(PathsDataSource):
     def __init__(self):
         super().__init__(extensions=GRAPH_EXTENSIONS)
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None, json_data_loader = None) -> Dict[str, Any]:
+        '''json_data_type requied only if data format is .json'''
         graph_path = sample[DefaultDataKeys.INPUT]
-        graph = self.default_loader(graph_path)
+        graph = self.default_loader(graph_path, json_data_loader)
         sample[DefaultDataKeys.INPUT] = from_networkx(graph)
         sample[DefaultDataKeys.METADATA] = {
             "filepath": graph_path,
@@ -75,10 +82,9 @@ class GraphPathsDataSource(PathsDataSource):
             "num_edges": graph.number_of_edges(),
             "num_features": len(list(graph.nodes(data=True))[0][1].keys()),
         }
-        sample[DefaultDataKeys.TARGET] = None #todo: take it from name of file or from folder?
         return sample
 
-    def default_loader(self, path: str) -> Any: #todo: missing json support: https://networkx.org/documentation/stable/reference/readwrite/json_graph.html
+    def default_loader(self, path: str, json_data_type = None) -> Any:
         if path.endswith(".gexf"):
             return read_gexf(path)
         elif path.endswith(".gml"):
@@ -97,5 +103,17 @@ class GraphPathsDataSource(PathsDataSource):
             return read_edgelist(path)
         elif path.endswith(".adjlist"):
             return read_adjlist(path)
+        elif path.endswith(".json"):
+            data = json.load(open(path))
+            if json_data_type == "node_link":
+                return node_link_graph(data)
+            elif json_data_type == "adjacency":
+                return adjacency_graph(data)
+            elif json_data_type == "cytoscape":
+                return cytoscape_graph(data)
+            elif json_data_type == "jit":
+                return jit_graph(data)
+            elif json_data_type == "tree":
+                return tree_graph(data)
         else:
             raise ValueError("Unknown graph file format: {}".format(path))
