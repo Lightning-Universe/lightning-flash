@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional
 
 from torch.utils.data import Sampler
 
@@ -14,6 +14,8 @@ if _POINTCLOUD_AVAILABLE:
         PointCloudObjectDetectionDataFormat,
         PointCloudObjectDetectorFoldersDataSource,
     )
+else:
+    PointCloudObjectDetectorFoldersDataSource = object()
 
 
 class PointCloudObjectDetectorDatasetDataSource(DataSource):
