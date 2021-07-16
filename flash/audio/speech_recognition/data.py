@@ -13,6 +13,7 @@
 # limitations under the License.
 import logging
 from functools import partial
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import datasets
@@ -21,11 +22,12 @@ import torch
 from torch import Tensor
 from torch.utils.data import Sampler
 
+import flash
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE, requires_extras
 
@@ -40,30 +42,12 @@ TARGET_FIELD = "text"
 
 class SpeechRecognitionDeserializer(Deserializer):
 
-    @requires_extras("speech")
-    def __init__(self, backbone: str):
-        super().__init__()
-        self.backbone = backbone
-        self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(backbone)
-
     def deserialize(self, sample: Any) -> Dict:
-        return {
-            DefaultDataKeys.INPUT: self.tokenizer(sample["speech"],
-                                                  sampling_rate=sample["sampling_rate"][0]).input_values,
-        }
+        return {INPUT_FIELD: sample}
 
     @property
     def example_input(self) -> str:
-        return "An example input"
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(self.backbone)
+        return str(Path(flash.ASSETS_ROOT) / "example.wav")
 
 
 class SpeechRecognitionDataSource(DataSource):
@@ -163,7 +147,7 @@ class SpeechRecognitionPreprocess(Preprocess):
                 DefaultDataSources.FILES: SpeechRecognitionFilesSource(self.backbone)
             },
             default_data_source=DefaultDataSources.FILES,
-            deserializer=SpeechRecognitionDeserializer(backbone),
+            deserializer=SpeechRecognitionDeserializer(),
         )
         self.processor = Wav2Vec2Processor.from_pretrained(backbone)
         self.collator = DataCollatorCTCWithPadding(processor=self.processor, padding=True)
