@@ -51,7 +51,7 @@ class VideoObjectDetector(Task):
             self.model = model
 
         if isinstance(image_detector, str):
-            image_detector: nn.Module = self.image_detector_backbones.get(image_detector)(**image_detector_kwargs)
+            self.image_detector: nn.Module = self.image_detector_backbones.get(image_detector)(**image_detector_kwargs)
         else:
             self.image_detector = image_detector
 
@@ -123,32 +123,27 @@ class VideoObjectDetector(Task):
         boxes: List,
         num_frames=4,
         crop_size=256,
-        data_mean=[0.45, 0.45, 0.45],
-        data_std=[0.225, 0.225, 0.225],
+        data_mean=(0.45, 0.45, 0.45),
+        data_std=(0.225, 0.225, 0.225),
         slow_fast_alpha=None,
     ):
 
         boxes = np.array(boxes)
         ori_boxes = boxes.copy()
 
-        # Image [0, 255] -> [0, 1].
         clip = uniform_temporal_subsample(clip, num_frames)
         clip = clip.float()
         clip = clip / 255.0
 
         height, width = clip.shape[2], clip.shape[3]
-        # The format of boxes is [x1, y1, x2, y2]. The input boxes are in the
-        # range of [0, width] for x and [0,height] for y
         boxes = clip_boxes_to_image(boxes, height, width)
 
-        # Resize short side to crop_size. Non-local and STRG uses 256.
         clip, boxes = short_side_scale_with_boxes(
             clip,
             size=crop_size,
             boxes=boxes,
         )
 
-        # Normalize images by mean and std.
         clip = normalize(
             clip,
             np.array(data_mean, dtype=np.float32),
