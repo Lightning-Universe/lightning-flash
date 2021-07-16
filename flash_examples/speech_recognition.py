@@ -32,11 +32,9 @@ model = SpeechRecognition(learning_rate=1e-5)
 trainer = flash.Trainer(max_epochs=1, gpus=1)
 trainer.finetune(model, datamodule=datamodule, strategy='no_freeze')
 
-# # 4. Predict on audio files!
-# predictions = model.predict(["data/example.wav"])
-# print(predictions)
-#
-# # 5. Save the model!
-# trainer.save_checkpoint("speech_recognition_model.pt")
+# 4. Predict on audio files!
+predictions = model.predict(["data/example.wav"])
+print(predictions)
 
-model.serve()
+# 5. Save the model!
+trainer.save_checkpoint("speech_recognition_model.pt")
