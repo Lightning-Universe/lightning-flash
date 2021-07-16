@@ -3,3 +3,4 @@ from flash.tabular.forecasting.data import (
     TabularForecastingPreprocess,
     TabularForecastingDataFrameDataSource
 )
+from flash.tabular.forecasting.backbone import TABULAR_FORECASTING_BACKBONES
