@@ -20,8 +20,8 @@ from flash.pointcloud.detection import launch_app, PointCloudObjectDetector, Poi
 download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_tiny.zip", "data/")
 
 datamodule = PointCloudObjectDetectorData.from_folders(
-    train_folder="data/KITTI_Tiny/kitti/train",
-    val_folder="data/KITTI_Tiny/kitti/val",
+    train_folder="data/KITTI_Tiny/Kitti/train",
+    val_folder="data/KITTI_Tiny/Kitti/val",
 )
 
 # 2. Build the task
