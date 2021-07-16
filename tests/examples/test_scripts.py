@@ -82,10 +82,27 @@ from tests.helpers.utils import (
             marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
         ),
         pytest.param(
+            "pointcloud_detection.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+        ),
+        pytest.param(
             "graph_classification.py",
             marks=pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed")
         ),
     ]
 )
 def test_example(tmpdir, file):
+    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
+
+
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@pytest.mark.parametrize(
+    "file", [
+        pytest.param(
+            "pointcloud_detection.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+        ),
+    ]
+)
+def test_example_2(tmpdir, file):
     run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
