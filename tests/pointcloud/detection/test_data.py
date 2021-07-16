@@ -57,4 +57,4 @@ def test_pointcloud_object_detection_data(tmpdir):
     predictions = model.predict([join(predict_path, "scans/000000.bin")])
     assert torch.stack(predictions[0][DefaultDataKeys.INPUT]).shape[1] == 4
     assert len(predictions[0][DefaultDataKeys.PREDS]) == 158
-    assert predictions[0][DefaultDataKeys.PREDS][0].__dict__["identifier"] == 'box:9'
+    assert predictions[0][DefaultDataKeys.PREDS][0].__dict__["identifier"] == 'box:1'
