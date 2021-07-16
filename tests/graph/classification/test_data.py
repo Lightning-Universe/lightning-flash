@@ -171,19 +171,19 @@ class TestGraphClassificationData:
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
         node_link_data(G, tmpdir/'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='json')
+        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='node_link')
 
         adjacency_data(G, tmpdir/'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='json')
+        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='adjacency')
 
         cytoscape_data(G, tmpdir/'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='json')
+        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='cytoscape')
 
         tree_data(G, tmpdir/'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='json')
+        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='tree')
 
         jit_data(G, tmpdir/'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='json')
+        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='jit')
 
 
     def test_from_data_sequence(self):
