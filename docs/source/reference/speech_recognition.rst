@@ -8,8 +8,7 @@ Speech Recognition
 The Task
 ********
 
-Text classification is the task of assigning a piece of text (word, sentence or document) an appropriate class, or category.
-The categories depend on the chosen data set and can range from topics.
+Speech recognition is the task of classifying audio into a text transcription. We rely on `Wav2Vec <https://ai.facebook.com/blog/wav2vec-20-learning-the-structure-of-speech-from-raw-audio/>`_ as our backbone, fine-tuned on labeled transcriptions for speech to text.
 
 -----
 
@@ -17,33 +16,30 @@ The categories depend on the chosen data set and can range from topics.
 Example
 *******
 
-Let's train a model to classify text as expressing either positive or negative sentiment.
-We will be using the IMDB data set, that contains a ``train.csv`` and ``valid.csv``.
-Here's the structure:
+Let's fine-tune the model onto our own labeled audio transcription data:
+
+Here's the structure our CSV file:
 
 .. code-block::
 
-    review,sentiment
-    "Japanese indie film with humor ... ",positive
-    "Isaac Florentine has made some ...",negative
-    "After seeing the low-budget ...",negative
-    "I've seen the original English version ...",positive
-    "Hunters chase what they think is a man through ...",negative
+    file,text
+    "/path/to/file_1.wav ... ","what was said in file 1."
+    "/path/to/file_2.wav ... ","what was said in file 2."
+    "/path/to/file_3.wav ... ","what was said in file 3."
     ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.classification.data.TextClassificationData`.
-We select a pre-trained backbone to use for our :class:`~flash.text.classification.model.TextClassifier` and finetune on the IMDB data.
-The backbone can be any BERT classification model from `HuggingFace/transformers <https://huggingface.co/models?filter=pytorch&pipeline_tag=text-classification>`_.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData`.
+We select a pre-trained Wav2Vec backbone to use for our :class:`~flash.audio.speech_recognition.model.SpeechRecognition` and finetune on a subset of the `TIMIT corpus <https://catalog.ldc.upenn.edu/LDC93S1>`__.
+The backbone can be any Wav2Vec model from `HuggingFace transformers <https://huggingface.co/models?search=wav2vec>`__.
 
 .. note::
 
-    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.text.classification.model.TextClassifier` and the :class:`~flash.text.classification.data.TextClassificationData`!
+    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.audio.speech_recognition.model.SpeechRecognition` and the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData`!
 
-Next, we use the trained :class:`~flash.text.classification.model.TextClassifier` for inference.
-Finally, we save the model.
+Next, we use the trained :class:`~flash.audio.speech_recognition.model.SpeechRecognition` for inference and save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/text_classification.py
+.. literalinclude:: ../../../flash_examples/speech_recognition.py
     :language: python
     :lines: 14-
 
@@ -53,7 +49,7 @@ Here's the full example:
 Serving
 *******
 
-The :class:`~flash.text.classification.model.TextClassifier` is servable.
+The :class:`~flash.audio.speech_recognition.model.SpeechRecognition` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 

@@ -20,7 +20,7 @@ from pytorch_lightning import Trainer
 
 import flash
 from flash.audio import SpeechRecognition, SpeechRecognitionData
-from tests.helpers.utils import _SPEECH_TESTING
+from tests.helpers.utils import _AUDIO_TESTING
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small model for testing
 
@@ -50,7 +50,7 @@ def json_data(tmpdir, n_samples=5):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _SPEECH_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_classification_csv(tmpdir):
     csv_path = csv_data(tmpdir)
 
@@ -68,7 +68,7 @@ def test_classification_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _SPEECH_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_classification_json(tmpdir):
     json_path = json_data(tmpdir)
 

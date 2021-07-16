@@ -19,7 +19,7 @@ import pytest
 
 import flash
 from flash.audio import SpeechRecognitionData
-from tests.helpers.utils import _SPEECH_TESTING
+from tests.helpers.utils import _AUDIO_TESTING
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small model for testing
 
@@ -49,7 +49,7 @@ def json_data(tmpdir, n_samples=5):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _SPEECH_TESTING, reason="speech libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="speech libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SpeechRecognitionData.from_csv(
@@ -61,7 +61,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _SPEECH_TESTING, reason="speech libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="speech libraries aren't installed.")
 def test_stage_test_and_valid(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SpeechRecognitionData.from_csv(
@@ -84,7 +84,7 @@ def test_stage_test_and_valid(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _SPEECH_TESTING, reason="speech libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="speech libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = SpeechRecognitionData.from_json(
@@ -95,7 +95,7 @@ def test_from_json(tmpdir):
     assert "input_values" in batch
 
 
-@pytest.mark.skipif(_SPEECH_TESTING, reason="speech libraries are installed.")
+@pytest.mark.skipif(_AUDIO_TESTING, reason="speech libraries are installed.")
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
         SpeechRecognitionData.from_json(
