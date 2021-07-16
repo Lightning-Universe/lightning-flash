@@ -177,8 +177,7 @@ class DefaultDataKeys(LightningEnum):
 
 
 class BaseDataFormat(LightningEnum):
-
-    pass
+    """The base class for creating ``data_format`` for :class:`~flash.core.data.data_source.DataSource`."""
 
     def __hash__(self) -> int:
         return hash(self.value)
