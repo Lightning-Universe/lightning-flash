@@ -135,6 +135,7 @@ jobs:
     - name: Install audio test dependencies
       if: matrix.topic[0] == 'audio'
       run: |
+        sudo apt-get install libsndfile1
         pip install '.[image]' --pre --upgrade
 
     - name: Cache datasets
