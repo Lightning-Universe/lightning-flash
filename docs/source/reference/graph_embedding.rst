@@ -26,4 +26,4 @@ Here's the full example:
 
 .. literalinclude:: ../../../flash_examples/graph_classification.py
     :language: python
-    :lines: 14
+    :lines: 14-
