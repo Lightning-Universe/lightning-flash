@@ -40,9 +40,9 @@ def test_pointcloud_object_detection_data(tmpdir):
 
         def training_step(self, batch, batch_idx: int):
             assert isinstance(batch, ObjectDetectBatchCollator)
-            assert batch.point[0].shape == torch.Size([20188, 4])
-            assert batch.point[1].shape == torch.Size([18826, 4])
-            assert batch.bboxes[0].shape == torch.Size([7, 7])
+            assert len(batch.point) == 2
+            assert batch.point[0][1].shape == torch.Size([4])
+            assert len(batch.bboxes) > 1
             assert batch.attr[0]["name"] == '000000.bin'
             assert batch.attr[1]["name"] == '000001.bin'
 
@@ -55,6 +55,6 @@ def test_pointcloud_object_detection_data(tmpdir):
     model.eval()
 
     predictions = model.predict([join(predict_path, "scans/000000.bin")])
-    assert torch.stack(predictions[0][DefaultDataKeys.INPUT]).shape == torch.Size([19901, 4])
+    assert torch.stack(predictions[0][DefaultDataKeys.INPUT]).shape[1] == 4
     assert len(predictions[0][DefaultDataKeys.PREDS]) == 158
     assert predictions[0][DefaultDataKeys.PREDS][0].__dict__["identifier"] == 'box:9'
