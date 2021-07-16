@@ -89,6 +89,7 @@ Lightning Flash
    api/data
    api/serve
    api/image
+   api/audio
    api/pointcloud
    api/tabular
    api/text
