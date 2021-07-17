@@ -32,15 +32,13 @@ from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postp
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _GRAPH_AVAILABLE, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
 
 if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
     from fiftyone.core.collections import SampleCollection
 else:
     SampleCollection = None
 
-if _GRAPH_AVAILABLE:
-    import torch_geometric
 
 
 class DataModule(pl.LightningDataModule):
