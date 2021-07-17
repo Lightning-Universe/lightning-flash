@@ -44,7 +44,6 @@ if _KORNIA_AVAILABLE:
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
     from pytorchvideo.data.encoded_video import EncodedVideo
-    # from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
     from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset, LabeledVideoDataset
     from pytorchvideo.data.labeled_video_paths import LabeledVideoPaths
     from pytorchvideo.transforms import ApplyTransformToKey, UniformTemporalSubsample
