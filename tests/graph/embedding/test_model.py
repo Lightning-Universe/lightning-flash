@@ -17,7 +17,7 @@ import torch
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
-from flash.graph.classification import GraphEmbedder
+from flash.graph.embedding import GraphEmbedder
 from flash.graph.classification.data import GraphClassificationPreprocess
 from tests.helpers.utils import _GRAPH_TESTING
 
