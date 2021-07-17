@@ -46,7 +46,10 @@ def load_GCN(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GCN backbone from torch geometric"""
     return models.GCN(in_channels, hidden_channels, num_layers)
 
@@ -56,7 +59,10 @@ def load_GCNWithJK(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GCN backbone with JK from torch geometric"""
     return models.GCNWithJK(in_channels, hidden_channels, num_layers)
 
@@ -66,7 +72,10 @@ def load_GraphSAGE(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GraphSAGE backbone from torch geometric"""
     return models.GraphSAGE(in_channels, hidden_channels, num_layers)
 
@@ -76,7 +85,10 @@ def load_GraphSAGEWithJK(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GraphSAGE backbone with JK from torch geometric"""
     return models.GraphSAGEWithJK(in_channels, hidden_channels, num_layers)
 
@@ -86,7 +98,10 @@ def load_GAT(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GAT backbone from torch geometric"""
     return models.GAT(in_channels, hidden_channels, num_layers)
 
@@ -96,7 +111,10 @@ def load_GATWithJK(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GAT backbone with JK from torch geometric"""
     return models.GATWithJK(in_channels, hidden_channels, num_layers)
 
@@ -106,7 +124,10 @@ def load_GIN(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GIN backbone from torch geometric"""
     return models.GIN(in_channels, hidden_channels, num_layers)
 
@@ -116,7 +137,10 @@ def load_GINWithJK(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GIN backbone with JK from torch geometric"""
     return models.GINWithJK(in_channels, hidden_channels, num_layers)
 
@@ -126,7 +150,10 @@ def load_GINE(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GINE backbone from torch geometric"""
     return models.GINE(in_channels, hidden_channels, num_layers)
 
@@ -136,6 +163,9 @@ def load_GINEWithJK(
     in_channels: int,
     hidden_channels: int = 512,
     num_layers: int = 4,
+    pretrained: bool = False,
 ):
+    if pretrained:
+        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
     """GINE backbone with JK from torch geometric"""
     return models.GINEWithJK(in_channels, hidden_channels, num_layers)
