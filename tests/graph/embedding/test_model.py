@@ -28,7 +28,7 @@ if _GRAPH_AVAILABLE:
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_smoke():
     """A simple test that the class can be instantiated."""
-    model = GraphEmbedder(embedding_dim=1)
+    model = GraphEmbedder(num_features=1, embedding_dimension=1)
     assert model is not None
 
 
