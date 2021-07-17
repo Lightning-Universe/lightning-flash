@@ -40,7 +40,6 @@ else:
     SampleCollection = None
 
 
-
 class DataModule(pl.LightningDataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
     :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`,
