@@ -52,7 +52,19 @@ jobs:
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
+            topic: ['pointcloud']
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
             topic: ['serve']
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: ['graph']
+          - os: ubuntu-20.04
+            python-version: 3.8
+            requires: 'latest'
+            topic: ['audio']
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
@@ -109,6 +121,7 @@ jobs:
       run: |
         python --version
         pip --version
+        pip install torch>=1.8
         pip install '.[${{ join(matrix.topic,',') }}]' --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install '.[test]' --pre --upgrade
         pip list
@@ -118,6 +131,13 @@ jobs:
       if: matrix.topic[0] == 'serve'
       run: |
         pip install '.[all]' --pre --upgrade
+
+    - name: Install audio test dependencies
+      if: matrix.topic[0] == 'audio'
+      run: |
+        sudo apt-get install libsndfile1
+        pip install matplotlib
+        pip install '.[image]' --pre --upgrade
 
     - name: Cache datasets
       uses: actions/cache@v2

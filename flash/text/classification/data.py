@@ -110,7 +110,10 @@ class TextFileDataSource(TextDataSource):
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
-        file, input, target = data
+        if self.filetype == 'json':
+            file, input, target, field = data
+        else:
+            file, input, target = data
 
         data_files = {}
 
@@ -120,13 +123,25 @@ class TextFileDataSource(TextDataSource):
         # FLASH_TESTING is set in the CI to run faster.
         if flash._IS_TESTING and not torch.cuda.is_available():
             try:
-                dataset_dict = DatasetDict({
-                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-                })
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'],
+                                            field=field)[0]
+                    })
+                else:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                    })
             except Exception:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files)
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+                else:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            dataset_dict = load_dataset(self.filetype, data_files=data_files)
+            if self.filetype == 'json' and field is not None:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+            else:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
         if not self.predicting:
             if isinstance(target, List):
