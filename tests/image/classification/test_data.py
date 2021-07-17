@@ -168,7 +168,7 @@ def test_from_filepaths_visualise(tmpdir):
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
