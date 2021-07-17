@@ -54,6 +54,7 @@ class GraphEmbedder(Task):
     def __init__(
         self,
         num_features: int,
+        num_classes: int,
         embedding_dim: Optional[int] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCNWithJK",
         backbone_kwargs: Optional[Dict] = {},
