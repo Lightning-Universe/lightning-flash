@@ -78,7 +78,7 @@ class GraphEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone = self.backbones.get(backbone)(in_channels = num_features, pretrained=pretrained)
+        self.backbone = self.backbones.get(backbone)(in_channels=num_features, pretrained=pretrained)
         num_out_features = backbone.hidden_channels
         if self.embedding_dim is not None:
             self.head = nn.Sequential(nn.Linear(num_out_features, self.embedding_dim))

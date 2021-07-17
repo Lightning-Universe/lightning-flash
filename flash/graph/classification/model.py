@@ -54,7 +54,7 @@ class GraphClassifier(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCNWithJK",
         backbone_kwargs: Optional[Dict] = None,
-        pretrained: Optional[bool] = False,#todo: implement True here
+        pretrained: Optional[bool] = False,  #todo: implement True here
         head: Optional[Union[FunctionType, nn.Module]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
@@ -76,7 +76,8 @@ class GraphClassifier(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, num_out_features = backbone
         else:
-            self.backbone = self.backbones.get(backbone)(in_channels = num_features, pretrained=pretrained, **backbone_kwargs)
+            self.backbone = self.backbones.get(backbone
+                                               )(in_channels=num_features, pretrained=pretrained, **backbone_kwargs)
             num_out_features = backbone.hidden_channels
 
         head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
