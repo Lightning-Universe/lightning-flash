@@ -59,21 +59,6 @@ class VideoObjectDetector(Task):
         self.filter_boxes_fn = filter_boxes_fn
         super().__init__(model=self.model, )
 
-    def prepare_data(self, x) -> EncodedVideo:
-        encoded_vid = EncodedVideo.from_path(x)
-        return encoded_vid
-
-    def _extract_clip(self, x: EncodedVideo, time_stamp: int, clip_duration: float = 1.0):
-        inp_imgs = x.get_clip(
-            time_stamp - clip_duration / 2.0,  # start second
-            time_stamp + clip_duration / 2.0,  # end second
-        )
-        inp_imgs = inp_imgs["video"]
-
-        inp_img = inp_imgs[:, inp_imgs.shape[1] // 2, :, :]
-        inp_img = inp_img.permute(1, 2, 0)
-        return inp_img
-
     def image_detector_forward(self, x: Any):
         predicted_boxes = self.image_detector(x)
         if self.filter_boxes_fn:
@@ -81,7 +66,7 @@ class VideoObjectDetector(Task):
         return predicted_boxes
 
     def prepare_video_forward(self, inp_imgs: torch.Tensor, predicted_boxes: torch.Tensor):
-        inputs, inp_boxes, _ = self.ava_inference_transform(inp_imgs, predicted_boxes.numpy())
+        inputs, inp_boxes, _ = self.ava_inference_transform(inp_imgs, predicted_boxes)
 
         inp_boxes = torch.cat([torch.zeros(inp_boxes.shape[0], 1), inp_boxes], dim=1)
 
@@ -98,23 +83,10 @@ class VideoObjectDetector(Task):
         time_stamp_range: Optional[Tuple[int, int]] = None,
         clip_duration: float = 1.0,
     ) -> Any:
-        data = self.prepare_data(x)
-
-        if time_stamp_range:
-            time_stamp_range = range(*time_stamp_range)
-        else:
-            time_stamp_range = range(int(data.duration))
-
-        for time_stamp in time_stamp_range:
-            inp_img = self._extract_clip(data, time_stamp, clip_duration)
-            predicted_boxes = self.image_detector_forward(inp_img)
-
-            if len(predicted_boxes) == 0:
-                continue
-
-            inputs, inp_boxes = self.prepare_video_forward(inp_img, predicted_boxes)
-            outputs = self.model(inputs, inp_boxes)
-            yield outputs
+        predicted_boxes = self.image_detector_forward(x)
+        inputs, inp_boxes = self.prepare_video_forward(x, predicted_boxes)
+        outputs = self.model(inputs, inp_boxes)
+        return outputs
 
     @staticmethod
     def ava_inference_transform(
@@ -163,3 +135,15 @@ class VideoObjectDetector(Task):
             clip = [slow_pathway, fast_pathway]
 
         return clip, torch.from_numpy(boxes), ori_boxes
+
+    @staticmethod
+    def extract_clip(x: EncodedVideo, time_stamp: int, clip_duration: float = 1.0):
+        inp_imgs = x.get_clip(
+            time_stamp - clip_duration / 2.0,  # start second
+            time_stamp + clip_duration / 2.0,  # end second
+        )
+        inp_imgs = inp_imgs["video"]
+
+        inp_img = inp_imgs[:, inp_imgs.shape[1] // 2, :, :]
+        inp_img = inp_img.permute(1, 2, 0)
+        return inp_img
