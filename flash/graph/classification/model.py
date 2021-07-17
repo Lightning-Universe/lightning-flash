@@ -53,7 +53,7 @@ class GraphClassifier(ClassificationTask):
         num_features: int,
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCNWithJK",
-        backbone_kwargs: Optional[Dict] = None,
+        backbone_kwargs: Optional[Dict] = {},
         pretrained: Optional[bool] = False,  #todo: implement True here
         head: Optional[Union[FunctionType, nn.Module]] = None,
         loss_fn: Callable = F.cross_entropy,

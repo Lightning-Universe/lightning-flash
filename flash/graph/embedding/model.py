@@ -55,7 +55,8 @@ class GraphEmbedder(Task):
         self,
         num_features: int,
         embedding_dim: Optional[int] = None,
-        backbone: Union[str, Tuple[nn.Module, int]] = "GraphUNet",
+        backbone: Union[str, Tuple[nn.Module, int]] = "GCNWithJK",
+        backbone_kwargs: Optional[Dict] = {},
         pretrained: Optional[bool] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
@@ -78,7 +79,7 @@ class GraphEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone = self.backbones.get(backbone)(in_channels=num_features, pretrained=pretrained)
+        self.backbone = self.backbones.get(backbone)(in_channels=num_features, pretrained=pretrained, **backbone_kwargs)
         num_out_features = backbone.hidden_channels
         if self.embedding_dim is not None:
             self.head = nn.Sequential(nn.Linear(num_out_features, self.embedding_dim))
