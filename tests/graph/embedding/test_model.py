@@ -36,7 +36,7 @@ def test_smoke():
 def test_train(tmpdir):
     """Tests that the model can be trained on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
-    model = GraphEmbedder(embedding_dim=tudataset.num_classes)
+    model = GraphEmbedder(num_features = tudataset.num_features, num_classes=tudataset.num_classes)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     train_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -47,7 +47,7 @@ def test_train(tmpdir):
 def test_val(tmpdir):
     """Tests that the model can be validated on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
-    model = GraphEmbedder(embedding_dim=tudataset.num_classes)
+    model = GraphEmbedder(num_features = tudataset.num_features, num_classes=tudataset.num_classes)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     val_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -58,7 +58,7 @@ def test_val(tmpdir):
 def test_test(tmpdir):
     """Tests that the model can be tested on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
-    model = GraphEmbedder(embedding_dim=tudataset.num_classes)
+    model = GraphEmbedder(num_features = tudataset.num_features, num_classes=tudataset.num_classes)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     test_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -69,7 +69,7 @@ def test_test(tmpdir):
 def test_predict_dataset(tmpdir):
     """Tests that we can generate predictions from a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
-    model = GraphEmbedder(embedding_dim=tudataset.num_classes)
+    model = GraphEmbedder(num_features = tudataset.num_features, num_classes=tudataset.num_classes)
     data_pipe = DataPipeline(preprocess=GraphClassificationPreprocess())
     out = model.predict(tudataset, data_source="dataset", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
