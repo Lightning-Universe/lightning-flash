@@ -44,8 +44,8 @@ MODELS = [
 @GRAPH_CLASSIFICATION_BACKBONES(name="GCN", namespace="graph/classification")  #todo: how to add more tasks?
 def load_GCN(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GCN backbone from torch geometric"""
     return models.GCN(in_channels, hidden_channels, num_layers)
@@ -54,9 +54,8 @@ def load_GCN(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GCNWithJK", namespace="graph/classification")
 def load_GCNWithJK(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
-    num_workers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GCN backbone with JK from torch geometric"""
     return models.GCNWithJK(in_channels, hidden_channels, num_layers)
@@ -65,8 +64,8 @@ def load_GCNWithJK(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GraphSAGE", namespace="graph/classification")
 def load_GraphSAGE(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GraphSAGE backbone from torch geometric"""
     return models.GraphSAGE(in_channels, hidden_channels, num_layers)
@@ -75,8 +74,8 @@ def load_GraphSAGE(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GraphSAGEWithJK", namespace="graph/classification")
 def load_GraphSAGEWithJK(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GraphSAGE backbone with JK from torch geometric"""
     return models.GraphSAGEWithJK(in_channels, hidden_channels, num_layers)
@@ -85,8 +84,8 @@ def load_GraphSAGEWithJK(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GAT", namespace="graph/classification")
 def load_GAT(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GAT backbone from torch geometric"""
     return models.GAT(in_channels, hidden_channels, num_layers)
@@ -95,8 +94,8 @@ def load_GAT(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GATWithJK", namespace="graph/classification")
 def load_GATWithJK(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GAT backbone with JK from torch geometric"""
     return models.GATWithJK(in_channels, hidden_channels, num_layers)
@@ -105,8 +104,8 @@ def load_GATWithJK(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GIN", namespace="graph/classification")
 def load_GIN(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GIN backbone from torch geometric"""
     return models.GIN(in_channels, hidden_channels, num_layers)
@@ -115,8 +114,8 @@ def load_GIN(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GINWithJK", namespace="graph/classification")
 def load_GINWithJK(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GIN backbone with JK from torch geometric"""
     return models.GINWithJK(in_channels, hidden_channels, num_layers)
@@ -125,8 +124,8 @@ def load_GINWithJK(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GINE", namespace="graph/classification")
 def load_GINE(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GINE backbone from torch geometric"""
     return models.GINE(in_channels, hidden_channels, num_layers)
@@ -135,8 +134,8 @@ def load_GINE(
 @GRAPH_CLASSIFICATION_BACKBONES(name="GINEWithJK", namespace="graph/classification")
 def load_GINEWithJK(
     in_channels: int,
-    hidden_channels: int,
-    num_layers: int,
+    hidden_channels: int = 512,
+    num_layers: int = 4,
 ):
     """GINE backbone with JK from torch geometric"""
     return models.GINEWithJK(in_channels, hidden_channels, num_layers)

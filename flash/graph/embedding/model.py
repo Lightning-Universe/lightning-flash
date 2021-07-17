@@ -53,9 +53,10 @@ class GraphEmbedder(Task):
 
     def __init__(
         self,
+        num_features: int,
         embedding_dim: Optional[int] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "GraphUNet",
-        pretrained: bool = False,
+        pretrained: Optional[bool] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
@@ -77,7 +78,7 @@ class GraphEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone = self.backbones.get(backbone)(pretrained=pretrained)
+        self.backbone = self.backbones.get(backbone)(in_channels = num_features, pretrained=pretrained)
         num_out_features = backbone.hidden_channels
         if self.embedding_dim is not None:
             self.head = nn.Sequential(nn.Linear(num_out_features, self.embedding_dim))
