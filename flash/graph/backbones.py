@@ -23,9 +23,9 @@ from torch.hub import load_state_dict_from_url
 from torch.nn import ReLU
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     import torch_geometric
     import torch_geometric.nn.models as models
 

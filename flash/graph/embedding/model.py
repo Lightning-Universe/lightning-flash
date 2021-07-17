@@ -24,16 +24,8 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
 from flash.graph.classification.data import GraphClassificationPreprocess
-
-if _TORCH_GEOMETRIC_AVAILABLE:
-    from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
-else:
-    MessagePassing = type(object)
-    GCNConv = object
-
 
 class GraphEmbedder(Task):
     """The ``GraphEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from graphs. For more

@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.model import GraphClassifier
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     from torch_geometric.datasets import TUDataset
 else:
     raise ModuleNotFoundError("Please, pip install -e '.[graph]'")
