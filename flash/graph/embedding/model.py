@@ -27,6 +27,7 @@ from flash.core.registry import FlashRegistry
 from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
 from flash.graph.classification.data import GraphClassificationPreprocess
 
+
 class GraphEmbedder(Task):
     """The ``GraphEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from graphs. For more
     details, see :ref:`graph_embedder`.
