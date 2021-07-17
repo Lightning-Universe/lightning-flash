@@ -13,7 +13,6 @@
 # limitations under the License.
 import torch
 
-import flash
 from flash import DataModule
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
@@ -58,7 +57,7 @@ if _POINTCLOUD_AVAILABLE:
 
         def __init__(self, datamodule: DataModule):
             self.datamodule = datamodule
-            self._enabled = not flash._IS_TESTING
+            self._enabled = True  # not flash._IS_TESTING
 
         def get_dataset(self, stage: str = "train"):
             dataloader = getattr(self.datamodule, f"{stage}_dataloader")()
