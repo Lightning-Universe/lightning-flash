@@ -22,9 +22,9 @@ from flash import Task
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
+from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
-if _SPEECH_RECOGNITION_AVAILABLE:
+if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2ForCTC
 
 

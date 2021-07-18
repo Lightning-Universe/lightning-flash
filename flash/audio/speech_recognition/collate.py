@@ -16,9 +16,9 @@ from typing import Dict, List, Optional, Union
 
 import torch
 
-from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
+from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
-if _SPEECH_RECOGNITION_AVAILABLE:
+if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2Processor
 
 

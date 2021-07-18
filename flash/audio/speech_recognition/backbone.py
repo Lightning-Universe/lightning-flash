@@ -14,9 +14,9 @@
 from functools import partial
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE
+from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
-if _SPEECH_RECOGNITION_AVAILABLE:
+if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2ForCTC
 
 SPEECH_RECOGNITION_BACKBONES = FlashRegistry("backbones")

@@ -28,9 +28,9 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _SPEECH_RECOGNITION_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires_extras
 
-if _SPEECH_RECOGNITION_AVAILABLE:
+if _AUDIO_AVAILABLE:
     import datasets
     import soundfile as sf
     from datasets import Dataset, load_dataset
