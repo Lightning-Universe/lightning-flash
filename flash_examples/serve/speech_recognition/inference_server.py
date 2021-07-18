@@ -13,7 +13,6 @@
 # limitations under the License.
 from flash.audio import SpeechRecognition
 
-# model = SpeechRecognition.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/speech_recognition_model.pt")
-model = SpeechRecognition.load_from_checkpoint("/home/sean/lightning-flash/speech_recognition_model.pt")
+model = SpeechRecognition.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/speech_recognition_model.pt")
 
 model.serve()
