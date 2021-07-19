@@ -19,9 +19,8 @@ import pytest
 
 import flash
 from flash.audio import SpeechRecognitionData
+from flash.core.data.data_source import DefaultDataKeys
 from tests.helpers.utils import _AUDIO_TESTING
-
-TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small model for testing
 
 path = str(Path(flash.ASSETS_ROOT) / "example.wav")
 sample = {'file': path, 'text': 'example input.'}
@@ -52,12 +51,10 @@ def json_data(tmpdir, n_samples=5):
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="speech libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = SpeechRecognitionData.from_csv(
-        "file", "text", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1, num_workers=0
-    )
+    dm = SpeechRecognitionData.from_csv("file", "text", train_file=csv_path, batch_size=1, num_workers=0)
     batch = next(iter(dm.train_dataloader()))
-    assert "labels" in batch
-    assert "input_values" in batch
+    assert DefaultDataKeys.INPUT in batch
+    assert DefaultDataKeys.TARGET in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -65,39 +62,28 @@ def test_from_csv(tmpdir):
 def test_stage_test_and_valid(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SpeechRecognitionData.from_csv(
-        "file",
-        "text",
-        backbone=TEST_BACKBONE,
-        train_file=csv_path,
-        val_file=csv_path,
-        test_file=csv_path,
-        batch_size=1,
-        num_workers=0
+        "file", "text", train_file=csv_path, val_file=csv_path, test_file=csv_path, batch_size=1, num_workers=0
     )
     batch = next(iter(dm.val_dataloader()))
-    assert "labels" in batch
-    assert "input_values" in batch
+    assert DefaultDataKeys.INPUT in batch
+    assert DefaultDataKeys.TARGET in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert "labels" in batch
-    assert "input_values" in batch
+    assert DefaultDataKeys.INPUT in batch
+    assert DefaultDataKeys.TARGET in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="speech libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
-    dm = SpeechRecognitionData.from_json(
-        "file", "text", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, num_workers=0
-    )
+    dm = SpeechRecognitionData.from_json("file", "text", train_file=json_path, batch_size=1, num_workers=0)
     batch = next(iter(dm.train_dataloader()))
-    assert "labels" in batch
-    assert "input_values" in batch
+    assert DefaultDataKeys.INPUT in batch
+    assert DefaultDataKeys.TARGET in batch
 
 
 @pytest.mark.skipif(_AUDIO_TESTING, reason="audio libraries are installed.")
 def test_audio_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[audio]"):
-        SpeechRecognitionData.from_json(
-            "file", "text", backbone=TEST_BACKBONE, train_file="", batch_size=1, num_workers=0
-        )
+        SpeechRecognitionData.from_json("file", "text", train_file="", batch_size=1, num_workers=0)
