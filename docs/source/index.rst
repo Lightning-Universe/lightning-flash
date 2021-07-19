@@ -45,6 +45,7 @@ Lightning Flash
    :caption: Audio
 
    reference/audio_classification
+   reference/speech_recognition
 
 .. toctree::
    :maxdepth: 1
@@ -60,12 +61,6 @@ Lightning Flash
    reference/text_classification_multi_label
    reference/summarization
    reference/translation
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Audio
-
-   reference/speech_recognition
 
 .. toctree::
    :maxdepth: 1
