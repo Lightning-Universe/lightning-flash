@@ -96,7 +96,7 @@ def test_from_json(tmpdir):
 
 
 @pytest.mark.skipif(_AUDIO_TESTING, reason="audio libraries are installed.")
-def test_text_module_not_found_error():
+def test_audio_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[audio]"):
         SpeechRecognitionData.from_json(
             "file", "text", backbone=TEST_BACKBONE, train_file="", batch_size=1, num_workers=0

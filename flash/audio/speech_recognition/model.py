@@ -29,7 +29,10 @@ if _AUDIO_AVAILABLE:
 
 
 class SpeechRecognition(Task):
+
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
+
+    required_extras = "audio"
 
     def __init__(
         self,
