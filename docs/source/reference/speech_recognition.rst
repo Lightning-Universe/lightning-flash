@@ -48,12 +48,12 @@ The :class:`~flash.audio.speech_recognition.model.SpeechRecognition` is servable
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
-.. literalinclude:: ../../../flash_examples/serve/text_classification/inference_server.py
+.. literalinclude:: ../../../flash_examples/serve/speech_recognition/inference_server.py
     :language: python
     :lines: 14-
 
 You can now perform inference from your client like this:
 
-.. literalinclude:: ../../../flash_examples/serve/text_classification/client.py
+.. literalinclude:: ../../../flash_examples/serve/speech_recognition/client.py
     :language: python
     :lines: 14-
