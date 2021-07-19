@@ -57,7 +57,6 @@ def test_classification_csv(tmpdir):
     data = SpeechRecognitionData.from_csv(
         "file",
         "text",
-        backbone=TEST_BACKBONE,
         train_file=csv_path,
         num_workers=0,
         batch_size=2,
@@ -75,7 +74,6 @@ def test_classification_json(tmpdir):
     data = SpeechRecognitionData.from_json(
         "file",
         "text",
-        backbone=TEST_BACKBONE,
         train_file=json_path,
         num_workers=0,
         batch_size=2,
