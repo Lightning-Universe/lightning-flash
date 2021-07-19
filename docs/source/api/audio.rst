@@ -36,7 +36,8 @@ __________________
     speech_recognition.data.SpeechRecognitionPostprocess
     speech_recognition.data.SpeechRecognitionCSVDataSource
     speech_recognition.data.SpeechRecognitionJSONDataSource
-    speech_recognition.data.SpeechRecognitionDataSource
+    speech_recognition.data.BaseSpeechRecognition
+    speech_recognition.data.SpeechRecognitionFileDataSource
     speech_recognition.data.SpeechRecognitionPathsDataSource
     speech_recognition.data.SpeechRecognitionDatasetDataSource
     speech_recognition.data.SpeechRecognitionDeserializer
