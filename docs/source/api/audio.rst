@@ -31,11 +31,12 @@ __________________
     ~speech_recognition.model.SpeechRecognition
     ~speech_recognition.data.SpeechRecognitionData
 
-    speech_recognition.data.SpeechRecognitionPostprocess
     speech_recognition.data.SpeechRecognitionPreprocess
+    speech_recognition.data.SpeechRecognitionBackboneState
+    speech_recognition.data.SpeechRecognitionPostprocess
     speech_recognition.data.SpeechRecognitionCSVDataSource
     speech_recognition.data.SpeechRecognitionJSONDataSource
     speech_recognition.data.SpeechRecognitionDataSource
-    speech_recognition.data.SpeechRecognitionFilesSource
-    speech_recognition.data.TimitDataSource
+    speech_recognition.data.SpeechRecognitionPathsDataSource
+    speech_recognition.data.SpeechRecognitionDatasetDataSource
     speech_recognition.data.SpeechRecognitionDeserializer
