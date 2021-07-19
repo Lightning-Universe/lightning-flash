@@ -31,11 +31,6 @@ Here's the structure our CSV file:
 Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData`.
 We select a pre-trained Wav2Vec backbone to use for our :class:`~flash.audio.speech_recognition.model.SpeechRecognition` and finetune on a subset of the `TIMIT corpus <https://catalog.ldc.upenn.edu/LDC93S1>`__.
 The backbone can be any Wav2Vec model from `HuggingFace transformers <https://huggingface.co/models?search=wav2vec>`__.
-
-.. note::
-
-    When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.audio.speech_recognition.model.SpeechRecognition` and the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData`!
-
 Next, we use the trained :class:`~flash.audio.speech_recognition.model.SpeechRecognition` for inference and save the model.
 Here's the full example:
 
