@@ -92,11 +92,19 @@ _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
 _TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
+_ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
+_SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
+_DATASETS_AVAILABLE = _module_available("datasets")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
 
-_TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
+_TEXT_AVAILABLE = all([
+    _TRANSFORMERS_AVAILABLE,
+    _ROUGE_SCORE_AVAILABLE,
+    _SENTENCEPIECE_AVAILABLE,
+    _DATASETS_AVAILABLE,
+])
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
 _IMAGE_AVAILABLE = all([
