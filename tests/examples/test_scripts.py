@@ -43,6 +43,10 @@ from tests.helpers.utils import (
             marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed")
         ),
         pytest.param(
+            "speech_recognition.py",
+            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed")
+        ),
+        pytest.param(
             "image_classification.py",
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
