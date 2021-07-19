@@ -15,12 +15,14 @@ import os
 import re
 from unittest import mock
 
+import numpy as np
 import pytest
 import torch
 
 from flash import Trainer
 from flash.audio import SpeechRecognition
 from flash.audio.speech_recognition.data import SpeechRecognitionPostprocess, SpeechRecognitionPreprocess
+from flash.core.data.data_source import DefaultDataKeys
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -30,8 +32,11 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            "input_values": torch.randn(size=torch.Size([86631])).float(),
-            "labels": torch.randn(size=(1, 77)).long(),
+            DefaultDataKeys.INPUT: np.random.randn(86631),
+            DefaultDataKeys.TARGET: "some target text",
+            DefaultDataKeys.METADATA: {
+                "sampling_rate": 16000
+            },
         }
 
     def __len__(self) -> int:
@@ -77,8 +82,8 @@ def test_jit(tmpdir):
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
     # TODO: Currently only servable once a preprocess and postprocess have been attached
-    model._preprocess = SpeechRecognitionPreprocess(backbone=TEST_BACKBONE)
-    model._postprocess = SpeechRecognitionPostprocess(backbone=TEST_BACKBONE)
+    model._preprocess = SpeechRecognitionPreprocess()
+    model._postprocess = SpeechRecognitionPostprocess()
     model.eval()
     model.serve()
 
