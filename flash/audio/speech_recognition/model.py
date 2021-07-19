@@ -20,12 +20,15 @@ import torch.nn as nn
 
 from flash import Task
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
+from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
+from flash.audio.speech_recognition.data import SpeechRecognitionBackboneState
 from flash.core.data.process import Serializer
+from flash.core.data.states import CollateFn
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
 if _AUDIO_AVAILABLE:
-    from transformers import Wav2Vec2ForCTC
+    from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 
 
 class SpeechRecognition(Task):
@@ -39,7 +42,7 @@ class SpeechRecognition(Task):
         backbone: str = "facebook/wav2vec2-base-960h",
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        learning_rate: float = 1e-2,
+        learning_rate: float = 1e-5,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
@@ -47,6 +50,7 @@ class SpeechRecognition(Task):
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
+
         model = self.backbones.get(backbone
                                    )() if backbone in self.backbones else Wav2Vec2ForCTC.from_pretrained(backbone)
         super().__init__(
@@ -58,6 +62,9 @@ class SpeechRecognition(Task):
         )
 
         self.save_hyperparameters()
+
+        self.set_state(SpeechRecognitionBackboneState(backbone))
+        self.set_state(CollateFn(DataCollatorCTCWithPadding(Wav2Vec2Processor.from_pretrained(backbone))))
 
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(batch["input_values"])

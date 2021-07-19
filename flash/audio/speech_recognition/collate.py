@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 
+from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
 if _AUDIO_AVAILABLE:
@@ -58,10 +59,19 @@ class DataCollatorCTCWithPadding:
     pad_to_multiple_of: Optional[int] = None
     pad_to_multiple_of_labels: Optional[int] = None
 
-    def __call__(self, features: List[Dict[str, Union[List[int], torch.Tensor]]]) -> Dict[str, torch.Tensor]:
+    def __call__(self, samples: List[Dict[str, Any]], metadata: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+        inputs = [sample[DefaultDataKeys.INPUT] for sample in samples]
+        sampling_rates = [sample["sampling_rate"] for sample in metadata]
+
+        assert (
+            len(set(sampling_rates)) == 1
+        ), f"Make sure all inputs have the same sampling rate of {self.processor.feature_extractor.sampling_rate}."
+
+        inputs = self.processor(inputs, sampling_rate=sampling_rates[0]).input_values
+
         # split inputs and labels since they have to be of different lengths and need
         # different padding methods
-        input_features = [{"input_values": feature["input_values"]} for feature in features]
+        input_features = [{"input_values": input} for input in inputs]
 
         batch = self.processor.pad(
             input_features,
@@ -71,11 +81,12 @@ class DataCollatorCTCWithPadding:
             return_tensors="pt",
         )
 
-        label_features = [{"input_ids": feature.get("labels")} for feature in features]
+        labels = [sample.get(DefaultDataKeys.TARGET, None) for sample in samples]
         # check to ensure labels exist to collate
-        labels_exist = not any(x['input_ids'] is None for x in label_features)
-        if labels_exist:
+        if None not in labels:
             with self.processor.as_target_processor():
+                label_features = self.processor(labels).input_ids
+                label_features = [{"input_ids": feature} for feature in label_features]
                 labels_batch = self.processor.pad(
                     label_features,
                     padding=self.padding,
@@ -85,8 +96,6 @@ class DataCollatorCTCWithPadding:
                 )
 
             # replace padding with -100 to ignore loss correctly
-            labels = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
-
-            batch["labels"] = labels
+            batch["labels"] = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
 
         return batch

@@ -14,5 +14,4 @@
 from flash.audio import SpeechRecognition
 
 model = SpeechRecognition.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/speech_recognition_model.pt")
-
 model.serve()

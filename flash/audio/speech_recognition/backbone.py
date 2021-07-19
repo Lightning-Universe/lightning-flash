@@ -16,20 +16,15 @@ from functools import partial
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
+SPEECH_RECOGNITION_BACKBONES = FlashRegistry("backbones")
+
 if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2ForCTC
 
-SPEECH_RECOGNITION_BACKBONES = FlashRegistry("backbones")
+    WAV2VEC_MODELS = ["facebook/wav2vec2-base-960h", "facebook/wav2vec2-large-960h-lv60"]
 
-WAV2VEC_MODELS = ["facebook/wav2vec2-base-960h", "facebook/wav2vec2-large-960h-lv60"]
-
-
-def _huggingface_from_pretrained(model_name):
-    return Wav2Vec2ForCTC.from_pretrained(model_name)
-
-
-for model_name in WAV2VEC_MODELS:
-    SPEECH_RECOGNITION_BACKBONES(
-        fn=partial(_huggingface_from_pretrained, model_name=model_name),
-        name=model_name,
-    )
+    for model_name in WAV2VEC_MODELS:
+        SPEECH_RECOGNITION_BACKBONES(
+            fn=partial(Wav2Vec2ForCTC.from_pretrained, model_name),
+            name=model_name,
+        )
