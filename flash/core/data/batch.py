@@ -229,7 +229,10 @@ class _Preprocessor(torch.nn.Module):
 
                 with self._collate_context:
                     samples, metadata = self._extract_metadata(samples)
-                    samples = self.collate_fn(samples)
+                    try:
+                        samples = self.collate_fn(samples, metadata)
+                    except TypeError:
+                        samples = self.collate_fn(samples)
                     if metadata and isinstance(samples, dict):
                         samples[DefaultDataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
