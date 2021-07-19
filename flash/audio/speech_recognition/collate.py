@@ -20,6 +20,8 @@ from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
 if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2Processor
+else:
+    Wav2Vec2Processor = object
 
 
 @dataclass
