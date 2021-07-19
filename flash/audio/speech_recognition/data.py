@@ -124,7 +124,7 @@ class SpeechRecognitionFilesSource(DataSource):
 
 class SpeechRecognitionPreprocess(Preprocess):
 
-    @requires_extras("speech")
+    @requires_extras("audio")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -205,7 +205,7 @@ class SpeechRecognitionPreprocess(Preprocess):
 
 class SpeechRecognitionPostprocess(Postprocess):
 
-    @requires_extras("speech")
+    @requires_extras("audio")
     def __init__(
         self,
         save_path: Optional[str] = None,

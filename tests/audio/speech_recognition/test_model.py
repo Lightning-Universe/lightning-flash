@@ -44,7 +44,7 @@ TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small mo
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="speech libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_init_train(tmpdir):
     model = SpeechRecognition(backbone=TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -52,7 +52,7 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="speech libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_jit(tmpdir):
     sample_input = {"input_values": torch.randn(size=torch.Size([1, 86631])).float()}
     path = os.path.join(tmpdir, "test.pt")
@@ -82,7 +82,7 @@ def test_serve():
     model.serve()
 
 
-@pytest.mark.skipif(_AUDIO_TESTING, reason="speech libraries are installed.")
+@pytest.mark.skipif(_AUDIO_TESTING, reason="audio libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[speech]'")):
+    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[audio]'")):
         SpeechRecognition.load_from_checkpoint("not_a_real_checkpoint.pt")
