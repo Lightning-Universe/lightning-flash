@@ -72,6 +72,7 @@ def test_jit(tmpdir):
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
