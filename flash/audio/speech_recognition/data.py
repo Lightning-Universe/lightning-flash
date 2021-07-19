@@ -35,6 +35,8 @@ if _AUDIO_AVAILABLE:
     import soundfile as sf
     from datasets import Dataset, load_dataset
     from transformers import Wav2Vec2CTCTokenizer, Wav2Vec2Processor
+else:
+    Dataset = object
 
 INPUT_FIELD = "file"
 TARGET_FIELD = "text"
