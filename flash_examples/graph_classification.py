@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import example_requires
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.model import GraphClassifier
 
-if _TORCH_GEOMETRIC_AVAILABLE:
-    from torch_geometric.datasets import TUDataset
-else:
-    raise ModuleNotFoundError("Please, pip install -e '.[graph]'")
+example_requires("graph")
+
+from torch_geometric.datasets import TUDataset  # noqa: E402
 
 # 1. Create the DataModule
 dataset = TUDataset(root="data", name="KKI")

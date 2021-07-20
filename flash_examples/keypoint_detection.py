@@ -12,22 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-from flash.core.data.utils import download_data
-from flash.image import ObjectDetectionData, ObjectDetector
+from flash.core.utilities.imports import example_requires
+from flash.image import KeypointDetectionData, KeypointDetector
+
+example_requires("image")
+
+import icedata  # noqa: E402
 
 # 1. Create the DataModule
-# Dataset Credit: https://www.kaggle.com/ultralytics/coco128
-download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
+data_dir = icedata.biwi.load_data()
 
-datamodule = ObjectDetectionData.from_coco(
-    train_folder="data/coco128/images/train2017/",
-    train_ann_file="data/coco128/annotations/instances_train2017.json",
+datamodule = KeypointDetectionData.from_folders(
+    train_folder=data_dir,
     val_split=0.1,
     image_size=128,
+    parser=icedata.biwi.parser,
 )
 
 # 2. Build the task
-model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=128)
+model = KeypointDetector(
+    head="keypoint_rcnn",
+    backbone="resnet18_fpn",
+    num_keypoints=1,
+    num_classes=datamodule.num_classes,
+)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1)
@@ -35,9 +43,9 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
 predictions = model.predict([
-    "data/coco128/images/train2017/000000000625.jpg",
-    "data/coco128/images/train2017/000000000626.jpg",
-    "data/coco128/images/train2017/000000000629.jpg",
+    str(data_dir / "biwi_sample/images/0.jpg"),
+    str(data_dir / "biwi_sample/images/1.jpg"),
+    str(data_dir / "biwi_sample/images/10.jpg"),
 ])
 print(predictions)
 

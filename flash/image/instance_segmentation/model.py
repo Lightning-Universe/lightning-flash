@@ -20,16 +20,15 @@ from flash.core.data.process import Serializer
 from flash.core.integrations.icevision.model import IceVisionTask, SimpleCOCOMetric
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
-from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
-from flash.image.detection.serialization import DetectionLabels
+from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
 
 if _ICEVISION_AVAILABLE:
     from icevision.metrics import COCOMetricType
     from icevision.metrics import Metric as IceVisionMetric
 
 
-class ObjectDetector(IceVisionTask):
-    """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
+class InstanceSegmentation(IceVisionTask):
+    """The ``InstanceSegmentation`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
     :ref:`object_detection`.
 
     Args:
@@ -52,7 +51,7 @@ class ObjectDetector(IceVisionTask):
 
     """
 
-    heads: FlashRegistry = OBJECT_DETECTION_HEADS
+    heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
 
     required_extras: str = "image"
 
@@ -60,10 +59,10 @@ class ObjectDetector(IceVisionTask):
         self,
         num_classes: int,
         backbone: Optional[str] = "resnet18_fpn",
-        head: Optional[str] = "retinanet",
+        head: Optional[str] = "mask_rcnn",
         pretrained: bool = True,
         metrics: Optional[IceVisionMetric] = None,
-        optimizer: Type[Optimizer] = torch.optim.AdamW,
+        optimizer: Type[Optimizer] = torch.optim.Adam,
         learning_rate: float = 5e-4,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         image_size: Optional[int] = None,
@@ -76,11 +75,11 @@ class ObjectDetector(IceVisionTask):
             backbone=backbone,
             head=head,
             pretrained=pretrained,
-            metrics=metrics or [SimpleCOCOMetric(COCOMetricType.bbox)],
+            metrics=metrics or [SimpleCOCOMetric(COCOMetricType.mask)],
             image_size=image_size,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            serializer=serializer or DetectionLabels(),
+            serializer=serializer,
             **kwargs,
         )
 

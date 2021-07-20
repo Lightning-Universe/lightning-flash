@@ -6,3 +6,5 @@ kornia>=0.5.1,<0.5.4
 pystiche>=0.7.2
 segmentation-models-pytorch
 icevision>=0.8
+icedata
+effdet

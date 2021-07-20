@@ -163,6 +163,10 @@ def requires_extras(extras: Union[str, List]):
     )
 
 
+def example_requires(extras: Union[str, List[str]]):
+    return requires_extras(extras)(lambda: None)()
+
+
 def lazy_import(module_name, callback=None):
     """Returns a proxy module object that will lazily import the given module
     the first time it is used.

@@ -29,7 +29,6 @@ if _TIMM_AVAILABLE:
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
-    from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 MOBILENET_MODELS = ["mobilenet_v2"]
 VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
@@ -38,7 +37,6 @@ DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
 TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
-OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
 
 
 def catch_url_error(fn):
@@ -127,15 +125,6 @@ if _TORCHVISION_AVAILABLE:
 
         return backbone, num_features
 
-    def _fn_resnet_fpn(
-        model_name: str,
-        pretrained: bool = True,
-        trainable_layers: bool = True,
-        **kwargs,
-    ) -> Tuple[nn.Module, int]:
-        backbone = resnet_fpn_backbone(model_name, pretrained=pretrained, trainable_layers=trainable_layers, **kwargs)
-        return backbone, 256
-
     for model_name in RESNET_MODELS:
         clf_kwargs = dict(
             fn=catch_url_error(partial(_fn_resnet, model_name=model_name)),
@@ -157,13 +146,6 @@ if _TORCHVISION_AVAILABLE:
                 )
             )
         IMAGE_CLASSIFIER_BACKBONES(**clf_kwargs)
-
-        OBJ_DETECTION_BACKBONES(
-            fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),
-            name=model_name,
-            package="torchvision",
-            type="resnet-fpn"
-        )
 
     def _fn_densenet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
         model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
