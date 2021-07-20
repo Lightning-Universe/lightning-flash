@@ -54,7 +54,7 @@ class FlashRegistry:
         """
         matches = [e for e in self.functions if key == e["name"]]
         if not matches:
-            raise KeyError(f"Key: {key} is not in {repr(self)}")
+            raise KeyError(f"Key: {key} is not in {type(self).__name__}")
 
         if metadata:
             matches = [m for m in matches if metadata.items() <= m["metadata"].items()]
