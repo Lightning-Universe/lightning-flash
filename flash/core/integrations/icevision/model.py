@@ -116,7 +116,7 @@ class IceVisionTask(Task):
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
-        collate_fn: Callable,
+        collate_fn: Optional[Callable] = None,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None
@@ -137,7 +137,7 @@ class IceVisionTask(Task):
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
-        collate_fn: Callable,
+        collate_fn: Optional[Callable] = None,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None
@@ -158,7 +158,7 @@ class IceVisionTask(Task):
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
-        collate_fn: Callable,
+        collate_fn: Optional[Callable] = None,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None
@@ -207,6 +207,9 @@ class IceVisionTask(Task):
         return self.adapter.validation_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch)
+
+    def forward(self, batch: Any) -> Any:
         if isinstance(batch, list) and isinstance(batch[0], BaseRecord):
             data = Dataset(batch)
             return self.model_type.predict(self.model, data)

@@ -12,17 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import random
 import re
 
+import numpy as np
 import pytest
 import torch
 from pytorch_lightning import Trainer
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from tests.helpers.utils import _IMAGE_TESTING
+
+if _ICEVISION_AVAILABLE:
+    from icevision.core import BBox, ClassMap, ObjectDetectionRecord
+    from icevision.data import Prediction
+    from icevision.utils import ImgSize
 
 
 def collate_fn(samples):
@@ -48,10 +54,19 @@ class DummyDetectionDataset(Dataset):
         return [min(xs), min(ys), max(xs) + 1, max(ys) + 1]
 
     def __getitem__(self, idx):
-        img = torch.rand(self.img_shape)
-        boxes = torch.tensor([self._random_bbox() for _ in range(self.num_boxes)])
-        labels = torch.randint(self.num_classes, (self.num_boxes, ))
-        return {DefaultDataKeys.INPUT: img, DefaultDataKeys.TARGET: {"boxes": boxes, "labels": labels}}
+        record = ObjectDetectionRecord()
+
+        img = np.random.rand(*self.img_shape).astype(np.float32)
+
+        record.set_img(img)
+        record.set_img_size(ImgSize(width=self.img_shape[0], height=self.img_shape[1]))
+        record.detection.set_class_map(ClassMap([f"test_{i}" for i in range(self.num_classes)], background=None))
+
+        for i in range(self.num_boxes):
+            record.detection.add_bboxes([BBox.from_xyxy(*self._random_bbox())])
+            record.detection.add_labels([f"test_{random.randint(0, self.num_classes - 1)}"])
+
+        return record
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -60,23 +75,22 @@ def test_init():
     model.eval()
 
     batch_size = 2
-    ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
-    dl = DataLoader(ds, collate_fn=collate_fn, batch_size=batch_size)
+    ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
+    dl = model.process_predict_dataset(ds, batch_size=batch_size)
     data = next(iter(dl))
-    img = data[DefaultDataKeys.INPUT]
 
-    out = model(img)
+    out = model(data)
 
     assert len(out) == batch_size
-    assert {"boxes", "labels", "scores"} <= out[0].keys()
+    assert all(isinstance(res, Prediction) for res in out)
 
 
-@pytest.mark.parametrize("model", ["fasterrcnn", "retinanet"])
+@pytest.mark.parametrize("head", ["faster_rcnn", "retinanet"])
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_training(tmpdir, model):
-    model = ObjectDetector(num_classes=2, model=model, pretrained=False, pretrained_backbone=False)
-    ds = DummyDetectionDataset((3, 224, 224), 1, 2, 10)
-    dl = DataLoader(ds, collate_fn=collate_fn)
+def test_training(tmpdir, head):
+    model = ObjectDetector(num_classes=2, head=head, pretrained=False)
+    ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
+    dl = model.process_train_dataset(ds, 2, 0, False)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, dl)
 
