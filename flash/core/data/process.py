@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
@@ -24,7 +25,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
+from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
@@ -360,18 +361,24 @@ class Preprocess(BasePreprocess, Properties):
         """
         return self.current_transform(batch)
 
-    def collate(self, samples: Sequence) -> Any:
+    def collate(self, samples: Sequence, metadata=None) -> Any:
         """ Transform to convert a sequence of samples to a collated batch. """
+        current_transform = self.current_transform
+        if current_transform is self._identity:
+            current_transform = self._default_collate
 
         # the model can provide a custom ``collate_fn``.
         collate_fn = self.get_state(CollateFn)
         if collate_fn is not None:
-            return collate_fn.collate_fn(samples)
+            collate_fn = collate_fn.collate_fn
+        else:
+            collate_fn = current_transform
+            # return collate_fn.collate_fn(samples)
 
-        current_transform = self.current_transform
-        if current_transform is self._identity:
-            return self._default_collate(samples)
-        return self.current_transform(samples)
+        parameters = inspect.signature(collate_fn).parameters
+        if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
+            return collate_fn(samples, metadata)
+        return collate_fn(samples)
 
     def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
