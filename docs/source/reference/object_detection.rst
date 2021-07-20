@@ -11,6 +11,8 @@ The Task
 
 Object detection is the task of identifying objects in images and their associated classes and bounding boxes.
 
+The :class:`~flash.image.detection.model.ObjectDetector` and :class:`~flash.image.detection.data.ObjectDetectionData` classes internally rely on `IceVision <https://airctic.com/>`_.
+
 ------
 
 *******
