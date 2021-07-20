@@ -82,14 +82,14 @@ class BaseVideoClassification(object):
         sample[DefaultDataKeys.METADATA] = {"filepath": video_path}
         return sample
 
-    def _encoded_video_to_dict(self, video) -> Dict[str, Any]:
+    def _encoded_video_to_dict(self, video, annotation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         (
             clip_start,
             clip_end,
             clip_index,
             aug_index,
             is_last_clip,
-        ) = self.clip_sampler(0.0, video.duration)
+        ) = self.clip_sampler(0.0, video.duration, annotation)
 
         loaded_clip = video.get_clip(clip_start, clip_end)
 
