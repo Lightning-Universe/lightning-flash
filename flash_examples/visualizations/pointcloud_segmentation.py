@@ -13,7 +13,7 @@
 # limitations under the License.
 import flash
 from flash.core.data.utils import download_data
-from flash.pointcloud import launch_app, PointCloudSegmentation, PointCloudSegmentationData
+from flash.pointcloud.segmentation import launch_app, PointCloudSegmentation, PointCloudSegmentationData
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/
@@ -42,4 +42,5 @@ trainer.save_checkpoint("pointcloud_segmentation_model.pt")
 
 # 6. Optional Visualize
 app = launch_app(datamodule)
+# app.show_train_dataset()
 app.show_predictions(predictions)
