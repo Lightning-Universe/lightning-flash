@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, TYPE_CHECKING
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
@@ -23,7 +23,7 @@ from flash.core.integrations.icevision.data import (
     IceVisionPathsDataSource,
 )
 from flash.core.integrations.icevision.transforms import default_transforms
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -33,84 +33,62 @@ if _FIFTYONE_AVAILABLE:
 else:
     foc, fol = None, None
 
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
-
 if _ICEVISION_AVAILABLE:
-    from icevision.parsers import COCOBBoxParser, VIABBoxParser, VOCBBoxParser
+    from icevision.core import BBox, ClassMap, IsCrowdsRecordComponent, ObjectDetectionRecord
+    from icevision.data import SingleSplitSplitter
+    from icevision.parsers import COCOBBoxParser, Parser, VIABBoxParser, VOCBBoxParser
+    from icevision.utils import ImgSize
+else:
+    Parser = object
 
 
-class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
+class FiftyOneParser(Parser):
 
-    def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
-        super().__init__(label_field=label_field)
-        self.iscrowd = iscrowd
+    def __init__(self, data, class_map, label_field, iscrowd):
+        template_record = ObjectDetectionRecord()
+        template_record.add_component(IsCrowdsRecordComponent())
+        super().__init__(template_record=template_record)
 
-    @property
-    def label_cls(self):
-        return fol.Detections
+        data = data
+        label_field = label_field
+        iscrowd = iscrowd
 
-    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        self._validate(data)
+        self.data = []
+        self.class_map = class_map
 
-        data.compute_metadata()
-
-        filepaths = data.values("filepath")
-        widths = data.values("metadata.width")
-        heights = data.values("metadata.height")
-        labels = data.values(self.label_field + ".detections.label")
-        bboxes = data.values(self.label_field + ".detections.bounding_box")
-        iscrowds = data.values(self.label_field + ".detections." + self.iscrowd)
-
-        classes = self._get_classes(data)
-        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-        if dataset is not None:
-            dataset.num_classes = len(classes)
-
-        output_data = []
-        img_id = 1
         for fp, w, h, sample_labs, sample_boxes, sample_iscrowd in zip(
-            filepaths, widths, heights, labels, bboxes, iscrowds
+            data.values("filepath"), data.values("metadata.width"), data.values("metadata.height"),
+            data.values(label_field + ".detections.label"), data.values(label_field + ".detections.bounding_box"),
+            data.values(label_field + ".detections." + iscrowd)
         ):
-            output_boxes = []
-            output_labs = []
-            output_iscrowd = []
-            output_areas = []
             for lab, box, iscrowd in zip(sample_labs, sample_boxes, sample_iscrowd):
-                output_box, output_area = self._reformat_bbox(box[0], box[1], box[2], box[3], w, h)
-                output_areas.append(output_area)
-                output_labs.append(class_to_idx[lab])
-                output_boxes.append(output_box)
-                if iscrowd is None:
-                    iscrowd = 0
-                output_iscrowd.append(iscrowd)
-            output_data.append(
-                dict(
-                    input=fp,
-                    target=dict(
-                        boxes=output_boxes,
-                        labels=output_labs,
-                        image_id=img_id,
-                        area=output_areas,
-                        iscrowd=output_iscrowd,
-                    )
-                )
-            )
-            img_id += 1
+                self.data.append((fp, w, h, lab, box, iscrowd))
 
-        return output_data
+    def __iter__(self) -> Any:
+        return iter(self.data)
 
-    @staticmethod
-    def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        filepath = sample[DefaultDataKeys.INPUT]
-        img = default_loader(filepath)
-        sample[DefaultDataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {
-            "filepath": filepath,
-            "size": (h, w),
-        }
-        return sample
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def record_id(self, o) -> Hashable:
+        return o[0]
+
+    def parse_fields(self, o, record, is_new):
+        fp, w, h, lab, box, iscrowd = o
+
+        if iscrowd is None:
+            iscrowd = 0
+
+        if is_new:
+            record.set_filepath(fp)
+            record.set_img_size(ImgSize(width=w, height=h))
+            record.detection.set_class_map(self.class_map)
+
+        box = self._reformat_bbox(*box, w, h)
+
+        record.detection.add_bboxes([BBox.from_xyxy(*box)])
+        record.detection.add_labels([lab])
+        record.detection.add_iscrowds([iscrowd])
 
     @staticmethod
     def _reformat_bbox(xmin, ymin, box_w, box_h, img_w, img_h):
@@ -121,7 +99,37 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
         xmax = xmin + box_w
         ymax = ymin + box_h
         output_bbox = [xmin, ymin, xmax, ymax]
-        return output_bbox, box_w * box_h
+        return output_bbox
+
+
+class ObjectDetectionFiftyOneDataSource(IceVisionPathsDataSource, FiftyOneDataSource):
+
+    def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
+        super().__init__()
+        self.label_field = label_field
+        self.iscrowd = iscrowd
+
+    @property
+    @requires("fiftyone")
+    def label_cls(self):
+        return fol.Detections
+
+    @requires("fiftyone")
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+        self._validate(data)
+
+        data.compute_metadata()
+        classes = self._get_classes(data)
+        class_map = ClassMap(classes)
+
+        parser = FiftyOneParser(data, class_map, self.label_field, self.iscrowd)
+        records = parser.parse(data_splitter=SingleSplitSplitter())
+        return [{DefaultDataKeys.INPUT: record} for record in records[0]]
+
+    @staticmethod
+    @requires("fiftyone")
+    def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
+        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
 
 class ObjectDetectionPreprocess(Preprocess):
@@ -149,6 +157,7 @@ class ObjectDetectionPreprocess(Preprocess):
                 "voc": IceVisionParserDataSource(parser=VOCBBoxParser),
                 DefaultDataSources.FILES: IceVisionPathsDataSource(),
                 DefaultDataSources.FOLDERS: IceDataParserDataSource(parser=parser),
+                DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(**data_source_kwargs),
             },
             default_data_source=DefaultDataSources.FILES,
         )

@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
 
@@ -126,15 +125,19 @@ def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
+    datamodule = ObjectDetectionData.from_coco(
+        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, image_size=128
+    )
 
     data = next(iter(datamodule.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+    record = data[0]
+
+    assert record.detection.img.shape == (128, 128, 3)
+    assert record.detection.iscrowds[0] in (0, 1)
+
+    assert record.img_size.height == 128
+    assert record.img_size.width == 128
 
     assert datamodule.val_dataloader() is None
     assert datamodule.test_dataloader() is None
@@ -148,23 +151,28 @@ def test_image_detector_data_from_coco(tmpdir):
         test_ann_file=coco_ann_path,
         batch_size=1,
         num_workers=0,
+        image_size=128,
     )
 
     data = next(iter(datamodule.val_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+    record = data[0]
+
+    assert record.detection.img.shape == (128, 128, 3)
+    assert record.detection.iscrowds[0] in (0, 1)
+
+    assert record.img_size.height == 128
+    assert record.img_size.width == 128
 
     data = next(iter(datamodule.test_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+    record = data[0]
+
+    assert record.detection.img.shape == (128, 128, 3)
+    assert record.detection.iscrowds[0] in (0, 1)
+
+    assert record.img_size.height == 128
+    assert record.img_size.width == 128
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -173,15 +181,17 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1)
+    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1, image_size=128)
 
     data = next(iter(datamodule.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+    record = data[0]
+
+    assert record.detection.img.shape == (128, 128, 3)
+    assert record.detection.iscrowds[0] in (0, 1)
+
+    assert record.img_size.height == 128
+    assert record.img_size.width == 128
 
     assert datamodule.val_dataloader() is None
     assert datamodule.test_dataloader() is None
@@ -192,20 +202,25 @@ def test_image_detector_data_from_fiftyone(tmpdir):
         test_dataset=train_dataset,
         batch_size=1,
         num_workers=0,
+        image_size=128,
     )
 
     data = next(iter(datamodule.val_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+    record = data[0]
+
+    assert record.detection.img.shape == (128, 128, 3)
+    assert record.detection.iscrowds[0] in (0, 1)
+
+    assert record.img_size.height == 128
+    assert record.img_size.width == 128
 
     data = next(iter(datamodule.test_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ['boxes', 'labels', 'image_id', 'area', 'iscrowd']
+    record = data[0]
+
+    assert record.detection.img.shape == (128, 128, 3)
+    assert record.detection.iscrowds[0] in (0, 1)
+
+    assert record.img_size.height == 128
+    assert record.img_size.width == 128
