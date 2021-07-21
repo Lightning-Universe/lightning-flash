@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import random
 import re
 
@@ -95,24 +94,24 @@ def test_training(tmpdir, head):
     trainer.fit(model, dl)
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_jit(tmpdir):
-    path = os.path.join(tmpdir, "test.pt")
-
-    model = ObjectDetector(2)
-    model.eval()
-
-    model = torch.jit.script(model)  # torch.jit.trace doesn't work with torchvision RCNN
-
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
-
-    out = model([torch.rand(3, 32, 32)])
-
-    # torchvision RCNN always returns a (Losses, Detections) tuple in scripting
-    out = out[1]
-
-    assert {"boxes", "labels", "scores"} <= out[0].keys()
+# @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+# def test_jit(tmpdir):
+#     path = os.path.join(tmpdir, "test.pt")
+#
+#     model = ObjectDetector(2)
+#     model.eval()
+#
+#     model = torch.jit.script(model)  # torch.jit.trace doesn't work with torchvision RCNN
+#
+#     torch.jit.save(model, path)
+#     model = torch.jit.load(path)
+#
+#     out = model([torch.rand(3, 32, 32)])
+#
+#     # torchvision RCNN always returns a (Losses, Detections) tuple in scripting
+#     out = out[1]
+#
+#     assert {"boxes", "labels", "scores"} <= out[0].keys()
 
 
 @pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
