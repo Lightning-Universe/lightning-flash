@@ -21,15 +21,15 @@ download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
 datamodule = SpeechRecognitionData.from_json(
     input_fields="file",
     target_fields="text",
-    train_file="data/timit/train.json",
-    test_file="data/timit/test.json",
+    train_file="data/train.json",
+    test_file="data/test.json",
 )
 
 # 2. Build the task
 model = SpeechRecognition(backbone="facebook/wav2vec2-base-960h")
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_test_batches=1)
+trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy='no_freeze')
 
 # 4. Predict on audio files!
