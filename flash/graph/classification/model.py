@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
@@ -21,10 +21,8 @@ from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
+from flash.graph.backbones import GRAPH_BACKBONES
 
 
 class GraphClassifier(ClassificationTask):
@@ -33,7 +31,8 @@ class GraphClassifier(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        backbone_kwargs: Dictionary dependent on the backbone, containing for example in_channels, out_channels, hidden_channels or depth (number of layers).
+        backbone_kwargs: Dictionary dependent on the backbone, containing for example in_channels, out_channels,
+            hidden_channels or depth (number of layers).
         backbone: Name of the backbone to use.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
@@ -42,11 +41,9 @@ class GraphClassifier(ClassificationTask):
         model: GraphNN used, defaults to BaseGraphModel.
         conv_cls: kind of convolution used in model, defaults to GCNConv
     """
-    backbones: FlashRegistry = GRAPH_CLASSIFICATION_BACKBONES
+    backbones: FlashRegistry = GRAPH_BACKBONES
 
     required_extras: str = "graph"
-
-    required_extras = "graph"
 
     def __init__(
         self,
@@ -54,7 +51,7 @@ class GraphClassifier(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCNWithJK",
         backbone_kwargs: Optional[Dict] = {},
-        pretrained: Optional[bool] = False,  #todo: implement True here
+        pretrained: Optional[bool] = False,  # todo: implement True here
         head: Optional[Union[FunctionType, nn.Module]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
