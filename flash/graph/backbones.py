@@ -11,31 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
-import urllib.error
-from functools import partial
-from typing import Tuple, Union
-
-import torch
-from pytorch_lightning.utilities import rank_zero_warn
-from torch import nn
-from torch.hub import load_state_dict_from_url
-from torch.nn import ReLU
-
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
 if _GRAPH_AVAILABLE:
-    import torch_geometric
     import torch_geometric.nn.models as models
 
-GRAPH_CLASSIFICATION_BACKBONES = FlashRegistry("backbones")
+GRAPH_BACKBONES = FlashRegistry("backbones")
 
 MODELS = [
     "GCN", "GraphSAGE", "GAT", "GIN"
 ]
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="GCN", namespace="graph/classification")  #todo: how to add more tasks?
+
+@GRAPH_BACKBONES(name="GCN", namespace="graph")
 def load_GCN(
     in_channels: int,
     hidden_channels: int = 512,
@@ -48,7 +37,7 @@ def load_GCN(
     return models.GCN(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="GraphSAGE", namespace="graph/classification")
+@GRAPH_BACKBONES(name="GraphSAGE", namespace="graph")
 def load_GraphSAGE(
     in_channels: int,
     hidden_channels: int = 512,
@@ -61,7 +50,7 @@ def load_GraphSAGE(
     return models.GraphSAGE(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="GAT", namespace="graph/classification")
+@GRAPH_BACKBONES(name="GAT", namespace="graph")
 def load_GAT(
     in_channels: int,
     hidden_channels: int = 512,
@@ -74,7 +63,7 @@ def load_GAT(
     return models.GAT(in_channels, hidden_channels, num_layers)
 
 
-@GRAPH_CLASSIFICATION_BACKBONES(name="GIN", namespace="graph/classification")
+@GRAPH_BACKBONES(name="GIN", namespace="graph")
 def load_GIN(
     in_channels: int,
     hidden_channels: int = 512,

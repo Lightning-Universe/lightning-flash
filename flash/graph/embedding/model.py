@@ -14,17 +14,14 @@
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
-from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
 from torch.nn import functional as F
 from torchmetrics import Accuracy, Metric
 
-from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.graph.backbones import GRAPH_CLASSIFICATION_BACKBONES
+from flash.graph.backbones import GRAPH_BACKBONES
 from flash.graph.classification.data import GraphClassificationPreprocess
 
 
@@ -47,7 +44,7 @@ class GraphEmbedder(Task):
 
     """
 
-    backbones: FlashRegistry = GRAPH_CLASSIFICATION_BACKBONES
+    backbones: FlashRegistry = GRAPH_BACKBONES
 
     required_extras: str = "graph"
 
