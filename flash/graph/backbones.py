@@ -19,9 +19,7 @@ if _GRAPH_AVAILABLE:
 
 GRAPH_BACKBONES = FlashRegistry("backbones")
 
-MODELS = [
-    "GCN", "GraphSAGE", "GAT", "GIN"
-]
+MODELS = ["GCN", "GraphSAGE", "GAT", "GIN"]
 
 
 @GRAPH_BACKBONES(name="GCN", namespace="graph")
