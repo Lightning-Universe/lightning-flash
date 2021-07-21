@@ -27,6 +27,8 @@ if _ICEVISION_AVAILABLE:
     from icevision.data import Dataset
     from icevision.metrics import COCOMetric
     from icevision.metrics import Metric as IceVisionMetric
+else:
+    COCOMetric = object
 
 
 class SimpleCOCOMetric(COCOMetric):
