@@ -20,6 +20,7 @@ from flash.text.seq2seq.core.data import (
     Seq2SeqBackboneState,
     Seq2SeqCSVDataSource,
     Seq2SeqDataSource,
+    Seq2SeqDictionaryDataSource,
     Seq2SeqFileDataSource,
     Seq2SeqJSONDataSource,
     Seq2SeqPostprocess,
@@ -50,6 +51,9 @@ if _TEXT_AVAILABLE:
             "backbone": "sshleifer/tiny-mbart"
         }),
         (Seq2SeqSentencesDataSource, {
+            "backbone": "sshleifer/tiny-mbart"
+        }),
+        (Seq2SeqDictionaryDataSource, {
             "backbone": "sshleifer/tiny-mbart"
         }),
         (Seq2SeqPostprocess, {}),

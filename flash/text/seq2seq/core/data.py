@@ -16,6 +16,7 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
+from pytorch_lightning.trainer.states import RunningStage
 from torch import Tensor
 
 import flash
@@ -28,7 +29,7 @@ from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
     import datasets
-    from datasets import DatasetDict, load_dataset
+    from datasets import Dataset, DatasetDict, load_dataset
     from transformers import AutoTokenizer, default_data_collator
 
 
@@ -222,6 +223,62 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
+class Seq2SeqDictionaryDataSource(Seq2SeqDataSource):
+
+    def _tokenize_fn(
+        self,
+        example: Dict[str, str],
+        input: Optional[str] = 'input',
+        input_pair: Optional[str] = None,
+        target: Optional[str] = None,
+    ) -> Callable:
+
+        ex_input = example[input]
+        ex_input_pair = example[input_pair] if input_pair else None
+        ex_target = example[target] if target else None
+
+        model_inputs = self.tokenizer(
+            ex_input, ex_input_pair, max_length=self.max_source_length, padding=self.padding, truncation=True
+        )
+
+        # Setup the tokenizer for targets
+        if ex_target is not None:
+            with self.tokenizer.as_target_tokenizer():
+                labels = self.tokenizer(
+                    ex_target, max_length=self.max_target_length, padding=self.padding, truncation=True
+                )
+
+            model_inputs["labels"] = labels["input_ids"]
+
+        return model_inputs
+
+    def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
+        if columns is None:
+            columns = ["input_ids", "attention_mask", "labels"]
+            if self._running_stage.value == RunningStage.PREDICTING:
+                columns.remove("labels")
+
+        stage = self._running_stage.value
+        data, input, input_pair, target = data
+
+        dataset_dict = DatasetDict({stage: Dataset.from_dict(data)})
+        dataset_dict = dataset_dict.map(
+            partial(self._tokenize_fn, input=input, input_pair=input_pair, target=target), batched=True
+        )
+
+        dataset_dict.set_format(columns=columns)
+        return dataset_dict[stage]
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
+
 @dataclass(unsafe_hash=True, frozen=True)
 class Seq2SeqBackboneState(ProcessState):
     """The ``Seq2SeqBackboneState`` stores the backbone in use by the
@@ -269,6 +326,12 @@ class Seq2SeqPreprocess(Preprocess):
                     padding=padding,
                 ),
                 "sentences": Seq2SeqSentencesDataSource(
+                    self.backbone,
+                    max_source_length=max_source_length,
+                    max_target_length=max_target_length,
+                    padding=padding,
+                ),
+                "dict": Seq2SeqDictionaryDataSource(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
