@@ -45,7 +45,7 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
 
 class IceVisionParserDataSource(IceVisionPathsDataSource):
 
-    def __init__(self, parser: Optional[Type[Parser]] = None):
+    def __init__(self, parser: Optional[Type['Parser']] = None):
         super().__init__()
         self.parser = parser
 
