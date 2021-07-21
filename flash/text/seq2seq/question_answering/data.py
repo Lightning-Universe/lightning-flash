@@ -30,7 +30,6 @@ from flash.text.seq2seq.core.data import (
     Seq2SeqDictionaryDataSource,
     Seq2SeqJSONDataSource,
     Seq2SeqPostprocess,
-    Seq2SeqSentencesDataSource,
 )
 
 if _TEXT_AVAILABLE:
@@ -80,6 +79,12 @@ class SQuADDataSource(Seq2SeqDictionaryDataSource):
         return dataset_dict[stage]
 
 
+class QuestionAnsweringDictionaryDataSource(Seq2SeqDictionaryDataSource):
+
+    def load_data(self, data: str, dataset: Optional[Any] = None) -> 'datasets.Dataset':
+        return super().load_data((data, "question", "context", None))
+
+
 class QuestionAnsweringPreprocess(Preprocess):
 
     @requires_extras("text")
@@ -117,13 +122,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     max_target_length=max_target_length,
                     padding=padding,
                 ),
-                "sentences": Seq2SeqSentencesDataSource(
-                    self.backbone,
-                    max_source_length=max_source_length,
-                    max_target_length=max_target_length,
-                    padding=padding,
-                ),
-                "dict": Seq2SeqDictionaryDataSource(
+                "dict": QuestionAnsweringDictionaryDataSource(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -136,7 +135,6 @@ class QuestionAnsweringPreprocess(Preprocess):
                     padding=padding,
                 )
             },
-            # TODO: Change default here to Dictionary
             default_data_source="dict",
             deserializer=TextDeserializer(backbone, max_source_length)
         )
@@ -182,16 +180,13 @@ class QuestionAnsweringData(Seq2SeqData):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data
-        folders and corresponding target folders.
+        """Creates a :class:`~flash.text.seq2seq.question_answering.data.QuestionAnsweringData` object from the given
+        data JSON files in the SQuAD2.0 format.
 
         Args:
-            train_folder: The folder containing the train data.
-            train_ann_file: The COCO format annotation file.
-            val_folder: The folder containing the validation data.
-            val_ann_file: The COCO format annotation file.
-            test_folder: The folder containing the test data.
-            test_ann_file: The COCO format annotation file.
+            train_file: The JSON file containing the training data.
+            val_file: The JSON file containing the validation data.
+            test_file: The JSON file containing the testing data.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -214,9 +209,8 @@ class QuestionAnsweringData(Seq2SeqData):
 
         Examples::
 
-            data_module = SemanticSegmentationData.from_coco(
-                train_folder="train_folder",
-                train_ann_file="annotations.json",
+            data_module = QuestionAnsweringData.from_squad_v2(
+                train_file="train.json",
             )
         """
         return cls.from_data_source(
