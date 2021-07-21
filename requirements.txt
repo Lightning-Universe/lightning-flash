@@ -7,3 +7,4 @@ numpy
 pandas<1.3.0
 packaging
 tqdm
+jsonargparse[signatures]>=3.17.0
