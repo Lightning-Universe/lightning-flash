@@ -61,7 +61,7 @@ class KeypointDetector(IceVisionTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "keypoint_rcnn",
         pretrained: bool = True,
-        metrics: Optional[IceVisionMetric] = None,
+        metrics: Optional['IceVisionMetric'] = None,
         optimizer: Type[Optimizer] = torch.optim.Adam,
         learning_rate: float = 5e-4,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,

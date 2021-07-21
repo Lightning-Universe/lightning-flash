@@ -66,7 +66,7 @@ class IceVisionTask(Task):
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Optional[IceVisionMetric] = None,
+        metrics: Optional['IceVisionMetric'] = None,
         learning_rate: float = 5e-4,
         deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
         preprocess: Optional[Preprocess] = None,
