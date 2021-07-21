@@ -75,7 +75,7 @@ class FlashRegistry:
         metadata: Optional[Dict[str, Any]] = None
     ):
         if not callable(fn):
-            raise MisconfigurationException(f"You can only register a function, found: {fn}")
+            raise MisconfigurationException(f"You can only register a callable, found: {fn}")
 
         name = name or fn.__name__
 

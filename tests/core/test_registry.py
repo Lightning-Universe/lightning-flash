@@ -27,8 +27,8 @@ def test_registry_raises():
     def my_model(nc_input=5, nc_output=6):
         return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
-    with pytest.raises(MisconfigurationException, match="You can only register a function, found: Linear"):
-        backbones(nn.Linear(1, 1), name="foo")
+    with pytest.raises(MisconfigurationException, match="You can only register a callable, found: 3"):
+        backbones(3, name="foo")
 
     backbones(my_model, name="foo", override=True)
 
