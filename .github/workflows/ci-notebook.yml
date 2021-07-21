@@ -39,6 +39,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -U pip wheel
+        pip install -e .
         pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install --requirement requirements/notebooks.txt --quiet --upgrade-strategy only-if-needed
 
@@ -57,6 +58,8 @@ jobs:
         key: flash-datasets_predict
 
     - name: Run Notebooks
+      env:
+          FIFTYONE_DO_NOT_TRACK: true
       run: |
         # jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
         jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb

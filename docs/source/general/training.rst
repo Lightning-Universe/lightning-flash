@@ -5,29 +5,12 @@
 Training from scratch
 *********************
 
-Some Flash tasks have been pretrained on large data sets. To accelerate your training, calling the :func:`~flash.core.trainer.Trainer.finetune` method using a pretrained backbone will fine-tune the backbone to generate a model customized to your data set and desired task. If you want to train the task from scratch instead, pass `pretrained=False` parameter when creating your task. Then, use the :func:`~flash.core.trainer.Trainer.fit` method to train your model.
+Some Flash tasks have been pretrained on large data sets.
+To accelerate your training, calling the :func:`~flash.core.trainer.Trainer.finetune` method using a pretrained backbone will fine-tune the backbone to generate a model customized to your data set and desired task.
 
+From the :ref:`quick_start` guide.
 
-.. code-block:: python
-
-    import flash
-    from flash.data.utils import download_data
-    from flash.vision import ImageClassificationData, ImageClassifier
-
-    # 1. download and organize the data
-    download_data("https://download.pytorch.org/tutorial/hymenoptera_data.zip", 'data/')
-
-    data = ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/",
-        valid_folder="data/hymenoptera_data/val/"
-    )
-
-    # 2. build the task, and turn off pre-training
-    task = ImageClassifier(num_classes=2, pretrained=False)
-
-    # 3. train!
-    trainer = flash.Trainer()
-    trainer.fit(model, data)
+.. include:: ../common/training_example.rst
 
 
 Training options
@@ -75,12 +58,4 @@ Flash tasks supports many advanced training functionalities out-of-the-box, such
     # Train on TPUs
     flash.Trainer(tpu_cores=8)
 
-You can add to the flash Trainer any argument from the Lightning trainer! Learn more about the Lightning Trainer `here <https://pytorch-lightning.readthedocs.io/en/stable/trainer.html>`_.
-
-
-Trainer API
------------
-
-.. autoclass:: flash.core.trainer.Trainer
-    :members:
-    :exclude-members: training_step, validation_step, test_step, configure_optimizers, forward
+You can add to the flash Trainer any argument from the Lightning trainer! Learn more about the Lightning Trainer `here <https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_.

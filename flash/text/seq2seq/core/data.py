@@ -11,23 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import datasets
 import torch
-from datasets import DatasetDict, load_dataset
 from torch import Tensor
-from transformers import AutoTokenizer, default_data_collator
 
-from flash.data.data_module import DataModule
-from flash.data.data_source import DataSource, DefaultDataSources
-from flash.data.process import Preprocess
+import flash
+from flash.core.data.data_module import DataModule
+from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.properties import ProcessState
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
+from flash.text.classification.data import TextDeserializer
+
+if _TEXT_AVAILABLE:
+    import datasets
+    from datasets import DatasetDict, load_dataset
+    from transformers import AutoTokenizer, default_data_collator
 
 
 class Seq2SeqDataSource(DataSource):
 
+    @requires_extras("text")
     def __init__(
         self,
         backbone: str,
@@ -37,7 +44,8 @@ class Seq2SeqDataSource(DataSource):
     ):
         super().__init__()
 
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+        self.backbone = backbone
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
         self.padding = padding
@@ -63,6 +71,15 @@ class Seq2SeqDataSource(DataSource):
             padding=self.padding,
         )
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class Seq2SeqFileDataSource(Seq2SeqDataSource):
 
@@ -78,27 +95,38 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
 
         self.filetype = filetype
 
-    def load_data(
-        self,
-        data: Any,
-        use_full: bool = False,
-        columns: List[str] = ["input_ids", "attention_mask", "labels"]
-    ) -> 'datasets.Dataset':
-        file, input, target = data
+    def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
+        if columns is None:
+            columns = ["input_ids", "attention_mask", "labels"]
+        if self.filetype == 'json':
+            file, input, target, field = data
+        else:
+            file, input, target = data
         data_files = {}
         stage = self._running_stage.value
         data_files[stage] = str(file)
 
         # FLASH_TESTING is set in the CI to run faster.
-        if use_full and os.getenv("FLASH_TESTING", "0") == "0":
-            dataset_dict = load_dataset(self.filetype, data_files=data_files)
-        else:
-            # used for debugging. Avoid processing the entire dataset   # noqa E265
+        if flash._IS_TESTING:
             try:
-                dataset_dict = DatasetDict({
-                    stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-                })
-            except AssertionError:
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'],
+                                            field=field)[0]
+                    })
+                else:
+                    dataset_dict = DatasetDict({
+                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
+                    })
+            except Exception:
+                if self.filetype == 'json' and field is not None:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+                else:
+                    dataset_dict = load_dataset(self.filetype, data_files=data_files)
+        else:
+            if self.filetype == 'json' and field is not None:
+                dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
+            else:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
 
         dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input, target=target), batched=True)
@@ -106,7 +134,16 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
-        return self.load_data(data, use_full=False, columns=["input_ids", "attention_mask"])
+        return self.load_data(data, columns=["input_ids", "attention_mask"])
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
@@ -126,6 +163,15 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
             padding=padding,
         )
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
 
@@ -144,6 +190,15 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
             padding=padding,
         )
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
 
 class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
 
@@ -157,9 +212,28 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
             data = [data]
         return [self._tokenize_fn(s) for s in data]
 
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class Seq2SeqBackboneState(ProcessState):
+    """The ``Seq2SeqBackboneState`` stores the backbone in use by the
+    :class:`~flash.text.seq2seq.core.data.Seq2SeqPreprocess`
+    """
+
+    backbone: str
+
 
 class Seq2SeqPreprocess(Preprocess):
 
+    @requires_extras("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -202,7 +276,10 @@ class Seq2SeqPreprocess(Preprocess):
                 ),
             },
             default_data_source="sentences",
+            deserializer=TextDeserializer(backbone, max_source_length)
         )
+
+        self.set_state(Seq2SeqBackboneState(self.backbone))
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
@@ -222,7 +299,45 @@ class Seq2SeqPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
+class Seq2SeqPostprocess(Postprocess):
+
+    @requires_extras("text")
+    def __init__(self):
+        super().__init__()
+
+        self._backbone = None
+        self._tokenizer = None
+
+    @property
+    def backbone(self):
+        backbone_state = self.get_state(Seq2SeqBackboneState)
+        if backbone_state is not None:
+            return backbone_state.backbone
+
+    @property
+    def tokenizer(self):
+        if self.backbone is not None and self.backbone != self._backbone:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+            self._backbone = self.backbone
+        return self._tokenizer
+
+    def uncollate(self, generated_tokens: Any) -> Any:
+        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+        pred_str = [str.strip(s) for s in pred_str]
+        return pred_str
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("_tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+
+
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
     preprocess_cls = Seq2SeqPreprocess
+    postprocess_cls = Seq2SeqPostprocess

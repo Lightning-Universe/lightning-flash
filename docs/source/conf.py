@@ -20,11 +20,20 @@ _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, '..', '..')
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
-SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
+try:
+    from flash import __about__ as about
 
-spec = spec_from_file_location("flash/__about__.py", os.path.join(_PATH_ROOT, "flash", "__about__.py"))
-about = module_from_spec(spec)
-spec.loader.exec_module(about)
+except ModuleNotFoundError:
+
+    def _load_py_module(fname, pkg="flash"):
+        spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
+        py = module_from_spec(spec)
+        spec.loader.exec_module(py)
+        return py
+
+    about = _load_py_module("__about__.py")
+
+SPHINX_MOCK_REQUIREMENTS = int(os.environ.get('SPHINX_MOCK_REQUIREMENTS', True))
 
 html_favicon = '_static/images/icon.svg'
 
@@ -43,7 +52,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    # 'sphinx.ext.todo',
+    'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
@@ -58,6 +67,12 @@ extensions = [
     'sphinx_togglebutton',
 ]
 
+# autodoc: Default to members and undoc-members
+autodoc_default_options = {"members": True}
+
+# autodoc: Don't inherit docstrings (e.g. for nn.Module.forward)
+autodoc_inherit_docstrings = False
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -71,7 +86,7 @@ exclude_patterns = []
 #
 source_suffix = [".rst", ".md"]
 
-needs_sphinx = '3.4'
+needs_sphinx = "4.0"
 
 # -- Options for intersphinx extension ---------------------------------------
 
@@ -79,8 +94,11 @@ needs_sphinx = '3.4'
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "torch": ("https://pytorch.org/docs/stable/", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
     "PIL": ("https://pillow.readthedocs.io/en/stable/", None),
+    "pytorchvideo": ("https://pytorchvideo.readthedocs.io/en/latest/", None),
+    "pytorch_lightning": ("https://pytorch-lightning.readthedocs.io/en/stable/", None),
+    "fiftyone": ("https://voxel51.com/docs/fiftyone/", "fiftyone_objects.inv"),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -115,6 +133,7 @@ def setup(app):
     # this is for hiding doctest decoration,
     # see: http://z4r.github.io/python/2011/12/02/hides-the-prompts-and-output/
     app.add_js_file('copybutton.js')
+    app.add_css_file('main.css')
 
 
 # Ignoring Third-party packages
@@ -141,6 +160,7 @@ PACKAGE_MAPPING = {
     'rouge-score': 'rouge_score',
     'lightning-bolts': 'pl_bolts',
     'pytorch-tabnet': 'pytorch_tabnet',
+    'pyDeprecate': 'deprecate',
 }
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:

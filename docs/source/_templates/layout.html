@@ -1,0 +1,10 @@
+{% extends "!layout.html" %}
+<link rel="canonical" href="{{ theme_canonical_url }}{{ pagename }}.html" />
+
+{% block footer %}
+{{ super() }}
+<script script type="text/javascript">
+  var collapsedSections = ['Guides', 'Image and Video', 'Audio', 'Tabular', 'Text', 'Point Cloud', 'Graph', 'Integrations', 'API Reference', 'Contributing a Task'];
+</script>
+
+{% endblock %}

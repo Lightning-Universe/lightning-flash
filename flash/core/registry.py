@@ -22,10 +22,7 @@ _REGISTERED_FUNCTION = Dict[str, Any]
 
 
 class FlashRegistry:
-    """
-    This class is used to register function or ``functools.partial`` class to a registry.
-
-    """
+    """This class is used to register function or :class:`functools.partial` class to a registry."""
 
     def __init__(self, name: str, verbose: bool = False) -> None:
         self.name = name
@@ -59,7 +56,7 @@ class FlashRegistry:
         """
         matches = [e for e in self.functions if key == e["name"]]
         if not matches:
-            raise KeyError(f"Key: {key} is not in {repr(self)}")
+            raise KeyError(f"Key: {key} is not in {type(self).__name__}")
 
         if metadata:
             matches = [m for m in matches if metadata.items() <= m["metadata"].items()]
@@ -102,10 +99,7 @@ class FlashRegistry:
 
     def _find_matching_index(self, item: _REGISTERED_FUNCTION) -> Optional[int]:
         for idx, fn in enumerate(self.functions):
-            if (
-                fn["fn"] == item["fn"] and fn["name"] == item["name"]
-                and item["metadata"].items() <= fn["metadata"].items()
-            ):
+            if all(fn[k] == item[k] for k in ("fn", "name", "metadata")):
                 return idx
 
     def __call__(

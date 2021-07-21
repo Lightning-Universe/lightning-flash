@@ -15,7 +15,7 @@ jobs:
       with:
         # git is required to clone the docs theme
         # before custom requirement are resolved https://github.com/ammaraskar/sphinx-action/issues/16
-        pre-build-command: "apt-get update -y && apt-get install -y gcc git pandoc && pip install -e . && pip install -r requirements/docs.txt"
+        pre-build-command: "apt-get update -y && apt-get install -y gcc git pandoc && pip install . && pip install -r ./requirements/docs.txt"
         docs-folder: "docs/"
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
     - uses: actions/upload-artifact@v2
@@ -47,7 +47,8 @@ jobs:
       run: |
         python --version
         pip --version
-        pip install --requirement requirements/docs.txt
+        pip install . --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install --requirement ./requirements/docs.txt
         # install Texlive, see https://linuxconfig.org/how-to-install-latex-on-ubuntu-20-04-focal-fossa-linux
         sudo apt-get update && sudo apt-get install -y texlive-latex-extra dvipng texlive-pictures
         pip list
@@ -89,18 +90,28 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --requirement requirements.txt --find-links https://download.pytorch.org/whl/cpu/torch_stable.html --quiet
-          pip install --requirement requirements/docs.txt --upgrade-strategy only-if-needed
+          pip install '.[all]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+          pip install '.[test]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+          pip install --requirement ./requirements/docs.txt
           python --version
           pip --version
           pip list
         shell: bash
 
+      - name: Cache datasets
+        uses: actions/cache@v2
+        with:
+          path: |
+            docs/data
+            data
+          key: flash-datasets-docs
+
       - name: Test Documentation
         env:
           SPHINX_MOCK_REQUIREMENTS: 0
+          FIFTYONE_DO_NOT_TRACK: true
         run: |
           # First run the same pipeline as Read-The-Docs
           apt-get update && sudo apt-get install -y cmake
           cd docs
-          make doctest
+          FLASH_TESTING=1 make doctest

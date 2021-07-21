@@ -19,7 +19,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.finetuning import NoFreeze
-from flash.vision.classification import ImageClassifier
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image.classification import ImageClassifier
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -31,6 +32,7 @@ class DummyDataset(torch.utils.data.Dataset):
         return 100
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
     "strategy", ['no_freeze', 'freeze', 'freeze_unfreeze', 'unfreeze_milestones', None, 'cls', 'chocolat']
 )

@@ -11,32 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
+from typing import Callable, Dict, Optional, Union
 
-from transformers import AutoTokenizer
-
-from flash.data.process import Postprocess
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2SeqPreprocess
 
 
-class SummarizationPostprocess(Postprocess):
+class SummarizationPreprocess(Seq2SeqPreprocess):
 
     def __init__(
         self,
-        backbone: str = "sshleifer/tiny-mbart",
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        backbone: str = "sshleifer/distilbart-xsum-1-1",
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = 'max_length'
     ):
-        super().__init__()
-
-        # TODO: Should share the backbone or tokenizer over state
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-
-    def uncollate(self, generated_tokens: Any) -> Any:
-        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-        pred_str = [str.strip(s) for s in pred_str]
-        return pred_str
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            backbone=backbone,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+        )
 
 
 class SummarizationData(Seq2SeqData):
 
-    preprocess_cls = Seq2SeqPreprocess
-    postprocess_cls = SummarizationPostprocess
+    preprocess_cls = SummarizationPreprocess
+    postprocess_cls = Seq2SeqPostprocess

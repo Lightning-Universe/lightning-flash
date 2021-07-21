@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+import math
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
-from PIL import Image
+from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
@@ -29,11 +29,23 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.classification import ClassificationTask
-from flash.data.process import DefaultPreprocess, Postprocess
-from flash.tabular import TabularClassifier
-from flash.text import SummarizationTask, TextClassifier
-from flash.utils.imports import _TRANSFORMERS_AVAILABLE
-from flash.vision import ImageClassificationData, ImageClassifier
+from flash.core.data.process import DefaultPreprocess, Postprocess
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
+from flash.image import ImageClassificationData, ImageClassifier
+from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
+
+if _TABULAR_AVAILABLE:
+    from flash.tabular import TabularClassifier
+else:
+    TabularClassifier = None
+
+if _PIL_AVAILABLE:
+    from PIL import Image
+else:
+
+    class Image:
+        Image = None
+
 
 # ======== Mock functions ========
 
@@ -58,6 +70,60 @@ class DummyPostprocess(Postprocess):
     pass
 
 
+class FixedDataset(torch.utils.data.Dataset):
+
+    def __init__(self, targets):
+        super().__init__()
+
+        self.targets = targets
+
+    def __getitem__(self, index: int) -> Tuple[Tensor, Number]:
+        return torch.rand(1), self.targets[index]
+
+    def __len__(self) -> int:
+        return len(self.targets)
+
+
+class OnesModel(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        self.layer = nn.Linear(1, 2)
+        self.register_buffer('zeros', torch.zeros(2))
+        self.register_buffer('zero_one', torch.tensor([0.0, 1.0]))
+
+    def forward(self, x):
+        x = self.layer(x)
+        return x * self.zeros + self.zero_one
+
+
+class Parent(ClassificationTask):
+
+    def __init__(self, child):
+        super().__init__()
+
+        self.child = child
+
+    def training_step(self, batch, batch_idx):
+        return self.child.training_step(batch, batch_idx)
+
+    def validation_step(self, batch, batch_idx):
+        return self.child.validation_step(batch, batch_idx)
+
+    def test_step(self, batch, batch_idx):
+        return self.child.test_step(batch, batch_idx)
+
+    def forward(self, x):
+        return self.child(x)
+
+
+class GrandParent(Parent):
+
+    def __init__(self, child):
+        super().__init__(Parent(child))
+
+
 # ================================
 
 
@@ -70,6 +136,21 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     result = trainer.fit(task, train_dl, val_dl)
     result = trainer.test(task, val_dl)
+    assert "test_nll_loss" in result[0]
+
+
+@pytest.mark.parametrize("task", [Parent, GrandParent])
+def test_nested_tasks(tmpdir, task):
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
+    train_dl = torch.utils.data.DataLoader(DummyDataset())
+    val_dl = torch.utils.data.DataLoader(DummyDataset())
+    child_task = ClassificationTask(model, loss_fn=F.nll_loss)
+
+    parent_task = task(child_task)
+
+    trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
+    trainer.fit(parent_task, train_dl, val_dl)
+    result = trainer.test(parent_task, val_dl)
     assert "test_nll_loss" in result[0]
 
 
@@ -89,7 +170,8 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@mock.patch("flash._IS_TESTING", True)
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -147,16 +229,24 @@ def test_task_datapipeline_save(tmpdir):
     assert task.postprocess.test
 
 
-@pytest.mark.parametrize(
-    ["cls", "filename"],
-    [
-        (ImageClassifier, "image_classification_model.pt"),
-        (TabularClassifier, "tabular_classification_model.pt"),
-        (TextClassifier, "text_classification_model.pt"),
-        # (SummarizationTask, "summarization_model_xsum.pt"), # (tchaton) bug with some tokenizers version.
-        # (TranslationTask, "translation_model_en_ro.pt"), todo: reduce model size or create CI friendly file size
-    ]
-)
+@pytest.mark.parametrize(["cls", "filename"], [
+    pytest.param(
+        ImageClassifier,
+        "image_classification_model.pt",
+        marks=pytest.mark.skipif(
+            not _IMAGE_TESTING,
+            reason="image packages aren't installed",
+        )
+    ),
+    pytest.param(
+        TabularClassifier,
+        "tabular_classification_model.pt",
+        marks=pytest.mark.skipif(
+            not _TABULAR_TESTING,
+            reason="tabular packages aren't installed",
+        )
+    ),
+])
 def test_model_download(tmpdir, cls, filename):
     url = "https://flash-weights.s3.amazonaws.com/"
     with tmpdir.as_cwd():
@@ -164,6 +254,7 @@ def test_model_download(tmpdir, cls, filename):
         assert isinstance(task, cls)
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_available_backbones():
     backbones = ImageClassifier.available_backbones()
     assert "resnet152" in backbones
@@ -204,14 +295,10 @@ def test_optimization(tmpdir):
     assert isinstance(optimizer[0], torch.optim.Adadelta)
     assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
 
-    if _TRANSFORMERS_AVAILABLE:
+    if _TEXT_AVAILABLE:
         from transformers.optimization import get_linear_schedule_with_warmup
 
-        assert task.available_schedulers() == [
-            'constant_schedule', 'constant_schedule_with_warmup', 'cosine_schedule_with_warmup',
-            'cosine_with_hard_restarts_schedule_with_warmup', 'linear_schedule_with_warmup',
-            'polynomial_decay_schedule_with_warmup'
-        ]
+        assert isinstance(task.available_schedulers(), list)
 
         optim = torch.optim.Adadelta(model.parameters())
         with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
@@ -233,3 +320,19 @@ def test_optimization(tmpdir):
         assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
         expected = get_linear_schedule_with_warmup.__name__
         assert scheduler[0].lr_lambdas[0].__qualname__.split('.')[0] == expected
+
+
+def test_classification_task_metrics():
+    train_dataset = FixedDataset([0, 1])
+    val_dataset = FixedDataset([1, 1])
+
+    model = OnesModel()
+
+    class CheckAccuracy(Callback):
+
+        def on_train_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+            assert math.isclose(trainer.callback_metrics['train_accuracy_epoch'], 0.5)
+
+    task = ClassificationTask(model)
+    trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy())
+    trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))

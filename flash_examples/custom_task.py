@@ -1,15 +1,33 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
 from pytorch_lightning import seed_everything
-from sklearn import datasets
 from torch import nn, Tensor
 
 import flash
-from flash.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.data.process import Preprocess
-from flash.data.transforms import ApplyToKeys
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.process import Preprocess
+from flash.core.data.transforms import ApplyToKeys
+from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+
+if _SKLEARN_AVAILABLE:
+    from sklearn import datasets
+else:
+    raise ModuleNotFoundError("Please pip install scikit-learn")
 
 seed_everything(42)
 
@@ -73,7 +91,8 @@ class NumpyDataSource(DataSource[Tuple[ND, ND]]):
             dataset.num_inputs = data[0].shape[1]
         return [{DefaultDataKeys.INPUT: x, DefaultDataKeys.TARGET: y} for x, y in zip(*data)]
 
-    def predict_load_data(self, data: ND) -> List[Dict[str, Any]]:
+    @staticmethod
+    def predict_load_data(data: ND) -> List[Dict[str, Any]]:
         return [{DefaultDataKeys.INPUT: x} for x in data]
 
 
@@ -121,20 +140,7 @@ class NumpyPreprocess(Preprocess):
             ),
         }
 
-    @property
-    def default_train_transforms(self) -> Optional[Dict[str, Callable]]:
-        return self.to_tensor
-
-    @property
-    def default_val_transforms(self) -> Optional[Dict[str, Callable]]:
-        return self.to_tensor
-
-    @property
-    def default_test_transforms(self) -> Optional[Dict[str, Callable]]:
-        return self.to_tensor
-
-    @property
-    def default_predict_transforms(self) -> Optional[Dict[str, Callable]]:
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
         return self.to_tensor
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -154,7 +160,7 @@ x, y = datasets.load_diabetes(return_X_y=True)
 datamodule = NumpyDataModule.from_numpy(x, y)
 model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
 
-trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20)
+trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
 trainer.fit(model, datamodule=datamodule)
 
 predict_data = np.array([

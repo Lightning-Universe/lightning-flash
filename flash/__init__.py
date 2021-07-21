@@ -15,16 +15,33 @@
 import os
 
 from flash.__about__ import *  # noqa: F401 F403
+from flash.core.utilities.imports import _TORCH_AVAILABLE
 
-_PACKAGE_ROOT = os.path.dirname(__file__)
-PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
+if _TORCH_AVAILABLE:
 
-from flash.core.model import Task  # noqa: E402
-from flash.core.trainer import Trainer  # noqa: E402
-from flash.data.data_module import DataModule  # noqa: E402
+    from flash.core.data.callback import FlashCallback
+    from flash.core.data.data_module import DataModule  # noqa: E402
+    from flash.core.data.data_source import DataSource
+    from flash.core.data.process import Postprocess, Preprocess, Serializer
+    from flash.core.model import Task  # noqa: E402
+    from flash.core.trainer import Trainer  # noqa: E402
 
-__all__ = [
-    "Task",
-    "Trainer",
-    "DataModule",
-]
+    _PACKAGE_ROOT = os.path.dirname(__file__)
+    ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
+    PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
+    _IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
+
+    if _IS_TESTING:
+        from pytorch_lightning import seed_everything
+        seed_everything(42)
+
+    __all__ = [
+        "DataSource",
+        "DataModule",
+        "FlashCallback",
+        "Preprocess",
+        "Postprocess",
+        "Serializer",
+        "Task",
+        "Trainer",
+    ]

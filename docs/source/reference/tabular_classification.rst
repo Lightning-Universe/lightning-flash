@@ -5,21 +5,20 @@ Tabular Classification
 ######################
 
 ********
-The task
+The Task
 ********
 
-Tabular classification is the task of assigning a class to samples of structured or relational data. The Flash Tabular Classification task can be used for multi-class classification, or classification of samples in more than two classes. In the following example, the Tabular data is structured into rows and columns, where columns represent properties or features. The task will learn to predict a single target column.
+Tabular classification is the task of assigning a class to samples of structured or relational data.
+The :class:`~flash.tabular.classification.model.TabularClassifier` task can be used for classification of samples in more than two classes (multi-class classification).
 
------
+------
 
-**********
-Finetuning
-**********
+*******
+Example
+*******
 
-Say we want to build a model to predict if a passenger survived on the
-Titanic. We can organize our data in ``.csv`` files
-(exportable from Excel, but you can find the kaggle dataset `here <https://www.kaggle.com/c/titanic-dataset/data>`_):
-
+Let's look at training a model to predict if passenger survival on the Titanic using `the classic Kaggle data set <https://www.kaggle.com/c/titanic-dataset/data>`_.
+The data is provided in CSV files that look like this:
 
 .. code-block::
 
@@ -30,139 +29,39 @@ Titanic. We can organize our data in ``.csv`` files
     6,0,3,"Moran, Mr. James",male,,0,0,330877,8.4583,,Q
     ...
 
-We can use the Flash Tabular classification task to predict the probability a passenger survived (1 means survived, 0 otherwise), using the feature columns.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.classification.data.TabularData` from our CSV files using the :func:`~flash.tabular.classification.data.TabularData.from_csv` method.
+From :meth:`the API reference <flash.tabular.classification.data.TabularData.from_csv>`, we need to provide:
 
-We can create :class:`~flash.tabular.TabularData` from csv files using the :func:`~flash.tabular.TabularData.from_csv` method. We will pass in:
+* **cat_cols**- A list of the names of columns that contain categorical data (strings or integers).
+* **num_cols**- A list of the names of columns that contain numerical continuous data (floats).
+* **target**- The name of the column we want to predict.
+* **train_csv**- A CSV file containing the training data converted to a Pandas DataFrame
 
-* **train_csv**- csv file containing the training data converted to a Pandas DataFrame
-* **cat_cols**- a list of the names of columns that contain categorical data (strings or integers)
-* **num_cols**- a list of the names of columns that contain numerical continuous data (floats)
-* **target**- the name of the column we want to predict
+Next, we create the :class:`~flash.tabular.classification.model.TabularClassifier` and finetune on the Titanic data.
+We then use the trained :class:`~flash.tabular.classification.model.TabularClassifier` for inference.
+Finally, we save the model.
+Here's the full example:
 
-
-Next, we create the :class:`~flash.tabular.TabularClassifier` task, using the Data module we created.
-
-.. code-block:: python
-
-    import flash
-    from flash.data.utils import download_data
-    from flash.tabular import TabularClassifier, TabularData
-    from torchmetrics.classification import Accuracy, Precision, Recall
-
-    # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
-
-    # 2. Load the data
-    datamodule = TabularData.from_csv(
-        "./data/titanic/titanic.csv",
-        test_csv="./data/titanic/test.csv",
-        cat_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-        num_cols=["Fare"],
-        target="Survived",
-        val_size=0.25,
-        )
-
-    # 3. Build the model
-    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
-
-    # 4. Create the trainer. Run 10 times on data
-    trainer = flash.Trainer(max_epochs=10)
-
-    # 5. Train the model
-    trainer.fit(model, datamodule=datamodule)
-
-    # 6. Test model
-    trainer.test()
-
-    # 7. Save it!
-    trainer.save_checkpoint("tabular_classification_model.pt")
-
-    # 8. Predict!
-    predictions = model.predict("data/titanic/titanic.csv")
-    print(predictions)
-
------
-
-*********
-Inference
-*********
-
-You can make predcitions on a pretrained model, that has already been trained for the titanic task:
-
-.. code-block:: python
-
-
-    from flash.data.utils import download_data
-    from flash.tabular import TabularClassifier
-
-    # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
-
-    # 2. Load the model from a checkpoint
-    model = TabularClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/tabnet_classification_model.pt"
-    )
-
-    # 3. Generate predictions from a sheet file! Who would survive?
-    predictions = model.predict("data/titanic/titanic.csv")
-    print(predictions)
-
-
-Or you can finetune your own model and use that for prediction:
-
-.. code-block:: python
-
-    import flash
-    from flash.data.utils import download_data
-    from flash.tabular import TabularClassifier, TabularData
-
-    # 1. Load the data
-    datamodule = TabularData.from_csv(
-        "my_data_file.csv",
-        test_csv="./data/titanic/test.csv",
-        cat_cols=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-        num_cols=["Fare"],
-        target="Survived",
-        val_size=0.25,
-    )
-
-    # 3. Build the model
-    model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
-
-    # 4. Create the trainer
-    trainer = flash.Trainer()
-
-    # 5. Train the model
-    trainer.fit(model, datamodule=datamodule)
-
-    # 6. Test model
-    trainer.test()
-
-    predictions = model.predict("data/titanic/titanic.csv")
-    print(predictions)
+.. literalinclude:: ../../../flash_examples/tabular_classification.py
+    :language: python
+    :lines: 14-
 
 ------
 
-*************
-API reference
-*************
+*******
+Serving
+*******
 
-.. _tabular_classifier:
+The :class:`~flash.tabular.classification.model.TabularClassifier` is servable.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
+Here's an example:
 
-TabularClassifier
------------------
+.. literalinclude:: ../../../flash_examples/serve/tabular_classification/inference_server.py
+    :language: python
+    :lines: 14-
 
-.. autoclass:: flash.tabular.TabularClassifier
-    :members:
-    :exclude-members: forward
+You can now perform inference from your client like this:
 
-.. _tabular_data:
-
-TabularData
------------
-
-.. autoclass:: flash.tabular.TabularData
-
-.. automethod:: flash.tabular.TabularData.from_csv
-
-.. automethod:: flash.tabular.TabularData.from_data_frame
+.. literalinclude:: ../../../flash_examples/serve/tabular_classification/client.py
+    :language: python
+    :lines: 14-

@@ -1,5 +1,13 @@
-# install all mandatory dependencies
- -r ../requirements.txt
+-r ../requirements.txt
 
- # extended list of dependencies for development and run lint and tests
- -r ./test.txt
+-r ./test.txt
+
+-r ./docs.txt
+
+-r ./datatype_image.txt
+
+-r ./datatype_tabular.txt
+
+-r ./datatype_text.txt
+
+-r ./datatype_video.txt

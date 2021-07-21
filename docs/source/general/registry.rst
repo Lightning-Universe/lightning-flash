@@ -20,8 +20,11 @@ Currently, Flash uses internally registries only for backbones, but more compone
 1. Imports
 __________
 
-Example::
+.. testcode:: registries
 
+    from functools import partial
+
+    from flash import Task
     from flash.core.registry import FlashRegistry
 
 2. Init a Registry
@@ -29,36 +32,44 @@ __________________
 
 It is good practice to associate one or multiple registry to a Task as follow:
 
-Example::
+.. testcode:: registries
 
-    from flash.vision import ImageClassifier
-    from flash.core.registry import FlashRegistry
-
-    # creating a custom ``ImageClassifier`` with its own registry
-    class MyImageClassifier(ImageClassifier):
+    # creating a custom `Task` with its own registry
+    class MyImageClassifier(Task):
 
         backbones = FlashRegistry("backbones")
+
+        def __init__(
+            self,
+            backbone: str = "resnet18",
+            pretrained: bool = True,
+        ):
+            ...
+
+            self.backbone, self.num_features = self.backbones.get(backbone)(pretrained=pretrained)
+
 
 3. Adding new functions
 _______________________
 
 Your custom functions can be registered within a :class:`~flash.core.registry.FlashRegistry` as a decorator or directly.
 
-Example::
+.. testcode:: registries
 
     # Option 1: Used with partial.
-    def fn(backbone: str):
+    def fn(backbone: str, pretrained: bool = True):
         # Create backbone and backbone output dimension (`num_features`)
+        backbone, num_features = None, None
         return backbone, num_features
 
     # HINT 1: Use `from functools import partial` if you want to store some arguments.
-    MyImageClassifier.backbones(fn=partial(fn, backbone="my_backbone"), name="username/my_backbone")
-
+    MyImageClassifier.backbones(fn=partial(fn, backbone="my_backbone"), name="username/partial_backbone")
 
     # Option 2: Using decorator.
-    @MyImageClassifier.backbones(name="username/my_backbone")
-    def fn():
+    @MyImageClassifier.backbones(name="username/decorated_backbone")
+    def fn(pretrained: bool = True):
         # Create backbone and backbone output dimension (`num_features`)
+        backbone, num_features = None, None
         return backbone, num_features
 
 4. Accessing registered functions
@@ -66,38 +77,30 @@ _________________________________
 
 You can now access your function from your task!
 
-Example::
+.. testcode:: registries
 
     # 3.b Optional: List available backbones
     print(MyImageClassifier.available_backbones())
-    # out: ["username/my_backbone"]
 
     # 4. Build the model
-    model = MyImageClassifier(backbone="username/my_backbone", num_classes=2)
+    model = MyImageClassifier(backbone="username/decorated_backbone")
 
+Here's the output:
 
-5. Pre-registered ones
-______________________
+.. testoutput:: registries
 
-Flash provides already populated registries containing lot of available backbones.
+    ['username/decorated_backbone', 'username/partial_backbone']
+
+5. Pre-registered backbones
+___________________________
+
+Flash provides populated registries containing lots of available backbones.
 
 Example::
 
-    from flash.vision.backbones import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES
+    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES
 
-    print(IMAGE_CLASSIFIER_BACKBONES.available_models())
+    print(IMAGE_CLASSIFIER_BACKBONES.available_keys())
     """ out:
     ['adv_inception_v3', 'cspdarknet53', 'cspdarknet53_iabn', 430+.., 'xception71']
     """
-
-
-**************
-Flash Registry
-**************
-
-
-FlashRegistry
-_____________
-
-.. autoclass:: flash.core.registry.FlashRegistry
-   :members:

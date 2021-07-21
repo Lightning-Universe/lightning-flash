@@ -12,77 +12,106 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import subprocess
-import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
 from unittest import mock
 
 import pytest
 
-root = Path(__file__).parent.parent.parent
-
-
-def call_script(
-    filepath: str,
-    args: Optional[List[str]] = None,
-    timeout: Optional[int] = 60 * 5,
-) -> Tuple[int, str, str]:
-    if args is None:
-        args = []
-    args = [str(a) for a in args]
-    command = [sys.executable, "-m", "coverage", "run", filepath] + args
-    print(" ".join(command))
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        stdout, stderr = p.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        p.kill()
-        stdout, stderr = p.communicate()
-    stdout = stdout.decode("utf-8")
-    stderr = stderr.decode("utf-8")
-    return p.returncode, stdout, stderr
-
-
-def run_test(filepath):
-    code, stdout, stderr = call_script(filepath)
-    print(f"{filepath} STDOUT: {stdout}")
-    print(f"{filepath} STDERR: {stderr}")
-    assert not code
+import flash
+from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+from tests.examples.utils import run_test
+from tests.helpers.utils import (
+    _AUDIO_TESTING,
+    _GRAPH_TESTING,
+    _IMAGE_TESTING,
+    _POINTCLOUD_TESTING,
+    _TABULAR_TESTING,
+    _TEXT_TESTING,
+    _VIDEO_TESTING,
+)
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
-    "folder, file",
+    "file",
     [
-        ("finetuning", "image_classification.py"),
-        ("finetuning", "image_classification_multi_label.py"),
-        # ("finetuning", "object_detection.py"),  # TODO: takes too long.
-        ("finetuning", "semantic_segmentation.py"),
-        # ("finetuning", "summarization.py"),  # TODO: takes too long.
-        ("finetuning", "tabular_classification.py"),
-        # ("finetuning", "video_classification.py"),
-        # ("finetuning", "text_classification.py"),  # TODO: takes too long
-        ("finetuning", "translation.py"),
-        ("predict", "image_classification.py"),
-        ("predict", "image_classification_multi_label.py"),
-        ("predict", "semantic_segmentation.py"),
-        ("predict", "tabular_classification.py"),
-        # ("predict", "text_classification.py"),
-        ("predict", "image_embedder.py"),
-        ("predict", "video_classification.py"),
-        # ("predict", "summarization.py"),  # TODO: takes too long
-        ("predict", "translation.py"),
+        pytest.param(
+            "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+        ),
+        pytest.param(
+            "audio_classification.py",
+            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed")
+        ),
+        pytest.param(
+            "speech_recognition.py",
+            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed")
+        ),
+        pytest.param(
+            "image_classification.py",
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "image_classification_multi_label.py",
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+        ),
+        # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
+        pytest.param(
+            "semantic_segmentation.py",
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "style_transfer.py",
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+        ),
+        pytest.param(
+            "summarization.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+        ),
+        pytest.param(
+            "tabular_classification.py",
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed")
+        ),
+        pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
+        pytest.param(
+            "text_classification.py",
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+        ),
+        # pytest.param(
+        #     "text_classification_multi_label.py",
+        #     marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+        # ),
+        pytest.param(
+            "translation.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+        ),
+        pytest.param(
+            "video_classification.py",
+            marks=pytest.mark.skipif(not _VIDEO_TESTING, reason="video libraries aren't installed")
+        ),
+        pytest.param(
+            "pointcloud_segmentation.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+        ),
+        pytest.param(
+            "pointcloud_detection.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+        ),
+        pytest.param(
+            "graph_classification.py",
+            marks=pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed")
+        ),
     ]
 )
-def test_example(tmpdir, folder, file):
-    run_test(str(root / "flash_examples" / folder / file))
+def test_example(tmpdir, file):
+    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
 
 
-@pytest.mark.skipif(reason="CI bug")
-def test_generic_example(tmpdir):
-    run_test(str(root / "flash_examples" / "generic_task.py"))
-
-
-def test_custom_task(tmpdir):
-    run_test(str(root / "flash_examples" / "custom_task.py"))
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@pytest.mark.parametrize(
+    "file", [
+        pytest.param(
+            "pointcloud_detection.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+        ),
+    ]
+)
+def test_example_2(tmpdir, file):
+    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))

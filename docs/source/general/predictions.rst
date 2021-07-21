@@ -15,8 +15,8 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
 
 .. code-block:: python
 
-	from flash.data.utils import download_data
-	from flash.vision import ImageClassifier
+	from flash.core.data.utils import download_data
+	from flash.image import ImageClassifier
 
 
 	# 1. Download the data set
@@ -36,7 +36,7 @@ Predict on a csv file
 
 .. code-block:: python
 
-	from flash.data.utils import download_data
+	from flash.core.data.utils import download_data
 	from flash.tabular import TabularClassifier
 
 	# 1. Download the data
@@ -55,16 +55,16 @@ Predict on a csv file
 Serializing predictions
 =======================
 
-To change how predictions are serialized you can attach a :class:`~flash.data.process.Serializer` to your
-:class:`~flash.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
+To change how predictions are serialized you can attach a :class:`~flash.core.data.process.Serializer` to your
+:class:`~flash.core.model.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
 reference below).
 
 
 .. code-block:: python
 
 	from flash.core.classification import Probabilities
-	from flash.data.utils import download_data
-	from flash.vision import ImageClassifier
+	from flash.core.data.utils import download_data
+	from flash.image import ImageClassifier
 
 
 	# 1. Download the data set
@@ -80,47 +80,3 @@ reference below).
 	predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
 	print(predictions)
 	# out: [[0.5926494598388672, 0.40735048055648804]]
-
-
-------
-
-
-******************************************
-Classification serializers - API reference
-******************************************
-
-.. _logits:
-
-Logits
----------------
-
-.. autoclass:: flash.core.classification.Logits
-	:members:
-	:exclude-members: serialize
-
-.. _probabilities:
-
-Probabilities
------------------------
-
-.. autoclass:: flash.core.classification.Probabilities
-	:members:
-	:exclude-members: serialize
-
-.. _classes:
-
-Classes
------------------------
-
-.. autoclass:: flash.core.classification.Classes
-	:members:
-	:exclude-members: serialize
-
-.. _labels:
-
-Labels
------------------------
-
-.. autoclass:: flash.core.classification.Labels
-	:members:
-	:exclude-members: serialize

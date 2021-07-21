@@ -13,36 +13,48 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Callable, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from transformers import BertForSequenceClassification
-from transformers.modeling_outputs import SequenceClassifierOutput
+from torchmetrics import Accuracy, F1, Metric
 
-from flash.core.classification import ClassificationTask
-from flash.data.process import Serializer
+from flash.core.classification import ClassificationTask, Labels
+from flash.core.data.process import Serializer
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+
+if _TEXT_AVAILABLE:
+    from transformers import BertForSequenceClassification
+    from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
-    """Task that classifies text.
+    """The ``TextClassifier`` is a :class:`~flash.Task` for classifying text. For more details, see
+    :ref:`text_classification`. The ``TextClassifier`` also supports multi-label classification with
+    ``multi_label=True``. For more details, see :ref:`text_classification_multi_label`.
 
     Args:
         num_classes: Number of classes to classify.
         backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        metrics: Metrics to compute for training and evaluation.
+        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
+            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
+            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
+            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.data.process.Serializer` to use when serializing prediction outputs.
+        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
+
+    required_extras: str = "text"
 
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "prajjwal1/bert-tiny",
+        backbone: str = "prajjwal1/bert-medium",
+        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
@@ -56,31 +68,48 @@ class TextClassifier(ClassificationTask):
 
         super().__init__(
             model=None,
-            loss_fn=None,
+            loss_fn=loss_fn,
             optimizer=optimizer,
-            metrics=metrics,
+            metrics=metrics or (F1(num_classes) if multi_label else Accuracy()),
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            serializer=serializer or Labels(multi_label=multi_label),
         )
         self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
+
+        self.save_hyperparameters()
 
     @property
     def backbone(self):
         # see huggingface's BertForSequenceClassification
         return self.model.bert
 
-    def forward(self, batch_dict):
-        return self.model(**batch_dict)
+    def forward(self, batch: Dict[str, torch.Tensor]):
+        return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
 
-    def step(self, batch, batch_idx) -> dict:
-        output = {}
-        out = self.forward(batch)
-        loss, logits = out[:2]
-        output["loss"] = loss
-        output["y_hat"] = logits
-        if isinstance(logits, SequenceClassifierOutput):
-            logits = logits.logits
-        probs = torch.softmax(logits, 1)
-        output["logs"] = {name: metric(probs, batch["labels"]) for name, metric in self.metrics.items()}
-        return output
+    def to_loss_format(self, x) -> torch.Tensor:
+        if isinstance(x, SequenceClassifierOutput):
+            x = x.logits
+        return super().to_loss_format(x)
+
+    def to_metrics_format(self, x) -> torch.Tensor:
+        if isinstance(x, SequenceClassifierOutput):
+            x = x.logits
+        return super().to_metrics_format(x)
+
+    def step(self, batch, batch_idx, metrics) -> dict:
+        target = batch.pop("labels")
+        batch = (batch, target)
+        return super().step(batch, batch_idx, metrics)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch)
+
+    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        if self.hparams.multi_label:
+            assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
+        else:
+            assert history[-1]["val_accuracy"] > 0.70, history[-1]["val_accuracy"]

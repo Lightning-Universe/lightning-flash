@@ -23,12 +23,14 @@ from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from torch.utils.data import DistributedSampler
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, Metric
 
+import flash
 from flash.core.classification import ClassificationTask, Labels
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.data.process import Serializer
-from flash.utils.imports import _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 
 _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
@@ -78,12 +80,16 @@ class VideoClassifier(ClassificationTask):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation,
-            defaults to :class:`torchmetrics.Accuracy`.
+        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
+            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
+            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
+            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
     """
 
     backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES
+
+    required_extras = "video"
 
     def __init__(
         self,
@@ -93,7 +99,7 @@ class VideoClassifier(ClassificationTask):
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = Accuracy(),
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
         serializer: Optional[Serializer] = None,
@@ -112,7 +118,7 @@ class VideoClassifier(ClassificationTask):
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        backbone_kwargs["pretrained"] = pretrained
+        backbone_kwargs["pretrained"] = True if (flash._IS_TESTING and torch.cuda.is_available()) else pretrained
         backbone_kwargs["head_activation"] = None
 
         if isinstance(backbone, nn.Module):
@@ -140,8 +146,8 @@ class VideoClassifier(ClassificationTask):
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()
 
-    def step(self, batch: Any, batch_idx: int) -> Any:
-        return super().step((batch["video"], batch["label"]), batch_idx)
+    def step(self, batch: Any, batch_idx: int, metrics) -> Any:
+        return super().step((batch["video"], batch["label"]), batch_idx, metrics)
 
     def forward(self, x: Any) -> Any:
         x = self.backbone(x)
@@ -151,7 +157,15 @@ class VideoClassifier(ClassificationTask):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         predictions = self(batch["video"])
-        return predictions
+        batch[DefaultDataKeys.PREDS] = predictions
+        return batch
 
     def configure_finetune_callback(self) -> List[Callback]:
         return [VideoClassifierFinetuning()]
+
+    @staticmethod
+    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
+        """
+        This function is used only for debugging usage with CI
+        """
+        assert history[-1]["val_accuracy"] > 0.70

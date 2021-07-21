@@ -1,0 +1,4 @@
+torchvision
+Pillow>=7.2
+kornia>=0.5.1,<0.5.4
+pytorchvideo==0.1.2

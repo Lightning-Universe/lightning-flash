@@ -1,74 +1,26 @@
 
-.. _semantinc_segmentation:
+.. _semantic_segmentation:
 
-######################
-Semantinc Segmentation
-######################
+#####################
+Semantic Segmentation
+#####################
 
 ********
-The task
+The Task
 ********
-Semantic segmentation, or image segmentation, is the task of performing classification at a pixel-level, meaning each pixel will associated to a given class. The model output shape is ``(batch_size, num_classes, heigh, width)``.
-
+Semantic Segmentation, or image segmentation, is the task of performing classification at a pixel-level, meaning each pixel will associated to a given class.
 See more: https://paperswithcode.com/task/semantic-segmentation
 
-.. raw:: html
-
-   <p>
-     <a href="https://i2.wp.com/syncedreview.com/wp-content/uploads/2019/12/image-9-1.png" >
-       <img src="https://i2.wp.com/syncedreview.com/wp-content/uploads/2019/12/image-9-1.png"/>
-     </a>
-   </p>
-
 ------
 
-*********
-Inference
-*********
+*******
+Example
+*******
 
-A :class:`~flash.vision.SemanticSegmentation` `fcn_resnet50` pre-trained on `CARLA <http://carla.org/>`_ simulator is provided for the inference example.
-
-
-Use the :class:`~flash.vision.SemanticSegmentation` pretrained model for inference on any string sequence using :func:`~flash.vision.SemanticSegmentation.predict`:
-
-.. code-block:: python
-
-    # import our libraries
-    from flash.data.utils import download_data
-    from flash.vision import SemanticSegmentation
-    from flash.vision.segmentation.serialization import SegmentationLabels
-
-    # 1. Download the data
-    download_data(
-        "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
-        "data/"
-    )
-
-    # 2. Load the model from a checkpoint
-    model = SemanticSegmentation.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/semantic_segmentation_model.pt"
-    )
-    model.serializer = SegmentationLabels(visualize=True)
-
-    # 3. Predict what's on a few images and visualize!
-    predictions = model.predict([
-        'data/CameraRGB/F61-1.png',
-        'data/CameraRGB/F62-1.png',
-        'data/CameraRGB/F63-1.png',
-    ])
-
-For more advanced inference options, see :ref:`predictions`.
-
-------
-
-**********
-Finetuning
-**********
-
-you now want to customise your model with new data using the same dataset.
-Once we download the data using :func:`~flash.data.download_data`, all we need is the train data and validation data folders to create the :class:`~flash.vision.SemanticSegmentationData`.
-
-.. note:: the dataset is structured in a way that each sample (an image and its corresponding labels) is stored in separated directories but keeping the same filename.
+Let's look at an example using a data set generated with the `CARLA <http://carla.org/>`_ driving simulator.
+The data was generated as part of the `Kaggle Lyft Udacity Challenge <https://www.kaggle.com/kumaresanmanickavelu/lyft-udacity-challenge>`_.
+The data contains one folder of images and another folder with the corresponding segmentation masks.
+Here's the structure:
 
 .. code-block::
 
@@ -82,70 +34,32 @@ Once we download the data using :func:`~flash.data.download_data`, all we need i
         ├── F61-2.png
             ...
 
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.segmentation.data.SemanticSegmentationData`.
+We select a pre-trained ``mobilenet_v3_large`` backbone with an ``fpn`` head to use for our :class:`~flash.image.segmentation.model.SemanticSegmentation` task and fine-tune on the CARLA data.
+We then use the trained :class:`~flash.image.segmentation.model.SemanticSegmentation` for inference. You can check the available pretrained weights for the backbones like this `SemanticSegmentation.available_pretrained_weights("resnet18")`.
+Finally, we save the model.
+Here's the full example:
 
-Now all we need is three lines of code to build to train our task!
-
-.. code-block:: python
-
-    import flash
-    from flash.data.utils import download_data
-    from flash.vision import SemanticSegmentation, SemanticSegmentationData
-    from flash.vision.segmentation.serialization import SegmentationLabels
-
-    # 1. Download the data
-    download_data(
-        "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
-        "data/"
-    )
-
-    # 2.1 Load the data
-    datamodule = SemanticSegmentationData.from_folders(
-        train_folder="data/CameraRGB",
-        train_target_folder="data/CameraSeg",
-        batch_size=4,
-        val_split=0.3,
-        image_size=(200, 200),  # (600, 800)
-    )
-
-    # 2.2 Visualise the samples
-    labels_map = SegmentationLabels.create_random_labels_map(num_classes=21)
-    datamodule.set_labels_map(labels_map)
-    datamodule.show_train_batch(["load_sample", "post_tensor_transform"])
-
-    # 3. Build the model
-    model = SemanticSegmentation(backbone="torchvision/fcn_resnet50", num_classes=21)
-
-    # 4. Create the trainer.
-    trainer = flash.Trainer(max_epochs=1)
-
-    # 5. Train the model
-    trainer.finetune(model, datamodule=datamodule, strategy='freeze')
-
-    # 7. Save it!
-    trainer.save_checkpoint("semantic_segmentation_model.pt")
+.. literalinclude:: ../../../flash_examples/semantic_segmentation.py
+    :language: python
+    :lines: 14-
 
 ------
 
-*************
-API reference
-*************
+*******
+Serving
+*******
 
-.. _segmentation:
+The :class:`~flash.image.segmentation.model.SemanticSegmentation` task is servable.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
+Here's an example:
 
-SemanticSegmentation
---------------------
+.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/inference_server.py
+    :language: python
+    :lines: 14-
 
-.. autoclass:: flash.vision.SemanticSegmentation
-    :members:
-    :exclude-members: forward
+You can now perform inference from your client like this:
 
-.. _segmentation_data:
-
-SemanticSegmentationData
-------------------------
-
-.. autoclass:: flash.vision.SemanticSegmentationData
-
-.. automethod:: flash.vision.SemanticSegmentationData.from_folders
-
-.. autoclass:: flash.vision.SemanticSegmentationPreprocess
+.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/client.py
+    :language: python
+    :lines: 14-

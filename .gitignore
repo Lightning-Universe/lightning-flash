@@ -75,6 +75,9 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api/
+docs/notebooks/
+docs/source/api/generated/
 
 # PyBuilder
 target/
@@ -133,8 +136,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-docs/notebooks/
-docs/api/
 titanic.csv
 .vscode
 .venv
@@ -143,6 +144,7 @@ data_folder
 *.zip
 flash_notebooks/*.py
 flash_notebooks/data
+/data
 MNIST*
 titanic
 hymenoptera_data
@@ -155,3 +157,7 @@ kinetics
 movie_posters
 CameraRGB
 CameraSeg
+jigsaw_toxic_comments
+flash_examples/serve/tabular_classification/data
+logs/cache/*
+flash_examples/data

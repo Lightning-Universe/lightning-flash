@@ -13,8 +13,8 @@
 # limitations under the License.
 import os
 
-from flash.core import utils as core_utils
-from flash.data.utils import download_data
+from flash.core.data.utils import download_data
+from flash.core.utilities.apply_func import get_callable_dict, get_callable_name
 
 # ======== Mock functions ========
 
@@ -29,29 +29,26 @@ def b():
     return True
 
 
-c = lambda: True  # noqa: E731
-
 # ==============================
 
 
 def test_get_callable_name():
-    assert core_utils.get_callable_name(A()) == "a"
-    assert core_utils.get_callable_name(b) == "b"
-    assert core_utils.get_callable_name(c) == "<lambda>"
+    assert get_callable_name(A()) == "a"
+    assert get_callable_name(b) == "b"
+    assert get_callable_name(lambda: True) == "<lambda>"
 
 
 def test_get_callable_dict():
-    d = core_utils.get_callable_dict(A())
-    assert type(d["a"]) == A
+    d = get_callable_dict(A())
+    assert type(d["a"]) is A
 
-    d = core_utils.get_callable_dict([A(), b])
-    assert type(d["a"]) == A
+    d = get_callable_dict([A(), b])
+    assert type(d["a"]) is A
     assert d["b"] == b
 
-    d = core_utils.get_callable_dict({"one": A(), "two": b, "three": c})
-    assert type(d["one"]) == A
+    d = get_callable_dict({"one": A(), "two": b})
+    assert type(d["one"]) is A
     assert d["two"] == b
-    assert d["three"] == c
 
 
 def test_download_data(tmpdir):

@@ -18,6 +18,7 @@ import pytest
 from pytorch_lightning import Trainer
 
 from flash.text import TextClassificationData, TextClassifier
+from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
@@ -35,6 +36,7 @@ def csv_data(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_classification(tmpdir):
 
     csv_path = csv_data(tmpdir)
