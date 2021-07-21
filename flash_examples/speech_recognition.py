@@ -21,8 +21,8 @@ download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
 datamodule = SpeechRecognitionData.from_json(
     input_fields="file",
     target_fields="text",
-    train_file="data/train.json",
-    test_file="data/test.json",
+    train_file="data/timit/train.json",
+    test_file="data/timit/test.json",
 )
 
 # 2. Build the task
