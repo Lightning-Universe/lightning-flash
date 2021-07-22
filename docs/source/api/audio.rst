@@ -28,7 +28,6 @@ __________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~speech_recognition.model.SpeechRecognition
     ~speech_recognition.data.SpeechRecognitionData
 
     speech_recognition.data.SpeechRecognitionPreprocess
