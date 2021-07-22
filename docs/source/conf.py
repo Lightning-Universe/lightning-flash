@@ -161,6 +161,9 @@ PACKAGE_MAPPING = {
     'lightning-bolts': 'pl_bolts',
     'pytorch-tabnet': 'pytorch_tabnet',
     'pyDeprecate': 'deprecate',
+    'torch-geometric': 'torch_geometric',
+    'torch-sparse': 'torch_sparse',
+    'torch-scatter': 'torch_scatter'
 }
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:
