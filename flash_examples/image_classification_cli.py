@@ -28,9 +28,6 @@ class ImageClassificationCLI(FlashCLI):
     #         'data.folders.test_folder': 'data/hymenoptera_data/test/',
     #     })
 
-    def parse_arguments(self):
-        self.config = self.parser.parse_args()
-
     def prepare_fit_kwargs(self):
         super().prepare_fit_kwargs()
         # TODO: expose the strategy arguments?

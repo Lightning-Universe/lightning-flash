@@ -53,13 +53,17 @@ class FlashCLI(LightningCLI):
         # self.datasource_fn: Optional[Callable] = None
 
     def add_arguments_to_parser(self, parser) -> None:
-        self.subcommand = ArgumentParser()
-        self.subcommand.add_class_arguments(
-            class_from_function(self.local_datamodule_class.from_folders), fail_untyped=False
+        subcommands = parser.add_subcommands()
+        self.add_from_method("from_folders", subcommands)
+        self.add_from_method("from_csv", subcommands)
+
+    def add_from_method(self, method_name, subcommands):
+        subcommand = ArgumentParser()
+        subcommand.add_class_arguments(
+            class_from_function(getattr(self.local_datamodule_class, method_name)), fail_untyped=False
         )
 
-        subcommands = parser.add_subcommands()
-        subcommands.add_subcommand('from_folders', self.subcommand)
+        subcommands.add_subcommand(method_name, subcommand)
 
     def instantiate_classes(self) -> None:
         """Instantiates the classes using settings from self.config"""
