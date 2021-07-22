@@ -4,10 +4,13 @@ import inspect
 import os
 import warnings
 from argparse import Namespace
+from functools import wraps
 from types import MethodType
 from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Type, Union
 
-from jsonargparse import ActionConfigFile, ArgumentParser, class_from_function, set_config_read_mode
+from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
+from jsonargparse.signatures import ClassFromFunctionBase
+from jsonargparse.typehints import ClassType
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.core.datamodule import LightningDataModule
 from pytorch_lightning.core.lightning import LightningModule
@@ -19,7 +22,34 @@ from pytorch_lightning.utilities.seed import seed_everything
 from pytorch_lightning.utilities.types import LRSchedulerType, LRSchedulerTypeTuple
 from torch.optim import Optimizer
 
+from flash.core.data.data_module import DataModule
+
 set_config_read_mode(fsspec_enabled=True)
+
+
+def class_from_function(func: Callable[..., ClassType]) -> Type[ClassType]:
+    """Creates a dynamic class which if instantiated is equivalent to calling func.
+
+    Args:
+        func: A function that returns an instance of a class. It must have a return type annotation.
+    """
+
+    @wraps(func)
+    def __new__(cls, *args, **kwargs):
+        return func(*args, **kwargs)
+
+    return_type = inspect.signature(func).return_annotation
+    if isinstance(return_type, str):
+        if return_type == 'DataModule':
+            return_type = DataModule
+
+    class ClassFromFunction(return_type, ClassFromFunctionBase):  # type: ignore
+        pass
+
+    ClassFromFunction.__new__ = __new__  # type: ignore
+    ClassFromFunction.__doc__ = func.__doc__
+    ClassFromFunction.__name__ = func.__name__
+    return ClassFromFunction
 
 
 class LightningArgumentParser(ArgumentParser):

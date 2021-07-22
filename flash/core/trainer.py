@@ -21,7 +21,6 @@ import torch
 from pytorch_lightning import LightningDataModule, LightningModule
 from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -223,7 +222,3 @@ class Trainer(PlTrainer):
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
-
-
-class FlashTrainerFn(TrainerFn):
-    finetune = 'finetune'
