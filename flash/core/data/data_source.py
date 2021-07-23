@@ -383,6 +383,7 @@ class SequenceDataSource(
         dataset: Optional[Any] = None,
     ) -> Sequence[Mapping[str, Any]]:
         # TODO: Bring back the code to work out how many classes there are
+        print(data)
         inputs, targets = data
         if targets is None:
             return self.predict_load_data(data)
