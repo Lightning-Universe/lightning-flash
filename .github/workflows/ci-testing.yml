@@ -54,10 +54,6 @@ jobs:
             requires: 'latest'
             topic: ['pointcloud']
           - os: ubuntu-20.04
-            python-version: 3.6
-            requires: 'latest'
-            topic: [ 'pointcloud' ]
-          - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
             topic: ['serve']
