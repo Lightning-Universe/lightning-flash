@@ -32,45 +32,4 @@ if _AUDIO_AVAILABLE:
 
 
 class SpeechRecognition(Task):
-
-    backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
-
-    def __init__(
-        self,
-        backbone: str = "facebook/wav2vec2-base-960h",
-        loss_fn: Optional[Callable] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        learning_rate: float = 1e-5,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-    ):
-        os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
-        # disable HF thousand warnings
-        warnings.simplefilter("ignore")
-        # set os environ variable for multiprocesses
-        os.environ["PYTHONWARNINGS"] = "ignore"
-
-        model = self.backbones.get(backbone
-                                   )() if backbone in self.backbones else Wav2Vec2ForCTC.from_pretrained(backbone)
-        super().__init__(
-            model=model,
-            loss_fn=loss_fn,
-            optimizer=optimizer,
-            learning_rate=learning_rate,
-            serializer=serializer,
-        )
-
-        self.save_hyperparameters()
-
-        self.set_state(SpeechRecognitionBackboneState(backbone))
-        self.set_state(CollateFn(DataCollatorCTCWithPadding(Wav2Vec2Processor.from_pretrained(backbone))))
-
-    def forward(self, batch: Dict[str, torch.Tensor]):
-        return self.model(batch["input_values"])
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self(batch)
-
-    def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
-        out = self.model(batch["input_values"], labels=batch["labels"])
-        out["logs"] = {'loss': out.loss}
-        return out
+    pass
