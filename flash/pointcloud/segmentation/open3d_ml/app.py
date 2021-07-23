@@ -20,14 +20,15 @@ from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 if _POINTCLOUD_AVAILABLE:
 
     from open3d._ml3d.torch.dataloaders import TorchDataloader
-    from open3d._ml3d.vis.visualizer import LabelLUT, Visualizer
+    from open3d._ml3d.vis.visualizer import LabelLUT
+    from open3d._ml3d.vis.visualizer import Visualizer as Open3dVisualizer
 
 else:
 
-    Visualizer = object
+    Open3dVisualizer = object
 
 
-class Visualizer(Visualizer):
+class Visualizer(Open3dVisualizer):
 
     def visualize_dataset(self, dataset, split, indices=None, width=1024, height=768):
         """Visualize a dataset.
