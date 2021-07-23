@@ -35,8 +35,6 @@ class SpeechRecognition(Task):
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
 
-    required_extras = "audio"
-
     def __init__(
         self,
         backbone: str = "facebook/wav2vec2-base-960h",
