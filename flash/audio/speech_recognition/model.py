@@ -11,24 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import warnings
-from typing import Any, Callable, Dict, Mapping, Optional, Type, Union
-
-import torch
-import torch.nn as nn
-
-from flash import Task
-from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
-from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
-from flash.audio.speech_recognition.data import SpeechRecognitionBackboneState
-from flash.core.data.process import Serializer
-from flash.core.data.states import CollateFn
-from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _AUDIO_AVAILABLE
-
-if _AUDIO_AVAILABLE:
-    from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 
 
 class SpeechRecognition(Task):
