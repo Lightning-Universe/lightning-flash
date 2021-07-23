@@ -16,4 +16,3 @@ from flash import Task
 
 class SpeechRecognition(Task):
     """Model for speech classification tasks"""
-
