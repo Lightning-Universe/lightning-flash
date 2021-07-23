@@ -30,6 +30,7 @@ from flash.core.utilities.imports import _AUDIO_AVAILABLE
 if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 
+
 class SpeechRecognition(Task):
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
