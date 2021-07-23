@@ -9,6 +9,7 @@ The Task
 ********
 
 Speech recognition is the task of classifying audio into a text transcription. We rely on `Wav2Vec <https://ai.facebook.com/blog/wav2vec-20-learning-the-structure-of-speech-from-raw-audio/>`_ as our backbone, fine-tuned on labeled transcriptions for speech to text.
+Wav2Vec is pre-trained on thousand of hours of unlabeled audio, providing a strong baseline when fine-tuning to downstream tasks such as Speech Recognition.
 
 -----
 
@@ -23,10 +24,18 @@ Here's the structure our CSV file:
 .. code-block::
 
     file,text
-    "/path/to/file_1.wav ... ","what was said in file 1."
-    "/path/to/file_2.wav ... ","what was said in file 2."
-    "/path/to/file_3.wav ... ","what was said in file 3."
+    "/path/to/file_1.wav","what was said in file 1."
+    "/path/to/file_2.wav","what was said in file 2."
+    "/path/to/file_3.wav","what was said in file 3."
     ...
+
+Alternatively, here is the structure of our JSON file:
+
+.. code-block::
+
+    {"file": "/path/to/file_1.wav", "text": "what was said in file 1."}
+    {"file": "/path/to/file_2.wav", "text": "what was said in file 2."}
+    {"file": "/path/to/file_3.wav", "text": "what was said in file 3."}
 
 Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData`.
 We select a pre-trained Wav2Vec backbone to use for our :class:`~flash.audio.speech_recognition.model.SpeechRecognition` and finetune on a subset of the `TIMIT corpus <https://catalog.ldc.upenn.edu/LDC93S1>`__.
