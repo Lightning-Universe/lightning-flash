@@ -549,7 +549,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
-        # **preprocess_kwargs: Any,
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
         :class:`~flash.core.data.data_source.DataSource` of name
@@ -609,7 +609,7 @@ class DataModule(pl.LightningDataModule):
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            # **preprocess_kwargs,
+            **preprocess_kwargs,
         )
 
     @classmethod
@@ -1002,7 +1002,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
-        # **preprocess_kwargs: Any,
+        **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
         :class:`~flash.core.data.data_source.DataSource`
@@ -1066,7 +1066,7 @@ class DataModule(pl.LightningDataModule):
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            # **preprocess_kwargs,
+            **preprocess_kwargs,
         )
 
     @classmethod
