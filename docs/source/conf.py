@@ -161,23 +161,11 @@ PACKAGE_MAPPING = {
     'lightning-bolts': 'pl_bolts',
     'pytorch-tabnet': 'pytorch_tabnet',
     'pyDeprecate': 'deprecate',
-    'torch-geometric': 'torch_geometric',
-    'torch-sparse': 'torch_sparse',
-    'torch-scatter': 'torch_scatter'
 }
 MOCK_PACKAGES = []
 if SPHINX_MOCK_REQUIREMENTS:
     # mock also base packages when we are on RTD since we don't install them there
     MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_audio.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_graph.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_image.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_image_extras.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_pointcloud.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_tabular.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_text.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_video.txt'))
-    MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, 'requirements', 'datatype_video_extras.txt'))
 # replace PyPI packages by importing ones
 MOCK_PACKAGES = [PACKAGE_MAPPING.get(pkg, pkg) for pkg in MOCK_PACKAGES]
 
