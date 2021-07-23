@@ -14,6 +14,5 @@
 from flash.core.model import Task
 
 
-
 class SpeechRecognition(Task):
     """Model for speech classification tasks"""
