@@ -23,7 +23,6 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
-import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
@@ -112,6 +111,7 @@ class PointCloudSegmentation(ClassificationTask):
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudSegmentationSerializer(),
     ):
+        import flash
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
 

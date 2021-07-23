@@ -18,12 +18,12 @@ from typing import Any, Callable, Dict, Mapping, Optional, Type, Union
 import torch
 import torch.nn as nn
 
-from flash import Task
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
 from flash.audio.speech_recognition.data import SpeechRecognitionBackboneState
 from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
+from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
