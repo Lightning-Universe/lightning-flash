@@ -13,8 +13,7 @@
 # limitations under the License.
 import sys
 
-sys.path
-sys.path.append('../../../flash')
+sys.path.append('../../../')
 
 from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
 from flash.image import ImageClassificationData, ImageClassifier  # noqa: E402
@@ -29,7 +28,6 @@ cli = FlashCLI(
         'model.backbone': 'resnet18',
         'from_folders.train_folder': 'data/hymenoptera_data/train/',
         'from_folders.val_folder': 'data/hymenoptera_data/val/',
-        'from_folders.test_folder': 'data/hymenoptera_data/test/',
     }
 )
 
