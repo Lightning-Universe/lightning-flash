@@ -13,7 +13,7 @@
 # limitations under the License.
 import torch
 
-from flash import DataModule
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
