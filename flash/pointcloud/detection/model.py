@@ -20,7 +20,7 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 
-import flash
+from flash.core.model import Task
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
@@ -37,7 +37,7 @@ class PointCloudObjectDetectorSerializer(Serializer):
     pass
 
 
-class PointCloudObjectDetector(flash.Task):
+class PointCloudObjectDetector(Task):
     """The ``PointCloudObjectDetector`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
     pointcloud data.
 
