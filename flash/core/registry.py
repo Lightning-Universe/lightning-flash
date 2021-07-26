@@ -11,12 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 _REGISTERED_FUNCTION = Dict[str, Any]
+
+
+@dataclass
+class Credit:
+
+    name: str
+    url: str
+
+    def __str__(self):
+        return f"{self.name} ({self.url})"
 
 
 class FlashRegistry:
@@ -60,6 +71,16 @@ class FlashRegistry:
             matches = [m for m in matches if metadata.items() <= m["metadata"].items()]
             if not matches:
                 raise KeyError("Found no matches that fit your metadata criteria. Try removing some metadata")
+
+        for match in matches:
+            if "credits" in match["metadata"]:
+                credits = match["metadata"]["credits"]
+                if not isinstance(credits, List):
+                    credits = [credits]
+                if len(credits) > 1:
+                    credits[-2] = f"{str(credits[-2])} and {str(credits[-1])}"
+                    credits = credits[:-1]
+                rank_zero_info(f"Using '{key}' provided by {', '.join(str(credit) for credit in credits)}.")
 
         matches = [e if with_metadata else e["fn"] for e in matches]
         return matches[0] if strict else matches
