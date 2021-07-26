@@ -29,7 +29,7 @@ datamodule = SpeechRecognitionData.from_json(
 model = SpeechRecognition(backbone="facebook/wav2vec2-base-960h")
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_test_batches=1)
+trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy='no_freeze')
 
 # 4. Predict on audio files!

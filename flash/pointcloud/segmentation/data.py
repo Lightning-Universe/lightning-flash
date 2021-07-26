@@ -1,13 +1,10 @@
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import Deserializer
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, requires_extras
-
-if _POINTCLOUD_AVAILABLE:
-    from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesDataset
+from flash.core.data.process import Deserializer, Preprocess
+from flash.core.utilities.imports import requires_extras
+from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesDataset
 
 
 class PointCloudSegmentationDatasetDataSource(DataSource):
