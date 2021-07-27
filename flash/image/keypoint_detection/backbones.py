@@ -20,6 +20,7 @@ from flash.core.integrations.icevision.backbones import (
 )
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.providers import _ICEVISION, _TORCHVISION
 
 if _ICEVISION_AVAILABLE:
     from icevision import models as icevision_models
@@ -33,4 +34,5 @@ if _ICEVISION_AVAILABLE:
             partial(load_icevision_ignore_image_size, icevision_model_adapter, model_type),
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
+            providers=[_ICEVISION, _TORCHVISION]
         )

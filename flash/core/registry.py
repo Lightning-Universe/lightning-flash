@@ -21,7 +21,7 @@ _REGISTERED_FUNCTION = Dict[str, Any]
 
 
 @dataclass
-class Credit:
+class Provider:
 
     name: str
     url: str
@@ -73,14 +73,14 @@ class FlashRegistry:
                 raise KeyError("Found no matches that fit your metadata criteria. Try removing some metadata")
 
         for match in matches:
-            if "credits" in match["metadata"]:
-                credits = match["metadata"]["credits"]
-                if not isinstance(credits, List):
-                    credits = [credits]
-                if len(credits) > 1:
-                    credits[-2] = f"{str(credits[-2])} and {str(credits[-1])}"
-                    credits = credits[:-1]
-                rank_zero_info(f"Using '{key}' provided by {', '.join(str(credit) for credit in credits)}.")
+            if "providers" in match["metadata"]:
+                providers = match["metadata"]["providers"]
+                if not isinstance(providers, List):
+                    providers = [providers]
+                if len(providers) > 1:
+                    providers[-2] = f"{str(providers[-2])} and {str(providers[-1])}"
+                    providers = providers[:-1]
+                rank_zero_info(f"Using '{key}' provided by {', '.join(str(provider) for provider in providers)}.")
 
         matches = [e if with_metadata else e["fn"] for e in matches]
         return matches[0] if strict else matches
@@ -126,6 +126,7 @@ class FlashRegistry:
         fn: Optional[Callable[..., Any]] = None,
         name: Optional[str] = None,
         override: bool = False,
+        providers: Optional[Union[Provider, List[Provider]]] = None,
         **metadata
     ) -> Callable:
         """
@@ -134,6 +135,9 @@ class FlashRegistry:
         Functions can be filtered using metadata using the ``get`` function.
 
         """
+        if providers is not None:
+            metadata["providers"] = providers
+
         if fn is not None:
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)
             return fn

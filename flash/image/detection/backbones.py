@@ -21,8 +21,9 @@ from flash.core.integrations.icevision.backbones import (
     load_icevision_ignore_image_size,
     load_icevision_with_image_size,
 )
-from flash.core.registry import Credit, FlashRegistry
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _module_available, _TORCHVISION_AVAILABLE
+from flash.core.utilities.providers import _EFFDET, _ICEVISION, _MMDET, _TORCHVISION, _ULTRALYTICS
 
 if _ICEVISION_AVAILABLE:
     from icevision import models as icevision_models
@@ -36,7 +37,7 @@ if _ICEVISION_AVAILABLE:
                 partial(load_icevision_ignore_image_size, icevision_model_adapter, model_type),
                 model_type.__name__.split(".")[-1],
                 backbones=get_backbones(model_type),
-                credits=Credit("IceVision", "www.icevision.com"),
+                providers=[_ICEVISION, _TORCHVISION],
             )
 
     if _module_available("yolov5"):
@@ -45,7 +46,7 @@ if _ICEVISION_AVAILABLE:
             partial(load_icevision_with_image_size, icevision_model_adapter, model_type),
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
-            credits=Credit("IceVision", "www.icevision.com"),
+            providers=[_ICEVISION, _ULTRALYTICS],
         )
 
     if _module_available("mmdet"):
@@ -59,7 +60,7 @@ if _ICEVISION_AVAILABLE:
                 partial(load_icevision_ignore_image_size, icevision_model_adapter, model_type),
                 f"mmdet_{model_type.__name__.split('.')[-1]}",
                 backbones=get_backbones(model_type),
-                credits=Credit("IceVision", "www.icevision.com"),
+                providers=[_ICEVISION, _MMDET],
             )
 
     if _module_available("effdet"):
@@ -82,6 +83,5 @@ if _ICEVISION_AVAILABLE:
             partial(load_icevision_with_image_size, _icevision_effdet_model_adapter, model_type),
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
-            credits=[Credit("IceVision", "www.icevision.com"),
-                     Credit("effdet", "github")],
+            providers=[_ICEVISION, _EFFDET],
         )
