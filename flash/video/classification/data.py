@@ -44,12 +44,12 @@ if _KORNIA_AVAILABLE:
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
     from pytorchvideo.data.encoded_video import EncodedVideo
-    from pytorchvideo.data.encoded_video_dataset import EncodedVideoDataset, labeled_encoded_video_dataset
+    from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset, LabeledVideoDataset
     from pytorchvideo.data.labeled_video_paths import LabeledVideoPaths
     from pytorchvideo.transforms import ApplyTransformToKey, UniformTemporalSubsample
     from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
 else:
-    ClipSampler, EncodedVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
+    ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 _PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
 
@@ -68,7 +68,7 @@ class BaseVideoClassification(object):
         self.decode_audio = decode_audio
         self.decoder = decoder
 
-    def load_data(self, data: str, dataset: Optional[Any] = None) -> 'EncodedVideoDataset':
+    def load_data(self, data: str, dataset: Optional[Any] = None) -> 'LabeledVideoDataset':
         ds = self._make_encoded_video_dataset(data)
         if self.training:
             label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in ds._labeled_videos._paths_and_labels}
@@ -82,14 +82,14 @@ class BaseVideoClassification(object):
         sample[DefaultDataKeys.METADATA] = {"filepath": video_path}
         return sample
 
-    def _encoded_video_to_dict(self, video) -> Dict[str, Any]:
+    def _encoded_video_to_dict(self, video, annotation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         (
             clip_start,
             clip_end,
             clip_index,
             aug_index,
             is_last_clip,
-        ) = self.clip_sampler(0.0, video.duration)
+        ) = self.clip_sampler(0.0, video.duration, annotation)
 
         loaded_clip = video.get_clip(clip_start, clip_end)
 
@@ -115,7 +115,7 @@ class BaseVideoClassification(object):
             } if audio_samples is not None else {}),
         }
 
-    def _make_encoded_video_dataset(self, data) -> 'EncodedVideoDataset':
+    def _make_encoded_video_dataset(self, data) -> 'LabeledVideoDataset':
         raise NotImplementedError("Subclass must implement _make_encoded_video_dataset()")
 
 
@@ -139,8 +139,8 @@ class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSourc
             extensions=("mp4", "avi"),
         )
 
-    def _make_encoded_video_dataset(self, data) -> 'EncodedVideoDataset':
-        ds: EncodedVideoDataset = labeled_encoded_video_dataset(
+    def _make_encoded_video_dataset(self, data) -> 'LabeledVideoDataset':
+        ds: LabeledVideoDataset = labeled_video_dataset(
             pathlib.Path(data),
             self.clip_sampler,
             video_sampler=self.video_sampler,
@@ -178,7 +178,7 @@ class VideoClassificationFiftyOneDataSource(
     def label_cls(self):
         return fol.Classification
 
-    def _make_encoded_video_dataset(self, data: SampleCollection) -> 'EncodedVideoDataset':
+    def _make_encoded_video_dataset(self, data: SampleCollection) -> 'LabeledVideoDataset':
         classes = self._get_classes(data)
         label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
@@ -188,7 +188,7 @@ class VideoClassificationFiftyOneDataSource(
         targets = [class_to_label_mapping[lab] for lab in labels]
         labeled_video_paths = LabeledVideoPaths(list(zip(filepaths, targets)))
 
-        ds: EncodedVideoDataset = EncodedVideoDataset(
+        ds: LabeledVideoDataset = LabeledVideoDataset(
             labeled_video_paths,
             self.clip_sampler,
             video_sampler=self.video_sampler,

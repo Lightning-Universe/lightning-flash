@@ -691,7 +691,7 @@ class CustomModel(Task):
         assert len(batch) == 2
         assert batch[0].shape == torch.Size([2, 1])
 
-    def predict_step(self, batch, batch_idx, dataloader_idx):
+    def predict_step(self, batch, batch_idx, dataloader_idx=None):
         assert batch[0][0] == 'a'
         assert batch[0][1] == 'a'
         assert batch[1][0] == 'b'
