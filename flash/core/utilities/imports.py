@@ -43,6 +43,9 @@ def _module_available(module_path: str) -> bool:
     except ModuleNotFoundError:
         # Python 3.7+
         return False
+    except ValueError:
+        # Sometimes __spec__ can be None and gives a ValueError
+        return True
 
 
 def _compare_version(package: str, op, version) -> bool:
@@ -59,7 +62,7 @@ def _compare_version(package: str, op, version) -> bool:
     try:
         pkg_version = Version(pkg.__version__)
     except TypeError:
-        # this is mock by sphinx, so it shall return True ro generate all summaries
+        # this is mock by sphinx, so it shall return True to generate all summaries
         return True
     return op(pkg_version, Version(version))
 
