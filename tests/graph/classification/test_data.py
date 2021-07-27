@@ -16,36 +16,17 @@ from networkx.readwrite.nx_shp import write_shp
 
 from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.classification.data import (
-    GraphClassificationData,
-    GraphClassificationPreprocess,
-    GraphDatasetSource,
-    GraphSequenceDataSource,
-)
+from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess
 from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
     import networkx as nx
     from networkx.readwrite import (
         adjacency_data,
-        adjacency_graph,
         cytoscape_data,
-        cytoscape_graph,
         jit_data,
-        jit_graph,
         node_link_data,
-        node_link_graph,
-        read_adjlist,
-        read_edgelist,
-        read_gexf,
-        read_gml,
-        read_gpickle,
-        read_graphml,
-        read_leda,
-        read_pajek,
-        read_yaml,
         tree_data,
-        tree_graph,
         write_adjlist,
         write_edgelist,
         write_gexf,
@@ -172,49 +153,49 @@ class TestGraphClassificationData:
         G = nx.karate_club_graph()
 
         write_adjlist(G, tmpdir / 'data.adjlist')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_edgelist(G, tmpdir / 'data.edgelist')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_gexf(G, tmpdir / 'data.gexf')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_gml(G, tmpdir / 'data.gml')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_graphml(G, tmpdir / 'data.graphml')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_gpickle(G, tmpdir / 'data.gpickle')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_pajek(G, tmpdir / 'data.net')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_shp(G, tmpdir / 'data.shp')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         write_yaml(G, tmpdir / 'data.yaml')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir)
+        GraphClassificationData.from_folders(train_folder=tmpdir)
 
         node_link_data(G, tmpdir / 'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='node_link')
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='node_link')
 
         adjacency_data(G, tmpdir / 'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='adjacency')
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='adjacency')
 
         cytoscape_data(G, tmpdir / 'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='cytoscape')
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='cytoscape')
 
         tree_data(G, tmpdir / 'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='tree')
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='tree')
 
         jit_data(G, tmpdir / 'data.json')
-        dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='jit')
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='jit')
 
     def test_from_data_sequence(self):
         G = nx.karate_club_graph()
 
         data_list = [PyGData(G), PyGData(G), PyGData(G)]
-        dm = GraphClassificationData.from_data_sequence(data_list)
+        GraphClassificationData.from_data_sequence(data_list)
