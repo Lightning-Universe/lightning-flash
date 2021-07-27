@@ -29,7 +29,7 @@ datamodule = GraphClassificationData.from_datasets(
     val_split=0.1,
 )
 # 2. Build the task
-model = GraphClassifier(num_features = datamodule.num_features, num_classes=datamodule.num_classes)
+model = GraphClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and fit the model
 trainer = flash.Trainer(max_epochs=3)
