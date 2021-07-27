@@ -19,6 +19,8 @@ from flash.core.utilities.imports import _TORCH_AVAILABLE
 
 if _TORCH_AVAILABLE:
 
+    from pytorch_lightning.utilities.enums import LightningEnum
+
     from flash.core.data.callback import FlashCallback
     from flash.core.data.data_module import DataModule  # noqa: E402
     from flash.core.data.data_source import DataSource
@@ -34,6 +36,10 @@ if _TORCH_AVAILABLE:
     if _IS_TESTING:
         from pytorch_lightning import seed_everything
         seed_everything(42)
+
+    class AvailableTasks(LightningEnum):
+
+        ImageClassifier = 'ImageClassifier'
 
     __all__ = [
         "DataSource",

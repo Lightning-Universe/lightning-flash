@@ -33,7 +33,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource
+from flash.core.data.data_source import data_source_of_name, DataSource
 from flash.core.data.process import (
     Deserializer,
     DeserializerMapping,
@@ -116,7 +116,6 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     """
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
-
     required_extras: Optional[str] = None
 
     def __init__(
@@ -247,7 +246,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def predict(
         self,
         x: Any,
-        data_source: Optional[str] = None,
+        data_source: Optional[Union[DataSource, str]] = None,
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
@@ -440,13 +439,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 getattr(data_pipeline, '_serializer', None),
             )
 
-        data_source = data_source or old_data_source
-
         if isinstance(data_source, str):
-            if preprocess is None:
-                data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
-            else:
-                data_source = preprocess.data_source_of_name(data_source)
+            # todo: Find a way to provide arguments to the data_source.
+            data_source = data_source_of_name(self.__class__.__name__, data_source)()
+        else:
+            data_source = old_data_source or DataSource()
 
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(preprocess, "deserializer", deserializer)

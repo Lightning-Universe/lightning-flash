@@ -11,9 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
 import os
 import platform
-from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TYPE_CHECKING,
+    Union,
+)
 
 import numpy as np
 import pytorch_lightning as pl
@@ -29,7 +43,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
@@ -72,6 +86,8 @@ class DataModule(pl.LightningDataModule):
 
     preprocess_cls = DefaultPreprocess
     postprocess_cls = Postprocess
+    data_sources: Optional[Dict[str, Type[DataSource]]] = None
+    default_data_source: Optional[str] = None
 
     def __init__(
         self,
@@ -135,6 +151,25 @@ class DataModule(pl.LightningDataModule):
         self.sampler = sampler
 
         self.set_running_stages()
+
+    @classmethod
+    def available_data_sources(cls) -> Sequence[str]:
+        """Get the list of available data source names.
+
+        Returns:
+            The list of data source names.
+        """
+        breakpoint()
+        return list(cls.data_sources.keys())
+
+    @classmethod
+    def available_file_based_data_sources(cls) -> Sequence[str]:
+        """Get the list of available data source names.
+
+        Returns:
+            The list of data source names.
+        """
+        return list(k for k, v in cls.data_sources.items() if v.is_file_based)
 
     @property
     def train_dataset(self) -> Optional[Dataset]:
@@ -398,15 +433,6 @@ class DataModule(pl.LightningDataModule):
     def data_pipeline(self) -> DataPipeline:
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
-    def available_data_sources(self) -> Sequence[str]:
-        """Get the list of available data source names for use with this
-        :class:`~flash.core.data.data_module.DataModule`.
-
-        Returns:
-            The list of data source names.
-        """
-        return self.preprocess.available_data_sources()
-
     @staticmethod
     def _split_train_val(
         train_dataset: Dataset,
@@ -431,10 +457,40 @@ class DataModule(pl.LightningDataModule):
             SplitDataset(train_dataset, val_indices, use_duplicated_indices=True),
         )
 
+    @staticmethod
+    def _filter_kwargs(fn: Callable, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        params = inspect.signature(fn).parameters.keys()
+        return {k: v for k, v in kwargs if k in params}
+
+    @classmethod
+    def data_source_of_name(cls, data_source_name: str) -> Type[DataSource]:
+        """Get the :class:`~flash.core.data.data_source.DataSource` of the given name from the
+        :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            data_source_name: The name of the data source to look up.
+
+        Returns:
+            The :class:`~flash.core.data.data_source.DataSource` of the given name.
+
+        Raises:
+            MisconfigurationException: If the requested data source is not configured by this
+                :class:`~flash.core.data.process.Preprocess`.
+        """
+        if data_source_name == "default":
+            data_source_name = cls.default_data_source
+        data_sources = cls.data_sources
+        if data_source_name in data_sources:
+            return data_sources[data_source_name]
+        raise MisconfigurationException(
+            f"No '{data_source_name}' data source is available for use with the {type(cls)}. The available data "
+            f"sources are: {', '.join(cls.available_data_sources())}."
+        )
+
     @classmethod
     def from_data_source(
         cls,
-        data_source: str,
+        data_source_type: str,
         train_data: Any = None,
         val_data: Any = None,
         test_data: Any = None,
@@ -445,11 +501,12 @@ class DataModule(pl.LightningDataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
+        data_source: Optional[DataSource] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
-        **preprocess_kwargs: Any,
+        **kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given inputs to
         :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
@@ -458,7 +515,7 @@ class DataModule(pl.LightningDataModule):
         using :meth:`~flash.core.data.process.Preprocess.data_source_of_name`.
 
         Args:
-            data_source: The name of the data source to use for the
+            data_source_type: The name of the data source to use for the
                 :meth:`~flash.core.data.data_source.DataSource.load_data`.
             train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
                 the train dataset.
@@ -485,8 +542,7 @@ class DataModule(pl.LightningDataModule):
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            kwargs: Additional keyword arguments to use when constructing the preprocess or data_source.
 
         Returns:
             The constructed data module.
@@ -501,15 +557,22 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        preprocess = preprocess or cls.preprocess_cls(
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
-            **preprocess_kwargs,
-        )
+        # add support for from_datasets if missing
+        if DefaultDataSources.DATASET not in cls.data_sources:
+            cls.data_sources[DefaultDataSources.DATASET] = DatasetDataSource()
 
-        data_source = preprocess.data_source_of_name(data_source)
+        if not preprocess:
+            preprocess = preprocess or cls.preprocess_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                **cls._filter_kwargs(preprocess.__init__, kwargs),
+            )
+
+        if not data_source:
+            data_source_cls = cls.data_source_of_name(data_source_type)
+            data_source = data_source_cls(**cls._filter_kwargs(data_source_cls.__init__, kwargs), )
 
         train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(
             train_data,
@@ -545,11 +608,12 @@ class DataModule(pl.LightningDataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
+        data_source: Optional[DataSource] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
-        **preprocess_kwargs: Any,
+        **kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
         :class:`~flash.core.data.data_source.DataSource` of name
@@ -574,12 +638,14 @@ class DataModule(pl.LightningDataModule):
             preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
                 will be constructed and used.
+            data_source: The :class:`~flash.core.data.data.DataSource` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, data_source associated to
+                ``from_folders`` function will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            kwargs: Additional keyword arguments to use when constructing the preprocess or datasource.
 
         Returns:
             The constructed data module.
@@ -605,11 +671,12 @@ class DataModule(pl.LightningDataModule):
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
             preprocess=preprocess,
+            data_source=data_source,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **kwargs,
         )
 
     @classmethod

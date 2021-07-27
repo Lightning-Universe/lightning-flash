@@ -161,11 +161,11 @@ def test_classificationtask_task_predict():
     expected = list(range(10))
     # single item
     x0, _ = ds[0]
-    pred0 = task.predict(x0)
+    pred0 = task.predict(x0, data_source=None)
     assert pred0[0] in expected
     # list
     x1, _ = ds[1]
-    pred1 = task.predict([x0, x1])
+    pred1 = task.predict([x0, x1], data_source=None)
     assert all(c in expected for c in pred1)
     assert pred0[0] == pred1[0]
 

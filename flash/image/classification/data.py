@@ -11,142 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import glob
-import os
-from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
-import numpy as np
 import pandas as pd
-import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.sampler import Sampler
 
-from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
+from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import (
-    _MATPLOTLIB_AVAILABLE,
-    _PIL_AVAILABLE,
-    _TORCHVISION_AVAILABLE,
-    requires,
-    requires_extras,
-)
+from flash.image.classification.data_sources import ImageClassificationDataSources, ImageClassificationDefaultDataSource
 from flash.image.classification.transforms import default_transforms, train_default_transforms
-from flash.image.data import (
-    ImageDeserializer,
-    ImageFiftyOneDataSource,
-    ImageNumpyDataSource,
-    ImagePathsDataSource,
-    ImageTensorDataSource,
-)
-
-if _MATPLOTLIB_AVAILABLE:
-    import matplotlib.pyplot as plt
-else:
-    plt = None
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
-
-if _PIL_AVAILABLE:
-    from PIL import Image
-else:
-
-    class Image:
-        Image = None
-
-
-class ImageClassificationDataFrameDataSource(
-    DataSource[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str]]]
-):
-
-    @staticmethod
-    def _resolve_file(root: str, file_id: str) -> str:
-        if os.path.isabs(file_id):
-            pattern = f"{file_id}*"
-        else:
-            pattern = os.path.join(root, f"*{file_id}*")
-        files = glob.glob(pattern)
-        if len(files) > 1:
-            raise ValueError(
-                f"Found multiple matches for pattern: {pattern}. File IDs should uniquely identify the file to load."
-            )
-        elif len(files) == 0:
-            raise ValueError(
-                f"Found no matches for pattern: {pattern}. File IDs should uniquely identify the file to load."
-            )
-        return files[0]
-
-    @staticmethod
-    def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
-        row[target_key] = label_to_class[row[target_key]]
-        return row
-
-    @staticmethod
-    def _resolve_multi_target(target_keys: List[str], row: pd.Series) -> pd.Series:
-        row[target_keys[0]] = [row[target_key] for target_key in target_keys]
-        return row
-
-    def load_data(
-        self,
-        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
-        data_frame, input_key, target_keys, root = data
-        if root is None:
-            root = ""
-
-        if not self.predicting:
-            if isinstance(target_keys, List):
-                dataset.num_classes = len(target_keys)
-                self.set_state(LabelsState(target_keys))
-                data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
-                target_keys = target_keys[0]
-            else:
-                if self.training:
-                    labels = list(sorted(data_frame[target_keys].unique()))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
-
-                labels = self.get_state(LabelsState)
-
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class = {v: k for k, v in enumerate(labels)}
-                    data_frame = data_frame.apply(partial(self._resolve_target, label_to_class, target_keys), axis=1)
-
-            return [{
-                DefaultDataKeys.INPUT: row[input_key],
-                DefaultDataKeys.TARGET: row[target_keys],
-                DefaultDataKeys.METADATA: dict(root=root),
-            } for _, row in data_frame.iterrows()]
-        else:
-            return [{
-                DefaultDataKeys.INPUT: row[input_key],
-                DefaultDataKeys.METADATA: dict(root=root),
-            } for _, row in data_frame.iterrows()]
-
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        file = self._resolve_file(sample[DefaultDataKeys.METADATA]['root'], sample[DefaultDataKeys.INPUT])
-        sample[DefaultDataKeys.INPUT] = default_loader(file)
-        return sample
-
-
-class ImageClassificationCSVDataSource(ImageClassificationDataFrameDataSource):
-
-    def load_data(
-        self,
-        data: Tuple[str, str, Union[str, List[str]], Optional[str]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
-        csv_file, input_key, target_keys, root = data
-        data_frame = pd.read_csv(csv_file)
-        if root is None:
-            root = os.path.dirname(csv_file)
-        return super().load_data((data_frame, input_key, target_keys, root), dataset)
+from flash.image.classification.viz import MatplotlibVisualization
+from flash.image.data_sources import ImageDeserializer
 
 
 class ImageClassificationPreprocess(Preprocess):
@@ -159,7 +36,6 @@ class ImageClassificationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
-        **data_source_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -168,17 +44,7 @@ class ImageClassificationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.FIFTYONE: ImageFiftyOneDataSource(**data_source_kwargs),
-                DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
-                DefaultDataSources.NUMPY: ImageNumpyDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
-                "data_frame": ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.CSV: ImageClassificationCSVDataSource(),
-            },
             deserializer=deserializer or ImageDeserializer(),
-            default_data_source=DefaultDataSources.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -199,6 +65,8 @@ class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
     preprocess_cls = ImageClassificationPreprocess
+    data_sources = ImageClassificationDataSources
+    default_data_source = ImageClassificationDefaultDataSource
 
     @classmethod
     def from_data_frame(
@@ -397,73 +265,3 @@ class ImageClassificationData(DataModule):
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         return MatplotlibVisualization(*args, **kwargs)
-
-
-class MatplotlibVisualization(BaseVisualization):
-    """Process and show the image batch and its associated label using matplotlib.
-    """
-    max_cols: int = 4  # maximum number of columns we accept
-    block_viz_window: bool = True  # parameter to allow user to block visualisation windows
-
-    @staticmethod
-    @requires_extras("image")
-    def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
-        out: np.ndarray
-        if isinstance(img, Image.Image):
-            out = np.array(img)
-        elif isinstance(img, torch.Tensor):
-            out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
-        else:
-            raise TypeError(f"Unknown image type. Got: {type(img)}.")
-        return out
-
-    @requires("matplotlib")
-    def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
-        # define the image grid
-        cols: int = min(num_samples, self.max_cols)
-        rows: int = num_samples // cols
-
-        # create figure and set title
-        fig, axs = plt.subplots(rows, cols)
-        fig.suptitle(title)
-
-        if not isinstance(axs, np.ndarray):
-            axs = [axs]
-
-        for i, ax in enumerate(axs):
-            # unpack images and labels
-            if isinstance(data, list):
-                _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")
-            elif isinstance(data, dict):
-                _img, _label = data[DefaultDataKeys.INPUT][i], data.get(DefaultDataKeys.TARGET, [""] * (i + 1))[i]
-            else:
-                raise TypeError(f"Unknown data type. Got: {type(data)}.")
-            # convert images to numpy
-            _img: np.ndarray = self._to_numpy(_img)
-            if isinstance(_label, torch.Tensor):
-                _label = _label.squeeze().tolist()
-            # show image and set label as subplot title
-            ax.imshow(_img)
-            ax.set_title(str(_label))
-            ax.axis('off')
-        plt.show(block=self.block_viz_window)
-
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_load_sample"
-        self._show_images_and_labels(samples, len(samples), win_title)
-
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_pre_tensor_transform"
-        self._show_images_and_labels(samples, len(samples), win_title)
-
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_to_tensor_transform"
-        self._show_images_and_labels(samples, len(samples), win_title)
-
-    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_post_tensor_transform"
-        self._show_images_and_labels(samples, len(samples), win_title)
-
-    def show_per_batch_transform(self, batch: List[Any], running_stage):
-        win_title: str = f"{running_stage} - show_per_batch_transform"
-        self._show_images_and_labels(batch[0], batch[0][DefaultDataKeys.INPUT].shape[0], win_title)

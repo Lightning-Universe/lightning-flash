@@ -44,7 +44,7 @@ from flash.core.utilities.imports import (
     requires,
     requires_extras,
 )
-from flash.image.data import ImageDeserializer
+from flash.image.data_sources import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 

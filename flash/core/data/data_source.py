@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 import typing
+from abc import abstractproperty
 from dataclasses import dataclass
 from inspect import signature
 from typing import (
@@ -27,6 +28,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     TYPE_CHECKING,
     TypeVar,
     Union,
@@ -36,12 +38,14 @@ import numpy as np
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
@@ -152,6 +156,7 @@ class DefaultDataSources(LightningEnum):
     FILES = "files"
     NUMPY = "numpy"
     TENSORS = "tensors"
+    DATA_FRAME = "data_frame"
     CSV = "csv"
     JSON = "json"
     DATASET = "dataset"
@@ -204,6 +209,13 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``. The
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
     sets from the hooks."""
+
+    @abstractproperty
+    def is_file_based(self) -> bool:
+        """
+        This property is used to specify if the :class:`~flash.core.data.data_source.DataSource
+        is loading from a filesystem.
+        """
 
     @staticmethod
     def load_data(
@@ -551,3 +563,26 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
             classes = data.distinct(label_path)
 
         return classes
+
+
+@dataclass
+class DataSourcesStore:
+
+    data_sources: Optional[Dict[DefaultDataSources, Type[DataSource]]]
+    default_data_source: Optional[str]
+
+
+DATA_SOURCES_COLLECTION = FlashRegistry("data_sources")
+
+
+def data_source_of_name(task: str, data_source_name: str):
+    data_source_store: DataSourcesStore = DATA_SOURCES_COLLECTION.get(task)()
+    if data_source_name == "default":
+        data_source_name = data_source_store.default_data_source
+    data_sources = data_source_store.data_sources
+    if data_source_name in data_sources:
+        return data_sources[data_source_name]
+    raise MisconfigurationException(
+        f"No '{data_source_name}' data source is available. The available data "
+        f"sources are: {', '.join(data_source_store.data_sources.keys())}."
+    )

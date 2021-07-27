@@ -25,7 +25,7 @@ from flash.core.utilities.imports import (
     lazy_import,
     requires,
 )
-from flash.image.data import ImagePathsDataSource
+from flash.image.data_sources import ImagePathsDataSource
 from flash.image.detection.transforms import default_transforms
 
 if _COCO_AVAILABLE:

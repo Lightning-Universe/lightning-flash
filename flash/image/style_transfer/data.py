@@ -22,7 +22,7 @@ from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.classification import ImageClassificationData
-from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+from flash.image.data_sources import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
 from flash.image.style_transfer.utils import raise_not_supported
 
 if _TORCHVISION_AVAILABLE:

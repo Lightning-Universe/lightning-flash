@@ -20,7 +20,7 @@ from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import requires_extras
 from flash.image.classification.data import MatplotlibVisualization
-from flash.image.data import ImageDeserializer, ImagePathsDataSource
+from flash.image.data_sources import ImageDeserializer, ImagePathsDataSource
 
 
 class AudioClassificationPreprocess(Preprocess):

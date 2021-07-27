@@ -14,7 +14,7 @@
 import inspect
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -25,7 +25,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
@@ -180,15 +180,16 @@ class Preprocess(BasePreprocess, Properties):
 
     """
 
+    data_sources: Optional[Dict[str, Type[DataSource]]] = None
+    default_data_source: Optional[str] = None
+
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, 'DataSource']] = None,
         deserializer: Optional['Deserializer'] = None,
-        default_data_source: Optional[str] = None,
     ):
         super().__init__()
 
@@ -215,12 +216,7 @@ class Preprocess(BasePreprocess, Properties):
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
 
-        if DefaultDataSources.DATASET not in data_sources:
-            data_sources[DefaultDataSources.DATASET] = DatasetDataSource()
-
-        self._data_sources = data_sources
         self._deserializer = deserializer
-        self._default_data_source = default_data_source
         self._callbacks: List[FlashCallback] = []
         self._default_collate: Callable = default_collate
 
@@ -429,8 +425,8 @@ class Preprocess(BasePreprocess, Properties):
                 :class:`~flash.core.data.process.Preprocess`.
         """
         if data_source_name == "default":
-            data_source_name = self._default_data_source
-        data_sources = self._data_sources
+            data_source_name = self.default_data_source
+        data_sources = self.data_sources
         if data_source_name in data_sources:
             return data_sources[data_source_name]
         raise MisconfigurationException(
@@ -447,16 +443,12 @@ class DefaultPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, 'DataSource']] = None,
-        default_data_source: Optional[str] = None,
     ):
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources=data_sources or {"default": DataSource()},
-            default_data_source=default_data_source or "default",
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
