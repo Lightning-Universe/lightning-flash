@@ -14,11 +14,10 @@
 
 import copy
 import json
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence
 
 from torch.utils.data import Dataset
 
-from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
 
@@ -41,32 +40,41 @@ if _GRAPH_AVAILABLE:
         read_yaml,
         tree_graph,
     )
-    from torch_geometric.data import Data as PyGData
-    from torch_geometric.data import Dataset as PyGDataset
+    from torch_geometric.data import Data
+    from torch_geometric.data import Dataset as TorchGeometricDataset
     from torch_geometric.utils import from_networkx
+else:
+    Data = object
 
 
-class GraphDatasetSource(DatasetDataSource):
+class GraphDatasetDataSource(DatasetDataSource):
 
-    def load_data(self, dataset: Dataset, auto_dataset: AutoDataset) -> Dataset:
-        data = super().load_data(dataset, auto_dataset)
-        if self.training:
-            if isinstance(dataset, PyGDataset):
-                auto_dataset.num_classes = dataset.num_classes
-                auto_dataset.num_features = dataset.num_features
+    @requires_extras("graph")
+    def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
+        data = super().load_data(data, dataset=dataset)
+        if not self.predicting:
+            if isinstance(data, TorchGeometricDataset):
+                dataset.num_classes = data.num_classes
+                dataset.num_features = data.num_features
         return data
 
+    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+        if isinstance(sample, Data):
+            return sample
+        return super().load_sample(sample, dataset=dataset)
 
-class GraphSequenceDataSource(SequenceDataSource):
 
-    def load_data(self, data_list: Sequence[PyGData]) -> Sequence:
+class GraphSequenceDataSource(SequenceDataSource[Data]):
+
+    @requires_extras("graph")
+    def load_data(self, data: Sequence[Data]) -> Sequence:
         # Converting the PyGDataList to the tuple of sequences that load_data expects:
 
         # Recover the labels
-        data_list_y = [data_list[i].y for i in range(len(data_list))]
+        data_list_y = [data[i].y for i in range(len(data))]
 
         # Recover the data
-        data_list_x = copy(data_list)
+        data_list_x = copy(data)
         for data_list_xi in data_list_x:
             data_list_xi.y = None
 
@@ -79,13 +87,13 @@ class GraphSequenceDataSource(SequenceDataSource):
 
 class GraphPathsDataSource(PathsDataSource):
 
-    @requires_extras("graph")
     def __init__(self, json_data_type=None):
         super().__init__(extensions=_GRAPH_EXTENSIONS)
         self.json_data_type = json_data_type
 
+    @requires_extras("graph")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        '''json_data_type requied only if data format is .json'''
+        """json_data_type required only if data format is .json"""
         graph_path = sample[DefaultDataKeys.INPUT]
         graph = self.default_loader(graph_path, self.json_data_type)
         sample[DefaultDataKeys.INPUT] = from_networkx(graph)

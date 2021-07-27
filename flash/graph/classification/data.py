@@ -17,7 +17,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
-from flash.graph.data import GraphDatasetSource, GraphPathsDataSource, GraphSequenceDataSource
+from flash.graph.data import GraphDatasetDataSource, GraphPathsDataSource, GraphSequenceDataSource
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.data.batch import Batch
@@ -40,7 +40,7 @@ class GraphClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASET: GraphDatasetSource(),
+                DefaultDataSources.DATASET: GraphDatasetDataSource(),
                 DefaultDataSources.SEQUENCE: GraphSequenceDataSource(),
                 DefaultDataSources.FOLDERS: GraphPathsDataSource()
             },
