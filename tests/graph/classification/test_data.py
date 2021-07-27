@@ -11,25 +11,53 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from networkx.readwrite.nx_shp import write_shp
 import pytest
+from networkx.readwrite.nx_shp import write_shp
 
 from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess, GraphDatasetSource, GraphSequenceDataSource
+from flash.graph.classification.data import (
+    GraphClassificationData,
+    GraphClassificationPreprocess,
+    GraphDatasetSource,
+    GraphSequenceDataSource,
+)
 from tests.helpers.utils import _GRAPH_TESTING
 
-
 if _GRAPH_AVAILABLE:
+    import networkx as nx
+    from networkx.readwrite import (
+        adjacency_data,
+        adjacency_graph,
+        cytoscape_data,
+        cytoscape_graph,
+        jit_data,
+        jit_graph,
+        node_link_data,
+        node_link_graph,
+        read_adjlist,
+        read_edgelist,
+        read_gexf,
+        read_gml,
+        read_gpickle,
+        read_graphml,
+        read_leda,
+        read_pajek,
+        read_yaml,
+        tree_data,
+        tree_graph,
+        write_adjlist,
+        write_edgelist,
+        write_gexf,
+        write_gml,
+        write_gpickle,
+        write_graphml,
+        write_pajek,
+        write_yaml,
+    )
+    from torch_geometric.data.data import Data as PyGData
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
-    from torch_geometric.data.data import Data as PyGData
-    import networkx as nx
-    from networkx.readwrite import (read_gexf, read_gml, read_gpickle, read_graphml, read_leda, read_yaml, read_pajek, read_edgelist, read_adjlist,
-                                    node_link_graph, adjacency_graph, cytoscape_graph, tree_graph, jit_graph)
-    from networkx.readwrite import (write_gexf, write_gml, write_gpickle, write_graphml, write_yaml, write_pajek, write_edgelist, write_adjlist,
-                                    node_link_data, adjacency_data, cytoscape_data, tree_data, jit_data)
-
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
@@ -143,48 +171,47 @@ class TestGraphClassificationData:
     def test_from_folder(self, tmpdir):
         G = nx.karate_club_graph()
 
-        write_adjlist(G, tmpdir/'data.adjlist')
+        write_adjlist(G, tmpdir / 'data.adjlist')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_edgelist(G, tmpdir/'data.edgelist')
+        write_edgelist(G, tmpdir / 'data.edgelist')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_gexf(G, tmpdir/'data.gexf')
+        write_gexf(G, tmpdir / 'data.gexf')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_gml(G, tmpdir/'data.gml')
+        write_gml(G, tmpdir / 'data.gml')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_graphml(G, tmpdir/'data.graphml')
+        write_graphml(G, tmpdir / 'data.graphml')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_gpickle(G, tmpdir/'data.gpickle')
+        write_gpickle(G, tmpdir / 'data.gpickle')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_pajek(G, tmpdir/'data.net')
+        write_pajek(G, tmpdir / 'data.net')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_shp(G, tmpdir/'data.shp')
+        write_shp(G, tmpdir / 'data.shp')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_yaml(G, tmpdir/'data.yaml')
+        write_yaml(G, tmpdir / 'data.yaml')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        node_link_data(G, tmpdir/'data.json')
+        node_link_data(G, tmpdir / 'data.json')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='node_link')
 
-        adjacency_data(G, tmpdir/'data.json')
+        adjacency_data(G, tmpdir / 'data.json')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='adjacency')
 
-        cytoscape_data(G, tmpdir/'data.json')
+        cytoscape_data(G, tmpdir / 'data.json')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='cytoscape')
 
-        tree_data(G, tmpdir/'data.json')
+        tree_data(G, tmpdir / 'data.json')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='tree')
 
-        jit_data(G, tmpdir/'data.json')
+        jit_data(G, tmpdir / 'data.json')
         dm = GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='jit')
-
 
     def test_from_data_sequence(self):
         G = nx.karate_club_graph()

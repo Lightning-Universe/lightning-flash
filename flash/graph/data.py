@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Sequence, Tuple, Union, Any, Dict, Optional
 import copy
 import json
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
+
 from networkx.readwrite.json_graph.adjacency import adjacency_graph
 from networkx.readwrite.json_graph.cytoscape import cytoscape_graph
 from networkx.readwrite.json_graph.jit import jit_graph
@@ -25,15 +26,30 @@ _GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', 
 from torch.utils.data import Dataset
 
 from flash.core.data.auto_dataset import AutoDataset
-from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, SequenceDataSource, PathsDataSource
+from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
 
 if _GRAPH_AVAILABLE:
+    from networkx.readwrite import (
+        adjacency_graph,
+        cytoscape_graph,
+        jit_graph,
+        node_link_graph,
+        read_adjlist,
+        read_edgelist,
+        read_gexf,
+        read_gml,
+        read_gpickle,
+        read_graphml,
+        read_leda,
+        read_pajek,
+        read_yaml,
+        tree_graph,
+    )
     from torch_geometric.data import Data as PyGData
     from torch_geometric.data import Dataset as PyGDataset
-    from networkx.readwrite import (read_gexf, read_gml, read_gpickle, read_graphml, read_leda, read_yaml, read_pajek, read_edgelist, read_adjlist,
-                                    node_link_graph, adjacency_graph, cytoscape_graph, tree_graph, jit_graph)
     from torch_geometric.utils import from_networkx
+
 
 class GraphDatasetSource(DatasetDataSource):
 
@@ -44,6 +60,7 @@ class GraphDatasetSource(DatasetDataSource):
                 auto_dataset.num_classes = dataset.num_classes
                 auto_dataset.num_features = dataset.num_features
         return data
+
 
 class GraphSequenceDataSource(SequenceDataSource):
 
@@ -57,7 +74,7 @@ class GraphSequenceDataSource(SequenceDataSource):
         data_list_x = copy(data_list)
         for data_list_xi in data_list_x:
             data_list_xi.y = None
-        
+
         # Create data_list
         data_list = (data_list_x, data_list_y)
         data = super().load_data(data_list)
@@ -68,7 +85,7 @@ class GraphSequenceDataSource(SequenceDataSource):
 class GraphPathsDataSource(PathsDataSource):
 
     @requires_extras("graph")
-    def __init__(self, json_data_type = None):
+    def __init__(self, json_data_type=None):
         super().__init__(extensions=_GRAPH_EXTENSIONS)
         self.json_data_type = json_data_type
 

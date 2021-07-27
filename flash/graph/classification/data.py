@@ -17,7 +17,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
-from flash.graph.data import GraphDatasetSource, GraphSequenceDataSource, GraphPathsDataSource
+from flash.graph.data import GraphDatasetSource, GraphPathsDataSource, GraphSequenceDataSource
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.data.batch import Batch
