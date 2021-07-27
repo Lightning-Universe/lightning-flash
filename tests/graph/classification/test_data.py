@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-from networkx.readwrite.nx_shp import write_shp
 
 from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
@@ -36,6 +35,7 @@ if _GRAPH_AVAILABLE:
         write_pajek,
         write_yaml,
     )
+    from networkx.readwrite.nx_shp import write_shp
     from torch_geometric.data.data import Data as PyGData
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
