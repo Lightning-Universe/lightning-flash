@@ -809,7 +809,7 @@ class DataModule(pl.LightningDataModule):
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
         :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.TENSOR`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.SEQUENCE`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -844,7 +844,7 @@ class DataModule(pl.LightningDataModule):
 
         Examples::
 
-            data_module = DataModule.from_pygdatasequence(
+            data_module = DataModule.from_data_sequence(
                 train_files=[
                     Any(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(3,2))),
                     Any(torch_geometric.utils.from_networkx(nx.tetrahedral_graph()))
