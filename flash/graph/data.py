@@ -14,20 +14,15 @@
 
 import copy
 import json
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
-
-from networkx.readwrite.json_graph.adjacency import adjacency_graph
-from networkx.readwrite.json_graph.cytoscape import cytoscape_graph
-from networkx.readwrite.json_graph.jit import jit_graph
-from networkx.readwrite.json_graph.node_link import node_link_graph
-
-_GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
+from typing import Any, Dict, Optional, Sequence
 
 from torch.utils.data import Dataset
 
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
+
+_GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
 
 if _GRAPH_AVAILABLE:
     from networkx.readwrite import (
