@@ -103,10 +103,21 @@ class IceVisionTask(Task):
         self.adapter = adapter(model=self.model, metrics=metrics)
 
     @classmethod
-    def available_backbones(cls, head: str) -> List[str]:
-        metadata = cls.heads.get(head, with_metadata=True)
-        backbones = metadata["metadata"]["backbones"]
-        return backbones.available_keys()
+    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
+        if head is None:
+            heads = cls.available_heads()
+        else:
+            heads = [head]
+
+        result = {}
+        for head in heads:
+            metadata = cls.heads.get(head, with_metadata=True)
+            backbones = metadata["metadata"]["backbones"]
+            result[head] = backbones.available_keys()
+
+        if len(result) == 1:
+            result = next(iter(result.values()[0]))
+        return result
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
