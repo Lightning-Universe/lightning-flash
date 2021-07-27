@@ -809,7 +809,7 @@ class DataModule(pl.LightningDataModule):
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
         :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.TENSOR`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.SEQUENCE`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
