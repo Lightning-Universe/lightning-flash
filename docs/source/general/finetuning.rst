@@ -79,6 +79,11 @@ In this strategy, the backbone and the head are unfrozen from the beginning.
 
     trainer.finetune(model, datamodule, strategy="no_freeze")
 
+.. testoutput:: strategies
+    :hide:
+
+    ...
+
 In pseudocode, this looks like:
 
 .. code-block:: python
