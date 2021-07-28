@@ -106,7 +106,10 @@ class GraphPathsDataSource(PathsDataSource, GraphDataSource):
         data = from_networkx(graph)
         if not data.x:
             warn(f"The imported data object does not contain any feature x. Will concatenate all other node_features as data.x")
-            data.x = torch.cat([data[key] for key, item in data.items() if item.shape[0] == data.num_nodes], dim = -1)
+            data_x_list = []
+            for key in list(graph.nodes(data=True))[0][1].keys():
+                data_x_list.append(data.__dict__[key])
+            data.x = torch.cat(data_x_list, dim = -1)
         return super()._build_sample(data)
 
     def default_loader(self, path: str) -> Any:

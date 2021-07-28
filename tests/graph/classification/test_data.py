@@ -199,6 +199,9 @@ class TestGraphClassificationData:
     def test_from_data_sequence(self):
         G = nx.karate_club_graph()
         data = from_networkx(G)
-        data.x = torch.cat([data[key] for key, item in data.items() if item.shape[0] == data.num_nodes], dim = -1)
+        data_x_list = []
+        for key in list(G.nodes(data=True))[0][1].keys():
+            data_x_list.append(data.__dict__[key])
+        data.x = torch.cat(data_x_list, dim = -1)
         data_list = [data, data, data]
         GraphClassificationData.from_data_sequence(data_list)
