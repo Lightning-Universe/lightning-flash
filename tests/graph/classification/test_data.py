@@ -18,6 +18,7 @@ from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess
 from tests.helpers.utils import _GRAPH_TESTING
+import torch
 
 if _GRAPH_AVAILABLE:
     import networkx as nx
@@ -39,6 +40,7 @@ if _GRAPH_AVAILABLE:
     from torch_geometric.data.data import Data as PyGData
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
+    from torch_geometric.utils import from_networkx
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
@@ -196,6 +198,7 @@ class TestGraphClassificationData:
 
     def test_from_data_sequence(self):
         G = nx.karate_club_graph()
-
-        data_list = [PyGData(G), PyGData(G), PyGData(G)]
+        data = from_networkx(G)
+        data.x = torch.cat([data[key] for key, item in data.items() if item.shape[0] == data.num_nodes], dim = -1)
+        data_list = [data, data, data]
         GraphClassificationData.from_data_sequence(data_list)
