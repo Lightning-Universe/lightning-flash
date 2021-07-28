@@ -43,6 +43,9 @@ def _module_available(module_path: str) -> bool:
     except ModuleNotFoundError:
         # Python 3.7+
         return False
+    except ValueError:
+        # Sometimes __spec__ can be None and gives a ValueError
+        return True
 
 
 def _compare_version(package: str, op, version) -> bool:
@@ -59,7 +62,7 @@ def _compare_version(package: str, op, version) -> bool:
     try:
         pkg_version = Version(pkg.__version__)
     except TypeError:
-        # this is mock by sphinx, so it shall return True ro generate all summaries
+        # this is mock by sphinx, so it shall return True to generate all summaries
         return True
     return op(pkg_version, Version(version))
 
@@ -116,7 +119,7 @@ _IMAGE_AVAILABLE = all([
     _SEGMENTATION_MODELS_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
-_POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE
+_POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
 _AUDIO_AVAILABLE = all([_ASTEROID_AVAILABLE, _TORCHAUDIO_AVAILABLE, _SOUNDFILE_AVAILABLE, _TRANSFORMERS_AVAILABLE])
 _GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
 
