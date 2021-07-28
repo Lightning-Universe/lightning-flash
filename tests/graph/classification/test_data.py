@@ -202,6 +202,6 @@ class TestGraphClassificationData:
         data_x_list = []
         for key in list(G.nodes(data=True))[0][1].keys():
             data_x_list.append(data.__dict__[key])
-        data.x = torch.cat(data_x_list, dim = -1)
+        data.x = torch.cat(data_x_list, dim=-1)
         data_list = [data, data, data]
         GraphClassificationData.from_data_sequence(data_list)
