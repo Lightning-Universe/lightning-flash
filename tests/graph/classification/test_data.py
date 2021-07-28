@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
+import yaml
 
 from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
@@ -33,7 +34,6 @@ if _GRAPH_AVAILABLE:
         write_gpickle,
         write_graphml,
         write_pajek,
-        write_yaml,
     )
     from networkx.readwrite.nx_shp import write_shp
     from torch_geometric.data.data import Data as PyGData
@@ -176,7 +176,7 @@ class TestGraphClassificationData:
         write_shp(G, tmpdir / 'data.shp')
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_yaml(G, tmpdir / 'data.yaml')
+        yaml.dump(G, tmpdir / 'data.yaml')
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
         node_link_data(G, tmpdir / 'data.json')

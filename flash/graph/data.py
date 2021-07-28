@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import copy
 import json
 from typing import Any, Dict, Mapping, Optional, Sequence
 
+import yaml
 from torch.utils.data import Dataset
 
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
@@ -37,7 +37,6 @@ if _GRAPH_AVAILABLE:
         read_graphml,
         read_leda,
         read_pajek,
-        read_yaml,
         tree_graph,
     )
     from torch_geometric.data import Data
@@ -117,7 +116,7 @@ class GraphPathsDataSource(PathsDataSource):
         elif path.endswith(".leda"):
             return read_leda(path)
         elif path.endswith(".yaml"):
-            return read_yaml(path)
+            return yaml.load(path, Loader=yaml.FullLoader)
         elif path.endswith(".net"):
             return read_pajek(path)
         elif path.endswith(".edgelist"):
