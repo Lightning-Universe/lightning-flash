@@ -11,15 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
-import urllib.error
-from functools import partial
-from typing import Tuple, Union
-
 import torch
-from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
 from torch.hub import load_state_dict_from_url
+
+from functools import partial
+from typing import Tuple, Union
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE
@@ -31,37 +28,11 @@ if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-MOBILENET_MODELS = ["mobilenet_v2"]
-VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
-RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnext50_32x4d", "resnext101_32x8d"]
-DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
-TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS
 
-IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
-OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
-
-
-def catch_url_error(fn):
-
-    @functools.wraps(fn)
-    def wrapper(*args, pretrained=False, **kwargs):
-        try:
-            return fn(*args, pretrained=pretrained, **kwargs)
-        except urllib.error.URLError:
-            result = fn(*args, pretrained=False, **kwargs)
-            rank_zero_warn(
-                "Failed to download pretrained weights for the selected backbone. The backbone has been created with"
-                " `pretrained=False` instead. If you are loading from a local checkpoint, this warning can be safely"
-                " ignored.", UserWarning
-            )
-            return result
-
-    return wrapper
 
 
 if _TORCHVISION_AVAILABLE:
 
-    HTTPS_VISSL = "https://dl.fbaipublicfiles.com/vissl/model_zoo/"
     RESNET50_WEIGHTS_PATHS = {
         "supervised": None,
         "simclr": HTTPS_VISSL + "simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/"
@@ -200,6 +171,52 @@ if _TIMM_AVAILABLE:
         IMAGE_CLASSIFIER_BACKBONES(
             fn=catch_url_error(partial(_fn_timm, model_name)), name=model_name, namespace="vision", package="timm"
         )
+
+
+# Wide resnet models from self-supervised training pipelines
+RESNET50_W2_WEIGHTS = {
+    'swav': None,
+    'simclr': HTTPS_VISSL + 'simclr_rn50w2_1000ep_simclr_8node_resnet_16_07_20.e1e3bbf0/'
+        'model_final_checkpoint_phase999.torch',
+}
+
+@IMAGE_CLASSIFIER_BACKBONES(name='resnet50-w2', namespace="vision", package="multiple",
+                            type="resnet", weights_paths=RESNET50_W2_WEIGHTS)
+def _wide_resnet50_w2(pretrained: str, weights_paths: dict = RESNET50_W2_WEIGHTS) -> Tuple[nn.Module, int]:
+    if not type(pretrained) == str:
+        raise TypeError('pretrained param should be str.')
+
+    if pretrained not in weights_paths:
+        raise KeyError(
+            "Requested weights for Resnet50-w2 not available,"
+            " choose from one of {0}".format(list(weights_paths.keys()))
+        )
+
+    backbone = torch.hub.load('facebookresearch/swav', 'resnet50w2')
+
+    model_weights = None
+    if pretrained != 'swav':
+        device = next(backbone.parameters()).get_device()
+        model_weights = load_state_dict_from_url(
+            weights_paths[pretrained],
+            map_location=torch.device('cpu') if device == -1 else torch.device(device)
+        )
+
+    return backbone, 4096
+
+
+RESNET50_W4_WEIGHTS = {
+    'swav': None,
+    'simclr': HTTPS_VISSL + 'simclr_rn50w4_1000ep_bs32_16node_simclr_8node_resnet_28_07_20.9e20b0ae/'
+        'model_final_checkpoint_phase999.torch',
+}
+
+@IMAGE_CLASSIFIER_BACKBONES(name='resnet50-w4', namespace="vision", package="multiple",
+                            type="resnet", weights_paths=RESNET50_W4_WEIGHTS)
+def _wide_resnet50_w4(pretrained: str, weights_paths: dict = RESNET50_W4_WEIGHTS) -> Tuple[nn.Module, int]:
+    backbone = torch.hub.load('facebookresearch/swav', 'resnet50w4')
+
+    return backbone, 8192
 
 
 # Paper: Emerging Properties in Self-Supervised Vision Transformers
