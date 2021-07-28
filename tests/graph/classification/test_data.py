@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
+import torch
 import yaml
 
 from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess
 from tests.helpers.utils import _GRAPH_TESTING
-import torch
 
 if _GRAPH_AVAILABLE:
     import networkx as nx
@@ -199,6 +199,6 @@ class TestGraphClassificationData:
     def test_from_data_sequence(self):
         G = nx.karate_club_graph()
         data = from_networkx(G)
-        data.x = torch.cat([data[key] for key, item in data.items() if item.shape[0] == data.num_nodes], dim = -1)
+        data.x = torch.cat([data[key] for key, item in data.items() if item.shape[0] == data.num_nodes], dim=-1)
         data_list = [data, data, data]
         GraphClassificationData.from_data_sequence(data_list)

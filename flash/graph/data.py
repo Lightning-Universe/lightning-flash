@@ -15,12 +15,12 @@ import json
 from typing import Any, Dict, Mapping, Optional, Sequence
 from warnings import warn
 
+import torch
 import yaml
 from torch.utils.data import Dataset
 
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
-import torch
 
 _GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
 
@@ -105,8 +105,10 @@ class GraphPathsDataSource(PathsDataSource, GraphDataSource):
         graph = self.default_loader(graph_path, self.json_data_type)
         data = from_networkx(graph)
         if not data.x:
-            warn(f"The imported data object does not contain any feature x. Will concatenate all other node_features as data.x")
-            data.x = torch.cat([data[key] for key, item in data.items() if item.shape[0] == data.num_nodes], dim = -1)
+            warn(
+                f"The imported data object does not contain any feature x. Will concatenate all other node_features as data.x"
+            )
+            data.x = torch.cat([data[key] for key, item in data.items() if item.shape[0] == data.num_nodes], dim=-1)
         return super()._build_sample(data)
 
     def default_loader(self, path: str) -> Any:
