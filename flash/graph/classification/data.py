@@ -44,7 +44,7 @@ class GraphClassificationPreprocess(Preprocess):
                 DefaultDataSources.SEQUENCE: GraphSequenceDataSource(),
                 DefaultDataSources.FOLDERS: GraphPathsDataSource()
             },
-            default_data_source=DefaultDataSources.DATASET,
+            default_data_source=DefaultDataSources.SEQUENCE,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

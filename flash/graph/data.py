@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import copy
 import json
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -46,7 +45,20 @@ else:
     Data = object
 
 
-class GraphDatasetDataSource(DatasetDataSource):
+class GraphDataSource:
+
+    def _build_sample(self, sample: Any) -> Mapping[str, Any]:
+        target = None
+        if isinstance(sample, tuple) and len(sample) == 2:
+            sample, target = sample
+
+        if target is not None:
+            sample.y = target
+
+        return sample
+
+
+class GraphDatasetDataSource(DatasetDataSource, GraphDataSource):
 
     @requires_extras("graph")
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
@@ -58,33 +70,27 @@ class GraphDatasetDataSource(DatasetDataSource):
         return data
 
     def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
-        if isinstance(sample, Data):
-            return sample
-        return super().load_sample(sample, dataset=dataset)
+        return super()._build_sample(sample)
 
 
-class GraphSequenceDataSource(SequenceDataSource[Data]):
+class GraphSequenceDataSource(SequenceDataSource[Data], GraphDataSource):
 
     @requires_extras("graph")
-    def load_data(self, data: Sequence[Data]) -> Sequence:
-        # Converting the PyGDataList to the tuple of sequences that load_data expects:
+    def load_data(self, data: Sequence[Data], dataset: Optional[Any] = None) -> Sequence:
+        data, targets = data
 
-        # Recover the labels
-        data_list_y = [data[i].y for i in range(len(data))]
+        if targets is None:
+            return data
+        return list(zip(data, targets))
 
-        # Recover the data
-        data_list_x = copy(data)
-        for data_list_xi in data_list_x:
-            data_list_xi.y = None
-
-        # Create data_list
-        data_list = (data_list_x, data_list_y)
-        data = super().load_data(data_list)
-
+    def predict_load_data(self, data: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
         return data
 
+    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+        return super()._build_sample(sample)
 
-class GraphPathsDataSource(PathsDataSource):
+
+class GraphPathsDataSource(PathsDataSource, GraphDataSource):
 
     def __init__(self, json_data_type=None):
         super().__init__(extensions=_GRAPH_EXTENSIONS)
@@ -95,14 +101,8 @@ class GraphPathsDataSource(PathsDataSource):
         """json_data_type required only if data format is .json"""
         graph_path = sample[DefaultDataKeys.INPUT]
         graph = self.default_loader(graph_path, self.json_data_type)
-        sample[DefaultDataKeys.INPUT] = from_networkx(graph)
-        sample[DefaultDataKeys.METADATA] = {
-            "filepath": graph_path,
-            "num_nodes": graph.number_of_nodes(),
-            "num_edges": graph.number_of_edges(),
-            "num_features": len(list(graph.nodes(data=True))[0][1].keys()),
-        }
-        return sample
+        graph = from_networkx(graph)
+        return super()._build_sample(graph)
 
     def default_loader(self, path: str) -> Any:
         if path.endswith(".gexf"):

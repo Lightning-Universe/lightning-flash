@@ -844,11 +844,11 @@ class DataModule(pl.LightningDataModule):
 
         Examples::
 
-            data_module = DataModule.from_data_sequence(
-                train_files=[
-                    Any(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(3,2))),
-                    Any(torch_geometric.utils.from_networkx(nx.tetrahedral_graph()))
-                    Any(torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(4,1))),
+            data_module = GraphClassificationData.from_data_sequence(
+                train_data=[
+                    torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(3,2)),
+                    torch_geometric.utils.from_networkx(nx.tetrahedral_graph()),
+                    torch_geometric.utils.from_networkx(nx.complete_bipartite_graph(4,1)),
                 ],
                 train_targets=[1, 0, 1],
                 train_transform={
@@ -856,24 +856,6 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        if not train_targets and train_data:
-            train_targets = []
-            for dat in train_data:
-                train_targets.append(dat.y)
-                dat.y = None
-
-        if not val_targets and val_data:
-            val_targets = []
-            for dat in val_data:
-                val_targets.append(dat.y)
-                dat.y = None
-
-        if not test_targets and test_data:
-            test_targets = []
-            for dat in test_data:
-                test_targets.append(dat.y)
-                dat.y = None
-
         return cls.from_data_source(
             DefaultDataSources.SEQUENCE,
             (train_data, train_targets),
