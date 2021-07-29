@@ -240,7 +240,7 @@ class TabularPostprocess(Postprocess):
 
 
 class TabularData(DataModule):
-    """Data module for tabular tasks"""
+    """Data module for tabular tasks."""
 
     preprocess_cls = TabularPreprocess
     postprocess_cls = TabularPostprocess

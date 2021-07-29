@@ -21,8 +21,8 @@ from flash.text.seq2seq.core.model import Seq2SeqTask
 
 
 class QuestionAnsweringTask(Seq2SeqTask):
-    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for Seq2Seq text question answering. For more details,
-    see `question_answering`.
+    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for Seq2Seq text question answering. For more
+    details, see `question_answering`.
 
     You can change the backbone to any question answering model from `HuggingFace/transformers
     <https://huggingface.co/models?filter=pytorch&pipeline_tag=question-answering>`_ using the ``backbone`` argument.
@@ -78,7 +78,5 @@ class QuestionAnsweringTask(Seq2SeqTask):
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         assert history[-1]["rouge1_recall"] > 0.2

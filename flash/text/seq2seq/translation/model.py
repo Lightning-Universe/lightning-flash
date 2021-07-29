@@ -84,7 +84,5 @@ class TranslationTask(Seq2SeqTask):
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         assert history[-1]["val_bleu_score"] > 0.6

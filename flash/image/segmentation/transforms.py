@@ -29,7 +29,7 @@ if _TORCHVISION_AVAILABLE:
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
-    """ Convert the target mask to long and remove the channel dimension. """
+    """Convert the target mask to long and remove the channel dimension."""
     return tensor.long().squeeze(1)
 
 
@@ -48,7 +48,8 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
 
 
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """During training, we apply the default transforms with additional ``RandomHorizontalFlip`` and ``ColorJitter``."""
+    """During training, we apply the default transforms with additional ``RandomHorizontalFlip`` and
+    ``ColorJitter``."""
     return merge_transforms(
         default_transforms(image_size), {
             "post_tensor_transform": nn.Sequential(

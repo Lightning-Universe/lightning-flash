@@ -66,10 +66,8 @@ class BenchmarkConvergenceCI(Callback):
 
 
 def predict_context(func: Callable) -> Callable:
-    """
-    This decorator is used as context manager
-    to put model in eval mode before running predict and reset to train after.
-    """
+    """This decorator is used as context manager to put model in eval mode before running predict and reset to
+    train after."""
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
@@ -177,8 +175,9 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         super().__setattr__(key, value)
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
-        """
-        The training/validation/test step. Override for custom behavior.
+        """The training/validation/test step.
+
+        Override for custom behavior.
         """
         x, y = batch
         y_hat = self(x)
@@ -251,8 +250,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
-        """
-        Predict function for raw data or processed data
+        """Predict function for raw data or processed data.
 
         Args:
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
@@ -359,8 +357,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def serializer(self) -> Optional[Serializer]:
-        """The current :class:`.Serializer` associated with this model. If this property was set to a mapping
-        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`."""
+        """The current :class:`.Serializer` associated with this model.
+
+        If this property was set to a mapping
+        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`.
+        """
         return self._serializer
 
     @torch.jit.unused
@@ -465,8 +466,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def data_pipeline(self) -> DataPipeline:
-        """The current :class:`.DataPipeline`. If set, the new value will override the :class:`.Task` defaults. See
-        :py:meth:`~build_data_pipeline` for more details on the resolution order."""
+        """The current :class:`.DataPipeline`.
+
+        If set, the new value will override the :class:`.Task` defaults. See
+        :py:meth:`~build_data_pipeline` for more details on the resolution order.
+        """
         return self.build_data_pipeline()
 
     @torch.jit.unused

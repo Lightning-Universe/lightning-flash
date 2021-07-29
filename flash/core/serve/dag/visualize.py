@@ -54,7 +54,7 @@ def visualize(
     *,
     no_optimization: bool = False,
 ):
-    """Visualize a graph"""
+    """Visualize a graph."""
     dsk = tc.pre_optimization_dsk if no_optimization else tc.dsk
     dependencies, dependents = get_deps(dsk)
     g = _dag_to_graphviz(

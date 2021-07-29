@@ -35,21 +35,18 @@ class BasePreprocess(ABC):
 
     @abstractmethod
     def get_state_dict(self) -> Dict[str, Any]:
-        """
-        Override this method to return state_dict
-        """
+        """Override this method to return state_dict."""
 
     @abstractclassmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        """
-        Override this method to load from state_dict
-        """
+        """Override this method to load from state_dict."""
 
 
 class Preprocess(BasePreprocess, Properties):
-    """The :class:`~flash.core.data.process.Preprocess` encapsulates all the data processing logic that should run before
-    the data is passed to the model. It is particularly useful when you want to provide an end to end implementation
-    which works with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
+    """The :class:`~flash.core.data.process.Preprocess` encapsulates all the data processing logic that should run
+    before the data is passed to the model. It is particularly useful when you want to provide an end to end
+    implementation which works with 4 different stages: ``train``, ``validation``, ``test``,  and inference
+    (``predict``).
 
     The :class:`~flash.core.data.process.Preprocess` supports the following hooks:
 
@@ -177,7 +174,6 @@ class Preprocess(BasePreprocess, Properties):
 
                 elif self.predicting:
                     # logic for predicting
-
     """
 
     def __init__(
@@ -312,7 +308,7 @@ class Preprocess(BasePreprocess, Properties):
 
     @property
     def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
-        """ The transforms currently being used by this :class:`~flash.core.data.process.Preprocess`. """
+        """The transforms currently being used by this :class:`~flash.core.data.process.Preprocess`."""
         return {
             "train_transform": self.train_transform,
             "val_transform": self.val_transform,
@@ -336,19 +332,22 @@ class Preprocess(BasePreprocess, Properties):
 
     @staticmethod
     def default_transforms() -> Optional[Dict[str, Callable]]:
-        """ The default transforms to use. Will be overridden by transforms passed to the ``__init__``. """
+        """The default transforms to use.
+
+        Will be overridden by transforms passed to the ``__init__``.
+        """
         return None
 
     def pre_tensor_transform(self, sample: Any) -> Any:
-        """ Transforms to apply on a single object. """
+        """Transforms to apply on a single object."""
         return self.current_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
-        """ Transforms to convert single object to a tensor. """
+        """Transforms to convert single object to a tensor."""
         return self.current_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
-        """ Transforms to apply on a tensor. """
+        """Transforms to apply on a tensor."""
         return self.current_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
@@ -362,7 +361,7 @@ class Preprocess(BasePreprocess, Properties):
         return self.current_transform(batch)
 
     def collate(self, samples: Sequence, metadata=None) -> Any:
-        """ Transform to convert a sequence of samples to a collated batch. """
+        """Transform to convert a sequence of samples to a collated batch."""
         current_transform = self.current_transform
         if current_transform is self._identity:
             current_transform = self._default_collate
@@ -396,8 +395,7 @@ class Preprocess(BasePreprocess, Properties):
         return self.current_transform(sample)
 
     def per_batch_transform_on_device(self, batch: Any) -> Any:
-        """
-        Transforms to apply to a whole batch (if possible use this for efficiency).
+        """Transforms to apply to a whole batch (if possible use this for efficiency).
 
         .. note::
 
@@ -407,7 +405,8 @@ class Preprocess(BasePreprocess, Properties):
         return self.current_transform(batch)
 
     def available_data_sources(self) -> Sequence[str]:
-        """Get the list of available data source names for use with this :class:`~flash.core.data.process.Preprocess`.
+        """Get the list of available data source names for use with this
+        :class:`~flash.core.data.process.Preprocess`.
 
         Returns:
             The list of data source names.
@@ -468,10 +467,8 @@ class DefaultPreprocess(Preprocess):
 
 
 class Postprocess(Properties):
-    """
-    The :class:`~flash.core.data.process.Postprocess` encapsulates all the data processing logic that should run after
-    the model.
-    """
+    """The :class:`~flash.core.data.process.Postprocess` encapsulates all the data processing logic that should run
+    after the model."""
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()
@@ -481,6 +478,7 @@ class Postprocess(Properties):
     @staticmethod
     def per_batch_transform(batch: Any) -> Any:
         """Transforms to apply on a whole batch before uncollation to individual samples.
+
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return batch
@@ -488,19 +486,22 @@ class Postprocess(Properties):
     @staticmethod
     def per_sample_transform(sample: Any) -> Any:
         """Transforms to apply to a single sample after splitting up the batch.
+
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return sample
 
     @staticmethod
     def uncollate(batch: Any) -> Any:
-        """Uncollates a batch into single samples. Tries to preserve the type whereever possible."""
+        """Uncollates a batch into single samples.
+
+        Tries to preserve the type whereever possible.
+        """
         return default_uncollate(batch)
 
     @staticmethod
     def save_data(data: Any, path: str) -> None:
-        """Saves all data together to a single path.
-        """
+        """Saves all data together to a single path."""
         torch.save(data, path)
 
     @staticmethod
@@ -522,8 +523,8 @@ class Postprocess(Properties):
 
 
 class Serializer(Properties):
-    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model output into
-    the desired output format when predicting."""
+    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model output
+    into the desired output format when predicting."""
 
     def __init__(self):
         super().__init__()
@@ -556,8 +557,8 @@ class Serializer(Properties):
 
 
 class SerializerMapping(Serializer):
-    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the dictionary
-    to be passed to it's own :class:`.Serializer`."""
+    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the
+    dictionary to be passed to it's own :class:`.Serializer`."""
 
     def __init__(self, serializers: Mapping[str, Serializer]):
         super().__init__()

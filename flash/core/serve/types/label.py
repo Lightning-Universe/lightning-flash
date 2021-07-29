@@ -9,8 +9,7 @@ from flash.core.serve.types.base import BaseType
 
 @dataclass(unsafe_hash=True)
 class Label(BaseType):
-    """
-    Type specifically made for labels that are mapped to a key.
+    """Type specifically made for labels that are mapped to a key.
 
     Parameters
     ----------

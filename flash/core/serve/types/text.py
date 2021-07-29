@@ -9,8 +9,7 @@ from flash.core.serve.types.base import BaseType
 
 @dataclass(unsafe_hash=True)
 class Text(BaseType):
-    """
-    Type for converting string to tensor and back
+    """Type for converting string to tensor and back.
 
     Parameters
     ----------

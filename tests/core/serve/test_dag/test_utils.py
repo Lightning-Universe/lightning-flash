@@ -52,7 +52,7 @@ def test_funcname():
 def test_numpy_vectorize_funcname():
 
     def myfunc(a, b):
-        "Return a-b if a>b, otherwise return a+b"
+        """Return a-b if a>b, otherwise return a+b."""
         if a > b:
             return a - b
         return a + b

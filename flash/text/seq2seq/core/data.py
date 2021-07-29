@@ -295,7 +295,7 @@ class Seq2SeqPreprocess(Preprocess):
         return cls(**state_dict)
 
     def collate(self, samples: Any) -> Tensor:
-        """Override to convert a set of samples to a batch"""
+        """Override to convert a set of samples to a batch."""
         return default_data_collator(samples)
 
 
