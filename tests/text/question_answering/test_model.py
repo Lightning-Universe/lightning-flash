@@ -21,8 +21,8 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
+from flash.text.question_answering.data import QuestionAnsweringPreprocess
 from flash.text.seq2seq.core.data import Seq2SeqPostprocess
-from flash.text.seq2seq.question_answering.data import QuestionAnsweringPreprocess
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========

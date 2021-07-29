@@ -21,23 +21,23 @@ from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 
-TEST_CSV_DATA = """input,target
-this is a question one,this is an answer one
-this is a question two,this is an answer two
-this is a question three,this is an answer three
+TEST_CSV_DATA = """question,context,answer
+this is a question one,this is a context one,this is an answer one
+this is a question two,this is a context two,this is an answer two
+this is a question three,this is a context three,this is an answer three
 """
 
 TEST_JSON_DATA = """
-{"input": "this is a question one","target":"this is an answer one"}
-{"input": "this is a question two","target":"this is an answer two"}
-{"input": "this is a question three","target":"this is an answer three"}
+{"question": "this is a question one","context": "this is a context one","answer":"this is an answer one"}
+{"question": "this is a question two","context": "this is a context two","answer":"this is an answer two"}
+{"question": "this is a question three","context": "this is a context three","answer":"this is an answer three"}
 """
 
 TEST_JSON_DATA_FIELD = """{"data": [
-{"input": "this is a question one","target":"this is an answer one"},
-{"input": "this is a question two","target":"this is an answer two"},
-{"input": "this is a question three","target":"this is an answer three"}]}
-"""
+{"question": "this is a question one","context": "this is a context one","answer":"this is an answer one"}
+{"question": "this is a question two","context": "this is a context two","answer":"this is an answer two"}
+{"question": "this is a question three","context": "this is a context three","answer":"this is an answer three"}
+]}"""
 
 
 def csv_data(tmpdir):
@@ -62,7 +62,14 @@ def json_data_with_field(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = QuestionAnsweringData.from_csv("input", "target", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
+    dm = QuestionAnsweringData.from_csv(
+        question_column_name="question",
+        context_column_name="context",
+        answer_column_name="answer",
+        backbone=TEST_BACKBONE,
+        train_file=csv_path,
+        batch_size=1
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
@@ -73,8 +80,9 @@ def test_from_csv(tmpdir):
 def test_from_files(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = QuestionAnsweringData.from_csv(
-        "input",
-        "target",
+        question_column_name="question",
+        context_column_name="context",
+        answer_column_name="answer",
         backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
@@ -98,8 +106,9 @@ def test_postprocess_tokenizer(tmpdir):
     backbone = "sshleifer/bart-tiny-random"
     csv_path = csv_data(tmpdir)
     dm = QuestionAnsweringData.from_csv(
-        "input",
-        "target",
+        question_column_name="question",
+        context_column_name="context",
+        answer_column_name="answer",
         backbone=backbone,
         train_file=csv_path,
         batch_size=1,
@@ -114,7 +123,14 @@ def test_postprocess_tokenizer(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
-    dm = QuestionAnsweringData.from_json("input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
+    dm = QuestionAnsweringData.from_json(
+        question_column_name="question",
+        context_column_name="context",
+        answer_column_name="answer",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
@@ -125,7 +141,13 @@ def test_from_json(tmpdir):
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir)
     dm = QuestionAnsweringData.from_json(
-        "input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, field="data"
+        question_column_name="question",
+        context_column_name="context",
+        answer_column_name="answer",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1,
+        field="data"
     )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
