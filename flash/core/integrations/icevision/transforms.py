@@ -28,7 +28,8 @@ def collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence[Any]]:
 
 @requires_extras("image")
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms for object detection: convert the image and targets to a tensor, collate the batch."""
+    """The default transforms for object detection: convert the image and targets to a tensor, collate the
+    batch."""
     return {
         # "pre_tensor_transform": ApplyToKeys(
         #     DefaultDataKeys.INPUT,
@@ -40,7 +41,8 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
 
 @requires_extras("image")
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms for object detection: convert the image and targets to a tensor, collate the batch."""
+    """The default transforms for object detection: convert the image and targets to a tensor, collate the
+    batch."""
     return {
         # "pre_tensor_transform": ApplyToKeys(
         #     DefaultDataKeys.INPUT,

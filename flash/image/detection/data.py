@@ -203,8 +203,8 @@ class ObjectDetectionData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders and
-        annotation files in the COCO format.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
+        and annotation files in the COCO format.
 
         Args:
             train_folder: The folder containing the train data.
@@ -282,8 +282,8 @@ class ObjectDetectionData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders and
-        annotation files in the VOC format.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
+        and annotation files in the VOC format.
 
         Args:
             train_folder: The folder containing the train data.
@@ -361,8 +361,8 @@ class ObjectDetectionData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders and
-        annotation files in the VIA format.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
+        and annotation files in the VIA format.
 
         Args:
             train_folder: The folder containing the train data.

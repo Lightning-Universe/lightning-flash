@@ -81,7 +81,5 @@ class ObjectDetector(AdapterTask):
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         # todo

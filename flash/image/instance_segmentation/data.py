@@ -97,8 +97,8 @@ class InstanceSegmentationData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the given
-        data folders and annotation files in the COCO format.
+        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
+        given data folders and annotation files in the COCO format.
 
         Args:
             train_folder: The folder containing the train data.
@@ -176,8 +176,8 @@ class InstanceSegmentationData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the given
-        data folders and annotation files in the VOC format.
+        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
+        given data folders and annotation files in the VOC format.
 
         Args:
             train_folder: The folder containing the train data.

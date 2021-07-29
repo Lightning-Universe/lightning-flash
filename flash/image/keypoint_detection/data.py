@@ -96,8 +96,8 @@ class KeypointDetectionData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.keypoint_detection.data.KeypointDetectionData` object from the given
-        data folders and annotation files in the COCO format.
+        """Creates a :class:`~flash.image.keypoint_detection.data.KeypointDetectionData` object from the given data
+        folders and annotation files in the COCO format.
 
         Args:
             train_folder: The folder containing the train data.
