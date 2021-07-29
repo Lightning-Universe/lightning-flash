@@ -16,6 +16,7 @@ import importlib
 import operator
 import types
 from importlib.util import find_spec
+from typing import Callable, List, Union
 
 from pkg_resources import DistributionNotFound
 
@@ -42,6 +43,9 @@ def _module_available(module_path: str) -> bool:
     except ModuleNotFoundError:
         # Python 3.7+
         return False
+    except ValueError:
+        # Sometimes __spec__ can be None and gives a ValueError
+        return True
 
 
 def _compare_version(package: str, op, version) -> bool:
@@ -58,7 +62,7 @@ def _compare_version(package: str, op, version) -> bool:
     try:
         pkg_version = Version(pkg.__version__)
     except TypeError:
-        # this is mock by sphinx, so it shall return True ro generate all summaries
+        # this is mock by sphinx, so it shall return True to generate all summaries
         return True
     return op(pkg_version, Version(version))
 
@@ -86,14 +90,24 @@ _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
 _ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
+_SOUNDFILE_AVAILABLE = _module_available("soundfile")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
+_TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
+_ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
+_SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
+_DATASETS_AVAILABLE = _module_available("datasets")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
 
-_TEXT_AVAILABLE = _TRANSFORMERS_AVAILABLE
+_TEXT_AVAILABLE = all([
+    _TRANSFORMERS_AVAILABLE,
+    _ROUGE_SCORE_AVAILABLE,
+    _SENTENCEPIECE_AVAILABLE,
+    _DATASETS_AVAILABLE,
+])
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
 _IMAGE_AVAILABLE = all([
@@ -105,10 +119,8 @@ _IMAGE_AVAILABLE = all([
     _SEGMENTATION_MODELS_AVAILABLE,
 ])
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
-_POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE
-_AUDIO_AVAILABLE = all([
-    _ASTEROID_AVAILABLE,
-])
+_POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
+_AUDIO_AVAILABLE = all([_ASTEROID_AVAILABLE, _TORCHAUDIO_AVAILABLE, _SOUNDFILE_AVAILABLE, _TRANSFORMERS_AVAILABLE])
 _GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
@@ -123,15 +135,22 @@ _EXTRAS_AVAILABLE = {
 }
 
 
-def _requires(module_path: str, module_available: bool):
+def _requires(
+    module_paths: Union[str, List],
+    module_available: Callable[[str], bool],
+    formatter: Callable[[List[str]], str],
+):
+
+    if not isinstance(module_paths, list):
+        module_paths = [module_paths]
 
     def decorator(func):
-        if not module_available:
+        if not all(module_available(module_path) for module_path in module_paths):
 
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 raise ModuleNotFoundError(
-                    f"Required dependencies not available. Please run: pip install '{module_path}'"
+                    f"Required dependencies not available. Please run: pip install {formatter(module_paths)}"
                 )
 
             return wrapper
@@ -141,12 +160,14 @@ def _requires(module_path: str, module_available: bool):
     return decorator
 
 
-def requires(module_path: str):
-    return _requires(module_path, _module_available(module_path))
+def requires(module_paths: Union[str, List]):
+    return _requires(module_paths, _module_available, lambda module_paths: " ".join(module_paths))
 
 
-def requires_extras(extras: str):
-    return _requires(f"lightning-flash[{extras}]", _EXTRAS_AVAILABLE[extras])
+def requires_extras(extras: Union[str, List]):
+    return _requires(
+        extras, lambda extras: _EXTRAS_AVAILABLE[extras], lambda extras: f"'lightning-flash[{','.join(extras)}]'"
+    )
 
 
 def lazy_import(module_name, callback=None):

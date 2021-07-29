@@ -100,7 +100,7 @@ Example::
 
     from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES
 
-    print(IMAGE_CLASSIFIER_BACKBONES.available_models())
+    print(IMAGE_CLASSIFIER_BACKBONES.available_keys())
     """ out:
     ['adv_inception_v3', 'cspdarknet53', 'cspdarknet53_iabn', 430+.., 'xception71']
     """
