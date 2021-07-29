@@ -56,7 +56,7 @@ Here's the full example:
     :lines: 14-
 
 Flash automatically takes care of Image transformations for you. But sometimes it is not enough and you want to customize the transformations.
-You can easily customize :ref:`Preprocessing<https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/data/process.py>` method in the `data_module`.
+You can easily customize `Preprocessing<https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/data/process.py>`_ method in the `data_module`.
 The base `Preprocess` class defines 7 methods for different stages in the data loading pipeline.
 To apply image augmentations you can directly use `default_transforms` defined in Flash Image module and then add your merge your custom defined image transformations with it.
 In this example, we will load the default transforms and merge it with custom `torchvision` transformations. We use `post_tensor_transform` since the transformations will be applied
