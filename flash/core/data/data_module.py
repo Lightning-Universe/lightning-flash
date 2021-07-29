@@ -138,22 +138,22 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def train_dataset(self) -> Optional[Dataset]:
-        """This property returns the train dataset"""
+        """This property returns the train dataset."""
         return self._train_ds
 
     @property
     def val_dataset(self) -> Optional[Dataset]:
-        """This property returns the validation dataset"""
+        """This property returns the validation dataset."""
         return self._val_ds
 
     @property
     def test_dataset(self) -> Optional[Dataset]:
-        """This property returns the test dataset"""
+        """This property returns the test dataset."""
         return self._test_ds
 
     @property
     def predict_dataset(self) -> Optional[Dataset]:
-        """This property returns the predict dataset"""
+        """This property returns the predict dataset."""
         return self._predict_ds
 
     @property
@@ -166,8 +166,8 @@ class DataModule(pl.LightningDataModule):
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        """
-        This function is used to configure a :class:`~flash.core.data.callback.BaseDataFetcher`.
+        """This function is used to configure a :class:`~flash.core.data.callback.BaseDataFetcher`.
+
         Override with your custom one.
         """
         return BaseDataFetcher()
@@ -192,9 +192,7 @@ class DataModule(pl.LightningDataModule):
         return iterator
 
     def _show_batch(self, stage: str, func_names: Union[str, List[str]], reset: bool = True) -> None:
-        """
-        This function is used to handle transforms profiling for batch visualization.
-        """
+        """This function is used to handle transforms profiling for batch visualization."""
         # don't show in CI
         if os.getenv("FLASH_TESTING", "0") == "1":
             return None
@@ -635,10 +633,10 @@ class DataModule(pl.LightningDataModule):
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given sequences of files using
-        the :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.FILES`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given sequences of files
+        using the :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.FILES` from the passed or constructed
+        :class:`~flash.core.data.process.Preprocess`.
 
         Args:
             train_files: A sequence of files to use as the train inputs.

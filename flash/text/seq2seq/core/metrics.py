@@ -56,8 +56,7 @@ def _count_ngram(ngram_input_list: List[str], n_gram: int) -> Counter:
 
 
 class BLEUScore(Metric):
-    """
-    Calculate BLEU score of machine translated text with one or more references.
+    """Calculate BLEU score of machine translated text with one or more references.
 
     Example:
         >>> translate_corpus = ['the cat is on the mat'.split()]
@@ -132,8 +131,7 @@ class BLEUScore(Metric):
 
 
 class RougeMetric(Metric):
-    """
-    Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
+    """Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
 
     Example:
 
@@ -206,13 +204,11 @@ class RougeMetric(Metric):
 
 
 class RougeBatchAggregator(BootstrapAggregator):
-    """
-    Aggregates rouge scores and provides confidence intervals.
-    """
+    """Aggregates rouge scores and provides confidence intervals."""
 
     def aggregate(self):
-        """
-        Override function to wrap the final results in `Score` objects.
+        """Override function to wrap the final results in `Score` objects.
+
         This is due to the scores being replaced with a list of torch tensors.
         """
         result = {}

@@ -20,7 +20,7 @@ else:
 
 @dataclass
 class Endpoint:
-    """An endpoint maps a route and request/response payload to components
+    """An endpoint maps a route and request/response payload to components.
 
     Parameters
     ----------
@@ -182,9 +182,7 @@ class Connection(NamedTuple):
 
 @dataclass
 class Parameter:
-    """
-    Holder class for each grid type of a component and connections from those
-    to the types of other components.
+    """Holder class for each grid type of a component and connections from those to the types of other components.
 
     Parameters
     ----------
@@ -208,7 +206,7 @@ class Parameter:
         return f"{self.component_uid}.{self.position}.{self.name}"
 
     def __terminate_invalid_connection_request(self, other: "Parameter", dunder_meth_called: str) -> None:
-        """verify that components can be composed
+        """verify that components can be composed.
 
         Parameters
         ----------
@@ -255,7 +253,7 @@ class Parameter:
             )
 
     def __lshift__(self, other: "Parameter"):
-        """Implements composition connecting Parameter << Parameter"""
+        """Implements composition connecting Parameter << Parameter."""
         self.__terminate_invalid_connection_request(other, "__lshift__")
         con = Connection(
             source_component=other.component_uid,
@@ -266,7 +264,7 @@ class Parameter:
         self.connections.append(con)
 
     def __rshift__(self, other: "Parameter"):
-        """Implements composition connecting Parameter >> Parameter"""
+        """Implements composition connecting Parameter >> Parameter."""
         self.__terminate_invalid_connection_request(other, "__rshift__")
         con = Connection(
             source_component=self.component_uid,
@@ -333,7 +331,7 @@ def make_parameter_container(data: Dict[str, Parameter]) -> ParameterContainer:
 
 def make_param_dict(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType],
                     component_uid: str) -> Tuple[Dict[str, Parameter], Dict[str, Parameter]]:
-    """Convert exposed input/outputs parameters / dtypes to parameter objects
+    """Convert exposed input/outputs parameters / dtypes to parameter objects.
 
     Returns
     -------

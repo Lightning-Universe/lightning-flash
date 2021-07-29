@@ -124,10 +124,8 @@ class DataPipeline:
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
-        """
-        Cropped Version of
-        https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
-        """
+        """Cropped Version of https://github.com/PyTorchLightning/pytorch-
+        lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
 
         current_method_name = method_name if prefix is None else f'{prefix}_{method_name}'
 
@@ -140,10 +138,8 @@ class DataPipeline:
     def _is_overriden_recursive(
         cls, method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None
     ) -> bool:
-        """
-        Cropped Version of
-        https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/model_helpers.py
-        """
+        """Cropped Version of https://github.com/PyTorchLightning/pytorch-
+        lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
         assert isinstance(process_obj, super_obj)
         if prefix is None and not hasattr(super_obj, method_name):
             raise MisconfigurationException(f"This function doesn't belong to the parent class {super_obj}")
@@ -333,9 +329,7 @@ class DataPipeline:
 
     @staticmethod
     def _set_loader(model: 'Task', loader_name: str, new_loader: DataLoader) -> None:
-        """
-        This function is used to set the loader to model and/or datamodule
-        """
+        """This function is used to set the loader to model and/or datamodule."""
         *intermediates, final_name = loader_name.split('.')
         curr_attr = model
 

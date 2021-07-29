@@ -129,6 +129,7 @@ class SequencesDataset(Dataset):
 
     def get_label_to_names(self):
         """Returns a label to names dictonary object.
+
         Returns:
             A dict where keys are label numbers and
             values are the corresponding names.

@@ -36,7 +36,7 @@ def test_cull():
 
 
 def fuse2(*args, **kwargs):
-    """Run both ``fuse`` and ``fuse_linear`` and compare results"""
+    """Run both ``fuse`` and ``fuse_linear`` and compare results."""
     rv1 = fuse_linear(*args, **kwargs)
     if kwargs.get("rename_keys") is not False:
         return rv1
@@ -1238,10 +1238,7 @@ def test_fuse_subgraphs_linear_chains_of_duplicate_deps():
 
 
 def test_dont_fuse_numpy_arrays():
-    """
-    Some types should stay in the graph bare
-    This helps with things like serialization
-    """
+    """Some types should stay in the graph bare This helps with things like serialization."""
     np = pytest.importorskip("numpy")
     dsk = {"x": np.arange(5), "y": (inc, "x")}
 

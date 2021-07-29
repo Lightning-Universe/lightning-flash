@@ -89,8 +89,10 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
 
 
 class AutoDataset(BaseAutoDataset[Sequence], Dataset):
-    """The ``AutoDataset`` is a ``BaseAutoDataset`` and a :class:`~torch.utils.data.Dataset`. The `data` argument
-    must be a ``Sequence`` (it must have a length)."""
+    """The ``AutoDataset`` is a ``BaseAutoDataset`` and a :class:`~torch.utils.data.Dataset`.
+
+    The `data` argument must be a ``Sequence`` (it must have a length).
+    """
 
     def __getitem__(self, index: int) -> Any:
         return self._call_load_sample(self.data[index])
@@ -100,8 +102,10 @@ class AutoDataset(BaseAutoDataset[Sequence], Dataset):
 
 
 class IterableAutoDataset(BaseAutoDataset[Iterable], IterableDataset):
-    """The ``IterableAutoDataset`` is a ``BaseAutoDataset`` and a :class:`~torch.utils.data.IterableDataset`. The `data`
-    argument must be an ``Iterable``."""
+    """The ``IterableAutoDataset`` is a ``BaseAutoDataset`` and a :class:`~torch.utils.data.IterableDataset`.
+
+    The `data` argument must be an ``Iterable``.
+    """
 
     def __iter__(self):
         self.data_iter = iter(self.data)

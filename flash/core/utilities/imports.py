@@ -27,8 +27,7 @@ except (ModuleNotFoundError, DistributionNotFound):
 
 
 def _module_available(module_path: str) -> bool:
-    """
-    Check if a path is available in your environment
+    """Check if a path is available in your environment.
 
     >>> _module_available('os')
     True
@@ -49,8 +48,7 @@ def _module_available(module_path: str) -> bool:
 
 
 def _compare_version(package: str, op, version) -> bool:
-    """
-    Compare package version with some requirements
+    """Compare package version with some requirements.
 
     >>> _compare_version("torch", operator.ge, "0.1")
     True
@@ -177,8 +175,7 @@ def example_requires(extras: Union[str, List[str]]):
 
 
 def lazy_import(module_name, callback=None):
-    """Returns a proxy module object that will lazily import the given module
-    the first time it is used.
+    """Returns a proxy module object that will lazily import the given module the first time it is used.
 
     Example usage::
 
@@ -202,8 +199,7 @@ def lazy_import(module_name, callback=None):
 
 
 class LazyModule(types.ModuleType):
-    """Proxy module that lazily imports the underlying module the first time it
-    is actually used.
+    """Proxy module that lazily imports the underlying module the first time it is actually used.
 
     Args:
         module_name: the fully-qualified module name to import

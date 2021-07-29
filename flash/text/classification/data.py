@@ -288,7 +288,7 @@ class TextClassificationPreprocess(Preprocess):
         return batch
 
     def collate(self, samples: Any) -> Tensor:
-        """Override to convert a set of samples to a batch"""
+        """Override to convert a set of samples to a batch."""
         if isinstance(samples, dict):
             samples = [samples]
         return default_data_collator(samples)
@@ -303,7 +303,7 @@ class TextClassificationPostprocess(Postprocess):
 
 
 class TextClassificationData(DataModule):
-    """Data Module for text classification tasks"""
+    """Data Module for text classification tasks."""
 
     preprocess_cls = TextClassificationPreprocess
     postprocess_cls = TextClassificationPostprocess

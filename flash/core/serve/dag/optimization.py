@@ -53,7 +53,7 @@ def cull(dsk, keys):
 
 
 def default_fused_linear_keys_renamer(keys):
-    """Create new keys for fused tasks"""
+    """Create new keys for fused tasks."""
     typ = type(keys[0])
     if typ is str:
         names = [key_split(x) for x in keys[:0:-1]]
@@ -265,7 +265,7 @@ def inline(dsk, keys=None, inline_constants=True, dependencies=None):
 
 
 def inline_functions(dsk, output, fast_functions=None, inline_constants=False, dependencies=None):
-    """Inline cheap functions into larger operations
+    """Inline cheap functions into larger operations.
 
     Examples
     --------
@@ -320,7 +320,7 @@ def unwrap_partial(func):
 
 
 def functions_of(task):
-    """Set of functions contained within nested task
+    """Set of functions contained within nested task.
 
     Examples
     --------
@@ -350,9 +350,8 @@ def functions_of(task):
 def default_fused_keys_renamer(keys, max_fused_key_length=120):
     """Create new keys for ``fuse`` tasks.
 
-    The optional parameter `max_fused_key_length` is used to limit the maximum
-    string length for each renamed key. If this parameter is set to `None`,
-    there is no limit.
+    The optional parameter `max_fused_key_length` is used to limit the maximum string length for each renamed key. If
+    this parameter is set to `None`, there is no limit.
     """
     it = reversed(keys)
     first_key = next(it)
@@ -774,7 +773,7 @@ def fuse(
 
 
 def _inplace_fuse_subgraphs(dsk, keys, dependencies, fused_trees, rename_keys):
-    """Subroutine of fuse.Mutates dsk, depenencies, and fused_trees inplace"""
+    """Subroutine of fuse.Mutates dsk, depenencies, and fused_trees inplace."""
     # locate all members of linear chains
     child2parent = {}
     unfusible = set()

@@ -72,8 +72,7 @@ class FlashRegistry:
         strict: bool = True,
         **metadata,
     ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
-        """
-        This function is used to gather matches from the registry:
+        """This function is used to gather matches from the registry:
 
         Args:
             key: Name of the registered function.
@@ -141,11 +140,9 @@ class FlashRegistry:
         providers: Optional[Union[Provider, List[Provider]]] = None,
         **metadata
     ) -> Callable:
-        """
-        This function is used to register new functions to the registry along their metadata.
+        """This function is used to register new functions to the registry along their metadata.
 
         Functions can be filtered using metadata using the ``get`` function.
-
         """
         if providers is not None:
             metadata["providers"] = providers

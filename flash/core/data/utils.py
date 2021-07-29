@@ -117,8 +117,7 @@ class CurrentRunningStageFuncContext:
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
-    """
-    Download file with progressbar
+    """Download file with progressbar.
 
     # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
     # __author__  = "github.com/ruxi"
@@ -172,10 +171,7 @@ def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
 
 
 class FuncModule(torch.nn.Module):
-    """
-    This class is used to wrap a callable within a nn.Module and
-    apply the wrapped function in `__call__`
-    """
+    """This class is used to wrap a callable within a nn.Module and apply the wrapped function in `__call__`"""
 
     def __init__(self, func: Callable) -> None:
         super().__init__()
