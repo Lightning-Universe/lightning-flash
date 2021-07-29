@@ -128,7 +128,7 @@ model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.
 model.serve()
 ```
 
-Credits to @rlizzo, @hhsecond, @lantiga, @luiscape for building Flash Serve Engine.
+Credits to [@rlizzo](https://github.com/rlizzo), [@hhsecond](https://github.com/hhsecond), [@lantiga](https://github.com/lantiga), [@luiscape](https://github.com/luiscape) for building Flash Serve Engine.
 
 ### Finetuning
 

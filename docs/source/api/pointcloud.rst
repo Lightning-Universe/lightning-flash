@@ -9,22 +9,6 @@ flash.pointcloud
 
 .. currentmodule:: flash.pointcloud
 
-Segmentation
-____________
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: classtemplate.rst
-
-    ~segmentation.model.PointCloudSegmentation
-    ~segmentation.data.PointCloudSegmentationData
-
-    segmentation.data.PointCloudSegmentationPreprocess
-    segmentation.data.PointCloudSegmentationFoldersDataSource
-    segmentation.data.PointCloudSegmentationDatasetDataSource
-
-
 Object Detection
 ________________
 

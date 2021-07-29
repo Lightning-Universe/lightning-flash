@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from os.path import basename, dirname, exists, isdir, isfile, join
-from posix import listdir
 from typing import Any, Dict, List, Optional, Union
 
 import yaml
@@ -69,7 +69,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         dataset.color_map = self.meta["color_map"]
 
     def load_data(self, folder: str, dataset: Optional[BaseAutoDataset]):
-        sub_directories = listdir(folder)
+        sub_directories = os.listdir(folder)
         if len(sub_directories) != 3:
             raise MisconfigurationException(
                 f"Using KITTI Format, the {folder} should contains 3 directories "
@@ -84,9 +84,9 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         labels_dir = join(folder, self.labels_folder_name)
         calibrations_dir = join(folder, self.calibrations_folder_name)
 
-        scan_paths = [join(scans_dir, f) for f in listdir(scans_dir)]
-        label_paths = [join(labels_dir, f) for f in listdir(labels_dir)]
-        calibration_paths = [join(calibrations_dir, f) for f in listdir(calibrations_dir)]
+        scan_paths = [join(scans_dir, f) for f in os.listdir(scans_dir)]
+        label_paths = [join(labels_dir, f) for f in os.listdir(labels_dir)]
+        calibration_paths = [join(calibrations_dir, f) for f in os.listdir(calibrations_dir)]
 
         assert len(scan_paths) == len(label_paths) == len(calibration_paths)
 

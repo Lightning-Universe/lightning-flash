@@ -4,9 +4,8 @@ from torch.utils.data import Sampler
 
 from flash.core.data.base_viz import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import Deserializer
 from flash.core.data.data_source import BaseDataFormat, DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Preprocess
+from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
