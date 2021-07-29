@@ -48,9 +48,8 @@ else:
 
 
 class SegmentationLabels(Serializer):
-    """A :class:`.Serializer` which converts the model outputs to the label of
-    the argmax classification per pixel in the image for semantic segmentation
-    tasks.
+    """A :class:`.Serializer` which converts the model outputs to the label of the argmax classification per pixel
+    in the image for semantic segmentation tasks.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
@@ -65,9 +64,8 @@ class SegmentationLabels(Serializer):
 
     @staticmethod
     def labels_to_image(img_labels: torch.Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> torch.Tensor:
-        """Function that given an image with labels ids and their pixels intrensity mapping,
-           creates a RGB representation for visualisation purposes.
-        """
+        """Function that given an image with labels ids and their pixels intrensity mapping, creates a RGB
+        representation for visualisation purposes."""
         assert len(img_labels.shape) == 2, img_labels.shape
         H, W = img_labels.shape
         out = torch.empty(3, H, W, dtype=torch.uint8)
@@ -104,8 +102,7 @@ class SegmentationLabels(Serializer):
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
-    """A :class:`.Serializer` which converts the model outputs to FiftyOne
-    segmentation format.
+    """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.

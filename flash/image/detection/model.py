@@ -43,9 +43,7 @@ else:
 
 
 def _evaluate_iou(target, pred):
-    """
-    Evaluate intersection over union (IOU) for target from dataset and output prediction from model
-    """
+    """Evaluate intersection over union (IOU) for target from dataset and output prediction from model."""
     if pred["boxes"].shape[0] == 0:
         # no box detected, 0 IOU
         return tensor(0.0, device=pred["boxes"].device)
@@ -169,7 +167,9 @@ class ObjectDetector(Task):
         return self.model(x)
 
     def training_step(self, batch, batch_idx) -> Any:
-        """The training step. Overrides ``Task.training_step``
+        """The training step.
+
+        Overrides ``Task.training_step``
         """
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         targets = [dict(t.items()) for t in targets]
@@ -203,8 +203,6 @@ class ObjectDetector(Task):
         return [ObjectDetectionFineTuning(train_bn=True)]
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         # todo (tchaton) Improve convergence
         # history[-1]["val_iou"]
