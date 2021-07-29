@@ -16,11 +16,21 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
+from flash.image import backbones
 import torch
 import torch.nn as nn
-
 from torch import Tensor
-from typing import Type, Any, Callable, Union, List, Optional
+from torch.hub import load_state_dict_from_url
+
+from functools import partial
+from typing import Type, Callable, Union, Optional, Tuple, Any,  List
+
+from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.image.backbones.utilities import catch_url_error
+
+if _TORCHVISION_AVAILABLE:
+    import torchvision
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
@@ -284,21 +294,131 @@ class ResNet(nn.Module):
         return x
 
 
-def resnet18(**kwargs):
-    return ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+def _resnet(
+    model_name: str,
+    block: Type[Union[BasicBlock, Bottleneck]],
+    layers: List[int],
+    num_features: int,
+    pretrained: Union[bool, str] = True,
+    weights_paths: dict = {"supervised": None},
+    **kwargs: Any,
+) -> ResNet:
+
+    pretrained_flag = (pretrained and isinstance(pretrained, bool)) or (pretrained == "supervised")
+
+    backbone = ResNet(block, layers, **kwargs)
+    device = next(backbone.parameters()).get_device()
+
+    model_weights = None
+    if _TORCHVISION_AVAILABLE and pretrained_flag:
+        model_weights = load_state_dict_from_url(
+            weights_paths['supervised'],
+            map_location=torch.device('cpu') if device == -1 else torch.device(device)
+        )
+
+        # for supervised pretrained weights
+        model_weights.pop("fc.weight")
+        model_weights.pop("fc.bias")
+    elif not _TORCHVISION_AVAILABLE and pretrained_flag:
+        raise ModuleNotFoundError(
+            "Tried loading supervised pretrained weights for {0}, but torchvision wasn't found".format(model_name)
+        )
+
+    if not pretrained_flag and isinstance(pretrained, str):
+        if pretrained in weights_paths:
+            model_weights = load_state_dict_from_url(
+                weights_paths[pretrained],
+                map_location=torch.device('cpu') if device == -1 else torch.device(device)
+            )
+
+            if "classy_state_dict" in model_weights.keys():
+                model_weights = model_weights["classy_state_dict"]["base_model"]["model"]["trunk"]
+                model_weights = {
+                    key.replace("_feature_blocks.", "") if "_feature_blocks." in key else key: val
+                    for (key, val) in model_weights.items()
+                }
+            else:
+                raise KeyError('Unrecognized state dict. Logic for loading the current state dict missing.')
+        else:
+            raise KeyError(
+                "Requested weights for {0} not available,"
+                " choose from one of {1}".format(model_name, list(weights_paths.keys()))
+            )
+
+    if model_weights is not None:
+        backbone.load_state_dict(model_weights)
+
+    return backbone, num_features
 
 
-def resnet34(**kwargs):
-    return ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
+HTTPS_VISSL = "https://dl.fbaipublicfiles.com/vissl/model_zoo/"
+DEFAULT_WEIGHTS_PATHS = {"supervised": None}
+RESNET50_WEIGHTS_PATHS = {
+    "supervised": 'https://download.pytorch.org/models/resnet50-0676ba61.pth',
+    "simclr": HTTPS_VISSL + "simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/"
+    "model_final_checkpoint_phase799.torch",
+    "swav": HTTPS_VISSL + "swav_in1k_rn50_800ep_swav_8node_resnet_27_07_20.a0a6b676/"
+    "model_final_checkpoint_phase799.torch",
+    "barlow-twins": HTTPS_VISSL + "barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch",
+}
+
+RESNET_MODELS = [
+    "resnet18", "resnet34", "resnet50", "resnet101", "resnet152",
+    "resnext50_32x4d", "resnext101_32x8d", "resnet50w2", "resnet50w4"
+]
+RESNET_PARAMS = [
+    {
+        'block': BasicBlock, 'layers': [2, 2, 2, 2], 'num_features': 512,
+        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet18-f37072fd.pth'}
+    },
+    {
+        'block': BasicBlock, 'layers': [3, 4, 6, 3], 'num_features': 512,
+        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet34-b627a593.pth'}
+    },
+    {
+        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'num_features': 2048,
+        'weights_paths': RESNET50_WEIGHTS_PATHS
+    },
+    {
+        'block': Bottleneck, 'layers': [3, 4, 23, 3], 'num_features': 2048,
+        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet101-63fe2227.pth'}
+    },
+    {
+        'block': Bottleneck, 'layers': [3, 8, 36, 3], 'num_features': 2048,
+        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet152-394f9c45.pth'}
+    },
+    {
+        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'groups': 32, 'width_per_group': 4, 'num_features': 2048,
+        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth'}
+    },
+    {
+        'block': Bottleneck, 'layers': [3, 4, 23, 3], 'groups': 32, 'width_per_group': 8, 'num_features': 2048,
+        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth'}
+    },
+    {
+        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'widen': 2, 'num_features': 4096,
+        'weights_paths': DEFAULT_WEIGHTS_PATHS
+    },
+    {
+        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'widen': 4, 'num_features': 8192,
+        'weights_paths': DEFAULT_WEIGHTS_PATHS
+    },
+]
 
 
-def resnet50(**kwargs):
-    return ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
-
-
-def resnet50w2(**kwargs):
-    return ResNet(Bottleneck, [3, 4, 6, 3], widen=2, **kwargs)
-
-
-def resnet50w4(**kwargs):
-    return ResNet(Bottleneck, [3, 4, 6, 3], widen=4, **kwargs)
+def register_resnet_backbones(register: FlashRegistry):
+    for model_name, params in zip(RESNET_MODELS, RESNET_PARAMS):
+        register(
+            fn=catch_url_error(
+                partial(
+                    _resnet, model_name=model_name, block=params['block'],
+                    layers=params['layers'], num_features=params['num_features'],
+                    weights_paths=params['weights_paths']
+                )
+            ),
+            name=model_name,
+            namespace="vision",
+            package="multiple",
+            type="resnet",
+            weights_paths=params['weights_paths'] # update
+        )

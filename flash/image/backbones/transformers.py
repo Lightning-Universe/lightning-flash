@@ -13,7 +13,8 @@
 # limitations under the License.
 import torch
 
-from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.core.registry import FlashRegistry
+from flash.image.backbones.utilities import catch_url_error
 
 
 # Paper: Emerging Properties in Self-Supervised Vision Transformers
@@ -39,7 +40,8 @@ def dino_vitb8(*_, **__):
     return backbone, 768
 
 
-IMAGE_CLASSIFIER_BACKBONES(dino_deits16)
-IMAGE_CLASSIFIER_BACKBONES(dino_deits8)
-IMAGE_CLASSIFIER_BACKBONES(dino_vitb16)
-IMAGE_CLASSIFIER_BACKBONES(dino_vitb8)
+def register_dino_backbones(register: FlashRegistry):
+    register(catch_url_error(dino_deits16))
+    register(catch_url_error(dino_deits8))
+    register(catch_url_error(dino_vitb16))
+    register(catch_url_error(dino_vitb8))

@@ -1,12 +1,21 @@
 from flash.core.registry import FlashRegistry
 
-MOBILENET_MODELS = ["mobilenet_v2"]
-VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
-RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnext50_32x4d", "resnext101_32x8d"]
-DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
-TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS
+from flash.image.backbones.timm import register_timm_backbones
+from flash.image.backbones.resnet import register_resnet_backbones
+from flash.image.backbones.transformers import register_dino_backbones
+from flash.image.backbones.torchvision import (
+    register_mobilenet_vgg_backbones,
+    register_detection_backbones,
+    register_densenet_backbones,
+)
+
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
 
-HTTPS_VISSL = "https://dl.fbaipublicfiles.com/vissl/model_zoo/"
+register_detection_backbones(OBJ_DETECTION_BACKBONES)
+register_resnet_backbones(IMAGE_CLASSIFIER_BACKBONES)
+register_mobilenet_vgg_backbones(IMAGE_CLASSIFIER_BACKBONES)
+register_densenet_backbones(IMAGE_CLASSIFIER_BACKBONES)
+register_dino_backbones(IMAGE_CLASSIFIER_BACKBONES)
+register_timm_backbones(IMAGE_CLASSIFIER_BACKBONES)

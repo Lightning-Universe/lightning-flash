@@ -16,8 +16,9 @@ import torch.nn as nn
 from functools import partial
 from typing import Tuple
 
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TIMM_AVAILABLE
-from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES, TORCHVISION_MODELS
+from flash.image.backbones.torchvision import TORCHVISION_MODELS
 from flash.image.backbones.utilities import catch_url_error
 
 
@@ -34,11 +35,15 @@ if _TIMM_AVAILABLE:
         num_features = backbone.num_features
         return backbone, num_features
 
-    for model_name in timm.list_models():
+    def register_timm_backbones(register: FlashRegistry):
+        for model_name in timm.list_models():
 
-        if model_name in TORCHVISION_MODELS:
-            continue
+            if model_name in TORCHVISION_MODELS:
+                continue
 
-        IMAGE_CLASSIFIER_BACKBONES(
-            fn=catch_url_error(partial(_fn_timm, model_name)), name=model_name, namespace="vision", package="timm"
-        )
+            register(
+                fn=catch_url_error(partial(_fn_timm, model_name)),
+                name=model_name,
+                namespace="vision",
+                package="timm",
+            )
