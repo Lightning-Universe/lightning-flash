@@ -11,14 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional, Union
 
-import torch
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 
+from flash.core.adapter import Adapter
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.process import Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
@@ -41,87 +39,42 @@ class SimpleCOCOMetric(COCOMetric):
         }
 
 
-class IceVisionTask(Task):
-    """The ``IceVisionTask`` is a base :class:`~flash.Task` for integrating with IceVision.
-
-    Args:
-        num_classes: the number of classes for detection, including background
-        model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretrained backbone CNN architecture. Constructs a model with a
-            ResNet-50-FPN backbone when no backbone is specified.
-        pretrained: if true, returns a model pre-trained on COCO train2017.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
-        image_size
-    """
+class IceVisionAdapter(Adapter):
+    """The ``IceVisionAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with IceVision."""
 
     required_extras: str = "image"
 
-    def __init__(
-        self,
+    def __init__(self, model_type, model, icevision_adapter, backbone):
+        super().__init__()
+
+        self.model_type = model_type
+        self.model = model
+        self.icevision_adapter = icevision_adapter
+        self.backbone = backbone
+
+    @classmethod
+    def from_task(
+        cls,
+        task: Task,
         num_classes: int,
         backbone: str,
         head: str,
         pretrained: bool = True,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Optional['IceVisionMetric'] = None,
-        learning_rate: float = 5e-4,
-        deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
-        preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         image_size: Optional = None,
         **kwargs,
-    ):
-        self.save_hyperparameters()
-
-        super().__init__(
-            model=None,
-            metrics=None,
-            optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
-            learning_rate=learning_rate,
-            deserializer=deserializer,
-            preprocess=preprocess,
-            postprocess=postprocess,
-            serializer=serializer,
-        )
-
-        metadata = self.heads.get(head, with_metadata=True)
+    ) -> Adapter:
+        metadata = task.heads.get(head, with_metadata=True)
         backbones = metadata["metadata"]["backbones"]
         backbone_config = backbones.get(backbone)(pretrained)
-        self.model_type, self.model, adapter, self.backbone = metadata["fn"](
+        model_type, model, icevision_adapter, backbone = metadata["fn"](
             backbone_config,
             num_classes,
             image_size=image_size,
             **kwargs,
         )
-        self.adapter = adapter(model=self.model, metrics=metrics)
-
-    @classmethod
-    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
-        if head is None:
-            heads = cls.available_heads()
-        else:
-            heads = [head]
-
-        result = {}
-        for head in heads:
-            metadata = cls.heads.get(head, with_metadata=True)
-            backbones = metadata["metadata"]["backbones"]
-            result[head] = backbones.available_keys()
-
-        if len(result) == 1:
-            result = next(iter(result.values()[0]))
-        return result
-
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
-            checkpoint['_data_pipeline_state'] = self._data_pipeline_state
+        icevision_adapter = icevision_adapter(model=model, metrics=metrics)
+        return cls(model_type, model, icevision_adapter, backbone)
 
     def process_train_dataset(
         self,
@@ -211,13 +164,13 @@ class IceVisionTask(Task):
         return dataset
 
     def training_step(self, batch, batch_idx) -> Any:
-        return self.adapter.training_step(batch, batch_idx)
+        return self.icevision_adapter.training_step(batch, batch_idx)
 
     def validation_step(self, batch, batch_idx):
-        return self.adapter.validation_step(batch, batch_idx)
+        return self.icevision_adapter.validation_step(batch, batch_idx)
 
     def test_step(self, batch, batch_idx):
-        return self.adapter.validation_step(batch, batch_idx)
+        return self.icevision_adapter.validation_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self(batch)
@@ -229,10 +182,10 @@ class IceVisionTask(Task):
         return self.model_type.predict_from_dl(self.model, [batch], show_pbar=False)
 
     def training_epoch_end(self, outputs) -> None:
-        return self.adapter.training_epoch_end(outputs)
+        return self.icevision_adapter.training_epoch_end(outputs)
 
     def validation_epoch_end(self, outputs) -> None:
-        return self.adapter.validation_epoch_end(outputs)
+        return self.icevision_adapter.validation_epoch_end(outputs)
 
     def test_epoch_end(self, outputs) -> None:
-        return self.adapter.validation_epoch_end(outputs)
+        return self.icevision_adapter.validation_epoch_end(outputs)

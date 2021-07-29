@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import inspect
+import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -24,6 +25,7 @@ import torchmetrics
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -31,6 +33,7 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
 
 import flash
+from flash.core.adapter import Adapter
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
@@ -102,7 +105,7 @@ class CheckDependenciesMeta(ABCMeta):
         return result
 
 
-class Task(LightningModule, metaclass=CheckDependenciesMeta):
+class Task(Adapter, LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
@@ -163,18 +166,6 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
-
-        self._children = []
-
-    def __setattr__(self, key, value):
-        if isinstance(value, LightningModule):
-            self._children.append(key)
-        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
-        if isinstance(value, pl.Trainer) or key in patched_attributes:
-            if hasattr(self, "_children"):
-                for child in self._children:
-                    setattr(getattr(self, child), key, value)
-        super().__setattr__(key, value)
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """
@@ -535,7 +526,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
         if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
-            checkpoint['data_pipeline'] = self.data_pipeline
+            try:
+                pickle.dumps(self.data_pipeline)  # TODO: DataPipeline not always pickleable
+                checkpoint['data_pipeline'] = self.data_pipeline
+            except AttributeError:
+                rank_zero_warn("DataPipeline couldn't be added to the checkpoint.")
         if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
             checkpoint['_data_pipeline_state'] = self._data_pipeline_state
         super().on_save_checkpoint(checkpoint)
@@ -548,11 +543,27 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             self._data_pipeline_state = checkpoint['_data_pipeline_state']
 
     @classmethod
-    def available_backbones(cls) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
-        if registry is None:
-            return []
-        return registry.available_keys()
+    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
+        if head is None:
+            registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+            if registry is not None:
+                return registry.available_keys()
+            heads = cls.available_heads()
+        else:
+            heads = [head]
+
+        result = {}
+        for head in heads:
+            metadata = cls.heads.get(head, with_metadata=True)["metadata"]
+            if "backbones" in metadata:
+                backbones = metadata["backbones"].available_keys()
+            else:
+                backbones = cls.available_backbones()
+            result[head] = backbones
+
+        if len(result) == 1:
+            result = next(iter(result.values()))
+        return result
 
     @classmethod
     def available_heads(cls) -> List[str]:
@@ -711,29 +722,41 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         for state in self._state.values():
             data_pipeline_state.set_state(state)
 
-    def _process_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True,
-    ) -> DataLoader:
-        if convert_to_dataloader:
-            return DataLoader(
-                dataset,
-                batch_size=batch_size,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                collate_fn=collate_fn
-            )
-        return dataset
+
+class AdapterTask(Task):
+
+    def __init__(self, adapter: Adapter, **kwargs):
+        super().__init__(**kwargs)
+
+        self.adapter = adapter
+
+    @property
+    def backbone(self) -> nn.Module:
+        return self.adapter.backbone
+
+    def forward(self, x: Any) -> Any:
+        return self.adapter.forward(x)
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.adapter.training_step(batch, batch_idx)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> None:
+        return self.adapter.validation_step(batch, batch_idx)
+
+    def test_step(self, batch: Any, batch_idx: int) -> None:
+        return self.adapter.test_step(batch, batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self.adapter.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+
+    def training_epoch_end(self, outputs) -> None:
+        return self.adapter.training_epoch_end(outputs)
+
+    def validation_epoch_end(self, outputs) -> None:
+        return self.adapter.validation_epoch_end(outputs)
+
+    def test_epoch_end(self, outputs) -> None:
+        return self.adapter.test_epoch_end(outputs)
 
     def process_train_dataset(
         self,
@@ -746,15 +769,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         drop_last: bool = True,
         sampler: Optional[Sampler] = None
     ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler
+        return self.adapter.process_train_dataset(
+            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
         )
 
     def process_val_dataset(
@@ -768,15 +784,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None
     ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler
+        return self.adapter.process_val_dataset(
+            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
         )
 
     def process_test_dataset(
@@ -787,18 +796,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         pin_memory: bool,
         collate_fn: Callable,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None
     ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler
+        return self.adapter.process_test_dataset(
+            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
         )
 
     def process_predict_dataset(
@@ -813,14 +815,6 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         sampler: Optional[Sampler] = None,
         convert_to_dataloader: bool = True
     ) -> Union[DataLoader, BaseAutoDataset]:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler,
-            convert_to_dataloader=convert_to_dataloader
+        return self.adapter.process_predict_dataset(
+            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler, convert_to_dataloader
         )

@@ -21,8 +21,6 @@ from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 if _ICEVISION_AVAILABLE:
     from icevision.backbones import BackboneConfig
 
-OBJECT_DETECTION_HEADS = FlashRegistry("heads")
-
 
 def icevision_model_adapter(model_type):
 

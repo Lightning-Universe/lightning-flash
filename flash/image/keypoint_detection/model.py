@@ -17,16 +17,12 @@ import torch
 from torch.optim import Optimizer
 
 from flash.core.data.process import Serializer
-from flash.core.integrations.icevision.model import IceVisionTask
+from flash.core.model import AdapterTask
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image.keypoint_detection.backbones import KEYPOINT_DETECTION_HEADS
 
-if _ICEVISION_AVAILABLE:
-    from icevision.metrics import Metric as IceVisionMetric
 
-
-class KeypointDetector(IceVisionTask):
+class KeypointDetector(AdapterTask):
     """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
     :ref:`object_detection`.
 
@@ -61,32 +57,33 @@ class KeypointDetector(IceVisionTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "keypoint_rcnn",
         pretrained: bool = True,
-        metrics: Optional['IceVisionMetric'] = None,
         optimizer: Type[Optimizer] = torch.optim.Adam,
         learning_rate: float = 5e-4,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-        image_size: Optional[int] = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
 
-        super().__init__(
-            num_classes=num_classes,
+        metadata = self.heads.get(head, with_metadata=True)
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
             num_keypoints=num_keypoints,
+            num_classes=num_classes,
             backbone=backbone,
             head=head,
             pretrained=pretrained,
-            metrics=metrics,
-            image_size=image_size,
+            **kwargs,
+        )
+
+        super().__init__(
+            adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
             serializer=serializer,
-            **kwargs,
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
         """
         This function is used only for debugging usage with CI
         """
-        # todo (tchaton) Improve convergence
-        # history[-1]["val_iou"]
+        # todo

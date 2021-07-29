@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -28,6 +29,23 @@ class Provider:
 
     def __str__(self):
         return f"{self.name} ({self.url})"
+
+
+def print_provider_info(name, providers, func):
+    if not isinstance(providers, List):
+        providers = [providers]
+    providers = list(providers)
+    if len(providers) > 1:
+        providers[-2] = f"{str(providers[-2])} and {str(providers[-1])}"
+        providers = providers[:-1]
+    message = f"Using '{name}' provided by {', '.join(str(provider) for provider in providers)}."
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        rank_zero_info(message)
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class FlashRegistry:
@@ -72,16 +90,6 @@ class FlashRegistry:
             if not matches:
                 raise KeyError("Found no matches that fit your metadata criteria. Try removing some metadata")
 
-        for match in matches:
-            if "providers" in match["metadata"]:
-                providers = match["metadata"]["providers"]
-                if not isinstance(providers, List):
-                    providers = [providers]
-                if len(providers) > 1:
-                    providers[-2] = f"{str(providers[-2])} and {str(providers[-1])}"
-                    providers = providers[:-1]
-                rank_zero_info(f"Using '{key}' provided by {', '.join(str(provider) for provider in providers)}.")
-
         matches = [e if with_metadata else e["fn"] for e in matches]
         return matches[0] if strict else matches
 
@@ -102,6 +110,10 @@ class FlashRegistry:
 
         if self._verbose:
             rank_zero_info(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")
+
+        if "providers" in metadata:
+            providers = metadata["providers"]
+            fn = print_provider_info(name, providers, fn)
 
         item = {"fn": fn, "name": name, "metadata": metadata or {}}
 

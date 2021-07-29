@@ -28,6 +28,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 import flash
+from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
@@ -124,6 +125,32 @@ class GrandParent(Parent):
         super().__init__(Parent(child))
 
 
+class BasicAdapter(Adapter):
+
+    def __init__(self, child):
+        super().__init__()
+
+        self.child = child
+
+    def training_step(self, batch, batch_idx):
+        return self.child.training_step(batch, batch_idx)
+
+    def validation_step(self, batch, batch_idx):
+        return self.child.validation_step(batch, batch_idx)
+
+    def test_step(self, batch, batch_idx):
+        return self.child.test_step(batch, batch_idx)
+
+    def forward(self, x):
+        return self.child(x)
+
+
+class AdapterParent(Parent):
+
+    def __init__(self, child):
+        super().__init__(BasicAdapter(child))
+
+
 # ================================
 
 
@@ -139,7 +166,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     assert "test_nll_loss" in result[0]
 
 
-@pytest.mark.parametrize("task", [Parent, GrandParent])
+@pytest.mark.parametrize("task", [Parent, GrandParent, AdapterParent])
 def test_nested_tasks(tmpdir, task):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
