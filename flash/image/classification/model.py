@@ -23,7 +23,7 @@ from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
 class ImageClassifier(ClassificationTask):

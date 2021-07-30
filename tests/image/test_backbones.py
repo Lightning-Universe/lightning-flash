@@ -17,7 +17,8 @@ import pytest
 from pytorch_lightning.utilities import _TORCHVISION_AVAILABLE
 
 from flash.core.utilities.imports import _TIMM_AVAILABLE
-from flash.image.backbones import catch_url_error, IMAGE_CLASSIFIER_BACKBONES
+from flash.core.utilities.url_error import catch_url_error
+from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
 @pytest.mark.parametrize(["backbone", "expected_num_features"], [
@@ -45,6 +46,15 @@ def test_pretrained_weights_registry(backbone, pretrained, expected_num_features
     backbone_model, num_features = backbone_fn(pretrained=pretrained)
     assert backbone_model
     assert num_features == expected_num_features
+
+
+@pytest.mark.parametrize(["backbone", "pretrained"], [
+    pytest.param("resnet50w2", True),
+    pytest.param("resnet50w4", "supervised"),
+])
+def test_wide_resnets(backbone, pretrained):
+    with pytest.raises(KeyError, match="Supervised pretrained weights not available for {0}".format(backbone)):
+        IMAGE_CLASSIFIER_BACKBONES.get(backbone)(pretrained=pretrained)
 
 
 def test_pretrained_backbones_catch_url_error():
