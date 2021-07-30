@@ -98,7 +98,8 @@ Flash provides populated registries containing lots of available backbones.
 
 Example::
 
-    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES
+    from flash.image.backbones import OBJ_DETECTION_BACKBONES
+    from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
     print(IMAGE_CLASSIFIER_BACKBONES.available_keys())
     """ out:

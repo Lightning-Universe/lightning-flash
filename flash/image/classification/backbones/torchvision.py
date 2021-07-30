@@ -18,8 +18,8 @@ import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from flash.image.backbones.resnet import RESNET_MODELS
-from flash.image.backbones.utilities import catch_url_error
+from flash.core.utilities.url_error import catch_url_error
+from flash.image.classification.backbones.resnet import RESNET_MODELS
 
 MOBILENET_MODELS = ["mobilenet_v2"]
 VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
@@ -29,7 +29,6 @@ TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNEXT_MODELS + RESNET_MOD
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
-    from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
     def _fn_mobilenet_vgg(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
         model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
@@ -47,24 +46,6 @@ if _TORCHVISION_AVAILABLE:
                 namespace="vision",
                 package="torchvision",
                 type=_type
-            )
-
-    def _fn_resnet_fpn(
-        model_name: str,
-        pretrained: bool = True,
-        trainable_layers: bool = True,
-        **kwargs,
-    ) -> Tuple[nn.Module, int]:
-        backbone = resnet_fpn_backbone(model_name, pretrained=pretrained, trainable_layers=trainable_layers, **kwargs)
-        return backbone, 256
-
-    def register_detection_backbones(register: FlashRegistry):
-        for model_name in RESNET_MODELS:
-            register(
-                fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),
-                name=model_name,
-                package="torchvision",
-                type="resnet-fpn"
             )
 
     def _fn_resnext(model_name: str, pretrained: bool = True):

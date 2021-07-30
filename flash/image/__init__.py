@@ -1,4 +1,5 @@
-from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES  # noqa: F401
+from flash.image.backbones import OBJ_DETECTION_BACKBONES  # noqa: F401
+from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES  # noqa: F401
 from flash.image.classification import (  # noqa: F401
     ImageClassificationData,
     ImageClassificationPreprocess,

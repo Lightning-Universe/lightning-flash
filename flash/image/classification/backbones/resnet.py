@@ -25,7 +25,7 @@ from torch import Tensor
 from torch.hub import load_state_dict_from_url
 
 from flash.core.registry import FlashRegistry
-from flash.image.backbones.utilities import catch_url_error
+from flash.core.utilities.url_error import catch_url_error
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:

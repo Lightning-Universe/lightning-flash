@@ -14,7 +14,7 @@
 import torch
 
 from flash.core.registry import FlashRegistry
-from flash.image.backbones.utilities import catch_url_error
+from flash.core.utilities.url_error import catch_url_error
 
 
 # Paper: Emerging Properties in Self-Supervised Vision Transformers

@@ -17,8 +17,8 @@ import pytest
 from pytorch_lightning.utilities import _TORCHVISION_AVAILABLE
 
 from flash.core.utilities.imports import _TIMM_AVAILABLE
-from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.image.backbones.utilities import catch_url_error
+from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.core.utilities.url_error import catch_url_error
 
 
 @pytest.mark.parametrize(["backbone", "expected_num_features"], [
@@ -35,10 +35,10 @@ def test_image_classifier_backbones_registry(backbone, expected_num_features):
 
 @pytest.mark.parametrize(["backbone", "pretrained", "expected_num_features"], [
     pytest.param(
-        "resnet50", 'supervised', 2048, marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")
+        "resnet50", "supervised", 2048, marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")
     ),
     pytest.param(
-        "resnet50", 'simclr', 2048, marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")
+        "resnet50", "simclr", 2048, marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")
     ),
 ])
 def test_pretrained_weights_registry(backbone, pretrained, expected_num_features):

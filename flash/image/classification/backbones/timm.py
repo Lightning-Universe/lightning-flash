@@ -18,8 +18,8 @@ import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TIMM_AVAILABLE
-from flash.image.backbones.torchvision import TORCHVISION_MODELS
-from flash.image.backbones.utilities import catch_url_error
+from flash.image.classification.backbones.torchvision import TORCHVISION_MODELS
+from flash.core.utilities.url_error import catch_url_error
 
 if _TIMM_AVAILABLE:
     import timm
