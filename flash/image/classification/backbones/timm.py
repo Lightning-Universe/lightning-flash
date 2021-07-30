@@ -14,34 +14,37 @@
 from functools import partial
 from typing import Tuple
 
-from torch import nn
+import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TIMM_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
+from flash.image.classification.backbones.torchvision import TORCHVISION_MODELS
 
-if _TORCHVISION_AVAILABLE:
-    from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
+if _TIMM_AVAILABLE:
+    import timm
 
-RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnext50_32x4d", "resnext101_32x8d"]
-
-OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
-
-if _TORCHVISION_AVAILABLE:
-
-    def _fn_resnet_fpn(
+    def _fn_timm(
         model_name: str,
         pretrained: bool = True,
-        trainable_layers: bool = True,
+        num_classes: int = 0,
         **kwargs,
     ) -> Tuple[nn.Module, int]:
-        backbone = resnet_fpn_backbone(model_name, pretrained=pretrained, trainable_layers=trainable_layers, **kwargs)
-        return backbone, 256
+        backbone = timm.create_model(model_name, pretrained=pretrained, num_classes=num_classes, **kwargs)
+        num_features = backbone.num_features
+        return backbone, num_features
 
-    for model_name in RESNET_MODELS:
-        OBJ_DETECTION_BACKBONES(
-            fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),
-            name=model_name,
-            package="torchvision",
-            type="resnet-fpn"
-        )
+
+def register_timm_backbones(register: FlashRegistry):
+    if _TIMM_AVAILABLE:
+        for model_name in timm.list_models():
+
+            if model_name in TORCHVISION_MODELS:
+                continue
+
+            register(
+                fn=catch_url_error(partial(_fn_timm, model_name)),
+                name=model_name,
+                namespace="vision",
+                package="timm",
+            )

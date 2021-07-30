@@ -26,7 +26,7 @@ from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image.classification.data import ImageClassificationPreprocess
 
 if _IMAGE_AVAILABLE:
-    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+    from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 else:
     IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
