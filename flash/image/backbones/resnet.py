@@ -16,26 +16,34 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
+from functools import partial
+from typing import Any, Callable, List, Optional, Type, Union
+
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.hub import load_state_dict_from_url
-
-from functools import partial
-from typing import Type, Callable, Union, Optional, Any, List
 
 from flash.core.registry import FlashRegistry
 from flash.image.backbones.utilities import catch_url_error
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
-    """3x3 convolution with padding"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=dilation, groups=groups, bias=False, dilation=dilation)
+    """3x3 convolution with padding."""
+    return nn.Conv2d(
+        in_planes,
+        out_planes,
+        kernel_size=3,
+        stride=stride,
+        padding=dilation,
+        groups=groups,
+        bias=False,
+        dilation=dilation
+    )
 
 
 def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
-    """1x1 convolution"""
+    """1x1 convolution."""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 
@@ -231,8 +239,14 @@ class ResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block: Type[Union[BasicBlock, Bottleneck]], planes: int, blocks: int,
-                    stride: int = 1, dilate: bool = False) -> nn.Sequential:
+    def _make_layer(
+        self,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        planes: int,
+        blocks: int,
+        stride: int = 1,
+        dilate: bool = False
+    ) -> nn.Sequential:
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -310,8 +324,7 @@ def _resnet(
             raise KeyError('Supervised pretrained weights not available for {0}'.format(model_name))
 
         model_weights = load_state_dict_from_url(
-            weights_paths['supervised'],
-            map_location=torch.device('cpu') if device == -1 else torch.device(device)
+            weights_paths['supervised'], map_location=torch.device('cpu') if device == -1 else torch.device(device)
         )
 
         # for supervised pretrained weights
@@ -321,8 +334,7 @@ def _resnet(
     if not pretrained_flag and isinstance(pretrained, str):
         if pretrained in weights_paths:
             model_weights = load_state_dict_from_url(
-                weights_paths[pretrained],
-                map_location=torch.device('cpu') if device == -1 else torch.device(device)
+                weights_paths[pretrained], map_location=torch.device('cpu') if device == -1 else torch.device(device)
             )
 
             if "classy_state_dict" in model_weights.keys():
@@ -366,36 +378,58 @@ RESNET50W4_WEIGHTS_PATHS = {
     'model_final_checkpoint_phase399.torch',
 }
 
-RESNET_MODELS = [
-    "resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnet50w2", "resnet50w4"
-]
+RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnet50w2", "resnet50w4"]
 RESNET_PARAMS = [
     {
-        'block': BasicBlock, 'layers': [2, 2, 2, 2], 'num_features': 512,
-        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet18-f37072fd.pth'}
+        'block': BasicBlock,
+        'layers': [2, 2, 2, 2],
+        'num_features': 512,
+        'weights_paths': {
+            "supervised": 'https://download.pytorch.org/models/resnet18-f37072fd.pth'
+        }
     },
     {
-        'block': BasicBlock, 'layers': [3, 4, 6, 3], 'num_features': 512,
-        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet34-b627a593.pth'}
+        'block': BasicBlock,
+        'layers': [3, 4, 6, 3],
+        'num_features': 512,
+        'weights_paths': {
+            "supervised": 'https://download.pytorch.org/models/resnet34-b627a593.pth'
+        }
     },
     {
-        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'num_features': 2048,
+        'block': Bottleneck,
+        'layers': [3, 4, 6, 3],
+        'num_features': 2048,
         'weights_paths': RESNET50_WEIGHTS_PATHS
     },
     {
-        'block': Bottleneck, 'layers': [3, 4, 23, 3], 'num_features': 2048,
-        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet101-63fe2227.pth'}
+        'block': Bottleneck,
+        'layers': [3, 4, 23, 3],
+        'num_features': 2048,
+        'weights_paths': {
+            "supervised": 'https://download.pytorch.org/models/resnet101-63fe2227.pth'
+        }
     },
     {
-        'block': Bottleneck, 'layers': [3, 8, 36, 3], 'num_features': 2048,
-        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet152-394f9c45.pth'}
+        'block': Bottleneck,
+        'layers': [3, 8, 36, 3],
+        'num_features': 2048,
+        'weights_paths': {
+            "supervised": 'https://download.pytorch.org/models/resnet152-394f9c45.pth'
+        }
     },
     {
-        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'widen': 2, 'num_features': 4096,
+        'block': Bottleneck,
+        'layers': [3, 4, 6, 3],
+        'widen': 2,
+        'num_features': 4096,
         'weights_paths': RESNET50W2_WEIGHTS_PATHS
     },
     {
-        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'widen': 4, 'num_features': 8192,
+        'block': Bottleneck,
+        'layers': [3, 4, 6, 3],
+        'widen': 4,
+        'num_features': 8192,
         'weights_paths': RESNET50W4_WEIGHTS_PATHS
     },
 ]

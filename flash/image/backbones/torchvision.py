@@ -11,22 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch.nn as nn
-
 from functools import partial
 from typing import Tuple
 
+import torch.nn as nn
+
 from flash.core.registry import FlashRegistry
-from flash.image.backbones.utilities import catch_url_error
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.backbones.resnet import RESNET_MODELS
+from flash.image.backbones.utilities import catch_url_error
 
 MOBILENET_MODELS = ["mobilenet_v2"]
 VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
 RESNEXT_MODELS = ["resnext50_32x4d", "resnext101_32x8d"]
 DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
 TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNEXT_MODELS + RESNET_MODELS + DENSENET_MODELS
-
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
