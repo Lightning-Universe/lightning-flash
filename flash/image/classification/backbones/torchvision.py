@@ -51,35 +51,38 @@ if _TORCHVISION_AVAILABLE:
 
 
 def register_mobilenet_vgg_backbones(register: FlashRegistry):
-    for model_name in MOBILENET_MODELS + VGG_MODELS:
-        _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
+    if _TORCHVISION_AVAILABLE:
+        for model_name in MOBILENET_MODELS + VGG_MODELS:
+            _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
 
-        register(
-            fn=catch_url_error(partial(_fn_mobilenet_vgg, model_name)),
-            name=model_name,
-            namespace="vision",
-            package="torchvision",
-            type=_type
-        )
+            register(
+                fn=catch_url_error(partial(_fn_mobilenet_vgg, model_name)),
+                name=model_name,
+                namespace="vision",
+                package="torchvision",
+                type=_type
+            )
 
 
 def register_resnext_model(register: FlashRegistry):
-    for model_name in RESNEXT_MODELS:
-        register(
-            fn=catch_url_error(partial(_fn_resnext, model_name)),
-            name=model_name,
-            namespace="vision",
-            package="torchvision",
-            type="resnext"
-        )
+    if _TORCHVISION_AVAILABLE:
+        for model_name in RESNEXT_MODELS:
+            register(
+                fn=catch_url_error(partial(_fn_resnext, model_name)),
+                name=model_name,
+                namespace="vision",
+                package="torchvision",
+                type="resnext"
+            )
 
 
 def register_densenet_backbones(register: FlashRegistry):
-    for model_name in DENSENET_MODELS:
-        register(
-            fn=catch_url_error(partial(_fn_densenet, model_name)),
-            name=model_name,
-            namespace="vision",
-            package="torchvision",
-            type="densenet"
-        )
+    if _TORCHVISION_AVAILABLE:
+        for model_name in DENSENET_MODELS:
+            register(
+                fn=catch_url_error(partial(_fn_densenet, model_name)),
+                name=model_name,
+                namespace="vision",
+                package="torchvision",
+                type="densenet"
+            )
