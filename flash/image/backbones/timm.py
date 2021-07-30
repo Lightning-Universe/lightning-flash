@@ -11,16 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch.nn as nn
-
 from functools import partial
 from typing import Tuple
+
+import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TIMM_AVAILABLE
 from flash.image.backbones.torchvision import TORCHVISION_MODELS
 from flash.image.backbones.utilities import catch_url_error
-
 
 if _TIMM_AVAILABLE:
     import timm
