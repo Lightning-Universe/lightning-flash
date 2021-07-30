@@ -37,7 +37,7 @@ def _load_requirements(path_dir: str, file_name: str = 'requirements.txt', comme
 
 
 def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
-    """Load readme as decribtion
+    """Load readme as decribtion.
 
     >>> _load_readme_description(_PROJECT_ROOT, "", "")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     '<div align="center">...'

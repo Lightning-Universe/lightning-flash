@@ -36,8 +36,7 @@ class NoFreeze(BaseFinetuning):
 
 
 class FlashBaseFinetuning(BaseFinetuning):
-    """
-    FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
+    """FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
 
     Override :meth:`.finetune_function` to put your unfreeze logic.
     """

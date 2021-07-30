@@ -26,11 +26,9 @@ else:
     class cached_property:  # NOSONAR  # pylint: disable=invalid-name  # noqa: N801
         """Cached property implementation.
 
-        Transform a method of a class into a property whose value is computed once
-        and then cached as a normal attribute for the life of the instance.
-        Similar to property(), with the addition of caching.
-        Useful for expensive computed properties of instances
-        that are otherwise effectively immutable.
+        Transform a method of a class into a property whose value is computed once and then cached as a normal attribute
+        for the life of the instance. Similar to property(), with the addition of caching. Useful for expensive computed
+        properties of instances that are otherwise effectively immutable.
         """
 
         def __init__(self, func: Callable[[Any], _T]) -> None:

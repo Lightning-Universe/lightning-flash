@@ -319,10 +319,10 @@ class ImageClassificationData(DataModule):
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
-        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV files
-        using the :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
+        files using the :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
+        :class:`~flash.core.data.process.Preprocess`.
 
         Args:
             input_field: The field (column) in the CSV file to use for the input.
@@ -400,8 +400,7 @@ class ImageClassificationData(DataModule):
 
 
 class MatplotlibVisualization(BaseVisualization):
-    """Process and show the image batch and its associated label using matplotlib.
-    """
+    """Process and show the image batch and its associated label using matplotlib."""
     max_cols: int = 4  # maximum number of columns we accept
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 

@@ -82,8 +82,7 @@ class ControlFlow(FlashCallback):
 
 
 class BaseDataFetcher(FlashCallback):
-    """
-    This class is used to profile :class:`~flash.core.data.process.Preprocess` hook outputs.
+    """This class is used to profile :class:`~flash.core.data.process.Preprocess` hook outputs.
 
     By default, the callback won't profile the data being processed as it may lead to ``OOMError``.
 
@@ -165,7 +164,6 @@ class BaseDataFetcher(FlashCallback):
             'val': {},
             'predict': {}
         }
-
     """
 
     def __init__(self, enabled: bool = False):
@@ -205,7 +203,7 @@ class BaseDataFetcher(FlashCallback):
 
     @contextmanager
     def enable(self):
-        """This function is used to enable to BaseDataFetcher"""
+        """This function is used to enable to BaseDataFetcher."""
         self.enabled = True
         yield
         self.enabled = False

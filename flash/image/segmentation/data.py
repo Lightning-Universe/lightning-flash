@@ -460,8 +460,7 @@ class SemanticSegmentationData(DataModule):
 
 
 class SegmentationMatplotlibVisualization(BaseVisualization):
-    """Process and show the image batch and its associated label using matplotlib.
-    """
+    """Process and show the image batch and its associated label using matplotlib."""
 
     def __init__(self, labels_map: Dict[int, Tuple[int, int, int]]):
         super().__init__()

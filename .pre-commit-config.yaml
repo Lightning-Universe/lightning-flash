@@ -59,3 +59,9 @@ repos:
     rev: 0.5.0
     hooks:
       - id: nbstripout
+
+  - repo: https://github.com/myint/docformatter
+    rev: v1.4
+    hooks:
+      - id: docformatter
+        args: [--in-place, --wrap-summaries=115, --wrap-descriptions=120]

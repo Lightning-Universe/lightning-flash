@@ -32,8 +32,8 @@ else:
 
 
 class ImageEmbedder(Task):
-    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For more
-    details, see :ref:`image_embedder`.
+    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For
+    more details, see :ref:`image_embedder`.
 
     Args:
         embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
@@ -47,7 +47,6 @@ class ImageEmbedder(Task):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
-
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES

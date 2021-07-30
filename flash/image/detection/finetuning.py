@@ -17,9 +17,7 @@ from flash.core.finetuning import FlashBaseFinetuning
 
 
 class ObjectDetectionFineTuning(FlashBaseFinetuning):
-    """
-    Freezes the backbone during Detector training.
-    """
+    """Freezes the backbone during Detector training."""
 
     def __init__(self, train_bn: bool = True) -> None:
         super().__init__(train_bn=train_bn)

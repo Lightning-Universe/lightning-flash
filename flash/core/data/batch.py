@@ -32,8 +32,8 @@ if TYPE_CHECKING:
 
 
 class _Sequential(torch.nn.Module):
-    """
-    This class is used to chain 3 functions together for the _Preprocessor ``per_sample_transform`` function.
+    """This class is used to chain 3 functions together for the _Preprocessor ``per_sample_transform`` function.
+
     1. ``pre_tensor_transform``
     2. ``to_tensor_transform``
     3. ``post_tensor_transform``
@@ -259,16 +259,16 @@ class _Preprocessor(torch.nn.Module):
 
 
 class _Postprocessor(torch.nn.Module):
-    """
-        This class is used to encapsultate the following functions of a Postprocess Object:
-        Inside main process:
-            per_batch_transform: Function to transform a batch
-            per_sample_transform: Function to transform an individual sample
-            uncollate_fn: Function to split a batch into samples
-            per_sample_transform: Function to transform an individual sample
-            save_fn: Function to save all data
-            save_per_sample: Function to save an individual sample
-            is_serving: Whether the Postprocessor is used in serving mode.
+    """This class is used to encapsultate the following functions of a Postprocess Object:
+
+    Inside main process:
+        per_batch_transform: Function to transform a batch
+        per_sample_transform: Function to transform an individual sample
+        uncollate_fn: Function to split a batch into samples
+        per_sample_transform: Function to transform an individual sample
+        save_fn: Function to save all data
+        save_per_sample: Function to save an individual sample
+        is_serving: Whether the Postprocessor is used in serving mode.
     """
 
     def __init__(

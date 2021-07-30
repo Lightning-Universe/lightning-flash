@@ -58,7 +58,7 @@ def lists_to_tuples(res, keys):
 
 
 def _execute_task(arg, cache):
-    """Do the actual work of collecting data and executing a function
+    """Do the actual work of collecting data and executing a function.
 
     Examples
     --------
@@ -134,7 +134,7 @@ def get(dsk: dict, out: Sequence[str], cache: dict = None, sortkeys: List[str] =
 
 
 def get_dependencies(dsk, key=None, task=no_default, as_list=False):
-    """Get the immediate tasks on which this task depends
+    """Get the immediate tasks on which this task depends.
 
     Examples
     --------
@@ -188,7 +188,7 @@ def get_dependencies(dsk, key=None, task=no_default, as_list=False):
 
 
 def get_deps(dsk):
-    """Get dependencies and dependents from task graph
+    """Get dependencies and dependents from task graph.
 
     Examples
     --------
@@ -246,7 +246,7 @@ def reverse_dict(d):
 
 
 def subs(task, key, val):
-    """Perform a substitution on a task
+    """Perform a substitution on a task.
 
     Examples
     --------
@@ -289,8 +289,7 @@ def subs(task, key, val):
 def _toposort(dsk, keys=None, returncycle=False, dependencies=None):
     """Stack-based depth-first search traversal.
 
-    This is based on Tarjan's method for topological sorting
-    (see wikipedia for pseudocode).
+    This is based on Tarjan's method for topological sorting (see wikipedia for pseudocode).
     """
     if keys is None:
         keys = dsk
@@ -363,8 +362,7 @@ def toposort(dsk, dependencies=None):
 
 
 def getcycle(d, keys):
-    """Return a list of nodes that form a cycle if graph is not a DAG.
-    Returns an empty list if no cycle is found.
+    """Return a list of nodes that form a cycle if graph is not a DAG. Returns an empty list if no cycle is found.
     ``keys`` may be a single key or list of keys.
 
     Examples
@@ -381,8 +379,8 @@ def getcycle(d, keys):
 
 
 def isdag(d, keys):
-    """Does graph form a directed acyclic graph when calculating keys?
-    ``keys`` may be a single key or list of keys.
+    """Does graph form a directed acyclic graph when calculating keys? ``keys`` may be a single key or list of
+    keys.
 
     Examples
     --------
@@ -399,7 +397,7 @@ def isdag(d, keys):
 
 
 class literal:
-    """A small serializable object to wrap literal values without copying"""
+    """A small serializable object to wrap literal values without copying."""
 
     __slots__ = ("data", )
 
@@ -417,9 +415,8 @@ class literal:
 
 
 def quote(x):
-    """Ensure that this value remains this value in a task graph
-    Some values in task graph take on special meaning. Sometimes we want to
-    ensure that our data is not interpreted but remains literal.
+    """Ensure that this value remains this value in a task graph Some values in task graph take on special meaning.
+    Sometimes we want to ensure that our data is not interpreted but remains literal.
 
     Examples
     --------

@@ -256,8 +256,8 @@ class ObjectDetectionData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data
-        folders and corresponding target folders.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
+        and corresponding target folders.
 
         Args:
             train_folder: The folder containing the train data.

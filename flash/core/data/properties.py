@@ -21,9 +21,7 @@ import flash
 
 @dataclass(unsafe_hash=True, frozen=True)
 class ProcessState:
-    """
-    Base class for all process states
-    """
+    """Base class for all process states."""
 
 
 STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)

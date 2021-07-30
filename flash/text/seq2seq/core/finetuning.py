@@ -17,9 +17,7 @@ from flash.core.finetuning import FlashBaseFinetuning
 
 
 class Seq2SeqFreezeEmbeddings(FlashBaseFinetuning):
-    """
-    Freezes the embedding layers during Seq2Seq training.
-    """
+    """Freezes the embedding layers during Seq2Seq training."""
 
     def __init__(self, model_type: str, train_bn: bool = True):
         super().__init__("", train_bn)
