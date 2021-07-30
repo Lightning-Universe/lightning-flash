@@ -23,8 +23,9 @@ from flash.image.backbones.resnet import RESNET_MODELS
 
 MOBILENET_MODELS = ["mobilenet_v2"]
 VGG_MODELS = ["vgg11", "vgg13", "vgg16", "vgg19"]
+RESNEXT_MODELS = ["resnext50_32x4d", "resnext101_32x8d"]
 DENSENET_MODELS = ["densenet121", "densenet169", "densenet161"]
-TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNET_MODELS + DENSENET_MODELS
+TORCHVISION_MODELS = MOBILENET_MODELS + VGG_MODELS + RESNEXT_MODELS + RESNET_MODELS + DENSENET_MODELS
 
 
 if _TORCHVISION_AVAILABLE:
@@ -65,6 +66,23 @@ if _TORCHVISION_AVAILABLE:
                 name=model_name,
                 package="torchvision",
                 type="resnet-fpn"
+            )
+
+    def _fn_resnext(model_name: str, pretrained: bool = True):
+        model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
+        backbone = nn.Sequential(*list(model.children())[:-2])
+        num_features = model.fc.in_features
+
+        return backbone, num_features
+
+    def register_resnext_model(register: FlashRegistry):
+        for model_name in RESNEXT_MODELS:
+            register(
+                fn=catch_url_error(partial(_fn_resnext, model_name)),
+                name=model_name,
+                namespace="vision",
+                package="torchvision",
+                type="resnext"
             )
 
     def _fn_densenet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:

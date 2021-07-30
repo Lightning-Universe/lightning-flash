@@ -7,6 +7,7 @@ from flash.image.backbones.torchvision import (
     register_mobilenet_vgg_backbones,
     register_detection_backbones,
     register_densenet_backbones,
+    register_resnext_model,
 )
 
 
@@ -16,6 +17,7 @@ OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
 register_detection_backbones(OBJ_DETECTION_BACKBONES)
 register_resnet_backbones(IMAGE_CLASSIFIER_BACKBONES)
 register_mobilenet_vgg_backbones(IMAGE_CLASSIFIER_BACKBONES)
+register_resnext_model(IMAGE_CLASSIFIER_BACKBONES)
 register_densenet_backbones(IMAGE_CLASSIFIER_BACKBONES)
 register_dino_backbones(IMAGE_CLASSIFIER_BACKBONES)
 register_timm_backbones(IMAGE_CLASSIFIER_BACKBONES)

@@ -23,14 +23,10 @@ from torch import Tensor
 from torch.hub import load_state_dict_from_url
 
 from functools import partial
-from typing import Type, Callable, Union, Optional, Tuple, Any,  List
+from typing import Type, Callable, Union, Optional, Any,  List
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.backbones.utilities import catch_url_error
-
-if _TORCHVISION_AVAILABLE:
-    import torchvision
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
@@ -310,7 +306,10 @@ def _resnet(
     device = next(backbone.parameters()).get_device()
 
     model_weights = None
-    if _TORCHVISION_AVAILABLE and pretrained_flag:
+    if pretrained_flag:
+        if 'supervised' not in weights_paths:
+            raise KeyError('Supervised pretrained weights not available for {0}'.format(model_name))
+
         model_weights = load_state_dict_from_url(
             weights_paths['supervised'],
             map_location=torch.device('cpu') if device == -1 else torch.device(device)
@@ -319,10 +318,6 @@ def _resnet(
         # for supervised pretrained weights
         model_weights.pop("fc.weight")
         model_weights.pop("fc.bias")
-    elif not _TORCHVISION_AVAILABLE and pretrained_flag:
-        raise ModuleNotFoundError(
-            "Tried loading supervised pretrained weights for {0}, but torchvision wasn't found".format(model_name)
-        )
 
     if not pretrained_flag and isinstance(pretrained, str):
         if pretrained in weights_paths:
@@ -352,19 +347,28 @@ def _resnet(
 
 
 HTTPS_VISSL = "https://dl.fbaipublicfiles.com/vissl/model_zoo/"
-DEFAULT_WEIGHTS_PATHS = {"supervised": None}
 RESNET50_WEIGHTS_PATHS = {
     "supervised": 'https://download.pytorch.org/models/resnet50-0676ba61.pth',
     "simclr": HTTPS_VISSL + "simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/"
     "model_final_checkpoint_phase799.torch",
     "swav": HTTPS_VISSL + "swav_in1k_rn50_800ep_swav_8node_resnet_27_07_20.a0a6b676/"
     "model_final_checkpoint_phase799.torch",
-    "barlow-twins": HTTPS_VISSL + "barlow_twins/barlow_twins_32gpus_4node_imagenet1k_1000ep_resnet50.torch",
+}
+RESNET50W2_WEIGHTS_PATHS = {
+    'simclr': HTTPS_VISSL + 'simclr_rn50w2_1000ep_simclr_8node_resnet_16_07_20.e1e3bbf0/'
+        'model_final_checkpoint_phase999.torch',
+    'swav': HTTPS_VISSL + 'swav_rn50w2_in1k_bs32_16node_400ep_swav_8node_resnet_30_07_20.93563e51/'
+        'model_final_checkpoint_phase399.torch',
+}
+RESNET50W4_WEIGHTS_PATHS = {
+    'simclr': HTTPS_VISSL + 'simclr_rn50w4_1000ep_bs32_16node_simclr_8node_resnet_28_07_20.9e20b0ae/'
+        'model_final_checkpoint_phase999.torch',
+    'swav': HTTPS_VISSL + 'swav_rn50w4_in1k_bs40_8node_400ep_swav_8node_resnet_30_07_20.1736135b/'
+        'model_final_checkpoint_phase399.torch',
 }
 
 RESNET_MODELS = [
-    "resnet18", "resnet34", "resnet50", "resnet101", "resnet152",
-    "resnext50_32x4d", "resnext101_32x8d", "resnet50w2", "resnet50w4"
+    "resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnet50w2", "resnet50w4"
 ]
 RESNET_PARAMS = [
     {
@@ -388,20 +392,12 @@ RESNET_PARAMS = [
         'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnet152-394f9c45.pth'}
     },
     {
-        'block': Bottleneck, 'layers': [3, 4, 6, 3], 'groups': 32, 'width_per_group': 4, 'num_features': 2048,
-        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth'}
-    },
-    {
-        'block': Bottleneck, 'layers': [3, 4, 23, 3], 'groups': 32, 'width_per_group': 8, 'num_features': 2048,
-        'weights_paths': {"supervised": 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth'}
-    },
-    {
         'block': Bottleneck, 'layers': [3, 4, 6, 3], 'widen': 2, 'num_features': 4096,
-        'weights_paths': DEFAULT_WEIGHTS_PATHS
+        'weights_paths': RESNET50W2_WEIGHTS_PATHS
     },
     {
         'block': Bottleneck, 'layers': [3, 4, 6, 3], 'widen': 4, 'num_features': 8192,
-        'weights_paths': DEFAULT_WEIGHTS_PATHS
+        'weights_paths': RESNET50W4_WEIGHTS_PATHS
     },
 ]
 
@@ -409,13 +405,7 @@ RESNET_PARAMS = [
 def register_resnet_backbones(register: FlashRegistry):
     for model_name, params in zip(RESNET_MODELS, RESNET_PARAMS):
         register(
-            fn=catch_url_error(
-                partial(
-                    _resnet, model_name=model_name, block=params['block'],
-                    layers=params['layers'], num_features=params['num_features'],
-                    weights_paths=params['weights_paths']
-                )
-            ),
+            fn=catch_url_error(partial(_resnet, model_name=model_name, **params)),
             name=model_name,
             namespace="vision",
             package="multiple",
