@@ -27,8 +27,8 @@ RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "
 
 OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
 
-
 if _TORCHVISION_AVAILABLE:
+
     def _fn_resnet_fpn(
         model_name: str,
         pretrained: bool = True,
