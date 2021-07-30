@@ -34,6 +34,7 @@ if _TIMM_AVAILABLE:
         num_features = backbone.num_features
         return backbone, num_features
 
+
 def register_timm_backbones(register: FlashRegistry):
     if _TIMM_AVAILABLE:
         for model_name in timm.list_models():
