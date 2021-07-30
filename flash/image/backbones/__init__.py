@@ -1,7 +1,5 @@
 from flash.core.registry import FlashRegistry
-
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-
 from flash.image.backbones.resnet import register_resnet_backbones
 # from flash.image.backbones.timm import register_timm_backbones
 from flash.image.backbones.torchvision import (
@@ -11,7 +9,6 @@ from flash.image.backbones.torchvision import (
     register_resnext_model,
 )
 from flash.image.backbones.transformers import register_dino_backbones
-
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 OBJ_DETECTION_BACKBONES = FlashRegistry("backbones")
