@@ -129,15 +129,3 @@ ________________
     ~data.ImageNumpyDataSource
     ~data.ImagePathsDataSource
     ~data.ImageTensorDataSource
-
-flash.image.classification.backbones
-_____________________
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    ~backbones.dino_deits16
-    ~backbones.dino_deits8
-    ~backbones.dino_vitb16
-    ~backbones.dino_vitb8
