@@ -8,12 +8,6 @@ from flash.image.classification.backbones.torchvision import (  # noqa: F401
     register_resnext_model,
 )
 from flash.image.classification.backbones.transformers import register_dino_backbones  # noqa: F401
-from flash.image.classification.backbones.transformers import (  # noqa: F401
-    dino_deits8,
-    dino_deits16,
-    dino_vitb8,
-    dino_vitb16,
-)
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 

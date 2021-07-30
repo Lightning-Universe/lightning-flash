@@ -48,6 +48,15 @@ def test_pretrained_weights_registry(backbone, pretrained, expected_num_features
     assert num_features == expected_num_features
 
 
+@pytest.mark.parametrize(["backbone", "pretrained"], [
+    pytest.param("resnet50w2", True),
+    pytest.param("resnet50w4", "supervised"),
+])
+def test_wide_resnets(backbone, pretrained):
+    with pytest.raises(KeyError, match="Supervised pretrained weights not available for {0}".format(backbone)):
+        IMAGE_CLASSIFIER_BACKBONES.get(backbone)(pretrained=pretrained)
+
+
 def test_pretrained_backbones_catch_url_error():
 
     def raise_error_if_pretrained(pretrained=False):
