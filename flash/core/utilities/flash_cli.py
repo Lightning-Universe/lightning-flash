@@ -1,13 +1,16 @@
 import contextlib
 import functools
+import inspect
 from functools import wraps
 from inspect import Parameter, signature
-from typing import Any, Optional, Set, Type
+from typing import Any, Callable, Optional, Set, Type
 
 import pytorch_lightning as pl
 from jsonargparse import ArgumentParser
+from jsonargparse.signatures import get_class_signature_functions
 
 import flash
+from flash.core.data.data_source import DefaultDataSources
 from flash.core.utilities.lightning_cli import class_from_function, LightningCLI
 
 
@@ -19,7 +22,11 @@ def drop_kwargs(func):
 
     # Override signature
     sig = signature(func)
-    sig = sig.replace(parameters=tuple(p for p in sig.parameters.values() if p.kind is not p.VAR_KEYWORD))
+    sig = sig.replace(
+        parameters=tuple(p for p in sig.parameters.values() if p.kind is not p.VAR_KEYWORD and p.name != "self")
+    )
+    if inspect.isclass(func):
+        sig = sig.replace(return_annotation=func)
     wrapper.__signature__ = sig
 
     return wrapper
@@ -52,6 +59,12 @@ def make_args_optional(cls, args: Set[str]):
     return wrapper
 
 
+def get_overlapping_args(func_a, func_b) -> Set[str]:
+    func_a = get_class_signature_functions([func_a])[0][1]
+    func_b = get_class_signature_functions([func_b])[0][1]
+    return set(inspect.signature(func_a).parameters.keys() & inspect.signature(func_b).parameters.keys())
+
+
 class FlashCLI(LightningCLI):
 
     def __init__(
@@ -59,9 +72,10 @@ class FlashCLI(LightningCLI):
         model_class: Type[pl.LightningModule],
         datamodule_class: Type['flash.DataModule'],
         trainer_class: Type[pl.Trainer] = flash.Trainer,
-        default_subcommand="from_folders",
+        default_datamodule_builder: Optional[Callable] = None,
         default_arguments=None,
         finetune=True,
+        datamodule_attributes=None,
         **kwargs: Any,
     ) -> None:
         """Flash's extension of the :class:`pytorch_lightning.utilities.cli.LightningCLI`
@@ -78,26 +92,37 @@ class FlashCLI(LightningCLI):
                 - ``Callable``. A custom method.
             kwargs: See the parent arguments
         """
-        self.default_subcommand = default_subcommand
+        if datamodule_attributes is None:
+            datamodule_attributes = {"num_classes"}
+        self.datamodule_attributes = datamodule_attributes
+
+        self.default_datamodule_builder = default_datamodule_builder
         self.default_arguments = default_arguments or {}
         self.finetune = finetune
 
-        model_class = make_args_optional(model_class, {"num_classes"})
+        model_class = make_args_optional(model_class, self.datamodule_attributes)
         self.local_datamodule_class = datamodule_class
-        super().__init__(model_class, datamodule_class=None, trainer_class=trainer_class, **kwargs)
+
+        self._subcommand_builders = {}
+
+        super().__init__(drop_kwargs(model_class), datamodule_class=None, trainer_class=trainer_class, **kwargs)
 
     @contextlib.contextmanager
     def patch_default_subcommand(self):
         parse_common = self.parser._parse_common
 
-        @functools.wraps(parse_common)
-        def wrapper(cfg, *args, **kwargs):
-            if not hasattr(cfg, "subcommand") or cfg['subcommand'] is None:
-                cfg['subcommand'] = self.default_subcommand
-            return parse_common(cfg, *args, **kwargs)
+        if self.default_datamodule_builder is not None:
 
-        self.parser._parse_common = wrapper
+            @functools.wraps(parse_common)
+            def wrapper(cfg, *args, **kwargs):
+                if not hasattr(cfg, "subcommand") or cfg['subcommand'] is None:
+                    cfg['subcommand'] = self.default_datamodule_builder.__name__
+                return parse_common(cfg, *args, **kwargs)
+
+            self.parser._parse_common = wrapper
+
         yield
+
         self.parser._parse_common = parse_common
 
     def parse_arguments(self) -> None:
@@ -106,28 +131,41 @@ class FlashCLI(LightningCLI):
 
     def add_arguments_to_parser(self, parser) -> None:
         subcommands = parser.add_subcommands()
-        self.add_from_method("from_folders", subcommands)
-        self.add_from_method("from_csv", subcommands)
+
+        data_sources = self.local_datamodule_class.preprocess_cls().available_data_sources()
+
+        for data_source in data_sources:
+            if isinstance(data_source, DefaultDataSources):
+                data_source = data_source.value
+            self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, f"from_{data_source}"))
+
+        if self.default_datamodule_builder is not None:
+            self.add_subcommand_from_function(subcommands, self.default_datamodule_builder)
 
         parser.set_defaults(self.default_arguments)
 
-    def add_from_method(self, method_name, subcommands):
+    def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
+        datamodule_function = class_from_function(drop_kwargs(function))
+        preprocess_function = class_from_function(drop_kwargs(self.local_datamodule_class.preprocess_cls))
+        subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand.add_class_arguments(
-            class_from_function(drop_kwargs(getattr(self.local_datamodule_class, method_name))), fail_untyped=False
-        )
-        subcommand.add_class_arguments(
-            class_from_function(drop_kwargs(self.local_datamodule_class.preprocess_cls)),
+            preprocess_function,
             fail_untyped=False,
-            skip={"train_transform", "val_transform", "test_transform", "predict_transform"}
+            skip=get_overlapping_args(datamodule_function, preprocess_function)
         )
-        subcommands.add_subcommand(method_name, subcommand)
+        subcommand_name = function_name or function.__name__
+        subcommands.add_subcommand(subcommand_name, subcommand)
+        self._subcommand_builders[subcommand_name] = function
 
     def instantiate_classes(self) -> None:
         """Instantiates the classes using settings from self.config."""
         sub_config = self.config.get("subcommand")
-        self.datamodule = getattr(self.local_datamodule_class, sub_config)(**self.config.get(sub_config))
-        self.config['model']['num_classes'] = self.datamodule.num_classes
+        self.datamodule = self._subcommand_builders[sub_config](**self.config.get(sub_config))
+
+        for datamodule_attribute in self.datamodule_attributes:
+            if datamodule_attribute in self.config["model"] and self.config["model"][datamodule_attribute] is None:
+                self.config["model"][datamodule_attribute] = getattr(self.datamodule, datamodule_attribute, None)
 
         self.config_init = self.parser.instantiate_classes(self.config)
         self.model = self.config_init['model']

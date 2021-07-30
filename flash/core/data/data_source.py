@@ -152,7 +152,7 @@ class DefaultDataSources(LightningEnum):
     TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
-    DATASET = "dataset"
+    DATASETS = "datasets"
     FIFTYONE = "fiftyone"
 
     # TODO: Create a FlashEnum class???

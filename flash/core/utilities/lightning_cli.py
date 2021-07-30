@@ -49,6 +49,7 @@ def class_from_function(func: Callable[..., ClassType]) -> Type[ClassType]:
     ClassFromFunction.__new__ = __new__  # type: ignore
     ClassFromFunction.__doc__ = func.__doc__
     ClassFromFunction.__name__ = func.__name__
+
     return ClassFromFunction
 
 

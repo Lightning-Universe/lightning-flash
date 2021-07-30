@@ -19,34 +19,41 @@ from typing import Optional  # noqa: E402
 
 from flash.core.data.utils import download_data  # noqa: E402
 from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.image import ImageClassificationData, ImageClassifier  # noqa: E402
+from flash.image import SemanticSegmentation, SemanticSegmentationData  # noqa: E402
 
 
-def from_hymenoptera(
+def from_carla(
+    num_classes: int = 21,
+    val_split: float = 0.1,
     batch_size: int = 4,
     num_workers: Optional[int] = None,
     **preprocess_kwargs,
-) -> ImageClassificationData:
-    """Downloads and loads the Hymenoptera (Ants, Bees) data set."""
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
-    return ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/",
-        val_folder="data/hymenoptera_data/val/",
+) -> SemanticSegmentationData:
+    """Downloads and loads the CARLA capture data set."""
+    download_data(
+        "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
+        "./data"
+    )
+    return SemanticSegmentationData.from_folders(
+        train_folder="data/CameraRGB",
+        train_target_folder="data/CameraSeg",
+        val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        num_classes=num_classes,
+        **preprocess_kwargs
     )
 
 
 # 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
 cli = FlashCLI(
-    ImageClassifier,
-    ImageClassificationData,
-    default_datamodule_builder=from_hymenoptera,
+    SemanticSegmentation,
+    SemanticSegmentationData,
+    default_datamodule_builder=from_carla,
     default_arguments={
-        'trainer.max_epochs': 3,
+        "trainer.max_epochs": 3,
     }
 )
 
 # 2. Save the model!
-cli.trainer.save_checkpoint("image_classification_model.pt")
+cli.trainer.save_checkpoint("semantic_segmentation_model.pt")

@@ -19,34 +19,36 @@ from typing import Optional  # noqa: E402
 
 from flash.core.data.utils import download_data  # noqa: E402
 from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.image import ImageClassificationData, ImageClassifier  # noqa: E402
+from flash.image import ObjectDetectionData, ObjectDetector  # noqa: E402
 
 
-def from_hymenoptera(
+def from_coco_128(
+    val_split: float = 0.1,
     batch_size: int = 4,
     num_workers: Optional[int] = None,
     **preprocess_kwargs,
-) -> ImageClassificationData:
-    """Downloads and loads the Hymenoptera (Ants, Bees) data set."""
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
-    return ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/",
-        val_folder="data/hymenoptera_data/val/",
+) -> ObjectDetectionData:
+    """Downloads and loads the COCO 128 data set."""
+    download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
+    return ObjectDetectionData.from_coco(
+        train_folder="data/coco128/images/train2017/",
+        train_ann_file="data/coco128/annotations/instances_train2017.json",
+        val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **preprocess_kwargs
     )
 
 
 # 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
 cli = FlashCLI(
-    ImageClassifier,
-    ImageClassificationData,
-    default_datamodule_builder=from_hymenoptera,
+    ObjectDetector,
+    ObjectDetectionData,
+    default_datamodule_builder=from_coco_128,
     default_arguments={
-        'trainer.max_epochs': 3,
+        "trainer.max_epochs": 3,
     }
 )
 
 # 2. Save the model!
-cli.trainer.save_checkpoint("image_classification_model.pt")
+cli.trainer.save_checkpoint("object_detection_model.pt")

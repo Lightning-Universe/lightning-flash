@@ -92,10 +92,14 @@ class ImageEmbedder(Task):
 
     def apply_pool(self, x):
         x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+        if hasattr(torch.jit, "isinstance") and torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+            x = x[0]
+        elif isinstance(x, Tuple):
             x = x[0]
         x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+        if hasattr(torch.jit, "isinstance") and torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+            x = x[0]
+        elif isinstance(x, Tuple):
             x = x[0]
         return x
 

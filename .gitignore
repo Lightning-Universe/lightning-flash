@@ -161,3 +161,4 @@ jigsaw_toxic_comments
 flash_examples/serve/tabular_classification/data
 logs/cache/*
 flash_examples/data
+flash_examples/cli/*/data

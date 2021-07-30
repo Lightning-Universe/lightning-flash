@@ -17,21 +17,22 @@ sys.path.append("../../../")
 
 from typing import Optional  # noqa: E402
 
+from flash.audio import AudioClassificationData  # noqa: E402
 from flash.core.data.utils import download_data  # noqa: E402
 from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.image import ImageClassificationData, ImageClassifier  # noqa: E402
+from flash.image import ImageClassifier  # noqa: E402
 
 
-def from_hymenoptera(
+def from_urban8k(
     batch_size: int = 4,
     num_workers: Optional[int] = None,
     **preprocess_kwargs,
-) -> ImageClassificationData:
-    """Downloads and loads the Hymenoptera (Ants, Bees) data set."""
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
-    return ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/",
-        val_folder="data/hymenoptera_data/val/",
+) -> AudioClassificationData:
+    """Downloads and loads the Urban 8k sounds images data set."""
+    download_data("https://pl-flash-data.s3.amazonaws.com/urban8k_images.zip", "./data")
+    return AudioClassificationData.from_folders(
+        train_folder="data/urban8k_images/train",
+        val_folder="data/urban8k_images/val",
         batch_size=batch_size,
         num_workers=num_workers,
         **preprocess_kwargs,
@@ -41,12 +42,12 @@ def from_hymenoptera(
 # 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
 cli = FlashCLI(
     ImageClassifier,
-    ImageClassificationData,
-    default_datamodule_builder=from_hymenoptera,
+    AudioClassificationData,
+    default_datamodule_builder=from_urban8k,
     default_arguments={
         'trainer.max_epochs': 3,
     }
 )
 
 # 2. Save the model!
-cli.trainer.save_checkpoint("image_classification_model.pt")
+cli.trainer.save_checkpoint("audio_classification_model.pt")

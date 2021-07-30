@@ -73,7 +73,7 @@ class PointCloudSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASET: PointCloudSegmentationDatasetDataSource(),
+                DefaultDataSources.DATASETS: PointCloudSegmentationDatasetDataSource(),
                 DefaultDataSources.FOLDERS: PointCloudSegmentationFoldersDataSource(),
             },
             deserializer=deserializer,

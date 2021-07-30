@@ -211,8 +211,8 @@ class Preprocess(BasePreprocess, Properties):
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
 
-        if DefaultDataSources.DATASET not in data_sources:
-            data_sources[DefaultDataSources.DATASET] = DatasetDataSource()
+        if DefaultDataSources.DATASETS not in data_sources:
+            data_sources[DefaultDataSources.DATASETS] = DatasetDataSource()
 
         self._data_sources = data_sources
         self._deserializer = deserializer

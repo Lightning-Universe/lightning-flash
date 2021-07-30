@@ -62,7 +62,7 @@ class PointCloudObjectDetectorPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASET: PointCloudObjectDetectorDatasetDataSource(**data_source_kwargs),
+                DefaultDataSources.DATASETS: PointCloudObjectDetectorDatasetDataSource(**data_source_kwargs),
                 DefaultDataSources.FOLDERS: PointCloudObjectDetectorFoldersDataSource(**data_source_kwargs),
             },
             deserializer=deserializer,

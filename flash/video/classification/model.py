@@ -94,7 +94,7 @@ class VideoClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, nn.Module] = "slow_r50",
+        backbone: Union[str, nn.Module] = "x3d_xs",
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,

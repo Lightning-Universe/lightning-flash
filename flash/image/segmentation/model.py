@@ -147,14 +147,12 @@ class SemanticSegmentation(ClassificationTask):
         # some frameworks like torchvision return a dict.
         # In particular, torchvision segmentation models return the output logits
         # in the key `out`.
-        if torch.jit.isinstance(res, Dict[str, torch.Tensor]):
-            out = res['out']
-        elif torch.is_tensor(res):
-            out = res
-        else:
-            raise NotImplementedError(f"Unsupported output type: {type(res)}")
+        if hasattr(torch.jit, "isinstance") and torch.jit.isinstance(res, Dict[str, torch.Tensor]):
+            res = res['out']
+        elif isinstance(res, Dict):
+            res = res['out']
 
-        return out
+        return res
 
     @classmethod
     def available_pretrained_weights(cls, backbone: str):

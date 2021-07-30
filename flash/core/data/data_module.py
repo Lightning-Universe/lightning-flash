@@ -1088,7 +1088,7 @@ class DataModule(pl.LightningDataModule):
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
         :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASET`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASETS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1129,7 +1129,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.DATASET,
+            DefaultDataSources.DATASETS,
             train_dataset,
             val_dataset,
             test_dataset,

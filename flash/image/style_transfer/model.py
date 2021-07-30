@@ -80,7 +80,7 @@ class StyleTransfer(Task):
         backbone: str = "vgg16",
         content_layer: str = "relu2_2",
         content_weight: float = 1e5,
-        style_layers: Union[Sequence[str], str] = ("relu1_2", "relu2_2", "relu3_3", "relu4_3"),
+        style_layers: Union[Sequence[str], str] = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"],
         style_weight: float = 1e10,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
