@@ -22,7 +22,7 @@ from torch import Tensor
 from torch.hub import load_state_dict_from_url
 
 from functools import partial
-from typing import Type, Callable, Union, Optional, Any,  List
+from typing import Type, Callable, Union, Optional, Any, List
 
 from flash.core.registry import FlashRegistry
 from flash.image.backbones.utilities import catch_url_error
@@ -355,15 +355,15 @@ RESNET50_WEIGHTS_PATHS = {
 }
 RESNET50W2_WEIGHTS_PATHS = {
     'simclr': HTTPS_VISSL + 'simclr_rn50w2_1000ep_simclr_8node_resnet_16_07_20.e1e3bbf0/'
-        'model_final_checkpoint_phase999.torch',
+    'model_final_checkpoint_phase999.torch',
     'swav': HTTPS_VISSL + 'swav_rn50w2_in1k_bs32_16node_400ep_swav_8node_resnet_30_07_20.93563e51/'
-        'model_final_checkpoint_phase399.torch',
+    'model_final_checkpoint_phase399.torch',
 }
 RESNET50W4_WEIGHTS_PATHS = {
     'simclr': HTTPS_VISSL + 'simclr_rn50w4_1000ep_bs32_16node_simclr_8node_resnet_28_07_20.9e20b0ae/'
-        'model_final_checkpoint_phase999.torch',
+    'model_final_checkpoint_phase999.torch',
     'swav': HTTPS_VISSL + 'swav_rn50w4_in1k_bs40_8node_400ep_swav_8node_resnet_30_07_20.1736135b/'
-        'model_final_checkpoint_phase399.torch',
+    'model_final_checkpoint_phase399.torch',
 }
 
 RESNET_MODELS = [
@@ -409,5 +409,5 @@ def register_resnet_backbones(register: FlashRegistry):
             namespace="vision",
             package="multiple",
             type="resnet",
-            weights_paths=params['weights_paths'] # update
+            weights_paths=params['weights_paths']  # update
         )
