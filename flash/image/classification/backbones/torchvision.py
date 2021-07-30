@@ -36,18 +36,6 @@ if _TORCHVISION_AVAILABLE:
         num_features = 512 if model_name in VGG_MODELS else model.classifier[-1].in_features
         return backbone, num_features
 
-    def register_mobilenet_vgg_backbones(register: FlashRegistry):
-        for model_name in MOBILENET_MODELS + VGG_MODELS:
-            _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
-
-            register(
-                fn=catch_url_error(partial(_fn_mobilenet_vgg, model_name)),
-                name=model_name,
-                namespace="vision",
-                package="torchvision",
-                type=_type
-            )
-
     def _fn_resnext(model_name: str, pretrained: bool = True):
         model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
         backbone = nn.Sequential(*list(model.children())[:-2])
@@ -55,28 +43,43 @@ if _TORCHVISION_AVAILABLE:
 
         return backbone, num_features
 
-    def register_resnext_model(register: FlashRegistry):
-        for model_name in RESNEXT_MODELS:
-            register(
-                fn=catch_url_error(partial(_fn_resnext, model_name)),
-                name=model_name,
-                namespace="vision",
-                package="torchvision",
-                type="resnext"
-            )
-
     def _fn_densenet(model_name: str, pretrained: bool = True) -> Tuple[nn.Module, int]:
         model: nn.Module = getattr(torchvision.models, model_name, None)(pretrained)
         backbone = nn.Sequential(*model.features, nn.ReLU(inplace=True))
         num_features = model.classifier.in_features
         return backbone, num_features
 
-    def register_densenet_backbones(register: FlashRegistry):
-        for model_name in DENSENET_MODELS:
-            register(
-                fn=catch_url_error(partial(_fn_densenet, model_name)),
-                name=model_name,
-                namespace="vision",
-                package="torchvision",
-                type="densenet"
-            )
+
+def register_mobilenet_vgg_backbones(register: FlashRegistry):
+    for model_name in MOBILENET_MODELS + VGG_MODELS:
+        _type = "mobilenet" if model_name in MOBILENET_MODELS else "vgg"
+
+        register(
+            fn=catch_url_error(partial(_fn_mobilenet_vgg, model_name)),
+            name=model_name,
+            namespace="vision",
+            package="torchvision",
+            type=_type
+        )
+
+
+def register_resnext_model(register: FlashRegistry):
+    for model_name in RESNEXT_MODELS:
+        register(
+            fn=catch_url_error(partial(_fn_resnext, model_name)),
+            name=model_name,
+            namespace="vision",
+            package="torchvision",
+            type="resnext"
+        )
+
+
+def register_densenet_backbones(register: FlashRegistry):
+    for model_name in DENSENET_MODELS:
+        register(
+            fn=catch_url_error(partial(_fn_densenet, model_name)),
+            name=model_name,
+            namespace="vision",
+            package="torchvision",
+            type="densenet"
+        )
