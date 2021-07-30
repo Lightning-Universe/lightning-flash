@@ -1,5 +1,6 @@
 from flash.core.registry import FlashRegistry  # noqa: F401
 from flash.core.utilities.imports import _TIMM_AVAILABLE, _TORCHVISION_AVAILABLE  # noqa: F401
+
 from flash.image.classification.backbones.resnet import register_resnet_backbones  # noqa: F401
 from flash.image.classification.backbones.timm import register_timm_backbones  # noqa: F401
 from flash.image.classification.backbones.torchvision import (  # noqa: F401
@@ -8,6 +9,13 @@ from flash.image.classification.backbones.torchvision import (  # noqa: F401
     register_resnext_model,
 )
 from flash.image.classification.backbones.transformers import register_dino_backbones  # noqa: F401
+
+from flash.image.classification.backbones.transformers import (
+    dino_deits16,
+    dino_deits8,
+    dino_vitb16,
+    dino_vitb8
+)  # noqa: F401
 
 IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
