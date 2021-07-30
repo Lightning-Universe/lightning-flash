@@ -347,8 +347,8 @@ def _resnet(
                 raise KeyError('Unrecognized state dict. Logic for loading the current state dict missing.')
         else:
             raise KeyError(
-                "Requested weights for {0} not available,"
-                " choose from one of {1}".format(model_name, list(weights_paths.keys()))
+                f"Requested weights for {model_name} not available,"
+                f" choose from one of {weights_paths.keys()}"
             )
 
     if model_weights is not None:
