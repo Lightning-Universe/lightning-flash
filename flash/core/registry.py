@@ -45,8 +45,7 @@ class FlashRegistry:
         strict: bool = True,
         **metadata,
     ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
-        """
-        This function is used to gather matches from the registry:
+        """This function is used to gather matches from the registry:
 
         Args:
             key: Name of the registered function.
@@ -109,11 +108,9 @@ class FlashRegistry:
         override: bool = False,
         **metadata
     ) -> Callable:
-        """
-        This function is used to register new functions to the registry along their metadata.
+        """This function is used to register new functions to the registry along their metadata.
 
         Functions can be filtered using metadata using the ``get`` function.
-
         """
         if fn is not None:
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)

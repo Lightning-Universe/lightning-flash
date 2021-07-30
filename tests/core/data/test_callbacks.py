@@ -74,9 +74,7 @@ def test_base_data_fetcher(tmpdir):
 
 
 def test_data_loaders_num_workers_to_0(tmpdir):
-    """
-    num_workers should be set to `0` internally for visualization and not for training.
-    """
+    """num_workers should be set to `0` internally for visualization and not for training."""
 
     datamodule = DataModule(train_dataset=range(10), num_workers=3)
     iterator = datamodule._reset_iterator(RunningStage.TRAINING)

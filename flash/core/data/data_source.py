@@ -130,10 +130,8 @@ def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
 
 @dataclass(unsafe_hash=True, frozen=True)
 class LabelsState(ProcessState):
-    """
-    A :class:`~flash.core.data.properties.ProcessState` containing ``labels``,
-    a mapping from class index to label.
-    """
+    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
+    label."""
 
     labels: Optional[Sequence[str]]
 
@@ -184,9 +182,12 @@ class BaseDataFormat(LightningEnum):
 
 
 class MockDataset:
-    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``. This is passed to
+    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``.
+
+    This is passed to
     :meth:`~flash.core.data.data_source.DataSource.load_data` so that attributes can be set on the generated
-    data set."""
+    data set.
+    """
 
     def __init__(self):
         self.metadata = {}
@@ -201,9 +202,12 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class DataSource(Generic[DATA_TYPE], Properties, Module):
-    """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``. The
+    """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``.
+
+    The
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
-    sets from the hooks."""
+    sets from the hooks.
+    """
 
     @staticmethod
     def load_data(
@@ -270,10 +274,10 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         test_data: Optional[DATA_TYPE] = None,
         predict_data: Optional[DATA_TYPE] = None,
     ) -> Tuple[Optional[BaseAutoDataset], ...]:
-        """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data source by
-        calling :meth:`~flash.core.data.data_source.DataSource.load_data` with each of the ``*_data`` arguments. If an
-        argument is given as ``None`` then no dataset will be created for that stage (``train``, ``val``, ``test``,
-        ``predict``).
+        """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data
+        source by calling :meth:`~flash.core.data.data_source.DataSource.load_data` with each of the ``*_data``
+        arguments. If an argument is given as ``None`` then no dataset will be created for that stage (``train``,
+        ``val``, ``test``, ``predict``).
 
         Args:
             train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the

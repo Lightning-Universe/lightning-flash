@@ -397,14 +397,14 @@ def test_nearest_neighbor(abcde):
 
 
 def test_string_ordering():
-    """ Prefer ordering tasks by name first """
+    """Prefer ordering tasks by name first."""
     dsk = {("a", 1): (f, ), ("a", 2): (f, ), ("a", 3): (f, )}
     o = order(dsk)
     assert o == {("a", 1): 0, ("a", 2): 1, ("a", 3): 2}
 
 
 def test_string_ordering_dependents():
-    """ Prefer ordering tasks by name first even when in dependencies """
+    """Prefer ordering tasks by name first even when in dependencies."""
     dsk = {("a", 1): (f, "b"), ("a", 2): (f, "b"), ("a", 3): (f, "b"), "b": (f, )}
     o = order(dsk)
     assert o == {"b": 0, ("a", 1): 1, ("a", 2): 2, ("a", 3): 3}
@@ -526,7 +526,7 @@ def test_map_overlap(abcde):
 
 
 def test_use_structure_not_keys(abcde):
-    """See https://github.com/dask/dask/issues/5584#issuecomment-554963958
+    """See https://github.com/dask/dask/issues/5584#issuecomment-554963958.
 
     We were using key names to infer structure, which could result in funny behavior.
     """
@@ -566,7 +566,7 @@ def test_use_structure_not_keys(abcde):
 
 
 def test_dont_run_all_dependents_too_early(abcde):
-    """ From https://github.com/dask/dask-ml/issues/206#issuecomment-395873372 """
+    """From https://github.com/dask/dask-ml/issues/206#issuecomment-395873372."""
     a, b, c, d, e = abcde
     depth = 10
     dsk = {(a, 0): 0, (b, 0): 1, (c, 0): 2, (d, 0): (f, (a, 0), (b, 0), (c, 0))}
@@ -581,13 +581,10 @@ def test_dont_run_all_dependents_too_early(abcde):
 
 
 def test_many_branches_use_ndependencies(abcde):
-    """From https://github.com/dask/dask/pull/5646#issuecomment-562700533
+    """From https://github.com/dask/dask/pull/5646#issuecomment-562700533.
 
-    Sometimes we need larger or wider DAGs to test behavior.  This test
-    ensures we choose the branch with more work twice in successtion.
-    This is important, because ``order`` may search along dependencies
-    and then along dependents.
-
+    Sometimes we need larger or wider DAGs to test behavior.  This test ensures we choose the branch with more work
+    twice in successtion. This is important, because ``order`` may search along dependencies and then along dependents.
     """
     a, b, c, d, e = abcde
     dd = d + d
@@ -694,12 +691,11 @@ def test_switching_dependents(abcde):
 
 
 def test_order_with_equal_dependents(abcde):
-    """From https://github.com/dask/dask/issues/5859#issuecomment-608422198
+    """From https://github.com/dask/dask/issues/5859#issuecomment-608422198.
 
     See the visualization of `(maxima, argmax)` example from the above comment.
 
     This DAG has enough structure to exercise more parts of `order`
-
     """
     a, b, c, d, e = abcde
     dsk = {}

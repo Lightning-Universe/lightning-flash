@@ -863,10 +863,8 @@ def test_dummy_example(tmpdir):
 
 
 def test_preprocess_transforms(tmpdir):
-    """
-    This test makes sure that when a preprocess is being provided transforms as dictionaries,
-    checking is done properly, and collate_in_worker_from_transform is properly extracted.
-    """
+    """This test makes sure that when a preprocess is being provided transforms as dictionaries, checking is done
+    properly, and collate_in_worker_from_transform is properly extracted."""
 
     with pytest.raises(MisconfigurationException, match="Transform should be a dict."):
         DefaultPreprocess(train_transform="choco")

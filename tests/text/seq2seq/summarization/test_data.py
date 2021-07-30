@@ -92,9 +92,8 @@ def test_from_files(tmpdir):
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_postprocess_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different backbone is
-    used.
-    """
+    """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different
+    backbone is used."""
     backbone = "sshleifer/bart-tiny-random"
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_csv(

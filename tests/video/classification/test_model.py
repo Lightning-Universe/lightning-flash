@@ -51,9 +51,9 @@ def create_dummy_video_frames(num_frames: int, height: int, width: int):
 # https://github.com/facebookresearch/pytorchvideo/blob/4feccb607d7a16933d485495f91d067f177dd8db/tests/utils.py#L33
 @contextlib.contextmanager
 def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=None, directory=None):
-    """
-    Creates a temporary lossless, mp4 video with synthetic content. Uses a context which
-    deletes the video after exit.
+    """Creates a temporary lossless, mp4 video with synthetic content.
+
+    Uses a context which deletes the video after exit.
     """
     # Lossless options.
     video_codec = "libx264rgb"
@@ -101,8 +101,8 @@ def mock_encoded_video_dataset_file():
 
 @contextlib.contextmanager
 def mock_encoded_video_dataset_folder(tmpdir):
-    """
-    Creates a temporary mock encoded video directory tree with 2 videos labeled 1, 2.
+    """Creates a temporary mock encoded video directory tree with 2 videos labeled 1, 2.
+
     Returns a directory that to this mock encoded video dataset and the video duration in seconds.
     """
     num_frames = 10

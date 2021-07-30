@@ -113,9 +113,7 @@ class Seq2SeqTask(Task):
 
     @property
     def task(self) -> Optional[str]:
-        """
-        Override to define AutoConfig task specific parameters stored within the model.
-        """
+        """Override to define AutoConfig task specific parameters stored within the model."""
         return
 
     def _initialize_model_specific_parameters(self):

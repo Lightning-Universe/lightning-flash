@@ -46,8 +46,10 @@ def test_serializer():
 
 
 def test_serializer_mapping():
-    """Tests that ``SerializerMapping`` correctly passes its inputs to the underlying serializers. Also checks that
-    state is retrieved / loaded correctly."""
+    """Tests that ``SerializerMapping`` correctly passes its inputs to the underlying serializers.
+
+    Also checks that state is retrieved / loaded correctly.
+    """
 
     serializer1 = Serializer()
     serializer1.serialize = Mock(return_value='test1')

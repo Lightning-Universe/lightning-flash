@@ -27,8 +27,7 @@ except (ModuleNotFoundError, DistributionNotFound):
 
 
 def _module_available(module_path: str) -> bool:
-    """
-    Check if a path is available in your environment
+    """Check if a path is available in your environment.
 
     >>> _module_available('os')
     True
@@ -43,11 +42,13 @@ def _module_available(module_path: str) -> bool:
     except ModuleNotFoundError:
         # Python 3.7+
         return False
+    except ValueError:
+        # Sometimes __spec__ can be None and gives a ValueError
+        return True
 
 
 def _compare_version(package: str, op, version) -> bool:
-    """
-    Compare package version with some requirements
+    """Compare package version with some requirements.
 
     >>> _compare_version("torch", operator.ge, "0.1")
     True
@@ -59,7 +60,7 @@ def _compare_version(package: str, op, version) -> bool:
     try:
         pkg_version = Version(pkg.__version__)
     except TypeError:
-        # this is mock by sphinx, so it shall return True ro generate all summaries
+        # this is mock by sphinx, so it shall return True to generate all summaries
         return True
     return op(pkg_version, Version(version))
 
@@ -168,8 +169,7 @@ def requires_extras(extras: Union[str, List]):
 
 
 def lazy_import(module_name, callback=None):
-    """Returns a proxy module object that will lazily import the given module
-    the first time it is used.
+    """Returns a proxy module object that will lazily import the given module the first time it is used.
 
     Example usage::
 
@@ -193,8 +193,7 @@ def lazy_import(module_name, callback=None):
 
 
 class LazyModule(types.ModuleType):
-    """Proxy module that lazily imports the underlying module the first time it
-    is actually used.
+    """Proxy module that lazily imports the underlying module the first time it is actually used.
 
     Args:
         module_name: the fully-qualified module name to import

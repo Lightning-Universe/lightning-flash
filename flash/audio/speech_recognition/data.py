@@ -219,7 +219,7 @@ class SpeechRecognitionPostprocess(Postprocess):
 
 
 class SpeechRecognitionData(DataModule):
-    """Data Module for text classification tasks"""
+    """Data Module for text classification tasks."""
 
     preprocess_cls = SpeechRecognitionPreprocess
     postprocess_cls = SpeechRecognitionPostprocess
