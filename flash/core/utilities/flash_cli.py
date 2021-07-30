@@ -64,8 +64,7 @@ class FlashCLI(LightningCLI):
         finetune=True,
         **kwargs: Any,
     ) -> None:
-        """
-        Flash's extension of the :class:`pytorch_lightning.utilities.cli.LightningCLI`
+        """Flash's extension of the :class:`pytorch_lightning.utilities.cli.LightningCLI`
 
         Args:
             model_class: The :class:`pytorch_lightning.LightningModule` class to train on.
@@ -125,7 +124,7 @@ class FlashCLI(LightningCLI):
         subcommands.add_subcommand(method_name, subcommand)
 
     def instantiate_classes(self) -> None:
-        """Instantiates the classes using settings from self.config"""
+        """Instantiates the classes using settings from self.config."""
         sub_config = self.config.get("subcommand")
         self.datamodule = getattr(self.local_datamodule_class, sub_config)(**self.config.get(sub_config))
         self.config['model']['num_classes'] = self.datamodule.num_classes

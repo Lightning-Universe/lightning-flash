@@ -53,10 +53,10 @@ def class_from_function(func: Callable[..., ClassType]) -> Type[ClassType]:
 
 
 class LightningArgumentParser(ArgumentParser):
-    """Extension of jsonargparse's ArgumentParser for pytorch-lightning"""
+    """Extension of jsonargparse's ArgumentParser for pytorch-lightning."""
 
     def __init__(self, *args: Any, parse_as_dict: bool = True, **kwargs: Any) -> None:
-        """Initialize argument parser that supports configuration file input
+        """Initialize argument parser that supports configuration file input.
 
         For full details of accepted arguments see `ArgumentParser.__init__
         <https://jsonargparse.readthedocs.io/en/stable/#jsonargparse.core.ArgumentParser.__init__>`_.
@@ -75,8 +75,7 @@ class LightningArgumentParser(ArgumentParser):
         nested_key: str,
         subclass_mode: bool = False
     ) -> List[str]:
-        """
-        Adds arguments from a lightning class to a nested key of the parser
+        """Adds arguments from a lightning class to a nested key of the parser.
 
         Args:
             lightning_class: A callable or any subclass of {Trainer, LightningModule, LightningDataModule, Callback}.
@@ -110,8 +109,7 @@ class LightningArgumentParser(ArgumentParser):
         nested_key: str = 'optimizer',
         link_to: str = 'AUTOMATIC',
     ) -> None:
-        """
-        Adds arguments from an optimizer class to a nested key of the parser
+        """Adds arguments from an optimizer class to a nested key of the parser.
 
         Args:
             optimizer_class: Any subclass of torch.optim.Optimizer.
@@ -139,8 +137,7 @@ class LightningArgumentParser(ArgumentParser):
         nested_key: str = 'lr_scheduler',
         link_to: str = 'AUTOMATIC',
     ) -> None:
-        """
-        Adds arguments from a learning rate scheduler class to a nested key of the parser
+        """Adds arguments from a learning rate scheduler class to a nested key of the parser.
 
         Args:
             lr_scheduler_class: Any subclass of ``torch.optim.lr_scheduler.{_LRScheduler, ReduceLROnPlateau}``.
@@ -164,7 +161,7 @@ class LightningArgumentParser(ArgumentParser):
 
 
 class SaveConfigCallback(Callback):
-    """Saves a LightningCLI config to the log_dir when training starts
+    """Saves a LightningCLI config to the log_dir when training starts.
 
     Raises:
         RuntimeError: If the config file already exists in the directory to avoid overwriting a previous run
@@ -212,7 +209,7 @@ class SaveConfigCallback(Callback):
 
 
 class LightningCLI:
-    """Implementation of a configurable command line tool for pytorch-lightning"""
+    """Implementation of a configurable command line tool for pytorch-lightning."""
 
     def __init__(
         self,
@@ -231,12 +228,11 @@ class LightningCLI:
         subclass_mode_model: bool = False,
         subclass_mode_data: bool = False
     ) -> None:
-        """
-        Receives as input pytorch-lightning classes (or callables which return pytorch-lightning classes), which are
-        called / instantiated using a parsed configuration file and / or command line args and then runs trainer.fit.
-        Parsing of configuration from environment variables can be enabled by setting ``env_parse=True``. A full
-        configuration yaml would be parsed from ``PL_CONFIG`` if set. Individual settings are so parsed from variables
-        named for example ``PL_TRAINER__MAX_EPOCHS``.
+        """Receives as input pytorch-lightning classes (or callables which return pytorch-lightning classes), which
+        are called / instantiated using a parsed configuration file and / or command line args and then runs
+        trainer.fit. Parsing of configuration from environment variables can be enabled by setting
+        ``env_parse=True``. A full configuration yaml would be parsed from ``PL_CONFIG`` if set. Individual
+        settings are so parsed from variables named for example ``PL_TRAINER__MAX_EPOCHS``.
 
         Example, first implement the ``trainer.py`` tool as::
 
@@ -306,11 +302,11 @@ class LightningCLI:
         self.after_fit()
 
     def init_parser(self) -> None:
-        """Method that instantiates the argument parser"""
+        """Method that instantiates the argument parser."""
         self.parser = LightningArgumentParser(**self.parser_kwargs)
 
     def add_core_arguments_to_parser(self) -> None:
-        """Adds arguments from the core classes to the parser"""
+        """Adds arguments from the core classes to the parser."""
         self.parser.add_argument(
             '--seed_everything',
             type=Optional[int],
@@ -325,14 +321,14 @@ class LightningCLI:
             self.parser.add_lightning_class_args(self.datamodule_class, 'data', subclass_mode=self.subclass_mode_data)
 
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
-        """Implement to add extra arguments to parser or link arguments
+        """Implement to add extra arguments to parser or link arguments.
 
         Args:
             parser: The argument parser object to which arguments can be added
         """
 
     def link_optimizers_and_lr_schedulers(self) -> None:
-        """Creates argument links for optimizers and lr_schedulers that specified a link_to"""
+        """Creates argument links for optimizers and lr_schedulers that specified a link_to."""
         for key, (class_type, link_to) in self.parser.optimizers_and_lr_schedulers.items():
             if link_to == 'AUTOMATIC':
                 continue
@@ -343,14 +339,14 @@ class LightningCLI:
                 self.parser.link_arguments(key, link_to, compute_fn=add_class_path)
 
     def parse_arguments(self) -> None:
-        """Parses command line arguments and stores it in self.config"""
+        """Parses command line arguments and stores it in self.config."""
         self.config = self.parser.parse_args()
 
     def before_instantiate_classes(self) -> None:
-        """Implement to run some code before instantiating the classes"""
+        """Implement to run some code before instantiating the classes."""
 
     def instantiate_classes(self) -> None:
-        """Instantiates the classes using settings from self.config"""
+        """Instantiates the classes using settings from self.config."""
         self.config_init = self.parser.instantiate_classes(self.config)
         self.datamodule = self.config_init.get('data')
         self.model = self.config_init['model']
@@ -375,11 +371,10 @@ class LightningCLI:
         self.trainer = self.trainer_class(**self.config_init['trainer'])
 
     def add_configure_optimizers_method_to_model(self) -> None:
-        """
-        Adds to the model an automatically generated configure_optimizers method
+        """Adds to the model an automatically generated configure_optimizers method.
 
-        If a single optimizer and optionally a scheduler argument groups are added to the parser as 'AUTOMATIC',
-        then a `configure_optimizers` method is automatically implemented in the model class.
+        If a single optimizer and optionally a scheduler argument groups are added to the parser as 'AUTOMATIC', then a
+        `configure_optimizers` method is automatically implemented in the model class.
         """
 
         def get_automatic(class_type: Union[Type, Tuple[Type, ...]]) -> List[str]:
@@ -435,20 +430,20 @@ class LightningCLI:
         self.model.configure_optimizers = MethodType(configure_optimizers, self.model)
 
     def prepare_fit_kwargs(self) -> None:
-        """Prepares fit_kwargs including datamodule using self.config_init['data'] if given"""
+        """Prepares fit_kwargs including datamodule using self.config_init['data'] if given."""
         self.fit_kwargs = {'model': self.model}
         if self.datamodule is not None:
             self.fit_kwargs['datamodule'] = self.datamodule
 
     def before_fit(self) -> None:
-        """Implement to run some code before fit is started"""
+        """Implement to run some code before fit is started."""
 
     def fit(self) -> None:
-        """Runs fit of the instantiated trainer class and prepared fit keyword arguments"""
+        """Runs fit of the instantiated trainer class and prepared fit keyword arguments."""
         self.trainer.fit(**self.fit_kwargs)
 
     def after_fit(self) -> None:
-        """Implement to run some code after fit has finished"""
+        """Implement to run some code after fit has finished."""
 
 
 def _global_add_class_path(class_type: Type, init_args: Dict[str, Any]) -> Dict[str, Any]:
