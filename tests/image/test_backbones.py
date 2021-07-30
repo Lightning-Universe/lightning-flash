@@ -17,8 +17,8 @@ import pytest
 from pytorch_lightning.utilities import _TORCHVISION_AVAILABLE
 
 from flash.core.utilities.imports import _TIMM_AVAILABLE
-from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 from flash.core.utilities.url_error import catch_url_error
+from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
 @pytest.mark.parametrize(["backbone", "expected_num_features"], [
