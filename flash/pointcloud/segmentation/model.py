@@ -149,7 +149,7 @@ class PointCloudSegmentation(ClassificationTask):
         return labels, scores
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
-        return F.softmax(self.to_loss_format(x))
+        return F.softmax(self.to_loss_format(x), dim=-1)
 
     def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
         return x.reshape(-1, x.shape[-1])
