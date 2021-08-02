@@ -183,7 +183,7 @@ def test_video_classifier_finetune(tmpdir):
             train_transform=train_transform
         )
 
-        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
         trainer = flash.Trainer(fast_dev_run=True)
 
@@ -253,7 +253,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
             train_transform=train_transform
         )
 
-        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
         trainer = flash.Trainer(fast_dev_run=True)
 
@@ -265,7 +265,7 @@ def test_jit(tmpdir):
     sample_input = torch.rand(1, 3, 32, 256, 256)
     path = os.path.join(tmpdir, "test.pt")
 
-    model = VideoClassifier(2, pretrained=False)
+    model = VideoClassifier(2, pretrained=False, backbone="slow_r50")
     model.eval()
 
     # pytorchvideo only works with `torch.jit.trace`
