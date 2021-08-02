@@ -71,5 +71,5 @@ def test_predict_dataset(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     data_pipe = DataPipeline(preprocess=GraphClassificationPreprocess())
-    out = model.predict(tudataset, data_source="dataset", data_pipeline=data_pipe)
+    out = model.predict(tudataset, data_source="datasets", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
