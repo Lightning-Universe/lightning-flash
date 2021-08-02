@@ -169,7 +169,6 @@ class FlashCLI(LightningCLI):
         for datamodule_attribute in self.datamodule_attributes:
             if datamodule_attribute in self.config["model"] and self.config["model"][datamodule_attribute] is None:
                 self.config["model"][datamodule_attribute] = getattr(self.datamodule, datamodule_attribute, None)
-
         self.config_init = self.parser.instantiate_classes(self.config)
         self.model = self.config_init['model']
         self.instantiate_trainer()

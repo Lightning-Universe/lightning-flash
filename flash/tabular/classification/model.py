@@ -53,7 +53,7 @@ class TabularClassifier(ClassificationTask):
         self,
         num_features: int,
         num_classes: int,
-        embedding_sizes: List[Tuple] = None,
+        embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
@@ -113,7 +113,7 @@ class TabularClassifier(ClassificationTask):
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
-        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
+        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.embedding_sizes, **kwargs)
         return model
 
     @staticmethod
