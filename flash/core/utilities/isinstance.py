@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data.utils import download_data
-from flash.image import ImageEmbedder
 
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
-# 2. Build the task
-embedder = ImageEmbedder(backbone="resnet101")
+def _typed_isinstance(__object, __class_or_tuple):
+    return isinstance(__object, getattr(__class_or_tuple, "__origin__", __class_or_tuple))
 
-# 3. Generate an embedding from an image path.
-embeddings = embedder.predict(["data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg"])
-print(embeddings)
+
+try:
+    from torch.jit import isinstance as _isinstance
+except ImportError:
+    _isinstance = _typed_isinstance

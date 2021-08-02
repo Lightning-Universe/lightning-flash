@@ -23,6 +23,7 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Postprocess, Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE
+from flash.core.utilities.isinstance import _isinstance
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.serialization import SegmentationLabels
@@ -147,9 +148,7 @@ class SemanticSegmentation(ClassificationTask):
         # some frameworks like torchvision return a dict.
         # In particular, torchvision segmentation models return the output logits
         # in the key `out`.
-        if hasattr(torch.jit, "isinstance") and torch.jit.isinstance(res, Dict[str, torch.Tensor]):
-            res = res['out']
-        elif isinstance(res, Dict):
+        if _isinstance(res, Dict[str, torch.Tensor]):
             res = res['out']
 
         return res
