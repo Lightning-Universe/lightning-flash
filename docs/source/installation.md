@@ -12,7 +12,7 @@ Optionally, you can install Flash with extra packages for each domain or all dom
 ```bash
 pip install 'lightning-flash[image]'
 pip install 'lightning-flash[tabular]'
-pip install 'lightnign-flash[text]'
+pip install 'lightning-flash[text]'
 pip install 'lightning-flash[video]'
 
 # image + video
