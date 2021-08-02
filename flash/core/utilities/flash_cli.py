@@ -137,7 +137,10 @@ class FlashCLI(LightningCLI):
         for data_source in data_sources:
             if isinstance(data_source, DefaultDataSources):
                 data_source = data_source.value
-            self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, f"from_{data_source}"))
+            if hasattr(self.local_datamodule_class, f"from_{data_source}"):
+                self.add_subcommand_from_function(
+                    subcommands, getattr(self.local_datamodule_class, f"from_{data_source}")
+                )
 
         if self.default_datamodule_builder is not None:
             self.add_subcommand_from_function(subcommands, self.default_datamodule_builder)

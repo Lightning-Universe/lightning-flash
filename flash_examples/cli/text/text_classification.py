@@ -17,25 +17,25 @@ sys.path.append("../../../")
 
 from typing import Optional  # noqa: E402
 
-from flash.audio import SpeechRecognition, SpeechRecognitionData  # noqa: E402
 from flash.core.data.utils import download_data  # noqa: E402
 from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
+from flash.text import TextClassificationData, TextClassifier  # noqa: E402
 
 
-def from_timit(
-    val_split: float = 0.1,
+def from_imdb(
+    backbone: str = "prajjwal1/bert-medium",
     batch_size: int = 4,
     num_workers: Optional[int] = None,
     **preprocess_kwargs,
-) -> SpeechRecognitionData:
-    """Downloads and loads the timit data set."""
-    download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
-    return SpeechRecognitionData.from_json(
-        input_fields="file",
-        target_fields="text",
-        train_file="data/timit/train.json",
-        test_file="data/timit/test.json",
-        val_split=val_split,
+) -> TextClassificationData:
+    """Downloads and loads the IMDB sentiment classification data set."""
+    download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "./data/")
+    return TextClassificationData.from_csv(
+        "review",
+        "sentiment",
+        train_file="data/imdb/train.csv",
+        val_file="data/imdb/valid.csv",
+        backbone=backbone,
         batch_size=batch_size,
         num_workers=num_workers,
         **preprocess_kwargs,
@@ -44,14 +44,14 @@ def from_timit(
 
 # 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
 cli = FlashCLI(
-    SpeechRecognition,
-    SpeechRecognitionData,
-    default_datamodule_builder=from_timit,
+    TextClassifier,
+    TextClassificationData,
+    default_datamodule_builder=from_imdb,
     default_arguments={
-        'trainer.max_epochs': 3,
-    },
-    finetune=False,
+        "trainer.max_epochs": 3,
+        "model.backbone": "prajjwal1/bert-medium",
+    }
 )
 
 # 2. Save the model!
-cli.trainer.save_checkpoint("speech_recognition_model.pt")
+cli.trainer.save_checkpoint("text_classification_model.pt")
