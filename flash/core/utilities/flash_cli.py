@@ -5,6 +5,7 @@ from functools import wraps
 from inspect import Parameter, signature
 from typing import Any, Callable, Optional, Set, Type
 
+import click
 import pytorch_lightning as pl
 from jsonargparse import ArgumentParser
 from jsonargparse.signatures import get_class_signature_functions
@@ -184,3 +185,26 @@ class FlashCLI(LightningCLI):
             self.trainer.finetune(**self.fit_kwargs)
         else:
             self.trainer.fit(**self.fit_kwargs)
+
+
+@click.group()
+def main():
+    """The Lightning-Flash zero-code command line utility."""
+
+
+@main.command(context_settings=dict(
+    help_option_names=[],
+    ignore_unknown_options=True,
+))
+@click.argument('cli_args', nargs=-1, type=click.UNPROCESSED)
+def image_classification(cli_args):
+    """Image classification task."""
+    from unittest.mock import patch
+
+    with patch('sys.argv', ["image_classification"] + list(cli_args)):
+        from flash.image.classification.cli import main
+        main()
+
+
+if __name__ == '__main__':
+    main()
