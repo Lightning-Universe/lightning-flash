@@ -35,7 +35,7 @@ _________________
 Flash Zero works with your own data through subcommands. The available subcommands for each task are given at the bottom
 of their help pages (e.g. when running :code:`flash image-classification --help`). You can then use the required
 subcommand to train on your own data. Let's look at an example using the Hymenoptera data from the
-:ref:`image_classification` guide. First download and unzip your data:
+:ref:`image_classification` guide. First, download and unzip your data:
 
 .. code-block:: bash
 
