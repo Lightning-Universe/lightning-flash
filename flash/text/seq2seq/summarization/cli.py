@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.text import SummarizationData, SummarizationTask
 
-from typing import Optional  # noqa: E402
-
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.text import SummarizationData, SummarizationTask  # noqa: E402
+__all__ = ["summarization"]
 
 
 def from_xsum(
@@ -42,16 +40,20 @@ def from_xsum(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    SummarizationTask,
-    SummarizationData,
-    default_datamodule_builder=from_xsum,
-    default_arguments={
-        "trainer.max_epochs": 3,
-        "model.backbone": "sshleifer/distilbart-xsum-1-1",
-    }
-)
+def summarization():
+    """Summarize text."""
+    cli = FlashCLI(
+        SummarizationTask,
+        SummarizationData,
+        default_datamodule_builder=from_xsum,
+        default_arguments={
+            "trainer.max_epochs": 3,
+            "model.backbone": "sshleifer/distilbart-xsum-1-1",
+        }
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("summarization_model_xsum.pt")
+    cli.trainer.save_checkpoint("summarization_model_xsum.pt")
+
+
+if __name__ == '__main__':
+    summarization()

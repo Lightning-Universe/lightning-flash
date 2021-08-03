@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.image import ObjectDetectionData, ObjectDetector
 
-from typing import Optional  # noqa: E402
-
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.image import ObjectDetectionData, ObjectDetector  # noqa: E402
+__all__ = ["object_detection"]
 
 
 def from_coco_128(
@@ -40,15 +38,19 @@ def from_coco_128(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    ObjectDetector,
-    ObjectDetectionData,
-    default_datamodule_builder=from_coco_128,
-    default_arguments={
-        "trainer.max_epochs": 3,
-    }
-)
+def object_detection():
+    """Detect objects in images."""
+    cli = FlashCLI(
+        ObjectDetector,
+        ObjectDetectionData,
+        default_datamodule_builder=from_coco_128,
+        default_arguments={
+            "trainer.max_epochs": 3,
+        }
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("object_detection_model.pt")
+    cli.trainer.save_checkpoint("object_detection_model.pt")
+
+
+if __name__ == '__main__':
+    object_detection()

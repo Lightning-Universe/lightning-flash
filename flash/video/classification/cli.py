@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.video import VideoClassificationData, VideoClassifier
 
-from typing import Optional  # noqa: E402
-
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.video import VideoClassificationData, VideoClassifier  # noqa: E402
+__all__ = ["video_classification"]
 
 
 def from_kinetics(
@@ -45,15 +43,19 @@ def from_kinetics(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    VideoClassifier,
-    VideoClassificationData,
-    default_datamodule_builder=from_kinetics,
-    default_arguments={
-        "trainer.max_epochs": 3,
-    }
-)
+def video_classification():
+    """Classify videos."""
+    cli = FlashCLI(
+        VideoClassifier,
+        VideoClassificationData,
+        default_datamodule_builder=from_kinetics,
+        default_arguments={
+            "trainer.max_epochs": 3,
+        }
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("video_classification.pt")
+    cli.trainer.save_checkpoint("video_classification.pt")
+
+
+if __name__ == '__main__':
+    video_classification()

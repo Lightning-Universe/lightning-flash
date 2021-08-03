@@ -17,6 +17,8 @@ from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.image import ImageClassificationData, ImageClassifier
 
+__all__ = ["image_classification"]
+
 
 def from_hymenoptera(
     batch_size: int = 4,
@@ -34,14 +36,38 @@ def from_hymenoptera(
     )
 
 
-def main():
+def from_movie_posters(
+    batch_size: int = 4,
+    num_workers: Optional[int] = None,
+    **preprocess_kwargs,
+) -> ImageClassificationData:
+    """Downloads and loads the movie posters genre classification data set."""
+    download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "./data")
+    return ImageClassificationData.from_csv(
+        "Id", ["Action", "Romance", "Crime", "Thriller", "Adventure"],
+        train_file="data/movie_posters/train/metadata.csv",
+        val_file="data/movie_posters/val/metadata.csv",
+        batch_size=batch_size,
+        num_workers=num_workers,
+        **preprocess_kwargs
+    )
+
+
+def image_classification():
+    """Classify images."""
     cli = FlashCLI(
         ImageClassifier,
         ImageClassificationData,
         default_datamodule_builder=from_hymenoptera,
+        additional_datamodule_builders=[from_movie_posters],
         default_arguments={
             'trainer.max_epochs': 3,
-        }
+        },
+        datamodule_attributes={"num_classes", "multi_label"}
     )
 
     cli.trainer.save_checkpoint("image_classification_model.pt")
+
+
+if __name__ == '__main__':
+    image_classification()

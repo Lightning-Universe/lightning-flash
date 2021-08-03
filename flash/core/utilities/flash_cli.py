@@ -1,11 +1,23 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import contextlib
 import functools
 import inspect
 from functools import wraps
 from inspect import Parameter, signature
-from typing import Any, Callable, Optional, Set, Type
+from typing import Any, Callable, List, Optional, Set, Type
 
-import click
 import pytorch_lightning as pl
 from jsonargparse import ArgumentParser
 from jsonargparse.signatures import get_class_signature_functions
@@ -41,8 +53,8 @@ def make_args_optional(cls, args: Set[str]):
 
     # Override signature
     sig = signature(cls)
-    parameters = [p for p in sig.parameters.values() if p.name not in args]
-    filtered_parameters = [p for p in sig.parameters.values() if p.name in args]
+    parameters = [p for p in sig.parameters.values() if p.name not in args or p.default != p.empty]
+    filtered_parameters = [p for p in sig.parameters.values() if p.name in args and p.default == p.empty]
 
     index = [i for i, p in enumerate(parameters) if p.kind == p.VAR_KEYWORD]
     if index == []:
@@ -74,6 +86,7 @@ class FlashCLI(LightningCLI):
         datamodule_class: Type['flash.DataModule'],
         trainer_class: Type[pl.Trainer] = flash.Trainer,
         default_datamodule_builder: Optional[Callable] = None,
+        additional_datamodule_builders: Optional[List[Callable]] = None,
         default_arguments=None,
         finetune=True,
         datamodule_attributes=None,
@@ -98,6 +111,7 @@ class FlashCLI(LightningCLI):
         self.datamodule_attributes = datamodule_attributes
 
         self.default_datamodule_builder = default_datamodule_builder
+        self.additional_datamodule_builders = additional_datamodule_builders or []
         self.default_arguments = default_arguments or {}
         self.finetune = finetune
 
@@ -116,8 +130,8 @@ class FlashCLI(LightningCLI):
 
             @functools.wraps(parse_common)
             def wrapper(cfg, *args, **kwargs):
-                if not hasattr(cfg, "subcommand") or cfg['subcommand'] is None:
-                    cfg['subcommand'] = self.default_datamodule_builder.__name__
+                if "subcommand" not in cfg or cfg["subcommand"] is None:
+                    cfg["subcommand"] = self.default_datamodule_builder.__name__
                 return parse_common(cfg, *args, **kwargs)
 
             self.parser._parse_common = wrapper
@@ -142,6 +156,9 @@ class FlashCLI(LightningCLI):
                 self.add_subcommand_from_function(
                     subcommands, getattr(self.local_datamodule_class, f"from_{data_source}")
                 )
+
+        for datamodule_builder in self.additional_datamodule_builders:
+            self.add_subcommand_from_function(subcommands, datamodule_builder)
 
         if self.default_datamodule_builder is not None:
             self.add_subcommand_from_function(subcommands, self.default_datamodule_builder)
@@ -168,8 +185,9 @@ class FlashCLI(LightningCLI):
         self.datamodule = self._subcommand_builders[sub_config](**self.config.get(sub_config))
 
         for datamodule_attribute in self.datamodule_attributes:
-            if datamodule_attribute in self.config["model"] and self.config["model"][datamodule_attribute] is None:
-                self.config["model"][datamodule_attribute] = getattr(self.datamodule, datamodule_attribute, None)
+            if datamodule_attribute in self.config["model"]:
+                if getattr(self.datamodule, datamodule_attribute, None) is not None:
+                    self.config["model"][datamodule_attribute] = getattr(self.datamodule, datamodule_attribute)
         self.config_init = self.parser.instantiate_classes(self.config)
         self.model = self.config_init['model']
         self.instantiate_trainer()
@@ -185,26 +203,3 @@ class FlashCLI(LightningCLI):
             self.trainer.finetune(**self.fit_kwargs)
         else:
             self.trainer.fit(**self.fit_kwargs)
-
-
-@click.group()
-def main():
-    """The Lightning-Flash zero-code command line utility."""
-
-
-@main.command(context_settings=dict(
-    help_option_names=[],
-    ignore_unknown_options=True,
-))
-@click.argument('cli_args', nargs=-1, type=click.UNPROCESSED)
-def image_classification(cli_args):
-    """Image classification task."""
-    from unittest.mock import patch
-
-    with patch('sys.argv', ["image_classification"] + list(cli_args)):
-        from flash.image.classification.cli import main
-        main()
-
-
-if __name__ == '__main__':
-    main()

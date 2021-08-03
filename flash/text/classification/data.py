@@ -146,10 +146,12 @@ class TextFileDataSource(TextDataSource):
         if not self.predicting:
             if isinstance(target, List):
                 # multi-target
+                dataset.multi_label = True
                 dataset_dict = dataset_dict.map(partial(self._multilabel_target, target))
                 dataset.num_classes = len(target)
                 self.set_state(LabelsState(target))
             else:
+                dataset.multi_label = False
                 if self.training:
                     labels = list(sorted(list(set(dataset_dict[stage][target]))))
                     dataset.num_classes = len(labels)
@@ -307,3 +309,7 @@ class TextClassificationData(DataModule):
 
     preprocess_cls = TextClassificationPreprocess
     postprocess_cls = TextClassificationPostprocess
+
+    @property
+    def backbone(self) -> Optional[str]:
+        return getattr(self.preprocess, "backbone", None)

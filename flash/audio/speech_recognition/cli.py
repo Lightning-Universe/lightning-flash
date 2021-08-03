@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.audio import SpeechRecognition, SpeechRecognitionData
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
 
-from typing import Optional  # noqa: E402
-
-from flash.audio import SpeechRecognition, SpeechRecognitionData  # noqa: E402
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
+__all__ = ["speech_recognition"]
 
 
 def from_timit(
@@ -42,16 +40,20 @@ def from_timit(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    SpeechRecognition,
-    SpeechRecognitionData,
-    default_datamodule_builder=from_timit,
-    default_arguments={
-        'trainer.max_epochs': 3,
-    },
-    finetune=False,
-)
+def speech_recognition():
+    """Speech recognition."""
+    cli = FlashCLI(
+        SpeechRecognition,
+        SpeechRecognitionData,
+        default_datamodule_builder=from_timit,
+        default_arguments={
+            'trainer.max_epochs': 3,
+        },
+        finetune=False,
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("speech_recognition_model.pt")
+    cli.trainer.save_checkpoint("speech_recognition_model.pt")
+
+
+if __name__ == '__main__':
+    speech_recognition()

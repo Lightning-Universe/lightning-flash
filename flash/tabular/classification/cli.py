@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.tabular import TabularClassificationData, TabularClassifier
 
-from typing import Optional  # noqa: E402
-
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.tabular import TabularClassificationData, TabularClassifier  # noqa: E402
+__all__ = ["tabular_classification"]
 
 
 def from_titanic(
@@ -41,17 +39,21 @@ def from_titanic(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    TabularClassifier,
-    TabularClassificationData,
-    default_datamodule_builder=from_titanic,
-    default_arguments={
-        "trainer.max_epochs": 3,
-    },
-    finetune=False,
-    datamodule_attributes={"num_features", "num_classes", "embedding_sizes"},
-)
+def tabular_classification():
+    """Classify tabular data."""
+    cli = FlashCLI(
+        TabularClassifier,
+        TabularClassificationData,
+        default_datamodule_builder=from_titanic,
+        default_arguments={
+            "trainer.max_epochs": 3,
+        },
+        finetune=False,
+        datamodule_attributes={"num_features", "num_classes", "embedding_sizes"},
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("tabular_classification_model.pt")
+    cli.trainer.save_checkpoint("tabular_classification_model.pt")
+
+
+if __name__ == '__main__':
+    tabular_classification()

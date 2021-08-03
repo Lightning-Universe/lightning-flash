@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.pointcloud import PointCloudObjectDetector, PointCloudObjectDetectorData
 
-from typing import Optional  # noqa: E402
-
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.pointcloud import PointCloudObjectDetector, PointCloudObjectDetectorData  # noqa: E402
+__all__ = ["pointcloud_detection"]
 
 
 def from_kitti(
@@ -38,16 +36,20 @@ def from_kitti(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    PointCloudObjectDetector,
-    PointCloudObjectDetectorData,
-    default_datamodule_builder=from_kitti,
-    default_arguments={
-        "trainer.max_epochs": 3,
-    },
-    finetune=False,
-)
+def pointcloud_detection():
+    """Detect objects in point clouds."""
+    cli = FlashCLI(
+        PointCloudObjectDetector,
+        PointCloudObjectDetectorData,
+        default_datamodule_builder=from_kitti,
+        default_arguments={
+            "trainer.max_epochs": 3,
+        },
+        finetune=False,
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("pointcloud_detection_model.pt")
+    cli.trainer.save_checkpoint("pointcloud_detection_model.pt")
+
+
+if __name__ == '__main__':
+    pointcloud_detection()

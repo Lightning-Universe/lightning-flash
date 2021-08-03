@@ -1,3 +1,0 @@
-../../../requirements.txt
-
-../../../requirements/datatype_pointcloud.txt

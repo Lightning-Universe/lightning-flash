@@ -1,5 +1,0 @@
-../../../requirements.txt
-
-../../../requirements/datatype_image.txt
-
-../../../requirements/datatype_audio.txt

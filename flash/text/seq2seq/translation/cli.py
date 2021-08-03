@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.text import TranslationData, TranslationTask
 
-from typing import Optional  # noqa: E402
-
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.text import TranslationData, TranslationTask  # noqa: E402
+__all__ = ["translation"]
 
 
 def from_wmt_en_ro(
@@ -42,16 +40,20 @@ def from_wmt_en_ro(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    TranslationTask,
-    TranslationData,
-    default_datamodule_builder=from_wmt_en_ro,
-    default_arguments={
-        "trainer.max_epochs": 3,
-        "model.backbone": "Helsinki-NLP/opus-mt-en-ro",
-    }
-)
+def translation():
+    """Translate text."""
+    cli = FlashCLI(
+        TranslationTask,
+        TranslationData,
+        default_datamodule_builder=from_wmt_en_ro,
+        default_arguments={
+            "trainer.max_epochs": 3,
+            "model.backbone": "Helsinki-NLP/opus-mt-en-ro",
+        }
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("translation_model_en_ro.pt")
+    cli.trainer.save_checkpoint("translation_model_en_ro.pt")
+
+
+if __name__ == '__main__':
+    translation()

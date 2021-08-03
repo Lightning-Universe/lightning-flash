@@ -11,16 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.audio import AudioClassificationData
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.image import ImageClassifier
 
-from typing import Optional  # noqa: E402
-
-from flash.audio import AudioClassificationData  # noqa: E402
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.image import ImageClassifier  # noqa: E402
+__all__ = ["audio_classification"]
 
 
 def from_urban8k(
@@ -39,15 +37,19 @@ def from_urban8k(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    ImageClassifier,
-    AudioClassificationData,
-    default_datamodule_builder=from_urban8k,
-    default_arguments={
-        'trainer.max_epochs': 3,
-    }
-)
+def audio_classification():
+    """Classify audio spectrograms."""
+    cli = FlashCLI(
+        ImageClassifier,
+        AudioClassificationData,
+        default_datamodule_builder=from_urban8k,
+        default_arguments={
+            'trainer.max_epochs': 3,
+        }
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("audio_classification_model.pt")
+    cli.trainer.save_checkpoint("audio_classification_model.pt")
+
+
+if __name__ == '__main__':
+    audio_classification()

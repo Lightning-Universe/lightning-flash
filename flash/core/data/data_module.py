@@ -381,6 +381,13 @@ class DataModule(pl.LightningDataModule):
         return n_cls_train or n_cls_val or n_cls_test
 
     @property
+    def multi_label(self) -> Optional[bool]:
+        multi_label_train = getattr(self.train_dataset, "multi_label", None)
+        multi_label_val = getattr(self.val_dataset, "multi_label", None)
+        multi_label_test = getattr(self.test_dataset, "multi_label", None)
+        return multi_label_train or multi_label_val or multi_label_test
+
+    @property
     def data_source(self) -> Optional[DataSource]:
         return self._data_source
 

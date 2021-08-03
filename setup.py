@@ -84,7 +84,7 @@ setup(
     include_package_data=True,
     extras_require=extras,
     entry_points={
-        'console_scripts': ['flash=flash.core.utilities.flash_cli:main'],
+        'console_scripts': ['flash=flash.__main__:main'],
     },
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],

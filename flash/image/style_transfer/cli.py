@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+import flash
+from flash.core.data.utils import download_data
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.image import StyleTransfer, StyleTransferData
 
-from typing import Optional  # noqa: E402
-
-import flash  # noqa: E402
-from flash.core.data.utils import download_data  # noqa: E402
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.image import StyleTransfer, StyleTransferData  # noqa: E402
+__all__ = ["style_transfer"]
 
 
 def from_coco_128(
@@ -39,17 +37,21 @@ def from_coco_128(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    StyleTransfer,
-    StyleTransferData,
-    default_datamodule_builder=from_coco_128,
-    default_arguments={
-        "trainer.max_epochs": 3,
-        "model.style_image": os.path.join(flash.ASSETS_ROOT, "starry_night.jpg")
-    },
-    finetune=False,
-)
+def style_transfer():
+    """Image style transfer."""
+    cli = FlashCLI(
+        StyleTransfer,
+        StyleTransferData,
+        default_datamodule_builder=from_coco_128,
+        default_arguments={
+            "trainer.max_epochs": 3,
+            "model.style_image": os.path.join(flash.ASSETS_ROOT, "starry_night.jpg")
+        },
+        finetune=False,
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("style_transfer_model.pt")
+    cli.trainer.save_checkpoint("style_transfer_model.pt")
+
+
+if __name__ == '__main__':
+    style_transfer()

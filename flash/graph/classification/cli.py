@@ -11,14 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+from typing import Optional
 
-sys.path.append("../../../")
+from flash.core.utilities.flash_cli import FlashCLI
+from flash.graph import GraphClassificationData, GraphClassifier
 
-from typing import Optional  # noqa: E402
-
-from flash.core.utilities.flash_cli import FlashCLI  # noqa: E402
-from flash.graph import GraphClassificationData, GraphClassifier  # noqa: E402
+__all__ = ["graph_classification"]
 
 
 def from_tu_dataset(
@@ -47,17 +45,21 @@ def from_tu_dataset(
     )
 
 
-# 1. Build the model, datamodule, and trainer. Expose them through CLI. Fine-tune
-cli = FlashCLI(
-    GraphClassifier,
-    GraphClassificationData,
-    default_datamodule_builder=from_tu_dataset,
-    default_arguments={
-        'trainer.max_epochs': 3,
-    },
-    finetune=False,
-    datamodule_attributes={"num_classes", "num_features"}
-)
+def graph_classification():
+    """Classify graphs."""
+    cli = FlashCLI(
+        GraphClassifier,
+        GraphClassificationData,
+        default_datamodule_builder=from_tu_dataset,
+        default_arguments={
+            'trainer.max_epochs': 3,
+        },
+        finetune=False,
+        datamodule_attributes={"num_classes", "num_features"}
+    )
 
-# 2. Save the model!
-cli.trainer.save_checkpoint("graph_classification.pt")
+    cli.trainer.save_checkpoint("graph_classification.pt")
+
+
+if __name__ == '__main__':
+    graph_classification()
