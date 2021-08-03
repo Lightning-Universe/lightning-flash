@@ -33,3 +33,22 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/style_transfer.py
     :language: python
     :lines: 14-
+
+------
+
+**********
+Flash Zero
+**********
+
+The style transfer task can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash style-transfer
+
+To view configuration options and options for running the style transfer task with your own data, use:
+
+.. code-block:: bash
+
+    flash style-transfer --help

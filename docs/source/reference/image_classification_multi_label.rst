@@ -49,6 +49,27 @@ Here's the full example:
     :language: python
     :lines: 14-
 
+
+------
+
+**********
+Flash Zero
+**********
+
+The multi-label image classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the movie posters example with:
+
+.. code-block:: bash
+
+    flash image-classification from_movie_posters
+
+To view configuration options and options for running the image classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash image-classification --help
+
+
 ------
 
 *******

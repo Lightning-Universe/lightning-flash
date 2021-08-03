@@ -49,6 +49,25 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The summarization task can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash summarization
+
+To view configuration options and options for running the summarization task with your own data, use:
+
+.. code-block:: bash
+
+    flash summarization --help
+
+------
+
 *******
 Serving
 *******
