@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from flash.__main__ import main
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -109,7 +109,8 @@ def test_load_from_checkpoint_dependency_error():
         ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing.")
 def test_cli():
     cli_args = ["flash", "object-detection", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
