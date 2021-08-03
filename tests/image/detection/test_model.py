@@ -13,12 +13,14 @@
 # limitations under the License.
 import os
 import re
+from unittest import mock
 
 import pytest
 import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
 
+from flash.__main__ import main
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
@@ -105,3 +107,13 @@ def test_jit(tmpdir):
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "object-detection", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass
