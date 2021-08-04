@@ -165,7 +165,7 @@ class Adapter(Wrapper, nn.Module):
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = lambda x: x,
+        collate_fn: Callable = None,
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
