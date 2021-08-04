@@ -145,16 +145,3 @@ ________________
     ~data.ImageNumpyDataSource
     ~data.ImagePathsDataSource
     ~data.ImageTensorDataSource
-
-flash.image.backbones
-_____________________
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    ~backbones.catch_url_error
-    ~backbones.dino_deits16
-    ~backbones.dino_deits8
-    ~backbones.dino_vitb16
-    ~backbones.dino_vitb8

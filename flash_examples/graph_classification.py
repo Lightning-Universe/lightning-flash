@@ -13,8 +13,7 @@
 # limitations under the License.
 import flash
 from flash.core.utilities.imports import example_requires
-from flash.graph.classification.data import GraphClassificationData
-from flash.graph.classification.model import GraphClassifier
+from flash.graph import GraphClassificationData, GraphClassifier
 
 example_requires("graph")
 

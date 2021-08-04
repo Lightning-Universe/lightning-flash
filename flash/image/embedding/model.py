@@ -23,10 +23,11 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.isinstance import _isinstance
 from flash.image.classification.data import ImageClassificationPreprocess
 
 if _IMAGE_AVAILABLE:
-    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+    from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 else:
     IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
@@ -92,10 +93,10 @@ class ImageEmbedder(Task):
 
     def apply_pool(self, x):
         x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+        if _isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
             x = x[0]
         x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+        if _isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
             x = x[0]
         return x
 

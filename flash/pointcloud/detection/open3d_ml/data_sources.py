@@ -170,7 +170,7 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
         }
 
         self.data_format = data_format or PointCloudObjectDetectionDataFormat.KITTI
-        self.loader = self.loaders[data_format]
+        self.loader = self.loaders[self.data_format]
 
     def _validate_data(self, folder: str) -> None:
         msg = f"The provided dataset for stage {self._running_stage} should be a folder. Found {folder}."

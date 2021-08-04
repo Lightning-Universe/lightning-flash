@@ -177,6 +177,8 @@ class TabularPreprocess(Preprocess):
         is_regression: bool = True,
         deserializer: Optional[Deserializer] = None
     ):
+        classes = classes or []
+
         self.cat_cols = cat_cols
         self.num_cols = num_cols
         self.target_col = target_col
@@ -268,7 +270,7 @@ class TabularData(DataModule):
         return len(self.cat_cols) + len(self.num_cols)
 
     @property
-    def emb_sizes(self) -> list:
+    def embedding_sizes(self) -> list:
         """Recommended embedding sizes."""
 
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html

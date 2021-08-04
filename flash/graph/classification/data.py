@@ -40,9 +40,9 @@ class GraphClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASET: GraphDatasetDataSource(),
+                DefaultDataSources.DATASETS: GraphDatasetDataSource(),
             },
-            default_data_source=DefaultDataSources.DATASET,
+            default_data_source=DefaultDataSources.DATASETS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

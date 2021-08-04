@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest import mock
+
 import pytest
 import torch
 
 from flash import Trainer
+from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 from flash.graph.classification import GraphClassifier
@@ -71,5 +74,15 @@ def test_predict_dataset(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     data_pipe = DataPipeline(preprocess=GraphClassificationPreprocess())
-    out = model.predict(tudataset, data_source="dataset", data_pipeline=data_pipe)
+    out = model.predict(tudataset, data_source="datasets", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
+
+
+@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
+def test_cli():
+    cli_args = ["flash", "graph-classification", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

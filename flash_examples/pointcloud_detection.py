@@ -38,4 +38,4 @@ predictions = model.predict([
 ])
 
 # 5. Save the model!
-trainer.save_checkpoint("pointcloud_segmentation_model.pt")
+trainer.save_checkpoint("pointcloud_detection_model.pt")

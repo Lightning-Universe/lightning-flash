@@ -31,7 +31,7 @@ def test_pointcloud_segmentation_data(tmpdir):
 
     download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiMicro.zip", tmpdir)
 
-    dm = PointCloudSegmentationData.from_folders(train_folder=join(tmpdir, "SemanticKittiMicro", "train"), )
+    dm = PointCloudSegmentationData.from_folders(train_folder=join(tmpdir, "SemanticKittiMicro", "train"))
 
     class MockModel(PointCloudSegmentation):
 
@@ -43,8 +43,8 @@ def test_pointcloud_segmentation_data(tmpdir):
             assert batch[DefaultDataKeys.INPUT]["labels"].shape == torch.Size([2, 45056])
             assert batch[DefaultDataKeys.INPUT]["labels"].max() == 19
             assert batch[DefaultDataKeys.INPUT]["labels"].min() == 0
-            assert batch[DefaultDataKeys.METADATA][0]["name"] == '00_000000'
-            assert batch[DefaultDataKeys.METADATA][1]["name"] == '00_000001'
+            assert batch[DefaultDataKeys.METADATA][0]["name"] in ('00_000000', '00_000001')
+            assert batch[DefaultDataKeys.METADATA][1]["name"] in ('00_000000', '00_000001')
 
     num_classes = 19
     model = MockModel(backbone="randlanet", num_classes=num_classes)

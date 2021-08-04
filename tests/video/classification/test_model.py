@@ -16,12 +16,14 @@ import os
 import re
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 import pytest
 import torch
 from torch.utils.data import SequentialSampler
 
 import flash
+from flash.__main__ import main
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.utils import _VIDEO_TESTING
@@ -183,7 +185,7 @@ def test_video_classifier_finetune(tmpdir):
             train_transform=train_transform
         )
 
-        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
         trainer = flash.Trainer(fast_dev_run=True)
 
@@ -253,7 +255,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
             train_transform=train_transform
         )
 
-        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False)
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
         trainer = flash.Trainer(fast_dev_run=True)
 
@@ -265,7 +267,7 @@ def test_jit(tmpdir):
     sample_input = torch.rand(1, 3, 32, 256, 256)
     path = os.path.join(tmpdir, "test.pt")
 
-    model = VideoClassifier(2, pretrained=False)
+    model = VideoClassifier(2, pretrained=False, backbone="slow_r50")
     model.eval()
 
     # pytorchvideo only works with `torch.jit.trace`
@@ -283,3 +285,13 @@ def test_jit(tmpdir):
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[video]'")):
         VideoClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_cli():
+    cli_args = ["flash", "video-classification", "--trainer.fast_dev_run", "True", "num_workers", "0"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

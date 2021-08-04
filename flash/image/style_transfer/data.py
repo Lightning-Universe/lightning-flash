@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 from torch import nn
 
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
@@ -118,12 +119,12 @@ class StyleTransferData(ImageClassificationData):
         predict_transform: Optional[Union[str, Dict]] = None,
         preprocess: Optional[Preprocess] = None,
         **kwargs: Any,
-    ) -> "StyleTransferData":
+    ) -> 'DataModule':
 
-        if any(param in kwargs for param in ("val_folder", "val_transform")):
+        if any(param in kwargs and kwargs[param] is not None for param in ("val_folder", "val_transform")):
             raise_not_supported("validation")
 
-        if any(param in kwargs for param in ("test_folder", "test_transform")):
+        if any(param in kwargs and kwargs[param] is not None for param in ("test_folder", "test_transform")):
             raise_not_supported("test")
 
         preprocess = preprocess or cls.preprocess_cls(

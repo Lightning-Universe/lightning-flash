@@ -13,6 +13,7 @@
 # limitations under the License.
 import random
 import re
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -20,6 +21,7 @@ import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import Dataset
 
+from flash.__main__ import main
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from tests.helpers.utils import _IMAGE_TESTING
@@ -118,3 +120,14 @@ def test_training(tmpdir, head):
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed.")
+def test_cli():
+    cli_args = ["flash", "object-detection", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

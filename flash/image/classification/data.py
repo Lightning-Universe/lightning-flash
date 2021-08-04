@@ -101,11 +101,13 @@ class ImageClassificationDataFrameDataSource(
 
         if not self.predicting:
             if isinstance(target_keys, List):
+                dataset.multi_label = True
                 dataset.num_classes = len(target_keys)
                 self.set_state(LabelsState(target_keys))
                 data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
                 target_keys = target_keys[0]
             else:
+                dataset.multi_label = False
                 if self.training:
                     labels = list(sorted(data_frame[target_keys].unique()))
                     dataset.num_classes = len(labels)

@@ -26,6 +26,7 @@ Lightning Flash
    general/jit
    general/data
    general/registry
+   general/flash_zero
    general/serve
 
 .. toctree::
