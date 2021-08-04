@@ -255,7 +255,7 @@ class Task(Adapter, LightningModule, metaclass=CheckDependenciesMeta):
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
-        dataloader = self.process_predict_dataset(dataset, convert_to_dataloader=True)
+        dataloader = self.process_predict_dataset(dataset)
         x = list(dataloader.dataset)
         x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
@@ -817,9 +817,8 @@ class AdapterTask(Task):
         collate_fn: Callable = lambda x: x,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True
-    ) -> Union[DataLoader, BaseAutoDataset]:
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
         return self.adapter.process_predict_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler, convert_to_dataloader
+            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
         )

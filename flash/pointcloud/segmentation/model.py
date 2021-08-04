@@ -191,9 +191,8 @@ class PointCloudSegmentation(ClassificationTask):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True,
-    ) -> Union[DataLoader, BaseAutoDataset]:
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
 
         if not _POINTCLOUD_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
@@ -207,20 +206,16 @@ class PointCloudSegmentation(ClassificationTask):
                 use_cache=False,
             )
 
-        if convert_to_dataloader:
-            return DataLoader(
-                dataset,
-                batch_size=batch_size,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                collate_fn=collate_fn,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                sampler=sampler,
-            )
-
-        else:
-            return dataset
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )
 
     def configure_finetune_callback(self) -> List[Callback]:
         return [PointCloudSegmentationFinetuning()]

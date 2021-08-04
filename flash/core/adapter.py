@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional
 
 from pytorch_lightning import LightningModule, Trainer
 from torch import nn
@@ -78,20 +78,17 @@ class Adapter(Wrapper, nn.Module):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True,
+        sampler: Optional[Sampler] = None
     ) -> DataLoader:
-        if convert_to_dataloader:
-            return DataLoader(
-                dataset,
-                batch_size=batch_size,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                collate_fn=collate_fn
-            )
-        return dataset
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            collate_fn=collate_fn
+        )
 
     def process_train_dataset(
         self,
@@ -168,9 +165,8 @@ class Adapter(Wrapper, nn.Module):
         collate_fn: Callable = None,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True
-    ) -> Union[DataLoader, BaseAutoDataset]:
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
         return self._process_dataset(
             dataset,
             batch_size=batch_size,
@@ -179,6 +175,5 @@ class Adapter(Wrapper, nn.Module):
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler,
-            convert_to_dataloader=convert_to_dataloader
+            sampler=sampler
         )

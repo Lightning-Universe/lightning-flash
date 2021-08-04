@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional
 
 from torch.utils.data import DataLoader, Sampler
 
@@ -148,20 +148,17 @@ class IceVisionAdapter(Adapter):
         collate_fn: Callable = lambda x: x,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True
-    ) -> Union[DataLoader, BaseAutoDataset]:
-        if convert_to_dataloader:
-            return self.model_type.infer_dl(
-                dataset,
-                batch_size=batch_size,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                sampler=sampler,
-            )
-        return dataset
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self.model_type.infer_dl(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )
 
     def training_step(self, batch, batch_idx) -> Any:
         return self.icevision_adapter.training_step(batch, batch_idx)
