@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Mapping, Optional, Type, Union
 import torch
 from torch.optim import Optimizer
 
+from flash.core.adapter import AdapterTask
 from flash.core.data.process import Serializer
-from flash.core.model import AdapterTask
 from flash.core.registry import FlashRegistry
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
 

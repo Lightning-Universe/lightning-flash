@@ -22,7 +22,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 import pytorch_lightning as pl
 import torch
 import torchmetrics
-from pytorch_lightning import LightningModule
+from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
@@ -33,7 +33,6 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
 
 import flash
-from flash.core.adapter import Adapter, DatasetProcessor, Wrapper
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
@@ -51,6 +50,136 @@ from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires_extras
+
+
+class Wrapper:
+
+    def __init__(self):
+        super().__init__()
+
+        self._children = []
+
+    def __setattr__(self, key, value):
+        if isinstance(value, (LightningModule, Wrapper)):
+            self._children.append(key)
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
+        if isinstance(value, Trainer) or key in patched_attributes:
+            if hasattr(self, "_children"):
+                for child in self._children:
+                    setattr(getattr(self, child), key, value)
+        super().__setattr__(key, value)
+
+
+class DatasetProcessor:
+
+    def _process_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            collate_fn=collate_fn
+        )
+
+    def process_train_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int = 1,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        collate_fn: Callable = None,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler
+        )
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -726,99 +855,3 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
     def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
         for state in self._state.values():
             data_pipeline_state.set_state(state)
-
-
-class AdapterTask(Task):
-
-    def __init__(self, adapter: Adapter, **kwargs):
-        super().__init__(**kwargs)
-
-        self.adapter = adapter
-
-    @property
-    def backbone(self) -> nn.Module:
-        return self.adapter.backbone
-
-    def forward(self, x: Any) -> Any:
-        return self.adapter.forward(x)
-
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        return self.adapter.training_step(batch, batch_idx)
-
-    def validation_step(self, batch: Any, batch_idx: int) -> None:
-        return self.adapter.validation_step(batch, batch_idx)
-
-    def test_step(self, batch: Any, batch_idx: int) -> None:
-        return self.adapter.test_step(batch, batch_idx)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self.adapter.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
-
-    def training_epoch_end(self, outputs) -> None:
-        return self.adapter.training_epoch_end(outputs)
-
-    def validation_epoch_end(self, outputs) -> None:
-        return self.adapter.validation_epoch_end(outputs)
-
-    def test_epoch_end(self, outputs) -> None:
-        return self.adapter.test_epoch_end(outputs)
-
-    def process_train_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None
-    ) -> DataLoader:
-        return self.adapter.process_train_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
-        )
-
-    def process_val_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = False,
-        sampler: Optional[Sampler] = None
-    ) -> DataLoader:
-        return self.adapter.process_val_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
-        )
-
-    def process_test_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = False,
-        sampler: Optional[Sampler] = None
-    ) -> DataLoader:
-        return self.adapter.process_test_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
-        )
-
-    def process_predict_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int = 1,
-        num_workers: int = 0,
-        pin_memory: bool = False,
-        collate_fn: Callable = lambda x: x,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None
-    ) -> DataLoader:
-        return self.adapter.process_predict_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
-        )
