@@ -16,12 +16,14 @@ import os
 import re
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 import pytest
 import torch
 from torch.utils.data import SequentialSampler
 
 import flash
+from flash.__main__ import main
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.utils import _VIDEO_TESTING
@@ -283,3 +285,13 @@ def test_jit(tmpdir):
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[video]'")):
         VideoClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_cli():
+    cli_args = ["flash", "video-classification", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass
