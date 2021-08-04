@@ -289,7 +289,7 @@ def test_load_from_checkpoint_dependency_error():
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_cli():
-    cli_args = ["flash", "video-classification", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "video-classification", "--trainer.fast_dev_run", "True", "num_workers", "0"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()
