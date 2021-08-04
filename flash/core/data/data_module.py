@@ -381,6 +381,13 @@ class DataModule(pl.LightningDataModule):
         return n_cls_train or n_cls_val or n_cls_test
 
     @property
+    def multi_label(self) -> Optional[bool]:
+        multi_label_train = getattr(self.train_dataset, "multi_label", None)
+        multi_label_val = getattr(self.val_dataset, "multi_label", None)
+        multi_label_test = getattr(self.test_dataset, "multi_label", None)
+        return multi_label_train or multi_label_val or multi_label_test
+
+    @property
     def data_source(self) -> Optional[DataSource]:
         return self._data_source
 
@@ -1088,7 +1095,7 @@ class DataModule(pl.LightningDataModule):
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
         :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASET`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASETS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1129,7 +1136,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.DATASET,
+            DefaultDataSources.DATASETS,
             train_dataset,
             val_dataset,
             test_dataset,

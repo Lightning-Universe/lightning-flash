@@ -157,7 +157,7 @@ class SpeechRecognitionPreprocess(Preprocess):
                 DefaultDataSources.CSV: SpeechRecognitionCSVDataSource(),
                 DefaultDataSources.JSON: SpeechRecognitionJSONDataSource(),
                 DefaultDataSources.FILES: SpeechRecognitionPathsDataSource(),
-                DefaultDataSources.DATASET: SpeechRecognitionDatasetDataSource(),
+                DefaultDataSources.DATASETS: SpeechRecognitionDatasetDataSource(),
             },
             default_data_source=DefaultDataSources.FILES,
             deserializer=SpeechRecognitionDeserializer(),

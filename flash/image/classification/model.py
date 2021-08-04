@@ -56,7 +56,7 @@ class ImageClassifier(ClassificationTask):
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
-            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
+            package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
