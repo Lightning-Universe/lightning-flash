@@ -39,35 +39,7 @@ class Wrapper:
         super().__setattr__(key, value)
 
 
-class Adapter(Wrapper, nn.Module):
-
-    @classmethod
-    def from_task(cls, task: 'flash.Task', **kwargs) -> 'Adapter':
-        pass
-
-    def forward(self, x: Any) -> Any:
-        pass
-
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        pass
-
-    def validation_step(self, batch: Any, batch_idx: int) -> None:
-        pass
-
-    def test_step(self, batch: Any, batch_idx: int) -> None:
-        pass
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        pass
-
-    def training_epoch_end(self, outputs) -> None:
-        pass
-
-    def validation_epoch_end(self, outputs) -> None:
-        pass
-
-    def test_epoch_end(self, outputs) -> None:
-        pass
+class DatasetProcessor:
 
     def _process_dataset(
         self,
@@ -177,3 +149,34 @@ class Adapter(Wrapper, nn.Module):
             drop_last=drop_last,
             sampler=sampler
         )
+
+
+class Adapter(DatasetProcessor, Wrapper, nn.Module):
+
+    @classmethod
+    def from_task(cls, task: 'flash.Task', **kwargs) -> 'Adapter':
+        pass
+
+    def forward(self, x: Any) -> Any:
+        pass
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        pass
+
+    def validation_step(self, batch: Any, batch_idx: int) -> None:
+        pass
+
+    def test_step(self, batch: Any, batch_idx: int) -> None:
+        pass
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        pass
+
+    def training_epoch_end(self, outputs) -> None:
+        pass
+
+    def validation_epoch_end(self, outputs) -> None:
+        pass
+
+    def test_epoch_end(self, outputs) -> None:
+        pass

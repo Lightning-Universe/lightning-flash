@@ -33,7 +33,7 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
 
 import flash
-from flash.core.adapter import Adapter
+from flash.core.adapter import Adapter, DatasetProcessor, Wrapper
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
@@ -103,7 +103,7 @@ class CheckDependenciesMeta(ABCMeta):
         return result
 
 
-class Task(Adapter, LightningModule, metaclass=CheckDependenciesMeta):
+class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
