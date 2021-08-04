@@ -255,8 +255,9 @@ class Task(Adapter, LightningModule, metaclass=CheckDependenciesMeta):
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
-        x = list(self.process_predict_dataset(dataset, convert_to_dataloader=False))
-        x = data_pipeline.worker_preprocessor(running_stage)(x)
+        dataloader = self.process_predict_dataset(dataset, convert_to_dataloader=True)
+        x = list(dataloader.dataset)
+        x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
             x = self.transfer_batch_to_device(x, self.device, 0)

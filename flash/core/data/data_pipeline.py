@@ -163,8 +163,13 @@ class DataPipeline:
     def deserialize_processor(self) -> _DeserializeProcessor:
         return self._create_collate_preprocessors(RunningStage.PREDICTING)[0]
 
-    def worker_preprocessor(self, running_stage: RunningStage, is_serving: bool = False) -> _Preprocessor:
-        return self._create_collate_preprocessors(running_stage, is_serving=is_serving)[1]
+    def worker_preprocessor(
+        self,
+        running_stage: RunningStage,
+        collate_fn: Optional[Callable] = None,
+        is_serving: bool = False
+    ) -> _Preprocessor:
+        return self._create_collate_preprocessors(running_stage, collate_fn=collate_fn, is_serving=is_serving)[1]
 
     def device_preprocessor(self, running_stage: RunningStage) -> _Preprocessor:
         return self._create_collate_preprocessors(running_stage)[2]
@@ -219,7 +224,6 @@ class DataPipeline:
         prefix: str = _STAGES_PREFIX[stage]
 
         if collate_fn is not None:
-            preprocess._original_default_collate = preprocess._default_collate
             preprocess._default_collate = collate_fn
 
         func_names: Dict[str, str] = {
@@ -480,10 +484,6 @@ class DataPipeline:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
         elif isinstance(stage, RunningStage):
             stages = [stage]
-
-        self._preprocess_pipeline._default_collate = getattr(
-            self._preprocess_pipeline, "_original_default_collate", self._preprocess_pipeline._default_collate
-        )
 
         for stage in stages:
 
