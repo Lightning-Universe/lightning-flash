@@ -68,9 +68,42 @@ To apply image augmentations you can directly import the ``default_transforms`` 
 In this example, we will load the default transforms and merge with custom `torchvision` transformations. We use the `post_tensor_transform` hook to apply the transformations
 after the image is converted to a `torch.Tensor`.
 
-.. literalinclude:: ../../../flash_examples/image_transforms.py
-    :language: python
 
+.. testcode:: transformations
+    from torchvision import transforms as T
+
+    from flash.core.data.data_source import DefaultDataKeys
+    from flash.core.data.transforms import ApplyToKeys, merge_transforms
+    from flash.core.data.utils import download_data
+    from flash.image import ImageClassificationData
+    from flash.image.classification.transforms import default_transforms
+
+    image_size = (256, 256)
+    default_image_transforms = default_transforms(image_size)
+
+    post_tensor_transform = ApplyToKeys(
+        DefaultDataKeys.INPUT,
+        T.Compose([T.RandomHorizontalFlip(),
+                   T.ColorJitter(),
+                   T.RandomAutocontrast(),
+                   T.RandomPerspective()])
+    )
+
+    new_transforms = merge_transforms(default_image_transforms, {"post_tensor_transform": post_tensor_transform})
+
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
+
+    datamodule = ImageClassificationData.from_folders(
+        train_folder="data/hymenoptera_data/train/",
+        val_folder="data/hymenoptera_data/val/",
+        train_transform=new_transforms
+    )
+
+
+.. testoutput:: finetune
+    :hide:
+
+    ...
 
 ------
 
