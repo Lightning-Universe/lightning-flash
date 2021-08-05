@@ -44,12 +44,12 @@ def audio_classification():
         AudioClassificationData,
         default_datamodule_builder=from_urban8k,
         default_arguments={
-            'trainer.max_epochs': 3,
-        }
+            "trainer.max_epochs": 3,
+        },
     )
 
     cli.trainer.save_checkpoint("audio_classification_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     audio_classification()

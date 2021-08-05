@@ -49,11 +49,11 @@ def summarization():
         default_arguments={
             "trainer.max_epochs": 3,
             "model.backbone": "sshleifer/distilbart-xsum-1-1",
-        }
+        },
     )
 
     cli.trainer.save_checkpoint("summarization_model_xsum.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     summarization()

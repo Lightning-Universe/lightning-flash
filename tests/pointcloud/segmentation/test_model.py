@@ -22,7 +22,7 @@ from tests.helpers.utils import _POINTCLOUD_TESTING
 def test_backbones():
 
     backbones = PointCloudSegmentation.available_backbones()
-    assert backbones == ['randlanet', 'randlanet_s3dis', 'randlanet_semantic_kitti', 'randlanet_toronto3d']
+    assert backbones == ["randlanet", "randlanet_s3dis", "randlanet_semantic_kitti", "randlanet_toronto3d"]
 
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")

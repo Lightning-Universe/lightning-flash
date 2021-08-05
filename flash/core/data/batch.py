@@ -41,7 +41,7 @@ class _Sequential(torch.nn.Module):
 
     def __init__(
         self,
-        preprocess: 'Preprocess',
+        preprocess: "Preprocess",
         pre_tensor_transform: Optional[Callable],
         to_tensor_transform: Optional[Callable],
         post_tensor_transform: Callable,
@@ -101,11 +101,10 @@ class _Sequential(torch.nn.Module):
 
 
 class _DeserializeProcessor(torch.nn.Module):
-
     def __init__(
         self,
-        deserializer: 'Deserializer',
-        preprocess: 'Preprocess',
+        deserializer: "Deserializer",
+        preprocess: "Preprocess",
         pre_tensor_transform: Callable,
         to_tensor_transform: Callable,
     ):
@@ -137,10 +136,9 @@ class _DeserializeProcessor(torch.nn.Module):
 
 
 class _SerializeProcessor(torch.nn.Module):
-
     def __init__(
         self,
-        serializer: 'Serializer',
+        serializer: "Serializer",
     ):
         super().__init__()
         self.serializer = convert_to_modules(serializer)
@@ -151,28 +149,28 @@ class _SerializeProcessor(torch.nn.Module):
 
 class _Preprocessor(torch.nn.Module):
     """
-        This class is used to encapsultate the following functions of a Preprocess Object:
-        Inside a worker:
-            per_sample_transform: Function to transform an individual sample
-                Inside a worker, it is actually make of 3 functions:
-                    * pre_tensor_transform
-                    * to_tensor_transform
-                    * post_tensor_transform
-            collate: Function to merge sample into a batch
-            per_batch_transform: Function to transform an individual batch
-                * per_batch_transform
+    This class is used to encapsultate the following functions of a Preprocess Object:
+    Inside a worker:
+        per_sample_transform: Function to transform an individual sample
+            Inside a worker, it is actually make of 3 functions:
+                * pre_tensor_transform
+                * to_tensor_transform
+                * post_tensor_transform
+        collate: Function to merge sample into a batch
+        per_batch_transform: Function to transform an individual batch
+            * per_batch_transform
 
-        Inside main process:
-            per_sample_transform: Function to transform an individual sample
-                * per_sample_transform_on_device
-            collate: Function to merge sample into a batch
-            per_batch_transform: Function to transform an individual batch
-                * per_batch_transform_on_device
+    Inside main process:
+        per_sample_transform: Function to transform an individual sample
+            * per_sample_transform_on_device
+        collate: Function to merge sample into a batch
+        per_batch_transform: Function to transform an individual batch
+            * per_batch_transform_on_device
     """
 
     def __init__(
         self,
-        preprocess: 'Preprocess',
+        preprocess: "Preprocess",
         collate_fn: Callable,
         per_sample_transform: Union[Callable, _Sequential],
         per_batch_transform: Callable,
@@ -349,7 +347,7 @@ def default_uncollate(batch: Any):
     if isinstance(batch, Mapping):
         return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
 
-    if isinstance(batch, tuple) and hasattr(batch, '_fields'):  # namedtuple
+    if isinstance(batch, tuple) and hasattr(batch, "_fields"):  # namedtuple
         return [batch_type(*default_uncollate(sample)) for sample in zip(*batch)]
 
     if isinstance(batch, Sequence) and not isinstance(batch, str):

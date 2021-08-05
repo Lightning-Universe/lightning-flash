@@ -55,10 +55,9 @@ _PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
 
 
 class BaseVideoClassification(object):
-
     def __init__(
         self,
-        clip_sampler: 'ClipSampler',
+        clip_sampler: "ClipSampler",
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
@@ -68,12 +67,12 @@ class BaseVideoClassification(object):
         self.decode_audio = decode_audio
         self.decoder = decoder
 
-    def load_data(self, data: str, dataset: Optional[Any] = None) -> 'LabeledVideoDataset':
+    def load_data(self, data: str, dataset: Optional[Any] = None) -> "LabeledVideoDataset":
         ds = self._make_encoded_video_dataset(data)
         if self.training:
             label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in ds._labeled_videos._paths_and_labels}
             self.set_state(LabelsState(label_to_class_mapping))
-            dataset.num_classes = len(np.unique([s[1]['label'] for s in ds._labeled_videos]))
+            dataset.num_classes = len(np.unique([s[1]["label"] for s in ds._labeled_videos]))
         return ds
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -110,20 +109,17 @@ class BaseVideoClassification(object):
             "video_index": 0,
             "clip_index": clip_index,
             "aug_index": aug_index,
-            **({
-                "audio": audio_samples
-            } if audio_samples is not None else {}),
+            **({"audio": audio_samples} if audio_samples is not None else {}),
         }
 
-    def _make_encoded_video_dataset(self, data) -> 'LabeledVideoDataset':
+    def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
         raise NotImplementedError("Subclass must implement _make_encoded_video_dataset()")
 
 
 class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSource):
-
     def __init__(
         self,
-        clip_sampler: 'ClipSampler',
+        clip_sampler: "ClipSampler",
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
@@ -139,7 +135,7 @@ class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSourc
             extensions=("mp4", "avi"),
         )
 
-    def _make_encoded_video_dataset(self, data) -> 'LabeledVideoDataset':
+    def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
         ds: LabeledVideoDataset = labeled_video_dataset(
             pathlib.Path(data),
             self.clip_sampler,
@@ -154,10 +150,9 @@ class VideoClassificationFiftyOneDataSource(
     BaseVideoClassification,
     FiftyOneDataSource,
 ):
-
     def __init__(
         self,
-        clip_sampler: 'ClipSampler',
+        clip_sampler: "ClipSampler",
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
@@ -178,7 +173,7 @@ class VideoClassificationFiftyOneDataSource(
     def label_cls(self):
         return fol.Classification
 
-    def _make_encoded_video_dataset(self, data: SampleCollection) -> 'LabeledVideoDataset':
+    def _make_encoded_video_dataset(self, data: SampleCollection) -> "LabeledVideoDataset":
         classes = self._get_classes(data)
         label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
@@ -199,14 +194,13 @@ class VideoClassificationFiftyOneDataSource(
 
 
 class VideoClassificationPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        clip_sampler: Union[str, 'ClipSampler'] = "random",
+        clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
@@ -275,7 +269,7 @@ class VideoClassificationPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool) -> 'VideoClassificationPreprocess':
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool) -> "VideoClassificationPreprocess":
         return cls(**state_dict)
 
     def default_transforms(self) -> Dict[str, Callable]:
@@ -290,22 +284,26 @@ class VideoClassificationPreprocess(Preprocess):
             ]
 
         return {
-            "post_tensor_transform": Compose([
-                ApplyTransformToKey(
-                    key="video",
-                    transform=Compose([UniformTemporalSubsample(8)] + post_tensor_transform),
-                ),
-            ]),
-            "per_batch_transform_on_device": Compose([
-                ApplyTransformToKey(
-                    key="video",
-                    transform=K.VideoSequential(
-                        K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
-                        data_format="BCTHW",
-                        same_on_frame=False
-                    )
-                ),
-            ]),
+            "post_tensor_transform": Compose(
+                [
+                    ApplyTransformToKey(
+                        key="video",
+                        transform=Compose([UniformTemporalSubsample(8)] + post_tensor_transform),
+                    ),
+                ]
+            ),
+            "per_batch_transform_on_device": Compose(
+                [
+                    ApplyTransformToKey(
+                        key="video",
+                        transform=K.VideoSequential(
+                            K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
+                            data_format="BCTHW",
+                            same_on_frame=False,
+                        ),
+                    ),
+                ]
+            ),
         }
 
 

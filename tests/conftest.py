@@ -80,7 +80,7 @@ if _SERVE_TESTING:
     def squeezenet_servable(squeezenet1_1_model, session_global_datadir):
         from flash.core.serve import Servable
 
-        trace = torch.jit.trace(squeezenet1_1_model.eval(), (torch.rand(1, 3, 224, 224), ))
+        trace = torch.jit.trace(squeezenet1_1_model.eval(), (torch.rand(1, 3, 224, 224),))
         fpth = str(session_global_datadir / "squeezenet_jit_trace.pt")
         torch.jit.save(trace, fpth)
 

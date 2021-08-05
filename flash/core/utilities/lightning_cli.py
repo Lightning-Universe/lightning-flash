@@ -40,7 +40,7 @@ def class_from_function(func: Callable[..., ClassType]) -> Type[ClassType]:
 
     return_type = inspect.signature(func).return_annotation
     if isinstance(return_type, str):
-        if return_type == 'DataModule':
+        if return_type == "DataModule":
             return_type = DataModule
 
     class ClassFromFunction(return_type, ClassFromFunctionBase):  # type: ignore
@@ -64,17 +64,22 @@ class LightningArgumentParser(ArgumentParser):
         """
         super().__init__(*args, parse_as_dict=parse_as_dict, **kwargs)
         self.add_argument(
-            '--config', action=ActionConfigFile, help='Path to a configuration file in json or yaml format.'
+            "--config", action=ActionConfigFile, help="Path to a configuration file in json or yaml format."
         )
         self.callback_keys: List[str] = []
         self.optimizers_and_lr_schedulers: Dict[str, Tuple[Union[Type, Tuple[Type, ...]], str]] = {}
 
     def add_lightning_class_args(
         self,
-        lightning_class: Union[Callable[..., Union[Trainer, LightningModule, LightningDataModule, Callback]],
-                               Type[Trainer], Type[LightningModule], Type[LightningDataModule], Type[Callback]],
+        lightning_class: Union[
+            Callable[..., Union[Trainer, LightningModule, LightningDataModule, Callback]],
+            Type[Trainer],
+            Type[LightningModule],
+            Type[LightningDataModule],
+            Type[Callback],
+        ],
         nested_key: str,
-        subclass_mode: bool = False
+        subclass_mode: bool = False,
     ) -> List[str]:
         """Adds arguments from a lightning class to a nested key of the parser.
 
@@ -107,8 +112,8 @@ class LightningArgumentParser(ArgumentParser):
     def add_optimizer_args(
         self,
         optimizer_class: Union[Type[Optimizer], Tuple[Type[Optimizer], ...]],
-        nested_key: str = 'optimizer',
-        link_to: str = 'AUTOMATIC',
+        nested_key: str = "optimizer",
+        link_to: str = "AUTOMATIC",
     ) -> None:
         """Adds arguments from an optimizer class to a nested key of the parser.
 
@@ -122,9 +127,9 @@ class LightningArgumentParser(ArgumentParser):
         else:
             assert issubclass(optimizer_class, Optimizer)
         kwargs = {
-            'instantiate': False,
-            'fail_untyped': False,
-            'skip': {'params'},
+            "instantiate": False,
+            "fail_untyped": False,
+            "skip": {"params"},
         }
         if isinstance(optimizer_class, tuple):
             self.add_subclass_arguments(optimizer_class, nested_key, required=True, **kwargs)
@@ -135,8 +140,8 @@ class LightningArgumentParser(ArgumentParser):
     def add_lr_scheduler_args(
         self,
         lr_scheduler_class: Union[LRSchedulerType, Tuple[LRSchedulerType, ...]],
-        nested_key: str = 'lr_scheduler',
-        link_to: str = 'AUTOMATIC',
+        nested_key: str = "lr_scheduler",
+        link_to: str = "AUTOMATIC",
     ) -> None:
         """Adds arguments from a learning rate scheduler class to a nested key of the parser.
 
@@ -150,9 +155,9 @@ class LightningArgumentParser(ArgumentParser):
         else:
             assert issubclass(lr_scheduler_class, LRSchedulerTypeTuple)
         kwargs = {
-            'instantiate': False,
-            'fail_untyped': False,
-            'skip': {'optimizer'},
+            "instantiate": False,
+            "fail_untyped": False,
+            "skip": {"optimizer"},
         }
         if isinstance(lr_scheduler_class, tuple):
             self.add_subclass_arguments(lr_scheduler_class, nested_key, required=True, **kwargs)
@@ -188,10 +193,10 @@ class SaveConfigCallback(Callback):
         config_path = os.path.join(log_dir, self.config_filename)
         if not self.overwrite and os.path.isfile(config_path):
             raise RuntimeError(
-                f'{self.__class__.__name__} expected {config_path} to NOT exist. Aborting to avoid overwriting'
-                ' results of a previous run. You can delete the previous config file,'
-                ' set `LightningCLI(save_config_callback=None)` to disable config saving,'
-                ' or set `LightningCLI(save_config_overwrite=True)` to overwrite the config file.'
+                f"{self.__class__.__name__} expected {config_path} to NOT exist. Aborting to avoid overwriting"
+                " results of a previous run. You can delete the previous config file,"
+                " set `LightningCLI(save_config_callback=None)` to disable config saving,"
+                " or set `LightningCLI(save_config_overwrite=True)` to overwrite the config file."
             )
         if trainer.is_global_zero:
             # save only on rank zero to avoid race conditions on DDP.
@@ -200,7 +205,7 @@ class SaveConfigCallback(Callback):
             get_filesystem(log_dir).makedirs(log_dir, exist_ok=True)
             self.parser.save(self.config, config_path, skip_none=False, overwrite=self.overwrite)
 
-    def __reduce__(self) -> Tuple[Type['SaveConfigCallback'], Tuple, Dict]:
+    def __reduce__(self) -> Tuple[Type["SaveConfigCallback"], Tuple, Dict]:
         # `ArgumentParser` is un-pickleable. Drop it
         return (
             self.__class__,
@@ -217,17 +222,17 @@ class LightningCLI:
         model_class: Union[Type[LightningModule], Callable[..., LightningModule]],
         datamodule_class: Optional[Union[Type[LightningDataModule], Callable[..., LightningDataModule]]] = None,
         save_config_callback: Optional[Type[SaveConfigCallback]] = SaveConfigCallback,
-        save_config_filename: str = 'config.yaml',
+        save_config_filename: str = "config.yaml",
         save_config_overwrite: bool = False,
         trainer_class: Union[Type[Trainer], Callable[..., Trainer]] = Trainer,
         trainer_defaults: Dict[str, Any] = None,
         seed_everything_default: int = None,
-        description: str = 'pytorch-lightning trainer command line tool',
-        env_prefix: str = 'PL',
+        description: str = "pytorch-lightning trainer command line tool",
+        env_prefix: str = "PL",
         env_parse: bool = False,
         parser_kwargs: Dict[str, Any] = None,
         subclass_mode_model: bool = False,
-        subclass_mode_data: bool = False
+        subclass_mode_data: bool = False,
     ) -> None:
         """Receives as input pytorch-lightning classes (or callables which return pytorch-lightning classes), which
         are called / instantiated using a parsed configuration file and / or command line args and then runs
@@ -285,15 +290,15 @@ class LightningCLI:
         self.subclass_mode_model = subclass_mode_model
         self.subclass_mode_data = subclass_mode_data
         self.parser_kwargs = {} if parser_kwargs is None else parser_kwargs
-        self.parser_kwargs.update({'description': description, 'env_prefix': env_prefix, 'default_env': env_parse})
+        self.parser_kwargs.update({"description": description, "env_prefix": env_prefix, "default_env": env_parse})
 
         self.init_parser()
         self.add_core_arguments_to_parser()
         self.add_arguments_to_parser(self.parser)
         self.link_optimizers_and_lr_schedulers()
         self.parse_arguments()
-        if self.config['seed_everything'] is not None:
-            seed_everything(self.config['seed_everything'], workers=True)
+        if self.config["seed_everything"] is not None:
+            seed_everything(self.config["seed_everything"], workers=True)
         self.before_instantiate_classes()
         self.instantiate_classes()
         self.add_configure_optimizers_method_to_model()
@@ -309,17 +314,17 @@ class LightningCLI:
     def add_core_arguments_to_parser(self) -> None:
         """Adds arguments from the core classes to the parser."""
         self.parser.add_argument(
-            '--seed_everything',
+            "--seed_everything",
             type=Optional[int],
             default=self.seed_everything_default,
-            help='Set to an int to run seed_everything with this value before classes instantiation',
+            help="Set to an int to run seed_everything with this value before classes instantiation",
         )
-        self.parser.add_lightning_class_args(self.trainer_class, 'trainer')
-        trainer_defaults = {'trainer.' + k: v for k, v in self.trainer_defaults.items() if k != 'callbacks'}
+        self.parser.add_lightning_class_args(self.trainer_class, "trainer")
+        trainer_defaults = {"trainer." + k: v for k, v in self.trainer_defaults.items() if k != "callbacks"}
         self.parser.set_defaults(trainer_defaults)
-        self.parser.add_lightning_class_args(self.model_class, 'model', subclass_mode=self.subclass_mode_model)
+        self.parser.add_lightning_class_args(self.model_class, "model", subclass_mode=self.subclass_mode_model)
         if self.datamodule_class is not None:
-            self.parser.add_lightning_class_args(self.datamodule_class, 'data', subclass_mode=self.subclass_mode_data)
+            self.parser.add_lightning_class_args(self.datamodule_class, "data", subclass_mode=self.subclass_mode_data)
 
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         """Implement to add extra arguments to parser or link arguments.
@@ -331,7 +336,7 @@ class LightningCLI:
     def link_optimizers_and_lr_schedulers(self) -> None:
         """Creates argument links for optimizers and lr_schedulers that specified a link_to."""
         for key, (class_type, link_to) in self.parser.optimizers_and_lr_schedulers.items():
-            if link_to == 'AUTOMATIC':
+            if link_to == "AUTOMATIC":
                 continue
             if isinstance(class_type, tuple):
                 self.parser.link_arguments(key, link_to)
@@ -349,27 +354,27 @@ class LightningCLI:
     def instantiate_classes(self) -> None:
         """Instantiates the classes using settings from self.config."""
         self.config_init = self.parser.instantiate_classes(self.config)
-        self.datamodule = self.config_init.get('data')
-        self.model = self.config_init['model']
+        self.datamodule = self.config_init.get("data")
+        self.model = self.config_init["model"]
         self.instantiate_trainer()
 
     def instantiate_trainer(self) -> None:
         """Instantiates the trainer using self.config_init['trainer']"""
-        if self.config_init['trainer'].get('callbacks') is None:
-            self.config_init['trainer']['callbacks'] = []
+        if self.config_init["trainer"].get("callbacks") is None:
+            self.config_init["trainer"]["callbacks"] = []
         callbacks = [self.config_init[c] for c in self.parser.callback_keys]
-        self.config_init['trainer']['callbacks'].extend(callbacks)
-        if 'callbacks' in self.trainer_defaults:
-            if isinstance(self.trainer_defaults['callbacks'], list):
-                self.config_init['trainer']['callbacks'].extend(self.trainer_defaults['callbacks'])
+        self.config_init["trainer"]["callbacks"].extend(callbacks)
+        if "callbacks" in self.trainer_defaults:
+            if isinstance(self.trainer_defaults["callbacks"], list):
+                self.config_init["trainer"]["callbacks"].extend(self.trainer_defaults["callbacks"])
             else:
-                self.config_init['trainer']['callbacks'].append(self.trainer_defaults['callbacks'])
-        if self.save_config_callback and not self.config_init['trainer']['fast_dev_run']:
+                self.config_init["trainer"]["callbacks"].append(self.trainer_defaults["callbacks"])
+        if self.save_config_callback and not self.config_init["trainer"]["fast_dev_run"]:
             config_callback = self.save_config_callback(
                 self.parser, self.config, self.save_config_filename, overwrite=self.save_config_overwrite
             )
-            self.config_init['trainer']['callbacks'].append(config_callback)
-        self.trainer = self.trainer_class(**self.config_init['trainer'])
+            self.config_init["trainer"]["callbacks"].append(config_callback)
+        self.trainer = self.trainer_class(**self.config_init["trainer"])
 
     def add_configure_optimizers_method_to_model(self) -> None:
         """Adds to the model an automatically generated configure_optimizers method.
@@ -382,8 +387,8 @@ class LightningCLI:
             automatic = []
             for key, (base_class, link_to) in self.parser.optimizers_and_lr_schedulers.items():
                 if not isinstance(base_class, tuple):
-                    base_class = (base_class, )
-                if link_to == 'AUTOMATIC' and any(issubclass(c, class_type) for c in base_class):
+                    base_class = (base_class,)
+                if link_to == "AUTOMATIC" and any(issubclass(c, class_type) for c in base_class):
                     automatic.append(key)
             return automatic
 
@@ -402,7 +407,7 @@ class LightningCLI:
                 "#optimizers-and-learning-rate-schedulers"
             )
 
-        if is_overridden('configure_optimizers', self.model):
+        if is_overridden("configure_optimizers", self.model):
             warnings.warn(
                 f"`{self.model.__class__.__name__}.configure_optimizers` will be overridden by "
                 f"`{self.__class__.__name__}.add_configure_optimizers_method_to_model`."
@@ -420,7 +425,7 @@ class LightningCLI:
                 lr_scheduler_init = _global_add_class_path(lr_scheduler_class, lr_scheduler_init)
 
         def configure_optimizers(
-            self: LightningModule
+            self: LightningModule,
         ) -> Union[Optimizer, Tuple[List[Optimizer], List[LRSchedulerType]]]:
             optimizer = instantiate_class(self.parameters(), optimizer_init)
             if not lr_scheduler_init:
@@ -432,9 +437,9 @@ class LightningCLI:
 
     def prepare_fit_kwargs(self) -> None:
         """Prepares fit_kwargs including datamodule using self.config_init['data'] if given."""
-        self.fit_kwargs = {'model': self.model}
+        self.fit_kwargs = {"model": self.model}
         if self.datamodule is not None:
-            self.fit_kwargs['datamodule'] = self.datamodule
+            self.fit_kwargs["datamodule"] = self.datamodule
 
     def before_fit(self) -> None:
         """Implement to run some code before fit is started."""
@@ -449,13 +454,12 @@ class LightningCLI:
 
 def _global_add_class_path(class_type: Type, init_args: Dict[str, Any]) -> Dict[str, Any]:
     return {
-        'class_path': class_type.__module__ + '.' + class_type.__name__,
-        'init_args': init_args,
+        "class_path": class_type.__module__ + "." + class_type.__name__,
+        "init_args": init_args,
     }
 
 
 def _add_class_path_generator(class_type: Type) -> Callable[[Dict[str, Any]], Dict[str, Any]]:
-
     def add_class_path(init_args: Dict[str, Any]) -> Dict[str, Any]:
         return _global_add_class_path(class_type, init_args)
 
@@ -472,10 +476,10 @@ def instantiate_class(args: Union[Any, Tuple[Any, ...]], init: Dict[str, Any]) -
     Returns:
         The instantiated class object.
     """
-    kwargs = init.get('init_args', {})
+    kwargs = init.get("init_args", {})
     if not isinstance(args, tuple):
-        args = (args, )
-    class_module, class_name = init['class_path'].rsplit('.', 1)
+        args = (args,)
+    class_module, class_name = init["class_path"].rsplit(".", 1)
     module = __import__(class_module, fromlist=[class_name])
     args_class = getattr(module, class_name)
     return args_class(*args, **kwargs)

@@ -31,11 +31,10 @@ from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
-            DefaultDataKeys.TARGET: torch.randint(10, size=(1, )).item(),
+            DefaultDataKeys.TARGET: torch.randint(10, size=(1,)).item(),
         }
 
     def __len__(self) -> int:
@@ -43,14 +42,13 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 class DummyMultiLabelDataset(torch.utils.data.Dataset):
-
     def __init__(self, num_classes: int):
         self.num_classes = num_classes
 
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
-            DefaultDataKeys.TARGET: torch.randint(0, 2, (self.num_classes, )),
+            DefaultDataKeys.TARGET: torch.randint(0, 2, (self.num_classes,)),
         }
 
     def __len__(self) -> int:
@@ -118,7 +116,7 @@ def test_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32), ))])
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32),))])
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 

@@ -28,7 +28,6 @@ from flash.core.utilities.lightning_cli import class_from_function, LightningCLI
 
 
 def drop_kwargs(func):
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
@@ -46,7 +45,6 @@ def drop_kwargs(func):
 
 
 def make_args_optional(cls, args: Set[str]):
-
     @wraps(cls)
     def wrapper(*args, **kwargs):
         return cls(*args, **kwargs)
@@ -79,11 +77,10 @@ def get_overlapping_args(func_a, func_b) -> Set[str]:
 
 
 class FlashCLI(LightningCLI):
-
     def __init__(
         self,
         model_class: Type[pl.LightningModule],
-        datamodule_class: Type['flash.DataModule'],
+        datamodule_class: Type["flash.DataModule"],
         trainer_class: Type[pl.Trainer] = flash.Trainer,
         default_datamodule_builder: Optional[Callable] = None,
         additional_datamodule_builders: Optional[List[Callable]] = None,
@@ -171,9 +168,7 @@ class FlashCLI(LightningCLI):
         preprocess_function = class_from_function(drop_kwargs(self.local_datamodule_class.preprocess_cls))
         subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand.add_class_arguments(
-            preprocess_function,
-            fail_untyped=False,
-            skip=get_overlapping_args(datamodule_function, preprocess_function)
+            preprocess_function, fail_untyped=False, skip=get_overlapping_args(datamodule_function, preprocess_function)
         )
         subcommand_name = function_name or function.__name__
         subcommands.add_subcommand(subcommand_name, subcommand)
@@ -189,7 +184,7 @@ class FlashCLI(LightningCLI):
                 if getattr(self.datamodule, datamodule_attribute, None) is not None:
                     self.config["model"][datamodule_attribute] = getattr(self.datamodule, datamodule_attribute)
         self.config_init = self.parser.instantiate_classes(self.config)
-        self.model = self.config_init['model']
+        self.model = self.config_init["model"]
         self.instantiate_trainer()
 
     def prepare_fit_kwargs(self):

@@ -72,7 +72,6 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 
 
 class Trainer(PlTrainer):
-
     @_defaults_from_env_vars
     def __init__(self, *args, serve_sanity_check: bool = False, **kwargs):
         if flash._IS_TESTING:
@@ -186,7 +185,8 @@ class Trainer(PlTrainer):
                 if strategy is not None:
                     rank_zero_warn(
                         "The model contains a default finetune callback. The provided {strategy} will be overriden.\n"
-                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
+                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ",
+                        UserWarning,
                     )
                 callback = model_callback
             else:
@@ -214,7 +214,7 @@ class Trainer(PlTrainer):
         return add_argparse_args(PlTrainer, *args, **kwargs)
 
     @classmethod
-    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> 'Trainer':
+    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> "Trainer":
         """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
         ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
         # the lightning trainer implementation does not support subclasses.

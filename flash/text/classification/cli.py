@@ -71,11 +71,11 @@ def text_classification():
         default_arguments={
             "trainer.max_epochs": 3,
         },
-        datamodule_attributes={"num_classes", "multi_label", "backbone"}
+        datamodule_attributes={"num_classes", "multi_label", "backbone"},
     )
 
     cli.trainer.save_checkpoint("text_classification_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     text_classification()

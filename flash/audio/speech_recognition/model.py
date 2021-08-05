@@ -51,8 +51,9 @@ class SpeechRecognition(Task):
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
 
-        model = self.backbones.get(backbone
-                                   )() if backbone in self.backbones else Wav2Vec2ForCTC.from_pretrained(backbone)
+        model = (
+            self.backbones.get(backbone)() if backbone in self.backbones else Wav2Vec2ForCTC.from_pretrained(backbone)
+        )
         super().__init__(
             model=model,
             loss_fn=loss_fn,
@@ -74,5 +75,5 @@ class SpeechRecognition(Task):
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         out = self.model(batch["input_values"], labels=batch["labels"])
-        out["logs"] = {'loss': out.loss}
+        out["logs"] = {"loss": out.loss}
         return out

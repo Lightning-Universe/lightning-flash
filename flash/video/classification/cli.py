@@ -51,11 +51,11 @@ def video_classification():
         default_datamodule_builder=from_kinetics,
         default_arguments={
             "trainer.max_epochs": 3,
-        }
+        },
     )
 
     cli.trainer.save_checkpoint("video_classification.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     video_classification()

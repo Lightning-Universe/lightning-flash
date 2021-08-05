@@ -44,7 +44,6 @@ if _TORCHVISION_AVAILABLE:
 
 
 class COCODataSource(DataSource[Tuple[str, str]]):
-
     @requires("pycocotools")
     def load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         root, ann_file = data
@@ -95,7 +94,7 @@ class COCODataSource(DataSource[Tuple[str, str]]):
                         image_id=img_id,
                         area=areas,
                         iscrowd=iscrowd,
-                    )
+                    ),
                 )
             )
         return data
@@ -110,11 +109,9 @@ class COCODataSource(DataSource[Tuple[str, str]]):
             "size": (h, w),
         }
         return sample
-        return sample
 
 
 class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
-
     def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
         super().__init__(label_field=label_field)
         self.iscrowd = iscrowd
@@ -166,7 +163,7 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
                         image_id=img_id,
                         area=output_areas,
                         iscrowd=output_iscrowd,
-                    )
+                    ),
                 )
             )
             img_id += 1
@@ -198,7 +195,6 @@ class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
 
 
 class ObjectDetectionPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,

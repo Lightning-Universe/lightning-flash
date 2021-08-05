@@ -33,9 +33,8 @@ if _KORNIA_AVAILABLE:
 
 
 class SemanticSegmentationPostprocess(Postprocess):
-
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA]["size"][-2:], interpolation='bilinear')
+        resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA]["size"][-2:], interpolation="bilinear")
         sample[DefaultDataKeys.PREDS] = resize(torch.stack(sample[DefaultDataKeys.PREDS]))
         sample[DefaultDataKeys.INPUT] = resize(torch.stack(sample[DefaultDataKeys.INPUT]))
         return super().per_sample_transform(sample)
@@ -104,7 +103,7 @@ class SemanticSegmentation(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             serializer=serializer or SegmentationLabels(),
-            postprocess=postprocess or self.postprocess_cls()
+            postprocess=postprocess or self.postprocess_cls(),
         )
 
         self.save_hyperparameters()
@@ -138,7 +137,7 @@ class SemanticSegmentation(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch_input = (batch[DefaultDataKeys.INPUT])
+        batch_input = batch[DefaultDataKeys.INPUT]
         batch[DefaultDataKeys.PREDS] = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
         return batch
 
@@ -149,7 +148,7 @@ class SemanticSegmentation(ClassificationTask):
         # In particular, torchvision segmentation models return the output logits
         # in the key `out`.
         if _isinstance(res, Dict[str, torch.Tensor]):
-            res = res['out']
+            res = res["out"]
 
         return res
 

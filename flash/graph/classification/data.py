@@ -25,7 +25,6 @@ if _GRAPH_AVAILABLE:
 
 
 class GraphClassificationPreprocess(Preprocess):
-
     @requires_extras("graph")
     def __init__(
         self,

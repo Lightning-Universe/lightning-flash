@@ -47,7 +47,6 @@ class FlashCallback(Callback):
 
 
 class ControlFlow(FlashCallback):
-
     def __init__(self, callbacks: List[FlashCallback]):
         self._callbacks = callbacks
 
@@ -208,7 +207,7 @@ class BaseDataFetcher(FlashCallback):
         yield
         self.enabled = False
 
-    def attach_to_preprocess(self, preprocess: 'flash.core.data.process.Preprocess') -> None:
+    def attach_to_preprocess(self, preprocess: "flash.core.data.process.Preprocess") -> None:
         preprocess.add_callbacks([self])
         self._preprocess = preprocess
 

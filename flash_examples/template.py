@@ -31,11 +31,13 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Classify a few examples
-predictions = model.predict([
-    np.array([4.9, 3.0, 1.4, 0.2]),
-    np.array([6.9, 3.2, 5.7, 2.3]),
-    np.array([7.2, 3.0, 5.8, 1.6]),
-])
+predictions = model.predict(
+    [
+        np.array([4.9, 3.0, 1.4, 0.2]),
+        np.array([6.9, 3.2, 5.7, 2.3]),
+        np.array([7.2, 3.0, 5.8, 1.6]),
+    ]
+)
 print(predictions)
 
 # 5. Save the model!
