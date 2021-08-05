@@ -33,7 +33,7 @@ def from_coco_128(
         train_folder="data/coco128/images/train2017/",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs
+        **preprocess_kwargs,
     )
 
 
@@ -45,7 +45,7 @@ def style_transfer():
         default_datamodule_builder=from_coco_128,
         default_arguments={
             "trainer.max_epochs": 3,
-            "model.style_image": os.path.join(flash.ASSETS_ROOT, "starry_night.jpg")
+            "model.style_image": os.path.join(flash.ASSETS_ROOT, "starry_night.jpg"),
         },
         finetune=False,
     )
@@ -53,5 +53,5 @@ def style_transfer():
     cli.trainer.save_checkpoint("style_transfer_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     style_transfer()

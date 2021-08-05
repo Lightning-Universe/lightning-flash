@@ -71,7 +71,7 @@ class TabularClassifier(ClassificationTask):
             cat_idxs=list(range(len(embedding_sizes))),
             cat_dims=list(cat_dims),
             cat_emb_dim=list(cat_emb_dim),
-            **tabnet_kwargs
+            **tabnet_kwargs,
         )
 
         super().__init__(
@@ -108,11 +108,11 @@ class TabularClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
+        batch = batch[DefaultDataKeys.INPUT]
         return self(batch)
 
     @classmethod
-    def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
+    def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.embedding_sizes, **kwargs)
         return model
 

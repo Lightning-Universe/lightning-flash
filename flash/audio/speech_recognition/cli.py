@@ -47,7 +47,7 @@ def speech_recognition():
         SpeechRecognitionData,
         default_datamodule_builder=from_timit,
         default_arguments={
-            'trainer.max_epochs': 3,
+            "trainer.max_epochs": 3,
         },
         finetune=False,
     )
@@ -55,5 +55,5 @@ def speech_recognition():
     cli.trainer.save_checkpoint("speech_recognition_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     speech_recognition()

@@ -32,7 +32,7 @@ def kitti(dataset_path, download, **kwargs):
             "https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/scripts/download_datasets/download_kitti.sh",  # noqa E501
             None,
             dataset_path,
-            name
+            name,
         )
     return KITTI(download_path, **kwargs)
 

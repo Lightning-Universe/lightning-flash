@@ -40,11 +40,13 @@ trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Generate predictions for a few comments!
-predictions = model.predict([
-    "No, he is an arrogant, self serving, immature idiot. Get it right.",
-    "U SUCK HANNAH MONTANA",
-    "Would you care to vote? Thx.",
-])
+predictions = model.predict(
+    [
+        "No, he is an arrogant, self serving, immature idiot. Get it right.",
+        "U SUCK HANNAH MONTANA",
+        "Would you care to vote? Thx.",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

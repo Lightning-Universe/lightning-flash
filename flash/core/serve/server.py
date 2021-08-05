@@ -25,7 +25,7 @@ class ServerMixin:
     DEBUG: bool
     TESTING: bool
 
-    def http_app(self) -> 'FastAPI':
+    def http_app(self) -> "FastAPI":
         return setup_http_app(composition=self, debug=self.DEBUG)
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000):

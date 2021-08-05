@@ -8,7 +8,6 @@ from torch.utils.data import DataLoader, Dataset, Subset
 
 
 class RandomDataset(Dataset):
-
     def __init__(self, size, length):
         self.len = length
         self.data = torch.randn(length, size)
@@ -21,7 +20,6 @@ class RandomDataset(Dataset):
 
 
 class BoringModel(LightningModule):
-
     def __init__(self):
         """Testing PL Module.
 
@@ -70,7 +68,7 @@ class BoringModel(LightningModule):
         return {"x": loss}
 
     def validation_epoch_end(self, outputs) -> None:
-        torch.stack([x['x'] for x in outputs]).mean()
+        torch.stack([x["x"] for x in outputs]).mean()
 
     def test_step(self, batch, batch_idx):
         output = self(batch)
@@ -99,7 +97,6 @@ class BoringModel(LightningModule):
 
 
 class BoringDataModule(LightningDataModule):
-
     def __init__(self, data_dir: str = "./"):
         super().__init__()
         self.data_dir = data_dir

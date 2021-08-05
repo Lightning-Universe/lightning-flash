@@ -29,10 +29,10 @@ def from_kitti(
     download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiTiny.zip", "data/")
     return PointCloudSegmentationData.from_folders(
         train_folder="data/SemanticKittiTiny/train",
-        val_folder='data/SemanticKittiTiny/val',
+        val_folder="data/SemanticKittiTiny/val",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs
+        **preprocess_kwargs,
     )
 
 
@@ -52,5 +52,5 @@ def pointcloud_segmentation():
     cli.trainer.save_checkpoint("pointcloud_segmentation_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pointcloud_segmentation()

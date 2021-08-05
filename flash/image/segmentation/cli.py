@@ -30,7 +30,7 @@ def from_carla(
     """Downloads and loads the CARLA capture data set."""
     download_data(
         "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip",
-        "./data"
+        "./data",
     )
     return SemanticSegmentationData.from_folders(
         train_folder="data/CameraRGB",
@@ -39,7 +39,7 @@ def from_carla(
         batch_size=batch_size,
         num_workers=num_workers,
         num_classes=num_classes,
-        **preprocess_kwargs
+        **preprocess_kwargs,
     )
 
 
@@ -51,11 +51,11 @@ def semantic_segmentation():
         default_datamodule_builder=from_carla,
         default_arguments={
             "trainer.max_epochs": 3,
-        }
+        },
     )
 
     cli.trainer.save_checkpoint("semantic_segmentation_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     semantic_segmentation()

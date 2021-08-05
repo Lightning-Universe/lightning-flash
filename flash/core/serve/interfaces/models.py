@@ -12,6 +12,7 @@ else:
 
 try:
     from typing import ForwardRef
+
     RequestModel = ForwardRef("RequestModel")
     ResponseModel = ForwardRef("ResponseModel")
 except ImportError:
@@ -34,7 +35,7 @@ class EndpointProtocol:
     returned as subclasses of pydantic ``BaseModel``.
     """
 
-    def __init__(self, name: str, endpoint: 'Endpoint', components: Dict[str, 'ModelComponent']):
+    def __init__(self, name: str, endpoint: "Endpoint", components: Dict[str, "ModelComponent"]):
         self._name = name
         self._endpoint = endpoint
         self._component = components
@@ -119,10 +120,7 @@ class EndpointProtocol:
         RequestModel = create_model(
             f"{self.name.title()}_RequestModel",
             __module__=self.__class__.__module__,
-            **{
-                "session": (Optional[str], None),
-                "payload": (payload_model, ...)
-            },
+            **{"session": (Optional[str], None), "payload": (payload_model, ...)},
         )
         RequestModel.update_forward_refs()
         return RequestModel
@@ -180,10 +178,7 @@ class EndpointProtocol:
         ResponseModel = create_model(
             f"{self.name.title()}_Response",
             __module__=self.__class__.__module__,
-            **{
-                "session": (Optional[str], None),
-                "result": (results_model, ...)
-            },
+            **{"session": (Optional[str], None), "result": (results_model, ...)},
         )
         ResponseModel.update_forward_refs()
         return ResponseModel

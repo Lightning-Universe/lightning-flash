@@ -43,5 +43,5 @@ if _TORCHVISION_AVAILABLE:
             fn=catch_url_error(partial(_fn_resnet_fpn, model_name)),
             name=model_name,
             package="torchvision",
-            type="resnet-fpn"
+            type="resnet-fpn",
         )

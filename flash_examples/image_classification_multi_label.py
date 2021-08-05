@@ -36,11 +36,13 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict the genre of a few movies!
-predictions = model.predict([
-    "data/movie_posters/predict/tt0085318.jpg",
-    "data/movie_posters/predict/tt0089461.jpg",
-    "data/movie_posters/predict/tt0097179.jpg",
-])
+predictions = model.predict(
+    [
+        "data/movie_posters/predict/tt0085318.jpg",
+        "data/movie_posters/predict/tt0089461.jpg",
+        "data/movie_posters/predict/tt0097179.jpg",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

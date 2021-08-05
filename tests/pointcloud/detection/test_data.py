@@ -37,14 +37,13 @@ def test_pointcloud_object_detection_data(tmpdir):
     dm = PointCloudObjectDetectorData.from_folders(train_folder=join(tmpdir, "KITTI_Micro", "Kitti", "train"))
 
     class MockModel(PointCloudObjectDetector):
-
         def training_step(self, batch, batch_idx: int):
             assert isinstance(batch, ObjectDetectBatchCollator)
             assert len(batch.point) == 2
             assert batch.point[0][1].shape == torch.Size([4])
             assert len(batch.bboxes) > 1
-            assert batch.attr[0]["name"] in ('000000.bin', '000001.bin')
-            assert batch.attr[1]["name"] in ('000000.bin', '000001.bin')
+            assert batch.attr[0]["name"] in ("000000.bin", "000001.bin")
+            assert batch.attr[1]["name"] in ("000000.bin", "000001.bin")
 
     num_classes = 19
     model = MockModel(backbone="pointpillars_kitti", num_classes=num_classes)

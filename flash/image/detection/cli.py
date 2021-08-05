@@ -34,7 +34,7 @@ def from_coco_128(
         val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs
+        **preprocess_kwargs,
     )
 
 
@@ -46,11 +46,11 @@ def object_detection():
         default_datamodule_builder=from_coco_128,
         default_arguments={
             "trainer.max_epochs": 3,
-        }
+        },
     )
 
     cli.trainer.save_checkpoint("object_detection_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     object_detection()
