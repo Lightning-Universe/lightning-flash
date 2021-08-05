@@ -24,10 +24,10 @@ from torch import Tensor
 from tqdm.auto import tqdm as tq
 
 _STAGES_PREFIX = {
-    RunningStage.TRAINING: 'train',
-    RunningStage.TESTING: 'test',
-    RunningStage.VALIDATING: 'val',
-    RunningStage.PREDICTING: 'predict'
+    RunningStage.TRAINING: "train",
+    RunningStage.TESTING: "test",
+    RunningStage.VALIDATING: "val",
+    RunningStage.PREDICTING: "predict",
 }
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
@@ -61,7 +61,6 @@ _POSTPROCESS_FUNCS: Set[str] = {
 
 
 class CurrentRunningStageContext:
-
     def __init__(self, running_stage: RunningStage, obj: Any, reset: bool = True):
         self._running_stage = running_stage
         self._obj = obj
@@ -79,7 +78,6 @@ class CurrentRunningStageContext:
 
 
 class CurrentFuncContext:
-
     def __init__(self, current_fn: str, obj: Any):
         self._current_fn = current_fn
         self._obj = obj
@@ -96,7 +94,6 @@ class CurrentFuncContext:
 
 
 class CurrentRunningStageFuncContext:
-
     def __init__(self, running_stage: RunningStage, current_fn: str, obj: Any):
         self._running_stage = running_stage
         self._current_fn = current_fn
@@ -131,9 +128,9 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
 
     if not os.path.exists(path):
         os.makedirs(path)
-    local_filename = os.path.join(path, url.split('/')[-1])
+    local_filename = os.path.join(path, url.split("/")[-1])
     r = requests.get(url, stream=True, verify=False)
-    file_size = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else 0
+    file_size = int(r.headers["Content-Length"]) if "Content-Length" in r.headers else 0
     chunk_size = 1024
     num_bars = int(file_size / chunk_size)
     if verbose:
@@ -141,19 +138,19 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         print(dict(num_bars=num_bars))
 
     if not os.path.exists(local_filename):
-        with open(local_filename, 'wb') as fp:
+        with open(local_filename, "wb") as fp:
             for chunk in tq(
                 r.iter_content(chunk_size=chunk_size),
                 total=num_bars,
-                unit='KB',
+                unit="KB",
                 desc=local_filename,
-                leave=True  # progressbar stays
+                leave=True,  # progressbar stays
             ):
                 fp.write(chunk)  # type: ignore
 
-    if '.zip' in local_filename:
+    if ".zip" in local_filename:
         if os.path.exists(local_filename):
-            with zipfile.ZipFile(local_filename, 'r') as zip_ref:
+            with zipfile.ZipFile(local_filename, "r") as zip_ref:
                 zip_ref.extractall(path)
 
 

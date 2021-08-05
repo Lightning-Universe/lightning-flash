@@ -20,6 +20,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.__main__ import main
 from flash.audio import SpeechRecognition
 from flash.audio.speech_recognition.data import SpeechRecognitionPostprocess, SpeechRecognitionPreprocess
 from flash.core.data.data_source import DefaultDataKeys
@@ -29,14 +30,11 @@ from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: np.random.randn(86631),
             DefaultDataKeys.TARGET: "some target text",
-            DefaultDataKeys.METADATA: {
-                "sampling_rate": 16000
-            },
+            DefaultDataKeys.METADATA: {"sampling_rate": 16000},
         }
 
     def __len__(self) -> int:
@@ -92,3 +90,13 @@ def test_serve():
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[audio]'")):
         SpeechRecognition.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "speech-recognition", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

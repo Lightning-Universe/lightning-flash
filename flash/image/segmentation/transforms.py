@@ -40,7 +40,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(
                 [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
-                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation='nearest')),
+                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation="nearest")),
             ),
         ),
         "collate": Compose([kornia_collate, ApplyToKeys(DefaultDataKeys.TARGET, prepare_target)]),
@@ -51,12 +51,13 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
     """During training, we apply the default transforms with additional ``RandomHorizontalFlip`` and
     ``ColorJitter``."""
     return merge_transforms(
-        default_transforms(image_size), {
+        default_transforms(image_size),
+        {
             "post_tensor_transform": nn.Sequential(
                 ApplyToKeys(
                     [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
                     KorniaParallelTransforms(K.augmentation.RandomHorizontalFlip(p=0.5)),
                 ),
             ),
-        }
+        },
     )

@@ -62,7 +62,6 @@ else:
 class ImageClassificationDataFrameDataSource(
     DataSource[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str]]]
 ):
-
     @staticmethod
     def _resolve_file(root: str, file_id: str) -> str:
         if os.path.isabs(file_id):
@@ -101,11 +100,13 @@ class ImageClassificationDataFrameDataSource(
 
         if not self.predicting:
             if isinstance(target_keys, List):
+                dataset.multi_label = True
                 dataset.num_classes = len(target_keys)
                 self.set_state(LabelsState(target_keys))
                 data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
                 target_keys = target_keys[0]
             else:
+                dataset.multi_label = False
                 if self.training:
                     labels = list(sorted(data_frame[target_keys].unique()))
                     dataset.num_classes = len(labels)
@@ -118,25 +119,30 @@ class ImageClassificationDataFrameDataSource(
                     label_to_class = {v: k for k, v in enumerate(labels)}
                     data_frame = data_frame.apply(partial(self._resolve_target, label_to_class, target_keys), axis=1)
 
-            return [{
-                DefaultDataKeys.INPUT: row[input_key],
-                DefaultDataKeys.TARGET: row[target_keys],
-                DefaultDataKeys.METADATA: dict(root=root),
-            } for _, row in data_frame.iterrows()]
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                    DefaultDataKeys.TARGET: row[target_keys],
+                    DefaultDataKeys.METADATA: dict(root=root),
+                }
+                for _, row in data_frame.iterrows()
+            ]
         else:
-            return [{
-                DefaultDataKeys.INPUT: row[input_key],
-                DefaultDataKeys.METADATA: dict(root=root),
-            } for _, row in data_frame.iterrows()]
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                    DefaultDataKeys.METADATA: dict(root=root),
+                }
+                for _, row in data_frame.iterrows()
+            ]
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        file = self._resolve_file(sample[DefaultDataKeys.METADATA]['root'], sample[DefaultDataKeys.INPUT])
+        file = self._resolve_file(sample[DefaultDataKeys.METADATA]["root"], sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = default_loader(file)
         return sample
 
 
 class ImageClassificationCSVDataSource(ImageClassificationDataFrameDataSource):
-
     def load_data(
         self,
         data: Tuple[str, str, Union[str, List[str]], Optional[str]],
@@ -150,7 +156,6 @@ class ImageClassificationCSVDataSource(ImageClassificationDataFrameDataSource):
 
 
 class ImageClassificationPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -224,7 +229,7 @@ class ImageClassificationData(DataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given pandas
         ``DataFrame`` objects.
 
@@ -318,7 +323,7 @@ class ImageClassificationData(DataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
         files using the :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
@@ -401,6 +406,7 @@ class ImageClassificationData(DataModule):
 
 class MatplotlibVisualization(BaseVisualization):
     """Process and show the image batch and its associated label using matplotlib."""
+
     max_cols: int = 4  # maximum number of columns we accept
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
@@ -444,7 +450,7 @@ class MatplotlibVisualization(BaseVisualization):
             # show image and set label as subplot title
             ax.imshow(_img)
             ax.set_title(str(_label))
-            ax.axis('off')
+            ax.axis("off")
         plt.show(block=self.block_viz_window)
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):

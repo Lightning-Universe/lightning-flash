@@ -21,7 +21,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiTiny.zip", "d
 
 datamodule = PointCloudSegmentationData.from_folders(
     train_folder="data/SemanticKittiTiny/train",
-    val_folder='data/SemanticKittiTiny/val',
+    val_folder="data/SemanticKittiTiny/val",
 )
 
 # 2. Build the task
@@ -32,10 +32,12 @@ trainer = flash.Trainer(max_epochs=1, limit_train_batches=0, limit_val_batches=0
 trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?
-predictions = model.predict([
-    "data/SemanticKittiTiny/predict/000000.bin",
-    "data/SemanticKittiTiny/predict/000001.bin",
-])
+predictions = model.predict(
+    [
+        "data/SemanticKittiTiny/predict/000000.bin",
+        "data/SemanticKittiTiny/predict/000001.bin",
+    ]
+)
 
 # 5. Save the model!
 trainer.save_checkpoint("pointcloud_segmentation_model.pt")

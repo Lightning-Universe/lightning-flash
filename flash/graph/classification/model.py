@@ -29,7 +29,6 @@ else:
 
 
 class GraphBlock(nn.Module):
-
     def __init__(self, nc_input, nc_output, conv_cls, act=nn.ReLU(), **conv_kwargs):
         super().__init__()
         self.conv = conv_cls(nc_input, nc_output, **conv_kwargs)
@@ -43,7 +42,6 @@ class GraphBlock(nn.Module):
 
 
 class BaseGraphModel(nn.Module):
-
     def __init__(
         self,
         num_features: int,

@@ -24,18 +24,17 @@ from flash.image.data import ImageDeserializer, ImagePathsDataSource
 
 
 class AudioClassificationPreprocess(Preprocess):
-
     @requires_extras(["audio", "image"])
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Callable]],
-        val_transform: Optional[Dict[str, Callable]],
-        test_transform: Optional[Dict[str, Callable]],
-        predict_transform: Optional[Dict[str, Callable]],
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
         spectrogram_size: Tuple[int, int] = (196, 196),
         time_mask_param: int = 80,
         freq_mask_param: int = 80,
-        deserializer: Optional['Deserializer'] = None,
+        deserializer: Optional["Deserializer"] = None,
     ):
         self.spectrogram_size = spectrogram_size
         self.time_mask_param = time_mask_param
@@ -48,7 +47,7 @@ class AudioClassificationPreprocess(Preprocess):
             predict_transform=predict_transform,
             data_sources={
                 DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource()
+                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,

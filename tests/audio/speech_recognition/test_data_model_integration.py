@@ -25,7 +25,7 @@ from tests.helpers.utils import _AUDIO_TESTING
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small model for testing
 
 path = str(Path(flash.ASSETS_ROOT) / "example.wav")
-sample = {'file': path, 'text': 'example input.'}
+sample = {"file": path, "text": "example input."}
 
 TEST_CSV_DATA = f"""file,text
 {path},example input.
@@ -44,8 +44,8 @@ def csv_data(tmpdir):
 
 def json_data(tmpdir, n_samples=5):
     path = Path(tmpdir) / "data.json"
-    with path.open('w') as f:
-        f.write('\n'.join([json.dumps(sample) for x in range(n_samples)]))
+    with path.open("w") as f:
+        f.write("\n".join([json.dumps(sample) for x in range(n_samples)]))
     return path
 
 

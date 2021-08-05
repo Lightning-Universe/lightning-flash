@@ -82,7 +82,7 @@ def test_registry():
     assert all(callable(f) for f in functions)
 
     # test available keys
-    assert backbones.available_keys() == ['foo', 'foo', 'foo', 'foo', 'foo', 'my_model']
+    assert backbones.available_keys() == ["foo", "foo", "foo", "foo", "foo", "my_model"]
 
 
 # todo (tchaton) Debug this test.
@@ -100,8 +100,8 @@ def test_registry_multiple_decorators(caplog):
 
     assert caplog.messages == [
         "Registering: my_model function with name: bar and metadata: {'foobar': True}",
-        'Registering: my_model function with name: foo and metadata: {}',
-        'Registering: my_model function with name: my_model and metadata: {}'
+        "Registering: my_model function with name: foo and metadata: {}",
+        "Registering: my_model function with name: my_model and metadata: {}",
     ]
 
     assert len(backbones) == 3

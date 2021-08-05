@@ -40,7 +40,6 @@ else:
         MultiLayerEncodingOperator = None
 
     class loss:
-
         class PerceptualLoss:
             pass
 
@@ -80,7 +79,7 @@ class StyleTransfer(Task):
         backbone: str = "vgg16",
         content_layer: str = "relu2_2",
         content_weight: float = 1e5,
-        style_layers: Union[Sequence[str], str] = ("relu1_2", "relu2_2", "relu3_3", "relu4_3"),
+        style_layers: Union[Sequence[str], str] = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"],
         style_weight: float = 1e10,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
@@ -100,7 +99,7 @@ class StyleTransfer(Task):
             model = pystiche.demo.transformer()
 
         if not isinstance(style_layers, (List, Tuple)):
-            style_layers = (style_layers, )
+            style_layers = (style_layers,)
 
         perceptual_loss = self._get_perceptual_loss(
             backbone=backbone,
@@ -134,7 +133,6 @@ class StyleTransfer(Task):
         # oversight: they normalize the representation twice by the number of channels. To be compatible with them, we
         # do the same here.
         class GramOperator(ops.GramOperator):
-
             def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
                 repr = super().enc_to_repr(enc)
                 num_channels = repr.size()[1]

@@ -32,10 +32,12 @@ trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1
 trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?
-predictions = model.predict([
-    "data/KITTI_Tiny/Kitti/predict/scans/000000.bin",
-    "data/KITTI_Tiny/Kitti/predict/scans/000001.bin",
-])
+predictions = model.predict(
+    [
+        "data/KITTI_Tiny/Kitti/predict/scans/000000.bin",
+        "data/KITTI_Tiny/Kitti/predict/scans/000001.bin",
+    ]
+)
 
 # 5. Save the model!
-trainer.save_checkpoint("pointcloud_segmentation_model.pt")
+trainer.save_checkpoint("pointcloud_detection_model.pt")

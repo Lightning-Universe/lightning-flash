@@ -20,7 +20,7 @@ from torch.utils.data import Dataset, IterableDataset
 import flash
 from flash.core.data.utils import CurrentRunningStageFuncContext
 
-DATA_TYPE = TypeVar('DATA_TYPE')
+DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class BaseAutoDataset(Generic[DATA_TYPE]):
@@ -41,7 +41,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
     def __init__(
         self,
         data: DATA_TYPE,
-        data_source: 'flash.core.data.data_source.DataSource',
+        data_source: "flash.core.data.data_source.DataSource",
         running_stage: RunningStage,
     ) -> None:
         super().__init__()
@@ -68,11 +68,11 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
         self.load_sample: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(
             self.data_source,
             DataPipeline._resolve_function_hierarchy(
-                'load_sample',
+                "load_sample",
                 self.data_source,
                 self.running_stage,
                 DataSource,
-            )
+            ),
         )
 
     def _call_load_sample(self, sample: Any) -> Any:

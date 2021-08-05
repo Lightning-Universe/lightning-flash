@@ -35,7 +35,6 @@ else:
 
 
 class ObjectDetectBatchCollator(ObjectDetectBatch):
-
     def __init__(self, batches):
         self.num_batches = len(batches)
         super().__init__(batches)
@@ -56,11 +55,11 @@ def register_open_3d_ml(register: FlashRegistry):
 
         def get_collate_fn(model) -> Callable:
             batcher_name = model.cfg.batcher
-            if batcher_name == 'DefaultBatcher':
+            if batcher_name == "DefaultBatcher":
                 batcher = DefaultBatcher()
-            elif batcher_name == 'ConcatBatcher':
+            elif batcher_name == "ConcatBatcher":
                 batcher = ConcatBatcher(torch, model.__class__.__name__)
-            elif batcher_name == 'ObjectDetectBatchCollator':
+            elif batcher_name == "ObjectDetectBatchCollator":
                 return ObjectDetectBatchCollator
             return batcher.collate_fn
 
@@ -70,7 +69,9 @@ def register_open_3d_ml(register: FlashRegistry):
             cfg.model.device = "cpu"
             model = PointPillars(**cfg.model)
             weight_url = os.path.join(ROOT_URL, "pointpillars_kitti_202012221652utc.pth")
-            model.load_state_dict(pl_load(weight_url, map_location='cpu')['model_state_dict'], )
+            model.load_state_dict(
+                pl_load(weight_url, map_location="cpu")["model_state_dict"],
+            )
             model.cfg.batcher = "ObjectDetectBatchCollator"
             return model, 384, get_collate_fn(model)
 

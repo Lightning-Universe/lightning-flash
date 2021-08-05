@@ -56,3 +56,22 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/video_classification.py
     :language: python
     :lines: 14-
+
+------
+
+**********
+Flash Zero
+**********
+
+The video classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash video-classifier
+
+To view configuration options and options for running the video classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash video-classifier --help

@@ -127,7 +127,7 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            if platform.system() == "Darwin" or platform.system() == "Windows":
+            if platform.system() in ("Darwin", "Windows"):
                 num_workers = 0
             else:
                 num_workers = os.cpu_count()
@@ -219,22 +219,22 @@ class DataModule(pl.LightningDataModule):
             if reset:
                 self.data_fetcher.batches[stage] = {}
 
-    def show_train_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
+    def show_train_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
         """This function is used to visualize a batch from the train dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TRAINING]
         self._show_batch(stage_name, hooks_names, reset=reset)
 
-    def show_val_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
+    def show_val_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
         """This function is used to visualize a batch from the validation dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.VALIDATING]
         self._show_batch(stage_name, hooks_names, reset=reset)
 
-    def show_test_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
+    def show_test_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
         """This function is used to visualize a batch from the test dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TESTING]
         self._show_batch(stage_name, hooks_names, reset=reset)
 
-    def show_predict_batch(self, hooks_names: Union[str, List[str]] = 'load_sample', reset: bool = True) -> None:
+    def show_predict_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
         """This function is used to visualize a batch from the predict dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
         self._show_batch(stage_name, hooks_names, reset=reset)
@@ -255,16 +255,16 @@ class DataModule(pl.LightningDataModule):
 
     def set_running_stages(self):
         if self._train_ds:
-            self.set_dataset_attribute(self._train_ds, 'running_stage', RunningStage.TRAINING)
+            self.set_dataset_attribute(self._train_ds, "running_stage", RunningStage.TRAINING)
 
         if self._val_ds:
-            self.set_dataset_attribute(self._val_ds, 'running_stage', RunningStage.VALIDATING)
+            self.set_dataset_attribute(self._val_ds, "running_stage", RunningStage.VALIDATING)
 
         if self._test_ds:
-            self.set_dataset_attribute(self._test_ds, 'running_stage', RunningStage.TESTING)
+            self.set_dataset_attribute(self._test_ds, "running_stage", RunningStage.TESTING)
 
         if self._predict_ds:
-            self.set_dataset_attribute(self._predict_ds, 'running_stage', RunningStage.PREDICTING)
+            self.set_dataset_attribute(self._predict_ds, "running_stage", RunningStage.PREDICTING)
 
     def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
         if isinstance(dataset, (BaseAutoDataset, SplitDataset)):
@@ -292,7 +292,7 @@ class DataModule(pl.LightningDataModule):
                 shuffle=shuffle,
                 drop_last=drop_last,
                 collate_fn=collate_fn,
-                sampler=self.sampler
+                sampler=self.sampler,
             )
 
         return DataLoader(
@@ -303,7 +303,7 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=pin_memory,
             drop_last=drop_last,
-            collate_fn=collate_fn
+            collate_fn=collate_fn,
         )
 
     def _val_dataloader(self) -> DataLoader:
@@ -317,7 +317,7 @@ class DataModule(pl.LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
-                collate_fn=collate_fn
+                collate_fn=collate_fn,
             )
 
         return DataLoader(
@@ -325,7 +325,7 @@ class DataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn
+            collate_fn=collate_fn,
         )
 
     def _test_dataloader(self) -> DataLoader:
@@ -339,7 +339,7 @@ class DataModule(pl.LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
-                collate_fn=collate_fn
+                collate_fn=collate_fn,
             )
 
         return DataLoader(
@@ -347,7 +347,7 @@ class DataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn
+            collate_fn=collate_fn,
         )
 
     def _predict_dataloader(self) -> DataLoader:
@@ -366,7 +366,7 @@ class DataModule(pl.LightningDataModule):
                 batch_size=batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
-                collate_fn=collate_fn
+                collate_fn=collate_fn,
             )
 
         return DataLoader(
@@ -379,6 +379,13 @@ class DataModule(pl.LightningDataModule):
         n_cls_val = getattr(self.val_dataset, "num_classes", None)
         n_cls_test = getattr(self.test_dataset, "num_classes", None)
         return n_cls_train or n_cls_val or n_cls_test
+
+    @property
+    def multi_label(self) -> Optional[bool]:
+        multi_label_train = getattr(self.train_dataset, "multi_label", None)
+        multi_label_val = getattr(self.val_dataset, "multi_label", None)
+        multi_label_test = getattr(self.test_dataset, "multi_label", None)
+        return multi_label_train or multi_label_val or multi_label_test
 
     @property
     def data_source(self) -> Optional[DataSource]:
@@ -448,7 +455,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given inputs to
         :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``). The data source will be resolved from the instantiated
@@ -548,7 +555,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
         :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
@@ -631,7 +638,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given sequences of files
         using the :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data.data_source.DefaultDataSources.FILES` from the passed or constructed
@@ -718,7 +725,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
         :class:`~flash.core.data.data_source.DataSource`
         of name :attr:`~flash.core.data.data_source.DefaultDataSources.TENSOR`
@@ -805,7 +812,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given numpy array using the
         :class:`~flash.core.data.data_source.DataSource`
         of name :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY`
@@ -892,7 +899,7 @@ class DataModule(pl.LightningDataModule):
         sampler: Optional[Sampler] = None,
         field: Optional[str] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given JSON files using the
         :class:`~flash.core.data.data_source.DataSource`
         of name :attr:`~flash.core.data.data_source.DefaultDataSources.JSON`
@@ -1001,7 +1008,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
         :class:`~flash.core.data.data_source.DataSource`
         of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
@@ -1085,10 +1092,10 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
         :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASET`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASETS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1129,7 +1136,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.DATASET,
+            DefaultDataSources.DATASETS,
             train_dataset,
             val_dataset,
             test_dataset,
@@ -1165,7 +1172,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given FiftyOne Datasets using the
         :class:`~flash.core.data.data_source.DataSource` of name

@@ -8,7 +8,6 @@ from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesD
 
 
 class PointCloudSegmentationDatasetDataSource(DataSource):
-
     def load_data(
         self,
         data: Any,
@@ -25,13 +24,12 @@ class PointCloudSegmentationDatasetDataSource(DataSource):
         sample = dataset.dataset[index]
 
         return {
-            DefaultDataKeys.INPUT: sample['data'],
+            DefaultDataKeys.INPUT: sample["data"],
             DefaultDataKeys.METADATA: sample["attr"],
         }
 
 
 class PointCloudSegmentationFoldersDataSource(DataSource):
-
     @requires_extras("pointcloud")
     def load_data(
         self,
@@ -49,13 +47,12 @@ class PointCloudSegmentationFoldersDataSource(DataSource):
         sample = dataset.dataset[index]
 
         return {
-            DefaultDataKeys.INPUT: sample['data'],
+            DefaultDataKeys.INPUT: sample["data"],
             DefaultDataKeys.METADATA: sample["attr"],
         }
 
 
 class PointCloudSegmentationPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -73,7 +70,7 @@ class PointCloudSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASET: PointCloudSegmentationDatasetDataSource(),
+                DefaultDataSources.DATASETS: PointCloudSegmentationDatasetDataSource(),
                 DefaultDataSources.FOLDERS: PointCloudSegmentationFoldersDataSource(),
             },
             deserializer=deserializer,

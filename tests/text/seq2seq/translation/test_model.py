@@ -29,11 +29,10 @@ from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index):
         return {
-            "input_ids": torch.randint(1000, size=(128, )),
-            "labels": torch.randint(1000, size=(128, )),
+            "input_ids": torch.randint(1000, size=(128,)),
+            "labels": torch.randint(1000, size=(128,)),
         }
 
     def __len__(self) -> int:

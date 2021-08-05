@@ -24,7 +24,6 @@ if _GRAPH_AVAILABLE:
 
 
 class GraphDatasetDataSource(DatasetDataSource):
-
     @requires_extras("graph")
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
         data = super().load_data(data, dataset=dataset)

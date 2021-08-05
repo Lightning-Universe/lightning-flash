@@ -28,7 +28,6 @@ def test_split_dataset():
     assert len(np.unique(train_ds.indices)) == len(train_ds.indices)
 
     class Dataset:
-
         def __init__(self):
             self.data = [0, 1, 2]
             self.name = "something"

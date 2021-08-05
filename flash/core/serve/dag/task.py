@@ -399,7 +399,7 @@ def isdag(d, keys):
 class literal:
     """A small serializable object to wrap literal values without copying."""
 
-    __slots__ = ("data", )
+    __slots__ = ("data",)
 
     def __init__(self, data):
         self.data = data
@@ -408,7 +408,7 @@ class literal:
         return "literal<type=%s>" % type(self.data).__name__
 
     def __reduce__(self):
-        return (literal, (self.data, ))
+        return (literal, (self.data,))
 
     def __call__(self):
         return self.data
@@ -424,5 +424,5 @@ def quote(x):
     (literal<type=tuple>,)
     """
     if istask(x) or type(x) is list or type(x) is dict:
-        return (literal(x), )
+        return (literal(x),)
     return x

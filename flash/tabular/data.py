@@ -39,7 +39,6 @@ else:
 
 
 class TabularDataFrameDataSource(DataSource[DataFrame]):
-
     def __init__(
         self,
         cat_cols: Optional[List[str]] = None,
@@ -73,8 +72,9 @@ class TabularDataFrameDataSource(DataSource[DataFrame]):
     ):
         # impute_data
         # compute train dataset stats
-        dfs = _pre_transform([df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col,
-                             self.target_codes)
+        dfs = _pre_transform(
+            [df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col, self.target_codes
+        )
 
         df = dfs[0]
 
@@ -91,10 +91,9 @@ class TabularDataFrameDataSource(DataSource[DataFrame]):
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         df, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
         target = df[self.target_col].to_numpy().astype(np.float32 if self.is_regression else np.int64)
-        return [{
-            DefaultDataKeys.INPUT: (c, n),
-            DefaultDataKeys.TARGET: t
-        } for c, n, t in zip(cat_vars, num_vars, target)]
+        return [
+            {DefaultDataKeys.INPUT: (c, n), DefaultDataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)
+        ]
 
     def predict_load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         _, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
@@ -102,7 +101,6 @@ class TabularDataFrameDataSource(DataSource[DataFrame]):
 
 
 class TabularCSVDataSource(TabularDataFrameDataSource):
-
     def load_data(self, data: str, dataset: Optional[Any] = None):
         return super().load_data(pd.read_csv(data), dataset=dataset)
 
@@ -111,7 +109,6 @@ class TabularCSVDataSource(TabularDataFrameDataSource):
 
 
 class TabularDeserializer(Deserializer):
-
     def __init__(
         self,
         cat_cols: Optional[List[str]] = None,
@@ -122,7 +119,7 @@ class TabularDeserializer(Deserializer):
         codes: Optional[Dict[str, Any]] = None,
         target_codes: Optional[Dict[str, Any]] = None,
         classes: Optional[List[str]] = None,
-        is_regression: bool = True
+        is_regression: bool = True,
     ):
         super().__init__()
         self.cat_cols = cat_cols
@@ -137,8 +134,9 @@ class TabularDeserializer(Deserializer):
 
     def deserialize(self, data: str) -> Any:
         df = pd.read_csv(StringIO(data))
-        df = _pre_transform([df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col,
-                            self.target_codes)[0]
+        df = _pre_transform(
+            [df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col, self.target_codes
+        )[0]
 
         cat_vars = _to_cat_vars_numpy(df, self.cat_cols)
         num_vars = _to_num_vars_numpy(df, self.num_cols)
@@ -159,7 +157,6 @@ class TabularDeserializer(Deserializer):
 
 
 class TabularPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -175,8 +172,10 @@ class TabularPreprocess(Preprocess):
         target_codes: Optional[Dict[str, Any]] = None,
         classes: Optional[List[str]] = None,
         is_regression: bool = True,
-        deserializer: Optional[Deserializer] = None
+        deserializer: Optional[Deserializer] = None,
     ):
+        classes = classes or []
+
         self.cat_cols = cat_cols
         self.num_cols = num_cols
         self.target_col = target_col
@@ -201,7 +200,8 @@ class TabularPreprocess(Preprocess):
                 ),
             },
             default_data_source=DefaultDataSources.CSV,
-            deserializer=deserializer or TabularDeserializer(
+            deserializer=deserializer
+            or TabularDeserializer(
                 cat_cols=cat_cols,
                 num_cols=num_cols,
                 target_col=target_col,
@@ -210,8 +210,8 @@ class TabularPreprocess(Preprocess):
                 codes=codes,
                 target_codes=target_codes,
                 classes=classes,
-                is_regression=is_regression
-            )
+                is_regression=is_regression,
+            ),
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
@@ -229,12 +229,11 @@ class TabularPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> 'Preprocess':
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> "Preprocess":
         return cls(**state_dict)
 
 
 class TabularPostprocess(Postprocess):
-
     def uncollate(self, batch: Any) -> Any:
         return batch
 
@@ -268,20 +267,20 @@ class TabularData(DataModule):
         return len(self.cat_cols) + len(self.num_cols)
 
     @property
-    def emb_sizes(self) -> list:
+    def embedding_sizes(self) -> list:
         """Recommended embedding sizes."""
 
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
         # The following "formula" provides a general rule of thumb about the number of embedding dimensions:
         # embedding_dimensions =  number_of_categories**0.25
         num_classes = [len(self.codes[cat]) for cat in self.cat_cols]
-        emb_dims = [max(int(n**0.25), 16) for n in num_classes]
+        emb_dims = [max(int(n ** 0.25), 16) for n in num_classes]
         return list(zip(num_classes, emb_dims))
 
     @staticmethod
     def _sanetize_cols(cat_cols: Optional[Union[str, List[str]]], num_cols: Optional[Union[str, List[str]]]):
         if cat_cols is None and num_cols is None:
-            raise RuntimeError('Both `cat_cols` and `num_cols` are None!')
+            raise RuntimeError("Both `cat_cols` and `num_cols` are None!")
 
         return cat_cols or [], num_cols or []
 
@@ -453,7 +452,7 @@ class TabularData(DataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given CSV files.
 
         Args:

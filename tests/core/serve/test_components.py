@@ -21,12 +21,14 @@ def test_model_compute_dependencies(lightning_squeezenet1_1_obj):
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
 
     comp1.inputs.tag << comp2.outputs.predicted_tag
-    res = [{
-        "source_component": "callnum_2",
-        "source_key": "predicted_tag",
-        "target_component": "callnum_1",
-        "target_key": "tag",
-    }]
+    res = [
+        {
+            "source_component": "callnum_2",
+            "source_key": "predicted_tag",
+            "target_component": "callnum_1",
+            "target_key": "tag",
+        }
+    ]
     assert list(map(lambda x: x._asdict(), comp1._flashserve_meta_.connections)) == res
     assert list(comp2._flashserve_meta_.connections) == []
 
@@ -38,12 +40,14 @@ def test_inverse_model_compute_component_dependencies(lightning_squeezenet1_1_ob
 
     comp2.outputs.predicted_tag >> comp1.inputs.tag
 
-    res = [{
-        "source_component": "callnum_2",
-        "source_key": "predicted_tag",
-        "target_component": "callnum_1",
-        "target_key": "tag",
-    }]
+    res = [
+        {
+            "source_component": "callnum_2",
+            "source_key": "predicted_tag",
+            "target_component": "callnum_1",
+            "target_key": "tag",
+        }
+    ]
     assert list(map(lambda x: x._asdict(), comp2._flashserve_meta_.connections)) == res
     assert list(comp1._flashserve_meta_.connections) == []
 
@@ -74,7 +78,6 @@ def test_two_component_invalid_dependencies_fail(lightning_squeezenet1_1_obj):
         comp2.outputs.predicted_tag >> comp1.outputs.predicted_tag
 
     class Foo:
-
         def __init__(self):
             pass
 
@@ -128,7 +131,6 @@ def test_invalid_expose_inputs():
     with pytest.raises(SyntaxError, match="must be valid python attribute"):
 
         class ComposeClassInvalidExposeNameKeyword(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -142,7 +144,6 @@ def test_invalid_expose_inputs():
     with pytest.raises(AttributeError, match="object has no attribute"):
 
         class ComposeClassInvalidExposeNameType(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -156,7 +157,6 @@ def test_invalid_expose_inputs():
     with pytest.raises(TypeError, match="`expose` values must be"):
 
         class ComposeClassInvalidExposeInputsType(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -170,7 +170,6 @@ def test_invalid_expose_inputs():
     with pytest.raises(ValueError, match="cannot set dict of length < 1"):
 
         class ComposeClassEmptyExposeInputsType(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -206,7 +205,6 @@ def test_invalid_name(lightning_squeezenet1_1_obj):
     with pytest.raises(SyntaxError):
 
         class FailedExposedOutputsKeyworkName(ModelComponent):
-
             def __init__(self, model):
                 self.model = model
 
@@ -222,7 +220,6 @@ def test_invalid_config_args(lightning_squeezenet1_1_obj):
     from flash.core.serve.types import Number
 
     class SomeComponent(ModelComponent):
-
         def __init__(self, model, config=None):
             self.model = model
             self.config = config
@@ -250,7 +247,6 @@ def test_invalid_model_args(lightning_squeezenet1_1_obj):
     from flash.core.serve.types import Number
 
     class SomeComponent(ModelComponent):
-
         def __init__(self, model):
             self.model = model
 

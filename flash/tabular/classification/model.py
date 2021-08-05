@@ -53,7 +53,7 @@ class TabularClassifier(ClassificationTask):
         self,
         num_features: int,
         num_classes: int,
-        embedding_sizes: List[Tuple] = None,
+        embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
@@ -71,7 +71,7 @@ class TabularClassifier(ClassificationTask):
             cat_idxs=list(range(len(embedding_sizes))),
             cat_dims=list(cat_dims),
             cat_emb_dim=list(cat_emb_dim),
-            **tabnet_kwargs
+            **tabnet_kwargs,
         )
 
         super().__init__(
@@ -108,12 +108,12 @@ class TabularClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
+        batch = batch[DefaultDataKeys.INPUT]
         return self(batch)
 
     @classmethod
-    def from_data(cls, datamodule, **kwargs) -> 'TabularClassifier':
-        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.emb_sizes, **kwargs)
+    def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
+        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.embedding_sizes, **kwargs)
         return model
 
     @staticmethod

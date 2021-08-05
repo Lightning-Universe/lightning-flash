@@ -21,11 +21,10 @@ from flash.image import ImageClassificationData, ImageClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip")
 
 datamodule = ImageClassificationData.from_csv(
-    'Id',
+    "Id",
     ["Action", "Romance", "Crime", "Thriller", "Adventure"],
     train_file="data/movie_posters/train/metadata.csv",
     val_file="data/movie_posters/val/metadata.csv",
-    val_split=0.1,
     image_size=(128, 128),
 )
 
@@ -37,11 +36,13 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict the genre of a few movies!
-predictions = model.predict([
-    "data/movie_posters/predict/tt0085318.jpg",
-    "data/movie_posters/predict/tt0089461.jpg",
-    "data/movie_posters/predict/tt0097179.jpg",
-])
+predictions = model.predict(
+    [
+        "data/movie_posters/predict/tt0085318.jpg",
+        "data/movie_posters/predict/tt0089461.jpg",
+        "data/movie_posters/predict/tt0097179.jpg",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

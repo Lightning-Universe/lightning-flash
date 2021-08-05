@@ -33,14 +33,13 @@ if _TEXT_AVAILABLE:
 
 
 class Seq2SeqDataSource(DataSource):
-
     @requires_extras("text")
     def __init__(
         self,
         backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length'
+        padding: Union[str, bool] = "max_length",
     ):
         super().__init__()
 
@@ -82,23 +81,22 @@ class Seq2SeqDataSource(DataSource):
 
 
 class Seq2SeqFileDataSource(Seq2SeqDataSource):
-
     def __init__(
         self,
         filetype: str,
         backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length',
+        padding: Union[str, bool] = "max_length",
     ):
         super().__init__(backbone, max_source_length, max_target_length, padding)
 
         self.filetype = filetype
 
-    def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
+    def load_data(self, data: Any, columns: List[str] = None) -> "datasets.Dataset":
         if columns is None:
             columns = ["input_ids", "attention_mask", "labels"]
-        if self.filetype == 'json':
+        if self.filetype == "json":
             file, input, target, field = data
         else:
             file, input, target = data
@@ -109,22 +107,25 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         # FLASH_TESTING is set in the CI to run faster.
         if flash._IS_TESTING:
             try:
-                if self.filetype == 'json' and field is not None:
-                    dataset_dict = DatasetDict({
-                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'],
-                                            field=field)[0]
-                    })
+                if self.filetype == "json" and field is not None:
+                    dataset_dict = DatasetDict(
+                        {
+                            stage: load_dataset(
+                                self.filetype, data_files=data_files, split=[f"{stage}[:20]"], field=field
+                            )[0]
+                        }
+                    )
                 else:
-                    dataset_dict = DatasetDict({
-                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-                    })
+                    dataset_dict = DatasetDict(
+                        {stage: load_dataset(self.filetype, data_files=data_files, split=[f"{stage}[:20]"])[0]}
+                    )
             except Exception:
-                if self.filetype == 'json' and field is not None:
+                if self.filetype == "json" and field is not None:
                     dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
                 else:
                     dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            if self.filetype == 'json' and field is not None:
+            if self.filetype == "json" and field is not None:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
             else:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
@@ -133,7 +134,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         dataset_dict.set_format(columns=columns)
         return dataset_dict[stage]
 
-    def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
+    def predict_load_data(self, data: Any) -> Union["datasets.Dataset", List[Dict[str, torch.Tensor]]]:
         return self.load_data(data, columns=["input_ids", "attention_mask"])
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
@@ -147,13 +148,12 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
 
 
 class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
-
     def __init__(
         self,
         backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length',
+        padding: Union[str, bool] = "max_length",
     ):
         super().__init__(
             "csv",
@@ -174,13 +174,12 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
 
 
 class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
-
     def __init__(
         self,
         backbone: str,
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length',
+        padding: Union[str, bool] = "max_length",
     ):
         super().__init__(
             "json",
@@ -201,7 +200,6 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
 
 
 class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
-
     def load_data(
         self,
         data: Union[str, List[str]],
@@ -232,7 +230,6 @@ class Seq2SeqBackboneState(ProcessState):
 
 
 class Seq2SeqPreprocess(Preprocess):
-
     @requires_extras("text")
     def __init__(
         self,
@@ -243,7 +240,7 @@ class Seq2SeqPreprocess(Preprocess):
         backbone: str = "sshleifer/tiny-mbart",
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length'
+        padding: Union[str, bool] = "max_length",
     ):
         self.backbone = backbone
         self.max_target_length = max_target_length
@@ -276,7 +273,7 @@ class Seq2SeqPreprocess(Preprocess):
                 ),
             },
             default_data_source="sentences",
-            deserializer=TextDeserializer(backbone, max_source_length)
+            deserializer=TextDeserializer(backbone, max_source_length),
         )
 
         self.set_state(Seq2SeqBackboneState(self.backbone))
@@ -300,7 +297,6 @@ class Seq2SeqPreprocess(Preprocess):
 
 
 class Seq2SeqPostprocess(Postprocess):
-
     @requires_extras("text")
     def __init__(self):
         super().__init__()

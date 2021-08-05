@@ -36,7 +36,7 @@ class FlashRegistry:
         return any(key == e["name"] for e in self.functions)
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(name={self.name}, functions={self.functions})'
+        return f"{self.__class__.__name__}(name={self.name}, functions={self.functions})"
 
     def get(
         self,
@@ -73,7 +73,7 @@ class FlashRegistry:
         fn: Callable,
         name: Optional[str] = None,
         override: bool = False,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
             raise MisconfigurationException(f"You can only register a function, found: {fn}")
@@ -102,11 +102,7 @@ class FlashRegistry:
                 return idx
 
     def __call__(
-        self,
-        fn: Optional[Callable[..., Any]] = None,
-        name: Optional[str] = None,
-        override: bool = False,
-        **metadata
+        self, fn: Optional[Callable[..., Any]] = None, name: Optional[str] = None, override: bool = False, **metadata
     ) -> Callable:
         """This function is used to register new functions to the registry along their metadata.
 
@@ -118,7 +114,7 @@ class FlashRegistry:
 
         # raise the error ahead of time
         if not (name is None or isinstance(name, str)):
-            raise TypeError(f'`name` must be a str, found {name}')
+            raise TypeError(f"`name` must be a str, found {name}")
 
         def _register(cls):
             self._register_function(fn=cls, name=name, override=override, metadata=metadata)

@@ -34,11 +34,13 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Translate something!
-predictions = model.predict([
-    "BBC News went to meet one of the project's first graduates.",
-    "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
-    "Of course, it's still early in the election cycle.",
-])
+predictions = model.predict(
+    [
+        "BBC News went to meet one of the project's first graduates.",
+        "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
+        "Of course, it's still early in the election cycle.",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!
