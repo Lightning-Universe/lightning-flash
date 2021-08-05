@@ -110,7 +110,6 @@ class COCODataSource(DataSource[Tuple[str, str]]):
             "size": (h, w),
         }
         return sample
-        return sample
 
 
 class ObjectDetectionFiftyOneDataSource(FiftyOneDataSource):
