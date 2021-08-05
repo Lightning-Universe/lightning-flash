@@ -11,10 +11,7 @@ default_image_transforms = default_transforms(image_size)
 
 post_tensor_transform = ApplyToKeys(
     DefaultDataKeys.INPUT,
-    T.Compose([T.RandomHorizontalFlip(),
-               T.ColorJitter(),
-               T.RandomAutocontrast(),
-               T.RandomPerspective()])
+    T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
 )
 
 new_transforms = merge_transforms(default_image_transforms, {"post_tensor_transform": post_tensor_transform})
@@ -22,7 +19,5 @@ new_transforms = merge_transforms(default_image_transforms, {"post_tensor_transf
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
 datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    val_folder="data/hymenoptera_data/val/",
-    train_transform=new_transforms
+    train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", train_transform=new_transforms
 )
