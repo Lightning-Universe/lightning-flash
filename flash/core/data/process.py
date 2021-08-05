@@ -576,7 +576,7 @@ class SerializerMapping(Serializer):
 
 
 class Deserializer(Properties):
-    """"""
+    """Deserializer"""
 
     def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
         raise NotImplementedError
@@ -592,7 +592,7 @@ class Deserializer(Properties):
 
 class DeserializerMapping(Deserializer):
     # TODO: This is essentially a duplicate of SerializerMapping, should be abstracted away somewhere
-    """"""
+    """Deserializer Mapping"""
 
     def __init__(self, deserializers: Mapping[str, Deserializer]):
         super().__init__()
