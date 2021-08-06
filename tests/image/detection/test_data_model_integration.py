@@ -42,7 +42,7 @@ def test_detection(tmpdir, model, backbone):
     data = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
     model = ObjectDetector(model=model, backbone=backbone, num_classes=data.num_classes)
 
-    trainer = flash.Trainer(fast_dev_run=True, gpus=-1)
+    trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
 
     trainer.finetune(model, data)
 
@@ -66,7 +66,7 @@ def test_detection_fiftyone(tmpdir, model, backbone):
     data = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1)
     model = ObjectDetector(model=model, backbone=backbone, num_classes=data.num_classes)
 
-    trainer = flash.Trainer(fast_dev_run=True, gpus=-1)
+    trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
 
     trainer.finetune(model, data)
 

@@ -309,7 +309,7 @@ def test_optimization(tmpdir):
             scheduler_kwargs={"num_warmup_steps": 0.1},
             loss_fn=F.nll_loss,
         )
-        trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=-1)
+        trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
         ds = DummyDataset()
         trainer.fit(task, train_dataloader=DataLoader(ds))
         optimizer, scheduler = task.configure_optimizers()
@@ -330,5 +330,5 @@ def test_classification_task_metrics():
             assert math.isclose(trainer.callback_metrics["train_accuracy_epoch"], 0.5)
 
     task = ClassificationTask(model)
-    trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy(), gpus=-1)
+    trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy(), gpus=torch.cuda.device_count())
     trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))

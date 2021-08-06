@@ -213,6 +213,7 @@ Flash has a [Summarization task](https://lightning-flash.readthedocs.io/en/lates
 
 ```python
 import flash
+import torch
 from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
@@ -232,7 +233,7 @@ datamodule = SummarizationData.from_csv(
 model = SummarizationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, gpus=1, precision=16)
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), precision=16)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)

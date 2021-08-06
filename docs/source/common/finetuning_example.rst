@@ -35,7 +35,7 @@ Here's an example of finetuning.
     model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
     # 3. Create the trainer (run one epoch for demo)
-    trainer = flash.Trainer(max_epochs=1, gpus=-1)
+    trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 
     # 4. Finetune the model
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
