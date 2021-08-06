@@ -220,7 +220,7 @@ Here's the full ``ImageClassificationFoldersDataSource``:
             # This returns [image_path_1, ... image_path_m].
             return [{DefaultDataKeys.INPUT: file} for file in os.listdir(folder)]
 
-        def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]
+        def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
             sample[DefaultDataKeys.INPUT] = Image.open(sample[DefaultDataKeys.INPUT])
             return sample
 
