@@ -36,7 +36,6 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Detect objects in a few images!
-model.to("cuda")
 predictions = model.predict(
     [
         "data/coco128/images/train2017/000000000625.jpg",
