@@ -29,7 +29,7 @@ class ObjectDetector(AdapterTask):
     Args:
         num_classes: the number of classes for detection, including background
         model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretained backbone CNN architecture. Constructs a model with a
+        backbone: Pretrained backbone CNN architecture. Constructs a model with a
             ResNet-50-FPN backbone when no backbone is specified.
         fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
         pretrained: if true, returns a model pre-trained on COCO train2017

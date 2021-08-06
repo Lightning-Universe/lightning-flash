@@ -6,7 +6,7 @@ from flash.core.data.base_viz import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import BaseDataFormat, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, requires_extras
 
 if _POINTCLOUD_AVAILABLE:
     from flash.pointcloud.detection.open3d_ml.data_sources import (
@@ -14,7 +14,7 @@ if _POINTCLOUD_AVAILABLE:
         PointCloudObjectDetectorFoldersDataSource,
     )
 else:
-    PointCloudObjectDetectorFoldersDataSource = object()
+    PointCloudObjectDetectorFoldersDataSource = object
 
     class PointCloudObjectDetectionDataFormat:
         KITTI = None
@@ -46,6 +46,7 @@ class PointCloudObjectDetectorDatasetDataSource(DataSource):
 
 class PointCloudObjectDetectorPreprocess(Preprocess):
 
+    @requires_extras("pointcloud")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
