@@ -21,7 +21,6 @@ else:
 
 
 class PointCloudObjectDetectorDatasetDataSource(DataSource):
-
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -39,13 +38,12 @@ class PointCloudObjectDetectorDatasetDataSource(DataSource):
         sample = dataset.dataset[index]
 
         return {
-            DefaultDataKeys.INPUT: sample['data'],
+            DefaultDataKeys.INPUT: sample["data"],
             DefaultDataKeys.METADATA: sample["attr"],
         }
 
 
 class PointCloudObjectDetectorPreprocess(Preprocess):
-
     @requires_extras("pointcloud")
     def __init__(
         self,
@@ -107,7 +105,7 @@ class PointCloudObjectDetectorData(DataModule):
         calibrations_folder_name: Optional[str] = "calibs",
         data_format: Optional[BaseDataFormat] = PointCloudObjectDetectionDataFormat.KITTI,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
         :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`

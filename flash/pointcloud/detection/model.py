@@ -79,9 +79,9 @@ class PointCloudObjectDetector(Task):
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudObjectDetectorSerializer(),
-        lambda_loss_cls: float = 1.,
-        lambda_loss_bbox: float = 1.,
-        lambda_loss_dir: float = 1.,
+        lambda_loss_cls: float = 1.0,
+        lambda_loss_bbox: float = 1.0,
+        lambda_loss_dir: float = 1.0,
     ):
 
         super().__init__(
@@ -120,8 +120,9 @@ class PointCloudObjectDetector(Task):
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         losses = losses["loss"]
         return (
-            self.hparams.lambda_loss_cls * losses["loss_cls"] + self.hparams.lambda_loss_bbox * losses["loss_bbox"] +
-            self.hparams.lambda_loss_dir * losses["loss_dir"]
+            self.hparams.lambda_loss_cls * losses["loss_cls"]
+            + self.hparams.lambda_loss_bbox * losses["loss_bbox"]
+            + self.hparams.lambda_loss_dir * losses["loss_dir"]
         )
 
     def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
@@ -143,7 +144,7 @@ class PointCloudObjectDetector(Task):
         return {
             DefaultDataKeys.INPUT: getattr(batch, "point", None),
             DefaultDataKeys.PREDS: boxes,
-            DefaultDataKeys.METADATA: [a["name"] for a in batch.attr]
+            DefaultDataKeys.METADATA: [a["name"] for a in batch.attr],
         }
 
     def forward(self, x) -> torch.Tensor:
@@ -161,7 +162,7 @@ class PointCloudObjectDetector(Task):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
 
         if not _POINTCLOUD_AVAILABLE:

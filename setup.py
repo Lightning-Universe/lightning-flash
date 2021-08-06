@@ -33,8 +33,8 @@ def _load_py_module(fname, pkg="flash"):
     return py
 
 
-about = _load_py_module('__about__.py')
-setup_tools = _load_py_module('setup_tools.py')
+about = _load_py_module("__about__.py")
+setup_tools = _load_py_module("setup_tools.py")
 
 long_description = setup_tools._load_readme_description(
     _PATH_ROOT,
@@ -84,12 +84,12 @@ setup(
     include_package_data=True,
     extras_require=extras,
     entry_points={
-        'console_scripts': ['flash=flash.__main__:main'],
+        "console_scripts": ["flash=flash.__main__:main"],
     },
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
-    install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name='requirements.txt'),
+    install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name="requirements.txt"),
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",

@@ -45,7 +45,6 @@ else:
 
 
 class ImageDeserializer(Deserializer):
-
     @requires_extras("image")
     def __init__(self):
         super().__init__()
@@ -67,7 +66,6 @@ class ImageDeserializer(Deserializer):
 
 
 class ImagePathsDataSource(PathsDataSource):
-
     @requires_extras("image")
     def __init__(self):
         super().__init__(extensions=IMG_EXTENSIONS)
@@ -85,7 +83,6 @@ class ImagePathsDataSource(PathsDataSource):
 
 
 class ImageTensorDataSource(TensorDataSource):
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = to_pil_image(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
@@ -95,7 +92,6 @@ class ImageTensorDataSource(TensorDataSource):
 
 
 class ImageNumpyDataSource(NumpyDataSource):
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
         sample[DefaultDataKeys.INPUT] = img
@@ -105,7 +101,6 @@ class ImageNumpyDataSource(NumpyDataSource):
 
 
 class ImageFiftyOneDataSource(FiftyOneDataSource):
-
     @staticmethod
     def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]

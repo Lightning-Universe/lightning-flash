@@ -39,7 +39,6 @@ if _POINTCLOUD_AVAILABLE:
 
 
 class PointCloudSegmentationFinetuning(BaseFinetuning):
-
     def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
         super().__init__()
         self.num_layers = num_layers
@@ -47,7 +46,7 @@ class PointCloudSegmentationFinetuning(BaseFinetuning):
         self.unfreeze_epoch = unfreeze_epoch
 
     def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.backbone.children())[:-self.num_layers], train_bn=self.train_bn)
+        self.freeze(modules=list(pl_module.backbone.children())[: -self.num_layers], train_bn=self.train_bn)
 
     def finetune_function(
         self,
@@ -59,7 +58,7 @@ class PointCloudSegmentationFinetuning(BaseFinetuning):
         if epoch != self.unfreeze_epoch:
             return
         self.unfreeze_and_add_param_group(
-            modules=list(pl_module.backbone.children())[-self.num_layers:],
+            modules=list(pl_module.backbone.children())[-self.num_layers :],
             optimizer=optimizer,
             train_bn=self.train_bn,
         )
@@ -112,6 +111,7 @@ class PointCloudSegmentation(ClassificationTask):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudSegmentationSerializer(),
     ):
         import flash
+
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
 
@@ -168,9 +168,9 @@ class PointCloudSegmentation(ClassificationTask):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
-        batch[DefaultDataKeys.TARGET] = batch[DefaultDataKeys.INPUT]['labels']
+        batch[DefaultDataKeys.TARGET] = batch[DefaultDataKeys.INPUT]["labels"]
         # drop sub-sampled pointclouds
-        batch[DefaultDataKeys.INPUT] = batch[DefaultDataKeys.INPUT]['xyz'][0]
+        batch[DefaultDataKeys.INPUT] = batch[DefaultDataKeys.INPUT]["xyz"][0]
         return batch
 
     def forward(self, x) -> torch.Tensor:
@@ -191,7 +191,7 @@ class PointCloudSegmentation(ClassificationTask):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
 
         if not _POINTCLOUD_AVAILABLE:

@@ -52,14 +52,14 @@ def graph_classification():
         GraphClassificationData,
         default_datamodule_builder=from_tu_dataset,
         default_arguments={
-            'trainer.max_epochs': 3,
+            "trainer.max_epochs": 3,
         },
         finetune=False,
-        datamodule_attributes={"num_classes", "num_features"}
+        datamodule_attributes={"num_classes", "num_features"},
     )
 
     cli.trainer.save_checkpoint("graph_classification.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     graph_classification()

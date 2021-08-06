@@ -36,22 +36,11 @@ if _TEXT_AVAILABLE:
 @pytest.mark.parametrize(
     "cls, kwargs",
     [
-        (Seq2SeqDataSource, {
-            "backbone": "sshleifer/tiny-mbart"
-        }),
-        (Seq2SeqFileDataSource, {
-            "backbone": "sshleifer/tiny-mbart",
-            "filetype": "csv"
-        }),
-        (Seq2SeqCSVDataSource, {
-            "backbone": "sshleifer/tiny-mbart"
-        }),
-        (Seq2SeqJSONDataSource, {
-            "backbone": "sshleifer/tiny-mbart"
-        }),
-        (Seq2SeqSentencesDataSource, {
-            "backbone": "sshleifer/tiny-mbart"
-        }),
+        (Seq2SeqDataSource, {"backbone": "sshleifer/tiny-mbart"}),
+        (Seq2SeqFileDataSource, {"backbone": "sshleifer/tiny-mbart", "filetype": "csv"}),
+        (Seq2SeqCSVDataSource, {"backbone": "sshleifer/tiny-mbart"}),
+        (Seq2SeqJSONDataSource, {"backbone": "sshleifer/tiny-mbart"}),
+        (Seq2SeqSentencesDataSource, {"backbone": "sshleifer/tiny-mbart"}),
         (Seq2SeqPostprocess, {}),
     ],
 )

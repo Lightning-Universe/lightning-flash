@@ -24,15 +24,16 @@ def main():
 
 
 def register_command(command):
-
-    @main.command(context_settings=dict(
-        help_option_names=[],
-        ignore_unknown_options=True,
-    ))
-    @click.argument('cli_args', nargs=-1, type=click.UNPROCESSED)
+    @main.command(
+        context_settings=dict(
+            help_option_names=[],
+            ignore_unknown_options=True,
+        )
+    )
+    @click.argument("cli_args", nargs=-1, type=click.UNPROCESSED)
     @functools.wraps(command)
     def wrapper(cli_args):
-        with patch('sys.argv', [command.__name__] + list(cli_args)):
+        with patch("sys.argv", [command.__name__] + list(cli_args)):
             command()
 
 
@@ -63,5 +64,5 @@ for task in tasks:
     except ImportError:
         pass
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

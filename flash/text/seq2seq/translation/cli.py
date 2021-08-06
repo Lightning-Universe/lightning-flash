@@ -49,11 +49,11 @@ def translation():
         default_arguments={
             "trainer.max_epochs": 3,
             "model.backbone": "Helsinki-NLP/opus-mt-en-ro",
-        }
+        },
     )
 
     cli.trainer.save_checkpoint("translation_model_en_ro.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     translation()

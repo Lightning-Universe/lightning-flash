@@ -30,44 +30,53 @@ if _FIFTYONE_AVAILABLE:
 def _create_dummy_coco_json(dummy_json_path):
 
     dummy_json = {
-        "images": [{
-            "id": 0,
-            'width': 1920,
-            'height': 1080,
-            'file_name': 'sample_one.png',
-        }, {
-            "id": 1,
-            "width": 1920,
-            "height": 1080,
-            "file_name": "sample_two.png",
-        }],
-        "annotations": [{
-            "id": 1,
-            "image_id": 0,
-            "category_id": 0,
-            "area": 150,
-            "bbox": [30, 40, 20, 20],
-            "iscrowd": 0,
-        }, {
-            "id": 2,
-            "image_id": 1,
-            "category_id": 0,
-            "area": 240,
-            "bbox": [50, 100, 280, 15],
-            "iscrowd": 0,
-        }, {
-            "id": 3,
-            "image_id": 1,
-            "category_id": 0,
-            "area": 170,
-            "bbox": [230, 130, 90, 180],
-            "iscrowd": 0,
-        }],
-        "categories": [{
-            "id": 0,
-            "name": "person",
-            "supercategory": "person",
-        }]
+        "images": [
+            {
+                "id": 0,
+                "width": 1920,
+                "height": 1080,
+                "file_name": "sample_one.png",
+            },
+            {
+                "id": 1,
+                "width": 1920,
+                "height": 1080,
+                "file_name": "sample_two.png",
+            },
+        ],
+        "annotations": [
+            {
+                "id": 1,
+                "image_id": 0,
+                "category_id": 0,
+                "area": 150,
+                "bbox": [30, 40, 20, 20],
+                "iscrowd": 0,
+            },
+            {
+                "id": 2,
+                "image_id": 1,
+                "category_id": 0,
+                "area": 240,
+                "bbox": [50, 100, 280, 15],
+                "iscrowd": 0,
+            },
+            {
+                "id": 3,
+                "image_id": 1,
+                "category_id": 0,
+                "area": 170,
+                "bbox": [230, 130, 90, 180],
+                "iscrowd": 0,
+            },
+        ],
+        "categories": [
+            {
+                "id": 0,
+                "name": "person",
+                "supercategory": "person",
+            }
+        ],
     }
 
     with open(dummy_json_path, "w") as fp:
@@ -79,8 +88,8 @@ def _create_synth_coco_dataset(tmpdir):
     train_dir.mkdir()
 
     (train_dir / "images").mkdir()
-    Image.new('RGB', (1920, 1080)).save(train_dir / "images" / "sample_one.png")
-    Image.new('RGB', (1920, 1080)).save(train_dir / "images" / "sample_two.png")
+    Image.new("RGB", (1920, 1080)).save(train_dir / "images" / "sample_one.png")
+    Image.new("RGB", (1920, 1080)).save(train_dir / "images" / "sample_two.png")
 
     (train_dir / "annotations").mkdir()
     dummy_json = train_dir / "annotations" / "sample.json"
@@ -96,8 +105,8 @@ def _create_synth_fiftyone_dataset(tmpdir):
     img_dir = Path(tmpdir / "fo_imgs")
     img_dir.mkdir()
 
-    Image.new('RGB', (1920, 1080)).save(img_dir / "sample_one.png")
-    Image.new('RGB', (1920, 1080)).save(img_dir / "sample_two.png")
+    Image.new("RGB", (1920, 1080)).save(img_dir / "sample_one.png")
+    Image.new("RGB", (1920, 1080)).save(img_dir / "sample_two.png")
 
     dataset = fo.Dataset.from_dir(
         img_dir,

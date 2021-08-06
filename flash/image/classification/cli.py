@@ -44,12 +44,13 @@ def from_movie_posters(
     """Downloads and loads the movie posters genre classification data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "./data")
     return ImageClassificationData.from_csv(
-        "Id", ["Action", "Romance", "Crime", "Thriller", "Adventure"],
+        "Id",
+        ["Action", "Romance", "Crime", "Thriller", "Adventure"],
         train_file="data/movie_posters/train/metadata.csv",
         val_file="data/movie_posters/val/metadata.csv",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs
+        **preprocess_kwargs,
     )
 
 
@@ -61,13 +62,13 @@ def image_classification():
         default_datamodule_builder=from_hymenoptera,
         additional_datamodule_builders=[from_movie_posters],
         default_arguments={
-            'trainer.max_epochs': 3,
+            "trainer.max_epochs": 3,
         },
-        datamodule_attributes={"num_classes", "multi_label"}
+        datamodule_attributes={"num_classes", "multi_label"},
     )
 
     cli.trainer.save_checkpoint("image_classification_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     image_classification()

@@ -30,14 +30,11 @@ from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: np.random.randn(86631),
             DefaultDataKeys.TARGET: "some target text",
-            DefaultDataKeys.METADATA: {
-                "sampling_rate": 16000
-            },
+            DefaultDataKeys.METADATA: {"sampling_rate": 16000},
         }
 
     def __len__(self) -> int:

@@ -43,7 +43,6 @@ else:
 
 
 class FiftyOneParser(Parser):
-
     def __init__(self, data, class_map, label_field, iscrowd):
         template_record = ObjectDetectionRecord()
         template_record.add_component(IsCrowdsRecordComponent())
@@ -57,9 +56,12 @@ class FiftyOneParser(Parser):
         self.class_map = class_map
 
         for fp, w, h, sample_labs, sample_boxes, sample_iscrowd in zip(
-            data.values("filepath"), data.values("metadata.width"), data.values("metadata.height"),
-            data.values(label_field + ".detections.label"), data.values(label_field + ".detections.bounding_box"),
-            data.values(label_field + ".detections." + iscrowd)
+            data.values("filepath"),
+            data.values("metadata.width"),
+            data.values("metadata.height"),
+            data.values(label_field + ".detections.label"),
+            data.values(label_field + ".detections.bounding_box"),
+            data.values(label_field + ".detections." + iscrowd),
         ):
             for lab, box, iscrowd in zip(sample_labs, sample_boxes, sample_iscrowd):
                 self.data.append((fp, w, h, lab, box, iscrowd))
@@ -103,7 +105,6 @@ class FiftyOneParser(Parser):
 
 
 class ObjectDetectionFiftyOneDataSource(IceVisionPathsDataSource, FiftyOneDataSource):
-
     def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
         super().__init__()
         self.label_field = label_field
@@ -133,7 +134,6 @@ class ObjectDetectionFiftyOneDataSource(IceVisionPathsDataSource, FiftyOneDataSo
 
 
 class ObjectDetectionPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,

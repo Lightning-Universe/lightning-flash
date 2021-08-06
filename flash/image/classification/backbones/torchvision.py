@@ -60,7 +60,7 @@ def register_mobilenet_vgg_backbones(register: FlashRegistry):
                 name=model_name,
                 namespace="vision",
                 package="torchvision",
-                type=_type
+                type=_type,
             )
 
 
@@ -72,7 +72,7 @@ def register_resnext_model(register: FlashRegistry):
                 name=model_name,
                 namespace="vision",
                 package="torchvision",
-                type="resnext"
+                type="resnext",
             )
 
 
@@ -84,5 +84,5 @@ def register_densenet_backbones(register: FlashRegistry):
                 name=model_name,
                 namespace="vision",
                 package="torchvision",
-                type="densenet"
+                type="densenet",
             )

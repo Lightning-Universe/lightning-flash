@@ -38,7 +38,7 @@ def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, d
         padding=dilation,
         groups=groups,
         bias=False,
-        dilation=dilation
+        dilation=dilation,
     )
 
 
@@ -60,13 +60,13 @@ class BasicBlock(nn.Module):
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super(BasicBlock, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         if groups != 1 or base_width != 64:
-            raise ValueError('BasicBlock only supports groups=1 and base_width=64')
+            raise ValueError("BasicBlock only supports groups=1 and base_width=64")
         if dilation > 1:
             raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
@@ -116,12 +116,12 @@ class Bottleneck(nn.Module):
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super(Bottleneck, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
-        width = int(planes * (base_width / 64.)) * groups
+        width = int(planes * (base_width / 64.0)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv1x1(inplanes, width)
         self.bn1 = norm_layer(width)
@@ -157,7 +157,6 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-
     def __init__(
         self,
         block: Type[Union[BasicBlock, Bottleneck]],
@@ -245,7 +244,7 @@ class ResNet(nn.Module):
         planes: int,
         blocks: int,
         stride: int = 1,
-        dilate: bool = False
+        dilate: bool = False,
     ) -> nn.Sequential:
         norm_layer = self._norm_layer
         downsample = None
@@ -320,11 +319,11 @@ def _resnet(
 
     model_weights = None
     if pretrained_flag:
-        if 'supervised' not in weights_paths:
-            raise KeyError('Supervised pretrained weights not available for {0}'.format(model_name))
+        if "supervised" not in weights_paths:
+            raise KeyError("Supervised pretrained weights not available for {0}".format(model_name))
 
         model_weights = load_state_dict_from_url(
-            weights_paths['supervised'], map_location=torch.device('cpu') if device == -1 else torch.device(device)
+            weights_paths["supervised"], map_location=torch.device("cpu") if device == -1 else torch.device(device)
         )
 
         # for supervised pretrained weights
@@ -334,7 +333,7 @@ def _resnet(
     if not pretrained_flag and isinstance(pretrained, str):
         if pretrained in weights_paths:
             model_weights = load_state_dict_from_url(
-                weights_paths[pretrained], map_location=torch.device('cpu') if device == -1 else torch.device(device)
+                weights_paths[pretrained], map_location=torch.device("cpu") if device == -1 else torch.device(device)
             )
 
             if "classy_state_dict" in model_weights.keys():
@@ -344,11 +343,10 @@ def _resnet(
                     for (key, val) in model_weights.items()
                 }
             else:
-                raise KeyError('Unrecognized state dict. Logic for loading the current state dict missing.')
+                raise KeyError("Unrecognized state dict. Logic for loading the current state dict missing.")
         else:
             raise KeyError(
-                f"Requested weights for {model_name} not available,"
-                f" choose from one of {weights_paths.keys()}"
+                f"Requested weights for {model_name} not available," f" choose from one of {weights_paths.keys()}"
             )
 
     if model_weights is not None:
@@ -359,78 +357,65 @@ def _resnet(
 
 HTTPS_VISSL = "https://dl.fbaipublicfiles.com/vissl/model_zoo/"
 RESNET50_WEIGHTS_PATHS = {
-    "supervised": 'https://download.pytorch.org/models/resnet50-0676ba61.pth',
+    "supervised": "https://download.pytorch.org/models/resnet50-0676ba61.pth",
     "simclr": HTTPS_VISSL + "simclr_rn50_800ep_simclr_8node_resnet_16_07_20.7e8feed1/"
     "model_final_checkpoint_phase799.torch",
     "swav": HTTPS_VISSL + "swav_in1k_rn50_800ep_swav_8node_resnet_27_07_20.a0a6b676/"
     "model_final_checkpoint_phase799.torch",
 }
 RESNET50W2_WEIGHTS_PATHS = {
-    'simclr': HTTPS_VISSL + 'simclr_rn50w2_1000ep_simclr_8node_resnet_16_07_20.e1e3bbf0/'
-    'model_final_checkpoint_phase999.torch',
-    'swav': HTTPS_VISSL + 'swav_rn50w2_in1k_bs32_16node_400ep_swav_8node_resnet_30_07_20.93563e51/'
-    'model_final_checkpoint_phase399.torch',
+    "simclr": HTTPS_VISSL + "simclr_rn50w2_1000ep_simclr_8node_resnet_16_07_20.e1e3bbf0/"
+    "model_final_checkpoint_phase999.torch",
+    "swav": HTTPS_VISSL + "swav_rn50w2_in1k_bs32_16node_400ep_swav_8node_resnet_30_07_20.93563e51/"
+    "model_final_checkpoint_phase399.torch",
 }
 RESNET50W4_WEIGHTS_PATHS = {
-    'simclr': HTTPS_VISSL + 'simclr_rn50w4_1000ep_bs32_16node_simclr_8node_resnet_28_07_20.9e20b0ae/'
-    'model_final_checkpoint_phase999.torch',
-    'swav': HTTPS_VISSL + 'swav_rn50w4_in1k_bs40_8node_400ep_swav_8node_resnet_30_07_20.1736135b/'
-    'model_final_checkpoint_phase399.torch',
+    "simclr": HTTPS_VISSL + "simclr_rn50w4_1000ep_bs32_16node_simclr_8node_resnet_28_07_20.9e20b0ae/"
+    "model_final_checkpoint_phase999.torch",
+    "swav": HTTPS_VISSL + "swav_rn50w4_in1k_bs40_8node_400ep_swav_8node_resnet_30_07_20.1736135b/"
+    "model_final_checkpoint_phase399.torch",
 }
 
 RESNET_MODELS = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "resnet50w2", "resnet50w4"]
 RESNET_PARAMS = [
     {
-        'block': BasicBlock,
-        'layers': [2, 2, 2, 2],
-        'num_features': 512,
-        'weights_paths': {
-            "supervised": 'https://download.pytorch.org/models/resnet18-f37072fd.pth'
-        }
+        "block": BasicBlock,
+        "layers": [2, 2, 2, 2],
+        "num_features": 512,
+        "weights_paths": {"supervised": "https://download.pytorch.org/models/resnet18-f37072fd.pth"},
     },
     {
-        'block': BasicBlock,
-        'layers': [3, 4, 6, 3],
-        'num_features': 512,
-        'weights_paths': {
-            "supervised": 'https://download.pytorch.org/models/resnet34-b627a593.pth'
-        }
+        "block": BasicBlock,
+        "layers": [3, 4, 6, 3],
+        "num_features": 512,
+        "weights_paths": {"supervised": "https://download.pytorch.org/models/resnet34-b627a593.pth"},
+    },
+    {"block": Bottleneck, "layers": [3, 4, 6, 3], "num_features": 2048, "weights_paths": RESNET50_WEIGHTS_PATHS},
+    {
+        "block": Bottleneck,
+        "layers": [3, 4, 23, 3],
+        "num_features": 2048,
+        "weights_paths": {"supervised": "https://download.pytorch.org/models/resnet101-63fe2227.pth"},
     },
     {
-        'block': Bottleneck,
-        'layers': [3, 4, 6, 3],
-        'num_features': 2048,
-        'weights_paths': RESNET50_WEIGHTS_PATHS
+        "block": Bottleneck,
+        "layers": [3, 8, 36, 3],
+        "num_features": 2048,
+        "weights_paths": {"supervised": "https://download.pytorch.org/models/resnet152-394f9c45.pth"},
     },
     {
-        'block': Bottleneck,
-        'layers': [3, 4, 23, 3],
-        'num_features': 2048,
-        'weights_paths': {
-            "supervised": 'https://download.pytorch.org/models/resnet101-63fe2227.pth'
-        }
+        "block": Bottleneck,
+        "layers": [3, 4, 6, 3],
+        "widen": 2,
+        "num_features": 4096,
+        "weights_paths": RESNET50W2_WEIGHTS_PATHS,
     },
     {
-        'block': Bottleneck,
-        'layers': [3, 8, 36, 3],
-        'num_features': 2048,
-        'weights_paths': {
-            "supervised": 'https://download.pytorch.org/models/resnet152-394f9c45.pth'
-        }
-    },
-    {
-        'block': Bottleneck,
-        'layers': [3, 4, 6, 3],
-        'widen': 2,
-        'num_features': 4096,
-        'weights_paths': RESNET50W2_WEIGHTS_PATHS
-    },
-    {
-        'block': Bottleneck,
-        'layers': [3, 4, 6, 3],
-        'widen': 4,
-        'num_features': 8192,
-        'weights_paths': RESNET50W4_WEIGHTS_PATHS
+        "block": Bottleneck,
+        "layers": [3, 4, 6, 3],
+        "widen": 4,
+        "num_features": 8192,
+        "weights_paths": RESNET50W4_WEIGHTS_PATHS,
     },
 ]
 
@@ -443,5 +428,5 @@ def register_resnet_backbones(register: FlashRegistry):
             namespace="vision",
             package="multiple",
             type="resnet",
-            weights_paths=params['weights_paths']  # update
+            weights_paths=params["weights_paths"],  # update
         )

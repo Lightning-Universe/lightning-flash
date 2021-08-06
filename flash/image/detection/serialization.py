@@ -101,11 +101,13 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 label = str(int(label))
 
-            detections.append(fo.Detection(
-                label=label,
-                bounding_box=box,
-                confidence=confidence,
-            ))
+            detections.append(
+                fo.Detection(
+                    label=label,
+                    bounding_box=box,
+                    confidence=confidence,
+                )
+            )
         fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]

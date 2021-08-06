@@ -41,7 +41,7 @@ def _validate_exposed_input_parameters_valid(instance):
         )
 
 
-def _validate_subclass_init_signature(cls: Type['ModelComponent']):
+def _validate_subclass_init_signature(cls: Type["ModelComponent"]):
     """Raises SyntaxError if the __init__ method is not formatted correctly.
 
     Expects arguments: ['self', 'models', Optional['config']]
@@ -163,7 +163,9 @@ class FlashServeMeta(type):
             # alter namespace to insert flash serve info as bound components of class.
             exposed = first(ex_meths.values())
             namespace["_flashserve_meta_"] = exposed.flashserve_meta
-            namespace["__call__"] = wraps(exposed)(exposed, )
+            namespace["__call__"] = wraps(exposed)(
+                exposed,
+            )
 
         new_cls = super().__new__(cls, name, bases, namespace)
         if new_cls.__name__ != "ModelComponent":
@@ -242,6 +244,7 @@ if _SERVE_AVAILABLE:
         @property
         def uid(self) -> str:
             return self._flashserve_meta_.uid
+
 
 else:
     ModelComponent = object

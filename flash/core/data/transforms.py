@@ -44,7 +44,7 @@ class ApplyToKeys(nn.Sequential):
                 inputs = inputs[0]
             outputs = super().forward(inputs)
             if not isinstance(outputs, Sequence):
-                outputs = (outputs, )
+                outputs = (outputs,)
 
             result = {}
             result.update(x)

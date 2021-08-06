@@ -38,7 +38,6 @@ def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.
 
 
 class ClassificationTask(Task):
-
     def __init__(
         self,
         *args,

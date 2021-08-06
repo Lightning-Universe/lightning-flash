@@ -48,7 +48,6 @@ def test_flash_callback(_, __, tmpdir):
     ]
 
     class CustomModel(Task):
-
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
@@ -92,5 +91,5 @@ def test_flash_callback(_, __, tmpdir):
         call.on_post_tensor_transform(ANY, RunningStage.VALIDATING),
         call.on_collate(ANY, RunningStage.VALIDATING),
         call.on_per_batch_transform(ANY, RunningStage.VALIDATING),
-        call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING)
+        call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING),
     ]

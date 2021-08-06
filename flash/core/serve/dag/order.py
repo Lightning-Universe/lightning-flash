@@ -321,7 +321,7 @@ def order(dsk, dependencies=None):
 
                     if len(deps) == 1:
                         # Fast path!  We trim down `deps` above hoping to reach here.
-                        (dep, ) = deps
+                        (dep,) = deps
                         if not inner_stack:
                             if add_to_inner_stack:
                                 inner_stack = [dep]
@@ -565,7 +565,7 @@ def graph_metrics(dependencies, dependents, total_dependencies):
         key = current_pop()
         parents = dependents[key]
         if len(parents) == 1:
-            (parent, ) = parents
+            (parent,) = parents
             (
                 total_dependents,
                 min_dependencies,
@@ -665,7 +665,7 @@ class StrComparable:
     False
     """
 
-    __slots__ = ("obj", )
+    __slots__ = ("obj",)
 
     def __init__(self, obj):
         self.obj = obj

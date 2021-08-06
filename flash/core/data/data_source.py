@@ -193,7 +193,7 @@ class MockDataset:
         self.metadata = {}
 
     def __setattr__(self, key, value):
-        if key != 'metadata':
+        if key != "metadata":
             self.metadata[key] = value
         object.__setattr__(self, key, value)
 
@@ -390,10 +390,9 @@ class SequenceDataSource(
         inputs, targets = data
         if targets is None:
             return self.predict_load_data(data)
-        return [{
-            DefaultDataKeys.INPUT: input,
-            DefaultDataKeys.TARGET: target
-        } for input, target in zip(inputs, targets)]
+        return [
+            {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in zip(inputs, targets)
+        ]
 
     @staticmethod
     def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
@@ -439,9 +438,9 @@ class PathsDataSource(SequenceDataSource):
             # data is not path-like (e.g. it may be a list of paths)
             return False
 
-    def load_data(self,
-                  data: Union[str, Tuple[List[str], List[Any]]],
-                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(
+        self, data: Union[str, Tuple[List[str], List[Any]]], dataset: Optional[Any] = None
+    ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
@@ -460,9 +459,9 @@ class PathsDataSource(SequenceDataSource):
             )
         )
 
-    def predict_load_data(self,
-                          data: Union[str, List[str]],
-                          dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(
+        self, data: Union[str, List[str]], dataset: Optional[Any] = None
+    ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             data = [os.path.join(data, file) for file in os.listdir(data)]
 
@@ -522,15 +521,19 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
             def to_idx(t):
                 return [class_to_idx[x] for x in t]
+
         else:
 
             def to_idx(t):
                 return class_to_idx[t]
 
-        return [{
-            DefaultDataKeys.INPUT: f,
-            DefaultDataKeys.TARGET: to_idx(t),
-        } for f, t in zip(filepaths, targets)]
+        return [
+            {
+                DefaultDataKeys.INPUT: f,
+                DefaultDataKeys.TARGET: to_idx(t),
+            }
+            for f, t in zip(filepaths, targets)
+        ]
 
     @staticmethod
     @requires("fiftyone")

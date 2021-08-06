@@ -52,16 +52,14 @@ else:
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index: int) -> Tuple[Tensor, Number]:
-        return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
+        return torch.rand(1, 28, 28), torch.randint(10, size=(1,)).item()
 
     def __len__(self) -> int:
         return 9
 
 
 class PredictDummyDataset(DummyDataset):
-
     def __getitem__(self, index: int) -> Tensor:
         return torch.rand(1, 28, 28)
 
@@ -72,7 +70,6 @@ class DummyPostprocess(Postprocess):
 
 
 class FixedDataset(torch.utils.data.Dataset):
-
     def __init__(self, targets):
         super().__init__()
 
@@ -86,13 +83,12 @@ class FixedDataset(torch.utils.data.Dataset):
 
 
 class OnesModel(nn.Module):
-
     def __init__(self):
         super().__init__()
 
         self.layer = nn.Linear(1, 2)
-        self.register_buffer('zeros', torch.zeros(2))
-        self.register_buffer('zero_one', torch.tensor([0.0, 1.0]))
+        self.register_buffer("zeros", torch.zeros(2))
+        self.register_buffer("zero_one", torch.tensor([0.0, 1.0]))
 
     def forward(self, x):
         x = self.layer(x)
@@ -100,7 +96,6 @@ class OnesModel(nn.Module):
 
 
 class Parent(ClassificationTask):
-
     def __init__(self, child):
         super().__init__()
 
@@ -120,13 +115,11 @@ class Parent(ClassificationTask):
 
 
 class GrandParent(Parent):
-
     def __init__(self, child):
         super().__init__(Parent(child))
 
 
 class BasicAdapter(Adapter):
-
     def __init__(self, child):
         super().__init__()
 
@@ -146,7 +139,6 @@ class BasicAdapter(Adapter):
 
 
 class AdapterParent(Parent):
-
     def __init__(self, child):
         super().__init__(BasicAdapter(child))
 
@@ -256,24 +248,27 @@ def test_task_datapipeline_save(tmpdir):
     assert task.postprocess.test
 
 
-@pytest.mark.parametrize(["cls", "filename"], [
-    pytest.param(
-        ImageClassifier,
-        "image_classification_model.pt",
-        marks=pytest.mark.skipif(
-            not _IMAGE_TESTING,
-            reason="image packages aren't installed",
-        )
-    ),
-    pytest.param(
-        TabularClassifier,
-        "tabular_classification_model.pt",
-        marks=pytest.mark.skipif(
-            not _TABULAR_TESTING,
-            reason="tabular packages aren't installed",
-        )
-    ),
-])
+@pytest.mark.parametrize(
+    ["cls", "filename"],
+    [
+        pytest.param(
+            ImageClassifier,
+            "image_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _IMAGE_TESTING,
+                reason="image packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            TabularClassifier,
+            "tabular_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _TABULAR_TESTING,
+                reason="tabular packages aren't installed",
+            ),
+        ),
+    ],
+)
 def test_model_download(tmpdir, cls, filename):
     url = "https://flash-weights.s3.amazonaws.com/"
     with tmpdir.as_cwd():
@@ -310,7 +305,7 @@ def test_optimization(tmpdir):
         model,
         optimizer=torch.optim.Adadelta,
         scheduler=torch.optim.lr_scheduler.StepLR,
-        scheduler_kwargs={"step_size": 1}
+        scheduler_kwargs={"step_size": 1},
     )
     optimizer, scheduler = task.configure_optimizers()
     assert isinstance(optimizer[0], torch.optim.Adadelta)
@@ -346,7 +341,7 @@ def test_optimization(tmpdir):
         assert isinstance(optimizer[0], torch.optim.Adadelta)
         assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
         expected = get_linear_schedule_with_warmup.__name__
-        assert scheduler[0].lr_lambdas[0].__qualname__.split('.')[0] == expected
+        assert scheduler[0].lr_lambdas[0].__qualname__.split(".")[0] == expected
 
 
 def test_classification_task_metrics():
@@ -356,9 +351,8 @@ def test_classification_task_metrics():
     model = OnesModel()
 
     class CheckAccuracy(Callback):
-
-        def on_train_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
-            assert math.isclose(trainer.callback_metrics['train_accuracy_epoch'], 0.5)
+        def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+            assert math.isclose(trainer.callback_metrics["train_accuracy_epoch"], 0.5)
 
     task = ClassificationTask(model)
     trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy())

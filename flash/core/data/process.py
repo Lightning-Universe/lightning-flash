@@ -32,7 +32,6 @@ from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_
 
 
 class BasePreprocess(ABC):
-
     @abstractmethod
     def get_state_dict(self) -> Dict[str, Any]:
         """Override this method to return state_dict."""
@@ -182,8 +181,8 @@ class Preprocess(BasePreprocess, Properties):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, 'DataSource']] = None,
-        deserializer: Optional['Deserializer'] = None,
+        data_sources: Optional[Dict[str, "DataSource"]] = None,
+        deserializer: Optional["Deserializer"] = None,
         default_data_source: Optional[str] = None,
     ):
         super().__init__()
@@ -221,7 +220,7 @@ class Preprocess(BasePreprocess, Properties):
         self._default_collate: Callable = default_collate
 
     @property
-    def deserializer(self) -> Optional['Deserializer']:
+    def deserializer(self) -> Optional["Deserializer"]:
         return self._deserializer
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
@@ -243,19 +242,19 @@ class Preprocess(BasePreprocess, Properties):
         preprocess_state_dict["_meta"]["module"] = self.__module__
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
         preprocess_state_dict["_meta"]["_state"] = self._state
-        destination['preprocess.state_dict'] = preprocess_state_dict
-        self._ddp_params_and_buffers_to_ignore = ['preprocess.state_dict']
+        destination["preprocess.state_dict"] = preprocess_state_dict
+        self._ddp_params_and_buffers_to_ignore = ["preprocess.state_dict"]
         return super()._save_to_state_dict(destination, prefix, keep_vars)
 
-    def _check_transforms(self, transform: Optional[Dict[str, Callable]],
-                          stage: RunningStage) -> Optional[Dict[str, Callable]]:
+    def _check_transforms(
+        self, transform: Optional[Dict[str, Callable]], stage: RunningStage
+    ) -> Optional[Dict[str, Callable]]:
         if transform is None:
             return transform
 
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
-                "Transform should be a dict. "
-                f"Here are the available keys for your transforms: {_PREPROCESS_FUNCS}."
+                "Transform should be a dict. " f"Here are the available keys for your transforms: {_PREPROCESS_FUNCS}."
             )
 
         keys_diff = set(transform.keys()).difference(_PREPROCESS_FUNCS)
@@ -270,8 +269,7 @@ class Preprocess(BasePreprocess, Properties):
 
         if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
             raise MisconfigurationException(
-                f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutually exclusive.'
+                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` " f"are mutually exclusive."
             )
 
         collate_in_worker: Optional[bool] = None
@@ -317,16 +315,16 @@ class Preprocess(BasePreprocess, Properties):
         }
 
     @property
-    def callbacks(self) -> List['FlashCallback']:
+    def callbacks(self) -> List["FlashCallback"]:
         if not hasattr(self, "_callbacks"):
             self._callbacks: List[FlashCallback] = []
         return self._callbacks
 
     @callbacks.setter
-    def callbacks(self, callbacks: List['FlashCallback']):
+    def callbacks(self, callbacks: List["FlashCallback"]):
         self._callbacks = callbacks
 
-    def add_callbacks(self, callbacks: List['FlashCallback']):
+    def add_callbacks(self, callbacks: List["FlashCallback"]):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
@@ -439,14 +437,13 @@ class Preprocess(BasePreprocess, Properties):
 
 
 class DefaultPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, 'DataSource']] = None,
+        data_sources: Optional[Dict[str, "DataSource"]] = None,
         default_data_source: Optional[str] = None,
     ):
         super().__init__(
@@ -511,7 +508,7 @@ class Postprocess(Properties):
 
     # TODO: Are those needed ?
     def format_sample_save_path(self, path: str) -> str:
-        path = os.path.join(path, f'sample_{self._saved_samples}.ptl')
+        path = os.path.join(path, f"sample_{self._saved_samples}.ptl")
         self._saved_samples += 1
         return path
 
@@ -570,13 +567,13 @@ class SerializerMapping(Serializer):
             return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
         raise ValueError("The model output must be a mapping when using a SerializerMapping.")
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
         for serializer in self._serializers.values():
             serializer.attach_data_pipeline_state(data_pipeline_state)
 
 
 class Deserializer(Properties):
-    """"""
+    """Deserializer."""
 
     def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
         raise NotImplementedError
@@ -592,7 +589,7 @@ class Deserializer(Properties):
 
 class DeserializerMapping(Deserializer):
     # TODO: This is essentially a duplicate of SerializerMapping, should be abstracted away somewhere
-    """"""
+    """Deserializer Mapping."""
 
     def __init__(self, deserializers: Mapping[str, Deserializer]):
         super().__init__()
@@ -604,6 +601,6 @@ class DeserializerMapping(Deserializer):
             return {key: deserializer.deserialize(sample[key]) for key, deserializer in self._deserializers.items()}
         raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
         for deserializer in self._deserializers.values():
             deserializer.attach_data_pipeline_state(data_pipeline_state)

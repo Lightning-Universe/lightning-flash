@@ -32,7 +32,7 @@ def from_kitti(
         val_folder="data/KITTI_Tiny/Kitti/val",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs
+        **preprocess_kwargs,
     )
 
 
@@ -51,5 +51,5 @@ def pointcloud_detection():
     cli.trainer.save_checkpoint("pointcloud_detection_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pointcloud_detection()

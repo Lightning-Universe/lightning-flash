@@ -114,7 +114,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key
         from the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
-        batch = (batch[DefaultDataKeys.INPUT])
+        batch = batch[DefaultDataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
     def forward(self, x) -> torch.Tensor:

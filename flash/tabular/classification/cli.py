@@ -55,5 +55,5 @@ def tabular_classification():
     cli.trainer.save_checkpoint("tabular_classification_model.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tabular_classification()

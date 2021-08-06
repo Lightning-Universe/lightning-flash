@@ -49,8 +49,8 @@ def test_detection(tmpdir, head, backbone):
     test_image_one = os.fspath(tmpdir / "test_one.png")
     test_image_two = os.fspath(tmpdir / "test_two.png")
 
-    Image.new('RGB', (512, 512)).save(test_image_one)
-    Image.new('RGB', (512, 512)).save(test_image_two)
+    Image.new("RGB", (512, 512)).save(test_image_one)
+    Image.new("RGB", (512, 512)).save(test_image_two)
 
     test_images = [str(test_image_one), str(test_image_two)]
     model.predict(test_images)
@@ -73,8 +73,8 @@ def test_detection_fiftyone(tmpdir, head, backbone):
     test_image_one = os.fspath(tmpdir / "test_one.png")
     test_image_two = os.fspath(tmpdir / "test_two.png")
 
-    Image.new('RGB', (512, 512)).save(test_image_one)
-    Image.new('RGB', (512, 512)).save(test_image_two)
+    Image.new("RGB", (512, 512)).save(test_image_one)
+    Image.new("RGB", (512, 512)).save(test_image_two)
 
     test_images = [str(test_image_one), str(test_image_two)]
     model.predict(test_images)

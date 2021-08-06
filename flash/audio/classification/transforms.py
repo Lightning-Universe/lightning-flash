@@ -41,13 +41,14 @@ def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]
     }
 
 
-def train_default_transforms(spectrogram_size: Tuple[int, int], time_mask_param: int,
-                             freq_mask_param: int) -> Dict[str, Callable]:
+def train_default_transforms(
+    spectrogram_size: Tuple[int, int], time_mask_param: int, freq_mask_param: int
+) -> Dict[str, Callable]:
     """During training we apply the default transforms with additional ``TimeMasking`` and ``Frequency Masking``"""
     transforms = {
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, TAudio.TimeMasking(time_mask_param=time_mask_param)),
-            ApplyToKeys(DefaultDataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param))
+            ApplyToKeys(DefaultDataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)),
         )
     }
 

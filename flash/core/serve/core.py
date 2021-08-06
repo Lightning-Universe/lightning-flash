@@ -41,8 +41,7 @@ class Endpoint:
     def __post_init__(self):
         if not isinstance(self.route, str):
             raise TypeError(
-                f"route parameter must be type={str}, recieved "
-                f"route={self.route} of type={type(self.route)}"
+                f"route parameter must be type={str}, recieved " f"route={self.route} of type={type(self.route)}"
             )
         if not self.route.startswith("/"):
             raise ValueError("route must begin with a `slash` character (ie `/`).")
@@ -76,8 +75,11 @@ class FlashServeScriptLoader:
         return self.instance(*args, **kwargs)
 
 
-ServableValidArgs_T = Union[Tuple[Type[pl.LightningModule], Union[HttpUrl, FilePath]], Tuple[HttpUrl],
-                            Tuple[FilePath], ]
+ServableValidArgs_T = Union[
+    Tuple[Type[pl.LightningModule], Union[HttpUrl, FilePath]],
+    Tuple[HttpUrl],
+    Tuple[FilePath],
+]
 
 
 class Servable:
@@ -105,7 +107,7 @@ class Servable:
         self,
         *args: ServableValidArgs_T,
         download_path: Optional[Path] = None,
-        script_loader_cls: Type[FlashServeScriptLoader] = FlashServeScriptLoader
+        script_loader_cls: Type[FlashServeScriptLoader] = FlashServeScriptLoader,
     ):
         try:
             loc = args[-1]  # last element in args is always loc
@@ -175,8 +177,7 @@ class Connection(NamedTuple):
 
     def __str__(self):
         return (
-            f"{self.source_component}.outputs.{self.source_key} >> "
-            f"{self.target_component}.inputs.{self.target_key}"
+            f"{self.source_component}.outputs.{self.source_key} >> " f"{self.target_component}.inputs.{self.target_key}"
         )
 
 
@@ -276,7 +277,6 @@ class Parameter:
 
 
 class DictAttrAccessBase:
-
     def __grid_fields__(self) -> Iterator[str]:
         for field in dataclasses.fields(self):  # noqa F402
             yield field.name
@@ -322,15 +322,16 @@ def make_parameter_container(data: Dict[str, Parameter]) -> ParameterContainer:
     ParameterContainer = make_dataclass(
         "ParameterContainer",
         dataclass_fields,
-        bases=(DictAttrAccessBase, ),
+        bases=(DictAttrAccessBase,),
         frozen=True,
         unsafe_hash=True,
     )
     return ParameterContainer(**data)
 
 
-def make_param_dict(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType],
-                    component_uid: str) -> Tuple[Dict[str, Parameter], Dict[str, Parameter]]:
+def make_param_dict(
+    inputs: Dict[str, BaseType], outputs: Dict[str, BaseType], component_uid: str
+) -> Tuple[Dict[str, Parameter], Dict[str, Parameter]]:
     """Convert exposed input/outputs parameters / dtypes to parameter objects.
 
     Returns

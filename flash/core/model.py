@@ -53,7 +53,6 @@ from flash.core.utilities.imports import requires_extras
 
 
 class Wrapper:
-
     def __init__(self):
         super().__init__()
 
@@ -71,7 +70,6 @@ class Wrapper:
 
 
 class DatasetProcessor:
-
     def _process_dataset(
         self,
         dataset: BaseAutoDataset,
@@ -81,7 +79,7 @@ class DatasetProcessor:
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return DataLoader(
             dataset,
@@ -90,7 +88,7 @@ class DatasetProcessor:
             pin_memory=pin_memory,
             shuffle=shuffle,
             drop_last=drop_last,
-            collate_fn=collate_fn
+            collate_fn=collate_fn,
         )
 
     def process_train_dataset(
@@ -102,7 +100,7 @@ class DatasetProcessor:
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -112,7 +110,7 @@ class DatasetProcessor:
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
 
     def process_val_dataset(
@@ -124,7 +122,7 @@ class DatasetProcessor:
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = False,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -134,7 +132,7 @@ class DatasetProcessor:
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
 
     def process_test_dataset(
@@ -146,7 +144,7 @@ class DatasetProcessor:
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -156,7 +154,7 @@ class DatasetProcessor:
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
 
     def process_predict_dataset(
@@ -168,7 +166,7 @@ class DatasetProcessor:
         collate_fn: Callable = None,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -178,16 +176,15 @@ class DatasetProcessor:
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
 
 
 class BenchmarkConvergenceCI(Callback):
-
     def __init__(self):
         self.history = []
 
-    def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+    def on_validation_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         self.history.append(deepcopy(trainer.callback_metrics))
         if trainer.current_epoch == trainer.max_epochs - 1:
             fn = getattr(pl_module, "_ci_benchmark_fn", None)
@@ -219,7 +216,6 @@ def predict_context(func: Callable) -> Callable:
 
 
 class CheckDependenciesMeta(ABCMeta):
-
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
@@ -517,21 +513,23 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
         deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
 
         # Datamodule
-        if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
-            old_data_source = getattr(self.datamodule.data_pipeline, 'data_source', None)
-            preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
-            postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
-            serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
-            deserializer = getattr(self.datamodule.data_pipeline, '_deserializer', None)
+        if self.datamodule is not None and getattr(self.datamodule, "data_pipeline", None) is not None:
+            old_data_source = getattr(self.datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(self.datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(self.datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(self.datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(self.datamodule.data_pipeline, "_deserializer", None)
 
-        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
-            self.trainer.datamodule, 'data_pipeline', None
-        ) is not None:
-            old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
-            preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
-            postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
-            serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
-            deserializer = getattr(self.trainer.datamodule.data_pipeline, '_deserializer', None)
+        elif (
+            self.trainer is not None
+            and hasattr(self.trainer, "datamodule")
+            and getattr(self.trainer.datamodule, "data_pipeline", None) is not None
+        ):
+            old_data_source = getattr(self.trainer.datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(self.trainer.datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(self.trainer.datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(self.trainer.datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(self.trainer.datamodule.data_pipeline, "_deserializer", None)
         else:
             # TODO: we should log with low severity level that we use defaults to create
             # `preprocess`, `postprocess` and `serializer`.
@@ -556,10 +554,10 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
                 preprocess,
                 postprocess,
                 serializer,
-                getattr(data_pipeline, '_deserializer', None),
-                getattr(data_pipeline, '_preprocess_pipeline', None),
-                getattr(data_pipeline, '_postprocess_pipeline', None),
-                getattr(data_pipeline, '_serializer', None),
+                getattr(data_pipeline, "_deserializer", None),
+                getattr(data_pipeline, "_preprocess_pipeline", None),
+                getattr(data_pipeline, "_postprocess_pipeline", None),
+                getattr(data_pipeline, "_serializer", None),
             )
 
         data_source = data_source or old_data_source
@@ -602,10 +600,10 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
             self._preprocess,
             self._postprocess,
             self._serializer,
-            getattr(data_pipeline, '_deserializer', None),
-            getattr(data_pipeline, '_preprocess_pipeline', None),
-            getattr(data_pipeline, '_postprocess_pipeline', None),
-            getattr(data_pipeline, '_serializer', None),
+            getattr(data_pipeline, "_deserializer", None),
+            getattr(data_pipeline, "_preprocess_pipeline", None),
+            getattr(data_pipeline, "_postprocess_pipeline", None),
+            getattr(data_pipeline, "_serializer", None),
         )
 
         # self._preprocess.state_dict()
@@ -615,12 +613,12 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
     @torch.jit.unused
     @property
     def preprocess(self) -> Preprocess:
-        return getattr(self.data_pipeline, '_preprocess_pipeline', None)
+        return getattr(self.data_pipeline, "_preprocess_pipeline", None)
 
     @torch.jit.unused
     @property
     def postprocess(self) -> Postprocess:
-        return getattr(self.data_pipeline, '_postprocess_pipeline', None)
+        return getattr(self.data_pipeline, "_postprocess_pipeline", None)
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:
@@ -659,22 +657,22 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
-        if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
+        if self.data_pipeline is not None and "data_pipeline" not in checkpoint:
             try:
                 pickle.dumps(self.data_pipeline)  # TODO: DataPipeline not always pickleable
-                checkpoint['data_pipeline'] = self.data_pipeline
+                checkpoint["data_pipeline"] = self.data_pipeline
             except AttributeError:
                 rank_zero_warn("DataPipeline couldn't be added to the checkpoint.")
-        if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
-            checkpoint['_data_pipeline_state'] = self._data_pipeline_state
+        if self._data_pipeline_state is not None and "_data_pipeline_state" not in checkpoint:
+            checkpoint["_data_pipeline_state"] = self._data_pipeline_state
         super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)
-        if 'data_pipeline' in checkpoint:
-            self.data_pipeline = checkpoint['data_pipeline']
-        if '_data_pipeline_state' in checkpoint:
-            self._data_pipeline_state = checkpoint['_data_pipeline_state']
+        if "data_pipeline" in checkpoint:
+            self.data_pipeline = checkpoint["data_pipeline"]
+        if "_data_pipeline_state" in checkpoint:
+            self._data_pipeline_state = checkpoint["_data_pipeline_state"]
 
     @classmethod
     def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
@@ -777,14 +775,13 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
     ):
-        if 'preprocess.state_dict' in state_dict:
+        if "preprocess.state_dict" in state_dict:
             try:
                 preprocess_state_dict = state_dict["preprocess.state_dict"]
                 meta = preprocess_state_dict["_meta"]
                 cls = getattr(import_module(meta["module"]), meta["class_name"])
                 self._preprocess = cls.load_state_dict(
-                    {k: v
-                     for k, v in preprocess_state_dict.items() if k != '_meta'},
+                    {k: v for k, v in preprocess_state_dict.items() if k != "_meta"},
                     strict=strict,
                 )
                 self._preprocess._state = meta["_state"]
@@ -826,7 +823,7 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
             print(f"Sanity check response: {resp.json()}")
 
     @requires_extras("serve")
-    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
+    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> "Composition":
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 
@@ -852,6 +849,6 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
         if self._data_pipeline_state is not None:
             self._data_pipeline_state.set_state(state)
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
         for state in self._state.values():
             data_pipeline_state.set_state(state)
