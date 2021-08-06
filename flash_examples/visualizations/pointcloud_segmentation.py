@@ -30,7 +30,9 @@ datamodule = PointCloudSegmentationData.from_folders(
 model = PointCloudSegmentation(backbone="randlanet_semantic_kitti", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=0, limit_val_batches=0, num_sanity_val_steps=0, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(
+    max_epochs=1, limit_train_batches=0, limit_val_batches=0, num_sanity_val_steps=0, gpus=torch.cuda.device_count()
+)
 trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?

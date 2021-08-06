@@ -40,7 +40,8 @@ model = ImageClassifier(
     serializer=Labels(),
 )
 trainer = flash.Trainer(
-    max_epochs=1, gpus=torch.cuda.device_count(),
+    max_epochs=1,
+    gpus=torch.cuda.device_count(),
     limit_train_batches=1,
     limit_val_batches=1,
 )
