@@ -32,7 +32,7 @@ datamodule = ImageClassificationData.from_csv(
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, multi_label=True)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=-1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict the genre of a few movies!

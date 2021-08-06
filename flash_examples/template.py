@@ -27,7 +27,7 @@ datamodule = TemplateData.from_sklearn(
 model = TemplateSKLearnClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and train the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=-1)
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Classify a few examples

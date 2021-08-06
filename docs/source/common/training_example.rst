@@ -35,7 +35,7 @@ Here's an example:
     model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, pretrained=False)
 
     # 3. Create the trainer (run one epoch for demo)
-    trainer = flash.Trainer(max_epochs=1)
+    trainer = flash.Trainer(max_epochs=1, gpus=-1)
 
     # 4. Train the model
     trainer.fit(model, datamodule=datamodule)

@@ -282,7 +282,7 @@ supplying the task itself, and the associated data:
 
     model = RegressionTask(num_inputs=datamodule.train_dataset.num_inputs)
 
-    trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False)
+    trainer = flash.Trainer(max_epochs=20, progress_bar_refresh_rate=20, checkpoint_callback=False, gpus=-1)
     trainer.fit(model, datamodule=datamodule)
 
 

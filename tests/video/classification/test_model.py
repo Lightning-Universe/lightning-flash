@@ -193,7 +193,7 @@ def test_video_classifier_finetune(tmpdir):
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
-        trainer = flash.Trainer(fast_dev_run=True)
+        trainer = flash.Trainer(fast_dev_run=True, gpus=-1)
 
         trainer.finetune(model, datamodule=datamodule)
 
@@ -269,7 +269,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
-        trainer = flash.Trainer(fast_dev_run=True)
+        trainer = flash.Trainer(fast_dev_run=True, gpus=-1)
 
         trainer.finetune(model, datamodule=datamodule)
 

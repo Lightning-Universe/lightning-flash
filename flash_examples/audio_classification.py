@@ -30,7 +30,7 @@ datamodule = AudioClassificationData.from_folders(
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=-1)
 trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
 
 # 4. Predict what's on few images! air_conditioner, children_playing, siren e.t.c

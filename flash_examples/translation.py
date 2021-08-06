@@ -30,7 +30,7 @@ datamodule = TranslationData.from_csv(
 model = TranslationTask(backbone="Helsinki-NLP/opus-mt-en-ro")
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=-1)
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Translate something!

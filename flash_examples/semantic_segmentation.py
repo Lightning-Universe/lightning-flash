@@ -39,15 +39,15 @@ model = SemanticSegmentation(
 )
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=-1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Segment a few images!
 predictions = model.predict(
     [
         "data/CameraRGB/F61-1.png",
-        "data/CameraRGB/F62-1.png",
-        "data/CameraRGB/F63-1.png",
+        # "data/CameraRGB/F62-1.png",
+        # "data/CameraRGB/F63-1.png",
     ]
 )
 print(predictions)

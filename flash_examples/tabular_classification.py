@@ -30,7 +30,7 @@ datamodule = TabularClassificationData.from_csv(
 model = TabularClassifier.from_data(datamodule)
 
 # 3. Create the trainer and train the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=-1)
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions from a CSV

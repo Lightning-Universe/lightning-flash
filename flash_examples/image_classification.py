@@ -27,7 +27,7 @@ datamodule = ImageClassificationData.from_folders(
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=-1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
