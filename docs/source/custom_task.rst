@@ -55,7 +55,6 @@ It's best practice in flash for the data to be provide as a dictionary which map
 .. testcode:: custom_task
 
     class RegressionTask(flash.Task):
-
         def __init__(self, num_inputs, learning_rate=0.2, metrics=None):
             # what kind of model do we want?
             model = torch.nn.Linear(num_inputs, 1)
@@ -149,7 +148,6 @@ generated ``dataset``.
 .. testcode:: custom_task
 
     class NumpyDataSource(DataSource[Tuple[ND, ND]]):
-
         def load_data(self, data: Tuple[ND, ND], dataset: Optional[Any] = None) -> List[Dict[str, Any]]:
             if self.training:
                 dataset.num_inputs = data[0].shape[1]
@@ -191,7 +189,6 @@ The recommended way to define a custom :class:`~flash.core.data.process.Preproce
 .. testcode:: custom_task
 
     class NumpyPreprocess(Preprocess):
-
         def __init__(
             self,
             train_transform: Optional[Dict[str, Callable]] = None,
@@ -299,13 +296,15 @@ With a trained model we can now perform inference. Here we will use a few exampl
 
 .. testcode:: custom_task
 
-    predict_data = np.array([
-        [ 0.0199,  0.0507,  0.1048,  0.0701, -0.0360, -0.0267, -0.0250, -0.0026,  0.0037,  0.0403],
-        [-0.0128, -0.0446,  0.0606,  0.0529,  0.0480,  0.0294, -0.0176,  0.0343,  0.0702,  0.0072],
-        [ 0.0381,  0.0507,  0.0089,  0.0425, -0.0428, -0.0210, -0.0397, -0.0026, -0.0181,  0.0072],
-        [-0.0128, -0.0446, -0.0235, -0.0401, -0.0167,  0.0046, -0.0176, -0.0026, -0.0385, -0.0384],
-        [-0.0237, -0.0446,  0.0455,  0.0907, -0.0181, -0.0354,  0.0707, -0.0395, -0.0345, -0.0094],
-    ])
+    predict_data = np.array(
+        [
+            [0.0199, 0.0507, 0.1048, 0.0701, -0.0360, -0.0267, -0.0250, -0.0026, 0.0037, 0.0403],
+            [-0.0128, -0.0446, 0.0606, 0.0529, 0.0480, 0.0294, -0.0176, 0.0343, 0.0702, 0.0072],
+            [0.0381, 0.0507, 0.0089, 0.0425, -0.0428, -0.0210, -0.0397, -0.0026, -0.0181, 0.0072],
+            [-0.0128, -0.0446, -0.0235, -0.0401, -0.0167, 0.0046, -0.0176, -0.0026, -0.0385, -0.0384],
+            [-0.0237, -0.0446, 0.0455, 0.0907, -0.0181, -0.0354, 0.0707, -0.0395, -0.0345, -0.0094],
+        ]
+    )
 
     predictions = model.predict(predict_data)
     print(predictions)

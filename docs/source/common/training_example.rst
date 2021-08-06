@@ -23,7 +23,7 @@ Here's an example:
     seed_everything(42)
 
     # 1. Download and organize the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",

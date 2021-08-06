@@ -110,10 +110,12 @@ from flash.text import TranslationTask
 model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 
 # 2. Translate a few sentences!
-predictions = model.predict([
-    "BBC News went to meet one of the project's first graduates.",
-    "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
-])
+predictions = model.predict(
+    [
+        "BBC News went to meet one of the project's first graduates.",
+        "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
+    ]
+)
 print(predictions)
 ```
 
@@ -140,7 +142,7 @@ from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Load the data
 datamodule = ImageClassificationData.from_folders(
@@ -168,10 +170,10 @@ Then use the finetuned model:
 from flash.image import ImageClassifier
 
 # load the finetuned model
-classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
+classifier = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
 # predict!
-predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
+predictions = classifier.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
 print(predictions)
 ```
 
@@ -191,13 +193,13 @@ from flash.core.data.utils import download_data
 from flash.image import ImageEmbedder
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Create an ImageEmbedder with resnet50 trained on imagenet.
 embedder = ImageEmbedder(backbone="resnet50", embedding_dim=128)
 
 # 3. Generate an embedding from an image path.
-embeddings = embedder.predict('data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg')
+embeddings = embedder.predict("data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg")
 
 # 4. Print embeddings shape
 print(embeddings.shape)
@@ -218,7 +220,7 @@ from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 
 # 2. Load the data
 datamodule = SummarizationData.from_csv(
@@ -264,7 +266,7 @@ from flash.core.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularClassificationData
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 
 # 2. Load the data
 datamodule = TabularClassificationData.from_csv(
@@ -319,9 +321,9 @@ download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.
 
 # 2. Load the Data
 datamodule = ObjectDetectionData.from_coco(
-  train_folder="data/coco128/images/train2017/",
-  train_ann_file="data/coco128/annotations/instances_train2017.json",
-  batch_size=2
+    train_folder="data/coco128/images/train2017/",
+    train_ann_file="data/coco128/annotations/instances_train2017.json",
+    batch_size=2,
 )
 
 # 3. Build the model
@@ -376,9 +378,7 @@ datamodule = VideoClassificationData.from_folders(
 )
 
 # 3. Build the model
-model = VideoClassifier(
-    backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False
-)
+model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
 
 # 4. Create the trainer
 trainer = flash.Trainer(max_epochs=3)
@@ -411,7 +411,9 @@ from flash.core.data.utils import download_data
 from flash.image import SemanticSegmentation, SemanticSegmentationData
 
 # 1. Download the Data
-download_data("https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip", "data/")
+download_data(
+    "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip", "data/"
+)
 
 # 2. Load the Data
 datamodule = SemanticSegmentationData.from_folders(
@@ -498,15 +500,10 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import transforms, datasets
 
 # model
-model = nn.Sequential(
-    nn.Flatten(),
-    nn.Linear(28 * 28, 128),
-    nn.ReLU(),
-    nn.Linear(128, 10)
-)
+model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10))
 
 # data
-dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+dataset = datasets.MNIST("./data_folder", download=True, transform=transforms.ToTensor())
 train, val = random_split(dataset, [55000, 5000])
 
 # task
@@ -527,6 +524,7 @@ import torch.nn.functional as F
 from torchmetrics import Accuracy
 from typing import Callable, Mapping, Sequence, Type, Union
 from flash.core.classification import ClassificationTask
+
 
 class LinearClassifier(ClassificationTask):
     def __init__(
@@ -552,9 +550,9 @@ class LinearClassifier(ClassificationTask):
     def forward(self, x):
         return self.linear(x)
 
+
 classifier = LinearClassifier(128, 10)
 ...
-
 ```
 
 When you reach the limits of the flexibility provided by Flash, then seamlessly transition to PyTorch Lightning which
@@ -578,9 +576,7 @@ download_data(
 )
 
 # 2. Load the model from a checkpoint and use the FiftyOne serializer
-model = ObjectDetector.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/object_detection_model.pt"
-)
+model = ObjectDetector.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/object_detection_model.pt")
 model.serializer = FiftyOneDetectionLabels()
 
 # 3. Detect the object on the images

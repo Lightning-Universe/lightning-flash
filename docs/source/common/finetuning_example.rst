@@ -58,7 +58,12 @@ Once you've finetuned, use the model to predict:
     # Serialize predictions as labels, automatically inferred from the training data in part 2.
     model.serializer = Labels()
 
-    predictions = model.predict(["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg"])
+    predictions = model.predict(
+        [
+            "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
+            "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg",
+        ]
+    )
     print(predictions)
 
 We get the following output:
@@ -86,4 +91,4 @@ Or you can use the saved model for prediction anywhere you want!
     # load finetuned checkpoint
     model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
-    predictions = model.predict('path/to/your/own/image.png')
+    predictions = model.predict("path/to/your/own/image.png")
