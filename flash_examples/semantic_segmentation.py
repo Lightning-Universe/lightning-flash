@@ -48,8 +48,8 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 predictions = model.predict(
     [
         "data/CameraRGB/F61-1.png",
-        # "data/CameraRGB/F62-1.png",
-        # "data/CameraRGB/F63-1.png",
+        "data/CameraRGB/F62-1.png",
+        "data/CameraRGB/F63-1.png",
     ]
 )
 print(predictions)
