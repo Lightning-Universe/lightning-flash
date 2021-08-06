@@ -38,7 +38,6 @@ OBJECT_DETECTION_HEADS = FlashRegistry("heads")
 
 
 class IceVisionObjectDetectionAdapter(IceVisionAdapter):
-
     @classmethod
     def from_task(
         cls,
@@ -47,7 +46,7 @@ class IceVisionObjectDetectionAdapter(IceVisionAdapter):
         backbone: str = "resnet18_fpn",
         head: str = "retinanet",
         pretrained: bool = True,
-        metrics: Optional['IceVisionMetric'] = None,
+        metrics: Optional["IceVisionMetric"] = None,
         image_size: Optional = None,
         **kwargs,
     ) -> Adapter:
@@ -59,7 +58,7 @@ class IceVisionObjectDetectionAdapter(IceVisionAdapter):
             pretrained=pretrained,
             metrics=metrics or [SimpleCOCOMetric(COCOMetricType.bbox)],
             image_size=image_size,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -102,14 +101,13 @@ if _ICEVISION_AVAILABLE:
     if _module_available("effdet"):
 
         def _icevision_effdet_model_adapter(model_type):
-
             class IceVisionEffdetModelAdapter(icevision_model_adapter(model_type)):
-
                 def validation_step(self, batch, batch_idx):
                     images = batch[0][0]
                     batch[0][1]["img_scale"] = torch.ones_like(images[:, 0, 0, 0]).unsqueeze(1)
-                    batch[0][1]["img_size"] = (torch.ones_like(images[:, 0, 0, 0]) *
-                                               images[0].shape[-1]).unsqueeze(1).repeat(1, 2)
+                    batch[0][1]["img_size"] = (
+                        (torch.ones_like(images[:, 0, 0, 0]) * images[0].shape[-1]).unsqueeze(1).repeat(1, 2)
+                    )
                     return super().validation_step(batch, batch_idx)
 
             return IceVisionEffdetModelAdapter

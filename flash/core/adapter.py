@@ -23,10 +23,9 @@ from flash.core.model import DatasetProcessor, Task, Wrapper
 
 
 class Adapter(DatasetProcessor, Wrapper, nn.Module):
-
     @classmethod
     @abstractmethod
-    def from_task(cls, task: 'flash.Task', **kwargs) -> 'Adapter':
+    def from_task(cls, task: "flash.Task", **kwargs) -> "Adapter":
         pass
 
     def forward(self, x: Any) -> Any:
@@ -55,7 +54,6 @@ class Adapter(DatasetProcessor, Wrapper, nn.Module):
 
 
 class AdapterTask(Task):
-
     def __init__(self, adapter: Adapter, **kwargs):
         super().__init__(**kwargs)
 
@@ -98,7 +96,7 @@ class AdapterTask(Task):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_train_dataset(
             dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
@@ -113,7 +111,7 @@ class AdapterTask(Task):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = False,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_val_dataset(
             dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
@@ -128,7 +126,7 @@ class AdapterTask(Task):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = False,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_test_dataset(
             dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
@@ -143,7 +141,7 @@ class AdapterTask(Task):
         collate_fn: Callable = lambda x: x,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_predict_dataset(
             dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler

@@ -35,7 +35,6 @@ INSTANCE_SEGMENTATION_HEADS = FlashRegistry("heads")
 
 
 class IceVisionInstanceSegmentationAdapter(IceVisionAdapter):
-
     @classmethod
     def from_task(
         cls,
@@ -44,7 +43,7 @@ class IceVisionInstanceSegmentationAdapter(IceVisionAdapter):
         backbone: str = "resnet18_fpn",
         head: str = "mask_rcnn",
         pretrained: bool = True,
-        metrics: Optional['IceVisionMetric'] = None,
+        metrics: Optional["IceVisionMetric"] = None,
         image_size: Optional = None,
         **kwargs,
     ) -> Adapter:
@@ -56,7 +55,7 @@ class IceVisionInstanceSegmentationAdapter(IceVisionAdapter):
             pretrained=pretrained,
             metrics=metrics or [SimpleCOCOMetric(COCOMetricType.mask)],
             image_size=image_size,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -68,7 +67,7 @@ if _ICEVISION_AVAILABLE:
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
             adapter=IceVisionInstanceSegmentationAdapter,
-            providers=[_ICEVISION, _TORCHVISION]
+            providers=[_ICEVISION, _TORCHVISION],
         )
 
     if _module_available("mmdet"):
@@ -78,5 +77,5 @@ if _ICEVISION_AVAILABLE:
             f"mmdet_{model_type.__name__.split('.')[-1]}",
             backbones=get_backbones(model_type),
             adapter=IceVisionInstanceSegmentationAdapter,
-            providers=[_ICEVISION, _MMDET]
+            providers=[_ICEVISION, _MMDET],
         )

@@ -42,11 +42,13 @@ trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
-predictions = model.predict([
-    str(data_dir / "biwi_sample/images/0.jpg"),
-    str(data_dir / "biwi_sample/images/1.jpg"),
-    str(data_dir / "biwi_sample/images/10.jpg"),
-])
+predictions = model.predict(
+    [
+        str(data_dir / "biwi_sample/images/0.jpg"),
+        str(data_dir / "biwi_sample/images/1.jpg"),
+        str(data_dir / "biwi_sample/images/10.jpg"),
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

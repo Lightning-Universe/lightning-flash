@@ -23,9 +23,7 @@ if _ICEVISION_AVAILABLE:
 
 
 def icevision_model_adapter(model_type):
-
     class IceVisionModelAdapter(model_type.lightning.ModelAdapter):
-
         def log(self, name, value, **kwargs):
             if "prog_bar" not in kwargs:
                 kwargs["prog_bar"] = True

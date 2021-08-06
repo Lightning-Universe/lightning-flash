@@ -34,7 +34,6 @@ KEYPOINT_DETECTION_HEADS = FlashRegistry("heads")
 
 
 class IceVisionKeypointDetectionAdapter(IceVisionAdapter):
-
     @classmethod
     def from_task(
         cls,
@@ -44,7 +43,7 @@ class IceVisionKeypointDetectionAdapter(IceVisionAdapter):
         backbone: str = "resnet18_fpn",
         head: str = "keypoint_rcnn",
         pretrained: bool = True,
-        metrics: Optional['IceVisionMetric'] = None,
+        metrics: Optional["IceVisionMetric"] = None,
         image_size: Optional = None,
         **kwargs,
     ) -> Adapter:
@@ -57,7 +56,7 @@ class IceVisionKeypointDetectionAdapter(IceVisionAdapter):
             pretrained=pretrained,
             metrics=metrics,
             image_size=image_size,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -69,5 +68,5 @@ if _ICEVISION_AVAILABLE:
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
             adapter=IceVisionKeypointDetectionAdapter,
-            providers=[_ICEVISION, _TORCHVISION]
+            providers=[_ICEVISION, _TORCHVISION],
         )

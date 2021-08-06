@@ -43,11 +43,13 @@ trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
-predictions = model.predict([
-    str(data_dir / "images/yorkshire_terrier_9.jpg"),
-    str(data_dir / "images/english_cocker_spaniel_1.jpg"),
-    str(data_dir / "images/scottish_terrier_1.jpg"),
-])
+predictions = model.predict(
+    [
+        str(data_dir / "images/yorkshire_terrier_9.jpg"),
+        str(data_dir / "images/english_cocker_spaniel_1.jpg"),
+        str(data_dir / "images/scottish_terrier_1.jpg"),
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

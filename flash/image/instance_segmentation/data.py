@@ -30,7 +30,6 @@ if _ICEVISION_AVAILABLE:
 
 
 class InstanceSegmentationPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,

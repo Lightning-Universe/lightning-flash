@@ -26,7 +26,6 @@ if _ICEVISION_AVAILABLE:
 
 
 class IceVisionPathsDataSource(ImagePathsDataSource):
-
     def predict_load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         return super().predict_load_data(data, dataset)
 
@@ -44,8 +43,7 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
 
 
 class IceVisionParserDataSource(IceVisionPathsDataSource):
-
-    def __init__(self, parser: Optional[Type['Parser']] = None):
+    def __init__(self, parser: Optional[Type["Parser"]] = None):
         super().__init__()
         self.parser = parser
 
@@ -62,7 +60,6 @@ class IceVisionParserDataSource(IceVisionPathsDataSource):
 
 
 class IceDataParserDataSource(IceVisionPathsDataSource):
-
     def __init__(self, parser: Optional[Callable] = None):
         super().__init__()
         self.parser = parser

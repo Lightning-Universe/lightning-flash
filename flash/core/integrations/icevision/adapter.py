@@ -30,7 +30,6 @@ else:
 
 
 class SimpleCOCOMetric(COCOMetric):
-
     def finalize(self) -> Dict[str, float]:
         logs = super().finalize()
         return {
@@ -60,7 +59,7 @@ class IceVisionAdapter(Adapter):
         backbone: str,
         head: str,
         pretrained: bool = True,
-        metrics: Optional['IceVisionMetric'] = None,
+        metrics: Optional["IceVisionMetric"] = None,
         image_size: Optional = None,
         **kwargs,
     ) -> Adapter:
@@ -85,7 +84,7 @@ class IceVisionAdapter(Adapter):
         collate_fn: Optional[Callable] = None,
         shuffle: bool = False,
         drop_last: bool = False,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.model_type.train_dl(
             dataset,
@@ -106,7 +105,7 @@ class IceVisionAdapter(Adapter):
         collate_fn: Optional[Callable] = None,
         shuffle: bool = False,
         drop_last: bool = False,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.model_type.valid_dl(
             dataset,
@@ -127,7 +126,7 @@ class IceVisionAdapter(Adapter):
         collate_fn: Optional[Callable] = None,
         shuffle: bool = False,
         drop_last: bool = False,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.model_type.valid_dl(
             dataset,
@@ -148,7 +147,7 @@ class IceVisionAdapter(Adapter):
         collate_fn: Callable = lambda x: x,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.model_type.infer_dl(
             dataset,
