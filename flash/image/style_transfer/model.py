@@ -34,12 +34,10 @@ else:
         Encoder = None
         MultiLayerEncoder = None
 
-    class ops:
-        EncodingComparisonOperator = None
-        FeatureReconstructionOperator = None
-        MultiLayerEncodingOperator = None
-
     class loss:
+        class GramLoss:
+            pass
+
         class PerceptualLoss:
             pass
 
