@@ -150,9 +150,7 @@ class StyleTransfer(Task):
         style_weight: float,
     ) -> loss.PerceptualLoss:
         mle, _ = cast(enc.MultiLayerEncoder, self.backbones.get(backbone)())
-        content_loss = loss.FeatureReconstructionLoss(
-            mle.extract_encoder(content_layer), score_weight=content_weight
-        )
+        content_loss = loss.FeatureReconstructionLoss(mle.extract_encoder(content_layer), score_weight=content_weight)
         style_loss = loss.MultiLayerEncodingLoss(
             mle,
             style_layers,
