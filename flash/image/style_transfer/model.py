@@ -26,7 +26,7 @@ from flash.image.style_transfer import STYLE_TRANSFER_BACKBONES
 
 if _IMAGE_AVAILABLE:
     import pystiche.demo
-    from pystiche import enc, loss, ops
+    from pystiche import enc, loss
     from pystiche.image import read_image
 else:
 
@@ -128,11 +128,11 @@ class StyleTransfer(Task):
         return pystiche.demo.images()["paint"].read(size=256)
 
     @staticmethod
-    def _modified_gram_loss(encoder: enc.Encoder, *, score_weight: float) -> ops.EncodingComparisonOperator:
+    def _modified_gram_loss(encoder: enc.Encoder, *, score_weight: float) -> loss.GramLoss:
         # The official PyTorch examples as well as the reference implementation of the original author contain an
         # oversight: they normalize the representation twice by the number of channels. To be compatible with them, we
         # do the same here.
-        class GramOperator(ops.GramOperator):
+        class GramOperator(loss.GramLoss):
             def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
                 repr = super().enc_to_repr(enc)
                 num_channels = repr.size()[1]
@@ -150,10 +150,10 @@ class StyleTransfer(Task):
         style_weight: float,
     ) -> loss.PerceptualLoss:
         mle, _ = cast(enc.MultiLayerEncoder, self.backbones.get(backbone)())
-        content_loss = ops.FeatureReconstructionOperator(
+        content_loss = loss.FeatureReconstructionLoss(
             mle.extract_encoder(content_layer), score_weight=content_weight
         )
-        style_loss = ops.MultiLayerEncodingOperator(
+        style_loss = loss.MultiLayerEncodingLoss(
             mle,
             style_layers,
             lambda encoder, layer_weight: self._modified_gram_loss(encoder, score_weight=layer_weight),
