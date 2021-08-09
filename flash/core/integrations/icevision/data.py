@@ -20,9 +20,10 @@ from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
 
 if _ICEVISION_AVAILABLE:
-    from icevision.core import BaseRecord, ClassMapRecordComponent, ImageRecordComponent, tasks
-    from icevision.data import SingleSplitSplitter
-    from icevision.parsers import Parser
+    from icevision.core.record import BaseRecord
+    from icevision.core.record_components import ClassMapRecordComponent, ImageRecordComponent, tasks
+    from icevision.data.data_splitter import SingleSplitSplitter
+    from icevision.parsers.parser import Parser
 
 
 class IceVisionPathsDataSource(ImagePathsDataSource):
