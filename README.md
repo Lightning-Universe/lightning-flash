@@ -446,9 +446,9 @@ python flash_examples/finetuning/semantic_segmentation.py
 
 </details>
 
-### Example 7: Style Transfer with Pystiche
+### Example 7: Style Transfer with pystiche
 
-Flash has a [Style Transfer task](https://lightning-flash.readthedocs.io/en/latest/reference/style_transfer.html) for Neural Style Transfer (NST) with [Pystiche](https://github.com/pystiche/pystiche).
+Flash has a [Style Transfer task](https://lightning-flash.readthedocs.io/en/latest/reference/style_transfer.html) for Neural Style Transfer (NST) with [pystiche](https://pystiche.org).
 
 <details>
   <summary>View example</summary>
