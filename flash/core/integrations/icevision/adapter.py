@@ -18,8 +18,8 @@ from torch.utils.data import DataLoader, Sampler
 from flash.core.adapter import Adapter
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.model import Task
-from flash.core.utilities.url_error import catch_url_error
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.url_error import catch_url_error
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import BaseRecord
