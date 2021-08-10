@@ -15,7 +15,7 @@ from typing import Optional
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
-from flash.tabular.classification.data import TabularData
+from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
 
 __all__ = ["tabular_classification"]
@@ -25,10 +25,10 @@ def from_titanic(
     batch_size: int = 4,
     num_workers: Optional[int] = None,
     **preprocess_kwargs,
-) -> TabularData:
+) -> TabularClassificationData:
     """Downloads and loads the Titanic data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
-    return TabularData.from_csv(
+    return TabularClassificationData.from_csv(
         ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
         "Fare",
         target_fields="Survived",
@@ -44,7 +44,7 @@ def tabular_classification():
     """Classify tabular data."""
     cli = FlashCLI(
         TabularClassifier,
-        TabularData,
+        TabularClassificationData,
         default_datamodule_builder=from_titanic,
         default_arguments={
             "trainer.max_epochs": 3,

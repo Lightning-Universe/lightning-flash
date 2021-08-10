@@ -236,7 +236,7 @@ class TabularPostprocess(Postprocess):
         return batch
 
 
-class TabularData(DataModule):
+class TabularClassificationData(DataModule):
     """Data module for tabular tasks."""
 
     preprocess_cls = TabularPreprocess
@@ -343,7 +343,7 @@ class TabularData(DataModule):
         is_regression: bool = False,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.tabular.data.TabularData` object from the given data frames.
+        """Creates a :class:`~flash.tabular.data.TabularClassificationData` object from the given data frames.
 
         Args:
             categorical_fields: The field or fields (columns) in the CSV file containing categorical inputs.
@@ -379,7 +379,7 @@ class TabularData(DataModule):
 
         Examples::
 
-            data_module = TabularData.from_data_frame(
+            data_module = TabularClassificationData.from_data_frame(
                 "categorical_input",
                 "numerical_input",
                 "target",
@@ -453,7 +453,7 @@ class TabularData(DataModule):
         is_regression: bool = False,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.tabular.data.TabularData` object from the given CSV files.
+        """Creates a :class:`~flash.tabular.data.TabularClassificationData` object from the given CSV files.
 
         Args:
             categorical_fields: The field or fields (columns) in the CSV file containing categorical inputs.
@@ -489,7 +489,7 @@ class TabularData(DataModule):
 
         Examples::
 
-            data_module = TabularData.from_csv(
+            data_module = TabularClassificationData.from_csv(
                 "categorical_input",
                 "numerical_input",
                 "target",

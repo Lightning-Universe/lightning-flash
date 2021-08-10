@@ -38,7 +38,7 @@ __________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~data.TabularData
+    ~data.TabularClassificationData
     ~data.TabularDataFrameDataSource
     ~data.TabularCSVDataSource
     ~data.TabularDeserializer

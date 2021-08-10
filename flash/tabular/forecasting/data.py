@@ -131,7 +131,7 @@ class TabularForecastingData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.tabular.data.TabularData` object from the given data frames.
+        """Creates a :class:`~flash.tabular.data.TabularClassificationData` object from the given data frames.
 
         Args:
             group_ids:
@@ -165,7 +165,7 @@ class TabularForecastingData(DataModule):
 
         Examples::
 
-            data_module = TabularData.from_data_frame(
+            data_module = TabularClassificationData.from_data_frame(
                 "categorical_input",
                 "numerical_input",
                 "target",

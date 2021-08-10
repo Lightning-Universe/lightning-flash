@@ -21,7 +21,7 @@ from pytorch_lightning import Trainer
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.tabular.classification.data import TabularData
+from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
 from tests.helpers.utils import _SERVE_TESTING, _TABULAR_TESTING
 
@@ -99,7 +99,7 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     train_data = {"num_col": [1.4, 2.5], "cat_col": ["positive", "negative"], "target": [1, 2]}
-    datamodule = TabularData.from_data_frame(
+    datamodule = TabularClassificationData.from_data_frame(
         "cat_col",
         "num_col",
         "target",
