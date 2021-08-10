@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Sequence, Mapping
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _PANDAS_AVAILABLE, _FORECASTING_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires_extras
 
 if _PANDAS_AVAILABLE:
     from pandas.core.frame import DataFrame
@@ -32,24 +32,15 @@ if _FORECASTING_AVAILABLE:
 
 @dataclass(unsafe_hash=True, frozen=True)
 class TimeSeriesDataSetState(ProcessState):
-    """
-    A :class:`~flash.core.data.properties.ProcessState` containing ``labels``,
-    a mapping from class index to label.
-    """
+    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
+    label."""
 
     time_series_dataset: Optional[TimeSeriesDataSet]
 
 
 class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
-
     @requires_extras("tabular")
-    def __init__(
-            self,
-            time_idx: str,
-            target: Union[str, List[str]],
-            group_ids: List[str],
-            **data_source_kwargs: Any
-    ):
+    def __init__(self, time_idx: str, target: Union[str, List[str]], group_ids: List[str], **data_source_kwargs: Any):
         self.time_idx = time_idx
         self.target = target
         self.group_ids = group_ids
@@ -68,9 +59,10 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
         else:
             train_time_series_dataset = self.get_state(TimeSeriesDataSetState).time_series_dataset
             eval_time_series_dataset = TimeSeriesDataSet.from_dataset(
-                    train_time_series_dataset, data,
-                    min_prediction_idx=train_time_series_dataset.index.time.max() + 1,
-                    stop_randomization=True
+                train_time_series_dataset,
+                data,
+                min_prediction_idx=train_time_series_dataset.index.time.max() + 1,
+                stop_randomization=True,
             )
             return eval_time_series_dataset
 
@@ -80,15 +72,14 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
 
 
 class TabularForecastingPreprocess(Preprocess):
-
     def __init__(
-            self,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            deserializer: Optional[Deserializer] = None,
-            **data_source_kwargs: Any
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        deserializer: Optional[Deserializer] = None,
+        **data_source_kwargs: Any,
     ):
         self.data_source_kwargs = data_source_kwargs
         super().__init__(
@@ -97,26 +88,21 @@ class TabularForecastingPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATAFRAME: TabularForecastingDataFrameDataSource(
-                    **data_source_kwargs
-                ),
+                DefaultDataSources.DATAFRAME: TabularForecastingDataFrameDataSource(**data_source_kwargs),
             },
-            deserializer=deserializer
+            deserializer=deserializer,
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
-        return {
-            **self.transforms,
-            **self.data_source_kwargs
-        }
+        return {**self.transforms, **self.data_source_kwargs}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> 'Preprocess':
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> "Preprocess":
         return cls(**state_dict)
 
 
 class TabularForecastingData(DataModule):
-    """Data module for tabular tasks"""
+    """Data module for tabular tasks."""
 
     preprocess_cls = TabularForecastingPreprocess
 
@@ -126,24 +112,24 @@ class TabularForecastingData(DataModule):
 
     @classmethod
     def from_data_frame(
-            cls,
-            time_idx: str,
-            target: Union[str, List[str]],
-            group_ids: List[str],
-            train_data_frame: Optional[DataFrame] = None,
-            val_data_frame: Optional[DataFrame] = None,
-            test_data_frame: Optional[DataFrame] = None,
-            predict_data_frame: Optional[DataFrame] = None,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            data_fetcher: Optional[BaseDataFetcher] = None,
-            preprocess: Optional[Preprocess] = None,
-            val_split: Optional[float] = None,
-            batch_size: int = 4,
-            num_workers: Optional[int] = None,
-            **preprocess_kwargs: Any,
+        cls,
+        time_idx: str,
+        target: Union[str, List[str]],
+        group_ids: List[str],
+        train_data_frame: Optional[DataFrame] = None,
+        val_data_frame: Optional[DataFrame] = None,
+        test_data_frame: Optional[DataFrame] = None,
+        predict_data_frame: Optional[DataFrame] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given data frames.
 
@@ -185,7 +171,6 @@ class TabularForecastingData(DataModule):
                 "target",
                 train_data_frame=train_data,
             )
-
         """
 
         return cls.from_data_source(
