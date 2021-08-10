@@ -1,6 +1,2 @@
-from flash.tabular.forecasting.backbone import TABULAR_FORECASTING_BACKBONES
-from flash.tabular.forecasting.data import (
-    TabularForecastingData,
-    TabularForecastingDataFrameDataSource,
-    TabularForecastingPreprocess,
-)
+from flash.tabular.forecasting.data import TabularForecastingData  # noqa: F401
+from flash.tabular.forecasting.model import TabularForecaster  # noqa: F401
