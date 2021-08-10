@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import urllib.error
 from typing import Any, Callable, Dict, Optional
 
 from torch.utils.data import DataLoader, Sampler
@@ -68,25 +67,13 @@ class IceVisionAdapter(Adapter):
     ) -> Adapter:
         metadata = task.heads.get(head, with_metadata=True)
         backbones = metadata["metadata"]["backbones"]
-        try:
-            backbone_config = backbones.get(backbone)(pretrained)
-            model_type, model, icevision_adapter, backbone = metadata["fn"](
-                backbone_config,
-                num_classes,
-                image_size=image_size,
-                **kwargs,
-            )
-        except urllib.error.URLError:
-            pretrained = False
-            if "efficientdet" in head:
-                kwargs["pretrained_backbone"] = False
-            backbone_config = backbones.get(backbone)(pretrained)
-            model_type, model, icevision_adapter, backbone = metadata["fn"](
-                backbone_config,
-                num_classes,
-                image_size=image_size,
-                **kwargs,
-            )
+        backbone_config = backbones.get(backbone)(pretrained)
+        model_type, model, icevision_adapter, backbone = metadata["fn"](
+            backbone_config,
+            num_classes,
+            image_size=image_size,
+            **kwargs,
+        )
         icevision_adapter = icevision_adapter(model=model, metrics=metrics)
         return cls(model_type, model, icevision_adapter, backbone)
 
