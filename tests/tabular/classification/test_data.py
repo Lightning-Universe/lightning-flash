@@ -73,19 +73,19 @@ def test_embedding_sizes():
     self.codes = {"category": [None, "a", "b", "c"]}
     self.cat_cols = ["category"]
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == [(4, 16)]
 
     self.codes = {}
     self.cat_cols = []
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == []
 
     self.codes = {"large": ["a"] * 100_000, "larger": ["b"] * 1_000_000}
     self.cat_cols = ["large", "larger"]
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == [(100_000, 17), (1_000_000, 31)]
 
 
