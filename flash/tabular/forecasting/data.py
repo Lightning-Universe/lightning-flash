@@ -11,8 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
+
+from torch.utils.data import DataLoader, Dataset
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
@@ -41,13 +44,11 @@ class TimeSeriesDataSetState(ProcessState):
 class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
     @requires_extras("tabular")
     def __init__(self, time_idx: str, target: Union[str, List[str]], group_ids: List[str], **data_source_kwargs: Any):
+        super().__init__()
         self.time_idx = time_idx
         self.target = target
         self.group_ids = group_ids
         self.data_source_kwargs = data_source_kwargs
-        super().__init__()
-
-        self.dataset = None
 
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         if self.training:
@@ -55,19 +56,17 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
                 data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target, **self.data_source_kwargs
             )
             self.set_state(TimeSeriesDataSetState(dataset.time_series_dataset))
-            return dataset.time_series_dataset
         else:
             train_time_series_dataset = self.get_state(TimeSeriesDataSetState).time_series_dataset
-            eval_time_series_dataset = TimeSeriesDataSet.from_dataset(
+            dataset.time_series_dataset = TimeSeriesDataSet.from_dataset(
                 train_time_series_dataset,
                 data,
-                min_prediction_idx=train_time_series_dataset.index.time.max() + 1,
+                predict=True,
                 stop_randomization=True,
             )
-            return eval_time_series_dataset
+        return dataset.time_series_dataset
 
-    @staticmethod
-    def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
+    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
         return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
 
 
@@ -106,9 +105,56 @@ class TabularForecastingData(DataModule):
 
     preprocess_cls = TabularForecastingPreprocess
 
-    @property
-    def data_source(self) -> DataSource:
-        return self._data_source
+    @staticmethod
+    def _collate_fn(collate_fn, samples):
+        samples = [(sample[DefaultDataKeys.INPUT], sample[DefaultDataKeys.TARGET]) for sample in samples]
+        batch = collate_fn(samples)
+        return {DefaultDataKeys.INPUT: batch[0], DefaultDataKeys.TARGET: batch[1]}
+
+    def _train_dataloader(self) -> DataLoader:
+        train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
+        time_series_dataset: TimeSeriesDataSet = train_ds.time_series_dataset
+        result = time_series_dataset.to_dataloader(
+            train=True,
+            batch_size=self.batch_size,
+        )
+        collate_fn = functools.partial(self._collate_fn, result.collate_fn)
+        batch_sampler = result.batch_sampler
+        return DataLoader(
+            train_ds,
+            collate_fn=collate_fn,
+            batch_sampler=batch_sampler,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+
+    def _eval_dataloader(self, dataset: Dataset) -> DataLoader:
+        time_series_dataset: TimeSeriesDataSet = dataset.time_series_dataset
+        result = time_series_dataset.to_dataloader(
+            train=False,
+            batch_size=self.batch_size,
+        )
+        collate_fn = functools.partial(self._collate_fn, result.collate_fn)
+        batch_sampler = result.batch_sampler
+        return DataLoader(
+            dataset,
+            collate_fn=collate_fn,
+            batch_sampler=batch_sampler,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+
+    def _val_dataloader(self) -> DataLoader:
+        val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
+        return self._eval_dataloader(val_ds)
+
+    def _test_dataloader(self) -> DataLoader:
+        test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
+        return self._eval_dataloader(test_ds)
+
+    def _predict_dataloader(self) -> DataLoader:
+        predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+        return self._eval_dataloader(predict_ds)
 
     @classmethod
     def from_data_frame(
