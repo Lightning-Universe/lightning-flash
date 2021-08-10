@@ -130,10 +130,8 @@ def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
 
 @dataclass(unsafe_hash=True, frozen=True)
 class LabelsState(ProcessState):
-    """
-    A :class:`~flash.core.data.properties.ProcessState` containing ``labels``,
-    a mapping from class index to label.
-    """
+    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
+    label."""
 
     labels: Optional[Sequence[str]]
 
@@ -154,7 +152,7 @@ class DefaultDataSources(LightningEnum):
     TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
-    DATASET = "dataset"
+    DATASETS = "datasets"
     FIFTYONE = "fiftyone"
     DATAFRAME = "dataframe"
 
@@ -177,16 +175,26 @@ class DefaultDataKeys(LightningEnum):
         return hash(self.value)
 
 
+class BaseDataFormat(LightningEnum):
+    """The base class for creating ``data_format`` for :class:`~flash.core.data.data_source.DataSource`."""
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+
 class MockDataset:
-    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``. This is passed to
+    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``.
+
+    This is passed to
     :meth:`~flash.core.data.data_source.DataSource.load_data` so that attributes can be set on the generated
-    data set."""
+    data set.
+    """
 
     def __init__(self):
         self.metadata = {}
 
     def __setattr__(self, key, value):
-        if key != 'metadata':
+        if key != "metadata":
             self.metadata[key] = value
         object.__setattr__(self, key, value)
 
@@ -195,9 +203,12 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class DataSource(Generic[DATA_TYPE], Properties, Module):
-    """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``. The
+    """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``.
+
+    The
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
-    sets from the hooks."""
+    sets from the hooks.
+    """
 
     @staticmethod
     def load_data(
@@ -264,10 +275,10 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         test_data: Optional[DATA_TYPE] = None,
         predict_data: Optional[DATA_TYPE] = None,
     ) -> Tuple[Optional[BaseAutoDataset], ...]:
-        """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data source by
-        calling :meth:`~flash.core.data.data_source.DataSource.load_data` with each of the ``*_data`` arguments. If an
-        argument is given as ``None`` then no dataset will be created for that stage (``train``, ``val``, ``test``,
-        ``predict``).
+        """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data
+        source by calling :meth:`~flash.core.data.data_source.DataSource.load_data` with each of the ``*_data``
+        arguments. If an argument is given as ``None`` then no dataset will be created for that stage (``train``,
+        ``val``, ``test``, ``predict``).
 
         Args:
             train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the
@@ -380,10 +391,9 @@ class SequenceDataSource(
         inputs, targets = data
         if targets is None:
             return self.predict_load_data(data)
-        return [{
-            DefaultDataKeys.INPUT: input,
-            DefaultDataKeys.TARGET: target
-        } for input, target in zip(inputs, targets)]
+        return [
+            {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in zip(inputs, targets)
+        ]
 
     @staticmethod
     def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
@@ -429,9 +439,9 @@ class PathsDataSource(SequenceDataSource):
             # data is not path-like (e.g. it may be a list of paths)
             return False
 
-    def load_data(self,
-                  data: Union[str, Tuple[List[str], List[Any]]],
-                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(
+        self, data: Union[str, Tuple[List[str], List[Any]]], dataset: Optional[Any] = None
+    ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
@@ -450,9 +460,9 @@ class PathsDataSource(SequenceDataSource):
             )
         )
 
-    def predict_load_data(self,
-                          data: Union[str, List[str]],
-                          dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(
+        self, data: Union[str, List[str]], dataset: Optional[Any] = None
+    ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             data = [os.path.join(data, file) for file in os.listdir(data)]
 
@@ -512,15 +522,19 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
             def to_idx(t):
                 return [class_to_idx[x] for x in t]
+
         else:
 
             def to_idx(t):
                 return class_to_idx[t]
 
-        return [{
-            DefaultDataKeys.INPUT: f,
-            DefaultDataKeys.TARGET: to_idx(t),
-        } for f, t in zip(filepaths, targets)]
+        return [
+            {
+                DefaultDataKeys.INPUT: f,
+                DefaultDataKeys.TARGET: to_idx(t),
+            }
+            for f, t in zip(filepaths, targets)
+        ]
 
     @staticmethod
     @requires("fiftyone")

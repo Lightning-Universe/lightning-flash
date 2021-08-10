@@ -51,11 +51,10 @@ from flash.core.utilities.imports import requires_extras
 
 
 class BenchmarkConvergenceCI(Callback):
-
     def __init__(self):
         self.history = []
 
-    def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+    def on_validation_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         self.history.append(deepcopy(trainer.callback_metrics))
         if trainer.current_epoch == trainer.max_epochs - 1:
             fn = getattr(pl_module, "_ci_benchmark_fn", None)
@@ -66,10 +65,8 @@ class BenchmarkConvergenceCI(Callback):
 
 
 def predict_context(func: Callable) -> Callable:
-    """
-    This decorator is used as context manager
-    to put model in eval mode before running predict and reset to train after.
-    """
+    """This decorator is used as context manager to put model in eval mode before running predict and reset to
+    train after."""
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
@@ -89,7 +86,6 @@ def predict_context(func: Callable) -> Callable:
 
 
 class CheckDependenciesMeta(ABCMeta):
-
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
@@ -177,8 +173,9 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         super().__setattr__(key, value)
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
-        """
-        The training/validation/test step. Override for custom behavior.
+        """The training/validation/test step.
+
+        Override for custom behavior.
         """
         x, y = batch
         y_hat = self(x)
@@ -188,20 +185,31 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
         logs = {}
         y_hat = self.to_metrics_format(output["y_hat"])
+
+        logs = {}
+
         for name, metric in metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)
-        logs.update(losses)
+
         if len(losses.values()) > 1:
             logs["total_loss"] = sum(losses.values())
             return logs["total_loss"], logs
-        output["loss"] = list(losses.values())[0]
-        output["logs"] = logs
+
+        output["loss"] = self.compute_loss(losses)
+        output["logs"] = self.compute_logs(logs, losses)
         output["y"] = y
         return output
+
+    def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
+        return list(losses.values())[0]
+
+    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
+        logs.update(losses)
+        return logs
 
     @staticmethod
     def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -240,8 +248,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
-        """
-        Predict function for raw data or processed data
+        """Predict function for raw data or processed data.
 
         Args:
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
@@ -348,8 +355,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def serializer(self) -> Optional[Serializer]:
-        """The current :class:`.Serializer` associated with this model. If this property was set to a mapping
-        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`."""
+        """The current :class:`.Serializer` associated with this model.
+
+        If this property was set to a mapping
+        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`.
+        """
         return self._serializer
 
     @torch.jit.unused
@@ -384,21 +394,23 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
 
         # Datamodule
-        if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
-            old_data_source = getattr(self.datamodule.data_pipeline, 'data_source', None)
-            preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
-            postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
-            serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
-            deserializer = getattr(self.datamodule.data_pipeline, '_deserializer', None)
+        if self.datamodule is not None and getattr(self.datamodule, "data_pipeline", None) is not None:
+            old_data_source = getattr(self.datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(self.datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(self.datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(self.datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(self.datamodule.data_pipeline, "_deserializer", None)
 
-        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
-            self.trainer.datamodule, 'data_pipeline', None
-        ) is not None:
-            old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
-            preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
-            postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
-            serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
-            deserializer = getattr(self.trainer.datamodule.data_pipeline, '_deserializer', None)
+        elif (
+            self.trainer is not None
+            and hasattr(self.trainer, "datamodule")
+            and getattr(self.trainer.datamodule, "data_pipeline", None) is not None
+        ):
+            old_data_source = getattr(self.trainer.datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(self.trainer.datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(self.trainer.datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(self.trainer.datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(self.trainer.datamodule.data_pipeline, "_deserializer", None)
         else:
             # TODO: we should log with low severity level that we use defaults to create
             # `preprocess`, `postprocess` and `serializer`.
@@ -423,10 +435,10 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 preprocess,
                 postprocess,
                 serializer,
-                getattr(data_pipeline, '_deserializer', None),
-                getattr(data_pipeline, '_preprocess_pipeline', None),
-                getattr(data_pipeline, '_postprocess_pipeline', None),
-                getattr(data_pipeline, '_serializer', None),
+                getattr(data_pipeline, "_deserializer", None),
+                getattr(data_pipeline, "_preprocess_pipeline", None),
+                getattr(data_pipeline, "_postprocess_pipeline", None),
+                getattr(data_pipeline, "_serializer", None),
             )
 
         data_source = data_source or old_data_source
@@ -454,8 +466,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def data_pipeline(self) -> DataPipeline:
-        """The current :class:`.DataPipeline`. If set, the new value will override the :class:`.Task` defaults. See
-        :py:meth:`~build_data_pipeline` for more details on the resolution order."""
+        """The current :class:`.DataPipeline`.
+
+        If set, the new value will override the :class:`.Task` defaults. See
+        :py:meth:`~build_data_pipeline` for more details on the resolution order.
+        """
         return self.build_data_pipeline()
 
     @torch.jit.unused
@@ -466,10 +481,10 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             self._preprocess,
             self._postprocess,
             self._serializer,
-            getattr(data_pipeline, '_deserializer', None),
-            getattr(data_pipeline, '_preprocess_pipeline', None),
-            getattr(data_pipeline, '_postprocess_pipeline', None),
-            getattr(data_pipeline, '_serializer', None),
+            getattr(data_pipeline, "_deserializer", None),
+            getattr(data_pipeline, "_preprocess_pipeline", None),
+            getattr(data_pipeline, "_postprocess_pipeline", None),
+            getattr(data_pipeline, "_serializer", None),
         )
 
         # self._preprocess.state_dict()
@@ -479,12 +494,12 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def preprocess(self) -> Preprocess:
-        return getattr(self.data_pipeline, '_preprocess_pipeline', None)
+        return getattr(self.data_pipeline, "_preprocess_pipeline", None)
 
     @torch.jit.unused
     @property
     def postprocess(self) -> Postprocess:
-        return getattr(self.data_pipeline, '_postprocess_pipeline', None)
+        return getattr(self.data_pipeline, "_postprocess_pipeline", None)
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:
@@ -523,18 +538,18 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
-        if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
-            checkpoint['data_pipeline'] = self.data_pipeline
-        if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
-            checkpoint['_data_pipeline_state'] = self._data_pipeline_state
+        if self.data_pipeline is not None and "data_pipeline" not in checkpoint:
+            checkpoint["data_pipeline"] = self.data_pipeline
+        if self._data_pipeline_state is not None and "_data_pipeline_state" not in checkpoint:
+            checkpoint["_data_pipeline_state"] = self._data_pipeline_state
         super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)
-        if 'data_pipeline' in checkpoint:
-            self.data_pipeline = checkpoint['data_pipeline']
-        if '_data_pipeline_state' in checkpoint:
-            self._data_pipeline_state = checkpoint['_data_pipeline_state']
+        if "data_pipeline" in checkpoint:
+            self.data_pipeline = checkpoint["data_pipeline"]
+        if "_data_pipeline_state" in checkpoint:
+            self._data_pipeline_state = checkpoint["_data_pipeline_state"]
 
     @classmethod
     def available_backbones(cls) -> List[str]:
@@ -621,14 +636,13 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
     ):
-        if 'preprocess.state_dict' in state_dict:
+        if "preprocess.state_dict" in state_dict:
             try:
                 preprocess_state_dict = state_dict["preprocess.state_dict"]
                 meta = preprocess_state_dict["_meta"]
                 cls = getattr(import_module(meta["module"]), meta["class_name"])
                 self._preprocess = cls.load_state_dict(
-                    {k: v
-                     for k, v in preprocess_state_dict.items() if k != '_meta'},
+                    {k: v for k, v in preprocess_state_dict.items() if k != "_meta"},
                     strict=strict,
                 )
                 self._preprocess._state = meta["_state"]
@@ -670,7 +684,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             print(f"Sanity check response: {resp.json()}")
 
     @requires_extras("serve")
-    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
+    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> "Composition":
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 
@@ -696,7 +710,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         if self._data_pipeline_state is not None:
             self._data_pipeline_state.set_state(state)
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
         for state in self._state.values():
             data_pipeline_state.set_state(state)
 
@@ -720,7 +734,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 pin_memory=pin_memory,
                 shuffle=shuffle,
                 drop_last=drop_last,
-                collate_fn=collate_fn
+                collate_fn=collate_fn,
             )
         return dataset
 
@@ -733,7 +747,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -743,7 +757,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
 
     def process_val_dataset(
@@ -755,7 +769,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = False,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -765,7 +779,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
 
     def process_test_dataset(
@@ -777,7 +791,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         collate_fn: Callable,
         shuffle: bool = False,
         drop_last: bool = True,
-        sampler: Optional[Sampler] = None
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -787,7 +801,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
-            sampler=sampler
+            sampler=sampler,
         )
 
     def process_predict_dataset(
@@ -800,7 +814,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True
+        convert_to_dataloader: bool = True,
     ) -> Union[DataLoader, BaseAutoDataset]:
         return self._process_dataset(
             dataset,
@@ -811,5 +825,5 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            convert_to_dataloader=convert_to_dataloader
+            convert_to_dataloader=convert_to_dataloader,
         )

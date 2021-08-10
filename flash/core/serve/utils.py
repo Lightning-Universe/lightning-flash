@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 
 def fn_outputs_to_keyed_map(serialize_fn_out_keys, fn_output) -> Dict[str, Any]:
-    """ "convert outputs of a function to a dict of `{result_name: values}`
+    """convert outputs of a function to a dict of `{result_name: values}`
 
     accepts function outputs which are sequence, dict, or object.
     """
@@ -20,7 +20,7 @@ def fn_outputs_to_keyed_map(serialize_fn_out_keys, fn_output) -> Dict[str, Any]:
 
 
 def download_file(url: str, *, download_path: Optional[Path] = None) -> str:
-    """Download to cwd with filename as last part of address, return filepath
+    """Download to cwd with filename as last part of address, return filepath.
 
     Returns
     -------
@@ -49,8 +49,7 @@ def download_file(url: str, *, download_path: Optional[Path] = None) -> str:
 
 
 def _module_available(module_path: str) -> bool:
-    """
-    Check if a path is available in your environment
+    """Check if a path is available in your environment.
 
     >>> _module_available('os')
     True

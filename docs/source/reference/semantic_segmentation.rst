@@ -44,6 +44,27 @@ Here's the full example:
     :language: python
     :lines: 14-
 
+
+------
+
+**********
+Flash Zero
+**********
+
+The semantic segmentation task can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash semantic-segmentation
+
+To view configuration options and options for running the semantic segmentation task with your own data, use:
+
+.. code-block:: bash
+
+    flash semantic-segmentation --help
+
+
 ------
 
 *******

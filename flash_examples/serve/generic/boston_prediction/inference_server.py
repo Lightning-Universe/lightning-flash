@@ -35,7 +35,6 @@ feature_names = [
 
 
 class PricePrediction(ModelComponent):
-
     def __init__(self, model):  # skipcq: PYL-W0621
         self.model = model
 

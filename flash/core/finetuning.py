@@ -21,7 +21,6 @@ from torch.optim import Optimizer
 
 
 class NoFreeze(BaseFinetuning):
-
     def freeze_before_training(self, pl_module: LightningModule) -> None:
         pass
 
@@ -36,8 +35,7 @@ class NoFreeze(BaseFinetuning):
 
 
 class FlashBaseFinetuning(BaseFinetuning):
-    """
-    FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
+    """FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
 
     Override :meth:`.finetune_function` to put your unfreeze logic.
     """
@@ -68,7 +66,6 @@ class FlashBaseFinetuning(BaseFinetuning):
 
 
 class Freeze(FlashBaseFinetuning):
-
     def finetune_function(
         self,
         pl_module: LightningModule,
@@ -80,7 +77,6 @@ class Freeze(FlashBaseFinetuning):
 
 
 class FreezeUnfreeze(FlashBaseFinetuning):
-
     def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True, unfreeze_epoch: int = 10):
         super().__init__(attr_names, train_bn)
         self.unfreeze_epoch = unfreeze_epoch
@@ -103,13 +99,12 @@ class FreezeUnfreeze(FlashBaseFinetuning):
 
 
 class UnfreezeMilestones(FlashBaseFinetuning):
-
     def __init__(
         self,
         attr_names: Union[str, List[str]] = "backbone",
         train_bn: bool = True,
         unfreeze_milestones: tuple = (5, 10),
-        num_layers: int = 5
+        num_layers: int = 5,
     ):
         self.unfreeze_milestones = unfreeze_milestones
         self.num_layers = num_layers
@@ -127,7 +122,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         if epoch == self.unfreeze_milestones[0]:
             # unfreeze num_layers last layers
             self.unfreeze_and_add_param_group(
-                modules=backbone_modules[-self.num_layers:],
+                modules=backbone_modules[-self.num_layers :],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
@@ -135,7 +130,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         elif epoch == self.unfreeze_milestones[1]:
             # unfreeze remaining layers
             self.unfreeze_and_add_param_group(
-                modules=backbone_modules[:-self.num_layers],
+                modules=backbone_modules[: -self.num_layers],
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
@@ -145,7 +140,7 @@ _DEFAULTS_FINETUNE_STRATEGIES = {
     "no_freeze": NoFreeze,
     "freeze": Freeze,
     "freeze_unfreeze": FreezeUnfreeze,
-    "unfreeze_milestones": UnfreezeMilestones
+    "unfreeze_milestones": UnfreezeMilestones,
 }
 
 

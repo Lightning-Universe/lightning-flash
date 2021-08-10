@@ -84,7 +84,7 @@ from flash.core.serve.dag.utils_test import add, inc
 
 
 def order(dsk, dependencies=None):
-    """Order nodes in the task graph
+    """Order nodes in the task graph.
 
     This produces an ordering over our tasks that we use to break ties when
     executing.  We do this ahead of time to reduce a bit of stress on the
@@ -151,10 +151,9 @@ def order(dsk, dependencies=None):
     initial_stack_key = init_stack.__getitem__
 
     def dependents_key(x):
-        """Choose a path from our starting task to our tactical goal
+        """Choose a path from our starting task to our tactical goal.
 
-        This path is connected to a large goal, but focuses on completing
-        a small goal and being memory efficient.
+        This path is connected to a large goal, but focuses on completing a small goal and being memory efficient.
         """
         return (
             # Focus on being memory-efficient
@@ -165,7 +164,7 @@ def order(dsk, dependencies=None):
         )
 
     def dependencies_key(x):
-        """Choose which dependency to run as part of a reverse DFS
+        """Choose which dependency to run as part of a reverse DFS.
 
         This is very similar to both ``initial_stack_key``.
         """
@@ -196,7 +195,7 @@ def order(dsk, dependencies=None):
         )
 
     def finish_now_key(x):
-        """ Determine the order of dependents that are ready to run and be released"""
+        """Determine the order of dependents that are ready to run and be released."""
         return (-len(dependencies[x]), StrComparable(x))
 
     # Computing this for all keys can sometimes be relatively expensive :(
@@ -322,7 +321,7 @@ def order(dsk, dependencies=None):
 
                     if len(deps) == 1:
                         # Fast path!  We trim down `deps` above hoping to reach here.
-                        (dep, ) = deps
+                        (dep,) = deps
                         if not inner_stack:
                             if add_to_inner_stack:
                                 inner_stack = [dep]
@@ -566,7 +565,7 @@ def graph_metrics(dependencies, dependents, total_dependencies):
         key = current_pop()
         parents = dependents[key]
         if len(parents) == 1:
-            (parent, ) = parents
+            (parent,) = parents
             (
                 total_dependents,
                 min_dependencies,
@@ -604,7 +603,7 @@ def graph_metrics(dependencies, dependents, total_dependencies):
 
 
 def ndependencies(dependencies, dependents):
-    """Number of total data elements on which this key depends
+    """Number of total data elements on which this key depends.
 
     For each key we return the number of tasks that must be run for us to run
     this task.
@@ -650,7 +649,7 @@ def ndependencies(dependencies, dependents):
 
 
 class StrComparable:
-    """Wrap object so that it defaults to string comparison
+    """Wrap object so that it defaults to string comparison.
 
     When comparing two objects of different types Python fails
 
@@ -666,7 +665,7 @@ class StrComparable:
     False
     """
 
-    __slots__ = ("obj", )
+    __slots__ = ("obj",)
 
     def __init__(self, obj):
         self.obj = obj

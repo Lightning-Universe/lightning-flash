@@ -90,7 +90,7 @@ def test_test_valid(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
-        batch_size=1
+        batch_size=1,
     )
     batch = next(iter(dm.val_dataloader()))
     assert batch["labels"].item() in [0, 1]
@@ -135,9 +135,7 @@ def test_text_module_not_found_error():
     "cls, kwargs",
     [
         (TextDataSource, {}),
-        (TextFileDataSource, {
-            "filetype": "csv"
-        }),
+        (TextFileDataSource, {"filetype": "csv"}),
         (TextCSVDataSource, {}),
         (TextJSONDataSource, {}),
         (TextSentencesDataSource, {}),

@@ -49,15 +49,14 @@ def _count_ngram(ngram_input_list: List[str], n_gram: int) -> Counter:
 
     for i in range(1, n_gram + 1):
         for j in range(len(ngram_input_list) - i + 1):
-            ngram_key = tuple(ngram_input_list[j:(i + j)])
+            ngram_key = tuple(ngram_input_list[j : (i + j)])
             ngram_counter[ngram_key] += 1
 
     return ngram_counter
 
 
 class BLEUScore(Metric):
-    """
-    Calculate BLEU score of machine translated text with one or more references.
+    """Calculate BLEU score of machine translated text with one or more references.
 
     Example:
         >>> translate_corpus = ['the cat is on the mat'.split()]
@@ -95,12 +94,11 @@ class BLEUScore(Metric):
         else:
             precision_scores = self.numerator / self.denominator
 
-        log_precision_scores = tensor([1.0 / self.n_gram] * self.n_gram,
-                                      device=self.r.device) * torch.log(precision_scores)
-        geometric_mean = torch.exp(torch.sum(log_precision_scores))
-        brevity_penalty = (
-            tensor(1.0, device=self.r.device) if self.c > self.r else torch.exp(1 - (ref_len / trans_len))
+        log_precision_scores = tensor([1.0 / self.n_gram] * self.n_gram, device=self.r.device) * torch.log(
+            precision_scores
         )
+        geometric_mean = torch.exp(torch.sum(log_precision_scores))
+        brevity_penalty = tensor(1.0, device=self.r.device) if self.c > self.r else torch.exp(1 - (ref_len / trans_len))
         bleu = brevity_penalty * geometric_mean
         return bleu
 
@@ -132,8 +130,7 @@ class BLEUScore(Metric):
 
 
 class RougeMetric(Metric):
-    """
-    Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
+    """Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
 
     Example:
 
@@ -206,13 +203,11 @@ class RougeMetric(Metric):
 
 
 class RougeBatchAggregator(BootstrapAggregator):
-    """
-    Aggregates rouge scores and provides confidence intervals.
-    """
+    """Aggregates rouge scores and provides confidence intervals."""
 
     def aggregate(self):
-        """
-        Override function to wrap the final results in `Score` objects.
+        """Override function to wrap the final results in `Score` objects.
+
         This is due to the scores being replaced with a list of torch tensors.
         """
         result = {}

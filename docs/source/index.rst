@@ -26,6 +26,7 @@ Lightning Flash
    general/jit
    general/data
    general/registry
+   general/flash_zero
    general/serve
 
 .. toctree::
@@ -39,6 +40,13 @@ Lightning Flash
    reference/semantic_segmentation
    reference/style_transfer
    reference/video_classification
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Audio
+
+   reference/audio_classification
+   reference/speech_recognition
 
 .. toctree::
    :maxdepth: 1
@@ -60,6 +68,7 @@ Lightning Flash
    :caption: Point Cloud
 
    reference/pointcloud_segmentation
+   reference/pointcloud_object_detection
 
 .. toctree::
    :maxdepth: 1
@@ -82,6 +91,7 @@ Lightning Flash
    api/data
    api/serve
    api/image
+   api/audio
    api/pointcloud
    api/tabular
    api/text

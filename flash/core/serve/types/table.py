@@ -65,8 +65,7 @@ class Table(BaseType):
         df = pd.DataFrame.from_dict(features)
         if len(self.column_names) != len(df.columns) or not np.all(df.columns == self.column_names):
             raise RuntimeError(
-                f"Failed to validate column names. \nExpected: "
-                f"{self.column_names}\nReceived: {list(df.columns)}"
+                f"Failed to validate column names. \nExpected: " f"{self.column_names}\nReceived: {list(df.columns)}"
             )
         # TODO: This strict type checking needs to be changed when numpy arrays are returned
         if df.values.dtype.name not in allowed_types:

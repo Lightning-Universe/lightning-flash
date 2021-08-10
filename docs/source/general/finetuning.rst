@@ -52,7 +52,7 @@ Finetune strategies
     from flash.core.data.utils import download_data
     from flash.image import ImageClassificationData, ImageClassifier
 
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     datamodule = ImageClassificationData.from_files(
         train_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
@@ -104,11 +104,6 @@ The freeze strategy keeps the backbone frozen throughout.
 
     trainer.finetune(model, datamodule, strategy="freeze")
 
-.. testoutput:: strategies
-    :hide:
-
-    ...
-
 The pseudocode looks like:
 
 .. code-block:: python
@@ -139,11 +134,6 @@ By default, in this strategy the backbone is frozen for 5 epochs then unfrozen:
 
     trainer.finetune(model, datamodule, strategy="freeze_unfreeze")
 
-.. testoutput:: strategies
-    :hide:
-
-    ...
-
 Or we can customize it unfreeze the backbone after a different epoch.
 For example, to unfreeze after epoch 7:
 
@@ -152,11 +142,6 @@ For example, to unfreeze after epoch 7:
     from flash.core.finetuning import FreezeUnfreeze
 
     trainer.finetune(model, datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=7))
-
-.. testoutput:: strategies
-    :hide:
-
-    ...
 
 Under the hood, the pseudocode looks like:
 
@@ -193,11 +178,6 @@ Here's an example where:
 
     trainer.finetune(model, datamodule, strategy=UnfreezeMilestones(unfreeze_milestones=(3, 8), num_layers=2))
 
-.. testoutput:: strategies
-    :hide:
-
-    ...
-
 Under the hood, the pseudocode looks like:
 
 .. code-block:: python
@@ -231,14 +211,13 @@ For even more customization, create your own finetuning callback. Learn more abo
 
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
-
         def __init__(self, unfreeze_epoch: int = 5, train_bn: bool = True):
             # this will set self.attr_names as ["backbone"]
             super().__init__("backbone", train_bn)
             self._unfreeze_epoch = unfreeze_epoch
 
         def finetune_function(self, pl_module, current_epoch, optimizer, opt_idx):
-            # unfreeze any module you want by overriding this function
+            # unfreeze any module you want by overriding this function
 
             # When ``current_epoch`` is 5, backbone will start to be trained.
             if current_epoch == self._unfreeze_epoch:
@@ -247,10 +226,6 @@ For even more customization, create your own finetuning callback. Learn more abo
                     optimizer,
                 )
 
+
     # Pass the callback to trainer.finetune
     trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
-
-.. testoutput:: strategies
-    :hide:
-
-    ...

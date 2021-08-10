@@ -40,7 +40,7 @@ def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
         )
 
     padded_tensor = pad_token_id * torch.ones((tensor.shape[0], max_length), dtype=tensor.dtype, device=tensor.device)
-    padded_tensor[:, :tensor.shape[-1]] = tensor
+    padded_tensor[:, : tensor.shape[-1]] = tensor
     return padded_tensor
 
 
@@ -60,7 +60,7 @@ class Seq2SeqTask(Task):
 
     def __init__(
         self,
-        backbone: str = 't5-small',
+        backbone: str = "t5-small",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
@@ -83,7 +83,7 @@ class Seq2SeqTask(Task):
         max_length = self.val_target_max_length if self.val_target_max_length else self.model.config.max_length
         num_beams = self.num_beams if self.num_beams else self.model.config.num_beams
         generated_tokens = self.model.generate(
-            input_ids=x['input_ids'], attention_mask=x['attention_mask'], max_length=max_length, num_beams=num_beams
+            input_ids=x["input_ids"], attention_mask=x["attention_mask"], max_length=max_length, num_beams=num_beams
         )
         # in case the batch is shorter than max length, the output should be padded
         if generated_tokens.shape[-1] < max_length:
@@ -113,9 +113,7 @@ class Seq2SeqTask(Task):
 
     @property
     def task(self) -> Optional[str]:
-        """
-        Override to define AutoConfig task specific parameters stored within the model.
-        """
+        """Override to define AutoConfig task specific parameters stored within the model."""
         return
 
     def _initialize_model_specific_parameters(self):
@@ -127,7 +125,7 @@ class Seq2SeqTask(Task):
             self.model.config.update(pars)
 
     @property
-    def tokenizer(self) -> 'PreTrainedTokenizerBase':
+    def tokenizer(self) -> "PreTrainedTokenizerBase":
         return self.data_pipeline.data_source.tokenizer
 
     def tokenize_labels(self, labels: Tensor) -> List[str]:

@@ -33,11 +33,13 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Detect objects in a few images!
-predictions = model.predict([
-    "data/coco128/images/train2017/000000000625.jpg",
-    "data/coco128/images/train2017/000000000626.jpg",
-    "data/coco128/images/train2017/000000000629.jpg",
-])
+predictions = model.predict(
+    [
+        "data/coco128/images/train2017/000000000625.jpg",
+        "data/coco128/images/train2017/000000000626.jpg",
+        "data/coco128/images/train2017/000000000629.jpg",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

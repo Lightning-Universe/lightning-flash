@@ -36,6 +36,7 @@ _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.models import hub
+
     for fn_name in dir(hub):
         if "__" not in fn_name:
             fn = getattr(hub, fn_name)
@@ -44,7 +45,6 @@ if _PYTORCHVIDEO_AVAILABLE:
 
 
 class VideoClassifierFinetuning(BaseFinetuning):
-
     def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
         super().__init__()
         self.num_layers = num_layers
@@ -52,7 +52,7 @@ class VideoClassifierFinetuning(BaseFinetuning):
         self.unfreeze_epoch = unfreeze_epoch
 
     def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.backbone.children())[:-self.num_layers], train_bn=self.train_bn)
+        self.freeze(modules=list(pl_module.backbone.children())[: -self.num_layers], train_bn=self.train_bn)
 
     def finetune_function(
         self,
@@ -64,7 +64,7 @@ class VideoClassifierFinetuning(BaseFinetuning):
         if epoch != self.unfreeze_epoch:
             return
         self.unfreeze_and_add_param_group(
-            modules=list(pl_module.backbone.children())[-self.num_layers:],
+            modules=list(pl_module.backbone.children())[-self.num_layers :],
             optimizer=optimizer,
             train_bn=self.train_bn,
         )
@@ -94,7 +94,7 @@ class VideoClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, nn.Module] = "slow_r50",
+        backbone: Union[str, nn.Module] = "x3d_xs",
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
@@ -110,7 +110,7 @@ class VideoClassifier(ClassificationTask):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer or Labels()
+            serializer=serializer or Labels(),
         )
 
         self.save_hyperparameters()
@@ -165,7 +165,5 @@ class VideoClassifier(ClassificationTask):
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         assert history[-1]["val_accuracy"] > 0.70

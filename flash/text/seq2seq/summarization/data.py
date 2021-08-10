@@ -17,7 +17,6 @@ from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2Se
 
 
 class SummarizationPreprocess(Seq2SeqPreprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -27,7 +26,7 @@ class SummarizationPreprocess(Seq2SeqPreprocess):
         backbone: str = "sshleifer/distilbart-xsum-1-1",
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length'
+        padding: Union[str, bool] = "max_length",
     ):
         super().__init__(
             train_transform=train_transform,

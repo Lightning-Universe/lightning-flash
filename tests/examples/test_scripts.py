@@ -21,6 +21,7 @@ import flash
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
+    _AUDIO_TESTING,
     _GRAPH_TESTING,
     _IMAGE_TESTING,
     _POINTCLOUD_TESTING,
@@ -38,33 +39,40 @@ from tests.helpers.utils import (
             "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
         ),
         pytest.param(
+            "audio_classification.py",
+            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed"),
+        ),
+        pytest.param(
+            "speech_recognition.py",
+            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed"),
+        ),
+        pytest.param(
             "image_classification.py",
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
             "image_classification_multi_label.py",
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(
             "semantic_segmentation.py",
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
-            "style_transfer.py",
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+            "style_transfer.py", marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
         ),
         pytest.param(
             "summarization.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         ),
         pytest.param(
             "tabular_classification.py",
-            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed")
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
         ),
         pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
         pytest.param(
             "text_classification.py",
-            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
         ),
         # pytest.param(
         #     "text_classification_multi_label.py",
@@ -75,17 +83,35 @@ from tests.helpers.utils import (
         ),
         pytest.param(
             "video_classification.py",
-            marks=pytest.mark.skipif(not _VIDEO_TESTING, reason="video libraries aren't installed")
+            marks=pytest.mark.skipif(not _VIDEO_TESTING, reason="video libraries aren't installed"),
         ),
         pytest.param(
             "pointcloud_segmentation.py",
-            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed"),
+        ),
+        pytest.param(
+            "pointcloud_detection.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed"),
         ),
         pytest.param(
             "graph_classification.py",
-            marks=pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed")
+            marks=pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed"),
         ),
-    ]
+    ],
 )
 def test_example(tmpdir, file):
+    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
+
+
+@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@pytest.mark.parametrize(
+    "file",
+    [
+        pytest.param(
+            "pointcloud_detection.py",
+            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed"),
+        ),
+    ],
+)
+def test_example_2(tmpdir, file):
     run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))

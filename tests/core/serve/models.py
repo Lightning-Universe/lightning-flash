@@ -14,7 +14,6 @@ CWD = Path(__file__).parent.joinpath("data").absolute()
 
 
 class LightningSqueezenet(pl.LightningModule):
-
     def __init__(self):
         super().__init__()
         self.model = squeezenet1_1(pretrained=True).eval()
@@ -24,7 +23,6 @@ class LightningSqueezenet(pl.LightningModule):
 
 
 class LightningSqueezenetServable(pl.LightningModule):
-
     def __init__(self, model):
         super().__init__()
         self.model = model
@@ -38,7 +36,6 @@ def _func_from_exposed(arg):
 
 
 class ClassificationInference(ModelComponent):
-
     def __init__(self, model):  # skipcq: PYL-W0621
         self.model = model
 
@@ -73,7 +70,6 @@ class ClassificationInference(ModelComponent):
 try:
 
     class ClassificationInferenceRepeated(ModelComponent):
-
         def __init__(self, model):
             self.model = model
 
@@ -92,13 +88,14 @@ try:
             img = img.permute(0, 3, 2, 1)
             out = self.model(img)
             return ([out.argmax(), out.argmax()], torch.Tensor([21]))
+
+
 except TypeError:
     ClassificationInferenceRepeated = None
 
 try:
 
     class ClassificationInferenceModelSequence(ModelComponent):
-
         def __init__(self, model):
             self.model1 = model[0]
             self.model2 = model[1]
@@ -117,13 +114,14 @@ try:
             out2 = self.model2(img)
             assert out.argmax() == out2.argmax()
             return out.argmax()
+
+
 except TypeError:
     ClassificationInferenceRepeated = None
 
 try:
 
     class ClassificationInferenceModelMapping(ModelComponent):
-
         def __init__(self, model):
             self.model1 = model["model_one"]
             self.model2 = model["model_two"]
@@ -142,13 +140,14 @@ try:
             out2 = self.model2(img)
             assert out.argmax() == out2.argmax()
             return out.argmax()
+
+
 except TypeError:
     ClassificationInferenceModelMapping = None
 
 try:
 
     class ClassificationInferenceComposable(ModelComponent):
-
         def __init__(self, model):
             self.model = model
 
@@ -171,13 +170,14 @@ try:
             out = self.model(img_new)
 
             return out.argmax(), img
+
+
 except TypeError:
     ClassificationInferenceComposable = None
 
 try:
 
     class SeatClassifier(ModelComponent):
-
         def __init__(self, model, config):
             self.sport = config["sport"]
 
@@ -197,5 +197,7 @@ try:
             seat_num = section.item() * isle.item() * row.item() * stadium * len(self.sport)
             stadium_idx = torch.tensor(1000)
             return torch.Tensor([seat_num]), stadium_idx
+
+
 except TypeError:
     SeatClassifier = None

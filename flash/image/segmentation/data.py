@@ -76,7 +76,6 @@ else:
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
         sample[DefaultDataKeys.INPUT] = img
@@ -85,7 +84,6 @@ class SemanticSegmentationNumpyDataSource(NumpyDataSource):
 
 
 class SemanticSegmentationTensorDataSource(TensorDataSource):
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = sample[DefaultDataKeys.INPUT].float()
         sample[DefaultDataKeys.INPUT] = img
@@ -94,13 +92,13 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
 
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
-
     @requires_extras("image")
     def __init__(self):
         super().__init__(IMG_EXTENSIONS)
 
-    def load_data(self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]],
-                  dataset: BaseAutoDataset) -> Sequence[Mapping[str, Any]]:
+    def load_data(
+        self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]], dataset: BaseAutoDataset
+    ) -> Sequence[Mapping[str, Any]]:
         input_data, target_data = data
 
         if self.isdir(input_data) and self.isdir(target_data):
@@ -131,8 +129,8 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
         data = filter(
             lambda sample: (
-                has_file_allowed_extension(sample[0], self.extensions) and
-                has_file_allowed_extension(sample[1], self.extensions)
+                has_file_allowed_extension(sample[0], self.extensions)
+                and has_file_allowed_extension(sample[1], self.extensions)
             ),
             zip(input_data, target_data),
         )
@@ -176,7 +174,6 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
 
 class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
-
     @requires_extras("image")
     def __init__(self, label_field: str = "ground_truth"):
         super().__init__(label_field=label_field)
@@ -223,7 +220,6 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 
 
 class SemanticSegmentationDeserializer(ImageDeserializer):
-
     def deserialize(self, data: str) -> torch.Tensor:
         result = super().deserialize(data)
         result[DefaultDataKeys.INPUT] = self.to_tensor(result[DefaultDataKeys.INPUT])
@@ -232,7 +228,6 @@ class SemanticSegmentationDeserializer(ImageDeserializer):
 
 
 class SemanticSegmentationPreprocess(Preprocess):
-
     @requires_extras("image")
     def __init__(
         self,
@@ -241,7 +236,7 @@ class SemanticSegmentationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (128, 128),
-        deserializer: Optional['Deserializer'] = None,
+        deserializer: Optional["Deserializer"] = None,
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
         **data_source_kwargs: Any,
@@ -284,9 +279,10 @@ class SemanticSegmentationPreprocess(Preprocess):
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
-            **self.transforms, "image_size": self.image_size,
+            **self.transforms,
+            "image_size": self.image_size,
             "num_classes": self.num_classes,
-            "labels_map": self.labels_map
+            "labels_map": self.labels_map,
         }
 
     @classmethod
@@ -308,7 +304,7 @@ class SemanticSegmentationData(DataModule):
     @staticmethod
     def configure_data_fetcher(
         labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None
-    ) -> 'SegmentationMatplotlibVisualization':
+    ) -> "SegmentationMatplotlibVisualization":
         return SegmentationMatplotlibVisualization(labels_map=labels_map)
 
     def set_block_viz_window(self, value: bool) -> None:
@@ -333,15 +329,16 @@ class SemanticSegmentationData(DataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
 
-        if 'num_classes' not in preprocess_kwargs:
+        if "num_classes" not in preprocess_kwargs:
             raise MisconfigurationException("`num_classes` should be provided during instantiation.")
 
         num_classes = preprocess_kwargs["num_classes"]
 
-        labels_map = getattr(preprocess_kwargs, "labels_map",
-                             None) or SegmentationLabels.create_random_labels_map(num_classes)
+        labels_map = getattr(preprocess_kwargs, "labels_map", None) or SegmentationLabels.create_random_labels_map(
+            num_classes
+        )
 
         data_fetcher = data_fetcher or cls.configure_data_fetcher(labels_map)
 
@@ -363,7 +360,7 @@ class SemanticSegmentationData(DataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            **preprocess_kwargs
+            **preprocess_kwargs,
         )
 
         if dm.train_dataset is not None:
@@ -392,7 +389,7 @@ class SemanticSegmentationData(DataModule):
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
         **preprocess_kwargs,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.image.segmentation.data.SemanticSegmentationData` object from the given data
         folders and corresponding target folders.
 
@@ -460,8 +457,7 @@ class SemanticSegmentationData(DataModule):
 
 
 class SegmentationMatplotlibVisualization(BaseVisualization):
-    """Process and show the image batch and its associated label using matplotlib.
-    """
+    """Process and show the image batch and its associated label using matplotlib."""
 
     def __init__(self, labels_map: Dict[int, Tuple[int, int, int]]):
         super().__init__()
@@ -510,7 +506,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             img_vis = np.hstack((image_vis, label_vis))
             # send to visualiser
             ax.imshow(img_vis)
-            ax.axis('off')
+            ax.axis("off")
         plt.show(block=self.block_viz_window)
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):

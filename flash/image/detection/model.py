@@ -43,9 +43,7 @@ else:
 
 
 def _evaluate_iou(target, pred):
-    """
-    Evaluate intersection over union (IOU) for target from dataset and output prediction from model
-    """
+    """Evaluate intersection over union (IOU) for target from dataset and output prediction from model."""
     if pred["boxes"].shape[0] == 0:
         # no box detected, 0 IOU
         return tensor(0.0, device=pred["boxes"].device)
@@ -89,7 +87,7 @@ class ObjectDetector(Task):
         pretrained: bool = True,
         pretrained_backbone: bool = True,
         trainable_backbone_layers: int = 3,
-        anchor_generator: Optional[Type['AnchorGenerator']] = None,
+        anchor_generator: Optional[Type["AnchorGenerator"]] = None,
         loss=None,
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.AdamW,
@@ -101,8 +99,15 @@ class ObjectDetector(Task):
 
         if model in _models:
             model = ObjectDetector.get_model(
-                model, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers,
-                anchor_generator, **kwargs
+                model,
+                num_classes,
+                backbone,
+                fpn,
+                pretrained,
+                pretrained_backbone,
+                trainable_backbone_layers,
+                anchor_generator,
+                **kwargs,
             )
         else:
             ValueError(f"{model} is not supported yet.")
@@ -145,7 +150,7 @@ class ObjectDetector(Task):
                     in_channels=model.backbone.out_channels,
                     num_anchors=model.head.classification_head.num_anchors,
                     num_classes=num_classes,
-                    **kwargs
+                    **kwargs,
                 )
         else:
             backbone_model, num_features = ObjectDetector.backbones.get(backbone)(
@@ -155,9 +160,11 @@ class ObjectDetector(Task):
             )
             backbone_model.out_channels = num_features
             if anchor_generator is None:
-                anchor_generator = AnchorGenerator(
-                    sizes=((32, 64, 128, 256, 512), ), aspect_ratios=((0.5, 1.0, 2.0), )
-                ) if not hasattr(backbone_model, "fpn") else None
+                anchor_generator = (
+                    AnchorGenerator(sizes=((32, 64, 128, 256, 512),), aspect_ratios=((0.5, 1.0, 2.0),))
+                    if not hasattr(backbone_model, "fpn")
+                    else None
+                )
 
             if model_name == "fasterrcnn":
                 model = FasterRCNN(backbone_model, num_classes=num_classes, rpn_anchor_generator=anchor_generator)
@@ -169,7 +176,9 @@ class ObjectDetector(Task):
         return self.model(x)
 
     def training_step(self, batch, batch_idx) -> Any:
-        """The training step. Overrides ``Task.training_step``
+        """The training step.
+
+        Overrides ``Task.training_step``
         """
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         targets = [dict(t.items()) for t in targets]
@@ -203,8 +212,6 @@ class ObjectDetector(Task):
         return [ObjectDetectionFineTuning(train_bn=True)]
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         # todo (tchaton) Improve convergence
         # history[-1]["val_iou"]

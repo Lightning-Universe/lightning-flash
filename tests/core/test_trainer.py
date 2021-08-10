@@ -27,7 +27,6 @@ from flash.core.finetuning import NoFreeze
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __init__(self, predict: bool = False):
         self._predict = predict
 
@@ -35,14 +34,13 @@ class DummyDataset(torch.utils.data.Dataset):
         sample = torch.rand(1, 28, 28)
         if self._predict:
             return sample
-        return sample, torch.randint(10, size=(1, )).item()
+        return sample, torch.randint(10, size=(1,)).item()
 
     def __len__(self) -> int:
         return 100
 
 
 class DummyClassifier(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.backbone = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
@@ -85,7 +83,6 @@ def test_resolve_callbacks_invalid_strategy(tmpdir):
 
 
 class MultiFinetuneClassificationTask(ClassificationTask):
-
     def configure_finetune_callback(self):
         return [NoFreeze(), NoFreeze()]
 
@@ -99,7 +96,6 @@ def test_resolve_callbacks_multi_error(tmpdir):
 
 
 class FinetuneClassificationTask(ClassificationTask):
-
     def configure_finetune_callback(self):
         return [NoFreeze()]
 
@@ -115,14 +111,14 @@ def test_resolve_callbacks_override_warning(tmpdir):
 def test_add_argparse_args():
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    args = parser.parse_args(['--gpus=1'])
+    args = parser.parse_args(["--gpus=1"])
     assert args.gpus == 1
 
 
 def test_from_argparse_args():
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    args = parser.parse_args(['--max_epochs=200'])
+    args = parser.parse_args(["--max_epochs=200"])
     trainer = Trainer.from_argparse_args(args)
     assert trainer.max_epochs == 200
     assert isinstance(trainer, Trainer)

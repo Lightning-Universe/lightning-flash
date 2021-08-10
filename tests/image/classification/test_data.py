@@ -79,9 +79,9 @@ def test_from_filepaths_smoke(tmpdir):
     assert img_data.test_dataloader() is None
 
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [1, 2]
 
 
@@ -111,24 +111,24 @@ def test_from_filepaths_list_image_paths(tmpdir):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
     assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [1, 4]
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [2, 5]
 
 
@@ -168,7 +168,7 @@ def test_from_filepaths_visualise(tmpdir):
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
@@ -216,7 +216,7 @@ def test_from_filepaths_splits(tmpdir):
     _rand_image(img_size).save(tmpdir / "s.png")
 
     num_samples: int = 10
-    val_split: float = .3
+    val_split: float = 0.3
 
     train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
 
@@ -227,7 +227,7 @@ def test_from_filepaths_splits(tmpdir):
     _to_tensor = {
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor)
+            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
         ),
     }
 
@@ -243,9 +243,9 @@ def test_from_filepaths_splits(tmpdir):
             image_size=img_size,
         )
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data['input'], data['target']
+        imgs, labels = data["input"], data["target"]
         assert imgs.shape == (B, 3, H, W)
-        assert labels.shape == (B, )
+        assert labels.shape == (B,)
 
     run(_to_tensor)
 
@@ -266,9 +266,9 @@ def test_from_folders_only_train(tmpdir):
     img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
 
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    assert labels.shape == (1,)
 
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
@@ -296,20 +296,20 @@ def test_from_folders_train_val(tmpdir):
     )
 
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [0, 0]
 
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [0, 0]
 
 
@@ -338,18 +338,18 @@ def test_from_filepaths_multilabel(tmpdir):
     )
 
     data = next(iter(dm.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
 
     data = next(iter(dm.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
     torch.testing.assert_allclose(labels, torch.tensor(valid_labels))
 
     data = next(iter(dm.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
     torch.testing.assert_allclose(labels, torch.tensor(test_labels))
@@ -377,24 +377,24 @@ def test_from_data(data, from_function):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
     assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [1, 4]
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [2, 5]
 
 
@@ -435,23 +435,23 @@ def test_from_fiftyone(tmpdir):
 
     # check train data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [0, 1]
 
     # check val data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [0, 1]
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [0, 1]
 
 
@@ -469,19 +469,19 @@ def test_from_datasets():
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
 
 @pytest.fixture
@@ -517,7 +517,7 @@ def test_from_csv_single_target(single_target_csv):
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
 
 @pytest.fixture

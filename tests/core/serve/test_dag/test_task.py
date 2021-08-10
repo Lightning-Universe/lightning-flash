@@ -52,7 +52,7 @@ def test_get_dependencies_nested():
 
 
 def test_get_dependencies_empty():
-    dsk = {"x": (inc, )}
+    dsk = {"x": (inc,)}
     assert get_dependencies(dsk, "x") == set()
     assert get_dependencies(dsk, "x", as_list=True) == []
 
@@ -181,7 +181,6 @@ def test_subs_with_unfriendly_eq():
         pass
 
     class F:
-
         def __eq__(self, other):
             raise MyException()
 
@@ -200,9 +199,7 @@ def test_subs_with_surprisingly_friendly_eq():
 
 
 def test_subs_unexpected_hashable_key():
-
     class UnexpectedButHashable:
-
         def __init__(self):
             self.name = "a"
 

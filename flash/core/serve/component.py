@@ -41,7 +41,7 @@ def _validate_exposed_input_parameters_valid(instance):
         )
 
 
-def _validate_subclass_init_signature(cls: Type['ModelComponent']):
+def _validate_subclass_init_signature(cls: Type["ModelComponent"]):
     """Raises SyntaxError if the __init__ method is not formatted correctly.
 
     Expects arguments: ['self', 'models', Optional['config']]
@@ -76,7 +76,7 @@ _Servable_t = (Servable, torch.nn.Module)
 def _validate_model_args(
     args: Union[_ServableType, List[_ServableType], Tuple[_ServableType, ...], Dict[str, _ServableType]]
 ) -> None:
-    """Validator for machine learning models
+    """Validator for machine learning models.
 
     Parameters
     ----------
@@ -106,7 +106,7 @@ def _validate_model_args(
 
 
 def _validate_config_args(config: Optional[Dict[str, Union[str, int, float, bytes]]]) -> None:
-    """Validator for the configuration
+    """Validator for the configuration.
 
     Parameters
     ----------
@@ -143,9 +143,7 @@ def _validate_config_args(config: Optional[Dict[str, Union[str, int, float, byte
 
 
 class FlashServeMeta(type):
-    """
-    We keep a mapping of externally used names to classes.
-    """
+    """We keep a mapping of externally used names to classes."""
 
     @requires_extras("serve")
     def __new__(cls, name, bases, namespace):
@@ -165,7 +163,9 @@ class FlashServeMeta(type):
             # alter namespace to insert flash serve info as bound components of class.
             exposed = first(ex_meths.values())
             namespace["_flashserve_meta_"] = exposed.flashserve_meta
-            namespace["__call__"] = wraps(exposed)(exposed, )
+            namespace["__call__"] = wraps(exposed)(
+                exposed,
+            )
 
         new_cls = super().__new__(cls, name, bases, namespace)
         if new_cls.__name__ != "ModelComponent":
@@ -181,8 +181,8 @@ class FlashServeMeta(type):
     def __call__(cls, *args, **kwargs):
         """Customize steps taken during class creation / initalization.
 
-        super().__call__() within metaclass means: return instance
-        created by calling metaclass __prepare__ -> __new__ -> __init__
+        super().__call__() within metaclass means: return instance created by calling metaclass __prepare__ -> __new__
+        -> __init__
         """
         klass = super().__call__(*args, **kwargs)
         klass._flashserve_meta_ = replace(klass._flashserve_meta_)
@@ -210,7 +210,7 @@ if _SERVE_AVAILABLE:
         _flashserve_meta_: Optional[Union[BoundMeta, UnboundMeta]] = None
 
         def __flashserve_init__(self, models, *, config=None):
-            """Do a bunch of setup
+            """Do a bunch of setup.
 
             instance's __flashserve_init__ calls subclass __init__ in turn.
             """
@@ -244,6 +244,7 @@ if _SERVE_AVAILABLE:
         @property
         def uid(self) -> str:
             return self._flashserve_meta_.uid
+
 
 else:
     ModelComponent = object

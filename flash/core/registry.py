@@ -36,7 +36,7 @@ class FlashRegistry:
         return any(key == e["name"] for e in self.functions)
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(name={self.name}, functions={self.functions})'
+        return f"{self.__class__.__name__}(name={self.name}, functions={self.functions})"
 
     def get(
         self,
@@ -45,8 +45,7 @@ class FlashRegistry:
         strict: bool = True,
         **metadata,
     ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
-        """
-        This function is used to gather matches from the registry:
+        """This function is used to gather matches from the registry:
 
         Args:
             key: Name of the registered function.
@@ -56,7 +55,7 @@ class FlashRegistry:
         """
         matches = [e for e in self.functions if key == e["name"]]
         if not matches:
-            raise KeyError(f"Key: {key} is not in {repr(self)}")
+            raise KeyError(f"Key: {key} is not in {type(self).__name__}")
 
         if metadata:
             matches = [m for m in matches if metadata.items() <= m["metadata"].items()]
@@ -74,7 +73,7 @@ class FlashRegistry:
         fn: Callable,
         name: Optional[str] = None,
         override: bool = False,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
             raise MisconfigurationException(f"You can only register a function, found: {fn}")
@@ -103,17 +102,11 @@ class FlashRegistry:
                 return idx
 
     def __call__(
-        self,
-        fn: Optional[Callable[..., Any]] = None,
-        name: Optional[str] = None,
-        override: bool = False,
-        **metadata
+        self, fn: Optional[Callable[..., Any]] = None, name: Optional[str] = None, override: bool = False, **metadata
     ) -> Callable:
-        """
-        This function is used to register new functions to the registry along their metadata.
+        """This function is used to register new functions to the registry along their metadata.
 
         Functions can be filtered using metadata using the ``get`` function.
-
         """
         if fn is not None:
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)
@@ -121,7 +114,7 @@ class FlashRegistry:
 
         # raise the error ahead of time
         if not (name is None or isinstance(name, str)):
-            raise TypeError(f'`name` must be a str, found {name}')
+            raise TypeError(f"`name` must be a str, found {name}")
 
         def _register(cls):
             self._register_function(fn=cls, name=name, override=override, metadata=metadata)

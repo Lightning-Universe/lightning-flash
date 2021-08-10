@@ -13,14 +13,16 @@
 # limitations under the License.
 import os
 import re
+from unittest import mock
 
 import pytest
 import torch
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, Dataset
 
+from flash.__main__ import main
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -30,7 +32,6 @@ def collate_fn(samples):
 
 
 class DummyDetectionDataset(Dataset):
-
     def __init__(self, img_shape, num_boxes, num_classes, length):
         super().__init__()
         self.img_shape = img_shape
@@ -43,14 +44,14 @@ class DummyDetectionDataset(Dataset):
 
     def _random_bbox(self):
         c, h, w = self.img_shape
-        xs = torch.randint(w - 1, (2, ))
-        ys = torch.randint(h - 1, (2, ))
+        xs = torch.randint(w - 1, (2,))
+        ys = torch.randint(h - 1, (2,))
         return [min(xs), min(ys), max(xs) + 1, max(ys) + 1]
 
     def __getitem__(self, idx):
         img = torch.rand(self.img_shape)
         boxes = torch.tensor([self._random_bbox() for _ in range(self.num_boxes)])
-        labels = torch.randint(self.num_classes, (self.num_boxes, ))
+        labels = torch.randint(self.num_classes, (self.num_boxes,))
         return {DefaultDataKeys.INPUT: img, DefaultDataKeys.TARGET: {"boxes": boxes, "labels": labels}}
 
 
@@ -105,3 +106,14 @@ def test_jit(tmpdir):
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing.")
+def test_cli():
+    cli_args = ["flash", "object-detection", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass
