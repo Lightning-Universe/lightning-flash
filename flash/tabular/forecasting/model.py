@@ -1,12 +1,12 @@
-from typing import Union, Optional, Tuple, Dict, Callable, Type, Any, Mapping, Sequence, List
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
-from pytorch_forecasting import BaseModel, QuantileLoss, SMAPE
 from torch.optim import Optimizer
 
+from flash import Task
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Deserializer, Postprocess
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCH_AVAILABLE
+from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _TORCH_AVAILABLE
+from flash.tabular.forecasting import TABULAR_FORECASTING_BACKBONES, TabularForecastingData
 
 if _TORCH_AVAILABLE:
     import torch
@@ -16,29 +16,26 @@ if _TORCH_AVAILABLE:
 else:
     _LRScheduler = object
 
-from flash import Task, Serializer, Preprocess
-from flash.tabular.forecasting import (
-    TabularForecastingData,
-    TABULAR_FORECASTING_BACKBONES
-)
+if _FORECASTING_AVAILABLE:
+    from pytorch_forecasting import SMAPE
 
 
 class TabularForecaster(Task):
     backbones: FlashRegistry = TABULAR_FORECASTING_BACKBONES
 
     def __init__(
-            self,
-            tabular_forecasting_data: TabularForecastingData,
-            backbone: Union[str, Tuple[nn.Module, int]] = "temporal_fusion_transformer",
-            backbone_kwargs: Optional[Dict] = None,
-            loss_fn: Optional[Callable] = None,
-            optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer, str] = torch.optim.Adam,
-            optimizer_kwargs: Optional[Dict[str, Any]] = None,
-            scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-            scheduler_kwargs: Optional[Dict[str, Any]] = None,
-            metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-            learning_rate: float = 1e-2,
-            **task_kwargs
+        self,
+        tabular_forecasting_data: TabularForecastingData,
+        backbone: Union[str, Tuple[nn.Module, int]] = "temporal_fusion_transformer",
+        backbone_kwargs: Optional[Dict] = None,
+        loss_fn: Optional[Callable] = None,
+        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer, str] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        learning_rate: float = 1e-2,
+        **task_kwargs
     ):
 
         super().__init__(
@@ -62,8 +59,7 @@ class TabularForecaster(Task):
             self.backbone = backbone
         else:
             self.backbone = self.backbones.get(backbone)(
-                tabular_forecasting_data=tabular_forecasting_data,
-                **backbone_kwargs
+                tabular_forecasting_data=tabular_forecasting_data, **backbone_kwargs
             )
         self.model = self.backbone
 
@@ -78,14 +74,6 @@ class TabularForecaster(Task):
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         return self.model.configure_optimizers()
 
-
-
-    # More hooks to map
-
     @classmethod
     def from_data(cls, tabular_forecasting_data: TabularForecastingData, **kwargs):
-        return cls(
-            tabular_forecasting_data=tabular_forecasting_data,
-            backbone_kwargs={"loss": SMAPE()},
-            **kwargs
-        )
+        return cls(tabular_forecasting_data=tabular_forecasting_data, backbone_kwargs={"loss": SMAPE()}, **kwargs)
