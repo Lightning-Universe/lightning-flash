@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.process import Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires_extras
 
@@ -35,7 +35,7 @@ class TimeSeriesDataSetState(ProcessState):
     """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
     label."""
 
-    time_series_dataset: Optional[TimeSeriesDataSet]
+    time_series_dataset: Optional["TimeSeriesDataSet"]
 
 
 class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
