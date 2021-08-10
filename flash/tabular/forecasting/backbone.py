@@ -1,6 +1,6 @@
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE
-from flash.tabular.forecasting import TabularForecastingData
+from flash.tabular.forecasting.data import TabularForecastingData
 
 if _FORECASTING_AVAILABLE:
     from pytorch_forecasting import TemporalFusionTransformer

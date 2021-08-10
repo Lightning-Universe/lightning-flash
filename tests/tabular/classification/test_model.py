@@ -21,8 +21,8 @@ from pytorch_lightning import Trainer
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.tabular import TabularClassifier
 from flash.tabular.classification.data import TabularData
+from flash.tabular.classification.model import TabularClassifier
 from tests.helpers.utils import _SERVE_TESTING, _TABULAR_TESTING
 
 # ======== Mock functions ========

@@ -6,7 +6,8 @@ from flash import Task
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _TORCH_AVAILABLE
-from flash.tabular.forecasting import TABULAR_FORECASTING_BACKBONES, TabularForecastingData
+from flash.tabular.forecasting.backbone import TABULAR_FORECASTING_BACKBONES
+from flash.tabular.forecasting.data import TabularForecastingData
 
 if _TORCH_AVAILABLE:
     import torch
