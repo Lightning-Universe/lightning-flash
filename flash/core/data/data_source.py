@@ -514,7 +514,7 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
             pattern = f"{file_id}*"
         else:
             pattern = os.path.join(root, f"*{file_id}*")
-        files = glob.glob(pattern)
+        files = glob.glob(pattern, recursive=True)
         if len(files) > 1:
             raise ValueError(
                 f"Found multiple matches for pattern: {pattern}. File IDs should uniquely identify the file to load."
