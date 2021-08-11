@@ -137,7 +137,7 @@ jobs:
       run: |
         sudo apt-get install libsndfile1
         pip install matplotlib
-        pip install '.[image]' --pre --upgrade
+        pip install '.[image]' --pre --upgrade torchaudio
 
     - name: Cache datasets
       uses: actions/cache@v2
