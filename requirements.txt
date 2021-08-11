@@ -1,5 +1,5 @@
 torch
-torchmetrics
+torchmetrics>=0.5.0
 pytorch-lightning>=1.4.0rc0
 pyDeprecate
 PyYAML>=5.1

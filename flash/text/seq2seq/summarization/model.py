@@ -14,9 +14,8 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from torchmetrics import Metric
+from torchmetrics import Metric, ROUGEScore
 
-from flash.text.seq2seq.core.metrics import RougeMetric
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
 
@@ -66,8 +65,8 @@ class SummarizationTask(Seq2SeqTask):
             val_target_max_length=val_target_max_length,
             num_beams=num_beams,
         )
-        self.rouge = RougeMetric(
-            rouge_newline_sep=rouge_newline_sep,
+        self.rouge = ROUGEScore(
+            newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
 

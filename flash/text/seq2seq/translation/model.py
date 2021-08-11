@@ -14,9 +14,8 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from torchmetrics import Metric
+from torchmetrics import Metric, BLEUScore
 
-from flash.text.seq2seq.core.metrics import BLEUScore
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
 

@@ -23,6 +23,7 @@ import numpy as np
 import torch
 from torch import tensor
 from torchmetrics import Metric
+from warnings import warn 
 
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
 from flash.text.seq2seq.core.utils import add_newline_to_end_of_each_sentence
@@ -64,14 +65,23 @@ class BLEUScore(Metric):
         >>> metric = BLEUScore()
         >>> metric(translate_corpus, reference_corpus)
         tensor(0.7598)
-    """
 
+    .. deprecated:: v0.5
+        Use :func:`torchmetrics.text.BLEUScore` instead. Will be removed in v0.6.
+
+    """
     def __init__(self, n_gram: int = 4, smooth: bool = False):
         """
         Args:
             n_gram: Gram value ranged from 1 to 4 (Default 4)
             smooth: Whether or not to apply smoothing – Lin et al. 2004
         """
+        warn(
+            "Metric `text.seq2seq.core.metrics.BLEUScore` is deprecated in v0.5 and will be removed in v0.6."
+            " Use `torchmetrics.text.BLEUScore` instead.",
+            DeprecationWarning,
+        )
+
         super().__init__()
         self.n_gram = n_gram
         self.smooth = smooth
@@ -151,6 +161,10 @@ class RougeMetric(Metric):
          'rougeLsum_fmeasure': 0.25,
          'rougeLsum_precision': 0.25,
          'rougeLsum_recall': 0.25}
+
+    .. deprecated:: v0.5
+        Use :func:`torchmetrics.text.ROUGEScore` instead. Will be removed in v0.6.
+
     """
 
     @requires_extras("text")
@@ -160,6 +174,11 @@ class RougeMetric(Metric):
         use_stemmer: bool = False,
         rouge_keys: Tuple[str] = ("rouge1", "rouge2", "rougeL", "rougeLsum"),
     ):
+        warn(
+            "Metric `text.seq2seq.core.metrics.RougeScore` is deprecated in v0.5 and will be removed in v0.6."
+            " Use `torchmetrics.text.ROUGEScore` instead.",
+            DeprecationWarning,
+        )
         super().__init__()
 
         self.rouge_newline_sep = rouge_newline_sep
