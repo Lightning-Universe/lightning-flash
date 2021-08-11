@@ -18,12 +18,12 @@
 # Link: https://pytorch.org/text/_modules/torchtext/data/metrics.html#bleu_score
 from collections import Counter
 from typing import Dict, List, Tuple
+from warnings import warn
 
 import numpy as np
 import torch
 from torch import tensor
 from torchmetrics import Metric
-from warnings import warn 
 
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
 from flash.text.seq2seq.core.utils import add_newline_to_end_of_each_sentence
@@ -68,8 +68,8 @@ class BLEUScore(Metric):
 
     .. deprecated:: v0.5
         Use :func:`torchmetrics.text.BLEUScore` instead. Will be removed in v0.6.
-
     """
+
     def __init__(self, n_gram: int = 4, smooth: bool = False):
         """
         Args:
@@ -164,7 +164,6 @@ class RougeMetric(Metric):
 
     .. deprecated:: v0.5
         Use :func:`torchmetrics.text.ROUGEScore` instead. Will be removed in v0.6.
-
     """
 
     @requires_extras("text")
