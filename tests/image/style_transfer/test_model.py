@@ -49,6 +49,9 @@ def test_jit(tmpdir):
     model = StyleTransfer()
     model.eval()
 
+    model.loss_fn = None
+    model.perceptual_loss = None  # TODO: Document this
+
     model = torch.jit.trace(model, torch.rand(1, 3, 32, 32))  # torch.jit.script doesn't work with pystiche
 
     torch.jit.save(model, path)

@@ -12,7 +12,7 @@ The Task
 The Neural Style Transfer Task is an optimization method which extract the style from an image and apply it another image while preserving its content.
 The goal is that the output image looks like the content image, but “painted” in the style of the style reference image.
 
-.. image:: https://raw.githubusercontent.com/pystiche/pystiche/master/docs/source/graphics/banner/banner.jpg
+.. image:: https://raw.githubusercontent.com/pystiche/pystiche/main/docs/source/graphics/banner/banner.jpg
     :alt: style_transfer_example
 
 The :class:`~flash.image.style_transfer.model.StyleTransfer` and :class:`~flash.image.style_transfer.data.StyleTransferData` classes internally rely on `pystiche <https://pystiche.org>`_.

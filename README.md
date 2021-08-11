@@ -22,7 +22,6 @@
 </p>
 
 
-[![Stable API](https://img.shields.io/static/v1.svg?label=API&message=stable&color=green)](https://img.shields.io/static/v1.svg?label=API&message=stable&color=green)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/lightning-flash)](https://pypi.org/project/lightning-flash/)
 [![PyPI Status](https://badge.fury.io/py/lightning-flash.svg)](https://badge.fury.io/py/lightning-flash)
 [![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)
@@ -41,8 +40,19 @@
 </div>
 
 ---
+
+__Note:__ Flash is currently being tested on real-world use cases and is in active development. Please [open an issue](https://github.com/PyTorchLightning/lightning-flash/issues/new/choose) if you find anything that isn't working as expected.
+
+---
+
 ## News
-[Read our launch blogpost](https://pytorch-lightning.medium.com/introducing-lightning-flash-the-fastest-way-to-get-started-with-deep-learning-202f196b3b98)
+
+- Jul 12: Flash Task-a-thon community sprint with 25+ community members
+- Jul 1: [Lightning Flash 0.4](https://devblog.pytorchlightning.ai/lightning-flash-0-4-flash-serve-fiftyone-multi-label-text-classification-and-jit-support-97428276c06f)
+- Jun 22: [Ushering in the New Age of Video Understanding with PyTorch](https://medium.com/pytorch/ushering-in-the-new-age-of-video-understanding-with-pytorch-1d85078e8015)
+- May 24: [Lightning Flash 0.3](https://devblog.pytorchlightning.ai/lightning-flash-0-3-new-tasks-visualization-tools-data-pipeline-and-flash-registry-api-1e236ba9530)
+- May 20: [Video Understanding with PyTorch](https://towardsdatascience.com/video-understanding-made-simple-with-pytorch-video-and-lightning-flash-c7d65583c37e)
+- Feb 2: [Read our launch blogpost](https://pytorch-lightning.medium.com/introducing-lightning-flash-the-fastest-way-to-get-started-with-deep-learning-202f196b3b98)
 
 ---
 
@@ -110,10 +120,12 @@ from flash.text import TranslationTask
 model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
 
 # 2. Translate a few sentences!
-predictions = model.predict([
-    "BBC News went to meet one of the project's first graduates.",
-    "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
-])
+predictions = model.predict(
+    [
+        "BBC News went to meet one of the project's first graduates.",
+        "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
+    ]
+)
 print(predictions)
 ```
 
@@ -140,7 +152,7 @@ from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Load the data
 datamodule = ImageClassificationData.from_folders(
@@ -168,10 +180,10 @@ Then use the finetuned model:
 from flash.image import ImageClassifier
 
 # load the finetuned model
-classifier = ImageClassifier.load_from_checkpoint('image_classification_model.pt')
+classifier = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
 # predict!
-predictions = classifier.predict('data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg')
+predictions = classifier.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
 print(predictions)
 ```
 
@@ -191,13 +203,13 @@ from flash.core.data.utils import download_data
 from flash.image import ImageEmbedder
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Create an ImageEmbedder with resnet50 trained on imagenet.
 embedder = ImageEmbedder(backbone="resnet50", embedding_dim=128)
 
 # 3. Generate an embedding from an image path.
-embeddings = embedder.predict('data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg')
+embeddings = embedder.predict("data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg")
 
 # 4. Print embeddings shape
 print(embeddings.shape)
@@ -217,7 +229,7 @@ from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
 
 # 2. Load the data
 datamodule = SummarizationData.from_csv(
@@ -263,7 +275,7 @@ from flash.core.data.utils import download_data
 from flash.tabular import TabularClassifier, TabularClassificationData
 
 # 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", 'data/')
+download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 
 # 2. Load the data
 datamodule = TabularClassificationData.from_csv(
@@ -318,9 +330,9 @@ download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.
 
 # 2. Load the Data
 datamodule = ObjectDetectionData.from_coco(
-  train_folder="data/coco128/images/train2017/",
-  train_ann_file="data/coco128/annotations/instances_train2017.json",
-  batch_size=2
+    train_folder="data/coco128/images/train2017/",
+    train_ann_file="data/coco128/annotations/instances_train2017.json",
+    batch_size=2,
 )
 
 # 3. Build the model
@@ -375,9 +387,7 @@ datamodule = VideoClassificationData.from_folders(
 )
 
 # 3. Build the model
-model = VideoClassifier(
-    backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False
-)
+model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
 
 # 4. Create the trainer
 trainer = flash.Trainer(max_epochs=3)
@@ -410,7 +420,9 @@ from flash.core.data.utils import download_data
 from flash.image import SemanticSegmentation, SemanticSegmentationData
 
 # 1. Download the Data
-download_data("https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip", "data/")
+download_data(
+    "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip", "data/"
+)
 
 # 2. Load the Data
 datamodule = SemanticSegmentationData.from_folders(
@@ -444,9 +456,9 @@ python flash_examples/finetuning/semantic_segmentation.py
 
 </details>
 
-### Example 7: Style Transfer with Pystiche
+### Example 7: Style Transfer with pystiche
 
-Flash has a [Style Transfer task](https://lightning-flash.readthedocs.io/en/latest/reference/style_transfer.html) for Neural Style Transfer (NST) with [Pystiche](https://github.com/pystiche/pystiche).
+Flash has a [Style Transfer task](https://lightning-flash.readthedocs.io/en/latest/reference/style_transfer.html) for Neural Style Transfer (NST) with [pystiche](https://pystiche.org).
 
 <details>
   <summary>View example</summary>
@@ -497,15 +509,10 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import transforms, datasets
 
 # model
-model = nn.Sequential(
-    nn.Flatten(),
-    nn.Linear(28 * 28, 128),
-    nn.ReLU(),
-    nn.Linear(128, 10)
-)
+model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10))
 
 # data
-dataset = datasets.MNIST('./data_folder', download=True, transform=transforms.ToTensor())
+dataset = datasets.MNIST("./data_folder", download=True, transform=transforms.ToTensor())
 train, val = random_split(dataset, [55000, 5000])
 
 # task
@@ -526,6 +533,7 @@ import torch.nn.functional as F
 from torchmetrics import Accuracy
 from typing import Callable, Mapping, Sequence, Type, Union
 from flash.core.classification import ClassificationTask
+
 
 class LinearClassifier(ClassificationTask):
     def __init__(
@@ -551,9 +559,9 @@ class LinearClassifier(ClassificationTask):
     def forward(self, x):
         return self.linear(x)
 
+
 classifier = LinearClassifier(128, 10)
 ...
-
 ```
 
 When you reach the limits of the flexibility provided by Flash, then seamlessly transition to PyTorch Lightning which
@@ -577,9 +585,7 @@ download_data(
 )
 
 # 2. Load the model from a checkpoint and use the FiftyOne serializer
-model = ObjectDetector.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/object_detection_model.pt"
-)
+model = ObjectDetector.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/object_detection_model.pt")
 model.serializer = FiftyOneDetectionLabels()
 
 # 3. Detect the object on the images
