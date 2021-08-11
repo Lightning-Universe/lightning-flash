@@ -122,6 +122,7 @@ class ObjectDetectionFiftyOneDataSource(IceVisionPathsDataSource, FiftyOneDataSo
         data.compute_metadata()
         classes = self._get_classes(data)
         class_map = ClassMap(classes)
+        dataset.num_classes = len(class_map)
 
         parser = FiftyOneParser(data, class_map, self.label_field, self.iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())

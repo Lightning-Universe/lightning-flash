@@ -22,14 +22,13 @@ from pytorch_lightning import Trainer
 from torch.utils.data import Dataset
 
 from flash.__main__ import main
+from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from tests.helpers.utils import _IMAGE_TESTING
 
 if _ICEVISION_AVAILABLE:
-    from icevision.core import BBox, ClassMap, ObjectDetectionRecord
     from icevision.data import Prediction
-    from icevision.utils import ImgSize
 
 
 def collate_fn(samples):
@@ -51,22 +50,25 @@ class DummyDetectionDataset(Dataset):
         c, h, w = self.img_shape
         xs = torch.randint(w - 1, (2,))
         ys = torch.randint(h - 1, (2,))
-        return [min(xs), min(ys), max(xs) + 1, max(ys) + 1]
+        return {"xmin": min(xs), "ymin": min(ys), "width": max(xs) - min(xs) + 1, "height": max(ys) - min(ys) + 1}
 
     def __getitem__(self, idx):
-        record = ObjectDetectionRecord()
+        sample = {}
 
         img = np.random.rand(*self.img_shape).astype(np.float32)
 
-        record.set_img(img)
-        record.set_img_size(ImgSize(width=self.img_shape[0], height=self.img_shape[1]))
-        record.detection.set_class_map(ClassMap([f"test_{i}" for i in range(self.num_classes)], background=None))
+        sample[DefaultDataKeys.INPUT] = img
+
+        sample[DefaultDataKeys.TARGET] = {
+            "bboxes": [],
+            "labels": [],
+        }
 
         for i in range(self.num_boxes):
-            record.detection.add_bboxes([BBox.from_xyxy(*self._random_bbox())])
-            record.detection.add_labels([f"test_{random.randint(0, self.num_classes - 1)}"])
+            sample[DefaultDataKeys.TARGET]["bboxes"].append(self._random_bbox())
+            sample[DefaultDataKeys.TARGET]["labels"].append(random.randint(0, self.num_classes - 1))
 
-        return record
+        return sample
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -90,7 +92,7 @@ def test_init():
 def test_training(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
-    dl = model.process_train_dataset(ds, 2, 0, False)
+    dl = model.process_train_dataset(ds, 2, 0, False, None)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, dl)
 

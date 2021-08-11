@@ -40,11 +40,14 @@ if _ICEVISION_AVAILABLE:
 def to_icevision_record(sample: Dict[str, Any]):
     record = BaseRecord([])
 
-    record_id_component = RecordIDRecordComponent()
-    record_id_component.set_record_id(sample[DefaultDataKeys.METADATA]["image_id"])
+    metadata = sample.get(DefaultDataKeys.METADATA, None) or {}
+
+    if "image_id" in metadata:
+        record_id_component = RecordIDRecordComponent()
+        record_id_component.set_record_id(metadata["image_id"])
 
     component = ClassMapRecordComponent(tasks.detection)
-    component.set_class_map(sample[DefaultDataKeys.METADATA].get("class_map", None))
+    component.set_class_map(metadata.get("class_map", None))
     record.add_component(component)
 
     if "labels" in sample[DefaultDataKeys.TARGET]:
@@ -86,9 +89,9 @@ def to_icevision_record(sample: Dict[str, Any]):
         input_component = FilepathRecordComponent()
         input_component.set_filepath(sample[DefaultDataKeys.INPUT])
     else:
-        if "filepath" in sample[DefaultDataKeys.METADATA]:
+        if "filepath" in metadata:
             input_component = FilepathRecordComponent()
-            input_component.filepath = sample[DefaultDataKeys.METADATA]["filepath"]
+            input_component.filepath = metadata["filepath"]
         else:
             input_component = ImageRecordComponent()
         input_component.composite = record

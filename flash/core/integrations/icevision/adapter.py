@@ -79,7 +79,8 @@ class IceVisionAdapter(Adapter):
         return cls(model_type, model, icevision_adapter, backbone)
 
     @staticmethod
-    def _collate_fn(collate_fn, samples, metadata: List[Dict[str, Any]]):
+    def _collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
+        metadata = metadata or [None] * len(samples)
         return collate_fn(
             [to_icevision_record({**sample, DefaultDataKeys.METADATA: m}) for sample, m in zip(samples, metadata)]
         )
