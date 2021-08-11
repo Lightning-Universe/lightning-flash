@@ -317,9 +317,11 @@ class MatplotlibVisualization(BaseVisualization):
 
     @staticmethod
     @requires_extras("image")
-    def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
+    def _to_numpy(img: Union[np.ndarray, torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
-        if isinstance(img, Image.Image):
+        if isinstance(img, np.ndarray):
+            out = img
+        elif isinstance(img, Image.Image):
             out = np.array(img)
         elif isinstance(img, torch.Tensor):
             out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
