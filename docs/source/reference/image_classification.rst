@@ -75,6 +75,7 @@ We use the `post_tensor_transform` hook to apply the transformations after the i
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
 .. testcode:: transformations
+
     from torchvision import transforms as T
 
     import flash
