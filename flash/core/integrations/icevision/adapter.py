@@ -11,19 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional
+import functools
+from typing import Any, Callable, Dict, List, Optional
 
 from torch.utils.data import DataLoader, Sampler
 
 from flash.core.adapter import Adapter
 from flash.core.data.auto_dataset import BaseAutoDataset
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.integrations.icevision.transforms import to_icevision_record
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
 
 if _ICEVISION_AVAILABLE:
-    from icevision.core import BaseRecord
-    from icevision.data import Dataset
     from icevision.metrics import COCOMetric
     from icevision.metrics import Metric as IceVisionMetric
 else:
@@ -77,6 +78,12 @@ class IceVisionAdapter(Adapter):
         icevision_adapter = icevision_adapter(model=model, metrics=metrics)
         return cls(model_type, model, icevision_adapter, backbone)
 
+    @staticmethod
+    def _collate_fn(collate_fn, samples, metadata: List[Dict[str, Any]]):
+        return collate_fn(
+            [to_icevision_record({**sample, DefaultDataKeys.METADATA: m}) for sample, m in zip(samples, metadata)]
+        )
+
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
@@ -88,7 +95,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        return self.model_type.train_dl(
+        result = self.model_type.train_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -97,6 +104,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
+        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
+        return result
 
     def process_val_dataset(
         self,
@@ -109,7 +118,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        return self.model_type.valid_dl(
+        result = self.model_type.valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -118,6 +127,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
+        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
+        return result
 
     def process_test_dataset(
         self,
@@ -130,7 +141,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        return self.model_type.valid_dl(
+        result = self.model_type.valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -139,6 +150,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
+        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
+        return result
 
     def process_predict_dataset(
         self,
@@ -151,7 +164,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        return self.model_type.infer_dl(
+        result = self.model_type.infer_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -160,6 +173,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
+        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
+        return result
 
     def training_step(self, batch, batch_idx) -> Any:
         return self.icevision_adapter.training_step(batch, batch_idx)
@@ -174,9 +189,6 @@ class IceVisionAdapter(Adapter):
         return self(batch)
 
     def forward(self, batch: Any) -> Any:
-        if isinstance(batch, list) and isinstance(batch[0], BaseRecord):
-            data = Dataset(batch)
-            return self.model_type.predict(self.model, data)
         return self.model_type.predict_from_dl(self.model, [batch], show_pbar=False)
 
     def training_epoch_end(self, outputs) -> None:

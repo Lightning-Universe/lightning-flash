@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type
 import numpy as np
 
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.integrations.icevision.transforms import from_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
 
@@ -31,7 +32,8 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
         return super().predict_load_data(data, dataset)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        return sample[DefaultDataKeys.INPUT].load()
+        record = sample[DefaultDataKeys.INPUT].load()
+        return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample = super().load_sample(sample)
@@ -40,7 +42,7 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
 
         record.set_img(image)
         record.add_component(ClassMapRecordComponent(task=tasks.detection))
-        return record
+        return from_icevision_record(record)
 
 
 class IceVisionParserDataSource(IceVisionPathsDataSource):

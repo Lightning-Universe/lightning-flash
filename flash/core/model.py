@@ -58,15 +58,41 @@ class Wrapper:
 
         self._children = []
 
+        # TODO: create enum values to define what are the exact states
+        self._data_pipeline_state: Optional[DataPipelineState] = None
+
+        # model own internal state shared with the data pipeline.
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+
     def __setattr__(self, key, value):
         if isinstance(value, (LightningModule, Wrapper)):
             self._children.append(key)
-        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results", "_data_pipeline_state"]
         if isinstance(value, Trainer) or key in patched_attributes:
             if hasattr(self, "_children"):
                 for child in self._children:
                     setattr(getattr(self, child), key, value)
         super().__setattr__(key, value)
+
+    def get_state(self, state_type):
+        if state_type in self._state:
+            return self._state[state_type]
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        return None
+
+    def set_state(self, state: ProcessState):
+        self._state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
+        for state in self._state.values():
+            data_pipeline_state.set_state(state)
+        for child in self._children:
+            child = getattr(self, child)
+            if hasattr(child, "attach_data_pipeline_state"):
+                child.attach_data_pipeline_state(data_pipeline_state)
 
 
 class DatasetProcessor:
@@ -279,12 +305,6 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
-
-        # TODO: create enum values to define what are the exact states
-        self._data_pipeline_state: Optional[DataPipelineState] = None
-
-        # model own internal state shared with the data pipeline.
-        self._state: Dict[Type[ProcessState], ProcessState] = {}
 
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
@@ -836,19 +856,3 @@ class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenci
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
-
-    def get_state(self, state_type):
-        if state_type in self._state:
-            return self._state[state_type]
-        if self._data_pipeline_state is not None:
-            return self._data_pipeline_state.get_state(state_type)
-        return None
-
-    def set_state(self, state: ProcessState):
-        self._state[type(state)] = state
-        if self._data_pipeline_state is not None:
-            self._data_pipeline_state.set_state(state)
-
-    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
-        for state in self._state.values():
-            data_pipeline_state.set_state(state)
