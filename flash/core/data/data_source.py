@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import glob
 import os
 import typing
 from dataclasses import dataclass
 from functools import partial
 from inspect import signature
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -511,19 +511,18 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
     @staticmethod
     def _resolve_file(root: str, file_id: str) -> str:
         if os.path.isabs(file_id):
-            pattern = f"{file_id}*"
-        else:
-            pattern = os.path.join(root, f"*{file_id}*")
-        files = glob.glob(pattern, recursive=True)
-        if len(files) > 1:
+            root = os.path.dirname(file_id)
+            file_id = os.path.basename(file_id)
+
+        pattern = f"*{file_id}*"
+
+        try:
+            return str(next(Path(root).rglob(pattern)))
+        except StopIteration:
             raise ValueError(
-                f"Found multiple matches for pattern: {pattern}. File IDs should uniquely identify the file to load."
+                f"Found no matches for pattern: {pattern} in directory: {root}. File IDs should uniquely identify the "
+                "file to load."
             )
-        elif len(files) == 0:
-            raise ValueError(
-                f"Found no matches for pattern: {pattern}. File IDs should uniquely identify the file to load."
-            )
-        return files[0]
 
     @staticmethod
     def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
