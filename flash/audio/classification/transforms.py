@@ -32,11 +32,11 @@ def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]
     """The default transforms for audio classification for spectrograms: resize the spectrogram, convert the
     spectrogram and target to a tensor, and collate the batch."""
     return {
-        "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(spectrogram_size)),
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
             ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
         ),
+        "post_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(spectrogram_size)),
         "collate": kornia_collate,
     }
 

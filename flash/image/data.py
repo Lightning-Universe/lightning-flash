@@ -16,14 +16,16 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import numpy as np
 import torch
 
 import flash
 from flash.core.data.data_source import (
     DefaultDataKeys,
     FiftyOneDataSource,
+    has_file_allowed_extension,
     NumpyDataSource,
-    PathsDataSource,
+    PathsLoaderDataSource,
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
@@ -34,7 +36,7 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
-    IMG_EXTENSIONS = []
+    IMG_EXTENSIONS = ()
 
 if _PIL_AVAILABLE:
     from PIL import Image as PILImage
@@ -42,6 +44,22 @@ else:
 
     class Image:
         Image = None
+
+
+NP_EXTENSIONS = (".npy", ".npz")
+
+
+def image_loader(filepath: str):
+    if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
+        img = default_loader(filepath)
+    elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
+        img = PILImage.fromarray(np.load(filepath).astype("uint8"), "RGB")
+    else:
+        raise ValueError(
+            f"File: {filepath} has an unsupported extension. Supported extensions: "
+            f"{list(IMG_EXTENSIONS + NP_EXTENSIONS)}."
+        )
+    return img
 
 
 class ImageDeserializer(Deserializer):
@@ -65,20 +83,15 @@ class ImageDeserializer(Deserializer):
             return base64.b64encode(f.read()).decode("UTF-8")
 
 
-class ImagePathsDataSource(PathsDataSource):
+class ImagePathsDataSource(PathsLoaderDataSource):
     @requires_extras("image")
     def __init__(self):
-        super().__init__(extensions=IMG_EXTENSIONS)
+        super().__init__(image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
-        img = default_loader(img_path)
-        sample[DefaultDataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {
-            "filepath": img_path,
-            "size": (h, w),
-        }
+        sample = super().load_sample(sample, dataset)
+        w, h = sample[DefaultDataKeys.INPUT].size  # WxH
+        sample[DefaultDataKeys.METADATA]["size"] = (h, w)
         return sample
 
 

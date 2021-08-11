@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import glob
 import os
 import typing
 from dataclasses import dataclass
+from functools import partial
 from inspect import signature
 from typing import (
     Any,
@@ -33,6 +35,7 @@ from typing import (
 )
 
 import numpy as np
+import pandas as pd
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -476,6 +479,121 @@ class PathsDataSource(SequenceDataSource):
                 data,
             )
         )
+
+
+class PathsLoaderDataSource(PathsDataSource):
+    def __init__(
+        self,
+        loader: Callable[[str], Any],
+        extensions: Optional[Tuple[str, ...]] = None,
+        labels: Optional[Sequence[str]] = None,
+    ):
+        super().__init__(extensions=extensions, labels=labels)
+
+        self.loader = loader
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        path = sample[DefaultDataKeys.INPUT]
+        result = self.loader(path)
+        sample[DefaultDataKeys.INPUT] = result
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": path,
+        }
+        return sample
+
+
+class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, Union[str, List[str]], Optional[str]]]):
+    def __init__(self, loader: Callable[[str], Any]):
+        super().__init__()
+
+        self.loader = loader
+
+    @staticmethod
+    def _resolve_file(root: str, file_id: str) -> str:
+        if os.path.isabs(file_id):
+            pattern = f"{file_id}*"
+        else:
+            pattern = os.path.join(root, f"*{file_id}*")
+        files = glob.glob(pattern)
+        if len(files) > 1:
+            raise ValueError(
+                f"Found multiple matches for pattern: {pattern}. File IDs should uniquely identify the file to load."
+            )
+        elif len(files) == 0:
+            raise ValueError(
+                f"Found no matches for pattern: {pattern}. File IDs should uniquely identify the file to load."
+            )
+        return files[0]
+
+    @staticmethod
+    def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
+        row[target_key] = label_to_class[row[target_key]]
+        return row
+
+    @staticmethod
+    def _resolve_multi_target(target_keys: List[str], row: pd.Series) -> pd.Series:
+        row[target_keys[0]] = [row[target_key] for target_key in target_keys]
+        return row
+
+    def load_data(
+        self,
+        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str]],
+        dataset: Optional[Any] = None,
+    ) -> Sequence[Mapping[str, Any]]:
+        data, input_key, target_keys, root = data
+
+        if isinstance(data, str):
+            data_frame = pd.read_csv(data)
+            if root is None:
+                root = os.path.dirname(data)
+        else:
+            data_frame = data
+
+        if root is None:
+            root = ""
+
+        if not self.predicting:
+            if isinstance(target_keys, List):
+                dataset.multi_label = True
+                dataset.num_classes = len(target_keys)
+                self.set_state(LabelsState(target_keys))
+                data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
+                target_keys = target_keys[0]
+            else:
+                dataset.multi_label = False
+                if self.training:
+                    labels = list(sorted(data_frame[target_keys].unique()))
+                    dataset.num_classes = len(labels)
+                    self.set_state(LabelsState(labels))
+
+                labels = self.get_state(LabelsState)
+
+                if labels is not None:
+                    labels = labels.labels
+                    label_to_class = {v: k for k, v in enumerate(labels)}
+                    data_frame = data_frame.apply(partial(self._resolve_target, label_to_class, target_keys), axis=1)
+
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                    DefaultDataKeys.TARGET: row[target_keys],
+                    DefaultDataKeys.METADATA: dict(root=root),
+                }
+                for _, row in data_frame.iterrows()
+            ]
+        else:
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                    DefaultDataKeys.METADATA: dict(root=root),
+                }
+                for _, row in data_frame.iterrows()
+            ]
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        file = self._resolve_file(sample[DefaultDataKeys.METADATA]["root"], sample[DefaultDataKeys.INPUT])
+        sample[DefaultDataKeys.INPUT] = self.loader(file)
+        return sample
 
 
 class TensorDataSource(SequenceDataSource[torch.Tensor]):
