@@ -55,18 +55,17 @@ Here's the full example:
     :language: python
     :lines: 14-
 
-
 ------
 
-*******
+**********************
 Custom Transformations
-*******
+**********************
 
-Flash automatically takes care of Image transformations for you. But sometimes it is not enough and you want to customize the transformations.
+Flash automatically applies some default image transformations and augmentations, but you may wish to customize these for your own use case.
 The base :class:`~flash.core.data.process.Preprocess` defines 7 hooks for different stages in the data loading pipeline.
-To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them.
-In this example, we will load the default transforms and merge with custom `torchvision` transformations. We use the `post_tensor_transform` hook to apply the transformations
-after the image is converted to a `torch.Tensor`.
+To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them using the :func:`~flash.core.data.transforms.merge_transforms` helper function.
+Here's an example where we load the default transforms and merge with custom `torchvision` transformations.
+We use the `post_tensor_transform` hook to apply the transformations after the image has been converted to a `torch.Tensor`.
 
 
 .. testcode:: transformations
@@ -83,10 +82,7 @@ after the image is converted to a `torch.Tensor`.
 
     post_tensor_transform = ApplyToKeys(
         DefaultDataKeys.INPUT,
-        T.Compose([T.RandomHorizontalFlip(),
-                   T.ColorJitter(),
-                   T.RandomAutocontrast(),
-                   T.RandomPerspective()])
+        T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
     )
 
     new_transforms = merge_transforms(default_image_transforms, {"post_tensor_transform": post_tensor_transform})
@@ -94,13 +90,11 @@ after the image is converted to a `torch.Tensor`.
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
     datamodule = ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/",
-        val_folder="data/hymenoptera_data/val/",
-        train_transform=new_transforms
+        train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", train_transform=new_transforms
     )
 
 
-.. testoutput:: finetune
+.. testoutput:: transformations
     :hide:
 
     ...
