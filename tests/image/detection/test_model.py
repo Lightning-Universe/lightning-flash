@@ -97,6 +97,7 @@ def test_training(tmpdir, head):
     trainer.fit(model, dl)
 
 
+# TODO: resolve JIT issues
 # @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 # def test_jit(tmpdir):
 #     path = os.path.join(tmpdir, "test.pt")

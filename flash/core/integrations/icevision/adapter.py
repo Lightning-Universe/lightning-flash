@@ -96,7 +96,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        result = self.model_type.train_dl(
+        data_loader = self.model_type.train_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -105,8 +105,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
-        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
-        return result
+        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        return data_loader
 
     def process_val_dataset(
         self,
@@ -119,7 +119,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        result = self.model_type.valid_dl(
+        data_loader = self.model_type.valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -128,8 +128,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
-        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
-        return result
+        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        return data_loader
 
     def process_test_dataset(
         self,
@@ -142,7 +142,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        result = self.model_type.valid_dl(
+        data_loader = self.model_type.valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -151,8 +151,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
-        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
-        return result
+        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        return data_loader
 
     def process_predict_dataset(
         self,
@@ -165,7 +165,7 @@ class IceVisionAdapter(Adapter):
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        result = self.model_type.infer_dl(
+        data_loader = self.model_type.infer_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -174,8 +174,8 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
-        result.collate_fn = functools.partial(self._collate_fn, result.collate_fn)
-        return result
+        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
         return self.icevision_adapter.training_step(batch, batch_idx)
