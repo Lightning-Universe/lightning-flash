@@ -83,10 +83,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash audio-classification
+    flash audio_classification
 
 To view configuration options and options for running the audio classifier with your own data, use:
 
 .. code-block:: bash
 
-    flash audio-classification --help
+    flash audio_classification --help

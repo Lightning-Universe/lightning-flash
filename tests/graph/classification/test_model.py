@@ -80,7 +80,7 @@ def test_predict_dataset(tmpdir):
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_cli():
-    cli_args = ["flash", "graph-classification", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "graph_classification", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()
