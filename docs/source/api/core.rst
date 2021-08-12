@@ -7,6 +7,17 @@ flash.core
     :local:
     :backlinks: top
 
+flash.core.adapter
+__________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.adapter.Adapter
+    ~flash.core.adapter.AdapterTask
+
 flash.core.classification
 _________________________
 
@@ -56,6 +67,8 @@ ________________
 
     ~flash.core.model.BenchmarkConvergenceCI
     ~flash.core.model.CheckDependenciesMeta
+    ~flash.core.model.ModuleWrapperBase
+    ~flash.core.model.DatasetProcessor
     ~flash.core.model.Task
 
 flash.core.registry
