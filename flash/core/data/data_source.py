@@ -413,10 +413,16 @@ class PathsDataSource(SequenceDataSource):
             :class:`~flash.core.data.data_source.LabelsState`.
     """
 
-    def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):
+    def __init__(
+        self,
+        extensions: Optional[Tuple[str, ...]] = None,
+        loader: Optional[Callable[[str], Any]] = None,
+        labels: Optional[Sequence[str]] = None,
+    ):
         super().__init__(labels=labels)
 
         self.extensions = extensions
+        self.loader = loader
 
     @staticmethod
     def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
@@ -480,22 +486,12 @@ class PathsDataSource(SequenceDataSource):
             )
         )
 
-
-class PathsLoaderDataSource(PathsDataSource):
-    def __init__(
-        self,
-        loader: Callable[[str], Any],
-        extensions: Optional[Tuple[str, ...]] = None,
-        labels: Optional[Sequence[str]] = None,
-    ):
-        super().__init__(extensions=extensions, labels=labels)
-
-        self.loader = loader
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         path = sample[DefaultDataKeys.INPUT]
-        result = self.loader(path)
-        sample[DefaultDataKeys.INPUT] = result
+
+        if self.loader is not None:
+            sample[DefaultDataKeys.INPUT] = self.loader(path)
+
         sample[DefaultDataKeys.METADATA] = {
             "filepath": path,
         }

@@ -25,7 +25,7 @@ from flash.core.data.data_source import (
     FiftyOneDataSource,
     has_file_allowed_extension,
     NumpyDataSource,
-    PathsLoaderDataSource,
+    PathsDataSource,
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
@@ -83,10 +83,10 @@ class ImageDeserializer(Deserializer):
             return base64.b64encode(f.read()).decode("UTF-8")
 
 
-class ImagePathsDataSource(PathsLoaderDataSource):
+class ImagePathsDataSource(PathsDataSource):
     @requires_extras("image")
     def __init__(self):
-        super().__init__(image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)

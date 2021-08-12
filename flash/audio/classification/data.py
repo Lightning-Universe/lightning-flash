@@ -20,7 +20,7 @@ from flash.core.data.data_source import (
     DefaultDataSources,
     has_file_allowed_extension,
     LoaderDataFrameDataSource,
-    PathsLoaderDataSource,
+    PathsDataSource,
 )
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, requires_extras
@@ -43,10 +43,10 @@ def spectrogram_loader(filepath: str):
     return data
 
 
-class AudioClassificationPathsDataSource(PathsLoaderDataSource):
+class AudioClassificationPathsDataSource(PathsDataSource):
     @requires_extras("image")
     def __init__(self):
-        super().__init__(spectrogram_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        super().__init__(loader=spectrogram_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
 
 class AudioClassificationDataFrameDataSource(LoaderDataFrameDataSource):
