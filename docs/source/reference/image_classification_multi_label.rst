@@ -61,13 +61,13 @@ You can run the movie posters example with:
 
 .. code-block:: bash
 
-    flash image-classification from_movie_posters
+    flash image_classification from_movie_posters
 
 To view configuration options and options for running the image classifier with your own data, use:
 
 .. code-block:: bash
 
-    flash image-classification --help
+    flash image_classification --help
 
 
 ------

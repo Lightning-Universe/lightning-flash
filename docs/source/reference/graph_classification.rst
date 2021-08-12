@@ -43,10 +43,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash graph-classifier
+    flash graph_classification
 
 To view configuration options and options for running the graph classifier with your own data, use:
 
 .. code-block:: bash
 
-    flash graph-classifier --help
+    flash graph_classification --help
