@@ -52,7 +52,16 @@ from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires_extras
 
 
-class Wrapper:
+class ModuleWrapperBase:
+    """The ``ModuleWrapperBase`` is a base for classes which wrap a ``LightningModule`` or an instance of
+    ``ModuleWrapperBase``.
+
+    This class ensures that trainer attributes are forwarded to any wrapped or nested
+    ``LightningModule`` instances so that nested calls to ``.log`` are handled correctly. The ``ModuleWrapperBase`` is
+    also stateful, meaning that a :class:`~flash.core.data.data_pipeline.DataPipelineState` can be attached. Attached
+    state will be forwarded to any nested ``ModuleWrapperBase`` instances.
+    """
+
     def __init__(self):
         super().__init__()
 
@@ -65,7 +74,7 @@ class Wrapper:
         self._state: Dict[Type[ProcessState], ProcessState] = {}
 
     def __setattr__(self, key, value):
-        if isinstance(value, (LightningModule, Wrapper)):
+        if isinstance(value, (LightningModule, ModuleWrapperBase)):
             self._children.append(key)
         patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results", "_data_pipeline_state"]
         if isinstance(value, Trainer) or key in patched_attributes:
@@ -96,6 +105,9 @@ class Wrapper:
 
 
 class DatasetProcessor:
+    """The ``DatasetProcessor`` mixin provides hooks for classes which need custom logic for producing the data
+    loaders for each running stage given the corresponding dataset."""
+
     def _process_dataset(
         self,
         dataset: BaseAutoDataset,
@@ -254,7 +266,7 @@ class CheckDependenciesMeta(ABCMeta):
         return result
 
 
-class Task(DatasetProcessor, Wrapper, LightningModule, metaclass=CheckDependenciesMeta):
+class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:

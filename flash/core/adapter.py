@@ -19,14 +19,20 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.model import DatasetProcessor, Task, Wrapper
+from flash.core.model import DatasetProcessor, ModuleWrapperBase, Task
 
 
-class Adapter(DatasetProcessor, Wrapper, nn.Module):
+class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
+    """The ``Adapter`` is a lightweight interface that can be used to encapsulate the logic from a particular
+    provider within a :class:`~flash.core.model.Task`."""
+
     @classmethod
     @abstractmethod
     def from_task(cls, task: "flash.Task", **kwargs) -> "Adapter":
-        pass
+        """Instantiate the adapter from the given :class:`~flash.core.model.Task`.
+
+        This includes resolution / creation of backbones / heads and any other provider specific options.
+        """
 
     def forward(self, x: Any) -> Any:
         pass
@@ -54,6 +60,14 @@ class Adapter(DatasetProcessor, Wrapper, nn.Module):
 
 
 class AdapterTask(Task):
+    """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter`
+    and forwards all of the hooks.
+
+    Args:
+        adapter: The :class:`~flash.core.adapter.Adapter` to wrap.
+        kwargs: Keyword arguments to be passed to the base :class:`~flash.core.model.Task`.
+    """
+
     def __init__(self, adapter: Adapter, **kwargs):
         super().__init__(**kwargs)
 
