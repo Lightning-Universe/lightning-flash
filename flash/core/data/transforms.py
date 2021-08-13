@@ -106,7 +106,7 @@ def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     """
     for sample in samples:
         for key in sample.keys():
-            if torch.is_tensor(sample[key]):
+            if torch.is_tensor(sample[key]) and sample[key].ndim() == 4:
                 sample[key] = sample[key].squeeze(0)
     return default_collate(samples)
 

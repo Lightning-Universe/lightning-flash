@@ -15,9 +15,10 @@ from typing import Callable, Dict, Tuple
 
 import torch
 from torch import nn
+from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
+from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -37,7 +38,7 @@ def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]
             ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
         ),
         "post_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(spectrogram_size)),
-        "collate": kornia_collate,
+        "collate": default_collate,
     }
 
 
