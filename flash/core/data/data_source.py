@@ -24,6 +24,7 @@ from typing import (
     Dict,
     Generic,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -41,6 +42,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
+from tqdm import tqdm
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
@@ -505,15 +507,23 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
         self.loader = loader
 
     @staticmethod
-    def _resolve_file(root: str, file_id: str) -> str:
+    def _walk_files(root: str) -> Iterator[str]:
+        for root, _, files in os.walk(root):
+            for file in files:
+                yield os.path.join(root, file)
+
+    @staticmethod
+    def _resolve_file(root: str, input_key: str, row: pd.Series) -> pd.Series:
+        file_id = row[input_key]
         if os.path.isabs(file_id):
-            root = os.path.dirname(file_id)
-            file_id = os.path.basename(file_id)
+            return row
 
         pattern = f"*{file_id}*"
 
         try:
-            return str(next(Path(root).rglob(pattern)))
+            path = str(next(Path(root).rglob(pattern)))
+            row[input_key] = path
+            return row
         except StopIteration:
             raise ValueError(
                 f"Found no matches for pattern: {pattern} in directory: {root}. File IDs should uniquely identify the "
@@ -547,6 +557,9 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
         if root is None:
             root = ""
 
+        tqdm.pandas(desc="Resolving files")
+        data_frame = data_frame.progress_apply(partial(self._resolve_file, root, input_key), axis=1)
+
         if not self.predicting:
             if isinstance(target_keys, List):
                 dataset.multi_label = True
@@ -572,7 +585,6 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
                 {
                     DefaultDataKeys.INPUT: row[input_key],
                     DefaultDataKeys.TARGET: row[target_keys],
-                    DefaultDataKeys.METADATA: dict(root=root),
                 }
                 for _, row in data_frame.iterrows()
             ]
@@ -580,14 +592,20 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
             return [
                 {
                     DefaultDataKeys.INPUT: row[input_key],
-                    DefaultDataKeys.METADATA: dict(root=root),
                 }
                 for _, row in data_frame.iterrows()
             ]
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        file = self._resolve_file(sample[DefaultDataKeys.METADATA]["root"], sample[DefaultDataKeys.INPUT])
-        sample[DefaultDataKeys.INPUT] = self.loader(file)
+        # TODO: simplify this duplicated code from PathsDataSource
+        path = sample[DefaultDataKeys.INPUT]
+
+        if self.loader is not None:
+            sample[DefaultDataKeys.INPUT] = self.loader(path)
+
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": path,
+        }
         return sample
 
 
