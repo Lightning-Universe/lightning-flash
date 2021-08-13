@@ -117,12 +117,16 @@ class ImageClassificationData(DataModule):
         target_fields: Optional[Union[str, Sequence[str]]] = None,
         train_data_frame: Optional[pd.DataFrame] = None,
         train_images_root: Optional[str] = None,
+        train_resolver: Optional[Callable[[str, str], str]] = None,
         val_data_frame: Optional[pd.DataFrame] = None,
         val_images_root: Optional[str] = None,
+        val_resolver: Optional[Callable[[str, str], str]] = None,
         test_data_frame: Optional[pd.DataFrame] = None,
         test_images_root: Optional[str] = None,
+        test_resolver: Optional[Callable[[str, str], str]] = None,
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
+        predict_resolver: Optional[Callable[[str, str], str]] = None,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
@@ -144,15 +148,19 @@ class ImageClassificationData(DataModule):
             train_data_frame: The pandas ``DataFrame`` containing the training data.
             train_images_root: The directory containing the train images. If ``None``, values in the ``input_field``
                 will be assumed to be the full file paths.
+            train_resolver: TODO
             val_data_frame: The pandas ``DataFrame`` containing the validation data.
             val_images_root: The directory containing the validation images. If ``None``, the directory containing the
                 ``val_file`` will be used.
+            val_resolver: TODO
             test_data_frame: The pandas ``DataFrame`` containing the testing data.
             test_images_root: The directory containing the test images. If ``None``, the directory containing the
                 ``test_file`` will be used.
+            test_resolver: TODO
             predict_data_frame: The pandas ``DataFrame`` containing the data to use when predicting.
             predict_images_root: The directory containing the predict images. If ``None``, the directory containing the
                 ``predict_file`` will be used.
+            predict_resolver: TODO
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -187,10 +195,10 @@ class ImageClassificationData(DataModule):
         """
         return cls.from_data_source(
             "data_frame",
-            (train_data_frame, input_field, target_fields, train_images_root),
-            (val_data_frame, input_field, target_fields, val_images_root),
-            (test_data_frame, input_field, target_fields, test_images_root),
-            (predict_data_frame, input_field, target_fields, predict_images_root),
+            (train_data_frame, input_field, target_fields, train_images_root, train_resolver),
+            (val_data_frame, input_field, target_fields, val_images_root, val_resolver),
+            (test_data_frame, input_field, target_fields, test_images_root, test_resolver),
+            (predict_data_frame, input_field, target_fields, predict_images_root, predict_resolver),
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,

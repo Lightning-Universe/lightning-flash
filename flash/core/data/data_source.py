@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 import typing
+import warnings
 from dataclasses import dataclass
 from functools import partial
 from inspect import signature
@@ -500,7 +501,9 @@ class PathsDataSource(SequenceDataSource):
         return sample
 
 
-class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, Union[str, List[str]], Optional[str]]]):
+class LoaderDataFrameDataSource(
+    DataSource[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]
+):
     def __init__(self, loader: Callable[[str], Any]):
         super().__init__()
 
@@ -513,22 +516,24 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
                 yield os.path.join(root, file)
 
     @staticmethod
-    def _resolve_file(root: str, input_key: str, row: pd.Series) -> pd.Series:
-        file_id = row[input_key]
-        if os.path.isabs(file_id):
-            return row
+    def _default_resolver(root: str, id: str):
+        if os.path.isabs(id):
+            return id
 
-        pattern = f"*{file_id}*"
+        pattern = f"*{id}*"
 
         try:
-            path = str(next(Path(root).rglob(pattern)))
-            row[input_key] = path
-            return row
+            return str(next(Path(root).rglob(pattern)))
         except StopIteration:
             raise ValueError(
                 f"Found no matches for pattern: {pattern} in directory: {root}. File IDs should uniquely identify the "
                 "file to load."
             )
+
+    @staticmethod
+    def _resolve_file(resolver: Callable[[str, str], str], root: str, input_key: str, row: pd.Series) -> pd.Series:
+        row[input_key] = resolver(root, row[input_key])
+        return row
 
     @staticmethod
     def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
@@ -542,10 +547,10 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
 
     def load_data(
         self,
-        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str]],
+        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]],
         dataset: Optional[Any] = None,
     ) -> Sequence[Mapping[str, Any]]:
-        data, input_key, target_keys, root = data
+        data, input_key, target_keys, root, resolver = data
 
         if isinstance(data, str):
             data_frame = pd.read_csv(data)
@@ -557,8 +562,12 @@ class LoaderDataFrameDataSource(DataSource[Tuple[Union[pd.DataFrame, str], str, 
         if root is None:
             root = ""
 
+        if resolver is None:
+            warnings.warn("Using default resolver, this may take a while.", UserWarning)
+            resolver = self._default_resolver
+
         tqdm.pandas(desc="Resolving files")
-        data_frame = data_frame.progress_apply(partial(self._resolve_file, root, input_key), axis=1)
+        data_frame = data_frame.progress_apply(partial(self._resolve_file, resolver, root, input_key), axis=1)
 
         if not self.predicting:
             if isinstance(target_keys, List):
