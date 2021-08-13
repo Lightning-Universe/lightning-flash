@@ -58,13 +58,13 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash text-classifier
+    flash text_classification
 
 To view configuration options and options for running the text classifier with your own data, use:
 
 .. code-block:: bash
 
-    flash text-classifier --help
+    flash text_classification --help
 
 ------
 

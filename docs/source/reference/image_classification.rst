@@ -117,13 +117,13 @@ You can run the hymenoptera example with:
 
 .. code-block:: bash
 
-    flash image-classification
+    flash image_classification
 
 To view configuration options and options for running the image classifier with your own data, use:
 
 .. code-block:: bash
 
-    flash image-classification --help
+    flash image_classification --help
 
 ------
 

@@ -81,10 +81,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash pointcloud-segmentation
+    flash pointcloud_segmentation
 
 To view configuration options and options for running the point cloud segmentation task with your own data, use:
 
 .. code-block:: bash
 
-    flash pointcloud-segmentation --help
+    flash pointcloud_segmentation --help
