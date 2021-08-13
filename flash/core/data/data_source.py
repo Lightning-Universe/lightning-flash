@@ -552,7 +552,8 @@ class LoaderDataFrameDataSource(
     ) -> Sequence[Mapping[str, Any]]:
         data, input_key, target_keys, root, resolver = data
 
-        if isinstance(data, str):
+        if isinstance(data, (str, Path)):
+            data = str(data)
             data_frame = pd.read_csv(data)
             if root is None:
                 root = os.path.dirname(data)
