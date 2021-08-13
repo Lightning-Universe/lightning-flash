@@ -1,5 +1,3 @@
-from itertools import chain
-
 from flash.core.data.utils import download_data
 
 import flash
@@ -13,7 +11,7 @@ download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightnin
 # 1. Load export data
 datamodule = ImageClassificationData.from_labelstudio(
     export_json='data/project.json',
-    img_folder='data/upload/',
+    data_folder='data/upload/',
     val_split=0.8,
 )
 

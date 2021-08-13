@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import os
 import typing
 from dataclasses import dataclass
@@ -43,7 +44,7 @@ from torchvision.datasets.folder import default_loader
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, _TEXT_AVAILABLE
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -548,7 +549,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
 
 class LabelStudioDataset(Dataset):
-    r"""Dataset wrapping label studio annotations.
+    """Dataset wrapping label studio annotations.
 
     Each sample will be retrieved by checking result field of the annotation.
 
@@ -607,3 +608,133 @@ class LabelStudioDataset(Dataset):
 
     def __len__(self):
         return len(self.results)
+
+
+class LabelStudioDataSource(DataSource):
+    """The ``LabelStudioDatasource`` expects the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
+
+    def __init__(self, data_folder: str, export_json: str, multi_label=False, backbone=None, max_length=128):
+
+        super().__init__()
+        self._data_folder = data_folder
+        with open(export_json) as f:
+            self._raw_data = json.load(f)
+        self.results = list()
+        self.test_results = list()
+        self.classes = set()
+        self.num_classes = 0
+        self.multi_label = multi_label
+        if backbone:
+            if _TEXT_AVAILABLE:
+                from transformers import AutoTokenizer
+            self.backbone = backbone
+            self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+            self.max_length = max_length
+
+    def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+        # iterate through all tasks in exported data
+        if data:
+            self._raw_data = data
+        for task in self._raw_data:
+            for annotation in task['annotations']:
+                # Adding ground_truth annotation to separate dataset
+                result = annotation['result']
+                for res in result:
+                    t = res['type']
+                    for label in res['value'][t]:
+                        # check if labeling result is a list of labels
+                        if isinstance(label, list):
+                            for sublabel in label:
+                                self.classes.add(sublabel)
+                                temp = dict()
+                                temp['file_upload'] = task.get('file_upload')
+                                temp['data'] = task.get('data')
+                                temp['label'] = sublabel
+                                temp['result'] = res.get('value')
+                                if annotation['ground_truth']:
+                                    self.test_results.append(temp)
+                                elif not annotation['ground_truth']:
+                                    self.results.append(temp)
+                        else:
+                            self.classes.add(label)
+                            temp = dict()
+                            temp['file_upload'] = task.get('file_upload')
+                            temp['data'] = task.get('data')
+                            temp['label'] = label
+                            temp['result'] = res.get('value')
+                            if annotation['ground_truth']:
+                                self.test_results.append(temp)
+                            elif not annotation['ground_truth']:
+                                self.results.append(temp)
+        self.num_classes = len(self.classes)
+
+    def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
+        data_types = sample.get('data')
+        data_type = None
+        # casting to list and sorting classes
+        sorted_labels = sorted(list(self.classes))
+        # checking index of class
+        label = sorted_labels.index(sample['label'])
+
+        if isinstance(data_types, dict):
+            # extracting data types from sample
+            data_types = list(data_types.keys())
+            if len(data_types) == 1:
+                data_type = data_types[0]
+            else:
+                data_type = None
+        if data_type == 'image':
+            # extracting path to file
+            if sample['file_upload']:
+                p = os.path.join(self._data_folder, sample['file_upload'])
+            else:
+                p = sample.get('data').get('image')
+            # loading image
+            image = default_loader(p)
+            result = {DefaultDataKeys.INPUT: image,
+                      DefaultDataKeys.TARGET: label}
+        elif data_type == 'text' and self.backbone:
+            tokenized_data = self.tokenizer(sample.get('data').get(data_type),
+                                            max_length=self.max_length,
+                                            truncation=True,
+                                            padding="max_length")
+            for key in tokenized_data:
+                tokenized_data[key] = torch.tensor(tokenized_data[key])
+            tokenized_data['labels'] = label
+            # separate text data type block
+            result = tokenized_data
+        elif data_type == 'video':
+            # extract path to file
+            if sample['file_upload']:
+                p = os.path.join(self._data_folder, sample['file_upload'])
+            else:
+                p = sample.get('data').get('image')
+            result = {DefaultDataKeys.INPUT: p,
+                      DefaultDataKeys.TARGET: label}
+        else:
+            # all other data types
+            result = {DefaultDataKeys.INPUT: sample.get('data').get(data_type),
+                      DefaultDataKeys.TARGET: label}
+        return result
+
+    def generate_dataset(
+            self,
+            data: Optional[DATA_TYPE],
+            running_stage: RunningStage,
+    ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
+        if running_stage in (RunningStage.TRAINING, RunningStage.TUNING):
+            data = self.results
+        elif running_stage == RunningStage.VALIDATING:
+            data = []
+        elif running_stage == RunningStage.TESTING:
+            data = self.test_results
+        elif running_stage == RunningStage.PREDICTING:
+            data = []
+
+        if has_len(data):
+            dataset = AutoDataset(data, self, running_stage)
+        else:
+            dataset = IterableAutoDataset(data, self, running_stage)
+        dataset.num_classes = self.num_classes
+        return dataset

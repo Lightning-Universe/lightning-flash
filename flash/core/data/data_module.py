@@ -29,7 +29,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelStudioDataset
+from flash.core.data.data_source import DataSource, DefaultDataSources, LabelStudioDataset, LabelStudioDataSource
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
@@ -1158,7 +1158,7 @@ class DataModule(pl.LightningDataModule):
     def from_labelstudio(
         cls,
         export_json: str = None,
-        img_folder: str = None,
+        data_folder: str = None,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
@@ -1179,7 +1179,7 @@ class DataModule(pl.LightningDataModule):
 
         Args:
             export_json: path to label studio export file
-            img_folder: path to label studio data folder
+            data_folder: path to label studio data folder
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -1207,21 +1207,23 @@ class DataModule(pl.LightningDataModule):
 
             data_module = DataModule.from_labelstudio(
                 export_json='project.json',
-                img_folder='label-studio/media/upload',
+                data_folder='label-studio/media/upload',
                 val_split=0.8,
             )
         """
         # loading export data
-        with open(export_json) as f:
-            js = json.load(f)
+        data_source = LabelStudioDataSource(data_folder=data_folder,
+                                            export_json=export_json,
+                                            backbone=preprocess_kwargs.get('backbone'),
+                                            max_length=preprocess_kwargs.get('max_length', 128))
+        data_source.load_data()
         # loading data sets
-        full_dataset = LabelStudioDataset(js, img_folder)
-        val_dataset = LabelStudioDataset(js, img_folder, val=True)
+        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets()
         # creating splitting params
-        l = len(full_dataset)
+        l = len(train_dataset)
         prop = int(l * val_split)
         # splitting full data set
-        train_dataset, test_dataset = random_split(full_dataset, [prop, l - prop])
+        train_dataset, val_dataset = random_split(train_dataset, [prop, l - prop])
 
         preprocess = preprocess or cls.preprocess_cls(
             train_transform,
@@ -1230,12 +1232,12 @@ class DataModule(pl.LightningDataModule):
             predict_transform,
             **preprocess_kwargs,
         )
-        data_source = preprocess.data_source_of_name(DefaultDataSources.FOLDERS)
+
         data = cls(
             train_dataset,
             val_dataset,
             test_dataset,
-            None,
+            predict_dataset,
             data_source=data_source,
             preprocess=preprocess,
             data_fetcher=data_fetcher,
