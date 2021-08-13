@@ -394,6 +394,7 @@ class DataPipeline:
                     # don't have to reinstantiate loader if just rewrapping devices (happens during detach)
                     if not device_transform_only:
                         del dl_args["batch_sampler"]
+                        print(dl_args)
                         loader = type(loader)(**dl_args)
 
                 dataloader[idx] = loader
