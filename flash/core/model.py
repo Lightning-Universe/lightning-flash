@@ -790,7 +790,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         pin_memory: bool,
         collate_fn: Callable,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
@@ -812,7 +812,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         pin_memory: bool = False,
         collate_fn: Callable = lambda x: x,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         convert_to_dataloader: bool = True,
     ) -> Union[DataLoader, BaseAutoDataset]:

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -136,7 +136,7 @@ class ImageClassificationData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        sampler: Optional[Sampler] = None,
+        sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given pandas
@@ -177,7 +177,7 @@ class ImageClassificationData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -238,7 +238,7 @@ class ImageClassificationData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        sampler: Optional[Sampler] = None,
+        sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
@@ -281,7 +281,7 @@ class ImageClassificationData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
