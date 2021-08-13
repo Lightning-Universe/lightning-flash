@@ -22,7 +22,7 @@ import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.dataset import IterableDataset, Subset, random_split
+from torch.utils.data.dataset import IterableDataset, random_split, Subset
 from torch.utils.data.sampler import Sampler
 
 from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
