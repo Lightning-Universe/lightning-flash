@@ -75,6 +75,9 @@ class BaseVideoClassification(object):
             dataset.num_classes = len(np.unique([s[1]["label"] for s in ds._labeled_videos]))
         return ds
 
+    def load_sample(self, sample):
+        return sample
+
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         video_path = sample[DefaultDataKeys.INPUT]
         sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(video_path)))
