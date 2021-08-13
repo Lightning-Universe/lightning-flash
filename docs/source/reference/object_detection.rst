@@ -61,10 +61,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash object-detection
+    flash object_detection
 
 To view configuration options and options for running the object detector with your own data, use:
 
 .. code-block:: bash
 
-    flash object-detection --help
+    flash object_detection --help

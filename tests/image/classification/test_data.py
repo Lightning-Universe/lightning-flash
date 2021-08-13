@@ -549,29 +549,6 @@ def test_from_csv_multi_target(multi_target_csv):
 
 
 @pytest.fixture
-def bad_csv_multi_image(image_tmpdir):
-    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
-        fieldnames = ["image", "target"]
-        writer = csv.DictWriter(csvfile, fieldnames)
-        writer.writeheader()
-        writer.writerow({"image": "image", "target": "Ants"})
-    return str(image_tmpdir / "metadata.csv")
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_from_bad_csv_multi_image(bad_csv_multi_image):
-    with pytest.raises(ValueError, match="Found multiple matches"):
-        img_data = ImageClassificationData.from_csv(
-            "image",
-            ["target"],
-            train_file=bad_csv_multi_image,
-            batch_size=1,
-            num_workers=0,
-        )
-        _ = next(iter(img_data.train_dataloader()))
-
-
-@pytest.fixture
 def bad_csv_no_image(image_tmpdir):
     with open(image_tmpdir / "metadata.csv", "w") as csvfile:
         fieldnames = ["image", "target"]

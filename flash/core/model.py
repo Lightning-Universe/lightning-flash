@@ -126,6 +126,7 @@ class DatasetProcessor:
             pin_memory=pin_memory,
             shuffle=shuffle,
             drop_last=drop_last,
+            sampler=sampler,
             collate_fn=collate_fn,
         )
 

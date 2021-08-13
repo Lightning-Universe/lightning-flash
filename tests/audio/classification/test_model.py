@@ -23,7 +23,7 @@ from tests.helpers.utils import _AUDIO_TESTING
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_cli():
-    cli_args = ["flash", "audio-classification", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "audio_classification", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()

@@ -13,8 +13,11 @@
 # limitations under the License.
 import os
 import typing
+import warnings
 from dataclasses import dataclass
+from functools import partial
 from inspect import signature
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -22,6 +25,7 @@ from typing import (
     Dict,
     Generic,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -33,11 +37,13 @@ from typing import (
 )
 
 import numpy as np
+import pandas as pd
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
+from tqdm import tqdm
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
@@ -410,10 +416,16 @@ class PathsDataSource(SequenceDataSource):
             :class:`~flash.core.data.data_source.LabelsState`.
     """
 
-    def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):
+    def __init__(
+        self,
+        extensions: Optional[Tuple[str, ...]] = None,
+        loader: Optional[Callable[[str], Any]] = None,
+        labels: Optional[Sequence[str]] = None,
+    ):
         super().__init__(labels=labels)
 
         self.extensions = extensions
+        self.loader = loader
 
     @staticmethod
     def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
@@ -476,6 +488,135 @@ class PathsDataSource(SequenceDataSource):
                 data,
             )
         )
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        path = sample[DefaultDataKeys.INPUT]
+
+        if self.loader is not None:
+            sample[DefaultDataKeys.INPUT] = self.loader(path)
+
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": path,
+        }
+        return sample
+
+
+class LoaderDataFrameDataSource(
+    DataSource[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]
+):
+    def __init__(self, loader: Callable[[str], Any]):
+        super().__init__()
+
+        self.loader = loader
+
+    @staticmethod
+    def _walk_files(root: str) -> Iterator[str]:
+        for root, _, files in os.walk(root):
+            for file in files:
+                yield os.path.join(root, file)
+
+    @staticmethod
+    def _default_resolver(root: str, id: str):
+        if os.path.isabs(id):
+            return id
+
+        pattern = f"*{id}*"
+
+        try:
+            return str(next(Path(root).rglob(pattern)))
+        except StopIteration:
+            raise ValueError(
+                f"Found no matches for pattern: {pattern} in directory: {root}. File IDs should uniquely identify the "
+                "file to load."
+            )
+
+    @staticmethod
+    def _resolve_file(resolver: Callable[[str, str], str], root: str, input_key: str, row: pd.Series) -> pd.Series:
+        row[input_key] = resolver(root, row[input_key])
+        return row
+
+    @staticmethod
+    def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
+        row[target_key] = label_to_class[row[target_key]]
+        return row
+
+    @staticmethod
+    def _resolve_multi_target(target_keys: List[str], row: pd.Series) -> pd.Series:
+        row[target_keys[0]] = [row[target_key] for target_key in target_keys]
+        return row
+
+    def load_data(
+        self,
+        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]],
+        dataset: Optional[Any] = None,
+    ) -> Sequence[Mapping[str, Any]]:
+        data, input_key, target_keys, root, resolver = data
+
+        if isinstance(data, (str, Path)):
+            data = str(data)
+            data_frame = pd.read_csv(data)
+            if root is None:
+                root = os.path.dirname(data)
+        else:
+            data_frame = data
+
+        if root is None:
+            root = ""
+
+        if resolver is None:
+            warnings.warn("Using default resolver, this may take a while.", UserWarning)
+            resolver = self._default_resolver
+
+        tqdm.pandas(desc="Resolving files")
+        data_frame = data_frame.progress_apply(partial(self._resolve_file, resolver, root, input_key), axis=1)
+
+        if not self.predicting:
+            if isinstance(target_keys, List):
+                dataset.multi_label = True
+                dataset.num_classes = len(target_keys)
+                self.set_state(LabelsState(target_keys))
+                data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
+                target_keys = target_keys[0]
+            else:
+                dataset.multi_label = False
+                if self.training:
+                    labels = list(sorted(data_frame[target_keys].unique()))
+                    dataset.num_classes = len(labels)
+                    self.set_state(LabelsState(labels))
+
+                labels = self.get_state(LabelsState)
+
+                if labels is not None:
+                    labels = labels.labels
+                    label_to_class = {v: k for k, v in enumerate(labels)}
+                    data_frame = data_frame.apply(partial(self._resolve_target, label_to_class, target_keys), axis=1)
+
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                    DefaultDataKeys.TARGET: row[target_keys],
+                }
+                for _, row in data_frame.iterrows()
+            ]
+        else:
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                }
+                for _, row in data_frame.iterrows()
+            ]
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        # TODO: simplify this duplicated code from PathsDataSource
+        path = sample[DefaultDataKeys.INPUT]
+
+        if self.loader is not None:
+            sample[DefaultDataKeys.INPUT] = self.loader(path)
+
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": path,
+        }
+        return sample
 
 
 class TensorDataSource(SequenceDataSource[torch.Tensor]):

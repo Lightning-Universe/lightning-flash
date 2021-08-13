@@ -93,8 +93,8 @@ def test_load_from_checkpoint_dependency_error():
 @pytest.mark.parametrize(
     "cli_args",
     (
-        ["flash", "text-classification", "--trainer.fast_dev_run", "True"],
-        ["flash", "text-classification", "--trainer.fast_dev_run", "True", "from_toxic"],
+        ["flash", "text_classification", "--trainer.fast_dev_run", "True"],
+        ["flash", "text_classification", "--trainer.fast_dev_run", "True", "from_toxic"],
     ),
 )
 def test_cli(cli_args):

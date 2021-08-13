@@ -15,9 +15,10 @@ from typing import Callable, Dict, Tuple
 
 import torch
 from torch import nn
+from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
+from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -32,12 +33,12 @@ def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]
     """The default transforms for audio classification for spectrograms: resize the spectrogram, convert the
     spectrogram and target to a tensor, and collate the batch."""
     return {
-        "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(spectrogram_size)),
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
             ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
         ),
-        "collate": kornia_collate,
+        "post_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(spectrogram_size)),
+        "collate": default_collate,
     }
 
 
