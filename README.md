@@ -206,7 +206,7 @@ from flash.image import ImageEmbedder
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Create an ImageEmbedder with resnet50 trained on imagenet.
-embedder = ImageEmbedder(backbone="resnet50", embedding_dim=128)
+embedder = ImageEmbedder(backbone="resnet50")
 
 # 3. Generate an embedding from an image path.
 embeddings = embedder.predict("data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg")
