@@ -735,6 +735,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 shuffle=shuffle,
                 drop_last=drop_last,
                 collate_fn=collate_fn,
+                sampler=sampler,
             )
         return dataset
 

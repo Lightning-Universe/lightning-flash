@@ -373,8 +373,6 @@ class DataPipeline:
             if dataloader is None:
                 continue
 
-            print(dataloader.sampler)
-
             if isinstance(dataloader, Sequence):
                 was_seq = True
             else:
@@ -385,7 +383,6 @@ class DataPipeline:
                 # TODO: See lightning for proper reinstantiation of loader
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
-                    print(dl_args)
 
                     _, dl_args["collate_fn"], device_collate_fn = self._create_collate_preprocessors(
                         stage=stage, collate_fn=dl_args["collate_fn"], is_serving=is_serving
@@ -397,7 +394,6 @@ class DataPipeline:
                     # don't have to reinstantiate loader if just rewrapping devices (happens during detach)
                     if not device_transform_only:
                         del dl_args["batch_sampler"]
-                        print(dl_args)
                         loader = type(loader)(**dl_args)
 
                 dataloader[idx] = loader
