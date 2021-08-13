@@ -148,19 +148,23 @@ class ImageClassificationData(DataModule):
             train_data_frame: The pandas ``DataFrame`` containing the training data.
             train_images_root: The directory containing the train images. If ``None``, values in the ``input_field``
                 will be assumed to be the full file paths.
-            train_resolver: TODO
+            train_resolver: The function to use to resolve filenames given the ``train_images_root`` and IDs from the
+                ``input_field`` column.
             val_data_frame: The pandas ``DataFrame`` containing the validation data.
             val_images_root: The directory containing the validation images. If ``None``, the directory containing the
                 ``val_file`` will be used.
-            val_resolver: TODO
+            val_resolver: The function to use to resolve filenames given the ``val_images_root`` and IDs from the
+                ``input_field`` column.
             test_data_frame: The pandas ``DataFrame`` containing the testing data.
             test_images_root: The directory containing the test images. If ``None``, the directory containing the
                 ``test_file`` will be used.
-            test_resolver: TODO
+            test_resolver: The function to use to resolve filenames given the ``test_images_root`` and IDs from the
+                ``input_field`` column.
             predict_data_frame: The pandas ``DataFrame`` containing the data to use when predicting.
             predict_images_root: The directory containing the predict images. If ``None``, the directory containing the
                 ``predict_file`` will be used.
-            predict_resolver: TODO
+            predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
+                the ``input_field`` column.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -252,19 +256,23 @@ class ImageClassificationData(DataModule):
             train_file: The CSV file containing the training data.
             train_images_root: The directory containing the train images. If ``None``, the directory containing the
                 ``train_file`` will be used.
-            train_resolver: TODO
+            train_resolver: The function to use to resolve filenames given the ``train_images_root`` and IDs from the
+                ``input_field`` column.
             val_file: The CSV file containing the validation data.
             val_images_root: The directory containing the validation images. If ``None``, the directory containing the
                 ``val_file`` will be used.
-            val_resolver: TODO
+            val_resolver: The function to use to resolve filenames given the ``val_images_root`` and IDs from the
+                ``input_field`` column.
             test_file: The CSV file containing the testing data.
             test_images_root: The directory containing the test images. If ``None``, the directory containing the
                 ``test_file`` will be used.
-            test_resolver: TODO
+            test_resolver: The function to use to resolve filenames given the ``test_images_root`` and IDs from the
+                ``input_field`` column.
             predict_file: The CSV file containing the data to use when predicting.
             predict_images_root: The directory containing the predict images. If ``None``, the directory containing the
                 ``predict_file`` will be used.
-            predict_resolver: TODO
+            predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
+                the ``input_field`` column.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
