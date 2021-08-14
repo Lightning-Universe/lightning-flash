@@ -684,9 +684,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     def _validate(self, data):
         label_type = data._get_label_field_type(self.label_field)
         if not issubclass(label_type, self.label_cls):
-            raise ValueError(
-                "Expected field '%s' to have type %s; found %s" % (self.label_field, self.label_cls, label_type)
-            )
+            raise ValueError(f"Expected field '{self.label_field}' to have type {self.label_cls}; found {label_type}")
 
     def _get_classes(self, data):
         classes = data.classes.get(self.label_field, None)

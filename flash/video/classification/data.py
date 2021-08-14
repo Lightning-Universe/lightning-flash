@@ -54,7 +54,7 @@ else:
 _PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
 
 
-class BaseVideoClassification(object):
+class BaseVideoClassification:
     def __init__(
         self,
         clip_sampler: "ClipSampler",

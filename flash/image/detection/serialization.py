@@ -87,7 +87,7 @@ class FiftyOneDetectionLabels(Serializer):
             if self.threshold is not None and confidence < self.threshold:
                 continue
 
-            xmin, ymin, xmax, ymax = [c.tolist() for c in det["boxes"]]
+            xmin, ymin, xmax, ymax = (c.tolist() for c in det["boxes"])
             box = [
                 xmin / width,
                 ymin / height,

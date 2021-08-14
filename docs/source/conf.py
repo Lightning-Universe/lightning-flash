@@ -140,7 +140,7 @@ def setup(app):
 # https://stackoverflow.com/questions/15889621/sphinx-how-to-exclude-imports-in-automodule
 def _package_list_from_file(pfile):
     assert os.path.isfile(pfile)
-    with open(pfile, "r") as fp:
+    with open(pfile) as fp:
         lines = fp.readlines()
     list_pkgs = []
     for ln in lines:

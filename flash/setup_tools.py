@@ -20,7 +20,7 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
 
 
 def _load_requirements(path_dir: str, file_name: str = "requirements.txt", comment_chars: str = "#@") -> List[str]:
-    with open(os.path.join(path_dir, file_name), "r") as file:
+    with open(os.path.join(path_dir, file_name)) as file:
         lines = [ln.strip() for ln in file.readlines()]
     reqs = []
     for ln in lines:
