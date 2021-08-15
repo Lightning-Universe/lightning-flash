@@ -45,10 +45,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash style-transfer
+    flash style_transfer
 
 To view configuration options and options for running the style transfer task with your own data, use:
 
 .. code-block:: bash
 
-    flash style-transfer --help
+    flash style_transfer --help

@@ -41,12 +41,10 @@ def preorder_traversal(task):
 
     for item in task:
         if istask(item):
-            for i in preorder_traversal(item):
-                yield i
+            yield from preorder_traversal(item)
         elif isinstance(item, list):
             yield list
-            for i in preorder_traversal(item):
-                yield i
+            yield from preorder_traversal(item)
         else:
             yield item
 
@@ -222,8 +220,7 @@ def flatten(seq, container=list):
     else:
         for item in seq:
             if isinstance(item, container):
-                for item2 in flatten(item, container=container):
-                    yield item2
+                yield from flatten(item, container=container)
             else:
                 yield item
 

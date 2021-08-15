@@ -345,7 +345,7 @@ class SemanticSegmentationData(DataModule):
         if flash._IS_TESTING:
             data_fetcher.block_viz_window = True
 
-        dm = super(SemanticSegmentationData, cls).from_data_source(
+        dm = super().from_data_source(
             data_source=data_source,
             train_data=train_data,
             val_data=val_data,

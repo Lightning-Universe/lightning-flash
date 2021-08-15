@@ -77,13 +77,13 @@ class SequencesDataset(Dataset):
                 f"The {root_dir} should contain a `meta.yaml` file about the pointcloud sequences."
             )
 
-        with open(meta_file, "r") as f:
+        with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
 
         self.label_to_names = self.get_label_to_names()
         self.num_classes = len(self.label_to_names)
 
-        with open(meta_file, "r") as f:
+        with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
 
         remap_dict_val = self.meta["learning_map"]
@@ -169,7 +169,7 @@ class SequencesDataset(Dataset):
         pc_path = self.path_list[idx]
         dir, file = split(pc_path)
         _, seq = split(split(dir)[0])
-        name = "{}_{}".format(seq, file[:-4])
+        name = f"{seq}_{file[:-4]}"
 
         pc_path = str(pc_path)
         attr = {"idx": idx, "name": name, "path": pc_path, "split": self.split}
