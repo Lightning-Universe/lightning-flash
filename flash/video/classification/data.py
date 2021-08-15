@@ -54,7 +54,7 @@ else:
 _PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
 
 
-class BaseVideoClassification(object):
+class BaseVideoClassification:
     def __init__(
         self,
         clip_sampler: "ClipSampler",
@@ -74,6 +74,9 @@ class BaseVideoClassification(object):
             self.set_state(LabelsState(label_to_class_mapping))
             dataset.num_classes = len(np.unique([s[1]["label"] for s in ds._labeled_videos]))
         return ds
+
+    def load_sample(self, sample):
+        return sample
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         video_path = sample[DefaultDataKeys.INPUT]

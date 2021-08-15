@@ -67,7 +67,7 @@ def test_pretrained_weights_registry(backbone, pretrained, expected_num_features
     ],
 )
 def test_wide_resnets(backbone, pretrained):
-    with pytest.raises(KeyError, match="Supervised pretrained weights not available for {0}".format(backbone)):
+    with pytest.raises(KeyError, match=f"Supervised pretrained weights not available for {backbone}"):
         IMAGE_CLASSIFIER_BACKBONES.get(backbone)(pretrained=pretrained)
 
 

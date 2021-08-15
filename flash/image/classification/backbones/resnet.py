@@ -62,7 +62,7 @@ class BasicBlock(nn.Module):
         dilation: int = 1,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
-        super(BasicBlock, self).__init__()
+        super().__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         if groups != 1 or base_width != 64:
@@ -118,7 +118,7 @@ class Bottleneck(nn.Module):
         dilation: int = 1,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
-        super(Bottleneck, self).__init__()
+        super().__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         width = int(planes * (base_width / 64.0)) * groups
@@ -171,7 +171,7 @@ class ResNet(nn.Module):
         remove_first_maxpool: bool = False,
     ) -> None:
 
-        super(ResNet, self).__init__()
+        super().__init__()
 
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -320,7 +320,7 @@ def _resnet(
     model_weights = None
     if pretrained_flag:
         if "supervised" not in weights_paths:
-            raise KeyError("Supervised pretrained weights not available for {0}".format(model_name))
+            raise KeyError(f"Supervised pretrained weights not available for {model_name}")
 
         model_weights = load_state_dict_from_url(
             weights_paths["supervised"], map_location=torch.device("cpu") if device == -1 else torch.device(device)

@@ -165,7 +165,7 @@ def test_available_pretrained_weights():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_cli():
-    cli_args = ["flash", "semantic-segmentation", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "semantic_segmentation", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()

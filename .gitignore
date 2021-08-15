@@ -163,3 +163,5 @@ logs/cache/*
 flash_examples/data
 flash_examples/cli/*/data
 timit/
+urban8k_images/
+__MACOSX

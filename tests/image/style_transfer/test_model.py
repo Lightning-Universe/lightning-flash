@@ -49,6 +49,9 @@ def test_jit(tmpdir):
     model = StyleTransfer()
     model.eval()
 
+    model.loss_fn = None
+    model.perceptual_loss = None  # TODO: Document this
+
     model = torch.jit.trace(model, torch.rand(1, 3, 32, 32))  # torch.jit.script doesn't work with pystiche
 
     torch.jit.save(model, path)
@@ -67,7 +70,7 @@ def test_load_from_checkpoint_dependency_error():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_cli():
-    cli_args = ["flash", "style-transfer", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "style_transfer", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()
