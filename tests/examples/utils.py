@@ -21,7 +21,7 @@ def call_script(
     args: Optional[List[str]] = None,
     timeout: Optional[int] = 60 * 10,
 ) -> Tuple[int, str, str]:
-    with open(filepath, "r") as original:
+    with open(filepath) as original:
         data = original.read()
 
     with open(filepath, "w") as modified:
