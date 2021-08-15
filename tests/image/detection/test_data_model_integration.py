@@ -14,6 +14,7 @@
 import os
 
 import pytest
+import torch
 
 import flash
 from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
