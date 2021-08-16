@@ -21,13 +21,13 @@ For example, to run the image classifier for 10 epochs with a `resnet50` backbon
 
 .. code-block:: bash
 
-    flash image-classification --trainer.max_epochs 10 --model.backbone resnet50
+    flash image_classification --trainer.max_epochs 10 --model.backbone resnet50
 
 To view all of the available options for a task, run:
 
 .. code-block:: bash
 
-    flash image-classification --help
+    flash image_classification --help
 
 Using Custom Data
 _________________
@@ -46,11 +46,11 @@ Now train with Flash Zero:
 
 .. code-block:: bash
 
-    flash image-classification from_folders --train_folder ./hymenoptera_data/train
+    flash image_classification from_folders --train_folder ./hymenoptera_data/train
 
 You can view the help page for each subcommand. For example, to view the options for training an image classifier from
 folders, you can run:
 
 .. code-block:: bash
 
-    flash image-classification from_folders --help
+    flash image_classification from_folders --help
