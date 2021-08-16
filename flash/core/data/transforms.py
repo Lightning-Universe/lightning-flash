@@ -31,7 +31,7 @@ class ApplyToKeys(nn.Sequential):
     """
 
     def __init__(self, keys: Union[str, Sequence[str]], *args):
-        super().__init__(*[convert_to_modules(arg) for arg in args])
+        super().__init__(*(convert_to_modules(arg) for arg in args))
         if isinstance(keys, str):
             keys = [keys]
         self.keys = keys
@@ -72,7 +72,7 @@ class KorniaParallelTransforms(nn.Sequential):
     """
 
     def __init__(self, *args):
-        super().__init__(*[convert_to_modules(arg) for arg in args])
+        super().__init__(*(convert_to_modules(arg) for arg in args))
 
     def forward(self, inputs: Any):
         result = list(inputs) if isinstance(inputs, Sequence) else [inputs]

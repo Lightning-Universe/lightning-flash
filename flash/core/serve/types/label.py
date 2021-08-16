@@ -32,7 +32,7 @@ class Label(BaseType):
                     "Must provide either classes as a list or " "path to a text file that contains classes"
                 )
             with Path(self.path).open(mode="r") as f:
-                self.classes = tuple([item.strip() for item in f.readlines()])
+                self.classes = tuple(item.strip() for item in f.readlines())
         if isinstance(self.classes, dict):
             self._reverse_map = {}
             for key, value in self.classes.items():
