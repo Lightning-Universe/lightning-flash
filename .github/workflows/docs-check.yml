@@ -7,34 +7,6 @@ on: # Trigger the workflow on push or pull request, but only for the master bran
     branches: [master]
 
 jobs:
-  sphinx-docs:
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        python --version
-        pip --version
-        sudo apt-get update -y
-        sudo apt-get install -y gcc git pandoc
-        pip install .
-        pip install -r ./requirements/docs.txt
-        pip list
-      shell: bash
-    - uses: ammaraskar/sphinx-action@master
-      with:
-        docs-folder: "docs/"
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
-    - uses: actions/upload-artifact@v2
-      with:
-        name: docs-results-${{ github.sha }}
-        path: docs/build/html/
-
-
   make-docs:
     runs-on: ubuntu-20.04
 
