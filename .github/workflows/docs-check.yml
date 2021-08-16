@@ -19,8 +19,8 @@ jobs:
       run: |
         python --version
         pip --version
-        apt-get update -y
-        apt-get install -y gcc git pandoc
+        sudo apt-get update -y
+        sudo apt-get install -y gcc git pandoc
         pip install .
         pip install -r ./requirements/docs.txt
         pip list
