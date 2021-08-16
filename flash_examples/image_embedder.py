@@ -22,4 +22,4 @@ embedder = ImageEmbedder(backbone="resnet101")
 
 # 3. Generate an embedding from an image path.
 embeddings = embedder.predict(["data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg"])
-print(embeddings)
+print(embeddings[0])
