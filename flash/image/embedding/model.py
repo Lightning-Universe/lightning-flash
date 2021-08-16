@@ -107,7 +107,7 @@ class ImageEmbedder(Task):
         if isinstance(x, tuple):
             x = x[-1]
 
-        if x.dim() == 4 and self.embedding_dim:
+        if x.dim() == 4 and not self.embedding_dim:
             x = self.apply_pool(x)
 
         x = self.head(x)
