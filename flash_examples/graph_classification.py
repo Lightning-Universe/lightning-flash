@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 from flash.graph import GraphClassificationData, GraphClassifier
@@ -32,7 +34,7 @@ datamodule = GraphClassificationData.from_datasets(
 model = GraphClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and fit the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Classify some graphs!
