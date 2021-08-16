@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from pytorch_lightning import Callback
@@ -26,7 +26,7 @@ from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSequenceClassification
-    from transformers.modeling_outputs import SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput
+    from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):

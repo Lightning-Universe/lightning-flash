@@ -13,6 +13,7 @@
 # limitations under the License.
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+
 from flash.core.utilities.imports import _TORCH_ORT_AVAILABLE
 
 if _TORCH_ORT_AVAILABLE:
@@ -20,8 +21,7 @@ if _TORCH_ORT_AVAILABLE:
 
 
 class ORTCallback(Callback):
-    """
-    Enables Torch ORT: Accelerate PyTorch models with ONNX Runtime.
+    """Enables Torch ORT: Accelerate PyTorch models with ONNX Runtime.
 
     Wraps a model with the ORT wrapper, lazily converting your module into an ONNX export, to optimize for
     training and inference.
@@ -33,7 +33,6 @@ class ORTCallback(Callback):
 
         # or via the trainer
         trainer = flash.Trainer(callbacks=ORTCallback())
-
     """
 
     def __init__(self):
@@ -43,7 +42,7 @@ class ORTCallback(Callback):
             )
 
     def on_before_accelerator_backend_setup(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
-        if not hasattr(pl_module, 'model'):
+        if not hasattr(pl_module, "model"):
             raise MisconfigurationException(
                 "Torch ORT requires to wrap a single model that defines a forward function "
                 "assigned as `model` inside the `LightningModule`."

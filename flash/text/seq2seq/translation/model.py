@@ -56,7 +56,7 @@ class TranslationTask(Seq2SeqTask):
         num_beams: Optional[int] = 4,
         n_gram: bool = 4,
         smooth: bool = True,
-        enable_ort: bool = True
+        enable_ort: bool = True,
     ):
         self.save_hyperparameters()
         super().__init__(
@@ -67,7 +67,7 @@ class TranslationTask(Seq2SeqTask):
             learning_rate=learning_rate,
             val_target_max_length=val_target_max_length,
             num_beams=num_beams,
-            enable_ort=enable_ort
+            enable_ort=enable_ort,
         )
         self.bleu = BLEUScore(
             n_gram=n_gram,

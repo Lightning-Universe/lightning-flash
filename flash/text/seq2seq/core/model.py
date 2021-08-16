@@ -16,7 +16,6 @@ import warnings
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from flash.text.ort_callback import ORTCallback
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
@@ -25,6 +24,7 @@ from torchmetrics import Metric
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.text.ort_callback import ORTCallback
 from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 if _TEXT_AVAILABLE:
@@ -70,7 +70,7 @@ class Seq2SeqTask(Task):
         learning_rate: float = 5e-5,
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
-        enable_ort: bool = False
+        enable_ort: bool = False,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings

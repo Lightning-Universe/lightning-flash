@@ -56,7 +56,7 @@ class QuestionAnsweringTask(Seq2SeqTask):
         num_beams: Optional[int] = 4,
         use_stemmer: bool = True,
         rouge_newline_sep: bool = True,
-        enable_ort: bool = True
+        enable_ort: bool = True,
     ):
         self.save_hyperparameters()
         super().__init__(
@@ -67,7 +67,7 @@ class QuestionAnsweringTask(Seq2SeqTask):
             learning_rate=learning_rate,
             val_target_max_length=val_target_max_length,
             num_beams=num_beams,
-            enable_ort=enable_ort
+            enable_ort=enable_ort,
         )
         self.rouge = RougeMetric(
             rouge_newline_sep=rouge_newline_sep,
