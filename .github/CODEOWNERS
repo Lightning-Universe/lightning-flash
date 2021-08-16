@@ -10,11 +10,11 @@
 # owners
 /.github/CODEOWNERS   @williamfalcon
 # main
-/README.md            @edenlightning @ethanwharris @ananyahjha93
+/README.md            @edenlightning @ethanwharris
 # installation
-/setup.py                 @borda @ethanwharris @ananyahjha93
-/__about__.py             @borda @ethanwharris @ananyahjha93
-/__init__.py              @borda @ethanwharris @ananyahjha93
+/setup.py                 @borda @ethanwharris
+/__about__.py             @borda @ethanwharris
+/__init__.py              @borda @ethanwharris
 
 # CI/CD
 /.github/workflows/   @borda @ethanwharris @ananyahjha93
