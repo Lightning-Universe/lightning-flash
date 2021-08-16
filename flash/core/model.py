@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import inspect
+import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -21,9 +22,10 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 import pytorch_lightning as pl
 import torch
 import torchmetrics
-from pytorch_lightning import LightningModule
+from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -48,6 +50,173 @@ from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires_extras
+
+
+class ModuleWrapperBase:
+    """The ``ModuleWrapperBase`` is a base for classes which wrap a ``LightningModule`` or an instance of
+    ``ModuleWrapperBase``.
+
+    This class ensures that trainer attributes are forwarded to any wrapped or nested
+    ``LightningModule`` instances so that nested calls to ``.log`` are handled correctly. The ``ModuleWrapperBase`` is
+    also stateful, meaning that a :class:`~flash.core.data.data_pipeline.DataPipelineState` can be attached. Attached
+    state will be forwarded to any nested ``ModuleWrapperBase`` instances.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self._children = []
+
+        # TODO: create enum values to define what are the exact states
+        self._data_pipeline_state: Optional[DataPipelineState] = None
+
+        # model own internal state shared with the data pipeline.
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+
+    def __setattr__(self, key, value):
+        if isinstance(value, (LightningModule, ModuleWrapperBase)):
+            self._children.append(key)
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results", "_data_pipeline_state"]
+        if isinstance(value, Trainer) or key in patched_attributes:
+            if hasattr(self, "_children"):
+                for child in self._children:
+                    setattr(getattr(self, child), key, value)
+        super().__setattr__(key, value)
+
+    def get_state(self, state_type):
+        if state_type in self._state:
+            return self._state[state_type]
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        return None
+
+    def set_state(self, state: ProcessState):
+        self._state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
+        for state in self._state.values():
+            data_pipeline_state.set_state(state)
+        for child in self._children:
+            child = getattr(self, child)
+            if hasattr(child, "attach_data_pipeline_state"):
+                child.attach_data_pipeline_state(data_pipeline_state)
+
+
+class DatasetProcessor:
+    """The ``DatasetProcessor`` mixin provides hooks for classes which need custom logic for producing the data
+    loaders for each running stage given the corresponding dataset."""
+
+    def _process_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            collate_fn=collate_fn,
+        )
+
+    def process_train_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int = 1,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        collate_fn: Callable = None,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )
 
 
 class BenchmarkConvergenceCI(Callback):
@@ -98,7 +267,7 @@ class CheckDependenciesMeta(ABCMeta):
         return result
 
 
-class Task(LightningModule, metaclass=CheckDependenciesMeta):
+class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
@@ -150,27 +319,9 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
 
-        # TODO: create enum values to define what are the exact states
-        self._data_pipeline_state: Optional[DataPipelineState] = None
-
-        # model own internal state shared with the data pipeline.
-        self._state: Dict[Type[ProcessState], ProcessState] = {}
-
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
-
-        self._children = []
-
-    def __setattr__(self, key, value):
-        if isinstance(value, LightningModule):
-            self._children.append(key)
-        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results"]
-        if isinstance(value, pl.Trainer) or key in patched_attributes:
-            if hasattr(self, "_children"):
-                for child in self._children:
-                    setattr(getattr(self, child), key, value)
-        super().__setattr__(key, value)
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """The training/validation/test step.
@@ -262,8 +413,9 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
-        x = list(self.process_predict_dataset(dataset, convert_to_dataloader=False))
-        x = data_pipeline.worker_preprocessor(running_stage)(x)
+        dataloader = self.process_predict_dataset(dataset)
+        x = list(dataloader.dataset)
+        x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
             x = self.transfer_batch_to_device(x, self.device, 0)
@@ -539,7 +691,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
         if self.data_pipeline is not None and "data_pipeline" not in checkpoint:
-            checkpoint["data_pipeline"] = self.data_pipeline
+            try:
+                pickle.dumps(self.data_pipeline)  # TODO: DataPipeline not always pickleable
+                checkpoint["data_pipeline"] = self.data_pipeline
+            except AttributeError:
+                rank_zero_warn("DataPipeline couldn't be added to the checkpoint.")
         if self._data_pipeline_state is not None and "_data_pipeline_state" not in checkpoint:
             checkpoint["_data_pipeline_state"] = self._data_pipeline_state
         super().on_save_checkpoint(checkpoint)
@@ -552,11 +708,27 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             self._data_pipeline_state = checkpoint["_data_pipeline_state"]
 
     @classmethod
-    def available_backbones(cls) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
-        if registry is None:
-            return []
-        return registry.available_keys()
+    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
+        if head is None:
+            registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+            if registry is not None:
+                return registry.available_keys()
+            heads = cls.available_heads()
+        else:
+            heads = [head]
+
+        result = {}
+        for head in heads:
+            metadata = cls.heads.get(head, with_metadata=True)["metadata"]
+            if "backbones" in metadata:
+                backbones = metadata["backbones"].available_keys()
+            else:
+                backbones = cls.available_backbones()
+            result[head] = backbones
+
+        if len(result) == 1:
+            result = next(iter(result.values()))
+        return result
 
     @classmethod
     def available_heads(cls) -> List[str]:
@@ -697,134 +869,3 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
-
-    def get_state(self, state_type):
-        if state_type in self._state:
-            return self._state[state_type]
-        if self._data_pipeline_state is not None:
-            return self._data_pipeline_state.get_state(state_type)
-        return None
-
-    def set_state(self, state: ProcessState):
-        self._state[type(state)] = state
-        if self._data_pipeline_state is not None:
-            self._data_pipeline_state.set_state(state)
-
-    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
-        for state in self._state.values():
-            data_pipeline_state.set_state(state)
-
-    def _process_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True,
-    ) -> DataLoader:
-        if convert_to_dataloader:
-            return DataLoader(
-                dataset,
-                batch_size=batch_size,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                collate_fn=collate_fn,
-                sampler=sampler,
-            )
-        return dataset
-
-    def process_train_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-    ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler,
-        )
-
-    def process_val_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = False,
-        sampler: Optional[Sampler] = None,
-    ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler,
-        )
-
-    def process_test_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = False,
-        sampler: Optional[Sampler] = None,
-    ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler,
-        )
-
-    def process_predict_dataset(
-        self,
-        dataset: BaseAutoDataset,
-        batch_size: int = 1,
-        num_workers: int = 0,
-        pin_memory: bool = False,
-        collate_fn: Callable = lambda x: x,
-        shuffle: bool = False,
-        drop_last: bool = False,
-        sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True,
-    ) -> Union[DataLoader, BaseAutoDataset]:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler,
-            convert_to_dataloader=convert_to_dataloader,
-        )

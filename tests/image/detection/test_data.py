@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import json
 import os
 from pathlib import Path
@@ -135,15 +148,13 @@ def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.from_coco(train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1)
+    datamodule = ObjectDetectionData.from_coco(
+        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, image_size=128
+    )
 
     data = next(iter(datamodule.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ["boxes", "labels", "image_id", "area", "iscrowd"]
+    sample = data[0]
+    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
 
     assert datamodule.val_dataloader() is None
     assert datamodule.test_dataloader() is None
@@ -157,23 +168,17 @@ def test_image_detector_data_from_coco(tmpdir):
         test_ann_file=coco_ann_path,
         batch_size=1,
         num_workers=0,
+        image_size=128,
     )
 
     data = next(iter(datamodule.val_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
 
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ["boxes", "labels", "image_id", "area", "iscrowd"]
+    sample = data[0]
+    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
 
     data = next(iter(datamodule.test_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ["boxes", "labels", "image_id", "area", "iscrowd"]
+    sample = data[0]
+    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -182,15 +187,11 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1)
+    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1, image_size=128)
 
     data = next(iter(datamodule.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ["boxes", "labels", "image_id", "area", "iscrowd"]
+    sample = data[0]
+    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
 
     assert datamodule.val_dataloader() is None
     assert datamodule.test_dataloader() is None
@@ -201,20 +202,13 @@ def test_image_detector_data_from_fiftyone(tmpdir):
         test_dataset=train_dataset,
         batch_size=1,
         num_workers=0,
+        image_size=128,
     )
 
     data = next(iter(datamodule.val_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ["boxes", "labels", "image_id", "area", "iscrowd"]
+    sample = data[0]
+    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
 
     data = next(iter(datamodule.test_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-
-    assert len(imgs) == 1
-    assert imgs[0].shape == (3, 1080, 1920)
-    assert len(labels) == 1
-    assert list(labels[0].keys()) == ["boxes", "labels", "image_id", "area", "iscrowd"]
+    sample = data[0]
+    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)

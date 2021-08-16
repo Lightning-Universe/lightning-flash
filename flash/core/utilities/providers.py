@@ -11,17 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytorch_lightning as pl
+from flash.core.registry import Provider
 
-from flash.core.finetuning import FlashBaseFinetuning
-
-
-class ObjectDetectionFineTuning(FlashBaseFinetuning):
-    """Freezes the backbone during Detector training."""
-
-    def __init__(self, train_bn: bool = True) -> None:
-        super().__init__(train_bn=train_bn)
-
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        model = pl_module.model
-        self.freeze(modules=model.backbone, train_bn=self.train_bn)
+_ICEVISION = Provider("airctic/IceVision", "https://github.com/airctic/icevision")
+_TORCHVISION = Provider("PyTorch/torchvision", "https://github.com/pytorch/vision")
+_ULTRALYTICS = Provider("Ultralytics/YOLOV5", "https://github.com/ultralytics/yolov5")
+_MMDET = Provider("OpenMMLab/MMDetection", "https://github.com/open-mmlab/mmdetection")
+_EFFDET = Provider("rwightman/efficientdet-pytorch", "https://github.com/rwightman/efficientdet-pytorch")

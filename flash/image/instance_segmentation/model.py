@@ -19,17 +19,17 @@ from torch.optim import Optimizer
 from flash.core.adapter import AdapterTask
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
+from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
 
 
-class ObjectDetector(AdapterTask):
-    """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
+class InstanceSegmentation(AdapterTask):
+    """The ``InstanceSegmentation`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
     :ref:`object_detection`.
 
     Args:
         num_classes: the number of classes for detection, including background
         model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretrained backbone CNN architecture. Constructs a model with a
+        backbone: Pretained backbone CNN architecture. Constructs a model with a
             ResNet-50-FPN backbone when no backbone is specified.
         fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
         pretrained: if true, returns a model pre-trained on COCO train2017
@@ -46,7 +46,7 @@ class ObjectDetector(AdapterTask):
 
     """
 
-    heads: FlashRegistry = OBJECT_DETECTION_HEADS
+    heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
 
     required_extras: str = "image"
 
@@ -54,7 +54,7 @@ class ObjectDetector(AdapterTask):
         self,
         num_classes: int,
         backbone: Optional[str] = "resnet18_fpn",
-        head: Optional[str] = "retinanet",
+        head: Optional[str] = "mask_rcnn",
         pretrained: bool = True,
         optimizer: Type[Optimizer] = torch.optim.Adam,
         learning_rate: float = 5e-4,
