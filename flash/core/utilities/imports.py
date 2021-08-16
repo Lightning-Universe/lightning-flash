@@ -96,6 +96,7 @@ _TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
 _ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
+_TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")

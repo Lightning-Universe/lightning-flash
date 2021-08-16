@@ -42,6 +42,7 @@ class SummarizationTask(Seq2SeqTask):
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         use_stemmer: Whether Porter stemmer should be used to strip word suffixes to improve matching.
         rouge_newline_sep: Add a new line at the beginning of each sentence in Rouge Metric calculation.
+        enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
     def __init__(
@@ -55,6 +56,7 @@ class SummarizationTask(Seq2SeqTask):
         num_beams: Optional[int] = 4,
         use_stemmer: bool = True,
         rouge_newline_sep: bool = True,
+        enable_ort: bool = True
     ):
         self.save_hyperparameters()
         super().__init__(
@@ -65,6 +67,7 @@ class SummarizationTask(Seq2SeqTask):
             learning_rate=learning_rate,
             val_target_max_length=val_target_max_length,
             num_beams=num_beams,
+            enable_ort=enable_ort
         )
         self.rouge = RougeMetric(
             rouge_newline_sep=rouge_newline_sep,
