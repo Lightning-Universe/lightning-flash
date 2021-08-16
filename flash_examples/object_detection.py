@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash.core.data.utils import download_data
 from flash.image import ObjectDetectionData, ObjectDetector
@@ -23,13 +25,14 @@ datamodule = ObjectDetectionData.from_coco(
     train_folder="data/coco128/images/train2017/",
     train_ann_file="data/coco128/annotations/instances_train2017.json",
     val_split=0.1,
+    batch_size=2,
 )
 
 # 2. Build the task
 model = ObjectDetector(model="retinanet", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Detect objects in a few images!

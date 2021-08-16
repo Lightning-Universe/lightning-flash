@@ -13,6 +13,8 @@
 # limitations under the License.
 import os
 
+import torch
+
 import flash
 from flash.core.data.utils import download_data
 from flash.video import VideoClassificationData, VideoClassifier
@@ -33,7 +35,7 @@ datamodule = VideoClassificationData.from_folders(
 model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
