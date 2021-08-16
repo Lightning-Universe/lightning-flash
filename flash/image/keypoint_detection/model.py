@@ -19,17 +19,17 @@ from torch.optim import Optimizer
 from flash.core.adapter import AdapterTask
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
-from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
+from flash.image.keypoint_detection.backbones import KEYPOINT_DETECTION_HEADS
 
 
-class ObjectDetector(AdapterTask):
+class KeypointDetector(AdapterTask):
     """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
     :ref:`object_detection`.
 
     Args:
         num_classes: the number of classes for detection, including background
         model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretrained backbone CNN architecture. Constructs a model with a
+        backbone: Pretained backbone CNN architecture. Constructs a model with a
             ResNet-50-FPN backbone when no backbone is specified.
         fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
         pretrained: if true, returns a model pre-trained on COCO train2017
@@ -46,15 +46,16 @@ class ObjectDetector(AdapterTask):
 
     """
 
-    heads: FlashRegistry = OBJECT_DETECTION_HEADS
+    heads: FlashRegistry = KEYPOINT_DETECTION_HEADS
 
     required_extras: str = "image"
 
     def __init__(
         self,
-        num_classes: int,
+        num_keypoints: int,
+        num_classes: int = 2,
         backbone: Optional[str] = "resnet18_fpn",
-        head: Optional[str] = "retinanet",
+        head: Optional[str] = "keypoint_rcnn",
         pretrained: bool = True,
         optimizer: Type[Optimizer] = torch.optim.Adam,
         learning_rate: float = 5e-4,
@@ -66,6 +67,7 @@ class ObjectDetector(AdapterTask):
         metadata = self.heads.get(head, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
+            num_keypoints=num_keypoints,
             num_classes=num_classes,
             backbone=backbone,
             head=head,
