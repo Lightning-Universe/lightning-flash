@@ -41,6 +41,7 @@ class ClassificationTask(Task):
     def __init__(
         self,
         *args,
+        num_classes: Optional[int] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
@@ -48,7 +49,7 @@ class ClassificationTask(Task):
         **kwargs,
     ) -> None:
         if metrics is None:
-            metrics = torchmetrics.Accuracy(subset_accuracy=multi_label)
+            metrics = torchmetrics.F1(num_classes) if (multi_label and num_classes) else torchmetrics.Accuracy()
 
         if loss_fn is None:
             loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
