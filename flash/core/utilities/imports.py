@@ -95,6 +95,7 @@ _TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
 _ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
+_ICEVISION_AVAILABLE = _module_available("icevision")
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
@@ -117,6 +118,7 @@ _IMAGE_AVAILABLE = all(
         _KORNIA_AVAILABLE,
         _PYSTICHE_AVAILABLE,
         _SEGMENTATION_MODELS_AVAILABLE,
+        _ICEVISION_AVAILABLE,
     ]
 )
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
@@ -169,6 +171,10 @@ def requires_extras(extras: Union[str, List]):
     return _requires(
         extras, lambda extras: _EXTRAS_AVAILABLE[extras], lambda extras: f"'lightning-flash[{','.join(extras)}]'"
     )
+
+
+def example_requires(extras: Union[str, List[str]]):
+    return requires_extras(extras)(lambda: None)()
 
 
 def lazy_import(module_name, callback=None):

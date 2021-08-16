@@ -23,6 +23,9 @@ def catch_url_error(fn):
         try:
             return fn(*args, pretrained=pretrained, **kwargs)
         except urllib.error.URLError:
+            # Hack for icevision/efficientdet to work without internet access
+            if "efficientdet" in kwargs.get("head", ""):
+                kwargs["pretrained_backbone"] = False
             result = fn(*args, pretrained=False, **kwargs)
             rank_zero_warn(
                 "Failed to download pretrained weights for the selected backbone. The backbone has been created with"
