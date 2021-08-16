@@ -28,6 +28,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 import flash
+from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TABULAR_AVAILABLE, _TEXT_AVAILABLE
@@ -118,6 +119,30 @@ class GrandParent(Parent):
         super().__init__(Parent(child))
 
 
+class BasicAdapter(Adapter):
+    def __init__(self, child):
+        super().__init__()
+
+        self.child = child
+
+    def training_step(self, batch, batch_idx):
+        return self.child.training_step(batch, batch_idx)
+
+    def validation_step(self, batch, batch_idx):
+        return self.child.validation_step(batch, batch_idx)
+
+    def test_step(self, batch, batch_idx):
+        return self.child.test_step(batch, batch_idx)
+
+    def forward(self, x):
+        return self.child(x)
+
+
+class AdapterParent(Parent):
+    def __init__(self, child):
+        super().__init__(BasicAdapter(child))
+
+
 # ================================
 
 
@@ -133,7 +158,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     assert "test_nll_loss" in result[0]
 
 
-@pytest.mark.parametrize("task", [Parent, GrandParent])
+@pytest.mark.parametrize("task", [Parent, GrandParent, AdapterParent])
 def test_nested_tasks(tmpdir, task):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -259,7 +284,7 @@ def test_available_backbones():
     class Foo(ImageClassifier):
         backbones = None
 
-    assert Foo.available_backbones() == []
+    assert Foo.available_backbones() == {}
 
 
 def test_optimization(tmpdir):
@@ -309,7 +334,7 @@ def test_optimization(tmpdir):
             scheduler_kwargs={"num_warmup_steps": 0.1},
             loss_fn=F.nll_loss,
         )
-        trainer = flash.Trainer(max_epochs=1, limit_train_batches=2)
+        trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
         ds = DummyDataset()
         trainer.fit(task, train_dataloader=DataLoader(ds))
         optimizer, scheduler = task.configure_optimizers()
@@ -330,5 +355,5 @@ def test_classification_task_metrics():
             assert math.isclose(trainer.callback_metrics["train_accuracy_epoch"], 0.5)
 
     task = ClassificationTask(model)
-    trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy())
+    trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy(), gpus=torch.cuda.device_count())
     trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))

@@ -90,10 +90,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash pointcloud-detection
+    flash pointcloud_detection
 
 To view configuration options and options for running the point cloud object detector with your own data, use:
 
 .. code-block:: bash
 
-    flash pointcloud-detection --help
+    flash pointcloud_detection --help

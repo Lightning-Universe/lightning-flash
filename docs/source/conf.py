@@ -140,7 +140,7 @@ def setup(app):
 # https://stackoverflow.com/questions/15889621/sphinx-how-to-exclude-imports-in-automodule
 def _package_list_from_file(pfile):
     assert os.path.isfile(pfile)
-    with open(pfile, "r") as fp:
+    with open(pfile) as fp:
         lines = fp.readlines()
     list_pkgs = []
     for ln in lines:
@@ -162,7 +162,7 @@ PACKAGE_MAPPING = {
     "pytorch-tabnet": "pytorch_tabnet",
     "pyDeprecate": "deprecate",
 }
-MOCK_PACKAGES = []
+MOCK_PACKAGES = ["numpy", "PyYAML", "tqdm"]
 if SPHINX_MOCK_REQUIREMENTS:
     # mock also base packages when we are on RTD since we don't install them there
     MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, "requirements.txt"))

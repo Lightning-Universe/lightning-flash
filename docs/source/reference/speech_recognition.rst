@@ -58,13 +58,13 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash speech-recognition
+    flash speech_recognition
 
 To view configuration options and options for running the speech recognition task with your own data, use:
 
 .. code-block:: bash
 
-    flash speech-recognition --help
+    flash speech_recognition --help
 
 ------
 

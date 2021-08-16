@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Type
 
 from torch.utils.data import Sampler
 
@@ -6,7 +6,7 @@ from flash.core.data.base_viz import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import BaseDataFormat, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, requires_extras
 
 if _POINTCLOUD_AVAILABLE:
     from flash.pointcloud.detection.open3d_ml.data_sources import (
@@ -14,7 +14,7 @@ if _POINTCLOUD_AVAILABLE:
         PointCloudObjectDetectorFoldersDataSource,
     )
 else:
-    PointCloudObjectDetectorFoldersDataSource = object()
+    PointCloudObjectDetectorFoldersDataSource = object
 
     class PointCloudObjectDetectionDataFormat:
         KITTI = None
@@ -44,6 +44,7 @@ class PointCloudObjectDetectorDatasetDataSource(DataSource):
 
 
 class PointCloudObjectDetectorPreprocess(Preprocess):
+    @requires_extras("pointcloud")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -98,7 +99,7 @@ class PointCloudObjectDetectorData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        sampler: Optional[Sampler] = None,
+        sampler: Optional[Type[Sampler]] = None,
         scans_folder_name: Optional[str] = "scans",
         labels_folder_name: Optional[str] = "labels",
         calibrations_folder_name: Optional[str] = "calibs",
@@ -131,7 +132,7 @@ class PointCloudObjectDetectorData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
             scans_folder_name: The name of the pointcloud scan folder

@@ -57,13 +57,13 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash tabular-classifier
+    flash tabular_classifier
 
 To view configuration options and options for running the tabular classifier with your own data, use:
 
 .. code-block:: bash
 
-    flash tabular-classifier --help
+    flash tabular_classifier --help
 
 ------
 

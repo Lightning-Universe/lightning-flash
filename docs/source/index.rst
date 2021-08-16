@@ -37,6 +37,8 @@ Lightning Flash
    reference/image_classification_multi_label
    reference/image_embedder
    reference/object_detection
+   reference/keypoint_detection
+   reference/instance_segmentation
    reference/semantic_segmentation
    reference/style_transfer
    reference/video_classification

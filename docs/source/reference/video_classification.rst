@@ -68,10 +68,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash video-classifier
+    flash video_classification
 
 To view configuration options and options for running the video classifier with your own data, use:
 
 .. code-block:: bash
 
-    flash video-classifier --help
+    flash video_classification --help

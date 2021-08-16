@@ -94,7 +94,7 @@ def test_load_from_checkpoint_dependency_error():
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_cli():
-    cli_args = ["flash", "speech-recognition", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "speech_recognition", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()

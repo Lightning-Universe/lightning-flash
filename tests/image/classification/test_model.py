@@ -60,17 +60,18 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
-    "backbone",
+    "backbone,metrics",
     [
-        "resnet18",
+        ("resnet18", None),
+        ("resnet18", []),
         # "resnet34",
         # "resnet50",
         # "resnet101",
         # "resnet152",
     ],
 )
-def test_init_train(tmpdir, backbone):
-    model = ImageClassifier(10, backbone=backbone)
+def test_init_train(tmpdir, backbone, metrics):
+    model = ImageClassifier(10, backbone=backbone, metrics=metrics)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
@@ -151,7 +152,7 @@ def test_load_from_checkpoint_dependency_error():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_cli():
-    cli_args = ["flash", "image-classification", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "image_classification", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()

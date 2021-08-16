@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash.core.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
@@ -30,7 +32,7 @@ datamodule = TextClassificationData.from_csv(
 model = TextClassifier(backbone="prajjwal1/bert-medium", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Classify a few sentences! How was the movie?

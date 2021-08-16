@@ -86,7 +86,6 @@ _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
-_ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
 _SOUNDFILE_AVAILABLE = _module_available("soundfile")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
@@ -96,6 +95,7 @@ _TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
 _ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
+_ICEVISION_AVAILABLE = _module_available("icevision")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 
 if Version:
@@ -119,11 +119,12 @@ _IMAGE_AVAILABLE = all(
         _KORNIA_AVAILABLE,
         _PYSTICHE_AVAILABLE,
         _SEGMENTATION_MODELS_AVAILABLE,
+        _ICEVISION_AVAILABLE,
     ]
 )
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
-_AUDIO_AVAILABLE = all([_ASTEROID_AVAILABLE, _TORCHAUDIO_AVAILABLE, _SOUNDFILE_AVAILABLE, _TRANSFORMERS_AVAILABLE])
+_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _SOUNDFILE_AVAILABLE, _TRANSFORMERS_AVAILABLE])
 _GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
@@ -171,6 +172,10 @@ def requires_extras(extras: Union[str, List]):
     return _requires(
         extras, lambda extras: _EXTRAS_AVAILABLE[extras], lambda extras: f"'lightning-flash[{','.join(extras)}]'"
     )
+
+
+def example_requires(extras: Union[str, List[str]]):
+    return requires_extras(extras)(lambda: None)()
 
 
 def lazy_import(module_name, callback=None):
