@@ -28,7 +28,7 @@
 [![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fforums.pytorchlightning.ai)](https://forums.pytorchlightning.ai/)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PytorchLightning/pytorch-lightning/blob/master/LICENSE)
 
-[![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=stable)](https://lightning-flash.readthedocs.io/en/stable/?badge=stable)
+[![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=latest)](https://lightning-flash.readthedocs.io/en/stable/?badge=stable)
 ![CI testing](https://github.com/PyTorchLightning/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)
 [![codecov](https://codecov.io/gh/PyTorchLightning/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/PyTorchLightning/lightning-flash)
 
@@ -225,6 +225,7 @@ Flash has a [Summarization task](https://lightning-flash.readthedocs.io/en/lates
 
 ```python
 import flash
+import torch
 from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
@@ -244,7 +245,7 @@ datamodule = SummarizationData.from_csv(
 model = SummarizationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, gpus=1, precision=16)
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), precision=16)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)

@@ -83,7 +83,7 @@ ServableValidArgs_T = Union[
 
 
 class Servable:
-    """Wrapper around a model object to enable serving at scale.
+    """ModuleWrapperBase around a model object to enable serving at scale.
 
     Create a ``Servable`` from either (LM, LOCATION) or (LOCATION,)
 
