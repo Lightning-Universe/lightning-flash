@@ -62,6 +62,7 @@ else:
     plt = None
 
 if _TORCHVISION_AVAILABLE:
+    import torchvision
     import torchvision.transforms.functional as FT
     from torchvision.datasets.folder import default_loader, has_file_allowed_extension, IMG_EXTENSIONS
 else:
@@ -149,7 +150,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
         # load images directly to torch tensors
         img: torch.Tensor = FT.to_tensor(default_loader(img_path))  # CxHxW
-        img_labels: torch.Tensor = FT.to_tensor(default_loader(img_labels_path))  # CxHxW
+        img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
         sample[DefaultDataKeys.INPUT] = img.float()
