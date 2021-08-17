@@ -16,6 +16,7 @@ from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
 from unittest import mock
+from logging import warn
 
 import numpy as np
 import pytest
@@ -45,7 +46,11 @@ if _PIL_AVAILABLE:
 else:
 
     class Image:
-        Image = None
+
+        @property
+        def Image(self):
+            warn("Mock object called, missing PIL library. Install using 'pip install Pillow'.")
+            return None
 
 
 # ======== Mock functions ========

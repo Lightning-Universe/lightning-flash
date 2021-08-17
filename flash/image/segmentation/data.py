@@ -19,6 +19,7 @@ import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from logging import warn
 
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
@@ -72,7 +73,11 @@ if _PIL_AVAILABLE:
 else:
 
     class Image:
-        Image = None
+
+        @property
+        def Image(self):
+            warn("Mock object called, missing PIL library. Install using 'pip install Pillow'.")
+            return None
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):

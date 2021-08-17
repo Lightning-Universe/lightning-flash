@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, U
 import numpy as np
 import pandas as pd
 import torch
+from logging import warn
 from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.sampler import Sampler
 
@@ -45,7 +46,11 @@ if _PIL_AVAILABLE:
 else:
 
     class Image:
-        Image = None
+
+        @property
+        def Image(self):
+            warn("Mock object called, missing PIL library. Install using 'pip install Pillow'.")
+            return None
 
 
 class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):

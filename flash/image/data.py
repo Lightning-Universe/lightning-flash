@@ -13,6 +13,7 @@
 # limitations under the License.
 import base64
 from io import BytesIO
+from logging import warn
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -39,11 +40,15 @@ else:
     IMG_EXTENSIONS = ()
 
 if _PIL_AVAILABLE:
-    from PIL import Image as PILImage
+    from PIL import Image
 else:
 
     class Image:
-        Image = None
+
+        @property
+        def Image(self):
+            warn("Mock object called, missing PIL library. Install using 'pip install Pillow'.")
+            return None
 
 
 NP_EXTENSIONS = (".npy", ".npz")
@@ -53,7 +58,7 @@ def image_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
         img = default_loader(filepath)
     elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
-        img = PILImage.fromarray(np.load(filepath).astype("uint8"), "RGB")
+        img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
     else:
         raise ValueError(
             f"File: {filepath} has an unsupported extension. Supported extensions: "
@@ -72,7 +77,7 @@ class ImageDeserializer(Deserializer):
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
-        img = PILImage.open(buffer, mode="r")
+        img = Image.open(buffer, mode="r")
         return {
             DefaultDataKeys.INPUT: img,
         }
