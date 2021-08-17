@@ -15,9 +15,9 @@ import functools
 import importlib
 import operator
 import types
-from warnings import warn
 from importlib.util import find_spec
 from typing import Callable, List, Union
+from warnings import warn
 
 from pkg_resources import DistributionNotFound
 
@@ -103,9 +103,10 @@ _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 if _PIL_AVAILABLE:
     from PIL import Image
 else:
+
     class MetaImage(type):
         def __init__(cls, name, bases, dct):
-            super(MetaImage, cls).__init__(name, bases, dct)
+            super().__init__(name, bases, dct)
 
             cls._Image = None
 

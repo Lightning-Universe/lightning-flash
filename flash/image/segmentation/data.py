@@ -39,10 +39,10 @@ from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
     _TORCHVISION_AVAILABLE,
+    Image,
     lazy_import,
     requires,
     requires_extras,
-    Image,
 )
 from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels

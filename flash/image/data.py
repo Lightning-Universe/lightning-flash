@@ -29,7 +29,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, requires_extras, Image
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires_extras
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
