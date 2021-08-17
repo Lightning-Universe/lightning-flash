@@ -45,7 +45,7 @@ else:
 
     class MetaImage(type):
         def __init__(cls, name, bases, dct):
-            super(MetaImage, cls).__init__(name, bases, dct)
+            super().__init__(name, bases, dct)
 
             cls._Image = None
 
