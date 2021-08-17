@@ -30,7 +30,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, requires_extras, Image
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -38,24 +38,6 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.transforms.functional import to_pil_image
 else:
     IMG_EXTENSIONS = ()
-
-if _PIL_AVAILABLE:
-    from PIL import Image
-else:
-
-    class MetaImage(type):
-        def __init__(cls, name, bases, dct):
-            super(MetaImage, cls).__init__(name, bases, dct)
-
-            cls._Image = None
-
-        @property
-        def Image(cls):
-            warn("Mock object called due to missing PIL library. Install PIL using 'pip install Pillow'.")
-            return cls._Image
-
-    class Image(metaclass=MetaImage):
-        pass
 
 
 NP_EXTENSIONS = (".npy", ".npz")

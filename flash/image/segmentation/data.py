@@ -39,11 +39,11 @@ from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
-    _PIL_AVAILABLE,
     _TORCHVISION_AVAILABLE,
     lazy_import,
     requires,
     requires_extras,
+    Image,
 )
 from flash.image.data import ImageDeserializer
 from flash.image.segmentation.serialization import SegmentationLabels
@@ -67,24 +67,6 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
 else:
     IMG_EXTENSIONS = None
-
-if _PIL_AVAILABLE:
-    from PIL import Image
-else:
-
-    class MetaImage(type):
-        def __init__(cls, name, bases, dct):
-            super(MetaImage, cls).__init__(name, bases, dct)
-
-            cls._Image = None
-
-        @property
-        def Image(cls):
-            warn("Mock object called due to missing PIL library. Install PIL using 'pip install Pillow'.")
-            return cls._Image
-
-    class Image(metaclass=MetaImage):
-        pass
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):

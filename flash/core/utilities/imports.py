@@ -15,6 +15,7 @@ import functools
 import importlib
 import operator
 import types
+from warnings import warn
 from importlib.util import find_spec
 from typing import Callable, List, Union
 
@@ -96,6 +97,24 @@ _ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
 _ICEVISION_AVAILABLE = _module_available("icevision")
+
+if _PIL_AVAILABLE:
+    from PIL import Image
+else:
+    class MetaImage(type):
+        def __init__(cls, name, bases, dct):
+            super(MetaImage, cls).__init__(name, bases, dct)
+
+            cls._Image = None
+
+        @property
+        def Image(cls):
+            warn("Mock object called due to missing PIL library. Please use \"pip install 'lightning-flash[image]'\".")
+            return cls._Image
+
+    class Image(metaclass=MetaImage):
+        pass
+
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
