@@ -26,7 +26,7 @@ from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSequenceClassification
-    from transformers.modeling_outputs import SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput
+    from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
