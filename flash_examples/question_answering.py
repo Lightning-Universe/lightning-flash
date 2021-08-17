@@ -31,7 +31,7 @@ model = QuestionAnsweringTask()
 trainer = Trainer(max_epochs=3, limit_train_batches=1, limit_val_batches=1)
 trainer.finetune(model, datamodule=datamodule)
 
-# 4. Summarize some text!
+# 4. Answer some Questions!
 predictions = model.predict({
     "id": ["56ddde6b9a695914005b9629", "56ddde6b9a695914005b9628"],
     "context": [
