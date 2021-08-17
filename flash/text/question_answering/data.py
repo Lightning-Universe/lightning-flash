@@ -16,6 +16,7 @@
 # https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/run_qa.py
 # https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/utils_qa.py
 
+import collections
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,12 +25,11 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from torch import Tensor
-from torch.utils.data.sampler import Sampler
 
 import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
@@ -38,13 +38,7 @@ from flash.text.classification.data import TextDeserializer
 if _TEXT_AVAILABLE:
     import datasets
     from datasets import Dataset, DatasetDict, load_dataset
-    from transformers import AutoTokenizer, default_data_collator
-
-# TODO:
-#   1) Updates needed
-#       i) Update the `QuestionAnsweringPostprocess` class according to the example
-#       ii) Actual implementation of all methods and classes.
-#       iii) `SQuADDataSource` might also need an update.
+    from transformers import AutoTokenizer, DataCollatorWithPadding, default_data_collator
 
 
 class QuestionAnsweringDataSource(DataSource):
@@ -53,9 +47,13 @@ class QuestionAnsweringDataSource(DataSource):
     def __init__(
         self,
         backbone: str,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
+        max_source_length: int = 384,
+        max_target_length: int = 30,
         padding: Union[str, bool] = 'max_length',
+        question_column_name: str = 'question',
+        context_column_name: str = 'context',
+        answer_column_name: str = 'answer',
+        doc_stride: int = 128,
     ):
         super().__init__()
 
@@ -67,12 +65,15 @@ class QuestionAnsweringDataSource(DataSource):
 
         # Setup global pre-processing requirements
         #   pad_on_right, doc_stride, etc. are remaining
-        self._question_column_name = "question"
-        self._context_column_name = "context"
-        self._answer_column_name = "answer"
-        self._doc_stride = 128
+        self._question_column_name = question_column_name
+        self._context_column_name = context_column_name
+        self._answer_column_name = answer_column_name
+        self._doc_stride = doc_stride
 
     def _tokenize_fn(self, samples: Any) -> Callable:
+        stage = self._running_stage.value
+
+        samples[self.question_column_name] = [q.lstrip() for q in samples[self.question_column_name]]
 
         # Setup the tokenizing call here
         #   tokenized_samples = self.tokenizer(...params)
@@ -89,15 +90,33 @@ class QuestionAnsweringDataSource(DataSource):
             padding=self.padding
         )
 
-        stage = self._running_stage.value
-
         if stage == RunningStage.TRAINING:
             # Preprocess function for training
             tokenized_samples = self._prepare_train_features(samples, tokenized_samples)
-
-        if self._running_stage.evaluating() or stage == RunningStage.PREDICTING:
+        elif self._running_stage.evaluating or stage == RunningStage.PREDICTING:
             # Preprocess function for eval or predict
             tokenized_samples = self._prepare_val_features(samples, tokenized_samples)
+
+            offset_mappings = tokenized_samples.pop("offset_mapping")
+            example_ids = tokenized_samples.pop("example_id")
+            contexts = tokenized_samples.pop("context")
+            answers = tokenized_samples.pop("answer")
+
+            tokenized_samples[DefaultDataKeys.METADATA] = []
+            for offset_mapping, example_id, context in zip(offset_mappings, example_ids, contexts):
+                tokenized_samples[DefaultDataKeys.METADATA].append({
+                    "context": context,
+                    "offset_mapping": offset_mapping,
+                    "example_id": example_id
+                })
+            if self._running_stage.evaluating:
+                for index, answer in enumerate(answers):
+                    tokenized_samples[DefaultDataKeys.METADATA][index]["answer"] = answer
+
+            del offset_mappings
+            del example_ids
+            del contexts
+            del answers
 
         return tokenized_samples
 
@@ -167,6 +186,8 @@ class QuestionAnsweringDataSource(DataSource):
         # For evaluation, we will need to convert our predictions to substrings of the context, so we keep the
         # corresponding example_id and we will store the offset mappings.
         tokenized_samples["example_id"] = []
+        tokenized_samples["context"] = []
+        tokenized_samples["answer"] = []
 
         for i in range(len(tokenized_samples["input_ids"])):
             # Grab the sequence corresponding to that example (to know what is the context and what is the question).
@@ -176,6 +197,9 @@ class QuestionAnsweringDataSource(DataSource):
             # One example can give several spans, this is the index of the example containing this span of text.
             sample_index = sample_mapping[i]
             tokenized_samples["example_id"].append(samples["id"][sample_index])
+            tokenized_samples["context"].append(samples["context"][sample_index])
+            if self._running_stage.evaluating:
+                tokenized_samples["answer"].append(samples["answer"][sample_index])
 
             # Set to None the offset_mapping that are not part of the context so it's easy to determine if a token
             # position is part of the context or not.
@@ -209,22 +233,6 @@ class QuestionAnsweringDataSource(DataSource):
     def doc_stride(self) -> str:
         return self._doc_stride
 
-    @question_column_name.setter
-    def question_column_name(self, value: str) -> None:
-        self._question_column_name = value
-
-    @context_column_name.setter
-    def context_column_name(self, value: str) -> None:
-        self._context_column_name = value
-
-    @answer_column_name.setter
-    def answer_column_name(self, value: str) -> None:
-        self._answer_column_name = value
-
-    @doc_stride.setter
-    def doc_stride(self, value: int) -> None:
-        self._doc_stride = value
-
 
 class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
 
@@ -232,26 +240,26 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
         self,
         filetype: str,
         backbone: str,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
+        max_source_length: int = 384,
+        max_target_length: int = 30,
         padding: Union[str, bool] = 'max_length',
+        question_column_name: Optional[str] = "question",
+        context_column_name: Optional[str] = "context",
+        answer_column_name: Optional[str] = "answer",
+        doc_stride: Optional[int] = 128
     ):
-        super().__init__(backbone, max_source_length, max_target_length, padding)
+        super().__init__(
+            backbone, max_source_length, max_target_length, padding, question_column_name, context_column_name,
+            answer_column_name, doc_stride
+        )
 
         self.filetype = filetype
 
     def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
-        if columns is None:
-            columns = ["input_ids", "attention_mask", "labels"]
         if self.filetype == 'json':
-            file, question_column_name, context_column_name, answer_column_name, doc_stride, field = data
+            file, field = data
         else:
-            file, question_column_name, context_column_name, answer_column_name, doc_stride = data
-
-        self.question_column_name(question_column_name)
-        self.context_column_name(context_column_name)
-        self.answer_column_name(answer_column_name)
-        self.doc_stride(doc_stride)
+            file = data
 
         data_files = {}
         stage = self._running_stage.value
@@ -269,19 +277,21 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
                     dataset_dict = DatasetDict({
                         stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
                     })
+                column_names = dataset_dict[stage].column_names
             except Exception:
                 if self.filetype == 'json' and field is not None:
                     dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
                 else:
                     dataset_dict = load_dataset(self.filetype, data_files=data_files)
+                column_names = dataset_dict.column_names
         else:
             if self.filetype == 'json' and field is not None:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
             else:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
+            column_names = dataset_dict.column_names
 
-        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
-        dataset_dict.set_format(columns=columns)
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True, remove_columns=column_names)
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any) -> Union['datasets.Dataset', List[Dict[str, torch.Tensor]]]:
@@ -302,9 +312,13 @@ class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
     def __init__(
         self,
         backbone: str,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
+        max_source_length: int = 384,
+        max_target_length: int = 30,
         padding: Union[str, bool] = 'max_length',
+        question_column_name: Optional[str] = "question",
+        context_column_name: Optional[str] = "context",
+        answer_column_name: Optional[str] = "answer",
+        doc_stride: Optional[int] = 128
     ):
         super().__init__(
             "csv",
@@ -312,6 +326,10 @@ class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
+            question_column_name=question_column_name,
+            context_column_name=context_column_name,
+            answer_column_name=answer_column_name,
+            doc_stride=doc_stride
         )
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
@@ -329,9 +347,13 @@ class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
     def __init__(
         self,
         backbone: str,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
+        max_source_length: int = 384,
+        max_target_length: int = 30,
         padding: Union[str, bool] = 'max_length',
+        question_column_name: Optional[str] = "question",
+        context_column_name: Optional[str] = "context",
+        answer_column_name: Optional[str] = "answer",
+        doc_stride: Optional[int] = 128
     ):
         super().__init__(
             "json",
@@ -339,6 +361,10 @@ class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
+            question_column_name=question_column_name,
+            context_column_name=context_column_name,
+            answer_column_name=answer_column_name,
+            doc_stride=doc_stride
         )
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
@@ -354,17 +380,14 @@ class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
 class QuestionAnsweringDictionaryDataSource(QuestionAnsweringDataSource):
 
     def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
-        if columns is None:
-            columns = ["input_ids", "attention_mask", "labels"]
-            if self._running_stage.value == RunningStage.PREDICTING:
-                columns.remove("labels")
-
         stage = self._running_stage.value
 
         dataset_dict = DatasetDict({stage: Dataset.from_dict(data)})
-        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
 
-        dataset_dict.set_format(columns=columns)
+        column_names = dataset_dict[stage].column_names
+
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True, remove_columns=column_names)
+
         return dataset_dict[stage]
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
@@ -382,38 +405,37 @@ class SQuADDataSource(QuestionAnsweringDataSource):
     def load_data(self, data: str, dataset: Optional[Any] = None) -> 'datasets.Dataset':
         stage = self._running_stage.value
 
-        file_path, doc_stride = data
-
-        self.question_column_name("question")
-        self.context_column_name("context")
-        self.answer_column_name("answer")
-        self.doc_stride(doc_stride)
+        file_path = data
 
         path = Path(file_path)
         with open(path, 'rb') as f:
             squad_v_2_dict = json.load(f)
 
+        ids = []
         titles = []
         contexts = []
         questions = []
         answers = []
         for topic in squad_v_2_dict['data']:
             title = topic["title"]
-            for comprehension in topic['paragraphs']:
-                context = comprehension['context']
-                for q_a_pair in comprehension['qas']:
-                    question = q_a_pair['question']
-                    for answer in q_a_pair['answers']:
-                        answer_text = answer['text']
-                        answer_start = answer['answer_start']
+            for comprehension in topic["paragraphs"]:
+                context = comprehension["context"]
+                for qa in comprehension["qas"]:
+                    question = qa["question"]
+                    id = qa["id"]
 
-                        titles.append(title)
-                        contexts.append(context)
-                        questions.append(question)
-                        answers.append(dict(text=answer_text, answer_start=answer_start))
+                    _answer_starts = [answer["answer_start"] for answer in qa["answers"]]
+                    _answers = [answer["text"] for answer in qa["answers"]]
+
+                    ids.append(id)
+                    titles.append(title)
+                    contexts.append(context)
+                    questions.append(question)
+                    answers.append(dict(text=_answers, answer_start=_answer_starts))
 
         dataset_dict = DatasetDict({
             stage: Dataset.from_dict({
+                "id": ids,
                 "title": titles,
                 "context": contexts,
                 "question": questions,
@@ -421,7 +443,9 @@ class SQuADDataSource(QuestionAnsweringDataSource):
             })
         })
 
-        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True)
+        column_names = dataset_dict[stage].column_names
+
+        dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True, remove_columns=column_names)
 
         return dataset_dict[stage]
 
@@ -440,22 +464,27 @@ class QuestionAnsweringPreprocess(Preprocess):
     @requires_extras("text")
     def __init__(
         self,
-        question_column_name: Optional[str] = None,
-        context_column_name: Optional[str] = None,
-        answer_column_name: Optional[str] = None,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "t5-small",
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length'
+        backbone: str = "distilbert-base-uncased",
+        max_source_length: int = 384,
+        max_target_length: int = 30,
+        padding: Union[str, bool] = 'max_length',
+        question_column_name: Optional[str] = "question",
+        context_column_name: Optional[str] = "context",
+        answer_column_name: Optional[str] = "answer",
+        doc_stride: Optional[int] = 128
     ):
         self.backbone = backbone
         self.max_target_length = max_target_length
         self.max_source_length = max_source_length
         self.padding = padding
+        self.question_column_name = question_column_name
+        self.context_column_name = context_column_name
+        self.answer_column_name = answer_column_name
+        self.doc_stride = doc_stride
 
         super().__init__(
             train_transform=train_transform,
@@ -471,6 +500,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     question_column_name=question_column_name,
                     context_column_name=context_column_name,
                     answer_column_name=answer_column_name,
+                    doc_stride=doc_stride
                 ),
                 DefaultDataSources.JSON: QuestionAnsweringJSONDataSource(
                     self.backbone,
@@ -480,6 +510,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     question_column_name=question_column_name,
                     context_column_name=context_column_name,
                     answer_column_name=answer_column_name,
+                    doc_stride=doc_stride
                 ),
                 "dict": QuestionAnsweringDictionaryDataSource(
                     self.backbone,
@@ -489,12 +520,14 @@ class QuestionAnsweringPreprocess(Preprocess):
                     question_column_name=question_column_name,
                     context_column_name=context_column_name,
                     answer_column_name=answer_column_name,
+                    doc_stride=doc_stride
                 ),
                 "squad_v2": SQuADDataSource(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
+                    doc_stride=doc_stride
                 )
             },
             default_data_source="dict",
@@ -510,6 +543,10 @@ class QuestionAnsweringPreprocess(Preprocess):
             "max_source_length": self.max_source_length,
             "max_target_length": self.max_target_length,
             "padding": self.padding,
+            "question_column_name": self.question_column_name,
+            "context_column_name": self.context_column_name,
+            "answer_column_name": self.answer_column_name,
+            "doc_stride": self.doc_stride,
         }
 
     @classmethod
@@ -518,6 +555,9 @@ class QuestionAnsweringPreprocess(Preprocess):
 
     def collate(self, samples: Any) -> Tensor:
         """Override to convert a set of samples to a batch"""
+        if self.padding != "max_length":
+            data_collator = DataCollatorWithPadding(AutoTokenizer.from_pretrained(self.backbone, use_fast=True))
+            return data_collator(samples)
         return default_data_collator(samples)
 
 
@@ -543,10 +583,18 @@ class QuestionAnsweringPostprocess(Postprocess):
             self._backbone = self.backbone
         return self._tokenizer
 
-    def uncollate(self, generated_tokens: Any) -> Any:
-        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-        pred_str = [str.strip(s) for s in pred_str]
-        return pred_str
+    def uncollate(self, predicted_sentences: collections.OrderedDict) -> Any:
+        uncollated_predicted_sentences = []
+        for key in predicted_sentences:
+            uncollated_predicted_sentences.append({key: predicted_sentences[key]})
+        return uncollated_predicted_sentences
+
+    @staticmethod
+    def per_sample_transform(sample: Any) -> Any:
+        """Transforms to apply to a single sample after splitting up the batch.
+        Can involve both CPU and Device transforms as this is not applied in separate workers.
+        """
+        return sample
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -565,195 +613,8 @@ class QuestionAnsweringData(DataModule):
     postprocess_cls = QuestionAnsweringPostprocess
 
     @classmethod
-    def from_json(
-        cls,
-        question_column_name: Optional[str] = "question",
-        context_column_name: Optional[str] = "context",
-        answer_column_name: Optional[str] = "answer",
-        doc_stride: Optional[int] = 128,
-        train_file: Optional[str] = None,
-        val_file: Optional[str] = None,
-        test_file: Optional[str] = None,
-        predict_file: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: Optional[int] = None,
-        sampler: Optional[Sampler] = None,
-        field: Optional[str] = None,
-        **preprocess_kwargs: Any,
-    ) -> 'DataModule':
-        """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given
-        JSON files using the :class:`~flash.text.question_answering.data.QuestionAnsweringDataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.JSON` from the passed or
-        constructed :class:`~flash.text.question_answering.data.QuestionAnsweringPreprocess`.
-
-        Args:
-            question_column_name: The field in the JSON objects to use for the question.
-            context_column_name: The field in the JSON objects to use for the context.
-            answer_column_name: The field in the JSON objects to use for the answer.
-            doc_stride: The amount of stride to be taken between chunks when splitting up a long document into chunks.
-            train_file: The JSON file containing the training data.
-            val_file: The JSON file containing the validation data.
-            test_file: The JSON file containing the testing data.
-            predict_file: The JSON file containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            field: To specify the field that holds the data in the JSON file.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_json(
-                question_column_name="question",
-                context_column_name="context",
-                answer_column_name="answer",
-                doc_stride=128,
-                train_file="train_data.json",
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
-        """
-        return cls.from_data_source(
-            DefaultDataSources.JSON,
-            (train_file, question_column_name, context_column_name, answer_column_name, doc_stride, field),
-            (val_file, question_column_name, context_column_name, answer_column_name, doc_stride, field),
-            (test_file, question_column_name, context_column_name, answer_column_name, doc_stride, field),
-            (predict_file, question_column_name, context_column_name, answer_column_name, doc_stride, field),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            preprocess=preprocess,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **preprocess_kwargs,
-        )
-
-    @classmethod
-    def from_csv(
-        cls,
-        question_column_name: Optional[str] = "question",
-        context_column_name: Optional[str] = "context",
-        answer_column_name: Optional[str] = "answer",
-        doc_stride: Optional[int] = 128,
-        train_file: Optional[str] = None,
-        val_file: Optional[str] = None,
-        test_file: Optional[str] = None,
-        predict_file: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: Optional[int] = None,
-        sampler: Optional[Sampler] = None,
-        **preprocess_kwargs: Any,
-    ) -> 'DataModule':
-        """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given
-        JSON files using the :class:`~flash.text.question_answering.data.QuestionAnsweringDataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or
-        constructed :class:`~flash.text.question_answering.data.QuestionAnsweringPreprocess`.
-
-        Args:
-            question_column_name: The field in the JSON objects to use for the question.
-            context_column_name: The field in the JSON objects to use for the context.
-            answer_column_name: The field in the JSON objects to use for the answer.
-            doc_stride: The amount of stride to be taken between chunks when splitting up a long document into chunks.
-            train_file: The CSV file containing the training data.
-            val_file: The CSV file containing the validation data.
-            test_file: The CSV file containing the testing data.
-            predict_file: The CSV file containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_csv(
-                question_column_name="question",
-                context_column_name="context",
-                answer_column_name="answer",
-                doc_stride=128,
-                train_file="train_data.csv",
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
-        """
-        return cls.from_data_source(
-            DefaultDataSources.CSV,
-            (train_file, question_column_name, context_column_name, answer_column_name, doc_stride),
-            (val_file, question_column_name, context_column_name, answer_column_name, doc_stride),
-            (test_file, question_column_name, context_column_name, answer_column_name, doc_stride),
-            (predict_file, question_column_name, context_column_name, answer_column_name, doc_stride),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            preprocess=preprocess,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **preprocess_kwargs,
-        )
-
-    @classmethod
     def from_squad_v2(
         cls,
-        doc_stride: Optional[int] = 128,
         train_file: Optional[str] = None,
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
@@ -771,7 +632,6 @@ class QuestionAnsweringData(DataModule):
         data JSON files in the SQuAD2.0 format.
 
         Args:
-            doc_stride: The amount of stride to be taken between chunks when splitting up a long document into chunks.
             train_file: The JSON file containing the training data.
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
@@ -798,15 +658,15 @@ class QuestionAnsweringData(DataModule):
         Examples::
 
             data_module = QuestionAnsweringData.from_squad_v2(
-                doc_stride=128,
                 train_file="train.json",
+                doc_stride=128,
             )
         """
         return cls.from_data_source(
             "squad_v2",
-            (train_file, doc_stride),
-            (val_file, doc_stride),
-            (test_file, doc_stride),
+            train_file,
+            val_file,
+            test_file,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
