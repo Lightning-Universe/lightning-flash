@@ -46,10 +46,7 @@ def test_init_train_enable_ort(tmpdir):
         train_dataloader=torch.utils.data.DataLoader(DummyDataset()),
         val_dataloaders=torch.utils.data.DataLoader(DummyDataset()),
     )
-    trainer.test(
-        model,
-        test_dataloaders=torch.utils.data.DataLoader(DummyDataset())
-    )
+    trainer.test(model, test_dataloaders=torch.utils.data.DataLoader(DummyDataset()))
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
