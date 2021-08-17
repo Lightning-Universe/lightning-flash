@@ -182,7 +182,7 @@ class DatasetProcessor:
         pin_memory: bool,
         collate_fn: Callable,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
@@ -204,7 +204,7 @@ class DatasetProcessor:
         pin_memory: bool = False,
         collate_fn: Callable = None,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self._process_dataset(
