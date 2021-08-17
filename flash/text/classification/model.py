@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from pytorch_lightning import Callback
