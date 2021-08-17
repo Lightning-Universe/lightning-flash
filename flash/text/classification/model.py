@@ -26,7 +26,7 @@ from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSequenceClassification
-    from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
+    from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
@@ -89,7 +89,7 @@ class TextClassifier(ClassificationTask):
         return self.model.base_model
 
     @staticmethod
-    def apply_filtering(y: torch.Tensor, y_hat: Seq2SeqSequenceClassifierOutput) -> Tuple[torch.Tensor, torch.Tensor]:
+    def apply_filtering(y: torch.Tensor, y_hat: SequenceClassifierOutput) -> Tuple[torch.Tensor, torch.Tensor]:
         return y, y_hat.logits
 
     def forward(self, batch: Dict[str, torch.Tensor]):
