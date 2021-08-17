@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import math
+from itertools import chain
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
@@ -52,14 +53,20 @@ else:
 
 
 class DummyDataset(torch.utils.data.Dataset):
+    def __init__(self, num_samples: int = 9):
+        self.num_samples = num_samples
+
     def __getitem__(self, index: int) -> Tuple[Tensor, Number]:
         return torch.rand(1, 28, 28), torch.randint(10, size=(1,)).item()
 
     def __len__(self) -> int:
-        return 9
+        return self.num_samples
 
 
 class PredictDummyDataset(DummyDataset):
+    def __init__(self, num_samples: int):
+        super().__init__(num_samples)
+
     def __getitem__(self, index: int) -> Tensor:
         return torch.rand(1, 28, 28)
 
@@ -211,15 +218,12 @@ def test_classification_task_predict_folder_path(tmpdir):
 def test_classification_task_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
-    ds = PredictDummyDataset()
-    batch_size = 3
-    predict_dl = torch.utils.data.DataLoader(ds, batch_size=batch_size)
+    ds = PredictDummyDataset(10)
+    batch_size = 6
+    predict_dl = task.process_predict_dataset(ds, batch_size=batch_size)
     trainer = pl.Trainer(default_root_dir=tmpdir)
     predictions = trainer.predict(task, predict_dl)
-    assert len(predictions) == len(ds) // batch_size
-    for batch_pred in predictions:
-        assert len(batch_pred) == batch_size
-        assert all(y < 10 for y in batch_pred)
+    assert len(list(chain.from_iterable(predictions))) == 10
 
 
 def test_task_datapipeline_save(tmpdir):
