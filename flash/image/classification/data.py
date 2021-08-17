@@ -45,12 +45,19 @@ if _PIL_AVAILABLE:
     from PIL import Image
 else:
 
-    class Image:
+    class MetaImage(type):
+        def __init__(cls, name, bases, dct):
+            super(MetaImage, cls).__init__(name, bases, dct)
+
+            cls._Image = None
 
         @property
-        def Image(self):
-            warn("Mock object called, missing PIL library. Install using 'pip install Pillow'.")
-            return None
+        def Image(cls):
+            warn("Mock object called due to missing PIL library. Install PIL using 'pip install Pillow'.")
+            return cls._Image
+
+    class Image(metaclass=MetaImage):
+        pass
 
 
 class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
