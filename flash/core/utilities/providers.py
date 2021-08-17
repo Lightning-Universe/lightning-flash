@@ -18,3 +18,7 @@ _TORCHVISION = Provider("PyTorch/torchvision", "https://github.com/pytorch/visio
 _ULTRALYTICS = Provider("Ultralytics/YOLOV5", "https://github.com/ultralytics/yolov5")
 _MMDET = Provider("OpenMMLab/MMDetection", "https://github.com/open-mmlab/mmdetection")
 _EFFDET = Provider("rwightman/efficientdet-pytorch", "https://github.com/rwightman/efficientdet-pytorch")
+_SEGMENTATION_MODELS = Provider(
+    "qubvel/segmentation_models.pytorch", "https://github.com/qubvel/segmentation_models.pytorch"
+)
+_PYSTICHE = Provider("pystiche/pystiche", "https://github.com/pystiche/pystiche")
