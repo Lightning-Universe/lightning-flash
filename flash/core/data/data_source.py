@@ -14,6 +14,7 @@
 import json
 import os
 import typing
+from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
 from typing import (
@@ -44,7 +45,7 @@ from torchvision.datasets.folder import default_loader
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, _TEXT_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, _TEXT_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -612,16 +613,29 @@ class LabelStudioDataset(Dataset):
 
 class LabelStudioDataSource(DataSource):
     """The ``LabelStudioDatasource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio."""
 
-    def __init__(self, data_folder: str, export_json: str, multi_label=False, backbone=None, max_length=128):
-
+    def __init__(self,
+                 data_folder: str,
+                 export_json: str,
+                 data_type: str = 'other',
+                 multi_label=False,
+                 backbone=None,
+                 max_length=128,
+                 video_sampler=None,
+                 clip_sampler=None,
+                 clip_duration=1,
+                 decode_audio=False,
+                 decoder: str = "pyav",
+                 split: float = 0.8):
         super().__init__()
         self._data_folder = data_folder
+        self._data_type = data_type
         with open(export_json) as f:
             self._raw_data = json.load(f)
         self.results = list()
         self.test_results = list()
+        self.val_results = list()
         self.classes = set()
         self.num_classes = 0
         self.multi_label = multi_label
@@ -631,6 +645,15 @@ class LabelStudioDataSource(DataSource):
             self.backbone = backbone
             self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
             self.max_length = max_length
+        self.video_sampler = video_sampler or torch.utils.data.RandomSampler
+        if clip_sampler:
+            if _PYTORCHVIDEO_AVAILABLE:
+                from pytorchvideo.data.clip_sampling import make_clip_sampler
+            self.clip_sampler = make_clip_sampler(clip_sampler, clip_duration)
+        self.decode_audio = decode_audio
+        self.decoder = decoder
+        self.data_types = set()
+        self.split = split
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         # iterate through all tasks in exported data
@@ -638,13 +661,15 @@ class LabelStudioDataSource(DataSource):
             self._raw_data = data
         for task in self._raw_data:
             for annotation in task['annotations']:
+                # extracting data types from tasks
+                [self.data_types.add(key) for key in task.get('data')]
                 # Adding ground_truth annotation to separate dataset
                 result = annotation['result']
                 for res in result:
                     t = res['type']
                     for label in res['value'][t]:
                         # check if labeling result is a list of labels
-                        if isinstance(label, list):
+                        if isinstance(label, list) and not self.multi_label:
                             for sublabel in label:
                                 self.classes.add(sublabel)
                                 temp = dict()
@@ -657,7 +682,11 @@ class LabelStudioDataSource(DataSource):
                                 elif not annotation['ground_truth']:
                                     self.results.append(temp)
                         else:
-                            self.classes.add(label)
+                            if isinstance(label, list):
+                                for item in label:
+                                    self.classes.add(item)
+                            else:
+                                self.classes.add(label)
                             temp = dict()
                             temp['file_upload'] = task.get('file_upload')
                             temp['data'] = task.get('data')
@@ -668,54 +697,51 @@ class LabelStudioDataSource(DataSource):
                             elif not annotation['ground_truth']:
                                 self.results.append(temp)
         self.num_classes = len(self.classes)
+        # splitting result to train and val sets
+        import random
+        random.shuffle(self.results)
+        l = len(self.results)
+        prop = l - int(l * self.split)
+        self.val_results = self.results[:prop]
+        self.results = self.results[prop:]
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        data_types = sample.get('data')
-        data_type = None
-        # casting to list and sorting classes
-        sorted_labels = sorted(list(self.classes))
-        # checking index of class
-        label = sorted_labels.index(sample['label'])
-
-        if isinstance(data_types, dict):
-            # extracting data types from sample
-            data_types = list(data_types.keys())
-            if len(data_types) == 1:
-                data_type = data_types[0]
-            else:
-                data_type = None
-        if data_type == 'image':
+        if self._check_data_type('image'):
             # extracting path to file
             if sample['file_upload']:
                 p = os.path.join(self._data_folder, sample['file_upload'])
             else:
-                p = sample.get('data').get('image')
+                for key in sample.get('data'):
+                    p = sample.get('data').get(key)
             # loading image
             image = default_loader(p)
             result = {DefaultDataKeys.INPUT: image,
-                      DefaultDataKeys.TARGET: label}
-        elif data_type == 'text' and self.backbone:
-            tokenized_data = self.tokenizer(sample.get('data').get(data_type),
+                      DefaultDataKeys.TARGET: self._get_labels_from_sample(sample['label'])}
+        elif self._check_data_type('text') and self.backbone:
+            data = ""
+            for key in sample.get('data'):
+                data += sample.get('data').get(key)
+            tokenized_data = self.tokenizer(data,
                                             max_length=self.max_length,
                                             truncation=True,
                                             padding="max_length")
             for key in tokenized_data:
                 tokenized_data[key] = torch.tensor(tokenized_data[key])
-            tokenized_data['labels'] = label
+            tokenized_data['labels'] = self._get_labels_from_sample(sample['label'])
             # separate text data type block
             result = tokenized_data
-        elif data_type == 'video':
-            # extract path to file
-            if sample['file_upload']:
-                p = os.path.join(self._data_folder, sample['file_upload'])
-            else:
-                p = sample.get('data').get('image')
-            result = {DefaultDataKeys.INPUT: p,
-                      DefaultDataKeys.TARGET: label}
+        elif self._check_data_type('video'):
+            result = sample
         else:
             # all other data types
-            result = {DefaultDataKeys.INPUT: sample.get('data').get(data_type),
-                      DefaultDataKeys.TARGET: label}
+            input_data = deepcopy(sample)
+            try:
+                del input_data['label']
+            except:
+                # no label in input data
+                pass
+            result = {DefaultDataKeys.INPUT: input_data,
+                      DefaultDataKeys.TARGET: self._get_labels_from_sample(sample['label'])}
         return result
 
     def generate_dataset(
@@ -724,17 +750,39 @@ class LabelStudioDataSource(DataSource):
             running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
         if running_stage in (RunningStage.TRAINING, RunningStage.TUNING):
-            data = self.results
-        elif running_stage == RunningStage.VALIDATING:
-            data = []
+            dataset = self.results
         elif running_stage == RunningStage.TESTING:
-            data = self.test_results
+            dataset = self.test_results
         elif running_stage == RunningStage.PREDICTING:
-            data = []
+            dataset = data or []
+        elif running_stage == RunningStage.VALIDATING:
+            dataset = self.val_results
 
+        if self._check_data_type('video') and len(dataset) > 0:
+            from pytorchvideo.data import EncodedVideoDataset
+            dataset = EncodedVideoDataset(
+                [(os.path.join(self._data_folder, sample['file_upload']),
+                  {"label": self._get_labels_from_sample(sample['label'])}) for sample in dataset],
+                self.clip_sampler,
+                decode_audio=self.decode_audio,
+                decoder=self.decoder,
+            )
         if has_len(data):
-            dataset = AutoDataset(data, self, running_stage)
+            dataset = AutoDataset(dataset, self, running_stage)
         else:
-            dataset = IterableAutoDataset(data, self, running_stage)
+            dataset = IterableAutoDataset(dataset, self, running_stage)
         dataset.num_classes = self.num_classes
         return dataset
+
+    def _get_labels_from_sample(self, labels):
+        sorted_labels = sorted(list(self.classes))
+        if isinstance(labels, list):
+            label = []
+            for item in labels:
+                label.append(sorted_labels.index(item))
+        else:
+            label = sorted_labels.index(labels)
+        return label
+
+    def _check_data_type(self, data_type):
+        return data_type == self._data_type

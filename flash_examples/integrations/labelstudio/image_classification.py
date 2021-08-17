@@ -13,6 +13,7 @@ datamodule = ImageClassificationData.from_labelstudio(
     export_json='data/project.json',
     data_folder='data/upload/',
     val_split=0.8,
+    data_type='image'
 )
 
 # 2. Fine tune a model

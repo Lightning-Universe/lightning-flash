@@ -1169,6 +1169,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
+        data_type: str = 'other',
         **preprocess_kwargs: Any,
     ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
@@ -1211,20 +1212,7 @@ class DataModule(pl.LightningDataModule):
                 val_split=0.8,
             )
         """
-        # loading export data
-        data_source = LabelStudioDataSource(data_folder=data_folder,
-                                            export_json=export_json,
-                                            backbone=preprocess_kwargs.get('backbone'),
-                                            max_length=preprocess_kwargs.get('max_length', 128))
-        data_source.load_data()
-        # loading data sets
-        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets()
-        # creating splitting params
-        l = len(train_dataset)
-        prop = int(l * val_split)
-        # splitting full data set
-        train_dataset, val_dataset = random_split(train_dataset, [prop, l - prop])
-
+        # create preprocess
         preprocess = preprocess or cls.preprocess_cls(
             train_transform,
             val_transform,
@@ -1232,6 +1220,20 @@ class DataModule(pl.LightningDataModule):
             predict_transform,
             **preprocess_kwargs,
         )
+        # loading export data
+        data_source = LabelStudioDataSource(data_folder=data_folder,
+                                            export_json=export_json,
+                                            data_type=data_type,
+                                            backbone=preprocess_kwargs.get('backbone'),
+                                            max_length=preprocess_kwargs.get('max_length', 128),
+                                            clip_sampler=preprocess_kwargs.get('clip_sampler'),
+                                            clip_duration=preprocess_kwargs.get('clip_duration', 1),
+                                            decode_audio=preprocess_kwargs.get('decode_audio', False),
+                                            decoder=preprocess_kwargs.get('decoder', 'pyav'),
+                                            multi_label=preprocess_kwargs.get('multi_label', False),)
+        data_source.load_data()
+        # loading data sets
+        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets()
 
         data = cls(
             train_dataset,

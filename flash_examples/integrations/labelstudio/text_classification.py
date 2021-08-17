@@ -9,6 +9,7 @@ backbone = "prajjwal1/bert-medium"
 
 datamodule = TextClassificationData.from_labelstudio(
     export_json='data/project.json',
+    data_type='text',
     val_split=0.8,
     backbone=backbone,
 )
