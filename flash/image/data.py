@@ -29,7 +29,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires_extras
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -37,13 +37,6 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.transforms.functional import to_pil_image
 else:
     IMG_EXTENSIONS = ()
-
-if _PIL_AVAILABLE:
-    from PIL import Image as PILImage
-else:
-
-    class Image:
-        Image = None
 
 
 NP_EXTENSIONS = (".npy", ".npz")
@@ -53,7 +46,7 @@ def image_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
         img = default_loader(filepath)
     elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
-        img = PILImage.fromarray(np.load(filepath).astype("uint8"), "RGB")
+        img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
     else:
         raise ValueError(
             f"File: {filepath} has an unsupported extension. Supported extensions: "
@@ -72,7 +65,7 @@ class ImageDeserializer(Deserializer):
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
-        img = PILImage.open(buffer, mode="r")
+        img = Image.open(buffer, mode="r")
         return {
             DefaultDataKeys.INPUT: img,
         }

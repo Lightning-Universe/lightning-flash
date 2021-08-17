@@ -38,8 +38,8 @@ from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
-    _PIL_AVAILABLE,
     _TORCHVISION_AVAILABLE,
+    Image,
     lazy_import,
     requires,
     requires_extras,
@@ -67,13 +67,6 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, has_file_allowed_extension, IMG_EXTENSIONS
 else:
     IMG_EXTENSIONS = None
-
-if _PIL_AVAILABLE:
-    from PIL import Image
-else:
-
-    class Image:
-        Image = None
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
