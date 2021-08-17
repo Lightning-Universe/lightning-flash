@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
+from typing import Callable, Optional
 
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires_extras
@@ -28,17 +28,21 @@ def from_biwi(
     val_split: float = 0.1,
     batch_size: int = 4,
     num_workers: Optional[int] = None,
+    parser: Optional[Callable] = None,
     **preprocess_kwargs,
 ) -> KeypointDetectionData:
     """Downloads and loads the BIWI data set from icedata."""
     data_dir = icedata.biwi.load_data()
+
+    if parser is None:
+        parser = icedata.biwi.parser
 
     return KeypointDetectionData.from_folders(
         train_folder=data_dir,
         val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        parser=icedata.biwi.parser,
+        parser=parser,
         **preprocess_kwargs,
     )
 
@@ -50,6 +54,7 @@ def keypoint_detection():
         KeypointDetectionData,
         default_datamodule_builder=from_biwi,
         default_arguments={
+            "model.num_keypoints": 1,
             "trainer.max_epochs": 3,
         },
     )
