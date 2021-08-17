@@ -85,3 +85,17 @@ You can now perform inference from your client like this:
 .. literalinclude:: ../../../flash_examples/serve/text_classification/client.py
     :language: python
     :lines: 14-
+
+------
+
+**********************************************
+Accelerate Training & Inference with Torch ORT
+**********************************************
+
+`Torch ORT <https://cloudblogs.microsoft.com/opensource/2021/07/13/accelerate-pytorch-training-with-torch-ort/>`__ converts your model into an optimized ONNX graph, speeding up training & inference. Enabling Torch ORT requires a single flag passed to the ``TextClassifier`` once installed. See installation instructions `here <https://github.com/pytorch/ort#install-in-a-local-python-environment>`__.
+
+.. code-block:: python
+
+    ...
+
+    model = TextClassifier(backbone="facebook/bart-large", num_classes=datamodule.num_classes, enable_ort=True)
