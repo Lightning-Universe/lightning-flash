@@ -21,19 +21,28 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
-from flash.text.question_answering.data import QuestionAnsweringPreprocess
-from flash.text.seq2seq.core.data import Seq2SeqPostprocess
+from flash.text.question_answering.data import (
+    QuestionAnsweringData,
+    QuestionAnsweringPostprocess,
+    QuestionAnsweringPreprocess,
+)
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
+from tests.text.question_answering.test_data import json_data
 
 # ======== Mock functions ========
+
+BATCH_SIZE = 4
+SEQUENCE_LENGTH = 128
 
 
 class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            "input_ids": torch.randint(1000, size=(128, )),
-            "labels": torch.randint(1000, size=(128, )),
+            "input_ids": torch.randint(1000, size=(BATCH_SIZE, SEQUENCE_LENGTH)),
+            "attention_mask": torch.randint(1, size=(BATCH_SIZE, SEQUENCE_LENGTH)),
+            "start_positions": torch.randint(1000, size=([BATCH_SIZE])),
+            "end_positions": torch.randint(1000, size=([BATCH_SIZE])),
         }
 
     def __len__(self) -> int:
@@ -42,7 +51,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 # ==============================
 
-TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
+TEST_BACKBONE = "distilbert-base-uncased"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -56,10 +65,9 @@ def test_init_train(tmpdir):
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_jit(tmpdir):
-    sample_input = {
-        "input_ids": torch.randint(1000, size=(1, 32)),
-        "attention_mask": torch.randint(1, size=(1, 32)),
-    }
+    json_path = json_data(tmpdir)
+    dm = QuestionAnsweringData.from_json(backbone=TEST_BACKBONE, val_file=json_path, batch_size=4)
+    sample_input = next(iter(dm.val_dataloader()))
     path = os.path.join(tmpdir, "test.pt")
 
     model = QuestionAnsweringTask(TEST_BACKBONE)
@@ -81,7 +89,7 @@ def test_serve():
     model = QuestionAnsweringTask(TEST_BACKBONE)
     # TODO: Currently only servable once a preprocess and postprocess have been attached
     model._preprocess = QuestionAnsweringPreprocess(backbone=TEST_BACKBONE)
-    model._postprocess = Seq2SeqPostprocess()
+    model._postprocess = QuestionAnsweringPostprocess()
     model.eval()
     model.serve()
 

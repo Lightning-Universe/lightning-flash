@@ -11,50 +11,77 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import os
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
+from flash.core.data.data_source import DefaultDataKeys
 from flash.text import QuestionAnsweringData
 from tests.helpers.utils import _TEXT_TESTING
 
-TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
+TEST_BACKBONE = "distilbert-base-uncased"
 
-TEST_CSV_DATA = """question,context,answer
-this is a question one,this is a context one,this is an answer one
-this is a question two,this is a context two,this is an answer two
-this is a question three,this is a context three,this is an answer three
-"""
+TEST_DATA = {
+    "id": ["12345", "12346", "12347", "12348"],
+    "context": [
+        "this is an answer one. this is a context one", "this is an answer two. this is a context two",
+        "this is an answer three. this is a context three", "this is an answer four. this is a context four"
+    ],
+    "question": [
+        "this is a question one", "this is a question two", "this is a question three", "this is a question four"
+    ],
+    "answer": [{
+        "text": ["this is an answer one"],
+        "answer_start": [0]
+    }, {
+        "text": ["this is an answer two"],
+        "answer_start": [0]
+    }, {
+        "text": ["this is an answer three"],
+        "answer_start": [0]
+    }, {
+        "text": ["this is an answer four"],
+        "answer_start": [0]
+    }]
+}
 
-TEST_JSON_DATA = """
-{"question": "this is a question one","context": "this is a context one","answer":"this is an answer one"}
-{"question": "this is a question two","context": "this is a context two","answer":"this is an answer two"}
-{"question": "this is a question three","context": "this is a context three","answer":"this is an answer three"}
-"""
 
-TEST_JSON_DATA_FIELD = """{"data": [
-{"question": "this is a question one","context": "this is a context one","answer":"this is an answer one"}
-{"question": "this is a question two","context": "this is a context two","answer":"this is an answer two"}
-{"question": "this is a question three","context": "this is a context three","answer":"this is an answer three"}
-]}"""
+def get_csv_data():
+    df = pd.DataFrame(TEST_DATA)
+    return df.to_csv(index=False)
 
 
 def csv_data(tmpdir):
     path = Path(tmpdir) / "data.csv"
-    path.write_text(TEST_CSV_DATA)
+    path.write_text(get_csv_data())
     return path
 
 
+def get_json_data():
+    data = []
+    examples = list(zip(TEST_DATA["id"], TEST_DATA["context"], TEST_DATA["question"], TEST_DATA["answer"]))
+    for example in examples:
+        data.append({"id": example[0], "context": example[1], "question": example[2], "answer": example[3]})
+    return data
+
+
 def json_data(tmpdir):
+    data = get_json_data()
+    json_data = ""
+    for example in data:
+        json_data += json.dumps(example) + "\n"
     path = Path(tmpdir) / "data.json"
-    path.write_text(TEST_JSON_DATA)
+    path.write_text(json_data)
     return path
 
 
 def json_data_with_field(tmpdir):
+    data = json.dumps({"data": get_json_data()})
     path = Path(tmpdir) / "data.json"
-    path.write_text(TEST_JSON_DATA_FIELD)
+    path.write_text(data)
     return path
 
 
@@ -67,12 +94,13 @@ def test_from_csv(tmpdir):
         context_column_name="context",
         answer_column_name="answer",
         backbone=TEST_BACKBONE,
-        train_file=csv_path,
-        batch_size=1
+        train_file=csv_path
     )
     batch = next(iter(dm.train_dataloader()))
-    assert "labels" in batch
     assert "input_ids" in batch
+    assert "attention_mask" in batch
+    assert "start_positions" in batch
+    assert "end_positions" in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -86,32 +114,41 @@ def test_from_files(tmpdir):
         backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
-        test_file=csv_path,
-        batch_size=1,
+        test_file=csv_path
     )
     batch = next(iter(dm.val_dataloader()))
-    assert "labels" in batch
     assert "input_ids" in batch
+    assert "attention_mask" in batch
+    assert DefaultDataKeys.METADATA in batch
+    assert "context" in batch[DefaultDataKeys.METADATA][0]
+    assert "answer" in batch[DefaultDataKeys.METADATA][0]
+    assert "example_id" in batch[DefaultDataKeys.METADATA][0]
+    assert "offset_mapping" in batch[DefaultDataKeys.METADATA][0]
 
     batch = next(iter(dm.test_dataloader()))
-    assert "labels" in batch
     assert "input_ids" in batch
+    assert "attention_mask" in batch
+    assert DefaultDataKeys.METADATA in batch
+    assert "context" in batch[DefaultDataKeys.METADATA][0]
+    assert "answer" in batch[DefaultDataKeys.METADATA][0]
+    assert "example_id" in batch[DefaultDataKeys.METADATA][0]
+    assert "offset_mapping" in batch[DefaultDataKeys.METADATA][0]
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_postprocess_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different backbone is
+    """Tests that the tokenizer property in ``QuestionAnsweringPostprocess`` resolves correctly when a different backbone is
     used.
     """
-    backbone = "sshleifer/bart-tiny-random"
-    csv_path = csv_data(tmpdir)
-    dm = QuestionAnsweringData.from_csv(
+    backbone = "allenai/longformer-base-4096"
+    json_path = json_data(tmpdir)
+    dm = QuestionAnsweringData.from_json(
         question_column_name="question",
         context_column_name="context",
         answer_column_name="answer",
         backbone=backbone,
-        train_file=csv_path,
-        batch_size=1,
+        train_file=json_path,
+        batch_size=2
     )
     pipeline = dm.data_pipeline
     pipeline.initialize()
@@ -129,11 +166,13 @@ def test_from_json(tmpdir):
         answer_column_name="answer",
         backbone=TEST_BACKBONE,
         train_file=json_path,
-        batch_size=1
+        batch_size=2
     )
     batch = next(iter(dm.train_dataloader()))
-    assert "labels" in batch
     assert "input_ids" in batch
+    assert "attention_mask" in batch
+    assert "start_positions" in batch
+    assert "end_positions" in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -146,9 +185,10 @@ def test_from_json_with_field(tmpdir):
         answer_column_name="answer",
         backbone=TEST_BACKBONE,
         train_file=json_path,
-        batch_size=1,
         field="data"
     )
     batch = next(iter(dm.train_dataloader()))
-    assert "labels" in batch
     assert "input_ids" in batch
+    assert "attention_mask" in batch
+    assert "start_positions" in batch
+    assert "end_positions" in batch

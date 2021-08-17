@@ -284,13 +284,13 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
                     dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
                 else:
                     dataset_dict = load_dataset(self.filetype, data_files=data_files)
-                column_names = dataset_dict.column_names
+                column_names = dataset_dict[stage].column_names
         else:
             if self.filetype == 'json' and field is not None:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
             else:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
-            column_names = dataset_dict.column_names
+            column_names = dataset_dict[stage].column_names
 
         dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True, remove_columns=column_names)
         return dataset_dict[stage]
