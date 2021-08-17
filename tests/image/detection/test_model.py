@@ -124,8 +124,7 @@ def test_load_from_checkpoint_dependency_error():
         ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_cli():
     cli_args = ["flash", "object_detection", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):

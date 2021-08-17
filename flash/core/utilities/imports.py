@@ -96,6 +96,7 @@ _ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
 _ICEVISION_AVAILABLE = _module_available("icevision")
+_ICEDATA_AVAILABLE = _module_available("icedata")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 
 if Version:
@@ -120,6 +121,7 @@ _IMAGE_AVAILABLE = all(
         _PYSTICHE_AVAILABLE,
         _SEGMENTATION_MODELS_AVAILABLE,
         _ICEVISION_AVAILABLE,
+        _ICEDATA_AVAILABLE,
     ]
 )
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE

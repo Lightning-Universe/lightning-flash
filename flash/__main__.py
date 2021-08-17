@@ -44,6 +44,8 @@ tasks = [
     "flash.graph.classification",
     "flash.image.classification",
     "flash.image.detection",
+    "flash.image.instance_segmentation",
+    "flash.image.keypoint_detection",
     "flash.image.segmentation",
     "flash.image.style_transfer",
     "flash.pointcloud.detection",
