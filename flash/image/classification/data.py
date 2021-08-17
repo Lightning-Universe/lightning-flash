@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from logging import warn
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from logging import warn
 from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.sampler import Sampler
 

@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import math
+from logging import warn
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
 from unittest import mock
-from logging import warn
 
 import numpy as np
 import pytest
