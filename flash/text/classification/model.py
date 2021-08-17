@@ -26,7 +26,7 @@ from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSequenceClassification
-    from transformers.modeling_outputs import SequenceClassifierOutput
+    from transformers.modeling_outputs import SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
@@ -88,20 +88,16 @@ class TextClassifier(ClassificationTask):
     def backbone(self):
         return self.model.base_model
 
-    @staticmethod
-    def apply_filtering(y: torch.Tensor, y_hat: SequenceClassifierOutput) -> Tuple[torch.Tensor, torch.Tensor]:
-        return y, y_hat.logits
-
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
 
     def to_loss_format(self, x) -> torch.Tensor:
-        if isinstance(x, SequenceClassifierOutput):
+        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             x = x.logits
         return super().to_loss_format(x)
 
     def to_metrics_format(self, x) -> torch.Tensor:
-        if isinstance(x, SequenceClassifierOutput):
+        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             x = x.logits
         return super().to_metrics_format(x)
 
