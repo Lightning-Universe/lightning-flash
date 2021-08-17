@@ -37,10 +37,10 @@ __________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~seq2seq.question_answering.model.QuestionAnsweringTask
-    ~seq2seq.question_answering.data.QuestionAnsweringData
+    ~question_answering.model.QuestionAnsweringTask
+    ~question_answering.data.QuestionAnsweringData
 
-    seq2seq.question_answering.data.QuestionAnsweringPreprocess
+    question_answering.data.QuestionAnsweringPreprocess
 
 Summarization
 _____________

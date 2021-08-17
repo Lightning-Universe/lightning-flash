@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Adapted from:
+# https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/run_qa_no_trainer.py
+# https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/utils_qa.py
+
 import collections
 import os
 import warnings

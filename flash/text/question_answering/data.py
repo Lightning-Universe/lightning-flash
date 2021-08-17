@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Adapted from:
-# https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/run_qa.py
+# https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/run_qa_no_trainer.py
 # https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/utils_qa.py
 
 import collections
@@ -25,6 +25,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from torch import Tensor
+from torch.utils.data.sampler import Sampler
 
 import flash
 from flash.core.data.callback import BaseDataFetcher
@@ -675,5 +676,209 @@ class QuestionAnsweringData(DataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_json(
+        cls,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
+        field: Optional[str] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        """Creates a :class:`~flash.text.question_answering.QuestionAnsweringData` object from the given JSON files
+        using the :class:`~flash.text.question_answering.QuestionAnsweringDataSource`of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.JSON` from the passed or constructed
+        :class:`~flash.text.question_answering.QuestionAnsweringPreprocess`.
+
+        Args:
+            train_file: The JSON file containing the training data.
+            val_file: The JSON file containing the validation data.
+            test_file: The JSON file containing the testing data.
+            predict_file: The JSON file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            field: To specify the field that holds the data in the JSON file.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        .. note:: The following keyword arguments can be passed through to the preprocess_kwargs
+
+            - backbone: The HF model to be used for the task.
+            - max_source_length: Max length of the sequence to be considered during tokenization.
+            - max_target_length: Max length of each answer to be produced.
+            - padding: Padding type during tokenization. Defaults to 'max_length'.
+            - question_column_name: The key in the JSON file to recognize the question field. Defaults to"question".
+            - context_column_name: The key in the JSON file to recognize the context field. Defaults to "context".
+            - answer_column_name: The key in the JSON file to recognize the answer field. Defaults to "answer".
+            - doc_stride: The stride amount to be taken when splitting up a long document into chunks.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_json(
+                train_file="train_data.json",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+                backbone="distilbert-base-uncased",
+                max_source_length=384,
+                max_target_length=30,
+                padding='max_length',
+                question_column_name="question",
+                context_column_name="context",
+                answer_column_name="answer",
+                doc_stride=128
+            )
+        """
+        return cls.from_data_source(
+            DefaultDataSources.JSON,
+            (train_file, field),
+            (val_file, field),
+            (test_file, field),
+            (predict_file, field),
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        sampler: Optional[Sampler] = None,
+        **preprocess_kwargs: Any,
+    ) -> 'DataModule':
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
+        :class:`~flash.core.data.data_source.DataSource`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            input_fields: The field or fields (columns) in the CSV file to use for the input.
+            target_fields: The field or fields (columns) in the CSV file to use for the target.
+            train_file: The CSV file containing the training data.
+            val_file: The CSV file containing the validation data.
+            test_file: The CSV file containing the testing data.
+            predict_file: The CSV file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        .. note:: The following keyword arguments can be passed through to the preprocess_kwargs
+
+            - backbone: The HF model to be used for the task.
+            - max_source_length: Max length of the sequence to be considered during tokenization.
+            - max_target_length: Max length of each answer to be produced.
+            - padding: Padding type during tokenization. Defaults to 'max_length'.
+            - question_column_name: The key in the JSON file to recognize the question field. Defaults to"question".
+            - context_column_name: The key in the JSON file to recognize the context field. Defaults to "context".
+            - answer_column_name: The key in the JSON file to recognize the answer field. Defaults to "answer".
+            - doc_stride: The stride amount to be taken when splitting up a long document into chunks.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_csv(
+                "input",
+                "target",
+                train_file="train_data.csv",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+                backbone="distilbert-base-uncased",
+                max_source_length=384,
+                max_target_length=30,
+                padding='max_length',
+                question_column_name="question",
+                context_column_name="context",
+                answer_column_name="answer",
+                doc_stride=128
+            )
+        """
+        return cls.from_data_source(
+            DefaultDataSources.CSV,
+            train_file,
+            val_file,
+            test_file,
+            predict_file,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
             **preprocess_kwargs,
         )
