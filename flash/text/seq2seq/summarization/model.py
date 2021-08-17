@@ -56,7 +56,7 @@ class SummarizationTask(Seq2SeqTask):
         num_beams: Optional[int] = 4,
         use_stemmer: bool = True,
         rouge_newline_sep: bool = True,
-        enable_ort: bool = True,
+        enable_ort: bool = False,
     ):
         self.save_hyperparameters()
         super().__init__(

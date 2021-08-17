@@ -56,7 +56,7 @@ class TranslationTask(Seq2SeqTask):
         num_beams: Optional[int] = 4,
         n_gram: bool = 4,
         smooth: bool = True,
-        enable_ort: bool = True,
+        enable_ort: bool = False,
     ):
         self.save_hyperparameters()
         super().__init__(
