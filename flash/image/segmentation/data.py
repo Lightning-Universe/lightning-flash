@@ -62,7 +62,6 @@ else:
     plt = None
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
     import torchvision.transforms.functional as FT
     from torchvision.datasets.folder import has_file_allowed_extension, default_loader, IMG_EXTENSIONS
 else:
