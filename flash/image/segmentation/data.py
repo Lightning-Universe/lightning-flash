@@ -63,7 +63,7 @@ else:
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms.functional as FT
-    from torchvision.datasets.folder import has_file_allowed_extension, default_loader, IMG_EXTENSIONS
+    from torchvision.datasets.folder import default_loader, has_file_allowed_extension, IMG_EXTENSIONS
 else:
     IMG_EXTENSIONS = None
 
