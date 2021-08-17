@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pytorch_lightning import Callback
+from pytorch_lightning import Callback, LightningModule
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
+from flash import Trainer
 from flash.core.utilities.imports import _TORCH_ORT_AVAILABLE
 
 if _TORCH_ORT_AVAILABLE:
@@ -41,7 +42,7 @@ class ORTCallback(Callback):
                 "Torch ORT is required to use ORT. See here for installation: https://github.com/pytorch/ort"
             )
 
-    def on_before_accelerator_backend_setup(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+    def on_before_accelerator_backend_setup(self, trainer: Trainer, pl_module: LightningModule) -> None:
         if not hasattr(pl_module, "model"):
             raise MisconfigurationException(
                 "Torch ORT requires to wrap a single model that defines a forward function "
