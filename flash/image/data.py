@@ -13,7 +13,6 @@
 # limitations under the License.
 import base64
 from io import BytesIO
-from logging import warn
 from pathlib import Path
 from typing import Any, Dict, Optional
 
