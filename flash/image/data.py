@@ -44,7 +44,6 @@ if _PIL_AVAILABLE:
 else:
 
     class Image:
-
         @property
         def Image(self):
             warn("Mock object called, missing PIL library. Install using 'pip install Pillow'.")
