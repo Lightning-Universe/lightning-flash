@@ -8,8 +8,8 @@ download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightnin
 backbone = "prajjwal1/bert-medium"
 
 datamodule = TextClassificationData.from_labelstudio(
-    export_json='data/project.json',
-    data_type='text',
+    export_json="data/project.json",
+    data_type="text",
     val_split=0.8,
     backbone=backbone,
 )
@@ -22,11 +22,13 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Classify a few sentences! How was the movie?
-predictions = model.predict([
-    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-    "The worst movie in the history of cinema.",
-    "I come from Bulgaria where it 's almost impossible to have a tornado.",
-])
+predictions = model.predict(
+    [
+        "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+        "The worst movie in the history of cinema.",
+        "I come from Bulgaria where it 's almost impossible to have a tornado.",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

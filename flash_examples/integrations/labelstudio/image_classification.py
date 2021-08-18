@@ -1,7 +1,6 @@
-from flash.core.data.utils import download_data
-
 import flash
 from flash.core.classification import Labels
+from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
 from flash.image import ImageClassificationData, ImageClassifier
 
@@ -10,10 +9,7 @@ download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightnin
 
 # 1. Load export data
 datamodule = ImageClassificationData.from_labelstudio(
-    export_json='data/project.json',
-    data_folder='data/upload/',
-    val_split=0.8,
-    data_type='image'
+    export_json="data/project.json", data_folder="data/upload/", val_split=0.8, data_type="image"
 )
 
 # 2. Fine tune a model
@@ -34,7 +30,9 @@ trainer.save_checkpoint("image_classification_model.pt")
 model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 model.serializer = Labels()
 
-predictions = model.predict([
-    "data/test/1.jpg",
-    "data/test/2.jpg",
-])
+predictions = model.predict(
+    [
+        "data/test/1.jpg",
+        "data/test/2.jpg",
+    ]
+)

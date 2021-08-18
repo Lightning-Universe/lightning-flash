@@ -1,8 +1,7 @@
 import os
 
-from flash.core.data.utils import download_data
-
 import flash
+from flash.core.data.utils import download_data
 from flash.video import VideoClassificationData, VideoClassifier
 
 # 1 Download data
@@ -10,9 +9,9 @@ download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightnin
 
 # 1. Load export data
 datamodule = VideoClassificationData.from_labelstudio(
-    export_json='data/project.json',
-    data_folder='data/upload/',
-    data_type='video',
+    export_json="data/project.json",
+    data_folder="data/upload/",
+    data_type="video",
     val_split=0.8,
     clip_sampler="uniform",
     clip_duration=1,
