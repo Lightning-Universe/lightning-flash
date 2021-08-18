@@ -83,6 +83,7 @@ Lightning Flash
    :caption: Integrations
 
    integrations/fiftyone
+   integrations/icevision
 
 .. toctree::
    :maxdepth: 1
