@@ -18,6 +18,7 @@ import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.providers import _TORCHVISION
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.backbones.resnet import RESNET_MODELS
 
@@ -59,8 +60,8 @@ def register_mobilenet_vgg_backbones(register: FlashRegistry):
                 fn=catch_url_error(partial(_fn_mobilenet_vgg, model_name)),
                 name=model_name,
                 namespace="vision",
-                package="torchvision",
                 type=_type,
+                providers=_TORCHVISION,
             )
 
 
@@ -71,8 +72,8 @@ def register_resnext_model(register: FlashRegistry):
                 fn=catch_url_error(partial(_fn_resnext, model_name)),
                 name=model_name,
                 namespace="vision",
-                package="torchvision",
                 type="resnext",
+                providers=_TORCHVISION,
             )
 
 
@@ -83,6 +84,6 @@ def register_densenet_backbones(register: FlashRegistry):
                 fn=catch_url_error(partial(_fn_densenet, model_name)),
                 name=model_name,
                 namespace="vision",
-                package="torchvision",
                 type="densenet",
+                providers=_TORCHVISION,
             )

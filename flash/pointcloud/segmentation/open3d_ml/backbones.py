@@ -19,6 +19,7 @@ from pytorch_lightning.utilities.cloud_io import load as pl_load
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.providers import _OPEN3D_ML
 
 ROOT_URL = "https://storage.googleapis.com/open3d-releases/model-zoo/"
 
@@ -42,7 +43,7 @@ def register_open_3d_ml(register: FlashRegistry):
                 batcher = None
             return batcher.collate_fn
 
-        @register
+        @register(providers=_OPEN3D_ML)
         def randlanet_s3dis(*args, use_fold_5: bool = True, **kwargs) -> RandLANet:
             cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_s3dis.yml"))
             model = RandLANet(**cfg.model)
@@ -53,7 +54,7 @@ def register_open_3d_ml(register: FlashRegistry):
             model.load_state_dict(pl_load(weight_url, map_location="cpu")["model_state_dict"])
             return model, 32, get_collate_fn(model)
 
-        @register
+        @register(providers=_OPEN3D_ML)
         def randlanet_toronto3d(*args, **kwargs) -> RandLANet:
             cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_toronto3d.yml"))
             model = RandLANet(**cfg.model)
@@ -64,7 +65,7 @@ def register_open_3d_ml(register: FlashRegistry):
             )
             return model, 32, get_collate_fn(model)
 
-        @register
+        @register(providers=_OPEN3D_ML)
         def randlanet_semantic_kitti(*args, **kwargs) -> RandLANet:
             cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "randlanet_semantickitti.yml"))
             model = RandLANet(**cfg.model)
@@ -75,7 +76,7 @@ def register_open_3d_ml(register: FlashRegistry):
             )
             return model, 32, get_collate_fn(model)
 
-        @register
+        @register(providers=_OPEN3D_ML)
         def randlanet(*args, **kwargs) -> RandLANet:
             model = RandLANet(*args, **kwargs)
             return model, 32, get_collate_fn(model)

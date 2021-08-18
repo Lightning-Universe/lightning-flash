@@ -82,6 +82,7 @@ Lightning Flash
    :maxdepth: 1
    :caption: Integrations
 
+   integrations/providers
    integrations/fiftyone
    integrations/icevision
 

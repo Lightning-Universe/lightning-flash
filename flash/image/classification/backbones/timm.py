@@ -18,6 +18,7 @@ import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TIMM_AVAILABLE
+from flash.core.utilities.providers import _TIMM
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.backbones.torchvision import TORCHVISION_MODELS
 
@@ -47,4 +48,5 @@ def register_timm_backbones(register: FlashRegistry):
                 name=model_name,
                 namespace="vision",
                 package="timm",
+                providers=_TIMM,
             )
