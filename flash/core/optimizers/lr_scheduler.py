@@ -74,15 +74,15 @@ class LinearWarmupCosineAnnealingLR(_LRScheduler):
                 UserWarning,
             )
 
-        if self.last_epoch == 0:
+        if self.last_epoch == self.warmup_epochs:
+            return self.base_lrs
+        elif self.last_epoch == 0:
             return [self.warmup_start_lr] * len(self.base_lrs)
         elif self.last_epoch < self.warmup_epochs:
             return [
                 group["lr"] + (base_lr - self.warmup_start_lr) / (self.warmup_epochs - 1)
                 for base_lr, group in zip(self.base_lrs, self.optimizer.param_groups)
             ]
-        elif self.last_epoch == self.warmup_epochs:
-            return self.base_lrs
         elif (self.last_epoch - 1 - self.max_epochs) % (2 * (self.max_epochs - self.warmup_epochs)) == 0:
             return [
                 group["lr"]
@@ -107,7 +107,7 @@ class LinearWarmupCosineAnnealingLR(_LRScheduler):
         """Called when epoch is passed as a param to the `step` function of the scheduler."""
         if self.last_epoch < self.warmup_epochs:
             return [
-                self.warmup_start_lr + self.last_epoch * (base_lr - self.warmup_start_lr) / (self.warmup_epochs - 1)
+                self.warmup_start_lr + self.last_epoch * (base_lr - self.warmup_start_lr) / max(1, self.warmup_epochs - 1)
                 for base_lr in self.base_lrs
             ]
 
@@ -118,28 +118,3 @@ class LinearWarmupCosineAnnealingLR(_LRScheduler):
             * (1 + math.cos(math.pi * (self.last_epoch - self.warmup_epochs) / (self.max_epochs - self.warmup_epochs)))
             for base_lr in self.base_lrs
         ]
-
-
-# warmup + decay as a function
-def linear_warmup_decay(warmup_steps, total_steps, cosine=True, linear=False):
-    """Linear warmup for warmup_steps, optionally with cosine annealing or linear decay to 0 at total_steps."""
-    # check if both decays are not True at the same time
-    assert not (linear and cosine)
-
-    def fn(step):
-        if step < warmup_steps:
-            return float(step) / float(max(1, warmup_steps))
-
-        if not (cosine or linear):
-            # no decay
-            return 1.0
-
-        progress = float(step - warmup_steps) / float(max(1, total_steps - warmup_steps))
-        if cosine:
-            # cosine decay
-            return 0.5 * (1.0 + math.cos(math.pi * progress))
-
-        # linear decay
-        return 1.0 - progress
-
-    return fn
