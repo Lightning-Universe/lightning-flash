@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
 try:
     from flash import __about__ as about
+    from flash.core.utilities import providers
 
 except ModuleNotFoundError:
 
@@ -32,6 +33,7 @@ except ModuleNotFoundError:
         return py
 
     about = _load_py_module("__about__.py")
+    providers = _load_py_module("flash/core/utilities/providers.py")
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get("SPHINX_MOCK_REQUIREMENTS", True))
 
@@ -42,6 +44,18 @@ html_favicon = "_static/images/icon.svg"
 project = "Flash"
 copyright = "2020-2021, PyTorch Lightning"
 author = "PyTorch Lightning"
+
+# -- Generate providers ------------------------------------------------------
+
+lines = []
+for provider in providers.PROVIDERS:
+    lines.append(f"- {str(provider)}\n")
+
+generated_dir = os.path.join("integrations", "generated")
+os.makedirs(generated_dir, exist_ok=True)
+
+with open(os.path.join(generated_dir, "providers.rst"), "w") as f:
+    f.writelines(lines)
 
 # -- General configuration ---------------------------------------------------
 

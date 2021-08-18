@@ -11,7 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.registry import Provider
+from dataclasses import dataclass
+
+PROVIDERS = []  #: testing
+
+
+@dataclass
+class Provider:
+
+    name: str
+    url: str
+
+    def __post_init__(self):
+        PROVIDERS.append(self)
+
+    def __str__(self):
+        return f"{self.name} ({self.url})"
+
 
 _TIMM = Provider("rwightman/pytorch-image-models", "https://github.com/rwightman/pytorch-image-models")
 _DINO = Provider("Facebook Research/dino", "https://github.com/facebookresearch/dino")
