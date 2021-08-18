@@ -41,6 +41,7 @@ class TranslationTask(Seq2SeqTask):
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         n_gram: Maximum n_grams to use in metric calculation. Defaults to `4`
         smooth: Apply smoothing in BLEU calculation. Defaults to `True`
+        enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
     def __init__(
@@ -54,6 +55,7 @@ class TranslationTask(Seq2SeqTask):
         num_beams: Optional[int] = 4,
         n_gram: bool = 4,
         smooth: bool = True,
+        enable_ort: bool = False,
     ):
         self.save_hyperparameters()
         super().__init__(
@@ -64,6 +66,7 @@ class TranslationTask(Seq2SeqTask):
             learning_rate=learning_rate,
             val_target_max_length=val_target_max_length,
             num_beams=num_beams,
+            enable_ort=enable_ort,
         )
         self.bleu = BLEUScore(
             n_gram=n_gram,

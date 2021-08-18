@@ -16,6 +16,7 @@ import warnings
 from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
+from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
 from torchmetrics import Metric
@@ -23,6 +24,7 @@ from torchmetrics import Metric
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.text.ort_callback import ORTCallback
 from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 if _TEXT_AVAILABLE:
@@ -54,6 +56,7 @@ class Seq2SeqTask(Task):
         learning_rate: Learning rate to use for training, defaults to `3e-4`
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
+        enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
     required_extras: str = "text"
@@ -67,6 +70,7 @@ class Seq2SeqTask(Task):
         learning_rate: float = 5e-5,
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
+        enable_ort: bool = False,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -75,6 +79,7 @@ class Seq2SeqTask(Task):
         os.environ["PYTHONWARNINGS"] = "ignore"
         super().__init__(loss_fn=loss_fn, optimizer=optimizer, metrics=metrics, learning_rate=learning_rate)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(backbone)
+        self.enable_ort = enable_ort
         self.val_target_max_length = val_target_max_length
         self.num_beams = num_beams
         self._initialize_model_specific_parameters()
@@ -134,3 +139,9 @@ class Seq2SeqTask(Task):
 
     def configure_finetune_callback(self) -> List[FlashBaseFinetuning]:
         return [Seq2SeqFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
+
+    def configure_callbacks(self) -> List[Callback]:
+        callbacks = super().configure_callbacks() or []
+        if self.enable_ort:
+            callbacks.append(ORTCallback())
+        return callbacks

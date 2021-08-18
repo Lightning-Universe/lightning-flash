@@ -169,6 +169,7 @@ class ResNet(nn.Module):
         norm_layer: Optional[Callable[..., nn.Module]] = None,
         first_conv3x3: bool = False,
         remove_first_maxpool: bool = False,
+        in_chans: int = 3,
     ) -> None:
 
         super().__init__()
@@ -194,9 +195,9 @@ class ResNet(nn.Module):
         num_out_filters = width_per_group * widen
 
         if first_conv3x3:
-            self.conv1 = nn.Conv2d(3, num_out_filters, kernel_size=3, stride=1, padding=1, bias=False)
+            self.conv1 = nn.Conv2d(in_chans, num_out_filters, kernel_size=3, stride=1, padding=1, bias=False)
         else:
-            self.conv1 = nn.Conv2d(3, num_out_filters, kernel_size=7, stride=2, padding=3, bias=False)
+            self.conv1 = nn.Conv2d(in_chans, num_out_filters, kernel_size=7, stride=2, padding=3, bias=False)
 
         self.bn1 = norm_layer(num_out_filters)
         self.relu = nn.ReLU(inplace=True)

@@ -27,7 +27,6 @@ data_dir = icedata.pets.load_data()
 datamodule = InstanceSegmentationData.from_folders(
     train_folder=data_dir,
     val_split=0.1,
-    image_size=128,
     parser=partial(icedata.pets.parser, mask=True),
 )
 

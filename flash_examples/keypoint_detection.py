@@ -25,7 +25,6 @@ data_dir = icedata.biwi.load_data()
 datamodule = KeypointDetectionData.from_folders(
     train_folder=data_dir,
     val_split=0.1,
-    image_size=128,
     parser=icedata.biwi.parser,
 )
 
@@ -52,4 +51,4 @@ predictions = model.predict(
 print(predictions)
 
 # 5. Save the model!
-trainer.save_checkpoint("object_detection_model.pt")
+trainer.save_checkpoint("keypoint_detection_model.pt")

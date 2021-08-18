@@ -24,7 +24,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, requires, requires_extras
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires, requires_extras
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     image_loader,
@@ -39,13 +39,6 @@ if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
-
-if _PIL_AVAILABLE:
-    from PIL import Image
-else:
-
-    class Image:
-        Image = None
 
 
 class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
