@@ -55,7 +55,7 @@ generated_dir = os.path.join("integrations", "generated")
 os.makedirs(generated_dir, exist_ok=True)
 
 with open(os.path.join(generated_dir, "providers.rst"), "w") as f:
-    f.writelines(lines)
+    f.writelines(sorted(lines, key=str.casefold))
 
 # -- General configuration ---------------------------------------------------
 
