@@ -24,3 +24,5 @@ _SEGMENTATION_MODELS = Provider(
     "qubvel/segmentation_models.pytorch", "https://github.com/qubvel/segmentation_models.pytorch"
 )
 _PYSTICHE = Provider("pystiche/pystiche", "https://github.com/pystiche/pystiche")
+_HUGGINGFACE = Provider("Hugging Face/transformers", "https://github.com/huggingface/transformers")
+_FAIRSEQ = Provider("PyTorch/fairseq", "https://github.com/pytorch/fairseq")
