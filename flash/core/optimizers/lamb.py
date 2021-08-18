@@ -19,6 +19,7 @@
 import math
 
 import torch
+from torch import nn
 from torch.optim.optimizer import Optimizer
 
 
@@ -39,9 +40,10 @@ class LAMB(Optimizer):
             algorithm from the paper `On the Convergence of Adam and Beyond`_
             (default: False)
     Example:
+        >>> model = nn.Linear(10, 1)
         >>> optimizer = LAMB(model.parameters(), lr=0.1)
         >>> optimizer.zero_grad()
-        >>> loss_fn(model(input), target).backward()
+        >>> # loss_fn(model(input), target).backward()
         >>> optimizer.step()
 
     .. warning::

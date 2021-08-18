@@ -17,6 +17,7 @@
 #     - https://arxiv.org/pdf/1708.03888.pdf
 #     - https://github.com/pytorch/pytorch/blob/master/torch/optim/sgd.py
 import torch
+from torch import nn
 from torch.optim.optimizer import Optimizer, required
 
 
@@ -34,9 +35,10 @@ class LARS(Optimizer):
         trust_coefficient (float, optional): trust coefficient for computing LR (default: 0.001)
         eps (float, optional): eps for division denominator (default: 1e-8)
     Example:
-        >>> optimizer = lightning_ssl.optim.LARS(model.parameters(), lr=0.1, momentum=0.9)
+        >>> model = nn.Linear(10, 1)
+        >>> optimizer = LARS(model.parameters(), lr=0.1, momentum=0.9)
         >>> optimizer.zero_grad()
-        >>> loss_fn(model(input), target).backward()
+        >>> # loss_fn(model(input), target).backward()
         >>> optimizer.step()
 
     .. note::
