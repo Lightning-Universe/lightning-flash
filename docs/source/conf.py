@@ -10,7 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import glob
 import os
+import shutil
 import sys
 from importlib.util import module_from_spec, spec_from_file_location
 
@@ -44,6 +46,33 @@ html_favicon = "_static/images/icon.svg"
 project = "Flash"
 copyright = "2020-2021, PyTorch Lightning"
 author = "PyTorch Lightning"
+
+# -- Project documents -------------------------------------------------------
+
+
+def _transform_changelog(path_in: str, path_out: str) -> None:
+    with open(path_in) as fp:
+        chlog_lines = fp.readlines()
+    # enrich short subsub-titles to be unique
+    chlog_ver = ""
+    for i, ln in enumerate(chlog_lines):
+        if ln.startswith("## "):
+            chlog_ver = ln[2:].split("-")[0].strip()
+        elif ln.startswith("### "):
+            ln = ln.replace("###", f"### {chlog_ver} -")
+            chlog_lines[i] = ln
+    with open(path_out, "w") as fp:
+        fp.writelines(chlog_lines)
+
+
+generated_dir = os.path.join(_PATH_HERE, "generated")
+
+os.makedirs(generated_dir, exist_ok=True)
+# copy all documents from GH templates like contribution guide
+for md in glob.glob(os.path.join(_PATH_ROOT, ".github", "*.md")):
+    shutil.copy(md, os.path.join(generated_dir, os.path.basename(md)))
+# copy also the changelog
+_transform_changelog(os.path.join(_PATH_ROOT, "CHANGELOG.md"), os.path.join(generated_dir, "CHANGELOG.md"))
 
 # -- Generate providers ------------------------------------------------------
 
@@ -93,7 +122,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ["generated/PULL_REQUEST_TEMPLATE.md"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
