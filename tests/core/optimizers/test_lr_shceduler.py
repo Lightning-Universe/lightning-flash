@@ -30,7 +30,7 @@ from flash.core.optimizers import LinearWarmupCosineAnnealingLR
         (0.01, 10, 10, 0.0, 0.0),  # only linear warmup
     ],
 )
-def test_LinearWarmupCosineAnnealingLR(tmpdir, lr, warmup_epochs, max_epochs, warmup_start_lr, eta_min):
+def test_linear_warmup_cosine_annealing_lr(tmpdir, lr, warmup_epochs, max_epochs, warmup_start_lr, eta_min):
     layer1 = nn.Linear(10, 1)
     layer2 = nn.Linear(10, 1)
     optimizer1 = Adam(layer1.parameters(), lr=lr)
