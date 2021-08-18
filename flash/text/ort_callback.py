@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pytorch_lightning import Callback, LightningModule
+from pytorch_lightning import Callback, LightningModule, Trainer
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash import Trainer
 from flash.core.utilities.imports import _TORCH_ORT_AVAILABLE
 
 if _TORCH_ORT_AVAILABLE:

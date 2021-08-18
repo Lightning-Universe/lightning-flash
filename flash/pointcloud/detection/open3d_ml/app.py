@@ -16,7 +16,7 @@ import torch
 from torch.utils.data.dataset import Dataset
 
 import flash
-from flash import DataModule
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
