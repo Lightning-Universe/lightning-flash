@@ -43,12 +43,11 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
-from torchvision.datasets.folder import default_loader
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires, _TEXT_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -58,7 +57,8 @@ if _FIFTYONE_AVAILABLE:
 else:
     fol = None
 from copy import deepcopy
-
+from torchvision.datasets.folder import default_loader
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 # Credit to the PyTorchVision Team:
 # https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L10
