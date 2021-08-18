@@ -5,6 +5,7 @@ Flash Governance | Persons of interest
 
 Leads
 -----
+- William Falcon (`williamFalcon <https://github.com/williamFalcon>`_)
 - Thomas Chaton (`tchaton <https://github.com/tchaton>`_)
 - Ethan Harris (`ethanwharris <https://github.com/ethanwharris>`_)
 - Jirka Borovec (`Borda <https://github.com/Borda>`_)
