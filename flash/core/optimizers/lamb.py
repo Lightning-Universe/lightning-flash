@@ -17,6 +17,7 @@
 #     - https://arxiv.org/pdf/1904.00962.pdf
 #     - https://github.com/pytorch/pytorch/blob/1.6/torch/optim/adam.py
 import math
+
 import torch
 from torch.optim.optimizer import Optimizer
 
@@ -48,6 +49,7 @@ class LAMB(Optimizer):
         0. weight decay and exclusion from layer adaptation like LARS. This would cause
         the optimizer to exclude all layers from layer adaptation.
     """
+
     def __init__(
         self,
         params,
@@ -56,26 +58,32 @@ class LAMB(Optimizer):
         eps=1e-6,
         weight_decay=0,
         exclude_from_layer_adaptation=False,
-        amsgrad=False
+        amsgrad=False,
     ):
         if not 0.0 <= lr:
-            raise ValueError("Invalid learning rate: {}".format(lr))
+            raise ValueError(f"Invalid learning rate: {lr}")
         if not 0.0 <= eps:
-            raise ValueError("Invalid epsilon value: {}".format(eps))
+            raise ValueError(f"Invalid epsilon value: {eps}")
         if not 0.0 <= betas[0] < 1.0:
-            raise ValueError("Invalid beta parameter at index 0: {}".format(betas[0]))
+            raise ValueError(f"Invalid beta parameter at index 0: {betas[0]}")
         if not 0.0 <= betas[1] < 1.0:
-            raise ValueError("Invalid beta parameter at index 1: {}".format(betas[1]))
+            raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
         if not 0.0 <= weight_decay:
-            raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
-        defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
-                        exclude_from_layer_adaptation=exclude_from_layer_adaptation, amsgrad=amsgrad)
-        super(LAMB, self).__init__(params, defaults)
+            raise ValueError(f"Invalid weight_decay value: {weight_decay}")
+        defaults = dict(
+            lr=lr,
+            betas=betas,
+            eps=eps,
+            weight_decay=weight_decay,
+            exclude_from_layer_adaptation=exclude_from_layer_adaptation,
+            amsgrad=amsgrad,
+        )
+        super().__init__(params, defaults)
 
     def __setstate__(self, state):
-        super(LAMB, self).__setstate__(state)
+        super().__setstate__(state)
         for group in self.param_groups:
-            group.setdefault('amsgrad', False)
+            group.setdefault("amsgrad", False)
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -91,36 +99,36 @@ class LAMB(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            for p in group['params']:
+            for p in group["params"]:
                 if p.grad is None:
                     continue
                 grad = p.grad
                 if grad.is_sparse:
-                    raise RuntimeError('LAMB does not support sparse gradients')
-                amsgrad = group['amsgrad']
-                exclude_from_layer_adaptation = group['exclude_from_layer_adaptation']
+                    raise RuntimeError("LAMB does not support sparse gradients")
+                amsgrad = group["amsgrad"]
+                exclude_from_layer_adaptation = group["exclude_from_layer_adaptation"]
 
                 state = self.state[p]
 
                 # State initialization
                 if len(state) == 0:
-                    state['step'] = 0
+                    state["step"] = 0
                     # Exponential moving average of gradient values
-                    state['exp_avg'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                    state["exp_avg"] = torch.zeros_like(p, memory_format=torch.preserve_format)
                     # Exponential moving average of squared gradient values
-                    state['exp_avg_sq'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                    state["exp_avg_sq"] = torch.zeros_like(p, memory_format=torch.preserve_format)
                     if amsgrad:
                         # Maintains max of all exp. moving avg. of sq. grad. values
-                        state['max_exp_avg_sq'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                        state["max_exp_avg_sq"] = torch.zeros_like(p, memory_format=torch.preserve_format)
 
-                exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
+                exp_avg, exp_avg_sq = state["exp_avg"], state["exp_avg_sq"]
                 if amsgrad:
-                    max_exp_avg_sq = state['max_exp_avg_sq']
-                beta1, beta2 = group['betas']
+                    max_exp_avg_sq = state["max_exp_avg_sq"]
+                beta1, beta2 = group["betas"]
 
-                state['step'] += 1
-                bias_correction1 = 1 - beta1 ** state['step']
-                bias_correction2 = 1 - beta2 ** state['step']
+                state["step"] += 1
+                bias_correction1 = 1 - beta1 ** state["step"]
+                bias_correction2 = 1 - beta2 ** state["step"]
 
                 # Decay the first and second moment running average coefficient
                 exp_avg.mul_(beta1).add_(grad, alpha=1 - beta1)
@@ -129,15 +137,15 @@ class LAMB(Optimizer):
                     # Maintains the maximum of all 2nd moment running avg. till now
                     torch.max(max_exp_avg_sq, exp_avg_sq, out=max_exp_avg_sq)
                     # Use the max. for normalizing running avg. of gradient
-                    denom = (max_exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
+                    denom = (max_exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group["eps"])
                 else:
-                    denom = (exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
+                    denom = (exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(group["eps"])
 
                 numerator = exp_avg / bias_correction1
                 update = numerator / denom
 
-                if group['weight_decay'] != 0:
-                    update = update.add(p.data, alpha=group['weight_decay'])
+                if group["weight_decay"] != 0:
+                    update = update.add(p.data, alpha=group["weight_decay"])
 
                 trust_ratio = 1.0
                 if not exclude_from_layer_adaptation:
@@ -147,6 +155,6 @@ class LAMB(Optimizer):
                     if w_norm > 0 and g_norm > 0:
                         trust_ratio = w_norm / g_norm
 
-                p.add_(update, alpha=-group['lr'] * trust_ratio)
+                p.add_(update, alpha=-group["lr"] * trust_ratio)
 
         return loss
