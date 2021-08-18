@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 #
+# Implemented by @ananyahjha93
+# also found at: https://github.com/gridai-labs/aavae/tree/main/src/optimizers
 # References:
 #     - https://arxiv.org/pdf/1708.03888.pdf
 #     - https://github.com/pytorch/pytorch/blob/master/torch/optim/sgd.py
