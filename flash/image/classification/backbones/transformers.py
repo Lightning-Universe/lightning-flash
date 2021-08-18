@@ -14,6 +14,7 @@
 import torch
 
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.providers import _DINO
 from flash.core.utilities.url_error import catch_url_error
 
 
@@ -41,7 +42,5 @@ def dino_vitb8(*_, **__):
 
 
 def register_dino_backbones(register: FlashRegistry):
-    register(catch_url_error(dino_deits16))
-    register(catch_url_error(dino_deits8))
-    register(catch_url_error(dino_vitb16))
-    register(catch_url_error(dino_vitb8))
+    for model in (dino_deits16, dino_deits8, dino_vitb16, dino_vitb8):
+        register(catch_url_error(model), providers=_DINO)
