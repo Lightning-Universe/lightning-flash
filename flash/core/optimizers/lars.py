@@ -66,12 +66,12 @@ class LARS(Optimizer):
         self,
         params,
         lr=required,
-        momentum=0,
-        dampening=0,
-        weight_decay=0,
-        nesterov=False,
-        trust_coefficient=0.001,
-        eps=1e-8,
+        momentum: float = 0,
+        dampening: float = 0,
+        weight_decay: float = 0,
+        nesterov: bool = False,
+        trust_coefficient: float = 0.001,
+        eps: float = 1e-8,
     ):
         if lr is not required and lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")

@@ -17,6 +17,7 @@
 #     - https://arxiv.org/pdf/1904.00962.pdf
 #     - https://github.com/pytorch/pytorch/blob/1.6/torch/optim/adam.py
 import math
+from typing import Tuple
 
 import torch
 from torch import nn
@@ -55,12 +56,12 @@ class LAMB(Optimizer):
     def __init__(
         self,
         params,
-        lr=1e-3,
-        betas=(0.9, 0.999),
-        eps=1e-6,
-        weight_decay=0,
-        exclude_from_layer_adaptation=False,
-        amsgrad=False,
+        lr: float = 1e-3,
+        betas: Tuple[float, float] = (0.9, 0.999),
+        eps: float = 1e-6,
+        weight_decay: float = 0,
+        exclude_from_layer_adaptation: bool = False,
+        amsgrad: bool = False,
     ):
         if not 0.0 <= lr:
             raise ValueError(f"Invalid learning rate: {lr}")
