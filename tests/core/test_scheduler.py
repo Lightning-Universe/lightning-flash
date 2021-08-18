@@ -11,22 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
 import math
 
+import pytest
 from torch import nn
 from torch.optim import Adam
+
 from flash.core.optimizers import LinearWarmupCosineAnnealingLR
 
 
 @pytest.mark.parametrize(
     "lr, warmup_epochs, max_epochs, warmup_start_lr, eta_min",
     [
-        (1, 10, 3200, 0.001, 0.),
+        (1, 10, 3200, 0.001, 0.0),
         (1e-4, 40, 300, 1e-6, 1e-5),
-        (0.01, 1, 10, 0., 0.),
-        (0.01, 0, 10, 0., 0.),  # only cosine decay
-        (0.01, 10, 10, 0., 0.),  # only linear warmup
+        (0.01, 1, 10, 0.0, 0.0),
+        (0.01, 0, 10, 0.0, 0.0),  # only cosine decay
+        (0.01, 10, 10, 0.0, 0.0),  # only linear warmup
     ],
 )
 def test_LinearWarmupCosineAnnealingLR(tmpdir, lr, warmup_epochs, max_epochs, warmup_start_lr, eta_min):
