@@ -38,6 +38,7 @@ class LARS(Optimizer):
         >>> optimizer.zero_grad()
         >>> loss_fn(model(input), target).backward()
         >>> optimizer.step()
+
     .. note::
         The application of momentum in the SGD part is modified according to
         the PyTorch standards. LARS scaling fits into the equation in the
