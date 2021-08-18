@@ -14,9 +14,9 @@
 import json
 import os
 import typing
-from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -24,6 +24,7 @@ from typing import (
     Dict,
     Generic,
     Iterable,
+    Iterator,
     List,
     Mapping,
     Optional,
@@ -35,17 +36,19 @@ from typing import (
 )
 
 import numpy as np
+import pandas as pd
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
+from tqdm import tqdm
 from torchvision.datasets.folder import default_loader
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, _TEXT_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires, _TEXT_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -54,6 +57,7 @@ if _FIFTYONE_AVAILABLE:
         from fiftyone.core.collections import SampleCollection
 else:
     fol = None
+from copy import deepcopy
 
 
 # Credit to the PyTorchVision Team:
@@ -562,7 +566,7 @@ class LabelStudioDataset(Dataset):
     def __init__(self, js, img_folder, val=False):
         self._raw_data = js
         self._img_folder = img_folder
-        self.results = list()
+        self.results = []
         self.classes = set()
         # iterate through all tasks in exported data
         for task in self._raw_data:
@@ -576,7 +580,7 @@ class LabelStudioDataset(Dataset):
                         if isinstance(label, list):
                             for sublabel in label:
                                 self.classes.add(sublabel)
-                                temp = dict()
+                                temp = {}
                                 temp['file_upload'] = task['file_upload']
                                 temp['label'] = sublabel
                                 if annotation['ground_truth'] & val:
@@ -585,7 +589,7 @@ class LabelStudioDataset(Dataset):
                                     self.results.append(temp)
                         else:
                             self.classes.add(label)
-                            temp = dict()
+                            temp = {}
                             temp['file_upload'] = task['file_upload']
                             temp['label'] = label
                             if annotation['ground_truth'] & val:
@@ -633,9 +637,9 @@ class LabelStudioDataSource(DataSource):
         self._data_type = data_type
         with open(export_json) as f:
             self._raw_data = json.load(f)
-        self.results = list()
-        self.test_results = list()
-        self.val_results = list()
+        self.results = []
+        self.test_results = []
+        self.val_results = []
         self.classes = set()
         self.num_classes = 0
         self.multi_label = multi_label
@@ -656,7 +660,9 @@ class LabelStudioDataSource(DataSource):
         self.split = split
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        # iterate through all tasks in exported data
+        """
+        Iterate through all tasks in exported data and construct train\test\val results
+        """
         if data:
             self._raw_data = data
         for task in self._raw_data:
@@ -672,7 +678,7 @@ class LabelStudioDataSource(DataSource):
                         if isinstance(label, list) and not self.multi_label:
                             for sublabel in label:
                                 self.classes.add(sublabel)
-                                temp = dict()
+                                temp = {}
                                 temp['file_upload'] = task.get('file_upload')
                                 temp['data'] = task.get('data')
                                 temp['label'] = sublabel
@@ -687,7 +693,7 @@ class LabelStudioDataSource(DataSource):
                                     self.classes.add(item)
                             else:
                                 self.classes.add(label)
-                            temp = dict()
+                            temp = {}
                             temp['file_upload'] = task.get('file_upload')
                             temp['data'] = task.get('data')
                             temp['label'] = label
@@ -700,12 +706,15 @@ class LabelStudioDataSource(DataSource):
         # splitting result to train and val sets
         import random
         random.shuffle(self.results)
-        l = len(self.results)
-        prop = l - int(l * self.split)
+        data_length = len(self.results)
+        prop = data_length - int(data_length * self.split)
         self.val_results = self.results[:prop]
         self.results = self.results[prop:]
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
+        """
+        Load 1 sample from dataset
+        """
         if self._check_data_type('image'):
             # extracting path to file
             if sample['file_upload']:
@@ -737,7 +746,7 @@ class LabelStudioDataSource(DataSource):
             input_data = deepcopy(sample)
             try:
                 del input_data['label']
-            except:
+            except KeyError:
                 # no label in input data
                 pass
             result = {DefaultDataKeys.INPUT: input_data,
@@ -749,6 +758,9 @@ class LabelStudioDataSource(DataSource):
             data: Optional[DATA_TYPE],
             running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
+        """
+        Generate dataset from loaded data
+        """
         if running_stage in (RunningStage.TRAINING, RunningStage.TUNING):
             dataset = self.results
         elif running_stage == RunningStage.TESTING:
@@ -775,6 +787,9 @@ class LabelStudioDataSource(DataSource):
         return dataset
 
     def _get_labels_from_sample(self, labels):
+        """
+        Translate string labels to int
+        """
         sorted_labels = sorted(list(self.classes))
         if isinstance(labels, list):
             label = []
@@ -785,4 +800,7 @@ class LabelStudioDataSource(DataSource):
         return label
 
     def _check_data_type(self, data_type):
+        """
+        Check if data type exist in datasource
+        """
         return data_type == self._data_type
