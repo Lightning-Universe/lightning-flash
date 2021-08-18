@@ -20,6 +20,7 @@ from pytorch_lightning.utilities.cloud_io import load as pl_load
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.providers import _OPEN3D_ML
 
 ROOT_URL = "https://storage.googleapis.com/open3d-releases/model-zoo/"
 
@@ -63,7 +64,7 @@ def register_open_3d_ml(register: FlashRegistry):
                 return ObjectDetectBatchCollator
             return batcher.collate_fn
 
-        @register(parameters=PointPillars.__init__)
+        @register(parameters=PointPillars.__init__, providers=_OPEN3D_ML)
         def pointpillars_kitti(*args, **kwargs) -> PointPillars:
             cfg = _ml3d.utils.Config.load_from_file(os.path.join(CONFIG_PATH, "pointpillars_kitti.yml"))
             cfg.model.device = "cpu"
@@ -75,7 +76,7 @@ def register_open_3d_ml(register: FlashRegistry):
             model.cfg.batcher = "ObjectDetectBatchCollator"
             return model, 384, get_collate_fn(model)
 
-        @register(parameters=PointPillars.__init__)
+        @register(parameters=PointPillars.__init__, providers=_OPEN3D_ML)
         def pointpillars(*args, **kwargs) -> PointPillars:
             model = PointPillars(*args, **kwargs)
             model.cfg.batcher = "ObjectDetectBatch"
