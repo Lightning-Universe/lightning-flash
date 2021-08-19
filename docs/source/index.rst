@@ -116,6 +116,14 @@ Lightning Flash
    template/docs
 
 .. toctree::
+   :maxdepth: 1
+   :caption: Community
+
+   governance
+   generated/CONTRIBUTING.md
+   generated/CHANGELOG.md
+
+.. toctree::
    :hidden:
 
    reference/template
