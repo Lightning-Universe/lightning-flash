@@ -82,7 +82,7 @@ ___________________
     ~flash.core.registry.FlashRegistry
 
 flash.core.optimizers
-___________________
+_____________________
 
 .. autosummary::
     :toctree: generated/
