@@ -26,6 +26,7 @@ from torch.optim.optimizer import Optimizer, required
 class LARS(Optimizer):
     r"""Extends SGD in PyTorch with LARS scaling from the paper
     `Large batch training of Convolutional Networks <https://arxiv.org/pdf/1708.03888.pdf>`_.
+
     Args:
         params (iterable): iterable of parameters to optimize or dicts defining
             parameter groups
@@ -36,6 +37,7 @@ class LARS(Optimizer):
         nesterov (bool, optional): enables Nesterov momentum (default: False)
         trust_coefficient (float, optional): trust coefficient for computing LR (default: 0.001)
         eps (float, optional): eps for division denominator (default: 1e-8)
+
     Example:
         >>> model = nn.Linear(10, 1)
         >>> optimizer = LARS(model.parameters(), lr=0.1, momentum=0.9)
@@ -47,12 +49,14 @@ class LARS(Optimizer):
         The application of momentum in the SGD part is modified according to
         the PyTorch standards. LARS scaling fits into the equation in the
         following fashion.
+
         .. math::
             \begin{aligned}
                 g_{t+1} & = \text{lars_lr} * (\beta * p_{t} + g_{t+1}), \\
                 v_{t+1} & = \mu * v_{t} + g_{t+1}, \\
                 p_{t+1} & = p_{t} - \text{lr} * v_{t+1},
             \end{aligned}
+
         where :math:`p`, :math:`g`, :math:`v`, :math:`\mu` and :math:`\beta` denote the
         parameters, gradient, velocity, momentum, and weight decay respectively.
         The :math:`lars_lr` is defined by Eq. 6 in the paper.
