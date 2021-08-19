@@ -52,7 +52,7 @@ class LARS(Optimizer):
 
         .. math::
             \begin{aligned}
-                g_{t+1} & = \text{lars_lr} * (\beta * p_{t} + g_{t+1}), \\
+                g_{t+1} & = \text{lars\_lr} * (\beta * p_{t} + g_{t+1}), \\
                 v_{t+1} & = \mu * v_{t} + g_{t+1}, \\
                 p_{t+1} & = p_{t} - \text{lr} * v_{t+1},
             \end{aligned}
