@@ -81,6 +81,18 @@ ___________________
 
     ~flash.core.registry.FlashRegistry
 
+flash.core.optimizers
+___________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.optimizers.LARS
+    ~flash.core.optimizers.LAMB
+    ~flash.core.optimizers.LinearWarmupCosineAnnealingLR
+
 Utilities
 _________
 
