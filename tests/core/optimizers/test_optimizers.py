@@ -14,7 +14,7 @@
 import pytest
 from torch import nn
 
-from flash.core.optimizers import LARS, LAMB, LinearWarmupCosineAnnealingLR
+from flash.core.optimizers import LAMB, LARS, LinearWarmupCosineAnnealingLR
 
 
 @pytest.mark.parametrize("optim_fn, lr", [(LARS, 0.1), (LAMB, 1e-3)])
