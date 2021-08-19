@@ -82,6 +82,7 @@ Lightning Flash
    :maxdepth: 1
    :caption: Integrations
 
+   integrations/providers
    integrations/fiftyone
 
 .. toctree::
@@ -112,6 +113,14 @@ Lightning Flash
    template/examples
    template/tests
    template/docs
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Community
+
+   governance
+   generated/CONTRIBUTING.md
+   generated/CHANGELOG.md
 
 .. toctree::
    :hidden:

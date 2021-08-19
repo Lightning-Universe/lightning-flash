@@ -12,23 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
+from flash.core.utilities.providers import Provider
+
 _REGISTERED_FUNCTION = Dict[str, Any]
-
-
-@dataclass
-class Provider:
-
-    name: str
-    url: str
-
-    def __str__(self):
-        return f"{self.name} ({self.url})"
 
 
 def print_provider_info(name, providers, func):

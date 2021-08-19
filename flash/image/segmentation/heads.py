@@ -18,6 +18,7 @@ from torch import nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
+from flash.core.utilities.providers import _SEGMENTATION_MODELS
 
 if _SEGMENTATION_MODELS_AVAILABLE:
     import segmentation_models_pytorch as smp
@@ -71,5 +72,5 @@ if _SEGMENTATION_MODELS_AVAILABLE:
             partial(_load_smp_head, head=model_name),
             name=model_name,
             namespace="image/segmentation",
-            package="segmentation_models.pytorch",
+            providers=_SEGMENTATION_MODELS,
         )

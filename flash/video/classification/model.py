@@ -31,6 +31,7 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
+from flash.core.utilities.providers import _PYTORCHVIDEO
 
 _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
@@ -41,7 +42,7 @@ if _PYTORCHVIDEO_AVAILABLE:
         if "__" not in fn_name:
             fn = getattr(hub, fn_name)
             if isinstance(fn, FunctionType):
-                _VIDEO_CLASSIFIER_BACKBONES(fn=fn)
+                _VIDEO_CLASSIFIER_BACKBONES(fn=fn, providers=_PYTORCHVIDEO)
 
 
 class VideoClassifierFinetuning(BaseFinetuning):
