@@ -99,6 +99,7 @@ _DATASETS_AVAILABLE = _module_available("datasets")
 _ICEVISION_AVAILABLE = _module_available("icevision")
 _ICEDATA_AVAILABLE = _module_available("icedata")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
+_SPARSEML_AVAILABLE = _module_available("sparseml")
 
 if _PIL_AVAILABLE:
     from PIL import Image

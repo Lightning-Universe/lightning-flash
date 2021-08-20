@@ -15,6 +15,7 @@ import inspect
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
+from pathlib import Path
 from typing import Callable, List, Optional, Union
 
 import torch
@@ -28,6 +29,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
+from flash.core.integrations.sparseml import SparseMLCallback
 from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
@@ -73,7 +75,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 
 class Trainer(PlTrainer):
     @_defaults_from_env_vars
-    def __init__(self, *args, serve_sanity_check: bool = False, **kwargs):
+    def __init__(self, *args, serve_sanity_check: bool = False, sparse_ml_config_path: Optional[Union[str, Path]] = None, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
                 kwargs["gpus"] = 1
@@ -84,6 +86,7 @@ class Trainer(PlTrainer):
                 kwargs["fast_dev_run"] = False
             else:
                 kwargs["fast_dev_run"] = True
+        self.sparse_ml_config_path = sparse_ml_config_path
         super().__init__(*args, **kwargs)
 
         self.serve_sanity_check = serve_sanity_check
@@ -192,6 +195,9 @@ class Trainer(PlTrainer):
             else:
                 callback = instantiate_default_finetuning_callbacks(strategy)
 
+        if self.sparse_ml_config_path:
+            callback.append(SparseMLCallback(self.sparse_ml_config_path))
+
         self.callbacks = self._merge_callbacks(self.callbacks, callback)
 
     @staticmethod
@@ -220,3 +226,9 @@ class Trainer(PlTrainer):
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
+
+    def export_sparseml_onnx_model(self,
+                               output_dir: str,
+                               sample_batch: Optional[torch.Tensor] = None):
+        with self.lightning_module._prevent_trainer_and_dataloaders_deepcopy():
+            SparseMLCallback.export_to_sparse_onnx(self.lightning_module, output_dir, sample_batch)
