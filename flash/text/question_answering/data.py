@@ -256,6 +256,16 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
 
         self.filetype = filetype
 
+    def _reshape_answer_column(self, sample: Any):
+        text = sample.pop('answer_text')
+        start = sample.pop('answer_start')
+        if isinstance(text, str):
+            text = [text]
+        if isinstance(start, int):
+            start = [start]
+        sample['answer'] = {'text': text, 'answer_start': start}
+        return sample
+
     def load_data(self, data: Any, columns: List[str] = None) -> 'datasets.Dataset':
         if self.filetype == 'json':
             file, field = data
@@ -291,6 +301,21 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
             else:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
             column_names = dataset_dict[stage].column_names
+
+        if self.answer_column_name == "answer":
+            if "answer" not in column_names:
+                if "answer_text" in column_names and "answer_start" in column_names:
+                    dataset_dict = dataset_dict.map(self._reshape_answer_column, batched=False)
+                    column_names = dataset_dict[stage].column_names
+                else:
+                    raise KeyError(
+                        """Dataset must contain either \"answer\" key as dict type or "answer_text" and "answer_start"
+                        as string and integer types."""
+                    )
+        if not isinstance(dataset_dict[stage][self.answer_column_name][0], Dict):
+            raise TypeError(
+                f"{self.answer_column_name} column should be of type dict with keys \"text\" and \"answer_start\""
+            )
 
         dataset_dict = dataset_dict.map(self._tokenize_fn, batched=True, remove_columns=column_names)
         return dataset_dict[stage]

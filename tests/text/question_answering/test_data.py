@@ -24,7 +24,7 @@ from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "distilbert-base-uncased"
 
-TEST_DATA = {
+TEST_CSV_DATA = {
     "id": ["12345", "12346", "12347", "12348"],
     "context": [
         "this is an answer one. this is a context one", "this is an answer two. this is a context two",
@@ -33,24 +33,49 @@ TEST_DATA = {
     "question": [
         "this is a question one", "this is a question two", "this is a question three", "this is a question four"
     ],
-    "answer": [{
+    "answer_text": [
+        "this is an answer one", "this is an answer two", "this is an answer three", "this is an answer four"
+    ],
+    "answer_start": [0, 0, 0, 0]
+}
+
+TEST_JSON_DATA = [{
+    "id": "12345",
+    "context": "this is an answer one. this is a context one",
+    "question": "this is a question one",
+    "answer": {
         "text": ["this is an answer one"],
         "answer_start": [0]
-    }, {
+    }
+}, {
+    "id": "12346",
+    "context": "this is an answer two. this is a context two",
+    "question": "this is a question two",
+    "answer": {
         "text": ["this is an answer two"],
         "answer_start": [0]
-    }, {
+    }
+}, {
+    "id": "12347",
+    "context": "this is an answer three. this is a context three",
+    "question": "this is a question three",
+    "answer": {
         "text": ["this is an answer three"],
         "answer_start": [0]
-    }, {
+    }
+}, {
+    "id": "12348",
+    "context": "this is an answer four. this is a context four",
+    "question": "this is a question four",
+    "answer": {
         "text": ["this is an answer four"],
         "answer_start": [0]
-    }]
-}
+    }
+}]
 
 
 def get_csv_data():
-    df = pd.DataFrame(TEST_DATA)
+    df = pd.DataFrame(TEST_CSV_DATA)
     return df.to_csv(index=False)
 
 
@@ -60,16 +85,7 @@ def csv_data(tmpdir):
     return path
 
 
-def get_json_data():
-    data = []
-    examples = list(zip(TEST_DATA["id"], TEST_DATA["context"], TEST_DATA["question"], TEST_DATA["answer"]))
-    for example in examples:
-        data.append({"id": example[0], "context": example[1], "question": example[2], "answer": example[3]})
-    return data
-
-
-def json_data(tmpdir):
-    data = get_json_data()
+def json_data(tmpdir, data):
     json_data = ""
     for example in data:
         json_data += json.dumps(example) + "\n"
@@ -78,8 +94,8 @@ def json_data(tmpdir):
     return path
 
 
-def json_data_with_field(tmpdir):
-    data = json.dumps({"data": get_json_data()})
+def json_data_with_field(tmpdir, data):
+    data = json.dumps({"data": data})
     path = Path(tmpdir) / "data.json"
     path.write_text(data)
     return path
@@ -141,7 +157,7 @@ def test_postprocess_tokenizer(tmpdir):
     used.
     """
     backbone = "allenai/longformer-base-4096"
-    json_path = json_data(tmpdir)
+    json_path = json_data(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
         question_column_name="question",
         context_column_name="context",
@@ -159,7 +175,7 @@ def test_postprocess_tokenizer(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
-    json_path = json_data(tmpdir)
+    json_path = json_data(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
         question_column_name="question",
         context_column_name="context",
@@ -178,7 +194,7 @@ def test_from_json(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json_with_field(tmpdir):
-    json_path = json_data_with_field(tmpdir)
+    json_path = json_data_with_field(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
         question_column_name="question",
         context_column_name="context",
@@ -192,3 +208,63 @@ def test_from_json_with_field(tmpdir):
     assert "attention_mask" in batch
     assert "start_positions" in batch
     assert "end_positions" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_wrong_keys_and_types(tmpdir):
+    TEST_CSV_DATA.pop("answer_text")
+    with pytest.raises(KeyError):
+        csv_path = csv_data(tmpdir)
+        QuestionAnsweringData.from_csv(
+            question_column_name="question",
+            context_column_name="context",
+            answer_column_name="answer",
+            backbone=TEST_BACKBONE,
+            train_file=csv_path,
+        )
+
+    TEST_CSV_DATA.pop("answer_start")
+    with pytest.raises(KeyError):
+        csv_path = csv_data(tmpdir)
+        QuestionAnsweringData.from_csv(
+            question_column_name="question",
+            context_column_name="context",
+            answer_column_name="answer",
+            backbone=TEST_BACKBONE,
+            train_file=csv_path,
+        )
+
+    TEST_JSON_DATA = [{
+        "id": "12345",
+        "context": "this is an answer one. this is a context one",
+        "question": "this is a question one",
+    }, {
+        "id": "12346",
+        "context": "this is an answer two. this is a context two",
+        "question": "this is a question two",
+    }]
+
+    with pytest.raises(KeyError):
+        json_path = json_data(tmpdir, TEST_JSON_DATA)
+        QuestionAnsweringData.from_json(
+            question_column_name="question",
+            context_column_name="context",
+            answer_column_name="answer",
+            backbone=TEST_BACKBONE,
+            train_file=json_path,
+            batch_size=2
+        )
+
+    TEST_JSON_DATA[0]["answer"] = "this is an answer one"
+    TEST_JSON_DATA[1]["answer"] = "this is an answer two"
+    with pytest.raises(TypeError):
+        json_path = json_data(tmpdir, TEST_JSON_DATA)
+        QuestionAnsweringData.from_json(
+            question_column_name="question",
+            context_column_name="context",
+            answer_column_name="answer",
+            backbone=TEST_BACKBONE,
+            train_file=json_path,
+            batch_size=2
+        )
