@@ -11,17 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytorch_lightning as pl
+from unittest import mock
 
-from flash.core.finetuning import FlashBaseFinetuning
+import pytest
+
+from flash.__main__ import main
+from tests.helpers.utils import _IMAGE_TESTING
 
 
-class ObjectDetectionFineTuning(FlashBaseFinetuning):
-    """Freezes the backbone during Detector training."""
-
-    def __init__(self, train_bn: bool = True) -> None:
-        super().__init__(train_bn=train_bn)
-
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        model = pl_module.model
-        self.freeze(modules=model.backbone, train_bn=self.train_bn)
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "keypoint_detection", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

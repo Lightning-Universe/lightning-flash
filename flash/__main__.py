@@ -25,10 +25,11 @@ def main():
 
 def register_command(command):
     @main.command(
+        command.__name__,
         context_settings=dict(
             help_option_names=[],
             ignore_unknown_options=True,
-        )
+        ),
     )
     @click.argument("cli_args", nargs=-1, type=click.UNPROCESSED)
     @functools.wraps(command)
@@ -43,6 +44,8 @@ tasks = [
     "flash.graph.classification",
     "flash.image.classification",
     "flash.image.detection",
+    "flash.image.instance_segmentation",
+    "flash.image.keypoint_detection",
     "flash.image.segmentation",
     "flash.image.style_transfer",
     "flash.pointcloud.detection",

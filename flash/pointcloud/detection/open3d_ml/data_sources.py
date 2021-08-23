@@ -55,7 +55,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         if not exists(meta_file):
             raise MisconfigurationException(f"The {root_dir} should contain a `meta.yaml` file about the classes.")
 
-        with open(meta_file, "r") as f:
+        with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
 
         if "label_to_names" not in self.meta:

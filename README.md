@@ -28,7 +28,7 @@
 [![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fforums.pytorchlightning.ai)](https://forums.pytorchlightning.ai/)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PytorchLightning/pytorch-lightning/blob/master/LICENSE)
 
-[![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=stable)](https://lightning-flash.readthedocs.io/en/stable/?badge=stable)
+[![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=latest)](https://lightning-flash.readthedocs.io/en/stable/?badge=stable)
 ![CI testing](https://github.com/PyTorchLightning/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)
 [![codecov](https://codecov.io/gh/PyTorchLightning/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/PyTorchLightning/lightning-flash)
 
@@ -206,13 +206,13 @@ from flash.image import ImageEmbedder
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
 # 2. Create an ImageEmbedder with resnet50 trained on imagenet.
-embedder = ImageEmbedder(backbone="resnet50", embedding_dim=128)
+embedder = ImageEmbedder(backbone="resnet50")
 
 # 3. Generate an embedding from an image path.
 embeddings = embedder.predict("data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg")
 
 # 4. Print embeddings shape
-print(embeddings.shape)
+print(embeddings[0].shape)
 ```
 
 </details>
@@ -225,6 +225,7 @@ Flash has a [Summarization task](https://lightning-flash.readthedocs.io/en/lates
 
 ```python
 import flash
+import torch
 from flash.core.data.utils import download_data
 from flash.text import SummarizationData, SummarizationTask
 
@@ -244,7 +245,7 @@ datamodule = SummarizationData.from_csv(
 model = SummarizationTask()
 
 # 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, gpus=1, precision=16)
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), precision=16)
 
 # 5. Fine-tune the model
 trainer.finetune(model, datamodule=datamodule)
@@ -606,10 +607,12 @@ The lightning + Flash team is hard at work building more tasks for common deep-l
 Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ) and/or read our [CONTRIBUTING](https://github.com/PyTorchLightning/lightning-flash/blob/master/.github/CONTRIBUTING.md) guidelines to get help becoming a contributor!
 
 ## Community
+Flash is maintained by our [core contributors](https://lightning-flash.readthedocs.io/en/latest/governance.html).
+
 For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)!
 
 ## Citations
-We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffee, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
+We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
 
 Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), [timm](https://github.com/rwightman/pytorch-image-models), [open3d-ml](https://github.com/intel-isl/Open3D-ML) for pointcloud, [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/), and [asteroid](https://github.com/asteroid-team/asteroid) for the `vision`, `text`, `tabular`, and `audio` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
 

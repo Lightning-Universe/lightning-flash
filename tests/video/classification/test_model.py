@@ -193,7 +193,7 @@ def test_video_classifier_finetune(tmpdir):
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
-        trainer = flash.Trainer(fast_dev_run=True)
+        trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
 
         trainer.finetune(model, datamodule=datamodule)
 
@@ -269,7 +269,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
 
-        trainer = flash.Trainer(fast_dev_run=True)
+        trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
 
         trainer.finetune(model, datamodule=datamodule)
 
@@ -301,7 +301,7 @@ def test_load_from_checkpoint_dependency_error():
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_cli():
-    cli_args = ["flash", "video-classification", "--trainer.fast_dev_run", "True", "num_workers", "0"]
+    cli_args = ["flash", "video_classification", "--trainer.fast_dev_run", "True", "num_workers", "0"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()

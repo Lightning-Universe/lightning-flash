@@ -15,6 +15,7 @@ import re
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _PYSTICHE_AVAILABLE
+from flash.core.utilities.providers import _PYSTICHE
 
 STYLE_TRANSFER_BACKBONES = FlashRegistry("backbones")
 
@@ -35,5 +36,5 @@ if _PYSTICHE_AVAILABLE:
             fn=lambda: (getattr(enc, mle_fn)(), None),
             name=match.group("name"),
             namespace="image/style_transfer",
-            package="pystiche",
+            providers=_PYSTICHE,
         )

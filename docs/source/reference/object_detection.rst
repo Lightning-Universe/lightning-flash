@@ -11,6 +11,8 @@ The Task
 
 Object detection is the task of identifying objects in images and their associated classes and bounding boxes.
 
+The :class:`~flash.image.detection.model.ObjectDetector` and :class:`~flash.image.detection.data.ObjectDetectionData` classes internally rely on `IceVision <https://airctic.com/>`_.
+
 ------
 
 *******
@@ -59,10 +61,10 @@ You can run the above example with:
 
 .. code-block:: bash
 
-    flash object-detection
+    flash object_detection
 
 To view configuration options and options for running the object detector with your own data, use:
 
 .. code-block:: bash
 
-    flash object-detection --help
+    flash object_detection --help
