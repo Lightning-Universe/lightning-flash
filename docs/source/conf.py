@@ -11,9 +11,11 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import glob
+import importlib
 import os
 import shutil
 import sys
+import textwrap
 from importlib.util import module_from_spec, spec_from_file_location
 
 import pt_lightning_sphinx_theme
@@ -85,6 +87,49 @@ os.makedirs(generated_dir, exist_ok=True)
 
 with open(os.path.join(generated_dir, "providers.rst"), "w") as f:
     f.writelines(sorted(lines, key=str.casefold))
+
+# -- Generate data docs ------------------------------------------------------
+
+generated_dir = os.path.join("reference", "generated")
+os.makedirs(generated_dir, exist_ok=True)
+
+data_modules = [
+    ("flash.image.classification.data", "ImageClassificationData"),
+]
+
+for data_module_path, data_module_name in data_modules:
+    data_module = getattr(importlib.import_module(data_module_path), data_module_name)
+    preprocess = data_module.preprocess_cls()
+    data_sources = [preprocess.data_source_of_name(data_source) for data_source in preprocess.available_data_sources()]
+
+    entries = {}
+    for data_source in data_sources:
+        entries.update(**(data_source.get_doc_entries(data_module_name) or {}))
+
+    lines = [
+        "************\n",
+        "Loading Data\n",
+        "************\n",
+        "\n",
+        f"This section lists all of the ways you can create the {data_module_name} with your own data.\n",
+        "\n",
+    ]
+
+    for constructor, docstring in sorted(entries.items(), key=lambda x: x[0]):
+        lines.append(constructor + "\n")
+        lines.append("_" * len(constructor) + "\n")
+        lines.append("\n")
+
+        if docstring.startswith("\n"):
+            docstring = docstring[1:]
+
+        for line in textwrap.dedent(docstring).rstrip().split("\n"):
+            lines.append(line + "\n")
+
+        lines.append("\n")
+
+    with open(os.path.join(generated_dir, f"{data_module_name}.rst"), "w") as f:
+        f.writelines(lines)
 
 # -- General configuration ---------------------------------------------------
 

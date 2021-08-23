@@ -57,6 +57,10 @@ Here's the full example:
 
 ------
 
+.. include:: generated/ImageClassificationData.rst
+
+------
+
 **********************
 Custom Transformations
 **********************
