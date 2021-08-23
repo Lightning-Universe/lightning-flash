@@ -12,7 +12,6 @@ def test_metaclass_raises_if_expose_decorator_not_applied_to_method():
     with pytest.raises(SyntaxError, match=r"expose.* decorator"):
 
         class FailedNoExposed(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -23,7 +22,6 @@ def test_metaclass_raises_if_more_than_one_expose_decorator_applied():
     with pytest.raises(SyntaxError, match=r"decorator must be applied to one"):
 
         class FailedTwoExposed(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -44,7 +42,6 @@ def test_metaclass_raises_if_first_arg_in_init_is_not_model():
     with pytest.raises(SyntaxError, match="__init__ must set 'model' as first"):
 
         class FailedModelArg(ModelComponent):
-
             def __init__(self, foo):
                 pass
 
@@ -60,7 +57,6 @@ def test_metaclass_raises_if_second_arg_is_not_config():
     with pytest.raises(SyntaxError, match="__init__ can only set 'config'"):
 
         class FailedConfig(ModelComponent):
-
             def __init__(self, model, OTHER):
                 pass
 
@@ -76,7 +72,6 @@ def test_metaclass_raises_if_random_parameters_in_init():
     with pytest.raises(SyntaxError, match="__init__ can only have 1 or 2 parameters"):
 
         class FailedInit(ModelComponent):
-
             def __init__(self, model, config, FOO):
                 pass
 
@@ -93,7 +88,6 @@ def test_metaclass_raises_uses_restricted_method_name():
     with pytest.raises(TypeError, match="bound methods/attrs named"):
 
         class FailedMethod_Inputs(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -109,7 +103,6 @@ def test_metaclass_raises_uses_restricted_method_name():
     with pytest.raises(TypeError, match="bound methods/attrs named"):
 
         class FailedMethod_Outputs(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -125,7 +118,6 @@ def test_metaclass_raises_uses_restricted_method_name():
     with pytest.raises(TypeError, match="bound methods/attrs named"):
 
         class FailedMethod_Name(ModelComponent):
-
             def __init__(self, model):
                 pass
 
@@ -136,11 +128,12 @@ def test_metaclass_raises_uses_restricted_method_name():
 
             @property
             def uid(self):
-                return f'{self.uid}_SHOULD_NOT_RETURN'
+                return f"{self.uid}_SHOULD_NOT_RETURN"
 
     # Ensure that if we add more restricted names in the future,
     # there is a test for them as well.
     from flash.core.serve.component import _FLASH_SERVE_RESERVED_NAMES
+
     assert set(_FLASH_SERVE_RESERVED_NAMES).difference({"inputs", "outputs", "uid"}) == set()
 
 
@@ -149,7 +142,6 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
     with pytest.raises(TypeError, match="must be subclass of"):
 
         class FailedExposedDecoratorInputs(ModelComponent):
-
             def __init__(self, model):
                 self.model = model
 
@@ -162,7 +154,6 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
     with pytest.raises(TypeError, match="must be subclass of"):
 
         class FailedExposedDecoratorOutputs(ModelComponent):
-
             def __init__(self, model):
                 self.model = model
 
@@ -175,7 +166,6 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
     with pytest.raises(TypeError, match="must be subclass of"):
 
         class FailedExposedDecoratorClass(ModelComponent):
-
             def __init__(self, model):
                 self.model = model
 
@@ -191,13 +181,12 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
 ):
     """This occurs when the instance is being initialized.
 
-    This is noted because it differes from some of the other metaclass validations
-    which will raise an exception at class defiition time.
+    This is noted because it differes from some of the other metaclass validations which will raise an exception at
+    class defiition time.
     """
     from tests.core.serve.models import ClassificationInference
 
     class FailedExposedDecorator(ModelComponent):
-
         def __init__(self, model):
             self.model = model
 
@@ -215,12 +204,11 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
 def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_obj):
     """This occurs when the instance is being initialized.
 
-    This is noted because it differes from some of the other metaclass validations
-    which will raise an exception at class defiition time.
+    This is noted because it differes from some of the other metaclass validations which will raise an exception at
+    class defiition time.
     """
 
     class ConfigComponent(ModelComponent):
-
         def __init__(self, model, config):
             pass
 
@@ -236,12 +224,11 @@ def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_o
 def test_ModelComponent_raises_if_model_is_empty_iterable():
     """This occurs when the instance is being initialized.
 
-    This is noted because it differes from some of the other metaclass validations
-    which will raise an exception at class defiition time.
+    This is noted because it differes from some of the other metaclass validations which will raise an exception at
+    class defiition time.
     """
 
     class ConfigComponent(ModelComponent):
-
         def __init__(self, model):
             pass
 

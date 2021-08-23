@@ -44,7 +44,6 @@ if _PIL_AVAILABLE:
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
         return torch.rand(1), torch.rand(1)
 
@@ -53,7 +52,6 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 class TestDataPipelineState:
-
     @staticmethod
     def test_str():
         state = DataPipelineState()
@@ -95,9 +93,7 @@ def test_data_pipeline_str():
 @pytest.mark.parametrize("use_preprocess", [False, True])
 @pytest.mark.parametrize("use_postprocess", [False, True])
 def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmpdir):
-
     class CustomModel(Task):
-
         def __init__(self, postprocess: Optional[Postprocess] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
             self._postprocess = postprocess
@@ -135,9 +131,7 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 
 
 def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
-
     class CustomPreprocess(DefaultPreprocess):
-
         def val_pre_tensor_transform(self, *_, **__):
             pass
 
@@ -258,7 +252,6 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
 
 
 class CustomPreprocess(DefaultPreprocess):
-
     def train_per_sample_transform(self, *_, **__):
         pass
 
@@ -307,9 +300,7 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
 
 
 def test_detach_preprocessing_from_model(tmpdir):
-
     class CustomModel(Task):
-
         def __init__(self, postprocess: Optional[Postprocess] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
             self._postprocess = postprocess
@@ -333,7 +324,6 @@ def test_detach_preprocessing_from_model(tmpdir):
 
 
 class TestPreprocess(DefaultPreprocess):
-
     def train_per_sample_transform(self, *_, **__):
         pass
 
@@ -363,7 +353,6 @@ class TestPreprocess(DefaultPreprocess):
 
 
 def test_attaching_datapipeline_to_model(tmpdir):
-
     class SubPreprocess(DefaultPreprocess):
         pass
 
@@ -371,7 +360,6 @@ def test_attaching_datapipeline_to_model(tmpdir):
     data_pipeline = DataPipeline(preprocess=preprocess)
 
     class CustomModel(Task):
-
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
             self._postprocess = Postprocess()
@@ -513,8 +501,7 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
     _original_predict_step = model.predict_step
 
     class CustomDataPipeline(DataPipeline):
-
-        def _attach_postprocess_to_model(self, model: 'Task', _postprocesssor: _Postprocessor) -> 'Task':
+        def _attach_postprocess_to_model(self, model: "Task", _postprocesssor: _Postprocessor) -> "Task":
             model.predict_step = self._model_predict_step_wrapper(model.predict_step, _postprocesssor, model)
             return model
 
@@ -528,7 +515,6 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
 
 
 class LamdaDummyDataset(torch.utils.data.Dataset):
-
     def __init__(self, fx: Callable):
         self.fx = fx
 
@@ -540,7 +526,6 @@ class LamdaDummyDataset(torch.utils.data.Dataset):
 
 
 class TestPreprocessTransformationsDataSource(DataSource):
-
     def __init__(self):
         super().__init__()
 
@@ -589,7 +574,7 @@ class TestPreprocessTransformationsDataSource(DataSource):
 
     @staticmethod
     def fn_predict_load_data() -> List[str]:
-        return (["a", "b"])
+        return ["a", "b"]
 
     def predict_load_data(self, sample) -> LamdaDummyDataset:
         assert self.predicting
@@ -599,7 +584,6 @@ class TestPreprocessTransformationsDataSource(DataSource):
 
 
 class TestPreprocessTransformations(DefaultPreprocess):
-
     def __init__(self):
         super().__init__(data_sources={"default": TestPreprocessTransformationsDataSource()})
 
@@ -616,7 +600,7 @@ class TestPreprocessTransformations(DefaultPreprocess):
         assert self.training
         assert self.current_fn == "pre_tensor_transform"
         self.train_pre_tensor_transform_called = True
-        return sample + (5, )
+        return sample + (5,)
 
     def train_collate(self, samples) -> Tensor:
         assert self.training
@@ -640,9 +624,9 @@ class TestPreprocessTransformations(DefaultPreprocess):
         assert self.validating
         assert self.current_fn == "collate"
         self.val_collate_called = True
-        _count = samples[0]['a']
-        assert samples == [{'a': _count, 'b': _count + 1}, {'a': _count + 1, 'b': _count + 2}]
-        return {'a': tensor([0, 1]), 'b': tensor([1, 2])}
+        _count = samples[0]["a"]
+        assert samples == [{"a": _count, "b": _count + 1}, {"a": _count + 1, "b": _count + 2}]
+        return {"a": tensor([0, 1]), "b": tensor([1, 2])}
 
     def val_per_batch_transform_on_device(self, batch: Any) -> Any:
         assert self.validating
@@ -668,14 +652,12 @@ class TestPreprocessTransformations(DefaultPreprocess):
 
 
 class TestPreprocessTransformations2(TestPreprocessTransformations):
-
     def val_to_tensor_transform(self, sample: Any) -> Tensor:
         self.val_to_tensor_transform_called = True
         return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
 
 
 class CustomModel(Task):
-
     def __init__(self):
         super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
@@ -691,11 +673,11 @@ class CustomModel(Task):
         assert len(batch) == 2
         assert batch[0].shape == torch.Size([2, 1])
 
-    def predict_step(self, batch, batch_idx, dataloader_idx):
-        assert batch[0][0] == 'a'
-        assert batch[0][1] == 'a'
-        assert batch[1][0] == 'b'
-        assert batch[1][1] == 'b'
+    def predict_step(self, batch, batch_idx, dataloader_idx=None):
+        assert batch[0][0] == "a"
+        assert batch[0][1] == "a"
+        assert batch[1][0] == "b"
+        assert batch[1][1] == "b"
         return tensor([0, 0, 0])
 
 
@@ -709,8 +691,8 @@ def test_datapipeline_transformations(tmpdir):
     batch = next(iter(datamodule.train_dataloader()))
     assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
-    assert datamodule.val_dataloader().dataset[0] == {'a': 0, 'b': 1}
-    assert datamodule.val_dataloader().dataset[1] == {'a': 1, 'b': 2}
+    assert datamodule.val_dataloader().dataset[0] == {"a": 0, "b": 1}
+    assert datamodule.val_dataloader().dataset[1] == {"a": 1, "b": 2}
     with pytest.raises(MisconfigurationException, match="When ``to_tensor_transform``"):
         batch = next(iter(datamodule.val_dataloader()))
 
@@ -728,7 +710,7 @@ def test_datapipeline_transformations(tmpdir):
         limit_val_batches=1,
         limit_test_batches=2,
         limit_predict_batches=2,
-        num_sanity_val_steps=1
+        num_sanity_val_steps=1,
     )
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model)
@@ -752,9 +734,7 @@ def test_datapipeline_transformations(tmpdir):
 
 
 def test_is_overriden_recursive(tmpdir):
-
     class TestPreprocess(DefaultPreprocess):
-
         def collate(self, *_):
             pass
 
@@ -775,9 +755,7 @@ def test_is_overriden_recursive(tmpdir):
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
-
     class ImageDataSource(DataSource):
-
         def load_data(self, folder: str):
             # from folder -> return files paths
             return ["a.jpg", "b.jpg"]
@@ -788,7 +766,6 @@ def test_dummy_example(tmpdir):
             return Image.fromarray(img8Bit)
 
     class ImageClassificationPreprocess(DefaultPreprocess):
-
         def __init__(
             self,
             train_transform=None,
@@ -817,7 +794,6 @@ def test_dummy_example(tmpdir):
             return self._train_per_sample_transform_on_device(sample)
 
     class CustomModel(Task):
-
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
@@ -856,17 +832,15 @@ def test_dummy_example(tmpdir):
         limit_val_batches=1,
         limit_test_batches=2,
         limit_predict_batches=2,
-        num_sanity_val_steps=1
+        num_sanity_val_steps=1,
     )
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model)
 
 
 def test_preprocess_transforms(tmpdir):
-    """
-    This test makes sure that when a preprocess is being provided transforms as dictionaries,
-    checking is done properly, and collate_in_worker_from_transform is properly extracted.
-    """
+    """This test makes sure that when a preprocess is being provided transforms as dictionaries, checking is done
+    properly, and collate_in_worker_from_transform is properly extracted."""
 
     with pytest.raises(MisconfigurationException, match="Transform should be a dict."):
         DefaultPreprocess(train_transform="choco")
@@ -885,13 +859,13 @@ def test_preprocess_transforms(tmpdir):
         preprocess = DefaultPreprocess(
             train_transform={
                 "per_batch_transform": torch.nn.Linear(1, 1),
-                "per_sample_transform_on_device": torch.nn.Linear(1, 1)
+                "per_sample_transform_on_device": torch.nn.Linear(1, 1),
             }
         )
 
     preprocess = DefaultPreprocess(
         train_transform={"per_batch_transform": torch.nn.Linear(1, 1)},
-        predict_transform={"per_sample_transform_on_device": torch.nn.Linear(1, 1)}
+        predict_transform={"per_sample_transform_on_device": torch.nn.Linear(1, 1)},
     )
     # keep is None
     assert preprocess._train_collate_in_worker_from_transform is True
@@ -910,7 +884,6 @@ def test_preprocess_transforms(tmpdir):
     assert predict_preprocessor.collate_fn.func == DataPipeline._identity
 
     class CustomPreprocess(DefaultPreprocess):
-
         def per_sample_transform_on_device(self, sample: Any) -> Any:
             return super().per_sample_transform_on_device(sample)
 
@@ -919,7 +892,7 @@ def test_preprocess_transforms(tmpdir):
 
     preprocess = CustomPreprocess(
         train_transform={"per_batch_transform": torch.nn.Linear(1, 1)},
-        predict_transform={"per_sample_transform_on_device": torch.nn.Linear(1, 1)}
+        predict_transform={"per_sample_transform_on_device": torch.nn.Linear(1, 1)},
     )
     # keep is None
     assert preprocess._train_collate_in_worker_from_transform is True
@@ -941,9 +914,7 @@ def test_preprocess_transforms(tmpdir):
 
 
 def test_iterable_auto_dataset(tmpdir):
-
     class CustomDataSource(DataSource):
-
         def load_sample(self, index: int) -> Dict[str, int]:
             return {"index": index}
 
@@ -954,7 +925,6 @@ def test_iterable_auto_dataset(tmpdir):
 
 
 class CustomPreprocessHyperparameters(DefaultPreprocess):
-
     def __init__(self, token: str, *args, **kwargs):
         self.token = token
         super().__init__(*args, **kwargs)

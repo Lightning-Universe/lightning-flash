@@ -36,7 +36,7 @@ def test_cull():
 
 
 def fuse2(*args, **kwargs):
-    """Run both ``fuse`` and ``fuse_linear`` and compare results"""
+    """Run both ``fuse`` and ``fuse_linear`` and compare results."""
     rv1 = fuse_linear(*args, **kwargs)
     if kwargs.get("rename_keys") is not False:
         return rv1
@@ -60,12 +60,14 @@ def test_fuse():
         "b": 2,
     }
     assert fuse(d, rename_keys=False) == with_deps({"w": (inc, (inc, (inc, (add, "a", "b")))), "a": 1, "b": 2})
-    assert fuse(d, rename_keys=True) == with_deps({
-        "z-y-x-w": (inc, (inc, (inc, (add, "a", "b")))),
-        "a": 1,
-        "b": 2,
-        "w": "z-y-x-w",
-    })
+    assert fuse(d, rename_keys=True) == with_deps(
+        {
+            "z-y-x-w": (inc, (inc, (inc, (add, "a", "b")))),
+            "a": 1,
+            "b": 2,
+            "w": "z-y-x-w",
+        }
+    )
 
     d = {
         "NEW": (inc, "y"),
@@ -76,22 +78,26 @@ def test_fuse():
         "a": 1,
         "b": 2,
     }
-    assert fuse(d, rename_keys=False) == with_deps({
-        "NEW": (inc, "y"),
-        "w": (inc, (inc, "y")),
-        "y": (inc, (add, "a", "b")),
-        "a": 1,
-        "b": 2,
-    })
-    assert fuse(d, rename_keys=True) == with_deps({
-        "NEW": (inc, "z-y"),
-        "x-w": (inc, (inc, "z-y")),
-        "z-y": (inc, (add, "a", "b")),
-        "a": 1,
-        "b": 2,
-        "w": "x-w",
-        "y": "z-y",
-    })
+    assert fuse(d, rename_keys=False) == with_deps(
+        {
+            "NEW": (inc, "y"),
+            "w": (inc, (inc, "y")),
+            "y": (inc, (add, "a", "b")),
+            "a": 1,
+            "b": 2,
+        }
+    )
+    assert fuse(d, rename_keys=True) == with_deps(
+        {
+            "NEW": (inc, "z-y"),
+            "x-w": (inc, (inc, "z-y")),
+            "z-y": (inc, (add, "a", "b")),
+            "a": 1,
+            "b": 2,
+            "w": "x-w",
+            "y": "z-y",
+        }
+    )
 
     d = {
         "v": (inc, "y"),
@@ -105,24 +111,28 @@ def test_fuse():
         "c": 1,
         "d": 2,
     }
-    assert fuse(d, rename_keys=False) == with_deps({
-        "u": (inc, (inc, (inc, "y"))),
-        "v": (inc, "y"),
-        "y": (inc, (add, "a", "b")),
-        "a": (inc, 1),
-        "b": (inc, 2),
-    })
-    assert fuse(d, rename_keys=True) == with_deps({
-        "x-w-u": (inc, (inc, (inc, "z-y"))),
-        "v": (inc, "z-y"),
-        "z-y": (inc, (add, "c-a", "d-b")),
-        "c-a": (inc, 1),
-        "d-b": (inc, 2),
-        "a": "c-a",
-        "b": "d-b",
-        "u": "x-w-u",
-        "y": "z-y",
-    })
+    assert fuse(d, rename_keys=False) == with_deps(
+        {
+            "u": (inc, (inc, (inc, "y"))),
+            "v": (inc, "y"),
+            "y": (inc, (add, "a", "b")),
+            "a": (inc, 1),
+            "b": (inc, 2),
+        }
+    )
+    assert fuse(d, rename_keys=True) == with_deps(
+        {
+            "x-w-u": (inc, (inc, (inc, "z-y"))),
+            "v": (inc, "z-y"),
+            "z-y": (inc, (add, "c-a", "d-b")),
+            "c-a": (inc, 1),
+            "d-b": (inc, 2),
+            "a": "c-a",
+            "b": "d-b",
+            "u": "x-w-u",
+            "y": "z-y",
+        }
+    )
 
     d = {
         "a": (inc, "x"),
@@ -132,20 +142,19 @@ def test_fuse():
         "x": (inc, "y"),
         "y": 0,
     }
-    assert fuse(d, rename_keys=False) == with_deps({
-        "a": (inc, "x"),
-        "b": (inc, "x"),
-        "d": (inc, (inc, "x")),
-        "x": (inc, 0)
-    })
-    assert fuse(d, rename_keys=True) == with_deps({
-        "a": (inc, "y-x"),
-        "b": (inc, "y-x"),
-        "c-d": (inc, (inc, "y-x")),
-        "y-x": (inc, 0),
-        "d": "c-d",
-        "x": "y-x",
-    })
+    assert fuse(d, rename_keys=False) == with_deps(
+        {"a": (inc, "x"), "b": (inc, "x"), "d": (inc, (inc, "x")), "x": (inc, 0)}
+    )
+    assert fuse(d, rename_keys=True) == with_deps(
+        {
+            "a": (inc, "y-x"),
+            "b": (inc, "y-x"),
+            "c-d": (inc, (inc, "y-x")),
+            "y-x": (inc, 0),
+            "d": "c-d",
+            "x": "y-x",
+        }
+    )
 
     d = {"a": 1, "b": (inc, "a"), "c": (add, "b", "b")}
     assert fuse(d, rename_keys=False) == with_deps({"b": (inc, 1), "c": (add, "b", "b")})
@@ -168,21 +177,19 @@ def test_fuse_keys():
         "b": 2,
     }
     keys = ["x", "z"]
-    assert fuse(d, keys, rename_keys=False) == with_deps({
-        "w": (inc, "x"),
-        "x": (inc, (inc, "z")),
-        "z": (add, "a", "b"),
-        "a": 1,
-        "b": 2
-    })
-    assert fuse(d, keys, rename_keys=True) == with_deps({
-        "w": (inc, "y-x"),
-        "y-x": (inc, (inc, "z")),
-        "z": (add, "a", "b"),
-        "a": 1,
-        "b": 2,
-        "x": "y-x",
-    })
+    assert fuse(d, keys, rename_keys=False) == with_deps(
+        {"w": (inc, "x"), "x": (inc, (inc, "z")), "z": (add, "a", "b"), "a": 1, "b": 2}
+    )
+    assert fuse(d, keys, rename_keys=True) == with_deps(
+        {
+            "w": (inc, "y-x"),
+            "y-x": (inc, (inc, "z")),
+            "z": (add, "a", "b"),
+            "a": 1,
+            "b": 2,
+            "x": "y-x",
+        }
+    )
 
 
 def test_inline():
@@ -238,9 +245,7 @@ def test_inline_ignores_curries_and_partials():
 
 
 def test_inline_functions_non_hashable():
-
     class NonHashableCallable:
-
         def __call__(self, a):
             return a + 1
 
@@ -277,7 +282,6 @@ def test_inline_functions_protects_output_keys():
 
 
 def test_functions_of():
-
     def a(x):
         return x
 
@@ -290,7 +294,7 @@ def test_functions_of():
     assert functions_of((a, [[[(b, 1)]]])) == {a, b}
     assert functions_of(1) == set()
     assert functions_of(a) == set()
-    assert functions_of((a, )) == {a}
+    assert functions_of((a,)) == {a}
 
 
 def test_inline_cull_dependencies():
@@ -301,7 +305,6 @@ def test_inline_cull_dependencies():
 
 
 def test_fuse_reductions_single_input():
-
     def f(*args):
         return args
 
@@ -309,11 +312,9 @@ def test_fuse_reductions_single_input():
     assert fuse(d, ave_width=1.9, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=1.9, rename_keys=True) == with_deps(d)
     assert fuse(d, ave_width=2, rename_keys=False) == with_deps({"a": 1, "c": (f, (f, "a"), (f, "a", "a"))})
-    assert fuse(d, ave_width=2, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-c": (f, (f, "a"), (f, "a", "a")),
-        "c": "b1-b2-c"
-    })
+    assert fuse(d, ave_width=2, rename_keys=True) == with_deps(
+        {"a": 1, "b1-b2-c": (f, (f, "a"), (f, "a", "a")), "c": "b1-b2-c"}
+    )
 
     d = {
         "a": 1,
@@ -324,25 +325,24 @@ def test_fuse_reductions_single_input():
     }
     assert fuse(d, ave_width=2.9, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=2.9, rename_keys=True) == with_deps(d)
-    assert fuse(d, ave_width=3, rename_keys=False) == with_deps({
-        "a": 1,
-        "c": (f, (f, "a"), (f, "a", "a"), (f, "a", "a", "a"))
-    })
-    assert fuse(d, ave_width=3, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-b3-c": (f, (f, "a"), (f, "a", "a"), (f, "a", "a", "a")),
-        "c": "b1-b2-b3-c",
-    })
+    assert fuse(d, ave_width=3, rename_keys=False) == with_deps(
+        {"a": 1, "c": (f, (f, "a"), (f, "a", "a"), (f, "a", "a", "a"))}
+    )
+    assert fuse(d, ave_width=3, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-b2-b3-c": (f, (f, "a"), (f, "a", "a"), (f, "a", "a", "a")),
+            "c": "b1-b2-b3-c",
+        }
+    )
 
     d = {"a": 1, "b1": (f, "a"), "b2": (f, "a"), "c": (f, "a", "b1", "b2")}
     assert fuse(d, ave_width=1.9, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=1.9, rename_keys=True) == with_deps(d)
     assert fuse(d, ave_width=2, rename_keys=False) == with_deps({"a": 1, "c": (f, "a", (f, "a"), (f, "a"))})
-    assert fuse(d, ave_width=2, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-c": (f, "a", (f, "a"), (f, "a")),
-        "c": "b1-b2-c"
-    })
+    assert fuse(d, ave_width=2, rename_keys=True) == with_deps(
+        {"a": 1, "b1-b2-c": (f, "a", (f, "a"), (f, "a")), "c": "b1-b2-c"}
+    )
 
     d = {
         "a": 1,
@@ -355,18 +355,18 @@ def test_fuse_reductions_single_input():
     }
     assert fuse(d, ave_width=1.9, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=1.9, rename_keys=True) == with_deps(d)
-    assert fuse(d, ave_width=2, rename_keys=False) == with_deps({
-        "a": 1,
-        "c": (f, (f, "a"), (f, "a")),
-        "e": (f, (f, "c"), (f, "c"))
-    })
-    assert fuse(d, ave_width=2, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-c": (f, (f, "a"), (f, "a")),
-        "d1-d2-e": (f, (f, "c"), (f, "c")),
-        "c": "b1-b2-c",
-        "e": "d1-d2-e",
-    })
+    assert fuse(d, ave_width=2, rename_keys=False) == with_deps(
+        {"a": 1, "c": (f, (f, "a"), (f, "a")), "e": (f, (f, "c"), (f, "c"))}
+    )
+    assert fuse(d, ave_width=2, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-b2-c": (f, (f, "a"), (f, "a")),
+            "d1-d2-e": (f, (f, "c"), (f, "c")),
+            "c": "b1-b2-c",
+            "e": "d1-d2-e",
+        }
+    )
 
     d = {
         "a": 1,
@@ -380,37 +380,42 @@ def test_fuse_reductions_single_input():
     }
     assert fuse(d, ave_width=1.9, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=1.9, rename_keys=True) == with_deps(d)
-    expected = with_deps({
-        "a": 1,
-        "c1": (f, (f, "a"), (f, "a")),
-        "c2": (f, (f, "a"), (f, "a")),
-        "d": (f, "c1", "c2"),
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "c1": (f, (f, "a"), (f, "a")),
+            "c2": (f, (f, "a"), (f, "a")),
+            "d": (f, "c1", "c2"),
+        }
+    )
     assert fuse(d, ave_width=2, rename_keys=False) == expected
     assert fuse(d, ave_width=2.9, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b1-b2-c1": (f, (f, "a"), (f, "a")),
-        "b3-b4-c2": (f, (f, "a"), (f, "a")),
-        "d": (f, "c1", "c2"),
-        "c1": "b1-b2-c1",
-        "c2": "b3-b4-c2",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b1-b2-c1": (f, (f, "a"), (f, "a")),
+            "b3-b4-c2": (f, (f, "a"), (f, "a")),
+            "d": (f, "c1", "c2"),
+            "c1": "b1-b2-c1",
+            "c2": "b3-b4-c2",
+        }
+    )
     assert fuse(d, ave_width=2, rename_keys=True) == expected
     assert fuse(d, ave_width=2.9, rename_keys=True) == expected
-    assert fuse(d, ave_width=3, rename_keys=False) == with_deps({
-        "a": 1,
-        "d": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a")))
-    })
-    assert fuse(d, ave_width=3, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-b3-b4-c1-c2-d": (
-            f,
-            (f, (f, "a"), (f, "a")),
-            (f, (f, "a"), (f, "a")),
-        ),
-        "d": "b1-b2-b3-b4-c1-c2-d",
-    })
+    assert fuse(d, ave_width=3, rename_keys=False) == with_deps(
+        {"a": 1, "d": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a")))}
+    )
+    assert fuse(d, ave_width=3, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-b2-b3-b4-c1-c2-d": (
+                f,
+                (f, (f, "a"), (f, "a")),
+                (f, (f, "a"), (f, "a")),
+            ),
+            "d": "b1-b2-b3-b4-c1-c2-d",
+        }
+    )
 
     d = {
         "a": 1,
@@ -432,77 +437,89 @@ def test_fuse_reductions_single_input():
     }
     assert fuse(d, ave_width=1.9, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=1.9, rename_keys=True) == with_deps(d)
-    expected = with_deps({
-        "a": 1,
-        "c1": (f, (f, "a"), (f, "a")),
-        "c2": (f, (f, "a"), (f, "a")),
-        "c3": (f, (f, "a"), (f, "a")),
-        "c4": (f, (f, "a"), (f, "a")),
-        "d1": (f, "c1", "c2"),
-        "d2": (f, "c3", "c4"),
-        "e": (f, "d1", "d2"),
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "c1": (f, (f, "a"), (f, "a")),
+            "c2": (f, (f, "a"), (f, "a")),
+            "c3": (f, (f, "a"), (f, "a")),
+            "c4": (f, (f, "a"), (f, "a")),
+            "d1": (f, "c1", "c2"),
+            "d2": (f, "c3", "c4"),
+            "e": (f, "d1", "d2"),
+        }
+    )
     assert fuse(d, ave_width=2, rename_keys=False) == expected
     assert fuse(d, ave_width=2.9, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b1-b2-c1": (f, (f, "a"), (f, "a")),
-        "b3-b4-c2": (f, (f, "a"), (f, "a")),
-        "b5-b6-c3": (f, (f, "a"), (f, "a")),
-        "b7-b8-c4": (f, (f, "a"), (f, "a")),
-        "d1": (f, "c1", "c2"),
-        "d2": (f, "c3", "c4"),
-        "e": (f, "d1", "d2"),
-        "c1": "b1-b2-c1",
-        "c2": "b3-b4-c2",
-        "c3": "b5-b6-c3",
-        "c4": "b7-b8-c4",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b1-b2-c1": (f, (f, "a"), (f, "a")),
+            "b3-b4-c2": (f, (f, "a"), (f, "a")),
+            "b5-b6-c3": (f, (f, "a"), (f, "a")),
+            "b7-b8-c4": (f, (f, "a"), (f, "a")),
+            "d1": (f, "c1", "c2"),
+            "d2": (f, "c3", "c4"),
+            "e": (f, "d1", "d2"),
+            "c1": "b1-b2-c1",
+            "c2": "b3-b4-c2",
+            "c3": "b5-b6-c3",
+            "c4": "b7-b8-c4",
+        }
+    )
     assert fuse(d, ave_width=2, rename_keys=True) == expected
     assert fuse(d, ave_width=2.9, rename_keys=True) == expected
-    expected = with_deps({
-        "a": 1,
-        "d1": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        "d2": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        "e": (f, "d1", "d2"),
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "d1": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            "d2": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            "e": (f, "d1", "d2"),
+        }
+    )
     assert fuse(d, ave_width=3, rename_keys=False) == expected
     assert fuse(d, ave_width=4.6, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b1-b2-b3-b4-c1-c2-d1": (
-            f,
-            (f, (f, "a"), (f, "a")),
-            (f, (f, "a"), (f, "a")),
-        ),
-        "b5-b6-b7-b8-c3-c4-d2": (
-            f,
-            (f, (f, "a"), (f, "a")),
-            (f, (f, "a"), (f, "a")),
-        ),
-        "e": (f, "d1", "d2"),
-        "d1": "b1-b2-b3-b4-c1-c2-d1",
-        "d2": "b5-b6-b7-b8-c3-c4-d2",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b1-b2-b3-b4-c1-c2-d1": (
+                f,
+                (f, (f, "a"), (f, "a")),
+                (f, (f, "a"), (f, "a")),
+            ),
+            "b5-b6-b7-b8-c3-c4-d2": (
+                f,
+                (f, (f, "a"), (f, "a")),
+                (f, (f, "a"), (f, "a")),
+            ),
+            "e": (f, "d1", "d2"),
+            "d1": "b1-b2-b3-b4-c1-c2-d1",
+            "d2": "b5-b6-b7-b8-c3-c4-d2",
+        }
+    )
     assert fuse(d, ave_width=3, rename_keys=True) == expected
     assert fuse(d, ave_width=4.6, rename_keys=True) == expected
-    assert fuse(d, ave_width=4.7, rename_keys=False) == with_deps({
-        "a": 1,
-        "e": (
-            f,
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        ),
-    })
-    assert fuse(d, ave_width=4.7, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e": (
-            f,
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        ),
-        "e": "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e",
-    })
+    assert fuse(d, ave_width=4.7, rename_keys=False) == with_deps(
+        {
+            "a": 1,
+            "e": (
+                f,
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            ),
+        }
+    )
+    assert fuse(d, ave_width=4.7, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e": (
+                f,
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            ),
+            "e": "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e",
+        }
+    )
 
     d = {
         "a": 1,
@@ -540,165 +557,181 @@ def test_fuse_reductions_single_input():
     }
     assert fuse(d, ave_width=1.9, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=1.9, rename_keys=True) == with_deps(d)
-    expected = with_deps({
-        "a": 1,
-        "c1": (f, (f, "a"), (f, "a")),
-        "c2": (f, (f, "a"), (f, "a")),
-        "c3": (f, (f, "a"), (f, "a")),
-        "c4": (f, (f, "a"), (f, "a")),
-        "c5": (f, (f, "a"), (f, "a")),
-        "c6": (f, (f, "a"), (f, "a")),
-        "c7": (f, (f, "a"), (f, "a")),
-        "c8": (f, (f, "a"), (f, "a")),
-        "d1": (f, "c1", "c2"),
-        "d2": (f, "c3", "c4"),
-        "d3": (f, "c5", "c6"),
-        "d4": (f, "c7", "c8"),
-        "e1": (f, "d1", "d2"),
-        "e2": (f, "d3", "d4"),
-        "f": (f, "e1", "e2"),
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "c1": (f, (f, "a"), (f, "a")),
+            "c2": (f, (f, "a"), (f, "a")),
+            "c3": (f, (f, "a"), (f, "a")),
+            "c4": (f, (f, "a"), (f, "a")),
+            "c5": (f, (f, "a"), (f, "a")),
+            "c6": (f, (f, "a"), (f, "a")),
+            "c7": (f, (f, "a"), (f, "a")),
+            "c8": (f, (f, "a"), (f, "a")),
+            "d1": (f, "c1", "c2"),
+            "d2": (f, "c3", "c4"),
+            "d3": (f, "c5", "c6"),
+            "d4": (f, "c7", "c8"),
+            "e1": (f, "d1", "d2"),
+            "e2": (f, "d3", "d4"),
+            "f": (f, "e1", "e2"),
+        }
+    )
     assert fuse(d, ave_width=2, rename_keys=False) == expected
     assert fuse(d, ave_width=2.9, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b1-b2-c1": (f, (f, "a"), (f, "a")),
-        "b3-b4-c2": (f, (f, "a"), (f, "a")),
-        "b5-b6-c3": (f, (f, "a"), (f, "a")),
-        "b7-b8-c4": (f, (f, "a"), (f, "a")),
-        "b10-b9-c5": (f, (f, "a"), (f, "a")),
-        "b11-b12-c6": (f, (f, "a"), (f, "a")),
-        "b13-b14-c7": (f, (f, "a"), (f, "a")),
-        "b15-b16-c8": (f, (f, "a"), (f, "a")),
-        "d1": (f, "c1", "c2"),
-        "d2": (f, "c3", "c4"),
-        "d3": (f, "c5", "c6"),
-        "d4": (f, "c7", "c8"),
-        "e1": (f, "d1", "d2"),
-        "e2": (f, "d3", "d4"),
-        "f": (f, "e1", "e2"),
-        "c1": "b1-b2-c1",
-        "c2": "b3-b4-c2",
-        "c3": "b5-b6-c3",
-        "c4": "b7-b8-c4",
-        "c5": "b10-b9-c5",
-        "c6": "b11-b12-c6",
-        "c7": "b13-b14-c7",
-        "c8": "b15-b16-c8",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b1-b2-c1": (f, (f, "a"), (f, "a")),
+            "b3-b4-c2": (f, (f, "a"), (f, "a")),
+            "b5-b6-c3": (f, (f, "a"), (f, "a")),
+            "b7-b8-c4": (f, (f, "a"), (f, "a")),
+            "b10-b9-c5": (f, (f, "a"), (f, "a")),
+            "b11-b12-c6": (f, (f, "a"), (f, "a")),
+            "b13-b14-c7": (f, (f, "a"), (f, "a")),
+            "b15-b16-c8": (f, (f, "a"), (f, "a")),
+            "d1": (f, "c1", "c2"),
+            "d2": (f, "c3", "c4"),
+            "d3": (f, "c5", "c6"),
+            "d4": (f, "c7", "c8"),
+            "e1": (f, "d1", "d2"),
+            "e2": (f, "d3", "d4"),
+            "f": (f, "e1", "e2"),
+            "c1": "b1-b2-c1",
+            "c2": "b3-b4-c2",
+            "c3": "b5-b6-c3",
+            "c4": "b7-b8-c4",
+            "c5": "b10-b9-c5",
+            "c6": "b11-b12-c6",
+            "c7": "b13-b14-c7",
+            "c8": "b15-b16-c8",
+        }
+    )
     assert fuse(d, ave_width=2, rename_keys=True) == expected
     assert fuse(d, ave_width=2.9, rename_keys=True) == expected
-    expected = with_deps({
-        "a": 1,
-        "d1": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        "d2": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        "d3": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        "d4": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        "e1": (f, "d1", "d2"),
-        "e2": (f, "d3", "d4"),
-        "f": (f, "e1", "e2"),
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "d1": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            "d2": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            "d3": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            "d4": (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            "e1": (f, "d1", "d2"),
+            "e2": (f, "d3", "d4"),
+            "f": (f, "e1", "e2"),
+        }
+    )
     assert fuse(d, ave_width=3, rename_keys=False) == expected
     assert fuse(d, ave_width=4.6, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b1-b2-b3-b4-c1-c2-d1": (
-            f,
-            (f, (f, "a"), (f, "a")),
-            (f, (f, "a"), (f, "a")),
-        ),
-        "b5-b6-b7-b8-c3-c4-d2": (
-            f,
-            (f, (f, "a"), (f, "a")),
-            (f, (f, "a"), (f, "a")),
-        ),
-        "b10-b11-b12-b9-c5-c6-d3": (
-            f,
-            (f, (f, "a"), (f, "a")),
-            (f, (f, "a"), (f, "a")),
-        ),
-        "b13-b14-b15-b16-c7-c8-d4": (
-            f,
-            (f, (f, "a"), (f, "a")),
-            (f, (f, "a"), (f, "a")),
-        ),
-        "e1": (f, "d1", "d2"),
-        "e2": (f, "d3", "d4"),
-        "f": (f, "e1", "e2"),
-        "d1": "b1-b2-b3-b4-c1-c2-d1",
-        "d2": "b5-b6-b7-b8-c3-c4-d2",
-        "d3": "b10-b11-b12-b9-c5-c6-d3",
-        "d4": "b13-b14-b15-b16-c7-c8-d4",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b1-b2-b3-b4-c1-c2-d1": (
+                f,
+                (f, (f, "a"), (f, "a")),
+                (f, (f, "a"), (f, "a")),
+            ),
+            "b5-b6-b7-b8-c3-c4-d2": (
+                f,
+                (f, (f, "a"), (f, "a")),
+                (f, (f, "a"), (f, "a")),
+            ),
+            "b10-b11-b12-b9-c5-c6-d3": (
+                f,
+                (f, (f, "a"), (f, "a")),
+                (f, (f, "a"), (f, "a")),
+            ),
+            "b13-b14-b15-b16-c7-c8-d4": (
+                f,
+                (f, (f, "a"), (f, "a")),
+                (f, (f, "a"), (f, "a")),
+            ),
+            "e1": (f, "d1", "d2"),
+            "e2": (f, "d3", "d4"),
+            "f": (f, "e1", "e2"),
+            "d1": "b1-b2-b3-b4-c1-c2-d1",
+            "d2": "b5-b6-b7-b8-c3-c4-d2",
+            "d3": "b10-b11-b12-b9-c5-c6-d3",
+            "d4": "b13-b14-b15-b16-c7-c8-d4",
+        }
+    )
     assert fuse(d, ave_width=3, rename_keys=True) == expected
     assert fuse(d, ave_width=4.6, rename_keys=True) == expected
-    expected = with_deps({
-        "a": 1,
-        "e1": (
-            f,
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        ),
-        "e2": (
-            f,
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        ),
-        "f": (f, "e1", "e2"),
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "e1": (
+                f,
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            ),
+            "e2": (
+                f,
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            ),
+            "f": (f, "e1", "e2"),
+        }
+    )
     assert fuse(d, ave_width=4.7, rename_keys=False) == expected
     assert fuse(d, ave_width=7.4, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e1": (
-            f,
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        ),
-        "b10-b11-b12-b13-b14-b15-b16-b9-c5-c6-c7-c8-d3-d4-e2": (
-            f,
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-        ),
-        "f": (f, "e1", "e2"),
-        "e1": "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e1",
-        "e2": "b10-b11-b12-b13-b14-b15-b16-b9-c5-c6-c7-c8-d3-d4-e2",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e1": (
+                f,
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            ),
+            "b10-b11-b12-b13-b14-b15-b16-b9-c5-c6-c7-c8-d3-d4-e2": (
+                f,
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+            ),
+            "f": (f, "e1", "e2"),
+            "e1": "b1-b2-b3-b4-b5-b6-b7-b8-c1-c2-c3-c4-d1-d2-e1",
+            "e2": "b10-b11-b12-b13-b14-b15-b16-b9-c5-c6-c7-c8-d3-d4-e2",
+        }
+    )
     assert fuse(d, ave_width=4.7, rename_keys=True) == expected
     assert fuse(d, ave_width=7.4, rename_keys=True) == expected
-    assert fuse(d, ave_width=7.5, rename_keys=False) == with_deps({
-        "a": 1,
-        "f": (
-            f,
-            (
+    assert fuse(d, ave_width=7.5, rename_keys=False) == with_deps(
+        {
+            "a": 1,
+            "f": (
                 f,
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (
+                    f,
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                ),
+                (
+                    f,
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                ),
             ),
-            (
+        }
+    )
+    assert fuse(d, ave_width=7.5, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-b10-b11-b12-b13-b14-b15-b16-b2-b3-b4-b5-b6-b7-b8-b9-c1-c2-c3-c4-c5-c6-c7-c8-d1-d2-d3-d4-e1-e2-f": (
                 f,
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                (
+                    f,
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                ),
+                (
+                    f,
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                    (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
+                ),
             ),
-        ),
-    })
-    assert fuse(d, ave_width=7.5, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b10-b11-b12-b13-b14-b15-b16-b2-b3-b4-b5-b6-b7-b8-b9-c1-c2-c3-c4-c5-c6-c7-c8-d1-d2-d3-d4-e1-e2-f": (
-            f,
-            (
-                f,
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            ),
-            (
-                f,
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-                (f, (f, (f, "a"), (f, "a")), (f, (f, "a"), (f, "a"))),
-            ),
-        ),
-        "f": "b1-b10-b11-b12-b13-b14-b15-b16-b2-b3-b4-b5-b6-b7-b8-b9-c1-c2-c3-c4-c5-c6-c7-c8-d1-d2-d3-d4-e1-e2-f",
-    })
+            "f": "b1-b10-b11-b12-b13-b14-b15-b16-b2-b3-b4-b5-b6-b7-b8-b9-c1-c2-c3-c4-c5-c6-c7-c8-d1-d2-d3-d4-e1-e2-f",
+        }
+    )
 
     d = {"a": 1, "b": (f, "a")}
     assert fuse(d, ave_width=1, rename_keys=False) == with_deps({"b": (f, 1)})
@@ -710,11 +743,9 @@ def test_fuse_reductions_single_input():
 
     d = {"a": 1, "b": (f, "a"), "c": (f, "a", "b"), "d": (f, "a", "c")}
     assert fuse(d, ave_width=1, rename_keys=False) == with_deps({"a": 1, "d": (f, "a", (f, "a", (f, "a")))})
-    assert fuse(d, ave_width=1, rename_keys=True) == with_deps({
-        "a": 1,
-        "b-c-d": (f, "a", (f, "a", (f, "a"))),
-        "d": "b-c-d"
-    })
+    assert fuse(d, ave_width=1, rename_keys=True) == with_deps(
+        {"a": 1, "b-c-d": (f, "a", (f, "a", (f, "a"))), "d": "b-c-d"}
+    )
 
     d = {
         "a": 1,
@@ -728,21 +759,25 @@ def test_fuse_reductions_single_input():
     expected = with_deps({"a": 1, "b2": (f, "a"), "e1": (f, (f, (f, (f, "a")))), "f": (f, "e1", "b2")})
     assert fuse(d, ave_width=1, rename_keys=False) == expected
     assert fuse(d, ave_width=1.9, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b2": (f, "a"),
-        "b1-c1-d1-e1": (f, (f, (f, (f, "a")))),
-        "f": (f, "e1", "b2"),
-        "e1": "b1-c1-d1-e1",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b2": (f, "a"),
+            "b1-c1-d1-e1": (f, (f, (f, (f, "a")))),
+            "f": (f, "e1", "b2"),
+            "e1": "b1-c1-d1-e1",
+        }
+    )
     assert fuse(d, ave_width=1, rename_keys=True) == expected
     assert fuse(d, ave_width=1.9, rename_keys=True) == expected
     assert fuse(d, ave_width=2, rename_keys=False) == with_deps({"a": 1, "f": (f, (f, (f, (f, (f, "a")))), (f, "a"))})
-    assert fuse(d, ave_width=2, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-c1-d1-e1-f": (f, (f, (f, (f, (f, "a")))), (f, "a")),
-        "f": "b1-b2-c1-d1-e1-f",
-    })
+    assert fuse(d, ave_width=2, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-b2-c1-d1-e1-f": (f, (f, (f, (f, (f, "a")))), (f, "a")),
+            "f": "b1-b2-c1-d1-e1-f",
+        }
+    )
 
     d = {
         "a": 1,
@@ -753,37 +788,42 @@ def test_fuse_reductions_single_input():
         "e1": (f, "a", "d1"),
         "f": (f, "a", "e1", "b2"),
     }
-    expected = with_deps({
-        "a": 1,
-        "b2": (f, "a"),
-        "e1": (f, "a", (f, "a", (f, "a", (f, "a")))),
-        "f": (f, "a", "e1", "b2"),
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b2": (f, "a"),
+            "e1": (f, "a", (f, "a", (f, "a", (f, "a")))),
+            "f": (f, "a", "e1", "b2"),
+        }
+    )
     assert fuse(d, ave_width=1, rename_keys=False) == expected
     assert fuse(d, ave_width=1.9, rename_keys=False) == expected
-    expected = with_deps({
-        "a": 1,
-        "b2": (f, "a"),
-        "b1-c1-d1-e1": (f, "a", (f, "a", (f, "a", (f, "a")))),
-        "f": (f, "a", "e1", "b2"),
-        "e1": "b1-c1-d1-e1",
-    })
+    expected = with_deps(
+        {
+            "a": 1,
+            "b2": (f, "a"),
+            "b1-c1-d1-e1": (f, "a", (f, "a", (f, "a", (f, "a")))),
+            "f": (f, "a", "e1", "b2"),
+            "e1": "b1-c1-d1-e1",
+        }
+    )
     assert fuse(d, ave_width=1, rename_keys=True) == expected
     assert fuse(d, ave_width=1.9, rename_keys=True) == expected
-    assert fuse(d, ave_width=2, rename_keys=False) == with_deps({
-        "a": 1,
-        "f": (f, "a", (f, "a", (f, "a", (f, "a", (f, "a")))), (f, "a"))
-    })
-    assert fuse(d, ave_width=2, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-b2-c1-d1-e1-f": (
-            f,
-            "a",
-            (f, "a", (f, "a", (f, "a", (f, "a")))),
-            (f, "a"),
-        ),
-        "f": "b1-b2-c1-d1-e1-f",
-    })
+    assert fuse(d, ave_width=2, rename_keys=False) == with_deps(
+        {"a": 1, "f": (f, "a", (f, "a", (f, "a", (f, "a", (f, "a")))), (f, "a"))}
+    )
+    assert fuse(d, ave_width=2, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-b2-c1-d1-e1-f": (
+                f,
+                "a",
+                (f, "a", (f, "a", (f, "a", (f, "a")))),
+                (f, "a"),
+            ),
+            "f": "b1-b2-c1-d1-e1-f",
+        }
+    )
 
     d = {
         "a": 1,
@@ -800,24 +840,28 @@ def test_fuse_reductions_single_input():
         "f": (f, "e"),
         "g": (f, "f"),
     }
-    assert fuse(d, ave_width=1, rename_keys=False) == with_deps({
-        "a": 1,
-        "d1": (f, (f, (f, "a"))),
-        "d2": (f, (f, (f, "a"))),
-        "d3": (f, (f, (f, "a"))),
-        "g": (f, (f, (f, "d1", "d2", "d3"))),
-    })
-    assert fuse(d, ave_width=1, rename_keys=True) == with_deps({
-        "a": 1,
-        "b1-c1-d1": (f, (f, (f, "a"))),
-        "b2-c2-d2": (f, (f, (f, "a"))),
-        "b3-c3-d3": (f, (f, (f, "a"))),
-        "e-f-g": (f, (f, (f, "d1", "d2", "d3"))),
-        "d1": "b1-c1-d1",
-        "d2": "b2-c2-d2",
-        "d3": "b3-c3-d3",
-        "g": "e-f-g",
-    })
+    assert fuse(d, ave_width=1, rename_keys=False) == with_deps(
+        {
+            "a": 1,
+            "d1": (f, (f, (f, "a"))),
+            "d2": (f, (f, (f, "a"))),
+            "d3": (f, (f, (f, "a"))),
+            "g": (f, (f, (f, "d1", "d2", "d3"))),
+        }
+    )
+    assert fuse(d, ave_width=1, rename_keys=True) == with_deps(
+        {
+            "a": 1,
+            "b1-c1-d1": (f, (f, (f, "a"))),
+            "b2-c2-d2": (f, (f, (f, "a"))),
+            "b3-c3-d3": (f, (f, (f, "a"))),
+            "e-f-g": (f, (f, (f, "d1", "d2", "d3"))),
+            "d1": "b1-c1-d1",
+            "d2": "b2-c2-d2",
+            "d3": "b3-c3-d3",
+            "g": "e-f-g",
+        }
+    )
 
     d = {
         "a": 1,
@@ -828,23 +872,22 @@ def test_fuse_reductions_single_input():
         "f": (f, "e"),
         "g": (f, "d", "f"),
     }
-    assert fuse(d, ave_width=1, rename_keys=False) == with_deps({
-        "b": (f, 1),
-        "d": (f, "b", (f, "b")),
-        "g": (f, "d", (f, (f, "d")))
-    })
-    assert fuse(d, ave_width=1, rename_keys=True) == with_deps({
-        "a-b": (f, 1),
-        "c-d": (f, "b", (f, "b")),
-        "e-f-g": (f, "d", (f, (f, "d"))),
-        "b": "a-b",
-        "d": "c-d",
-        "g": "e-f-g",
-    })
+    assert fuse(d, ave_width=1, rename_keys=False) == with_deps(
+        {"b": (f, 1), "d": (f, "b", (f, "b")), "g": (f, "d", (f, (f, "d")))}
+    )
+    assert fuse(d, ave_width=1, rename_keys=True) == with_deps(
+        {
+            "a-b": (f, 1),
+            "c-d": (f, "b", (f, "b")),
+            "e-f-g": (f, "d", (f, (f, "d"))),
+            "b": "a-b",
+            "d": "c-d",
+            "g": "e-f-g",
+        }
+    )
 
 
 def test_fuse_stressed():
-
     def f(*args):
         return args
 
@@ -917,7 +960,6 @@ def test_fuse_stressed():
 
 
 def test_fuse_reductions_multiple_input():
-
     def f(*args):
         return args
 
@@ -925,12 +967,9 @@ def test_fuse_reductions_multiple_input():
     assert fuse(d, ave_width=2, rename_keys=False) == with_deps({"c": (f, (f, 1, 2))})
     assert fuse(d, ave_width=2, rename_keys=True) == with_deps({"a1-a2-b-c": (f, (f, 1, 2)), "c": "a1-a2-b-c"})
     assert fuse(d, ave_width=1, rename_keys=False) == with_deps({"a1": 1, "a2": 2, "c": (f, (f, "a1", "a2"))})
-    assert fuse(d, ave_width=1, rename_keys=True) == with_deps({
-        "a1": 1,
-        "a2": 2,
-        "b-c": (f, (f, "a1", "a2")),
-        "c": "b-c"
-    })
+    assert fuse(d, ave_width=1, rename_keys=True) == with_deps(
+        {"a1": 1, "a2": 2, "b-c": (f, (f, "a1", "a2")), "c": "b-c"}
+    )
 
     d = {
         "a1": 1,
@@ -945,17 +984,17 @@ def test_fuse_reductions_multiple_input():
     assert fuse(d, ave_width=2.9, rename_keys=False) == expected
     assert fuse(d, ave_width=1, rename_keys=True) == expected
     assert fuse(d, ave_width=2.9, rename_keys=True) == expected
-    assert fuse(d, ave_width=3, rename_keys=False) == with_deps({
-        "a1": 1,
-        "a2": 2,
-        "c": (f, (f, "a1"), (f, "a1", "a2"), (f, "a2"))
-    })
-    assert fuse(d, ave_width=3, rename_keys=True) == with_deps({
-        "a1": 1,
-        "a2": 2,
-        "b1-b2-b3-c": (f, (f, "a1"), (f, "a1", "a2"), (f, "a2")),
-        "c": "b1-b2-b3-c",
-    })
+    assert fuse(d, ave_width=3, rename_keys=False) == with_deps(
+        {"a1": 1, "a2": 2, "c": (f, (f, "a1"), (f, "a1", "a2"), (f, "a2"))}
+    )
+    assert fuse(d, ave_width=3, rename_keys=True) == with_deps(
+        {
+            "a1": 1,
+            "a2": 2,
+            "b1-b2-b3-c": (f, (f, "a1"), (f, "a1", "a2"), (f, "a2")),
+            "c": "b1-b2-b3-c",
+        }
+    )
 
     d = {
         "a1": 1,
@@ -968,22 +1007,26 @@ def test_fuse_reductions_multiple_input():
     }
     assert fuse(d, ave_width=1, rename_keys=False) == with_deps(d)
     assert fuse(d, ave_width=1, rename_keys=True) == with_deps(d)
-    assert fuse(d, ave_width=2, rename_keys=False) == with_deps({
-        "a1": 1,
-        "a2": 2,
-        "b2": (f, "a1", "a2"),
-        "c1": (f, (f, "a1"), "b2"),
-        "c2": (f, "b2", (f, "a2")),
-    })
-    assert fuse(d, ave_width=2, rename_keys=True) == with_deps({
-        "a1": 1,
-        "a2": 2,
-        "b2": (f, "a1", "a2"),
-        "b1-c1": (f, (f, "a1"), "b2"),
-        "b3-c2": (f, "b2", (f, "a2")),
-        "c1": "b1-c1",
-        "c2": "b3-c2",
-    })
+    assert fuse(d, ave_width=2, rename_keys=False) == with_deps(
+        {
+            "a1": 1,
+            "a2": 2,
+            "b2": (f, "a1", "a2"),
+            "c1": (f, (f, "a1"), "b2"),
+            "c2": (f, "b2", (f, "a2")),
+        }
+    )
+    assert fuse(d, ave_width=2, rename_keys=True) == with_deps(
+        {
+            "a1": 1,
+            "a2": 2,
+            "b2": (f, "a1", "a2"),
+            "b1-c1": (f, (f, "a1"), "b2"),
+            "b3-c2": (f, "b2", (f, "a2")),
+            "c1": "b1-c1",
+            "c2": "b3-c2",
+        }
+    )
 
     d = {
         "a1": 1,
@@ -1000,19 +1043,23 @@ def test_fuse_reductions_multiple_input():
 
     # A more aggressive heuristic could do this at `ave_width=2`.  Perhaps
     # we can improve this.  Nevertheless, this is behaving as intended.
-    assert fuse(d, ave_width=3, rename_keys=False) == with_deps({
-        "a1": 1,
-        "a2": 2,
-        "b2": (f, "a1", "a2"),
-        "d": (f, (f, (f, "a1"), "b2"), (f, "b2", (f, "a2"))),
-    })
-    assert fuse(d, ave_width=3, rename_keys=True) == with_deps({
-        "a1": 1,
-        "a2": 2,
-        "b2": (f, "a1", "a2"),
-        "b1-b3-c1-c2-d": (f, (f, (f, "a1"), "b2"), (f, "b2", (f, "a2"))),
-        "d": "b1-b3-c1-c2-d",
-    })
+    assert fuse(d, ave_width=3, rename_keys=False) == with_deps(
+        {
+            "a1": 1,
+            "a2": 2,
+            "b2": (f, "a1", "a2"),
+            "d": (f, (f, (f, "a1"), "b2"), (f, "b2", (f, "a2"))),
+        }
+    )
+    assert fuse(d, ave_width=3, rename_keys=True) == with_deps(
+        {
+            "a1": 1,
+            "a2": 2,
+            "b2": (f, "a1", "a2"),
+            "b1-b3-c1-c2-d": (f, (f, (f, "a1"), "b2"), (f, "b2", (f, "a2"))),
+            "d": "b1-b3-c1-c2-d",
+        }
+    )
 
 
 def func_with_kwargs(a, b, c=2):
@@ -1028,20 +1075,13 @@ def test_SubgraphCallable():
             apply,
             partial_by_order,
             ["in2"],
-            {
-                "function": func_with_kwargs,
-                "other": [(1, 20)],
-                "c": 4
-            },
+            {"function": func_with_kwargs, "other": [(1, 20)], "c": 4},
         ),
         "c": (
             apply,
             partial_by_order,
             ["in2", "in1"],
-            {
-                "function": func_with_kwargs,
-                "other": [(1, 20)]
-            },
+            {"function": func_with_kwargs, "other": [(1, 20)]},
         ),
         "d": (inc, "a"),
         "e": (add, "c", "d"),
@@ -1105,54 +1145,60 @@ def test_fuse_subgraphs():
     }
 
     res = fuse(dsk, "inc-6", fuse_subgraphs=True)
-    sol = with_deps({
-        "inc-6": "add-inc-x-1",
-        "add-inc-x-1": (
-            SubgraphCallable(
-                {
-                    "x-1": 1,
-                    "add-1": (add, "x-1", (inc, (inc, "x-1"))),
-                    "inc-6": (inc, (inc, (add, "add-1", (inc, (inc, "add-1"))))),
-                },
-                "inc-6",
-                (),
+    sol = with_deps(
+        {
+            "inc-6": "add-inc-x-1",
+            "add-inc-x-1": (
+                SubgraphCallable(
+                    {
+                        "x-1": 1,
+                        "add-1": (add, "x-1", (inc, (inc, "x-1"))),
+                        "inc-6": (inc, (inc, (add, "add-1", (inc, (inc, "add-1"))))),
+                    },
+                    "inc-6",
+                    (),
+                ),
             ),
-        ),
-    })
+        }
+    )
     assert res == sol
 
     res = fuse(dsk, "inc-6", fuse_subgraphs=True, rename_keys=False)
-    sol = with_deps({
-        "inc-6": (
-            SubgraphCallable(
-                {
-                    "x-1": 1,
-                    "add-1": (add, "x-1", (inc, (inc, "x-1"))),
-                    "inc-6": (inc, (inc, (add, "add-1", (inc, (inc, "add-1"))))),
-                },
-                "inc-6",
-                (),
-            ),
-        )
-    })
+    sol = with_deps(
+        {
+            "inc-6": (
+                SubgraphCallable(
+                    {
+                        "x-1": 1,
+                        "add-1": (add, "x-1", (inc, (inc, "x-1"))),
+                        "inc-6": (inc, (inc, (add, "add-1", (inc, (inc, "add-1"))))),
+                    },
+                    "inc-6",
+                    (),
+                ),
+            )
+        }
+    )
     assert res == sol
 
     res = fuse(dsk, "add-2", fuse_subgraphs=True)
-    sol = with_deps({
-        "add-inc-x-1": (
-            SubgraphCallable(
-                {
-                    "x-1": 1,
-                    "add-1": (add, "x-1", (inc, (inc, "x-1"))),
-                    "add-2": (add, "add-1", (inc, (inc, "add-1"))),
-                },
-                "add-2",
-                (),
+    sol = with_deps(
+        {
+            "add-inc-x-1": (
+                SubgraphCallable(
+                    {
+                        "x-1": 1,
+                        "add-1": (add, "x-1", (inc, (inc, "x-1"))),
+                        "add-2": (add, "add-1", (inc, (inc, "add-1"))),
+                    },
+                    "add-2",
+                    (),
+                ),
             ),
-        ),
-        "add-2": "add-inc-x-1",
-        "inc-6": (inc, (inc, "add-2")),
-    })
+            "add-2": "add-inc-x-1",
+            "inc-6": (inc, (inc, "add-2")),
+        }
+    )
     assert res == sol
 
     res = fuse(dsk, "inc-2", fuse_subgraphs=True)
@@ -1160,24 +1206,27 @@ def test_fuse_subgraphs():
     sols = []
     for inkeys in itertools.permutations(("x-1", "inc-2")):
         sols.append(
-            with_deps({
-                "x-1": 1,
-                "inc-2": (inc, (inc, "x-1")),
-                "inc-6": "inc-add-1",
-                "inc-add-1": (
-                    SubgraphCallable(
-                        {
-                            "add-1": (add, "x-1", "inc-2"),
-                            "inc-6": (
-                                inc,
-                                (inc, (add, "add-1", (inc, (inc, "add-1")))),
-                            ),
-                        },
-                        "inc-6",
-                        inkeys,
-                    ),
-                ) + inkeys,
-            })
+            with_deps(
+                {
+                    "x-1": 1,
+                    "inc-2": (inc, (inc, "x-1")),
+                    "inc-6": "inc-add-1",
+                    "inc-add-1": (
+                        SubgraphCallable(
+                            {
+                                "add-1": (add, "x-1", "inc-2"),
+                                "inc-6": (
+                                    inc,
+                                    (inc, (add, "add-1", (inc, (inc, "add-1")))),
+                                ),
+                            },
+                            "inc-6",
+                            inkeys,
+                        ),
+                    )
+                    + inkeys,
+                }
+            )
         )
     assert res in sols
 
@@ -1186,22 +1235,25 @@ def test_fuse_subgraphs():
     sols = []
     for inkeys in itertools.permutations(("x-1", "inc-2")):
         sols.append(
-            with_deps({
-                "x-1": 1,
-                "inc-2": (inc, (inc, "x-1")),
-                "inc-add-1": (
-                    SubgraphCallable(
-                        {
-                            "add-1": (add, "x-1", "inc-2"),
-                            "add-2": (add, "add-1", (inc, (inc, "add-1"))),
-                        },
-                        "add-2",
-                        inkeys,
-                    ),
-                ) + inkeys,
-                "add-2": "inc-add-1",
-                "inc-6": (inc, (inc, "add-2")),
-            })
+            with_deps(
+                {
+                    "x-1": 1,
+                    "inc-2": (inc, (inc, "x-1")),
+                    "inc-add-1": (
+                        SubgraphCallable(
+                            {
+                                "add-1": (add, "x-1", "inc-2"),
+                                "add-2": (add, "add-1", (inc, (inc, "add-1"))),
+                            },
+                            "add-2",
+                            inkeys,
+                        ),
+                    )
+                    + inkeys,
+                    "add-2": "inc-add-1",
+                    "inc-6": (inc, (inc, "add-2")),
+                }
+            )
         )
     assert res in sols
 
@@ -1217,31 +1269,30 @@ def test_fuse_subgraphs_linear_chains_of_duplicate_deps():
     }
 
     res = fuse(dsk, "add-5", fuse_subgraphs=True)
-    sol = with_deps({
-        "add-x-1": (
-            SubgraphCallable(
-                {
-                    "x-1": 1,
-                    "add-1": (add, "x-1", "x-1"),
-                    "add-2": (add, "add-1", "add-1"),
-                    "add-3": (add, "add-2", "add-2"),
-                    "add-4": (add, "add-3", "add-3"),
-                    "add-5": (add, "add-4", "add-4"),
-                },
-                "add-5",
-                (),
+    sol = with_deps(
+        {
+            "add-x-1": (
+                SubgraphCallable(
+                    {
+                        "x-1": 1,
+                        "add-1": (add, "x-1", "x-1"),
+                        "add-2": (add, "add-1", "add-1"),
+                        "add-3": (add, "add-2", "add-2"),
+                        "add-4": (add, "add-3", "add-3"),
+                        "add-5": (add, "add-4", "add-4"),
+                    },
+                    "add-5",
+                    (),
+                ),
             ),
-        ),
-        "add-5": "add-x-1",
-    })
+            "add-5": "add-x-1",
+        }
+    )
     assert res == sol
 
 
 def test_dont_fuse_numpy_arrays():
-    """
-    Some types should stay in the graph bare
-    This helps with things like serialization
-    """
+    """Some types should stay in the graph bare This helps with things like serialization."""
     np = pytest.importorskip("numpy")
     dsk = {"x": np.arange(5), "y": (inc, "x")}
 

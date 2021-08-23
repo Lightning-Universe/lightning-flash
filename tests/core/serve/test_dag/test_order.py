@@ -20,14 +20,14 @@ def f(*args):
 
 def test_ordering_keeps_groups_together(abcde):
     a, b, c, d, e = abcde
-    d = dict(((a, i), (f, )) for i in range(4))
+    d = {(a, i): (f,) for i in range(4)}
     d.update({(b, 0): (f, (a, 0), (a, 1)), (b, 1): (f, (a, 2), (a, 3))})
     o = order(d)
 
     assert abs(o[(a, 0)] - o[(a, 1)]) == 1
     assert abs(o[(a, 2)] - o[(a, 3)]) == 1
 
-    d = dict(((a, i), (f, )) for i in range(4))
+    d = {(a, i): (f,) for i in range(4)}
     d.update({(b, 0): (f, (a, 0), (a, 2)), (b, 1): (f, (a, 1), (a, 3))})
     o = order(d)
 
@@ -46,8 +46,8 @@ def test_avoid_broker_nodes(abcde):
     """
     a, b, c, d, e = abcde
     dsk = {
-        (a, 0): (f, ),
-        (a, 1): (f, ),
+        (a, 0): (f,),
+        (a, 1): (f,),
         (b, 0): (f, (a, 0)),
         (b, 1): (f, (a, 1)),
         (b, 2): (f, (a, 1)),
@@ -57,8 +57,8 @@ def test_avoid_broker_nodes(abcde):
 
     # Switch name of 0, 1 to ensure that this isn't due to string comparison
     dsk = {
-        (a, 1): (f, ),
-        (a, 0): (f, ),
+        (a, 1): (f,),
+        (a, 0): (f,),
         (b, 0): (f, (a, 1)),
         (b, 1): (f, (a, 0)),
         (b, 2): (f, (a, 0)),
@@ -68,8 +68,8 @@ def test_avoid_broker_nodes(abcde):
 
     # Switch name of 0, 1 for "b"s too
     dsk = {
-        (a, 0): (f, ),
-        (a, 1): (f, ),
+        (a, 0): (f,),
+        (a, 1): (f,),
         (b, 1): (f, (a, 0)),
         (b, 0): (f, (a, 1)),
         (b, 2): (f, (a, 1)),
@@ -161,10 +161,10 @@ def test_avoid_upwards_branching_complex(abcde):
         (a, 2): (f, (a, 3)),
         (a, 3): (f, (b, 1), (c, 1)),
         (b, 1): (f, (b, 2)),
-        (b, 2): (f, ),
+        (b, 2): (f,),
         (c, 1): (f, (c, 2)),
         (c, 2): (f, (c, 3)),
-        (c, 3): (f, ),
+        (c, 3): (f,),
         (d, 1): (f, (c, 1)),
         (d, 2): (f, (d, 1)),
         (d, 3): (f, (d, 1)),
@@ -220,7 +220,7 @@ def test_prefer_deep(abcde):
 
 
 def test_stacklimit(abcde):
-    dsk = dict(("x%s" % (i + 1), (inc, "x%s" % i)) for i in range(10000))
+    dsk = {"x%s" % (i + 1): (inc, "x%s" % i) for i in range(10000)}
     dependencies, dependents = get_deps(dsk)
     ndependencies(dependencies, dependents)
 
@@ -261,7 +261,7 @@ def test_prefer_short_dependents(abcde):
     during the long computations.
     """
     a, b, c, d, e = abcde
-    dsk = {c: (f, ), d: (f, c), e: (f, c), b: (f, c), a: (f, b)}
+    dsk = {c: (f,), d: (f, c), e: (f, c), b: (f, c), a: (f, b)}
 
     o = order(dsk)
     assert o[d] < o[b]
@@ -280,24 +280,23 @@ def test_run_smaller_sections(abcde):
     Prefer to run acb first because then we can get that out of the way
     """
     a, b, c, d, e = abcde
-    aa, bb, cc, dd = [x * 2 for x in [a, b, c, d]]
+    aa, bb, cc, dd = (x * 2 for x in [a, b, c, d])
 
     expected = [a, c, b, e, d, cc, bb, aa, dd]
 
     log = []
 
     def f(x):
-
         def _(*args):
             log.append(x)
 
         return _
 
     dsk = {
-        a: (f(a), ),
-        c: (f(c), ),
-        e: (f(e), ),
-        cc: (f(cc), ),
+        a: (f(a),),
+        c: (f(c),),
+        e: (f(e),),
+        cc: (f(cc),),
         b: (f(b), a, c),
         d: (f(d), c, e),
         bb: (f(bb), cc),
@@ -326,29 +325,28 @@ def test_local_parents_of_reduction(abcde):
     Prefer to finish a1 stack before proceeding to b2
     """
     a, b, c, d, e = abcde
-    a1, a2, a3 = [a + i for i in "123"]
-    b1, b2, b3 = [b + i for i in "123"]
-    c1, c2, c3 = [c + i for i in "123"]
+    a1, a2, a3 = (a + i for i in "123")
+    b1, b2, b3 = (b + i for i in "123")
+    c1, c2, c3 = (c + i for i in "123")
 
     expected = [a3, a2, a1, b3, b2, b1, c3, c2, c1]
 
     log = []
 
     def f(x):
-
         def _(*args):
             log.append(x)
 
         return _
 
     dsk = {
-        a3: (f(a3), ),
+        a3: (f(a3),),
         a2: (f(a2), a3),
         a1: (f(a1), a2),
-        b3: (f(b3), ),
+        b3: (f(b3),),
         b2: (f(b2), b3, a2),
         b1: (f(b1), b2),
-        c3: (f(c3), ),
+        c3: (f(c3),),
         c2: (f(c2), c3, b2),
         c1: (f(c1), c2),
     }
@@ -370,14 +368,14 @@ def test_nearest_neighbor(abcde):
     This is difficult because all groups are connected.
     """
     a, b, c, _, _ = abcde
-    a1, a2, a3, a4, a5, a6, a7, a8, a9 = [a + i for i in "123456789"]
-    b1, b2, b3, b4 = [b + i for i in "1234"]
+    a1, a2, a3, a4, a5, a6, a7, a8, a9 = (a + i for i in "123456789")
+    b1, b2, b3, b4 = (b + i for i in "1234")
 
     dsk = {
-        b1: (f, ),
-        b2: (f, ),
-        b3: (f, ),
-        b4: (f, ),
+        b1: (f,),
+        b2: (f,),
+        b3: (f,),
+        b4: (f,),
         a1: (f, b1),
         a2: (f, b1),
         a3: (f, b1, b2),
@@ -397,15 +395,15 @@ def test_nearest_neighbor(abcde):
 
 
 def test_string_ordering():
-    """ Prefer ordering tasks by name first """
-    dsk = {("a", 1): (f, ), ("a", 2): (f, ), ("a", 3): (f, )}
+    """Prefer ordering tasks by name first."""
+    dsk = {("a", 1): (f,), ("a", 2): (f,), ("a", 3): (f,)}
     o = order(dsk)
     assert o == {("a", 1): 0, ("a", 2): 1, ("a", 3): 2}
 
 
 def test_string_ordering_dependents():
-    """ Prefer ordering tasks by name first even when in dependencies """
-    dsk = {("a", 1): (f, "b"), ("a", 2): (f, "b"), ("a", 3): (f, "b"), "b": (f, )}
+    """Prefer ordering tasks by name first even when in dependencies."""
+    dsk = {("a", 1): (f, "b"), ("a", 2): (f, "b"), ("a", 3): (f, "b"), "b": (f,)}
     o = order(dsk)
     assert o == {"b": 0, ("a", 1): 1, ("a", 2): 2, ("a", 3): 3}
 
@@ -502,19 +500,19 @@ def test_map_overlap(abcde):
     """
     a, b, c, d, e = abcde
     dsk = {
-        (e, 1): (f, ),
+        (e, 1): (f,),
         (d, 1): (f, (e, 1)),
         (c, 1): (f, (d, 1)),
         (b, 1): (f, (c, 1), (c, 2)),
-        (d, 2): (f, ),
+        (d, 2): (f,),
         (c, 2): (f, (d, 1), (d, 2), (d, 3)),
-        (e, 3): (f, ),
+        (e, 3): (f,),
         (d, 3): (f, (e, 3)),
         (c, 3): (f, (d, 3)),
         (b, 3): (f, (c, 2), (c, 3), (c, 4)),
-        (d, 4): (f, ),
+        (d, 4): (f,),
         (c, 4): (f, (d, 3), (d, 4), (d, 5)),
-        (e, 5): (f, ),
+        (e, 5): (f,),
         (d, 5): (f, (e, 5)),
         (c, 5): (f, (d, 5)),
         (b, 5): (f, (c, 4), (c, 5)),
@@ -526,22 +524,22 @@ def test_map_overlap(abcde):
 
 
 def test_use_structure_not_keys(abcde):
-    """See https://github.com/dask/dask/issues/5584#issuecomment-554963958
+    """See https://github.com/dask/dask/issues/5584#issuecomment-554963958.
 
     We were using key names to infer structure, which could result in funny behavior.
     """
     a, b, _, _, _ = abcde
     dsk = {
-        (a, 0): (f, ),
-        (a, 1): (f, ),
-        (a, 2): (f, ),
-        (a, 3): (f, ),
-        (a, 4): (f, ),
-        (a, 5): (f, ),
-        (a, 6): (f, ),
-        (a, 7): (f, ),
-        (a, 8): (f, ),
-        (a, 9): (f, ),
+        (a, 0): (f,),
+        (a, 1): (f,),
+        (a, 2): (f,),
+        (a, 3): (f,),
+        (a, 4): (f,),
+        (a, 5): (f,),
+        (a, 6): (f,),
+        (a, 7): (f,),
+        (a, 8): (f,),
+        (a, 9): (f,),
         (b, 5): (f, (a, 2)),
         (b, 7): (f, (a, 0), (a, 2)),
         (b, 9): (f, (a, 7), (a, 0), (a, 2)),
@@ -566,7 +564,7 @@ def test_use_structure_not_keys(abcde):
 
 
 def test_dont_run_all_dependents_too_early(abcde):
-    """ From https://github.com/dask/dask-ml/issues/206#issuecomment-395873372 """
+    """From https://github.com/dask/dask-ml/issues/206#issuecomment-395873372."""
     a, b, c, d, e = abcde
     depth = 10
     dsk = {(a, 0): 0, (b, 0): 1, (c, 0): 2, (d, 0): (f, (a, 0), (b, 0), (c, 0))}
@@ -581,13 +579,10 @@ def test_dont_run_all_dependents_too_early(abcde):
 
 
 def test_many_branches_use_ndependencies(abcde):
-    """From https://github.com/dask/dask/pull/5646#issuecomment-562700533
+    """From https://github.com/dask/dask/pull/5646#issuecomment-562700533.
 
-    Sometimes we need larger or wider DAGs to test behavior.  This test
-    ensures we choose the branch with more work twice in successtion.
-    This is important, because ``order`` may search along dependencies
-    and then along dependents.
-
+    Sometimes we need larger or wider DAGs to test behavior.  This test ensures we choose the branch with more work
+    twice in successtion. This is important, because ``order`` may search along dependencies and then along dependents.
     """
     a, b, c, d, e = abcde
     dd = d + d
@@ -694,32 +689,35 @@ def test_switching_dependents(abcde):
 
 
 def test_order_with_equal_dependents(abcde):
-    """From https://github.com/dask/dask/issues/5859#issuecomment-608422198
+    """From https://github.com/dask/dask/issues/5859#issuecomment-608422198.
 
     See the visualization of `(maxima, argmax)` example from the above comment.
 
     This DAG has enough structure to exercise more parts of `order`
-
     """
     a, b, c, d, e = abcde
     dsk = {}
     abc = [a, b, c, d]
     for x in abc:
-        dsk.update({
-            (x, 0): 0,
-            (x, 1): (f, (x, 0)),
-            (x, 2, 0): (f, (x, 0)),
-            (x, 2, 1): (f, (x, 1)),
-        })
+        dsk.update(
+            {
+                (x, 0): 0,
+                (x, 1): (f, (x, 0)),
+                (x, 2, 0): (f, (x, 0)),
+                (x, 2, 1): (f, (x, 1)),
+            }
+        )
         for i, y in enumerate(abc):
-            dsk.update({
-                (x, 3, i): (f, (x, 2, 0), (y, 2, 1)),  # cross x and y
-                (x, 4, i): (f, (x, 3, i)),
-                (x, 5, i, 0): (f, (x, 4, i)),
-                (x, 5, i, 1): (f, (x, 4, i)),
-                (x, 6, i, 0): (f, (x, 5, i, 0)),
-                (x, 6, i, 1): (f, (x, 5, i, 1)),
-            })
+            dsk.update(
+                {
+                    (x, 3, i): (f, (x, 2, 0), (y, 2, 1)),  # cross x and y
+                    (x, 4, i): (f, (x, 3, i)),
+                    (x, 5, i, 0): (f, (x, 4, i)),
+                    (x, 5, i, 1): (f, (x, 4, i)),
+                    (x, 6, i, 0): (f, (x, 5, i, 0)),
+                    (x, 6, i, 1): (f, (x, 5, i, 1)),
+                }
+            )
     o = order(dsk)
     total = 0
     for x in abc:

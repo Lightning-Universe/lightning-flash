@@ -14,7 +14,9 @@
 import json
 import os
 import typing
+import warnings
 from dataclasses import dataclass
+from functools import partial
 from inspect import signature
 from pathlib import Path
 from typing import (
@@ -57,7 +59,9 @@ if _FIFTYONE_AVAILABLE:
 else:
     fol = None
 from copy import deepcopy
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
+
 if _PYTORCHVIDEO_AVAILABLE:
     from torchvision.datasets.folder import default_loader
 
@@ -138,10 +142,8 @@ def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
 
 @dataclass(unsafe_hash=True, frozen=True)
 class LabelsState(ProcessState):
-    """
-    A :class:`~flash.core.data.properties.ProcessState` containing ``labels``,
-    a mapping from class index to label.
-    """
+    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
+    label."""
 
     labels: Optional[Sequence[str]]
 
@@ -162,7 +164,7 @@ class DefaultDataSources(LightningEnum):
     TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
-    DATASET = "dataset"
+    DATASETS = "datasets"
     FIFTYONE = "fiftyone"
     LABELSTUDIO = "labelstudio"
 
@@ -185,16 +187,26 @@ class DefaultDataKeys(LightningEnum):
         return hash(self.value)
 
 
+class BaseDataFormat(LightningEnum):
+    """The base class for creating ``data_format`` for :class:`~flash.core.data.data_source.DataSource`."""
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+
 class MockDataset:
-    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``. This is passed to
+    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``.
+
+    This is passed to
     :meth:`~flash.core.data.data_source.DataSource.load_data` so that attributes can be set on the generated
-    data set."""
+    data set.
+    """
 
     def __init__(self):
         self.metadata = {}
 
     def __setattr__(self, key, value):
-        if key != 'metadata':
+        if key != "metadata":
             self.metadata[key] = value
         object.__setattr__(self, key, value)
 
@@ -203,9 +215,12 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class DataSource(Generic[DATA_TYPE], Properties, Module):
-    """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``. The
+    """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``.
+
+    The
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
-    sets from the hooks."""
+    sets from the hooks.
+    """
 
     @staticmethod
     def load_data(
@@ -272,10 +287,10 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         test_data: Optional[DATA_TYPE] = None,
         predict_data: Optional[DATA_TYPE] = None,
     ) -> Tuple[Optional[BaseAutoDataset], ...]:
-        """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data source by
-        calling :meth:`~flash.core.data.data_source.DataSource.load_data` with each of the ``*_data`` arguments. If an
-        argument is given as ``None`` then no dataset will be created for that stage (``train``, ``val``, ``test``,
-        ``predict``).
+        """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data
+        source by calling :meth:`~flash.core.data.data_source.DataSource.load_data` with each of the ``*_data``
+        arguments. If an argument is given as ``None`` then no dataset will be created for that stage (``train``,
+        ``val``, ``test``, ``predict``).
 
         Args:
             train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the
@@ -388,10 +403,9 @@ class SequenceDataSource(
         inputs, targets = data
         if targets is None:
             return self.predict_load_data(data)
-        return [{
-            DefaultDataKeys.INPUT: input,
-            DefaultDataKeys.TARGET: target
-        } for input, target in zip(inputs, targets)]
+        return [
+            {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in zip(inputs, targets)
+        ]
 
     @staticmethod
     def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
@@ -409,10 +423,16 @@ class PathsDataSource(SequenceDataSource):
             :class:`~flash.core.data.data_source.LabelsState`.
     """
 
-    def __init__(self, extensions: Optional[Tuple[str, ...]] = None, labels: Optional[Sequence[str]] = None):
+    def __init__(
+        self,
+        extensions: Optional[Tuple[str, ...]] = None,
+        loader: Optional[Callable[[str], Any]] = None,
+        labels: Optional[Sequence[str]] = None,
+    ):
         super().__init__(labels=labels)
 
         self.extensions = extensions
+        self.loader = loader
 
     @staticmethod
     def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
@@ -437,9 +457,9 @@ class PathsDataSource(SequenceDataSource):
             # data is not path-like (e.g. it may be a list of paths)
             return False
 
-    def load_data(self,
-                  data: Union[str, Tuple[List[str], List[Any]]],
-                  dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(
+        self, data: Union[str, Tuple[List[str], List[Any]]], dataset: Optional[Any] = None
+    ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
@@ -458,9 +478,9 @@ class PathsDataSource(SequenceDataSource):
             )
         )
 
-    def predict_load_data(self,
-                          data: Union[str, List[str]],
-                          dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(
+        self, data: Union[str, List[str]], dataset: Optional[Any] = None
+    ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             data = [os.path.join(data, file) for file in os.listdir(data)]
 
@@ -475,6 +495,135 @@ class PathsDataSource(SequenceDataSource):
                 data,
             )
         )
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        path = sample[DefaultDataKeys.INPUT]
+
+        if self.loader is not None:
+            sample[DefaultDataKeys.INPUT] = self.loader(path)
+
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": path,
+        }
+        return sample
+
+
+class LoaderDataFrameDataSource(
+    DataSource[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]
+):
+    def __init__(self, loader: Callable[[str], Any]):
+        super().__init__()
+
+        self.loader = loader
+
+    @staticmethod
+    def _walk_files(root: str) -> Iterator[str]:
+        for root, _, files in os.walk(root):
+            for file in files:
+                yield os.path.join(root, file)
+
+    @staticmethod
+    def _default_resolver(root: str, id: str):
+        if os.path.isabs(id):
+            return id
+
+        pattern = f"*{id}*"
+
+        try:
+            return str(next(Path(root).rglob(pattern)))
+        except StopIteration:
+            raise ValueError(
+                f"Found no matches for pattern: {pattern} in directory: {root}. File IDs should uniquely identify the "
+                "file to load."
+            )
+
+    @staticmethod
+    def _resolve_file(resolver: Callable[[str, str], str], root: str, input_key: str, row: pd.Series) -> pd.Series:
+        row[input_key] = resolver(root, row[input_key])
+        return row
+
+    @staticmethod
+    def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
+        row[target_key] = label_to_class[row[target_key]]
+        return row
+
+    @staticmethod
+    def _resolve_multi_target(target_keys: List[str], row: pd.Series) -> pd.Series:
+        row[target_keys[0]] = [row[target_key] for target_key in target_keys]
+        return row
+
+    def load_data(
+        self,
+        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]],
+        dataset: Optional[Any] = None,
+    ) -> Sequence[Mapping[str, Any]]:
+        data, input_key, target_keys, root, resolver = data
+
+        if isinstance(data, (str, Path)):
+            data = str(data)
+            data_frame = pd.read_csv(data)
+            if root is None:
+                root = os.path.dirname(data)
+        else:
+            data_frame = data
+
+        if root is None:
+            root = ""
+
+        if resolver is None:
+            warnings.warn("Using default resolver, this may take a while.", UserWarning)
+            resolver = self._default_resolver
+
+        tqdm.pandas(desc="Resolving files")
+        data_frame = data_frame.progress_apply(partial(self._resolve_file, resolver, root, input_key), axis=1)
+
+        if not self.predicting:
+            if isinstance(target_keys, List):
+                dataset.multi_label = True
+                dataset.num_classes = len(target_keys)
+                self.set_state(LabelsState(target_keys))
+                data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
+                target_keys = target_keys[0]
+            else:
+                dataset.multi_label = False
+                if self.training:
+                    labels = list(sorted(data_frame[target_keys].unique()))
+                    dataset.num_classes = len(labels)
+                    self.set_state(LabelsState(labels))
+
+                labels = self.get_state(LabelsState)
+
+                if labels is not None:
+                    labels = labels.labels
+                    label_to_class = {v: k for k, v in enumerate(labels)}
+                    data_frame = data_frame.apply(partial(self._resolve_target, label_to_class, target_keys), axis=1)
+
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                    DefaultDataKeys.TARGET: row[target_keys],
+                }
+                for _, row in data_frame.iterrows()
+            ]
+        else:
+            return [
+                {
+                    DefaultDataKeys.INPUT: row[input_key],
+                }
+                for _, row in data_frame.iterrows()
+            ]
+
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        # TODO: simplify this duplicated code from PathsDataSource
+        path = sample[DefaultDataKeys.INPUT]
+
+        if self.loader is not None:
+            sample[DefaultDataKeys.INPUT] = self.loader(path)
+
+        sample[DefaultDataKeys.METADATA] = {
+            "filepath": path,
+        }
+        return sample
 
 
 class TensorDataSource(SequenceDataSource[torch.Tensor]):
@@ -492,15 +641,15 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
 
     def __init__(self, label_field: str = "ground_truth"):
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
         super().__init__()
         self.label_field = label_field
 
     @property
+    @requires("fiftyone")
     def label_cls(self):
         return fol.Label
 
+    @requires("fiftyone")
     def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
@@ -520,26 +669,29 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
             def to_idx(t):
                 return [class_to_idx[x] for x in t]
+
         else:
 
             def to_idx(t):
                 return class_to_idx[t]
 
-        return [{
-            DefaultDataKeys.INPUT: f,
-            DefaultDataKeys.TARGET: to_idx(t),
-        } for f, t in zip(filepaths, targets)]
+        return [
+            {
+                DefaultDataKeys.INPUT: f,
+                DefaultDataKeys.TARGET: to_idx(t),
+            }
+            for f, t in zip(filepaths, targets)
+        ]
 
     @staticmethod
+    @requires("fiftyone")
     def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def _validate(self, data):
         label_type = data._get_label_field_type(self.label_field)
         if not issubclass(label_type, self.label_cls):
-            raise ValueError(
-                "Expected field '%s' to have type %s; found %s" % (self.label_field, self.label_cls, label_type)
-            )
+            raise ValueError(f"Expected field '{self.label_field}' to have type {self.label_cls}; found {label_type}")
 
     def _get_classes(self, data):
         classes = data.classes.get(self.label_field, None)
@@ -557,6 +709,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 class LabelStudioDataSource(DataSource):
     """The ``LabelStudioDatasource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio."""
+
     def __init__(self):
         super().__init__()
         self.results = []
@@ -567,36 +720,34 @@ class LabelStudioDataSource(DataSource):
         self.num_classes = 0
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        """
-        Iterate through all tasks in exported data and construct train\test\val results
-        """
+        """Iterate through all tasks in exported data and construct train\test\val results."""
         if data and isinstance(data, dict):
-            self._data_folder = data.get('data_folder')
-            with open(data.get('export_json')) as f:
+            self._data_folder = data.get("data_folder")
+            with open(data.get("export_json")) as f:
                 self._raw_data = json.load(f)
-            self.multi_label = data.get('multi_label')
-            self.split = data.get('split')
+            self.multi_label = data.get("multi_label")
+            self.split = data.get("split")
         for task in self._raw_data:
-            for annotation in task['annotations']:
+            for annotation in task["annotations"]:
                 # extracting data types from tasks
-                [self.data_types.add(key) for key in task.get('data')]
+                [self.data_types.add(key) for key in task.get("data")]
                 # Adding ground_truth annotation to separate dataset
-                result = annotation['result']
+                result = annotation["result"]
                 for res in result:
-                    t = res['type']
-                    for label in res['value'][t]:
+                    t = res["type"]
+                    for label in res["value"][t]:
                         # check if labeling result is a list of labels
                         if isinstance(label, list) and not self.multi_label:
                             for sublabel in label:
                                 self.classes.add(sublabel)
                                 temp = {}
-                                temp['file_upload'] = task.get('file_upload')
-                                temp['data'] = task.get('data')
-                                temp['label'] = sublabel
-                                temp['result'] = res.get('value')
-                                if annotation['ground_truth']:
+                                temp["file_upload"] = task.get("file_upload")
+                                temp["data"] = task.get("data")
+                                temp["label"] = sublabel
+                                temp["result"] = res.get("value")
+                                if annotation["ground_truth"]:
                                     self.test_results.append(temp)
-                                elif not annotation['ground_truth']:
+                                elif not annotation["ground_truth"]:
                                     self.results.append(temp)
                         else:
                             if isinstance(label, list):
@@ -605,17 +756,18 @@ class LabelStudioDataSource(DataSource):
                             else:
                                 self.classes.add(label)
                             temp = {}
-                            temp['file_upload'] = task.get('file_upload')
-                            temp['data'] = task.get('data')
-                            temp['label'] = label
-                            temp['result'] = res.get('value')
-                            if annotation['ground_truth']:
+                            temp["file_upload"] = task.get("file_upload")
+                            temp["data"] = task.get("data")
+                            temp["label"] = label
+                            temp["result"] = res.get("value")
+                            if annotation["ground_truth"]:
                                 self.test_results.append(temp)
-                            elif not annotation['ground_truth']:
+                            elif not annotation["ground_truth"]:
                                 self.results.append(temp)
         self.num_classes = len(self.classes)
         # splitting result to train and val sets
         import random
+
         random.shuffle(self.results)
         data_length = len(self.results)
         prop = data_length - int(data_length * self.split)
@@ -623,28 +775,26 @@ class LabelStudioDataSource(DataSource):
         self.results = self.results[prop:]
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
+        """Load 1 sample from dataset."""
         # all other data types
         input_data = deepcopy(sample)
         try:
-            del input_data['label']
+            del input_data["label"]
         except KeyError:
             # no label in input data
             pass
-        result = {DefaultDataKeys.INPUT: input_data,
-                  DefaultDataKeys.TARGET: self._get_labels_from_sample(sample['label'])}
+        result = {
+            DefaultDataKeys.INPUT: input_data,
+            DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"]),
+        }
         return result
 
     def generate_dataset(
-            self,
-            data: Optional[DATA_TYPE],
-            running_stage: RunningStage,
+        self,
+        data: Optional[DATA_TYPE],
+        running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
-        """
-        Generate dataset from loaded data
-        """
+        """Generate dataset from loaded data."""
         if running_stage in (RunningStage.TRAINING, RunningStage.TUNING):
             self.load_data(data)
             dataset = self.results
@@ -663,9 +813,7 @@ class LabelStudioDataSource(DataSource):
         return dataset
 
     def _get_labels_from_sample(self, labels):
-        """
-        Translate string labels to int
-        """
+        """Translate string labels to int."""
         sorted_labels = sorted(list(self.classes))
         if isinstance(labels, list):
             label = []
@@ -682,26 +830,20 @@ class LabelStudioImageDataSource(LabelStudioDataSource):
         pass
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
-        if sample['file_upload']:
-            p = os.path.join(self._data_folder, sample['file_upload'])
+        """Load 1 sample from dataset."""
+        if sample["file_upload"]:
+            p = os.path.join(self._data_folder, sample["file_upload"])
         else:
-            for key in sample.get('data'):
-                p = sample.get('data').get(key)
+            for key in sample.get("data"):
+                p = sample.get("data").get(key)
         # loading image
         image = default_loader(p)
-        result = {DefaultDataKeys.INPUT: image,
-                  DefaultDataKeys.TARGET: self._get_labels_from_sample(sample['label'])}
+        result = {DefaultDataKeys.INPUT: image, DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
         return result
 
 
 class LabelStudioTextDataSource(LabelStudioDataSource):
-    def __init__(self,
-                 backbone=None,
-                 max_length=128
-                 ):
+    def __init__(self, backbone=None, max_length=128):
         super().__init__()
         if backbone:
             if _TEXT_AVAILABLE:
@@ -711,33 +853,24 @@ class LabelStudioTextDataSource(LabelStudioDataSource):
             self.max_length = max_length
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
+        """Load 1 sample from dataset."""
         if self.backbone:
             data = ""
-            for key in sample.get('data'):
-                data += sample.get('data').get(key)
-            tokenized_data = self.tokenizer(data,
-                                            max_length=self.max_length,
-                                            truncation=True,
-                                            padding="max_length")
+            for key in sample.get("data"):
+                data += sample.get("data").get(key)
+            tokenized_data = self.tokenizer(data, max_length=self.max_length, truncation=True, padding="max_length")
             for key in tokenized_data:
                 tokenized_data[key] = torch.tensor(tokenized_data[key])
-            tokenized_data['labels'] = self._get_labels_from_sample(sample['label'])
+            tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
             # separate text data type block
             result = tokenized_data
         return result
 
 
 class LabelStudioVideoDataSource(LabelStudioDataSource):
-    def __init__(self,
-                 video_sampler=None,
-                 clip_sampler=None,
-                 clip_duration=1,
-                 decode_audio=False,
-                 decoder: str = "pyav"
-                 ):
+    def __init__(
+        self, video_sampler=None, clip_sampler=None, clip_duration=1, decode_audio=False, decoder: str = "pyav"
+    ):
         super().__init__()
         self.video_sampler = video_sampler or torch.utils.data.RandomSampler
         self.clip_sampler = clip_sampler
@@ -745,9 +878,7 @@ class LabelStudioVideoDataSource(LabelStudioDataSource):
         self.decoder = decoder
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
+        """Load 1 sample from dataset."""
         return sample
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
@@ -759,9 +890,15 @@ class LabelStudioVideoDataSource(LabelStudioDataSource):
     def convert_to_encodedvideo(self, dataset):
         if len(dataset) > 0:
             from pytorchvideo.data import EncodedVideoDataset
+
             dataset = EncodedVideoDataset(
-                [(os.path.join(self._data_folder, sample['file_upload']),
-                  {"label": self._get_labels_from_sample(sample['label'])}) for sample in dataset],
+                [
+                    (
+                        os.path.join(self._data_folder, sample["file_upload"]),
+                        {"label": self._get_labels_from_sample(sample["label"])},
+                    )
+                    for sample in dataset
+                ],
                 self.clip_sampler,
                 decode_audio=self.decode_audio,
                 decoder=self.decoder,

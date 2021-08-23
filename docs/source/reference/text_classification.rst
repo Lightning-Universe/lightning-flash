@@ -49,12 +49,31 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The text classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash text_classification
+
+To view configuration options and options for running the text classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash text_classification --help
+
+------
+
 *******
 Serving
 *******
 
 The :class:`~flash.text.classification.model.TextClassifier` is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
 .. literalinclude:: ../../../flash_examples/serve/text_classification/inference_server.py
@@ -66,3 +85,21 @@ You can now perform inference from your client like this:
 .. literalinclude:: ../../../flash_examples/serve/text_classification/client.py
     :language: python
     :lines: 14-
+
+------
+
+**********************************************
+Accelerate Training & Inference with Torch ORT
+**********************************************
+
+`Torch ORT <https://cloudblogs.microsoft.com/opensource/2021/07/13/accelerate-pytorch-training-with-torch-ort/>`__ converts your model into an optimized ONNX graph, speeding up training & inference when using NVIDIA or AMD GPUs. Enabling Torch ORT requires a single flag passed to the ``TextClassifier`` once installed. See installation instructions `here <https://github.com/pytorch/ort#install-in-a-local-python-environment>`__.
+
+.. note::
+
+    Not all Transformer models are supported. See `this table <https://github.com/microsoft/onnxruntime-training-examples#examples>`__ for supported models + branches containing fixes for certain models.
+
+.. code-block:: python
+
+    ...
+
+    model = TextClassifier(backbone="facebook/bart-large", num_classes=datamodule.num_classes, enable_ort=True)

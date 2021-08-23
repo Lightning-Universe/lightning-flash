@@ -23,7 +23,7 @@ Here's an example:
     seed_everything(42)
 
     # 1. Download and organize the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", 'data/')
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
@@ -35,7 +35,7 @@ Here's an example:
     model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, pretrained=False)
 
     # 3. Create the trainer (run one epoch for demo)
-    trainer = flash.Trainer(max_epochs=1)
+    trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 
     # 4. Train the model
     trainer.fit(model, datamodule=datamodule)

@@ -29,7 +29,7 @@ class UnboundMeta:
 @dataclass(unsafe_hash=True)
 class BoundMeta(UnboundMeta):
 
-    models: Union[List['Servable'], Tuple['Servable', ...], Dict[str, 'Servable']]
+    models: Union[List["Servable"], Tuple["Servable", ...], Dict[str, "Servable"]]
     uid: str = field(default_factory=lambda: uuid4().hex, init=False)
     out_attr_dict: ParameterContainer = field(default=None, init=False)
     inp_attr_dict: ParameterContainer = field(default=None, init=False)
@@ -66,7 +66,7 @@ class BoundMeta(UnboundMeta):
             )
 
     @property
-    def connections(self) -> Sequence['Connection']:
+    def connections(self) -> Sequence["Connection"]:
         connections = []
         for fld in fields(self.inp_attr_dict):
             connections.extend(getattr(self.inp_attr_dict, fld.name).connections)
@@ -154,7 +154,6 @@ def expose(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType]):
     _validate_expose_inputs_outputs_args(outputs)
 
     def wrapper(fn):
-
         @wraps(fn)
         def wrapped(func):
             func.flashserve_meta = UnboundMeta(exposed=func, inputs=inputs, outputs=outputs)

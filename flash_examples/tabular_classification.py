@@ -11,14 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash.core.data.utils import download_data
-from flash.tabular import TabularClassifier, TabularData
+from flash.tabular import TabularClassificationData, TabularClassifier
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
 
-datamodule = TabularData.from_csv(
+datamodule = TabularClassificationData.from_csv(
     ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
     "Fare",
     target_fields="Survived",
@@ -30,7 +32,7 @@ datamodule = TabularData.from_csv(
 model = TabularClassifier.from_data(datamodule)
 
 # 3. Create the trainer and train the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions from a CSV

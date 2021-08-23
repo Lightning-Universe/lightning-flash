@@ -33,6 +33,7 @@ if _TORCH_AVAILABLE:
 
     if _IS_TESTING:
         from pytorch_lightning import seed_everything
+
         seed_everything(42)
 
     __all__ = [

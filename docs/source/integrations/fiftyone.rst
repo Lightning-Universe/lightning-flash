@@ -1,10 +1,12 @@
+.. _fiftyone:
+
 ########
 FiftyOne
 ########
 
 We have collaborated with the team at
-`Voxel51 <https://voxel51.com>`_ to integrate their tool,
-`FiftyOne <https://fiftyone.ai>`_, into Lightning Flash.
+`Voxel51 <https://voxel51.com>`__ to integrate their tool,
+`FiftyOne <https://fiftyone.ai>`__, into Lightning Flash.
 
 FiftyOne is an open-source tool for building high-quality
 datasets and computer vision models. The FiftyOne API and App enable you to
@@ -114,50 +116,3 @@ in only a few lines of code.
 .. image:: https://pl-flash-data.s3.amazonaws.com/assets/fiftyone/embeddings.png
    :alt: embeddings_example
    :align: center
-
-------
-
-*************
-API reference
-*************
-
-.. _from_fiftyone:
-
-DataModule.from_fiftyone
-------------------------
-
-.. automethod:: flash.core.data.data_module.DataModule.from_fiftyone
-    :noindex:
-
-.. _fiftyone_labels:
-
-FiftyOneLabels
---------------
-
-.. autoclass:: flash.core.classification.FiftyOneLabels
-    :members:
-
-.. _fiftyone_segmentation_labels:
-
-FiftyOneSegmentationLabels
---------------------------
-
-.. autoclass:: flash.image.segmentation.serialization.FiftyOneSegmentationLabels
-    :members:
-    :noindex:
-
-.. _fiftyone_detection_labels:
-
-FiftyOneDetectionLabels
------------------------
-
-.. autoclass:: flash.image.detection.serialization.FiftyOneDetectionLabels
-    :members:
-
-
-.. _fiftyone_visualize:
-
-visualize
----------
-
-.. autofunction:: flash.core.integrations.fiftyone.visualize

@@ -17,7 +17,7 @@ from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 Detections = None
 if _FIFTYONE_AVAILABLE:
@@ -48,15 +48,13 @@ class FiftyOneDetectionLabels(Serializer):
             list of FiftyOne labels (False)
     """
 
+    @requires("fiftyone")
     def __init__(
         self,
         labels: Optional[List[str]] = None,
         threshold: Optional[float] = None,
         return_filepath: bool = False,
     ):
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
-
         super().__init__()
         self._labels = labels
         self.threshold = threshold
@@ -89,7 +87,7 @@ class FiftyOneDetectionLabels(Serializer):
             if self.threshold is not None and confidence < self.threshold:
                 continue
 
-            xmin, ymin, xmax, ymax = [c.tolist() for c in det["boxes"]]
+            xmin, ymin, xmax, ymax = (c.tolist() for c in det["boxes"])
             box = [
                 xmin / width,
                 ymin / height,
@@ -103,11 +101,13 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 label = str(int(label))
 
-            detections.append(fo.Detection(
-                label=label,
-                bounding_box=box,
-                confidence=confidence,
-            ))
+            detections.append(
+                fo.Detection(
+                    label=label,
+                    bounding_box=box,
+                    confidence=confidence,
+                )
+            )
         fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]

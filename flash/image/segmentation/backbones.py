@@ -14,45 +14,31 @@
 from functools import partial
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from flash.image.backbones import catch_url_error
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
+from flash.core.utilities.providers import _SEGMENTATION_MODELS
 
-if _TORCHVISION_AVAILABLE:
-    from torchvision.models import mobilenetv3, resnet
-
-MOBILENET_MODELS = ["mobilenet_v3_large"]
-RESNET_MODELS = ["resnet50", "resnet101"]
+if _SEGMENTATION_MODELS_AVAILABLE:
+    import segmentation_models_pytorch as smp
 
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
-if _TORCHVISION_AVAILABLE:
+if _SEGMENTATION_MODELS_AVAILABLE:
 
-    def _load_resnet(model_name: str, pretrained: bool = True):
-        backbone = resnet.__dict__[model_name](
-            pretrained=pretrained,
-            replace_stride_with_dilation=[False, True, True],
-        )
+    ENCODERS = smp.encoders.get_encoder_names()
+
+    def _load_smp_backbone(backbone: str, **_) -> str:
         return backbone
 
-    for model_name in RESNET_MODELS:
-        SEMANTIC_SEGMENTATION_BACKBONES(
-            fn=catch_url_error(partial(_load_resnet, model_name)),
-            name=model_name,
-            namespace="image/segmentation",
-            package="torchvision",
-        )
+    for encoder_name in ENCODERS:
+        short_name = encoder_name
+        if short_name.startswith("timm-"):
+            short_name = encoder_name[5:]
 
-    def _load_mobilenetv3(model_name: str, pretrained: bool = True):
-        backbone = mobilenetv3.__dict__[model_name](
-            pretrained=pretrained,
-            _dilated=True,
-        )
-        return backbone
-
-    for model_name in MOBILENET_MODELS:
+        available_weights = smp.encoders.encoders[encoder_name]["pretrained_settings"].keys()
         SEMANTIC_SEGMENTATION_BACKBONES(
-            fn=catch_url_error(partial(_load_mobilenetv3, model_name)),
-            name=model_name,
+            partial(_load_smp_backbone, backbone=encoder_name),
+            name=short_name,
             namespace="image/segmentation",
-            package="torchvision",
+            weights_paths=available_weights,
+            providers=_SEGMENTATION_MODELS,
         )
