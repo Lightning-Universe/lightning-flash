@@ -1270,7 +1270,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given export file and data directory using the
         :class:`~flash.core.data.data_source.DataSource` of name
@@ -1312,10 +1312,10 @@ class DataModule(pl.LightningDataModule):
             )
         """
         data = {
-            'data_folder': data_folder,
-            'export_json': export_json,
-            'split': val_split,
-            'multi_label': preprocess_kwargs.get('multi_label', False)
+            "data_folder": data_folder,
+            "export_json": export_json,
+            "split": val_split,
+            "multi_label": preprocess_kwargs.get("multi_label", False),
         }
         return cls.from_data_source(
             DefaultDataSources.LABELSTUDIO,

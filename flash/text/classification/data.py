@@ -31,6 +31,7 @@ if _TEXT_AVAILABLE:
 
 from flash.core.data.data_source import LabelStudioTextDataSource
 
+
 class TextDeserializer(Deserializer):
     @requires_extras("text")
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
@@ -268,7 +269,9 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
                 "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.LABELSTUDIO: LabelStudioTextDataSource(backbone=self.backbone, max_length=max_length)
+                DefaultDataSources.LABELSTUDIO: LabelStudioTextDataSource(
+                    backbone=self.backbone, max_length=max_length
+                ),
             },
             default_data_source="sentences",
             deserializer=TextDeserializer(backbone, max_length),

@@ -22,7 +22,12 @@ from torch.utils.data.sampler import Sampler
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
+from flash.core.data.data_source import (
+    DefaultDataKeys,
+    DefaultDataSources,
+    LabelStudioImageDataSource,
+    LoaderDataFrameDataSource,
+)
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires, requires_extras
 from flash.image.classification.transforms import default_transforms, train_default_transforms
@@ -34,7 +39,6 @@ from flash.image.data import (
     ImagePathsDataSource,
     ImageTensorDataSource,
 )
-from flash.core.data.data_source import LabelStudioImageDataSource
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -80,7 +84,7 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
                 "data_frame": ImageClassificationDataFrameDataSource(),
                 DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.LABELSTUDIO: LabelStudioImageDataSource(**data_source_kwargs)
+                DefaultDataSources.LABELSTUDIO: LabelStudioImageDataSource(**data_source_kwargs),
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,

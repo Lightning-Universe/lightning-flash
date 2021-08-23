@@ -59,7 +59,9 @@ if _FIFTYONE_AVAILABLE:
 else:
     fol = None
 from copy import deepcopy
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
+
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
+
 if _PYTORCHVIDEO_AVAILABLE:
     from torchvision.datasets.folder import default_loader
 
@@ -707,6 +709,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 class LabelStudioDataSource(DataSource):
     """The ``LabelStudioDatasource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio."""
+
     def __init__(self):
         super().__init__()
         self.results = []
@@ -717,36 +720,34 @@ class LabelStudioDataSource(DataSource):
         self.num_classes = 0
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        """
-        Iterate through all tasks in exported data and construct train\test\val results
-        """
+        """Iterate through all tasks in exported data and construct train\test\val results."""
         if data and isinstance(data, dict):
-            self._data_folder = data.get('data_folder')
-            with open(data.get('export_json')) as f:
+            self._data_folder = data.get("data_folder")
+            with open(data.get("export_json")) as f:
                 self._raw_data = json.load(f)
-            self.multi_label = data.get('multi_label')
-            self.split = data.get('split')
+            self.multi_label = data.get("multi_label")
+            self.split = data.get("split")
         for task in self._raw_data:
-            for annotation in task['annotations']:
+            for annotation in task["annotations"]:
                 # extracting data types from tasks
-                [self.data_types.add(key) for key in task.get('data')]
+                [self.data_types.add(key) for key in task.get("data")]
                 # Adding ground_truth annotation to separate dataset
-                result = annotation['result']
+                result = annotation["result"]
                 for res in result:
-                    t = res['type']
-                    for label in res['value'][t]:
+                    t = res["type"]
+                    for label in res["value"][t]:
                         # check if labeling result is a list of labels
                         if isinstance(label, list) and not self.multi_label:
                             for sublabel in label:
                                 self.classes.add(sublabel)
                                 temp = {}
-                                temp['file_upload'] = task.get('file_upload')
-                                temp['data'] = task.get('data')
-                                temp['label'] = sublabel
-                                temp['result'] = res.get('value')
-                                if annotation['ground_truth']:
+                                temp["file_upload"] = task.get("file_upload")
+                                temp["data"] = task.get("data")
+                                temp["label"] = sublabel
+                                temp["result"] = res.get("value")
+                                if annotation["ground_truth"]:
                                     self.test_results.append(temp)
-                                elif not annotation['ground_truth']:
+                                elif not annotation["ground_truth"]:
                                     self.results.append(temp)
                         else:
                             if isinstance(label, list):
@@ -755,17 +756,18 @@ class LabelStudioDataSource(DataSource):
                             else:
                                 self.classes.add(label)
                             temp = {}
-                            temp['file_upload'] = task.get('file_upload')
-                            temp['data'] = task.get('data')
-                            temp['label'] = label
-                            temp['result'] = res.get('value')
-                            if annotation['ground_truth']:
+                            temp["file_upload"] = task.get("file_upload")
+                            temp["data"] = task.get("data")
+                            temp["label"] = label
+                            temp["result"] = res.get("value")
+                            if annotation["ground_truth"]:
                                 self.test_results.append(temp)
-                            elif not annotation['ground_truth']:
+                            elif not annotation["ground_truth"]:
                                 self.results.append(temp)
         self.num_classes = len(self.classes)
         # splitting result to train and val sets
         import random
+
         random.shuffle(self.results)
         data_length = len(self.results)
         prop = data_length - int(data_length * self.split)
@@ -773,28 +775,26 @@ class LabelStudioDataSource(DataSource):
         self.results = self.results[prop:]
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
+        """Load 1 sample from dataset."""
         # all other data types
         input_data = deepcopy(sample)
         try:
-            del input_data['label']
+            del input_data["label"]
         except KeyError:
             # no label in input data
             pass
-        result = {DefaultDataKeys.INPUT: input_data,
-                  DefaultDataKeys.TARGET: self._get_labels_from_sample(sample['label'])}
+        result = {
+            DefaultDataKeys.INPUT: input_data,
+            DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"]),
+        }
         return result
 
     def generate_dataset(
-            self,
-            data: Optional[DATA_TYPE],
-            running_stage: RunningStage,
+        self,
+        data: Optional[DATA_TYPE],
+        running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
-        """
-        Generate dataset from loaded data
-        """
+        """Generate dataset from loaded data."""
         if running_stage in (RunningStage.TRAINING, RunningStage.TUNING):
             self.load_data(data)
             dataset = self.results
@@ -813,9 +813,7 @@ class LabelStudioDataSource(DataSource):
         return dataset
 
     def _get_labels_from_sample(self, labels):
-        """
-        Translate string labels to int
-        """
+        """Translate string labels to int."""
         sorted_labels = sorted(list(self.classes))
         if isinstance(labels, list):
             label = []
@@ -832,26 +830,20 @@ class LabelStudioImageDataSource(LabelStudioDataSource):
         pass
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
-        if sample['file_upload']:
-            p = os.path.join(self._data_folder, sample['file_upload'])
+        """Load 1 sample from dataset."""
+        if sample["file_upload"]:
+            p = os.path.join(self._data_folder, sample["file_upload"])
         else:
-            for key in sample.get('data'):
-                p = sample.get('data').get(key)
+            for key in sample.get("data"):
+                p = sample.get("data").get(key)
         # loading image
         image = default_loader(p)
-        result = {DefaultDataKeys.INPUT: image,
-                  DefaultDataKeys.TARGET: self._get_labels_from_sample(sample['label'])}
+        result = {DefaultDataKeys.INPUT: image, DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
         return result
 
 
 class LabelStudioTextDataSource(LabelStudioDataSource):
-    def __init__(self,
-                 backbone=None,
-                 max_length=128
-                 ):
+    def __init__(self, backbone=None, max_length=128):
         super().__init__()
         if backbone:
             if _TEXT_AVAILABLE:
@@ -861,33 +853,24 @@ class LabelStudioTextDataSource(LabelStudioDataSource):
             self.max_length = max_length
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
+        """Load 1 sample from dataset."""
         if self.backbone:
             data = ""
-            for key in sample.get('data'):
-                data += sample.get('data').get(key)
-            tokenized_data = self.tokenizer(data,
-                                            max_length=self.max_length,
-                                            truncation=True,
-                                            padding="max_length")
+            for key in sample.get("data"):
+                data += sample.get("data").get(key)
+            tokenized_data = self.tokenizer(data, max_length=self.max_length, truncation=True, padding="max_length")
             for key in tokenized_data:
                 tokenized_data[key] = torch.tensor(tokenized_data[key])
-            tokenized_data['labels'] = self._get_labels_from_sample(sample['label'])
+            tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
             # separate text data type block
             result = tokenized_data
         return result
 
 
 class LabelStudioVideoDataSource(LabelStudioDataSource):
-    def __init__(self,
-                 video_sampler=None,
-                 clip_sampler=None,
-                 clip_duration=1,
-                 decode_audio=False,
-                 decoder: str = "pyav"
-                 ):
+    def __init__(
+        self, video_sampler=None, clip_sampler=None, clip_duration=1, decode_audio=False, decoder: str = "pyav"
+    ):
         super().__init__()
         self.video_sampler = video_sampler or torch.utils.data.RandomSampler
         self.clip_sampler = clip_sampler
@@ -895,9 +878,7 @@ class LabelStudioVideoDataSource(LabelStudioDataSource):
         self.decoder = decoder
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """
-        Load 1 sample from dataset
-        """
+        """Load 1 sample from dataset."""
         return sample
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
@@ -909,9 +890,15 @@ class LabelStudioVideoDataSource(LabelStudioDataSource):
     def convert_to_encodedvideo(self, dataset):
         if len(dataset) > 0:
             from pytorchvideo.data import EncodedVideoDataset
+
             dataset = EncodedVideoDataset(
-                [(os.path.join(self._data_folder, sample['file_upload']),
-                  {"label": self._get_labels_from_sample(sample['label'])}) for sample in dataset],
+                [
+                    (
+                        os.path.join(self._data_folder, sample["file_upload"]),
+                        {"label": self._get_labels_from_sample(sample["label"])},
+                    )
+                    for sample in dataset
+                ],
                 self.clip_sampler,
                 decode_audio=self.decode_audio,
                 decoder=self.decoder,
