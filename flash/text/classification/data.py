@@ -29,6 +29,7 @@ if _TEXT_AVAILABLE:
     from transformers import AutoTokenizer, default_data_collator
     from transformers.modeling_outputs import SequenceClassifierOutput
 
+from flash.core.data.data_source import LabelStudioTextDataSource
 
 class TextDeserializer(Deserializer):
 
@@ -249,6 +250,7 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
                 "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.LABELSTUDIO: LabelStudioTextDataSource(backbone=self.backbone, max_length=max_length)
             },
             default_data_source="sentences",
             deserializer=TextDeserializer(backbone, max_length),

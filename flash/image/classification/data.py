@@ -31,6 +31,7 @@ from flash.image.data import (
     ImagePathsDataSource,
     ImageTensorDataSource,
 )
+from flash.core.data.data_source import LabelStudioImageDataSource
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -70,6 +71,7 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
+                DefaultDataSources.LABELSTUDIO: LabelStudioImageDataSource(**data_source_kwargs)
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,

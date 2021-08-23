@@ -29,7 +29,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelStudioDataset, LabelStudioDataSource
+from flash.core.data.data_source import DataSource, DefaultDataSources, LabelStudioDataSource
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
@@ -1169,9 +1169,8 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         sampler: Optional[Sampler] = None,
-        data_type: str = "other",
         **preprocess_kwargs: Any,
-    ) -> "DataModule":
+    ) -> 'DataModule':
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given export file and data directory using the
         :class:`~flash.core.data.data_source.DataSource` of name
@@ -1212,42 +1211,23 @@ class DataModule(pl.LightningDataModule):
                 val_split=0.8,
             )
         """
-        # create preprocess
-        preprocess = preprocess or cls.preprocess_cls(
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
-            **preprocess_kwargs,
-        )
-        # loading export data
-        data_source = LabelStudioDataSource(
-            data_folder=data_folder,
-            export_json=export_json,
-            data_type=data_type,
-            backbone=preprocess_kwargs.get("backbone"),
-            max_length=preprocess_kwargs.get("max_length", 128),
-            clip_sampler=preprocess_kwargs.get("clip_sampler"),
-            clip_duration=preprocess_kwargs.get("clip_duration", 1),
-            decode_audio=preprocess_kwargs.get("decode_audio", False),
-            decoder=preprocess_kwargs.get("decoder", "pyav"),
-            multi_label=preprocess_kwargs.get("multi_label", False),
-        )
-        data_source.load_data()
-        # loading data sets
-        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets()
-
-        data = cls(
-            train_dataset,
-            val_dataset,
-            test_dataset,
-            predict_dataset,
-            data_source=data_source,
-            preprocess=preprocess,
+        data = {
+            'data_folder': data_folder,
+            'export_json': export_json,
+            'split': val_split,
+            'multi_label': preprocess_kwargs.get('multi_label', False)
+        }
+        return cls.from_data_source(
+            DefaultDataSources.LABELSTUDIO,
+            train_data=data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
             data_fetcher=data_fetcher,
+            preprocess=preprocess,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            sampler=sampler,
+            **preprocess_kwargs,
         )
-        return data

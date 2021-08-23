@@ -8,8 +8,7 @@ download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightnin
 backbone = "prajjwal1/bert-medium"
 
 datamodule = TextClassificationData.from_labelstudio(
-    export_json="data/project.json",
-    data_type="text",
+    export_json='data/project.json',
     val_split=0.8,
     backbone=backbone,
 )
