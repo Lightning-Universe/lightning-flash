@@ -839,9 +839,6 @@ class LabelStudioImageDataSource(LabelStudioDataSource):
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
     Export data should point to image files"""
 
-    def __init__(self):
-        super().__init__()
-
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
         """Load 1 sample from dataset."""
         if sample["file_upload"]:
