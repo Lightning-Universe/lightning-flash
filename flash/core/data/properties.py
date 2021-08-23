@@ -21,22 +21,19 @@ import flash
 
 @dataclass(unsafe_hash=True, frozen=True)
 class ProcessState:
-    """
-    Base class for all process states
-    """
+    """Base class for all process states."""
 
 
-STATE_TYPE = TypeVar('STATE_TYPE', bound=ProcessState)
+STATE_TYPE = TypeVar("STATE_TYPE", bound=ProcessState)
 
 
 class Properties:
-
     def __init__(self):
         super().__init__()
 
         self._running_stage: Optional[RunningStage] = None
         self._current_fn: Optional[str] = None
-        self._data_pipeline_state: Optional['flash.core.data.data_pipeline.DataPipelineState'] = None
+        self._data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None
         self._state: Dict[Type[ProcessState], ProcessState] = {}
 
     def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
@@ -51,7 +48,7 @@ class Properties:
         if self._data_pipeline_state is not None:
             self._data_pipeline_state.set_state(state)
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
         self._data_pipeline_state = data_pipeline_state
         for state in self._state.values():
             self._data_pipeline_state.set_state(state)

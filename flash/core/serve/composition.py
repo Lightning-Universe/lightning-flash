@@ -14,8 +14,9 @@ else:
     concat, first = None, None
 
 
-def _parse_composition_kwargs(**kwargs: Union[ModelComponent,
-                                              Endpoint]) -> Tuple[Dict[str, ModelComponent], Dict[str, Endpoint]]:
+def _parse_composition_kwargs(
+    **kwargs: Union[ModelComponent, Endpoint]
+) -> Tuple[Dict[str, ModelComponent], Dict[str, Endpoint]]:
 
     components, endpoints = {}, {}
     for k, v in kwargs.items():
@@ -28,8 +29,7 @@ def _parse_composition_kwargs(**kwargs: Union[ModelComponent,
 
     if len(components) > 1 and len(endpoints) == 0:
         raise ValueError(
-            "Must explicitly define atelast one Endpoint when "
-            "two or more components are included in a composition."
+            "Must explicitly define atelast one Endpoint when " "two or more components are included in a composition."
         )
     return (components, endpoints)
 

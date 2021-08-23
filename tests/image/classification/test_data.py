@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import csv
 from pathlib import Path
 from typing import Any, List, Tuple
 
@@ -21,7 +22,13 @@ import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _IMAGE_AVAILABLE,
+    _MATPLOTLIB_AVAILABLE,
+    _PIL_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
+)
 from flash.image import ImageClassificationData
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -72,9 +79,9 @@ def test_from_filepaths_smoke(tmpdir):
     assert img_data.test_dataloader() is None
 
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [1, 2]
 
 
@@ -104,28 +111,29 @@ def test_from_filepaths_list_image_paths(tmpdir):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
     assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [1, 4]
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -160,7 +168,8 @@ def test_from_filepaths_visualise(tmpdir):
     dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -207,7 +216,7 @@ def test_from_filepaths_splits(tmpdir):
     _rand_image(img_size).save(tmpdir / "s.png")
 
     num_samples: int = 10
-    val_split: float = .3
+    val_split: float = 0.3
 
     train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
 
@@ -218,7 +227,7 @@ def test_from_filepaths_splits(tmpdir):
     _to_tensor = {
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor)
+            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
         ),
     }
 
@@ -234,9 +243,9 @@ def test_from_filepaths_splits(tmpdir):
             image_size=img_size,
         )
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data['input'], data['target']
+        imgs, labels = data["input"], data["target"]
         assert imgs.shape == (B, 3, H, W)
-        assert labels.shape == (B, )
+        assert labels.shape == (B,)
 
     run(_to_tensor)
 
@@ -257,9 +266,9 @@ def test_from_folders_only_train(tmpdir):
     img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
 
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    assert labels.shape == (1,)
 
     assert img_data.val_dataloader() is None
     assert img_data.test_dataloader() is None
@@ -287,20 +296,20 @@ def test_from_folders_train_val(tmpdir):
     )
 
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [0, 0]
 
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [0, 0]
 
 
@@ -329,18 +338,18 @@ def test_from_filepaths_multilabel(tmpdir):
     )
 
     data = next(iter(dm.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
 
     data = next(iter(dm.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
     torch.testing.assert_allclose(labels, torch.tensor(valid_labels))
 
     data = next(iter(dm.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 4)
     torch.testing.assert_allclose(labels, torch.tensor(test_labels))
@@ -368,28 +377,28 @@ def test_from_data(data, from_function):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
     assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [1, 4]
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_from_fiftyone(tmpdir):
     tmpdir = Path(tmpdir)
@@ -426,23 +435,23 @@ def test_from_fiftyone(tmpdir):
 
     # check train data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [0, 1]
 
     # check val data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [0, 1]
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
+    imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [0, 1]
 
 
@@ -460,16 +469,103 @@ def test_from_datasets():
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    assert labels.shape == (2,)
+
+
+@pytest.fixture
+def image_tmpdir(tmpdir):
+    (tmpdir / "train").mkdir()
+    Image.new("RGB", (128, 128)).save(str(tmpdir / "train" / "image_1.png"))
+    Image.new("RGB", (128, 128)).save(str(tmpdir / "train" / "image_2.png"))
+    return tmpdir / "train"
+
+
+@pytest.fixture
+def single_target_csv(image_tmpdir):
+    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
+        fieldnames = ["image", "target"]
+        writer = csv.DictWriter(csvfile, fieldnames)
+        writer.writeheader()
+        writer.writerow({"image": "image_1", "target": "Ants"})
+        writer.writerow({"image": "image_2", "target": "Bees"})
+    return str(image_tmpdir / "metadata.csv")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_from_csv_single_target(single_target_csv):
+    img_data = ImageClassificationData.from_csv(
+        "image",
+        "target",
+        train_file=single_target_csv,
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2,)
+
+
+@pytest.fixture
+def multi_target_csv(image_tmpdir):
+    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
+        fieldnames = ["image", "target_1", "target_2"]
+        writer = csv.DictWriter(csvfile, fieldnames)
+        writer.writeheader()
+        writer.writerow({"image": "image_1", "target_1": 1, "target_2": 0})
+        writer.writerow({"image": "image_2", "target_1": 1, "target_2": 1})
+    return str(image_tmpdir / "metadata.csv")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_from_csv_multi_target(multi_target_csv):
+    img_data = ImageClassificationData.from_csv(
+        "image",
+        ["target_1", "target_2"],
+        train_file=multi_target_csv,
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    assert imgs.shape == (2, 3, 196, 196)
+    assert labels.shape == (2, 2)
+
+
+@pytest.fixture
+def bad_csv_no_image(image_tmpdir):
+    with open(image_tmpdir / "metadata.csv", "w") as csvfile:
+        fieldnames = ["image", "target"]
+        writer = csv.DictWriter(csvfile, fieldnames)
+        writer.writeheader()
+        writer.writerow({"image": "image_3", "target": "Ants"})
+    return str(image_tmpdir / "metadata.csv")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_from_bad_csv_no_image(bad_csv_no_image):
+    with pytest.raises(ValueError, match="Found no matches"):
+        img_data = ImageClassificationData.from_csv(
+            "image",
+            ["target"],
+            train_file=bad_csv_no_image,
+            batch_size=1,
+            num_workers=0,
+        )
+        _ = next(iter(img_data.train_dataloader()))

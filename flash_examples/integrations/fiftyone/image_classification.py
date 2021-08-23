@@ -13,6 +13,8 @@
 # limitations under the License.
 from itertools import chain
 
+import torch
+
 import flash
 from flash.core.classification import FiftyOneLabels, Labels
 from flash.core.data.utils import download_data
@@ -39,6 +41,7 @@ model = ImageClassifier(
 )
 trainer = flash.Trainer(
     max_epochs=1,
+    gpus=torch.cuda.device_count(),
     limit_train_batches=1,
     limit_val_batches=1,
 )

@@ -47,7 +47,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             "per_batch_transform_on_device": ApplyToKeys(
                 DefaultDataKeys.INPUT,
                 K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-            )
+            ),
         }
     return {
         "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(image_size)),

@@ -4,7 +4,7 @@ from flash.core.serve.dag.task import istask, subs
 
 
 def head(task):
-    """Return the top level node of a task"""
+    """Return the top level node of a task."""
 
     if istask(task):
         return task[0]
@@ -14,7 +14,7 @@ def head(task):
 
 
 def args(task):
-    """Get the arguments for the current task"""
+    """Get the arguments for the current task."""
 
     if istask(task):
         return task[1:]
@@ -58,8 +58,8 @@ class Traverser:
     def copy(self):
         """Copy the traverser in its current state.
 
-        This allows the traversal to be pushed onto a stack, for easy
-        backtracking."""
+        This allows the traversal to be pushed onto a stack, for easy backtracking.
+        """
 
         return Traverser(self.term, deque(self._stack))
 
@@ -79,14 +79,15 @@ class Traverser:
         return head(self.term)
 
     def skip(self):
-        """Skip over all subterms of the current level in the traversal"""
+        """Skip over all subterms of the current level in the traversal."""
         self.term = self._stack.pop()
 
 
 class Token:
     """A token object.
 
-    Used to express certain objects in the traversal of a task or pattern."""
+    Used to express certain objects in the traversal of a task or pattern.
+    """
 
     def __init__(self, name):
         self.name = name
@@ -114,12 +115,12 @@ class Node(tuple):
 
     @property
     def edges(self):
-        """A dictionary, where the keys are edges, and the values are nodes"""
+        """A dictionary, where the keys are edges, and the values are nodes."""
         return self[0]
 
     @property
     def patterns(self):
-        """A list of all patterns that currently match at this node"""
+        """A list of all patterns that currently match at this node."""
         return self[1]
 
 
@@ -188,7 +189,7 @@ class RewriteRule:
         return term
 
     def __str__(self):
-        return "RewriteRule({0}, {1}, {2})".format(self.lhs, self.rhs, self.vars)
+        return f"RewriteRule({self.lhs}, {self.rhs}, {self.vars})"
 
     def __repr__(self):
         return str(self)
@@ -231,7 +232,7 @@ class RuleSet:
     """
 
     def __init__(self, *rules):
-        """Create a `RuleSet` for a number of rules
+        """Create a `RuleSet` for a number of rules.
 
         Parameters
         ----------
@@ -281,7 +282,8 @@ class RuleSet:
         ------
         Tuples of `(rule, subs)`, where `rule` is the rewrite rule being
         matched, and `subs` is a dictionary mapping the variables in the lhs
-        of the rule to their matching values in the term."""
+        of the rule to their matching values in the term.
+        """
 
         S = Traverser(term)
         for m, syms in _match(S, self._net):
@@ -292,7 +294,7 @@ class RuleSet:
                     yield rule, subs
 
     def _rewrite(self, term):
-        """Apply the rewrite rules in RuleSet to top level of term"""
+        """Apply the rewrite rules in RuleSet to top level of term."""
 
         for rule, sd in self.iter_matches(term):
             # We use for (...) because it's fast in all cases for getting the
@@ -352,7 +354,7 @@ def _top_level(net, term):
 
 def _bottom_up(net, term):
     if istask(term):
-        term = (head(term), ) + tuple(_bottom_up(net, t) for t in args(term))
+        term = (head(term),) + tuple(_bottom_up(net, t) for t in args(term))
     elif isinstance(term, list):
         term = [_bottom_up(net, t) for t in args(term)]
     return net._rewrite(term)
@@ -387,7 +389,7 @@ def _match(S, N):
         n = N.edges.get(VAR, None)
         if n:
             restore_state_flag = False
-            matches = matches + (S.term, )
+            matches = matches + (S.term,)
             S.skip()
             N = n
             continue
@@ -400,8 +402,8 @@ def _match(S, N):
 
 
 def _process_match(rule, syms):
-    """Process a match to determine if it is correct, and to find the correct
-    substitution that will convert the term into the pattern.
+    """Process a match to determine if it is correct, and to find the correct substitution that will convert the
+    term into the pattern.
 
     Parameters
     ----------
@@ -413,7 +415,8 @@ def _process_match(rule, syms):
     -------
     A dictionary of {vars : subterms} describing the substitution to make the
     pattern equivalent with the term. Returns `None` if the match is
-    invalid."""
+    invalid.
+    """
 
     subs = {}
     varlist = rule._varlist

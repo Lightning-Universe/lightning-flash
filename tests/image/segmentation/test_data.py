@@ -9,7 +9,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -22,8 +22,8 @@ if _FIFTYONE_AVAILABLE:
 
 def build_checkboard(n, m, k=8):
     x = np.zeros((n, m))
-    x[k::k * 2, ::k] = 1
-    x[::k * 2, k::k * 2] = 1
+    x[k :: k * 2, ::k] = 1
+    x[:: k * 2, k :: k * 2] = 1
     return x
 
 
@@ -48,23 +48,22 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
 
 
 class TestSemanticSegmentationPreprocess:
-
-    @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     @staticmethod
+    @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     def test_smoke():
         prep = SemanticSegmentationPreprocess(num_classes=1)
         assert prep is not None
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestSemanticSegmentationData:
-
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_smoke():
         dm = SemanticSegmentationData()
         assert dm is not None
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_folders(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -86,7 +85,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -110,22 +109,23 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_folders_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -145,7 +145,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -164,10 +164,11 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (1, 3, 196, 196)
-        assert labels.shape == (1, 196, 196)
+        assert imgs.shape == (1, 3, 128, 128)
+        assert labels.shape == (1, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_files(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -186,7 +187,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -200,7 +201,7 @@ class TestSemanticSegmentationData:
             test_targets=targets,
             batch_size=2,
             num_workers=0,
-            num_classes=num_classes
+            num_classes=num_classes,
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -210,22 +211,23 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_from_files_warning(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -244,7 +246,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -255,11 +257,12 @@ class TestSemanticSegmentationData:
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],
                 batch_size=2,
                 num_workers=0,
-                num_classes=num_classes
+                num_classes=num_classes,
             )
 
-    @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     def test_from_fiftyone(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -272,7 +275,7 @@ class TestSemanticSegmentationData:
         ]
 
         num_classes: int = 2
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
 
         for img_file in images:
             _rand_image(img_size).save(img_file)
@@ -307,27 +310,29 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
 
         # check predict data
         data = next(iter(dm.predict_dataloader()))
         imgs = data[DefaultDataKeys.INPUT]
-        assert imgs.shape == (2, 3, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
 
     @staticmethod
+    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
     def test_map_labels(tmpdir):
         tmp_dir = Path(tmpdir)
 
@@ -351,7 +356,7 @@ class TestSemanticSegmentationData:
         }
 
         num_classes: int = len(labels_map.keys())
-        img_size: Tuple[int, int] = (196, 196)
+        img_size: Tuple[int, int] = (128, 128)
         create_random_data(images, targets, img_size, num_classes)
 
         # instantiate the data module
@@ -363,7 +368,7 @@ class TestSemanticSegmentationData:
             val_targets=targets,
             batch_size=2,
             num_workers=0,
-            num_classes=num_classes
+            num_classes=num_classes,
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -379,13 +384,13 @@ class TestSemanticSegmentationData:
         # check training data
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
-        assert imgs.shape == (2, 3, 196, 196)
-        assert labels.shape == (2, 196, 196)
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
         assert labels.min().item() == 0
         assert labels.max().item() == 1
         assert labels.dtype == torch.int64
 
         # now train with `fast_dev_run`
-        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fcn")
+        model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fpn")
         trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
         trainer.finetune(model, dm, strategy="freeze_unfreeze")
