@@ -15,6 +15,7 @@ import json
 import os
 import typing
 import warnings
+from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
 from inspect import signature
@@ -49,9 +50,13 @@ from tqdm import tqdm
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires, \
-    _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
-from copy import deepcopy
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _PYTORCHVIDEO_AVAILABLE,
+    _TEXT_AVAILABLE,
+    lazy_import,
+    requires,
+)
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -826,8 +831,9 @@ class LabelStudioDataSource(DataSource):
 
 class LabelStudioImageDataSource(LabelStudioDataSource):
     """The ``LabelStudioImageDataSource`` expects the input to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
-        Export data should point to image files"""
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+    Export data should point to image files"""
+
     def __init__(self):
         super().__init__()
 
@@ -846,9 +852,10 @@ class LabelStudioImageDataSource(LabelStudioDataSource):
 
 class LabelStudioTextDataSource(LabelStudioDataSource):
     """The ``LabelStudioTextDataSource`` expects the input to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
-        Export data should point to text data
-        """
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+    Export data should point to text data
+    """
+
     def __init__(self, backbone=None, max_length=128):
         super().__init__()
         if backbone:
@@ -875,11 +882,10 @@ class LabelStudioTextDataSource(LabelStudioDataSource):
 
 class LabelStudioVideoDataSource(LabelStudioDataSource):
     """The ``LabelStudioVideoDataSource`` expects the input to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
-        Export data should point to video files"""
-    def __init__(
-        self, video_sampler=None, clip_sampler=None, decode_audio=False, decoder: str = "pyav"
-    ):
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+    Export data should point to video files"""
+
+    def __init__(self, video_sampler=None, clip_sampler=None, decode_audio=False, decoder: str = "pyav"):
         super().__init__()
         self.video_sampler = video_sampler or torch.utils.data.RandomSampler
         self.clip_sampler = clip_sampler
@@ -891,18 +897,14 @@ class LabelStudioVideoDataSource(LabelStudioDataSource):
         return sample
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        """
-        load_data produces a sequence or iterable of samples
-        """
+        """load_data produces a sequence or iterable of samples."""
         super().load_data(data, dataset)
         self.results = self.convert_to_encodedvideo(self.results)
         self.test_results = self.convert_to_encodedvideo(self.test_results)
         self.val_results = self.convert_to_encodedvideo(self.val_results)
 
     def convert_to_encodedvideo(self, dataset):
-        """
-        Converting dataset to EncodedVideoDataset
-        """
+        """Converting dataset to EncodedVideoDataset."""
         if len(dataset) > 0:
             from pytorchvideo.data import EncodedVideoDataset
 
