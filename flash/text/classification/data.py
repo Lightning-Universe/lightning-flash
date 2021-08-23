@@ -20,7 +20,7 @@ from torch import Tensor
 import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
+from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState, LabelStudioTextDataSource
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
 
@@ -28,8 +28,6 @@ if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
     from transformers import AutoTokenizer, default_data_collator
     from transformers.modeling_outputs import SequenceClassifierOutput
-
-from flash.core.data.data_source import LabelStudioTextDataSource
 
 
 class TextDeserializer(Deserializer):

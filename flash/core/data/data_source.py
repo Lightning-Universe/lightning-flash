@@ -718,6 +718,10 @@ class LabelStudioDataSource(DataSource):
         self.classes = set()
         self.data_types = set()
         self.num_classes = 0
+        self._data_folder = ""
+        self._raw_data = {}
+        self.multi_label = False
+        self.split = 0.8
 
     def load_data(self, data: Optional[Any] = None, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         """Iterate through all tasks in exported data and construct train\test\val results."""
@@ -725,12 +729,13 @@ class LabelStudioDataSource(DataSource):
             self._data_folder = data.get("data_folder")
             with open(data.get("export_json")) as f:
                 self._raw_data = json.load(f)
-            self.multi_label = data.get("multi_label")
-            self.split = data.get("split")
+            self.multi_label = data.get("multi_label", False)
+            self.split = data.get("split", 0.8)
         for task in self._raw_data:
             for annotation in task["annotations"]:
                 # extracting data types from tasks
-                [self.data_types.add(key) for key in task.get("data")]
+                for key in task.get("data"):
+                    self.data_types.add(key)
                 # Adding ground_truth annotation to separate dataset
                 result = annotation["result"]
                 for res in result:
