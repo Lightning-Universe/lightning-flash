@@ -32,15 +32,10 @@ SEQUENCE_LENGTH = 384
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
-<<<<<<< HEAD:tests/text/question_answering/test_model.py
-            "input_ids": torch.randint(1000, size=(SEQUENCE_LENGTH, )),
-            "attention_mask": torch.randint(1, size=(SEQUENCE_LENGTH, )),
-            "start_positions": torch.randint(1000, size=(1, )),
-            "end_positions": torch.randint(1000, size=(1, )),
-=======
-            "input_ids": torch.randint(1000, size=(128,)),
-            "labels": torch.randint(1000, size=(128,)),
->>>>>>> master:tests/text/seq2seq/question_answering/test_model.py
+            "input_ids": torch.randint(1000, size=(SEQUENCE_LENGTH,)),
+            "attention_mask": torch.randint(1, size=(SEQUENCE_LENGTH,)),
+            "start_positions": torch.randint(1000, size=(1,)),
+            "end_positions": torch.randint(1000, size=(1,)),
         }
 
     def __len__(self) -> int:
