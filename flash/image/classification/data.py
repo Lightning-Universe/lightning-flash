@@ -42,10 +42,10 @@ else:
 
 
 class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
-    @requires_extras("image")
     def __init__(self):
         super().__init__(image_loader)
 
+    @requires_extras("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH

@@ -36,7 +36,7 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
-    IMG_EXTENSIONS = ()
+    IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
 
 
 NP_EXTENSIONS = (".npy", ".npz")
@@ -56,11 +56,11 @@ def image_loader(filepath: str):
 
 
 class ImageDeserializer(Deserializer):
-    @requires_extras("image")
     def __init__(self):
         super().__init__()
         self.to_tensor = torchvision.transforms.ToTensor()
 
+    @requires_extras("image")
     def deserialize(self, data: str) -> Dict:
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
@@ -77,10 +77,10 @@ class ImageDeserializer(Deserializer):
 
 
 class ImagePathsDataSource(PathsDataSource):
-    @requires_extras("image")
     def __init__(self):
         super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
+    @requires_extras("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH
