@@ -17,9 +17,7 @@ from flash.core.finetuning import FlashBaseFinetuning
 
 
 class QuestionAnsweringFreezeEmbeddings(FlashBaseFinetuning):
-    """
-    Freezes the embedding layers during Question Answering training.
-    """
+    """Freezes the embedding layers during Question Answering training."""
 
     def __init__(self, model_type: str, train_bn: bool = True):
         super().__init__("", train_bn)
@@ -46,8 +44,18 @@ class QuestionAnsweringFreezeEmbeddings(FlashBaseFinetuning):
             self.freeze(model.decoder, train_bn=self.train_bn)
 
         elif self.model_type == [
-            "bert", "big_bird", "ibert", "longformer", "lxmert", "mpnet", "megatron-bert", "mobilebert", "camembert",
-            "roberta", "squeezebert", "xlm-roberta"
+            "bert",
+            "big_bird",
+            "ibert",
+            "longformer",
+            "lxmert",
+            "mpnet",
+            "megatron-bert",
+            "mobilebert",
+            "camembert",
+            "roberta",
+            "squeezebert",
+            "xlm-roberta",
         ]:
             if self.model_type in ["bert", "big_bird", "megatron-bert"]:
                 model = pl_module.model.bert

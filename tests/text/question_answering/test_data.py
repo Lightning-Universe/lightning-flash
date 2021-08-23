@@ -27,51 +27,52 @@ TEST_BACKBONE = "distilbert-base-uncased"
 TEST_CSV_DATA = {
     "id": ["12345", "12346", "12347", "12348"],
     "context": [
-        "this is an answer one. this is a context one", "this is an answer two. this is a context two",
-        "this is an answer three. this is a context three", "this is an answer four. this is a context four"
+        "this is an answer one. this is a context one",
+        "this is an answer two. this is a context two",
+        "this is an answer three. this is a context three",
+        "this is an answer four. this is a context four",
     ],
     "question": [
-        "this is a question one", "this is a question two", "this is a question three", "this is a question four"
+        "this is a question one",
+        "this is a question two",
+        "this is a question three",
+        "this is a question four",
     ],
     "answer_text": [
-        "this is an answer one", "this is an answer two", "this is an answer three", "this is an answer four"
+        "this is an answer one",
+        "this is an answer two",
+        "this is an answer three",
+        "this is an answer four",
     ],
-    "answer_start": [0, 0, 0, 0]
+    "answer_start": [0, 0, 0, 0],
 }
 
-TEST_JSON_DATA = [{
-    "id": "12345",
-    "context": "this is an answer one. this is a context one",
-    "question": "this is a question one",
-    "answer": {
-        "text": ["this is an answer one"],
-        "answer_start": [0]
-    }
-}, {
-    "id": "12346",
-    "context": "this is an answer two. this is a context two",
-    "question": "this is a question two",
-    "answer": {
-        "text": ["this is an answer two"],
-        "answer_start": [0]
-    }
-}, {
-    "id": "12347",
-    "context": "this is an answer three. this is a context three",
-    "question": "this is a question three",
-    "answer": {
-        "text": ["this is an answer three"],
-        "answer_start": [0]
-    }
-}, {
-    "id": "12348",
-    "context": "this is an answer four. this is a context four",
-    "question": "this is a question four",
-    "answer": {
-        "text": ["this is an answer four"],
-        "answer_start": [0]
-    }
-}]
+TEST_JSON_DATA = [
+    {
+        "id": "12345",
+        "context": "this is an answer one. this is a context one",
+        "question": "this is a question one",
+        "answer": {"text": ["this is an answer one"], "answer_start": [0]},
+    },
+    {
+        "id": "12346",
+        "context": "this is an answer two. this is a context two",
+        "question": "this is a question two",
+        "answer": {"text": ["this is an answer two"], "answer_start": [0]},
+    },
+    {
+        "id": "12347",
+        "context": "this is an answer three. this is a context three",
+        "question": "this is a question three",
+        "answer": {"text": ["this is an answer three"], "answer_start": [0]},
+    },
+    {
+        "id": "12348",
+        "context": "this is an answer four. this is a context four",
+        "question": "this is a question four",
+        "answer": {"text": ["this is an answer four"], "answer_start": [0]},
+    },
+]
 
 
 def get_csv_data():
@@ -110,7 +111,7 @@ def test_from_csv(tmpdir):
         context_column_name="context",
         answer_column_name="answer",
         backbone=TEST_BACKBONE,
-        train_file=csv_path
+        train_file=csv_path,
     )
     batch = next(iter(dm.train_dataloader()))
     assert "input_ids" in batch
@@ -130,7 +131,7 @@ def test_from_files(tmpdir):
         backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
-        test_file=csv_path
+        test_file=csv_path,
     )
     batch = next(iter(dm.val_dataloader()))
     assert "input_ids" in batch
@@ -153,9 +154,8 @@ def test_from_files(tmpdir):
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_postprocess_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``QuestionAnsweringPostprocess`` resolves correctly when a different backbone is
-    used.
-    """
+    """Tests that the tokenizer property in ``QuestionAnsweringPostprocess`` resolves correctly when a different
+    backbone is used."""
     backbone = "allenai/longformer-base-4096"
     json_path = json_data(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
@@ -164,7 +164,7 @@ def test_postprocess_tokenizer(tmpdir):
         answer_column_name="answer",
         backbone=backbone,
         train_file=json_path,
-        batch_size=2
+        batch_size=2,
     )
     pipeline = dm.data_pipeline
     pipeline.initialize()
@@ -182,7 +182,7 @@ def test_from_json(tmpdir):
         answer_column_name="answer",
         backbone=TEST_BACKBONE,
         train_file=json_path,
-        batch_size=2
+        batch_size=2,
     )
     batch = next(iter(dm.train_dataloader()))
     assert "input_ids" in batch
@@ -201,7 +201,7 @@ def test_from_json_with_field(tmpdir):
         answer_column_name="answer",
         backbone=TEST_BACKBONE,
         train_file=json_path,
-        field="data"
+        field="data",
     )
     batch = next(iter(dm.train_dataloader()))
     assert "input_ids" in batch
@@ -235,15 +235,18 @@ def test_wrong_keys_and_types(tmpdir):
             train_file=csv_path,
         )
 
-    TEST_JSON_DATA = [{
-        "id": "12345",
-        "context": "this is an answer one. this is a context one",
-        "question": "this is a question one",
-    }, {
-        "id": "12346",
-        "context": "this is an answer two. this is a context two",
-        "question": "this is a question two",
-    }]
+    TEST_JSON_DATA = [
+        {
+            "id": "12345",
+            "context": "this is an answer one. this is a context one",
+            "question": "this is a question one",
+        },
+        {
+            "id": "12346",
+            "context": "this is an answer two. this is a context two",
+            "question": "this is a question two",
+        },
+    ]
 
     with pytest.raises(KeyError):
         json_path = json_data(tmpdir, TEST_JSON_DATA)
@@ -253,7 +256,7 @@ def test_wrong_keys_and_types(tmpdir):
             answer_column_name="answer",
             backbone=TEST_BACKBONE,
             train_file=json_path,
-            batch_size=2
+            batch_size=2,
         )
 
     TEST_JSON_DATA[0]["answer"] = "this is an answer one"
@@ -266,5 +269,5 @@ def test_wrong_keys_and_types(tmpdir):
             answer_column_name="answer",
             backbone=TEST_BACKBONE,
             train_file=json_path,
-            batch_size=2
+            batch_size=2,
         )

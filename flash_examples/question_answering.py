@@ -32,10 +32,11 @@ trainer = Trainer(max_epochs=3, limit_train_batches=1, limit_val_batches=1)
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Answer some Questions!
-predictions = model.predict({
-    "id": ["56ddde6b9a695914005b9629", "56ddde6b9a695914005b9628"],
-    "context": [
-        """
+predictions = model.predict(
+    {
+        "id": ["56ddde6b9a695914005b9629", "56ddde6b9a695914005b9628"],
+        "context": [
+            """
         The Normans (Norman: Nourmands; French: Normands; Latin: Normanni) were the people who in the 10th
         and 11th centuries gave their name to Normandy, a region in France. They were descended from Norse
         ("Norman" comes from "Norseman") raiders and pirates from Denmark, Iceland and Norway who, under
@@ -44,7 +45,8 @@ predictions = model.predict({
         descendants would gradually merge with the Carolingian-based cultures of West Francia. The distinct
         cultural and ethnic identity of the Normans emerged initially in the first half of the 10th
         century, and it continued to evolve over the succeeding centuries.
-        """, """
+        """,
+            """
         The Normans (Norman: Nourmands; French: Normands; Latin: Normanni) were the people who in the 10th
         and 11th centuries gave their name to Normandy, a region in France. They were descended from Norse
         ("Norman" comes from "Norseman") raiders and pirates from Denmark, Iceland and Norway who, under
@@ -53,10 +55,11 @@ predictions = model.predict({
         descendants would gradually merge with the Carolingian-based cultures of West Francia. The distinct
         cultural and ethnic identity of the Normans emerged initially in the first half of the 10th
         century, and it continued to evolve over the succeeding centuries.
-        """
-    ],
-    "question": ["When were the Normans in Normandy?", "In what country is Normandy located?"]
-})
+        """,
+        ],
+        "question": ["When were the Normans in Normandy?", "In what country is Normandy located?"],
+    }
+)
 print(predictions)
 
 # 5. Save the model!
