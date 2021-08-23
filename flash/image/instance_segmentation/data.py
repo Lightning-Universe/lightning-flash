@@ -27,6 +27,9 @@ from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
 if _ICEVISION_AVAILABLE:
     from icevision.parsers import COCOMaskParser, VOCMaskParser
+else:
+    COCOMaskParser = object
+    VOCMaskParser = object
 
 
 class InstanceSegmentationPreprocess(Preprocess):
