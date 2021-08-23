@@ -99,7 +99,15 @@ data_modules = [
 
 for data_module_path, data_module_name in data_modules:
     data_module = getattr(importlib.import_module(data_module_path), data_module_name)
-    preprocess = data_module.preprocess_cls()
+
+    class PatchedPreprocess(data_module.preprocess_cls):
+        """TODO: This is a hack to prevent default transforms form being created"""
+
+        @staticmethod
+        def _resolve_transforms(_):
+            return None
+
+    preprocess = PatchedPreprocess()
     data_sources = [preprocess.data_source_of_name(data_source) for data_source in preprocess.available_data_sources()]
 
     entries = {}
