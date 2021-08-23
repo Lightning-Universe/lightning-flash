@@ -57,3 +57,21 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/question_answering.py
     :language: python
     :lines: 14-
+
+------
+
+**********************************************
+Accelerate Training & Inference with Torch ORT
+**********************************************
+
+`Torch ORT <https://cloudblogs.microsoft.com/opensource/2021/07/13/accelerate-pytorch-training-with-torch-ort/>`__ converts your model into an optimized ONNX graph, speeding up training & inference when using NVIDIA or AMD GPUs. Enabling Torch ORT requires a single flag passed to the ``QuestionAnsweringTask`` once installed. See installation instructions `here <https://github.com/pytorch/ort#install-in-a-local-python-environment>`__.
+
+.. note::
+
+    Not all Transformer models are supported. See `this table <https://github.com/microsoft/onnxruntime-training-examples#examples>`__ for supported models + branches containing fixes for certain models.
+
+.. code-block:: python
+
+    ...
+
+    model = QuestionAnsweringTask(backbone="distilbert-base-uncased", max_answer_length=30, enable_ort=True)

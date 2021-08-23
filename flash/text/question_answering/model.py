@@ -23,6 +23,7 @@ from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
 
 import numpy as np
 import torch
+from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
 from torchmetrics import Metric
@@ -31,18 +32,19 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
 from flash.text.seq2seq.core.metrics import RougeMetric
 
 if _TEXT_AVAILABLE:
-    from transformers import AutoModelForQuestionAnswering, PreTrainedTokenizerBase
+    from transformers import AutoModelForQuestionAnswering
 else:
-    AutoModelForQuestionAnswering, PreTrainedTokenizerBase = None, None
+    AutoModelForQuestionAnswering = None
 
 
 class QuestionAnsweringTask(Task):
-    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for extractive text question answering. For more details
-    , see `question_answering`.
+    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for extractive question answering. For more details,
+    see `question_answering`.
 
     You can change the backbone to any question answering model from `HuggingFace/transformers
     <https://huggingface.co/transformers/model_doc/auto.html#automodelforquestionanswering>`_ using the ``backbone``
@@ -59,10 +61,7 @@ class QuestionAnsweringTask(Task):
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the ROUGE metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `3e-4`
-        val_target_max_length: Maximum length of targets in validation. Defaults to `128`
-        num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
-        use_stemmer: Whether Porter stemmer should be used to strip word suffixes to improve matching.
-        rouge_newline_sep: Add a new line at the beginning of each sentence in Rouge Metric calculation.
+        enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
         n_best_size: The total number of n-best predictions to generate when looking for an answer.
         version_2_with_negative: If true, some of the examples do not have an answer.
         max_answer_length: The maximum length of an answer that can be generated. This is needed because the start and
@@ -70,6 +69,8 @@ class QuestionAnsweringTask(Task):
         null_score_diff_threshold: The threshold used to select the null answer: if the best answer has a score that is
             less than the score of the null answer minus this threshold, the null answer is selected for this example.
             Only useful when `version_2_with_negative=True`.
+        use_stemmer: Whether Porter stemmer should be used to strip word suffixes to improve matching.
+        rouge_newline_sep: Add a new line at the beginning of each sentence in Rouge Metric calculation.
     """
 
     required_extras: str = "text"
@@ -81,14 +82,13 @@ class QuestionAnsweringTask(Task):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-        val_target_max_length: Optional[int] = None,
-        num_beams: Optional[int] = None,
-        use_stemmer: bool = True,
-        rouge_newline_sep: bool = True,
+        enable_ort: bool = False,
         n_best_size: int = 20,
         version_2_with_negative: bool = True,
         max_answer_length: int = 30,
-        null_score_diff_threshold: float = 0.0
+        null_score_diff_threshold: float = 0.0,
+        use_stemmer: bool = True,
+        rouge_newline_sep: bool = True,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -97,19 +97,17 @@ class QuestionAnsweringTask(Task):
         os.environ["PYTHONWARNINGS"] = "ignore"
         super().__init__(loss_fn=loss_fn, optimizer=optimizer, metrics=metrics, learning_rate=learning_rate)
         self.model = AutoModelForQuestionAnswering.from_pretrained(backbone)
-        self.val_target_max_length = val_target_max_length
-        self.num_beams = num_beams
+        self.enable_ort = enable_ort
+        self.n_best_size = n_best_size
+        self.version_2_with_negative = version_2_with_negative
+        self.max_answer_length = max_answer_length
+        self.null_score_diff_threshold = null_score_diff_threshold
         self._initialize_model_specific_parameters()
 
         self.rouge = RougeMetric(
             rouge_newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
-
-        self.n_best_size = n_best_size
-        self.version_2_with_negative = version_2_with_negative
-        self.max_answer_length = max_answer_length
-        self.null_score_diff_threshold = null_score_diff_threshold
 
     def _generate_answers(self, pred_start_logits, pred_end_logits, examples):
 
@@ -137,10 +135,12 @@ class QuestionAnsweringTask(Task):
                 }
 
             # Go through all possibilities for the `n_best_size` greater start and end logits.
-            start_indexes: List[int] = np.argsort(start_logits.clone().detach().numpy()
-                                                  )[-1:-self.n_best_size - 1:-1].tolist()
-            end_indexes: List[int] = np.argsort(end_logits.clone().detach().numpy()
-                                                )[-1:-self.n_best_size - 1:-1].tolist()
+            start_indexes: List[int] = np.argsort(start_logits.clone().detach().numpy())[
+                -1 : -self.n_best_size - 1 : -1
+            ].tolist()
+            end_indexes: List[int] = np.argsort(end_logits.clone().detach().numpy())[
+                -1 : -self.n_best_size - 1 : -1
+            ].tolist()
 
             max_answer_length: int = 30
             for start_index in start_indexes:
@@ -149,7 +149,7 @@ class QuestionAnsweringTask(Task):
                     # to part of the input_ids that are not in the context.
                     out_of_bounds_indices = start_index >= len(offset_mapping) or end_index >= len(offset_mapping)
                     unmapped_offsets = offset_mapping[start_index] is None or offset_mapping[end_index] is None
-                    if (out_of_bounds_indices or unmapped_offsets):
+                    if out_of_bounds_indices or unmapped_offsets:
                         continue
 
                     # Don't consider answers with a length that is either < 0 or > max_answer_length.
@@ -161,12 +161,14 @@ class QuestionAnsweringTask(Task):
                     if token_is_max_context is not None and not token_is_max_context.get(str(start_index), False):
                         continue
 
-                    prelim_predictions.append({
-                        "offsets": (offset_mapping[start_index][0], offset_mapping[end_index][1]),
-                        "score": start_logits[start_index] + end_logits[end_index],
-                        "start_logit": start_logits[start_index],
-                        "end_logit": end_logits[end_index],
-                    })
+                    prelim_predictions.append(
+                        {
+                            "offsets": (offset_mapping[start_index][0], offset_mapping[end_index][1]),
+                            "score": start_logits[start_index] + end_logits[end_index],
+                            "start_logit": start_logits[start_index],
+                            "end_logit": end_logits[end_index],
+                        }
+                    )
 
             if self.version_2_with_negative:
                 # Add the minimum null prediction
@@ -174,7 +176,7 @@ class QuestionAnsweringTask(Task):
                 null_score = min_null_prediction["score"]
 
             # Only keep the best `n_best_size` predictions.
-            predictions = sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[:self.n_best_size]
+            predictions = sorted(prelim_predictions, key=lambda x: x["score"], reverse=True)[: self.n_best_size]
 
             # Add back the minimum null prediction if it was removed because of its low score.
             if self.version_2_with_negative and not any(p["offsets"] == (0, 0) for p in predictions):
@@ -184,7 +186,7 @@ class QuestionAnsweringTask(Task):
             context = example["context"]
             for pred in predictions:
                 offsets = pred.pop("offsets")
-                pred["text"] = context[offsets[0]:offsets[1]]
+                pred["text"] = context[offsets[0] : offsets[1]]
 
             # In the very rare edge case we have not a single non-null prediction, we create a fake prediction to avoid
             # failure.
@@ -262,9 +264,7 @@ class QuestionAnsweringTask(Task):
 
     @property
     def task(self) -> Optional[str]:
-        """
-        Override to define AutoConfig task specific parameters stored within the model.
-        """
+        """Override to define AutoConfig task specific parameters stored within the model."""
         return "question_answering"
 
     def _initialize_model_specific_parameters(self):
@@ -275,13 +275,11 @@ class QuestionAnsweringTask(Task):
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
-    @property
-    def tokenizer(self) -> 'PreTrainedTokenizerBase':
-        return self.data_pipeline.data_source.tokenizer
-
-    def tokenize_labels(self, labels: Tensor) -> List[str]:
-        label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
-        return [str.strip(s) for s in label_str]
-
     def configure_finetune_callback(self) -> List[FlashBaseFinetuning]:
         return [QuestionAnsweringFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
+
+    def configure_callbacks(self) -> List[Callback]:
+        callbacks = super().configure_callbacks() or []
+        if self.enable_ort:
+            callbacks.append(ORTCallback())
+        return callbacks

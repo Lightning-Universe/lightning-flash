@@ -40,7 +40,16 @@ __________________
     ~question_answering.model.QuestionAnsweringTask
     ~question_answering.data.QuestionAnsweringData
 
-    question_answering.data.QuestionAnsweringPreprocess
+    question_answering.data.QuestionAnsweringBackboneState
+	question_answering.data.QuestionAnsweringCSVDataSource
+	question_answering.data.QuestionAnsweringDataSource
+	question_answering.data.QuestionAnsweringDictionaryDataSource
+	question_answering.data.QuestionAnsweringFileDataSource
+	question_answering.data.QuestionAnsweringJSONDataSource
+	question_answering.data.QuestionAnsweringPostprocess
+	question_answering.data.QuestionAnsweringPreprocess
+	question_answering.data.SQuADDataSource
+
 
 Summarization
 _____________
