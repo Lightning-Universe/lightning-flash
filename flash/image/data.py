@@ -32,7 +32,6 @@ from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires_extras
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
@@ -56,10 +55,6 @@ def image_loader(filepath: str):
 
 
 class ImageDeserializer(Deserializer):
-    def __init__(self):
-        super().__init__()
-        self.to_tensor = torchvision.transforms.ToTensor()
-
     @requires_extras("image")
     def deserialize(self, data: str) -> Dict:
         encoded_with_padding = (data + "===").encode("ascii")
