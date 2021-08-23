@@ -24,6 +24,8 @@ _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, "..", "..")
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
 
+os.environ["BUILDING_DOCS"] = "1"
+
 try:
     from flash import __about__ as about
     from flash.core.utilities import providers

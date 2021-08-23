@@ -132,8 +132,7 @@ class ImageClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given pandas
-        ``DataFrame`` objects.
+        """{autodoc}
 
         Args:
             input_field: The field (column) in the pandas ``DataFrame`` to use for the input.
@@ -180,15 +179,6 @@ class ImageClassificationData(DataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = ImageClassificationData.from_data_frame(
-                "image_id",
-                "target",
-                train_data_frame=train_data,
-                train_images_root="data/train_images",
-            )
         """
         return cls.from_data_source(
             "data_frame",
@@ -238,10 +228,7 @@ class ImageClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
-        files using the :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
-        :class:`~flash.core.data.process.Preprocess`.
+        """{autodoc}
 
         Args:
             input_field: The field (column) in the CSV file to use for the input.
@@ -288,15 +275,6 @@ class ImageClassificationData(DataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = ImageClassificationData.from_csv(
-                "image_id",
-                "target",
-                train_file="train_data.csv",
-                train_images_root="data/train_images",
-            )
         """
         return cls.from_data_source(
             DefaultDataSources.CSV,
