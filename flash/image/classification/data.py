@@ -71,6 +71,8 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.FOLDERS: ImagePathsDataSource(),
                 DefaultDataSources.NUMPY: ImageNumpyDataSource(),
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
+                "data_frame": ImageClassificationDataFrameDataSource(),
+                DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
                 DefaultDataSources.LABELSTUDIO: LabelStudioImageDataSource(**data_source_kwargs)
             },
             deserializer=deserializer or ImageDeserializer(),
