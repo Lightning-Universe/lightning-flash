@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash.core.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
@@ -36,15 +38,17 @@ model = TextClassifier(
 )
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Generate predictions for a few comments!
-predictions = model.predict([
-    "No, he is an arrogant, self serving, immature idiot. Get it right.",
-    "U SUCK HANNAH MONTANA",
-    "Would you care to vote? Thx.",
-])
+predictions = model.predict(
+    [
+        "No, he is an arrogant, self serving, immature idiot. Get it right.",
+        "U SUCK HANNAH MONTANA",
+        "Would you care to vote? Thx.",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

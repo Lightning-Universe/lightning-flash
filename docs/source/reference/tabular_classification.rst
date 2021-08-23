@@ -48,6 +48,25 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The tabular classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash tabular_classifier
+
+To view configuration options and options for running the tabular classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash tabular_classifier --help
+
+------
+
 *******
 Serving
 *******

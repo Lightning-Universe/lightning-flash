@@ -11,14 +11,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
-from types import FunctionType
+import functools
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
+from flash.core.utilities.providers import Provider
+
 _REGISTERED_FUNCTION = Dict[str, Any]
+
+
+def print_provider_info(name, providers, func):
+    if not isinstance(providers, List):
+        providers = [providers]
+    providers = list(providers)
+    if len(providers) > 1:
+        providers[-2] = f"{str(providers[-2])} and {str(providers[-1])}"
+        providers = providers[:-1]
+    message = f"Using '{name}' provided by {', '.join(str(provider) for provider in providers)}."
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        rank_zero_info(message)
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class FlashRegistry:
@@ -36,7 +54,7 @@ class FlashRegistry:
         return any(key == e["name"] for e in self.functions)
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(name={self.name}, functions={self.functions})'
+        return f"{self.__class__.__name__}(name={self.name}, functions={self.functions})"
 
     def get(
         self,
@@ -45,8 +63,7 @@ class FlashRegistry:
         strict: bool = True,
         **metadata,
     ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
-        """
-        This function is used to gather matches from the registry:
+        """This function is used to gather matches from the registry:
 
         Args:
             key: Name of the registered function.
@@ -74,15 +91,19 @@ class FlashRegistry:
         fn: Callable,
         name: Optional[str] = None,
         override: bool = False,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
-        if not isinstance(fn, FunctionType) and not isinstance(fn, partial):
-            raise MisconfigurationException(f"You can only register a function, found: {fn}")
+        if not callable(fn):
+            raise MisconfigurationException(f"You can only register a callable, found: {fn}")
 
         name = name or fn.__name__
 
         if self._verbose:
             rank_zero_info(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")
+
+        if "providers" in metadata:
+            providers = metadata["providers"]
+            fn = print_provider_info(name, providers, fn)
 
         item = {"fn": fn, "name": name, "metadata": metadata or {}}
 
@@ -107,21 +128,23 @@ class FlashRegistry:
         fn: Optional[Callable[..., Any]] = None,
         name: Optional[str] = None,
         override: bool = False,
-        **metadata
+        providers: Optional[Union[Provider, List[Provider]]] = None,
+        **metadata,
     ) -> Callable:
-        """
-        This function is used to register new functions to the registry along their metadata.
+        """This function is used to register new functions to the registry along their metadata.
 
         Functions can be filtered using metadata using the ``get`` function.
-
         """
+        if providers is not None:
+            metadata["providers"] = providers
+
         if fn is not None:
             self._register_function(fn=fn, name=name, override=override, metadata=metadata)
             return fn
 
         # raise the error ahead of time
         if not (name is None or isinstance(name, str)):
-            raise TypeError(f'`name` must be a str, found {name}')
+            raise TypeError(f"`name` must be a str, found {name}")
 
         def _register(cls):
             self._register_function(fn=cls, name=name, override=override, metadata=metadata)

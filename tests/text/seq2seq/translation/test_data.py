@@ -79,7 +79,7 @@ def test_from_files(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
-        batch_size=1
+        batch_size=1,
     )
     batch = next(iter(dm.val_dataloader()))
     assert "labels" in batch

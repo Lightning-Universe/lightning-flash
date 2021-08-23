@@ -16,8 +16,9 @@ import re
 from pytorch_lightning.utilities import _module_available
 
 nltk = None
-if _module_available('nltk'):
+if _module_available("nltk"):
     import nltk
+
     nltk.download("punkt", quiet=True)
 
 

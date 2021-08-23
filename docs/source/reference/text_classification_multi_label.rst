@@ -47,6 +47,25 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The multi-label text classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash text_classification from_toxic
+
+To view configuration options and options for running the text classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash text_classification --help
+
+------
+
 *******
 Serving
 *******

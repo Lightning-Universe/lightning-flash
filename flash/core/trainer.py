@@ -48,8 +48,10 @@ def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
 
 
 def _defaults_from_env_vars(fn: Callable) -> Callable:
-    """Copy of ``pytorch_lightning.trainer.connectors.env_vars_connector._defaults_from_env_vars``. Required to fix
-    build error in readthedocs."""
+    """Copy of ``pytorch_lightning.trainer.connectors.env_vars_connector._defaults_from_env_vars``.
+
+    Required to fix build error in readthedocs.
+    """
 
     @wraps(fn)
     def insert_env_defaults(self, *args, **kwargs):
@@ -70,7 +72,6 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 
 
 class Trainer(PlTrainer):
-
     @_defaults_from_env_vars
     def __init__(self, *args, serve_sanity_check: bool = False, **kwargs):
         if flash._IS_TESTING:
@@ -164,9 +165,7 @@ class Trainer(PlTrainer):
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
     def _resolve_callbacks(self, model, strategy):
-        """
-        This function is used to select the `BaseFinetuning` to be used for finetuning.
-        """
+        """This function is used to select the `BaseFinetuning` to be used for finetuning."""
         if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
             raise MisconfigurationException(
                 "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
@@ -186,7 +185,8 @@ class Trainer(PlTrainer):
                 if strategy is not None:
                     rank_zero_warn(
                         "The model contains a default finetune callback. The provided {strategy} will be overriden.\n"
-                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
+                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ",
+                        UserWarning,
                     )
                 callback = model_callback
             else:
@@ -196,10 +196,8 @@ class Trainer(PlTrainer):
 
     @staticmethod
     def _merge_callbacks(old_callbacks: List, new_callbacks: List) -> List:
-        """
-        This function keeps only 1 instance of each callback type,
-        extending new_callbacks with old_callbacks
-        """
+        """This function keeps only 1 instance of each callback type, extending new_callbacks with
+        old_callbacks."""
         if len(new_callbacks) == 0:
             return old_callbacks
         new_callbacks_types = {type(c) for c in new_callbacks}
@@ -216,7 +214,7 @@ class Trainer(PlTrainer):
         return add_argparse_args(PlTrainer, *args, **kwargs)
 
     @classmethod
-    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> 'Trainer':
+    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> "Trainer":
         """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
         ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
         # the lightning trainer implementation does not support subclasses.

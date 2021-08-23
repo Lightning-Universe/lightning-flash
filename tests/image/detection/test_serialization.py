@@ -9,7 +9,6 @@ from flash.image.detection.serialization import FiftyOneDetectionLabels
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 class TestFiftyOneDetectionLabels:
-
     @staticmethod
     def test_smoke():
         serial = FiftyOneDetectionLabels()
@@ -17,7 +16,7 @@ class TestFiftyOneDetectionLabels:
 
     @staticmethod
     def test_serialize_fiftyone():
-        labels = ['class_1', 'class_2', 'class_3']
+        labels = ["class_1", "class_2", "class_3"]
         serial = FiftyOneDetectionLabels()
         filepath_serial = FiftyOneDetectionLabels(return_filepath=True)
         threshold_serial = FiftyOneDetectionLabels(threshold=0.9)
@@ -26,8 +25,7 @@ class TestFiftyOneDetectionLabels:
         sample = {
             DefaultDataKeys.PREDS: [
                 {
-                    "boxes": [torch.tensor(20), torch.tensor(30),
-                              torch.tensor(40), torch.tensor(50)],
+                    "boxes": [torch.tensor(20), torch.tensor(30), torch.tensor(40), torch.tensor(50)],
                     "labels": torch.tensor(0),
                     "scores": torch.tensor(0.5),
                 },

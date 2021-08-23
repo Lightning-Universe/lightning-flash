@@ -16,15 +16,17 @@ import warnings
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from torchmetrics import Accuracy, F1, Metric
+from pytorch_lightning import Callback
+from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
-    from transformers import BertForSequenceClassification
-    from transformers.modeling_outputs import SequenceClassifierOutput
+    from transformers import AutoModelForSequenceClassification
+    from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
@@ -43,6 +45,7 @@ class TextClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
     required_extras: str = "text"
@@ -57,6 +60,7 @@ class TextClassifier(ClassificationTask):
         learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        enable_ort: bool = False,
     ):
         self.save_hyperparameters()
 
@@ -67,33 +71,33 @@ class TextClassifier(ClassificationTask):
         os.environ["PYTHONWARNINGS"] = "ignore"
 
         super().__init__(
+            num_classes=num_classes,
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            metrics=metrics or (F1(num_classes) if multi_label else Accuracy()),
+            metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
             serializer=serializer or Labels(multi_label=multi_label),
         )
-        self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
-
+        self.enable_ort = enable_ort
+        self.model = AutoModelForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
         self.save_hyperparameters()
 
     @property
     def backbone(self):
-        # see huggingface's BertForSequenceClassification
-        return self.model.bert
+        return self.model.base_model
 
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
 
     def to_loss_format(self, x) -> torch.Tensor:
-        if isinstance(x, SequenceClassifierOutput):
+        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             x = x.logits
         return super().to_loss_format(x)
 
     def to_metrics_format(self, x) -> torch.Tensor:
-        if isinstance(x, SequenceClassifierOutput):
+        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             x = x.logits
         return super().to_metrics_format(x)
 
@@ -106,10 +110,14 @@ class TextClassifier(ClassificationTask):
         return self(batch)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         if self.hparams.multi_label:
             assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
         else:
             assert history[-1]["val_accuracy"] > 0.70, history[-1]["val_accuracy"]
+
+    def configure_callbacks(self) -> List[Callback]:
+        callbacks = super().configure_callbacks() or []
+        if self.enable_ort:
+            callbacks.append(ORTCallback())
+        return callbacks

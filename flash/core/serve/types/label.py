@@ -9,8 +9,7 @@ from flash.core.serve.types.base import BaseType
 
 @dataclass(unsafe_hash=True)
 class Label(BaseType):
-    """
-    Type specifically made for labels that are mapped to a key.
+    """Type specifically made for labels that are mapped to a key.
 
     Parameters
     ----------
@@ -30,11 +29,10 @@ class Label(BaseType):
         if self.classes is None:
             if self.path is None:
                 raise ValueError(
-                    "Must provide either classes as a list or "
-                    "path to a text file that contains classes"
+                    "Must provide either classes as a list or " "path to a text file that contains classes"
                 )
             with Path(self.path).open(mode="r") as f:
-                self.classes = tuple([item.strip() for item in f.readlines()])
+                self.classes = tuple(item.strip() for item in f.readlines())
         if isinstance(self.classes, dict):
             self._reverse_map = {}
             for key, value in self.classes.items():

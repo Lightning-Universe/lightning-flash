@@ -34,9 +34,9 @@ Here's another example with a slightly more complex model:
     :language: python
     :pyobject: load_mlp_128_256
 
-Here's a another example, which adds ``DINO`` pretrained model from PyTorch Hub to the ``IMAGE_CLASSIFIER_BACKBONES``, from `flash/image/backbones.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/backbones.py>`_:
+Here's a another example, which adds ``DINO`` pretrained model from PyTorch Hub to the ``IMAGE_CLASSIFIER_BACKBONES``, from `flash/image/classification/backbones/transformers.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/backbones/transformers.py>`_:
 
-.. literalinclude:: ../../../flash/image/backbones.py
+.. literalinclude:: ../../../flash/image/classification/backbones/transformers.py
     :language: python
     :pyobject: dino_vitb16
 

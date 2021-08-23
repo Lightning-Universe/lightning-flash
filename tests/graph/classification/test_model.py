@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest import mock
+
 import pytest
 import torch
 
 from flash import Trainer
+from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
 from flash.graph.classification import GraphClassifier
@@ -35,7 +38,7 @@ def test_smoke():
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_train(tmpdir):
     """Tests that the model can be trained on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     train_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
@@ -46,7 +49,7 @@ def test_train(tmpdir):
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_val(tmpdir):
     """Tests that the model can be validated on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     val_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
@@ -57,7 +60,7 @@ def test_val(tmpdir):
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_test(tmpdir):
     """Tests that the model can be tested on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     test_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
@@ -68,8 +71,18 @@ def test_test(tmpdir):
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_predict_dataset(tmpdir):
     """Tests that we can generate predictions from a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     data_pipe = DataPipeline(preprocess=GraphClassificationPreprocess())
-    out = model.predict(tudataset, data_source="dataset", data_pipeline=data_pipe)
+    out = model.predict(tudataset, data_source="datasets", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
+
+
+@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
+def test_cli():
+    cli_args = ["flash", "graph_classification", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

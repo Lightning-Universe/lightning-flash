@@ -24,11 +24,12 @@ from tests.helpers.utils import _IMAGE_TESTING
 
 
 @pytest.mark.parametrize(
-    "head", [
+    "head",
+    [
         pytest.param("fpn", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
         pytest.param("deeplabv3", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
         pytest.param("unet", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-    ]
+    ],
 )
 def test_semantic_segmentation_heads_registry(head):
     img = torch.rand(1, 3, 32, 32)
@@ -52,11 +53,11 @@ def test_pretrained_weights(mock_smp):
     SEMANTIC_SEGMENTATION_HEADS.get("unet")(backbone=backbone, num_classes=10, pretrained=True)
 
     kwargs = {
-        'arch': 'unet',
-        'classes': 10,
-        'encoder_name': 'resnet18',
-        'in_channels': 3,
-        "encoder_weights": "imagenet"
+        "arch": "unet",
+        "classes": 10,
+        "encoder_name": "resnet18",
+        "in_channels": 3,
+        "encoder_weights": "imagenet",
     }
     mock_smp.create_model.assert_called_with(**kwargs)
 

@@ -21,7 +21,7 @@ def test_head():
 
 
 def test_args():
-    assert args((inc, 1)) == (1, )
+    assert args((inc, 1)) == (1,)
     assert args((add, 1, 2)) == (1, 2)
     assert args(1) == ()
     assert args([1, 2, 3]) == [1, 2, 3]
@@ -65,16 +65,16 @@ def repl_list(sd):
     return (list, x)
 
 
-rule6 = RewriteRule((list, "x"), repl_list, ("x", ))
+rule6 = RewriteRule((list, "x"), repl_list, ("x",))
 
 
 def test_RewriteRule():
     # Test extraneous vars are removed, varlist is correct
-    assert rule1.vars == ("a", )
+    assert rule1.vars == ("a",)
     assert rule1._varlist == ["a"]
-    assert rule2.vars == ("a", )
+    assert rule2.vars == ("a",)
     assert rule2._varlist == ["a", "a"]
-    assert rule3.vars == ("a", )
+    assert rule3.vars == ("a",)
     assert rule3._varlist == ["a", "a"]
     assert rule4.vars == ("a", "b")
     assert rule4._varlist == ["b", "a"]
@@ -97,32 +97,13 @@ def test_RuleSet():
         {
             add: (
                 {
-                    VAR: ({
-                        VAR: ({}, [1]),
-                        1: ({}, [0])
-                    }, []),
-                    inc: ({
-                        VAR: ({
-                            inc: ({
-                                VAR: ({}, [2, 3])
-                            }, [])
-                        }, [])
-                    }, []),
+                    VAR: ({VAR: ({}, [1]), 1: ({}, [0])}, []),
+                    inc: ({VAR: ({inc: ({VAR: ({}, [2, 3])}, [])}, [])}, []),
                 },
                 [],
             ),
-            list: ({
-                VAR: ({}, [5])
-            }, []),
-            sum: ({
-                list: ({
-                    VAR: ({
-                        VAR: ({
-                            VAR: ({}, [4])
-                        }, [])
-                    }, [])
-                }, [])
-            }, []),
+            list: ({VAR: ({}, [5])}, []),
+            sum: ({list: ({VAR: ({VAR: ({VAR: ({}, [4])}, [])}, [])}, [])}, []),
         },
         [],
     )

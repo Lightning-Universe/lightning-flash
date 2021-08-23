@@ -68,24 +68,24 @@ def test_normalize():
 
 
 @pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
-def test_emb_sizes():
+def test_embedding_sizes():
     self = Mock()
     self.codes = {"category": [None, "a", "b", "c"]}
     self.cat_cols = ["category"]
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == [(4, 16)]
 
     self.codes = {}
     self.cat_cols = []
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == []
 
     self.codes = {"large": ["a"] * 100_000, "larger": ["b"] * 1_000_000}
     self.cat_cols = ["large", "larger"]
     # use __get__ to test property with mocked self
-    es = TabularClassificationData.emb_sizes.__get__(self)  # pylint: disable=E1101
+    es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == [(100_000, 17), (1_000_000, 31)]
 
 
@@ -110,7 +110,7 @@ def test_tabular_data(tmpdir):
         target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
-        assert target.shape == (1, )
+        assert target.shape == (1,)
 
 
 @pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
@@ -138,7 +138,7 @@ def test_categorical_target(tmpdir):
         target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
-        assert target.shape == (1, )
+        assert target.shape == (1,)
 
 
 @pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
@@ -154,7 +154,7 @@ def test_from_data_frame(tmpdir):
         val_data_frame=val_data_frame,
         test_data_frame=test_data_frame,
         num_workers=0,
-        batch_size=1
+        batch_size=1,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
         data = next(iter(dl))
@@ -162,7 +162,7 @@ def test_from_data_frame(tmpdir):
         target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
-        assert target.shape == (1, )
+        assert target.shape == (1,)
 
 
 @pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
@@ -181,7 +181,7 @@ def test_from_csv(tmpdir):
         val_file=str(val_csv),
         test_file=str(test_csv),
         num_workers=0,
-        batch_size=1
+        batch_size=1,
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
         data = next(iter(dl))
@@ -189,7 +189,7 @@ def test_from_csv(tmpdir):
         target = data[DefaultDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
-        assert target.shape == (1, )
+        assert target.shape == (1,)
 
 
 @pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")

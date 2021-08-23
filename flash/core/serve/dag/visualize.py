@@ -37,7 +37,7 @@ def _dag_to_graphviz(dag, dependencies, request_data, response_data, *, no_optim
         g.node(request_name, request_name, shape="oval")
         with g.subgraph(name=f"cluster_{cluster}") as c:
             c.node(task_key, task_key, shape="rectangle")
-            c.edge(task_key, task_key[:-len(".serial")])
+            c.edge(task_key, task_key[: -len(".serial")])
 
         g.edge(request_name, task_key)
 
@@ -48,13 +48,13 @@ def _dag_to_graphviz(dag, dependencies, request_data, response_data, *, no_optim
 
 
 def visualize(
-    tc: 'TaskComposition',
+    tc: "TaskComposition",
     fhandle: BytesIO = None,
     format: str = "png",
     *,
     no_optimization: bool = False,
 ):
-    """Visualize a graph"""
+    """Visualize a graph."""
     dsk = tc.pre_optimization_dsk if no_optimization else tc.dsk
     dependencies, dependents = get_deps(dsk)
     g = _dag_to_graphviz(

@@ -71,3 +71,22 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/audio_classification.py
     :language: python
     :lines: 14-
+
+------
+
+**********
+Flash Zero
+**********
+
+The audio classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash audio_classification
+
+To view configuration options and options for running the audio classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash audio_classification --help

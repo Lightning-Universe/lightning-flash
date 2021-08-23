@@ -17,6 +17,7 @@ import operator
 import types
 from importlib.util import find_spec
 from typing import Callable, List, Union
+from warnings import warn
 
 from pkg_resources import DistributionNotFound
 
@@ -27,8 +28,7 @@ except (ModuleNotFoundError, DistributionNotFound):
 
 
 def _module_available(module_path: str) -> bool:
-    """
-    Check if a path is available in your environment
+    """Check if a path is available in your environment.
 
     >>> _module_available('os')
     True
@@ -49,8 +49,7 @@ def _module_available(module_path: str) -> bool:
 
 
 def _compare_version(package: str, op, version) -> bool:
-    """
-    Compare package version with some requirements
+    """Compare package version with some requirements.
 
     >>> _compare_version("torch", operator.ge, "0.1")
     True
@@ -88,7 +87,6 @@ _CYTOOLZ_AVAILABLE = _module_available("cytoolz")
 _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
-_ASTEROID_AVAILABLE = _module_available("asteroid")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
 _SOUNDFILE_AVAILABLE = _module_available("soundfile")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
@@ -98,40 +96,68 @@ _TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
 _ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
+_ICEVISION_AVAILABLE = _module_available("icevision")
+_ICEDATA_AVAILABLE = _module_available("icedata")
+_TORCH_ORT_AVAILABLE = _module_available("torch_ort")
+
+if _PIL_AVAILABLE:
+    from PIL import Image
+else:
+
+    class MetaImage(type):
+        def __init__(cls, name, bases, dct):
+            super().__init__(name, bases, dct)
+
+            cls._Image = None
+
+        @property
+        def Image(cls):
+            warn("Mock object called due to missing PIL library. Please use \"pip install 'lightning-flash[image]'\".")
+            return cls._Image
+
+    class Image(metaclass=MetaImage):
+        pass
+
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
 
-_TEXT_AVAILABLE = all([
-    _TRANSFORMERS_AVAILABLE,
-    _ROUGE_SCORE_AVAILABLE,
-    _SENTENCEPIECE_AVAILABLE,
-    _DATASETS_AVAILABLE,
-])
+_TEXT_AVAILABLE = all(
+    [
+        _TRANSFORMERS_AVAILABLE,
+        _ROUGE_SCORE_AVAILABLE,
+        _SENTENCEPIECE_AVAILABLE,
+        _DATASETS_AVAILABLE,
+    ]
+)
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
 _VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
-_IMAGE_AVAILABLE = all([
-    _TORCHVISION_AVAILABLE,
-    _TIMM_AVAILABLE,
-    _PIL_AVAILABLE,
-    _KORNIA_AVAILABLE,
-    _PYSTICHE_AVAILABLE,
-    _SEGMENTATION_MODELS_AVAILABLE,
-])
+_IMAGE_AVAILABLE = all(
+    [
+        _TORCHVISION_AVAILABLE,
+        _TIMM_AVAILABLE,
+        _PIL_AVAILABLE,
+        _KORNIA_AVAILABLE,
+        _PYSTICHE_AVAILABLE,
+        _SEGMENTATION_MODELS_AVAILABLE,
+        _ICEVISION_AVAILABLE,
+        _ICEDATA_AVAILABLE,
+    ]
+)
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
-_AUDIO_AVAILABLE = all([_ASTEROID_AVAILABLE, _TORCHAUDIO_AVAILABLE, _SOUNDFILE_AVAILABLE, _TRANSFORMERS_AVAILABLE])
+_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _SOUNDFILE_AVAILABLE, _TRANSFORMERS_AVAILABLE])
 _GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
-    'image': _IMAGE_AVAILABLE,
-    'tabular': _TABULAR_AVAILABLE,
-    'text': _TEXT_AVAILABLE,
-    'video': _VIDEO_AVAILABLE,
-    'pointcloud': _POINTCLOUD_AVAILABLE,
-    'serve': _SERVE_AVAILABLE,
-    'audio': _AUDIO_AVAILABLE,
-    'graph': _GRAPH_AVAILABLE,
+    "image": _IMAGE_AVAILABLE,
+    "tabular": _TABULAR_AVAILABLE,
+    "text": _TEXT_AVAILABLE,
+    "video": _VIDEO_AVAILABLE,
+    "pointcloud": _POINTCLOUD_AVAILABLE,
+    "serve": _SERVE_AVAILABLE,
+    "audio": _AUDIO_AVAILABLE,
+    "graph": _GRAPH_AVAILABLE,
 }
 
 
@@ -170,9 +196,12 @@ def requires_extras(extras: Union[str, List]):
     )
 
 
+def example_requires(extras: Union[str, List[str]]):
+    return requires_extras(extras)(lambda: None)()
+
+
 def lazy_import(module_name, callback=None):
-    """Returns a proxy module object that will lazily import the given module
-    the first time it is used.
+    """Returns a proxy module object that will lazily import the given module the first time it is used.
 
     Example usage::
 
@@ -196,8 +225,7 @@ def lazy_import(module_name, callback=None):
 
 
 class LazyModule(types.ModuleType):
-    """Proxy module that lazily imports the underlying module the first time it
-    is actually used.
+    """Proxy module that lazily imports the underlying module the first time it is actually used.
 
     Args:
         module_name: the fully-qualified module name to import

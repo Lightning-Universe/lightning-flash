@@ -13,6 +13,8 @@
 # limitations under the License.
 import os
 
+import torch
+
 import flash
 from flash.core.data.utils import download_data
 from flash.image.style_transfer import StyleTransfer, StyleTransferData
@@ -26,15 +28,17 @@ datamodule = StyleTransferData.from_folders(train_folder="data/coco128/images/tr
 model = StyleTransfer(os.path.join(flash.ASSETS_ROOT, "starry_night.jpg"))
 
 # 3. Create the trainer and train the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Apply style transfer to a few images!
-predictions = model.predict([
-    "data/coco128/images/train2017/000000000625.jpg",
-    "data/coco128/images/train2017/000000000626.jpg",
-    "data/coco128/images/train2017/000000000629.jpg",
-])
+predictions = model.predict(
+    [
+        "data/coco128/images/train2017/000000000625.jpg",
+        "data/coco128/images/train2017/000000000626.jpg",
+        "data/coco128/images/train2017/000000000629.jpg",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

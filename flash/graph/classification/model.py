@@ -19,9 +19,9 @@ from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
     MessagePassing = None
@@ -29,7 +29,6 @@ else:
 
 
 class GraphBlock(nn.Module):
-
     def __init__(self, nc_input, nc_output, conv_cls, act=nn.ReLU(), **conv_kwargs):
         super().__init__()
         self.conv = conv_cls(nc_input, nc_output, **conv_kwargs)
@@ -43,7 +42,6 @@ class GraphBlock(nn.Module):
 
 
 class BaseGraphModel(nn.Module):
-
     def __init__(
         self,
         num_features: int,

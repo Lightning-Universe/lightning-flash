@@ -15,9 +15,10 @@ from typing import Callable, Dict, Tuple
 
 import torch
 from torch import nn
+from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
+from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -29,25 +30,26 @@ if _TORCHAUDIO_AVAILABLE:
 
 
 def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms for audio classification for spectrograms: resize the spectrogram,
-    convert the spectrogram and target to a tensor, and collate the batch."""
+    """The default transforms for audio classification for spectrograms: resize the spectrogram, convert the
+    spectrogram and target to a tensor, and collate the batch."""
     return {
-        "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(spectrogram_size)),
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
             ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
         ),
-        "collate": kornia_collate,
+        "post_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(spectrogram_size)),
+        "collate": default_collate,
     }
 
 
-def train_default_transforms(spectrogram_size: Tuple[int, int], time_mask_param: int,
-                             freq_mask_param: int) -> Dict[str, Callable]:
+def train_default_transforms(
+    spectrogram_size: Tuple[int, int], time_mask_param: int, freq_mask_param: int
+) -> Dict[str, Callable]:
     """During training we apply the default transforms with additional ``TimeMasking`` and ``Frequency Masking``"""
     transforms = {
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, TAudio.TimeMasking(time_mask_param=time_mask_param)),
-            ApplyToKeys(DefaultDataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param))
+            ApplyToKeys(DefaultDataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)),
         )
     }
 
