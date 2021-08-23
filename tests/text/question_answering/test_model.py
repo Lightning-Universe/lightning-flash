@@ -21,28 +21,22 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
-from flash.text.question_answering.data import (
-    QuestionAnsweringData,
-    QuestionAnsweringPostprocess,
-    QuestionAnsweringPreprocess,
-)
+from flash.text.question_answering.data import QuestionAnsweringPostprocess, QuestionAnsweringPreprocess
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
-from tests.text.question_answering.test_data import json_data
 
 # ======== Mock functions ========
 
-BATCH_SIZE = 4
-SEQUENCE_LENGTH = 128
+SEQUENCE_LENGTH = 384
 
 
 class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            "input_ids": torch.randint(1000, size=(BATCH_SIZE, SEQUENCE_LENGTH)),
-            "attention_mask": torch.randint(1, size=(BATCH_SIZE, SEQUENCE_LENGTH)),
-            "start_positions": torch.randint(1000, size=([BATCH_SIZE])),
-            "end_positions": torch.randint(1000, size=([BATCH_SIZE])),
+            "input_ids": torch.randint(1000, size=(SEQUENCE_LENGTH, )),
+            "attention_mask": torch.randint(1, size=(SEQUENCE_LENGTH, )),
+            "start_positions": torch.randint(1000, size=(1, )),
+            "end_positions": torch.randint(1000, size=(1, )),
         }
 
     def __len__(self) -> int:
@@ -61,26 +55,6 @@ def test_init_train(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
-
-
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_jit(tmpdir):
-    json_path = json_data(tmpdir)
-    dm = QuestionAnsweringData.from_json(backbone=TEST_BACKBONE, val_file=json_path, batch_size=4)
-    sample_input = next(iter(dm.val_dataloader()))
-    path = os.path.join(tmpdir, "test.pt")
-
-    model = QuestionAnsweringTask(TEST_BACKBONE)
-    model.eval()
-
-    # Huggingface only supports `torch.jit.trace`
-    model = torch.jit.trace(model, [sample_input])
-
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
-
-    out = model(sample_input)
-    assert isinstance(out, torch.Tensor)
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")

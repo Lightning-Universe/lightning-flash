@@ -31,15 +31,121 @@ import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
-from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
     import datasets
     from datasets import Dataset, DatasetDict, load_dataset
     from transformers import AutoTokenizer, DataCollatorWithPadding, default_data_collator
+
+
+class QuestionAnsweringDeserializer(Deserializer):
+
+    @requires_extras("text")
+    def __init__(
+        self,
+        backbone: str,
+        max_source_length: int = 384,
+        max_target_length: int = 30,
+        padding: Union[str, bool] = 'max_length',
+        question_column_name: str = 'question',
+        context_column_name: str = 'context',
+        answer_column_name: str = 'answer',
+        doc_stride: int = 128,
+    ):
+        super().__init__()
+        self.backbone = backbone
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
+        self.max_source_length = max_source_length
+        self.max_target_length = max_target_length
+        self.padding = padding
+
+        # Setup global pre-processing requirements
+        self._question_column_name = question_column_name
+        self._context_column_name = context_column_name
+        self._answer_column_name = answer_column_name
+        self._doc_stride = doc_stride
+
+    def _prepare_features(self, sample: Any, tokenized_sample: Any):
+        # For evaluation, we will need to convert our predictions to substrings of the context, so we keep the
+        # corresponding example_id and we will store the offset mappings.
+        tokenized_sample["example_id"] = []
+        tokenized_sample["context"] = []
+        tokenized_sample["answer"] = []
+
+        for i in range(len(tokenized_sample["input_ids"])):
+            # Grab the sequence corresponding to that example (to know what is the context and what is the question).
+            sequence_ids = tokenized_sample.sequence_ids(i)
+            context_index = 1 if self.pad_on_right else 0
+
+            # One example can give several spans, this is the index of the example containing this span of text.
+            tokenized_sample["example_id"].append(sample["id"])
+            tokenized_sample["context"].append(sample["context"])
+            if self._running_stage.evaluating:
+                tokenized_sample["answer"].append(sample["answer"])
+
+            # Set to None the offset_mapping that are not part of the context so it's easy to determine if a token
+            # position is part of the context or not.
+            tokenized_sample["offset_mapping"][i] = [(o if sequence_ids[k] == context_index else None)
+                                                     for k, o in enumerate(tokenized_sample["offset_mapping"][i])]
+
+        return tokenized_sample
+
+    def deserialize(self, sample: Dict[str, Any]) -> Tensor:
+        sample[self.question_column_name] = sample[self.question_column_name].lstrip()
+        self.pad_on_right = self.tokenizer.padding_side == "right"
+        tokenized_sample = self.tokenizer(
+            sample[self._question_column_name if self.pad_on_right else self._context_column_name],
+            sample[self._context_column_name if self.pad_on_right else self._question_column_name],
+            truncation="only_second" if self.pad_on_right else "only_first",
+            max_length=self.max_source_length,
+            stride=self.doc_stride,
+            return_overflowing_tokens=True,
+            return_offsets_mapping=True,
+            padding=self.padding
+        )
+        tokenized_sample = self._prepare_val_features(sample, tokenized_sample)
+        offset_mappings = tokenized_sample.pop("offset_mapping")
+        example_ids = tokenized_sample.pop("example_id")
+        contexts = tokenized_sample.pop("context")
+        answers = tokenized_sample.pop("answer")
+
+        tokenized_sample[DefaultDataKeys.METADATA] = []
+        for offset_mapping, example_id, context in zip(offset_mappings, example_ids, contexts):
+            tokenized_sample[DefaultDataKeys.METADATA].append({
+                "context": context,
+                "offset_mapping": offset_mapping,
+                "example_id": example_id
+            })
+
+        del offset_mappings
+        del example_ids
+        del contexts
+        del answers
+        return tokenized_sample
+
+    @property
+    def example_input(self) -> str:
+        return {
+            "id": "1",
+            "context": "this is answer one. this is context one",
+            "question": "this is question one",
+            "answer": {
+                "text": ["this is answer one"],
+                "answer_start": [0]
+            }
+        }
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class QuestionAnsweringDataSource(DataSource):
@@ -65,7 +171,6 @@ class QuestionAnsweringDataSource(DataSource):
         self.padding = padding
 
         # Setup global pre-processing requirements
-        #   pad_on_right, doc_stride, etc. are remaining
         self._question_column_name = question_column_name
         self._context_column_name = context_column_name
         self._answer_column_name = answer_column_name
@@ -76,8 +181,6 @@ class QuestionAnsweringDataSource(DataSource):
 
         samples[self.question_column_name] = [q.lstrip() for q in samples[self.question_column_name]]
 
-        # Setup the tokenizing call here
-        #   tokenized_samples = self.tokenizer(...params)
         self.pad_on_right = self.tokenizer.padding_side == "right"
 
         tokenized_samples = self.tokenizer(
@@ -557,7 +660,16 @@ class QuestionAnsweringPreprocess(Preprocess):
                 )
             },
             default_data_source="dict",
-            deserializer=TextDeserializer(backbone, max_source_length)
+            deserializer=QuestionAnsweringDeserializer(
+                backbone=backbone,
+                max_source_length=max_source_length,
+                max_target_length=max_target_length,
+                padding=padding,
+                question_column_name=question_column_name,
+                context_column_name=context_column_name,
+                answer_column_name=answer_column_name,
+                doc_stride=doc_stride,
+            )
         )
 
         self.set_state(QuestionAnsweringBackboneState(self.backbone))

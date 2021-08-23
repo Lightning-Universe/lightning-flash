@@ -222,20 +222,17 @@ class QuestionAnsweringTask(Task):
         return all_predictions
 
     def forward(self, batch: Any) -> Any:
-        outputs = self.model(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"])
+        metadata = batch.pop(DefaultDataKeys.METADATA)
+        outputs = self.model(**batch)
         start_logits = outputs.start_logits
         end_logits = outputs.end_logits
 
-        generated_answers = self._generate_answers(start_logits, end_logits, batch[DefaultDataKeys.METADATA])
+        generated_answers = self._generate_answers(start_logits, end_logits, metadata)
+        batch[DefaultDataKeys.METADATA] = metadata
         return generated_answers
 
     def training_step(self, batch: Any, batch_idx: int) -> Tensor:
-        outputs = self.model(
-            input_ids=batch["input_ids"],
-            attention_mask=batch["attention_mask"],
-            start_positions=batch["start_positions"],
-            end_positions=batch["end_positions"]
-        )
+        outputs = self.model(**batch)
         loss = outputs.loss
         self.log("train_loss", loss)
         return loss
