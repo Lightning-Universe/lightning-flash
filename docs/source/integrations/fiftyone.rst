@@ -1,10 +1,12 @@
+.. _fiftyone:
+
 ########
 FiftyOne
 ########
 
 We have collaborated with the team at
-`Voxel51 <https://voxel51.com>`_ to integrate their tool,
-`FiftyOne <https://fiftyone.ai>`_, into Lightning Flash.
+`Voxel51 <https://voxel51.com>`__ to integrate their tool,
+`FiftyOne <https://fiftyone.ai>`__, into Lightning Flash.
 
 FiftyOne is an open-source tool for building high-quality
 datasets and computer vision models. The FiftyOne API and App enable you to

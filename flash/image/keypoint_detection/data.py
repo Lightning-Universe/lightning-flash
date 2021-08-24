@@ -27,6 +27,8 @@ from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
 if _ICEVISION_AVAILABLE:
     from icevision.parsers import COCOKeyPointsParser
+else:
+    COCOKeyPointsParser = object
 
 
 class KeypointDetectionPreprocess(Preprocess):

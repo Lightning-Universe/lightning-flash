@@ -29,6 +29,7 @@ from torch.optim.optimizer import Optimizer
 class LAMB(Optimizer):
     r"""Extends ADAM in pytorch to incorporate LAMB algorithm from the paper:
     `Large batch optimization for deep learning: Training BERT in 76 minutes <https://arxiv.org/pdf/1904.00962.pdf>`_.
+
     Args:
         params (iterable): iterable of parameters to optimize or dicts defining
             parameter groups
@@ -40,8 +41,9 @@ class LAMB(Optimizer):
         exclude_from_layer_adaptation (bool, optional): layers which do not need LAMB
             layer adaptation (default: False)
         amsgrad (boolean, optional): whether to use the AMSGrad variant of this
-            algorithm from the paper `On the Convergence of Adam and Beyond`_
+            algorithm from the paper `On the Convergence of Adam and Beyond <https://arxiv.org/pdf/1904.09237.pdf>`_
             (default: False)
+
     Example:
         >>> model = nn.Linear(10, 1)
         >>> optimizer = LAMB(model.parameters(), lr=0.1)
