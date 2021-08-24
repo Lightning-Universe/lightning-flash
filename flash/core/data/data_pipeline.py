@@ -407,7 +407,7 @@ class DataPipeline:
 
                 if isinstance(dataloader, DataLoader):
                     try:
-                        dataloader = _PatchDataLoader(dataloader, stage)
+                        dataloader = _PatchDataLoader(dataloader, _STAGES_PREFIX[stage])
                         dataloader.patch(model)
                     except TypeError:
                         dataloader = _PatchDataLoader(dataloader)
@@ -541,7 +541,7 @@ class DataPipeline:
 
             if isinstance(dataloader, DataLoader):
                 try:
-                    dataloader = _PatchDataLoader(dataloader, stage)
+                    dataloader = _PatchDataLoader(dataloader, _STAGES_PREFIX[stage])
                     dataloader.patch(model)
                 except TypeError:
                     dataloader = _PatchDataLoader(dataloader)
