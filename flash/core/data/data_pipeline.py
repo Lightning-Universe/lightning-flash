@@ -416,7 +416,7 @@ class DataPipeline:
                 if not was_seq:
                     dataloader = dataloader[0]
 
-                self._patch_dataloader(model, dataloader, stage)
+                dataloader = self._patch_dataloader(model, dataloader, stage)
 
                 self._set_loader(model, whole_attr_name, dataloader)
 
@@ -545,7 +545,7 @@ class DataPipeline:
             if not was_seq:
                 dataloader = dataloader[0]
 
-            self._patch_dataloader(model, dataloader, stage)
+            dataloader = self._patch_dataloader(model, dataloader, stage)
 
             self._set_loader(model, whole_attr_name, dataloader)
 
