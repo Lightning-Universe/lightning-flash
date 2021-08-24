@@ -117,32 +117,27 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
-    - name: Install MacOS dependencies
-      if: runner.os == 'macOS'
-      run: |
-        pip install wheel
-
     - name: Install dependencies
       run: |
         python --version
         pip --version
         pip install torch>=1.8
-        pip install '.[${{ join(matrix.topic,',') }}]' --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install '.[test]' --pre --upgrade
+        pip install '.[${{ join(matrix.topic,',') }}]' --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install '.[test]' --upgrade
         pip list
       shell: bash
 
     - name: Install serve test dependencies
       if: matrix.topic[0] == 'serve'
       run: |
-        pip install '.[all]' --pre --upgrade
+        pip install '.[all]' --upgrade
 
     - name: Install audio test dependencies
       if: matrix.topic[0] == 'audio'
       run: |
         sudo apt-get install libsndfile1
         pip install matplotlib
-        pip install '.[audio,image]' --pre --upgrade
+        pip install '.[audio,image]' --upgrade
 
     - name: Cache datasets
       uses: actions/cache@v2
