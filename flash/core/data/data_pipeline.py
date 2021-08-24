@@ -406,7 +406,10 @@ class DataPipeline:
                     dataloader = dataloader[0]
 
                 if isinstance(dataloader, DataLoader):
-                    dataloader = _PatchDataLoader(dataloader)
+                    try:
+                        dataloader = _PatchDataLoader(dataloader, stage)
+                    except TypeError:
+                        dataloader = _PatchDataLoader(dataloader)
 
                 self._set_loader(model, whole_attr_name, dataloader)
 
@@ -536,7 +539,10 @@ class DataPipeline:
                 dataloader = dataloader[0]
 
             if isinstance(dataloader, DataLoader):
-                dataloader = _PatchDataLoader(dataloader)
+                try:
+                    dataloader = _PatchDataLoader(dataloader, stage)
+                except TypeError:
+                    dataloader = _PatchDataLoader(dataloader)
 
             self._set_loader(model, whole_attr_name, dataloader)
 
