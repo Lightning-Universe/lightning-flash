@@ -11,11 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
-import inspect
 import os
 import platform
-from abc import ABCMeta
 from typing import (
     Any,
     Callable,
@@ -56,67 +53,7 @@ else:
     SampleCollection = None
 
 
-class AutoDocMeta(ABCMeta):
-    def __new__(mcs, name, bases, dct):
-        if name != "DataModule" and os.getenv("BUILDING_DOCS", "0") == "1":
-            base = bases[0]
-
-            preprocess_cls = dct.get("preprocess_cls", None)
-            if preprocess_cls is None:
-                preprocess_cls = base.preprocess_cls
-
-            class PatchedPreprocess(preprocess_cls):
-                """TODO: This is a hack to prevent default transforms from being created"""
-
-                @staticmethod
-                def _resolve_transforms(_):
-                    return None
-
-            preprocess = PatchedPreprocess()
-            data_source_names = preprocess.available_data_sources()
-            data_sources = [preprocess.data_source_of_name(data_source) for data_source in data_source_names]
-
-            entries = {}
-            for data_source in data_sources:
-                entries.update(**(data_source.get_doc_entries(name) or {}))
-
-            methods = dict(inspect.getmembers(base, lambda x: getattr(x, "__name__", "") in entries))
-
-            methods.update(filter(lambda x: x[0] in entries, dct.items()))
-
-            for method_name, docstring in entries.items():
-                method = methods[method_name]
-
-                if isinstance(method, classmethod):
-                    old_doc = method.__func__.__doc__
-                else:
-                    old_doc = method.__doc__
-                old_doc = old_doc or ""
-
-                # print(old_doc)
-
-                token = "{autodoc}"
-
-                if token in old_doc:
-                    index = old_doc.index(token) + len(token)
-                    new_doc = docstring + "\n\n        .. {autodoc}\n\n" + old_doc[index:]
-
-                    if isinstance(method, classmethod):
-                        method.__func__.__doc__ = new_doc
-                    else:
-
-                        @functools.wraps(method)
-                        def wrapper(*args, **kwargs):
-                            return method(*args, **kwargs)
-
-                        wrapper.__doc__ = new_doc
-                        dct[method_name] = wrapper
-
-        data_module = ABCMeta.__new__(mcs, name, bases, dct)
-        return data_module
-
-
-class DataModule(pl.LightningDataModule, metaclass=AutoDocMeta):
+class DataModule(pl.LightningDataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
     :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`,
     :class:`~flash.core.data.process.Postprocess`, and a :class:`~flash.core.data.callback.BaseDataFetcher`.
@@ -640,8 +577,6 @@ class DataModule(pl.LightningDataModule, metaclass=AutoDocMeta):
         :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
-        .. {autodoc}
-
         Args:
             train_folder: The folder containing the train data.
             val_folder: The folder containing the validation data.
@@ -715,8 +650,6 @@ class DataModule(pl.LightningDataModule, metaclass=AutoDocMeta):
         using the :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data.data_source.DefaultDataSources.FILES` from the passed or constructed
         :class:`~flash.core.data.process.Preprocess`.
-
-        .. {autodoc}
 
         Args:
             train_files: A sequence of files to use as the train inputs.

@@ -15,16 +15,14 @@ import importlib
 import os
 import shutil
 import sys
-import textwrap
 from importlib.util import module_from_spec, spec_from_file_location
 
 import pt_lightning_sphinx_theme
+from jinja2 import Environment, FileSystemLoader
 
 _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, "..", "..")
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
-
-os.environ["BUILDING_DOCS"] = "1"
 
 try:
     from flash import __about__ as about
@@ -99,6 +97,9 @@ data_modules = [
     ("flash.image.classification.data", "ImageClassificationData"),
 ]
 
+env = Environment(loader=FileSystemLoader("./_templates/data"))
+base_template = template = env.get_template("base.rst")
+
 for data_module_path, data_module_name in data_modules:
     data_module = getattr(importlib.import_module(data_module_path), data_module_name)
 
@@ -110,33 +111,11 @@ for data_module_path, data_module_name in data_modules:
             return None
 
     preprocess = PatchedPreprocess()
-    data_sources = [preprocess.data_source_of_name(data_source) for data_source in preprocess.available_data_sources()]
+    data_sources = {
+        data_source: preprocess.data_source_of_name(data_source) for data_source in preprocess.available_data_sources()
+    }
 
-    entries = {}
-    for data_source in data_sources:
-        entries.update(**(data_source.get_doc_entries(data_module_name) or {}))
-
-    lines = [
-        "************\n",
-        "Loading Data\n",
-        "************\n",
-        "\n",
-        f"This section lists all of the ways you can create the {data_module_name} with your own data.\n",
-        "\n",
-    ]
-
-    for constructor, docstring in sorted(entries.items(), key=lambda x: x[0]):
-        lines.append(constructor + "\n")
-        lines.append("_" * len(constructor) + "\n")
-        lines.append("\n")
-
-        if docstring.startswith("\n"):
-            docstring = docstring[1:]
-
-        for line in textwrap.dedent(docstring).rstrip().split("\n"):
-            lines.append(line + "\n")
-
-        lines.append("\n")
+    lines = base_template.render(data_module=data_module_name, data_sources=data_sources)
 
     with open(os.path.join(generated_dir, f"{data_module_name}.rst"), "w") as f:
         f.writelines(lines)

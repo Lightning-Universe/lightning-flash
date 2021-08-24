@@ -215,19 +215,6 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     sets from the hooks.
     """
 
-    def get_doc_entries(self, datamodule: str) -> Optional[Dict[str, str]]:
-        """Return a dictionary mapping supported commands (e.g. ``from_datasets``) to restructured text strings to
-        be inserted into the documentation.
-
-        Args:
-            datamodule: The name of the datamodule that this ``DataSource`` will be used with. Use this to customize
-                examples.
-
-        Returns:
-            A dictionary mapping command name to the restructured text to be included in the docs or ``None`` to omit
-            this ``DataSource``.
-        """
-
     @staticmethod
     def load_data(
         data: DATA_TYPE,
@@ -373,24 +360,6 @@ class DatasetDataSource(DataSource[Dataset]):
             :class:`~flash.core.data.data_source.LabelsState`.
     """
 
-    def get_doc_entries(self, datamodule: str) -> Optional[Dict[str, str]]:
-        return {
-            "from_datasets": f"""
-        Construct the {datamodule} from the given datasets for each stage.
-
-        Example::
-
-            from torch.utils.data.dataset import Dataset
-
-            train_dataset: Dataset = ...
-
-            datamodule = {datamodule}.from_datasets(
-                train_dataset = train_dataset,
-                ...
-            )
-        """
-        }
-
     def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
         if isinstance(sample, tuple) and len(sample) == 2:
             return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
@@ -457,69 +426,6 @@ class PathsDataSource(SequenceDataSource):
 
         self.extensions = extensions
         self.loader = loader
-
-    def get_doc_entries(self, datamodule: str) -> Optional[Dict[str, str]]:
-        extensions = self.extensions or [""]
-
-        if self.extensions:
-            supported_extensions = f"The supported file extensions are: {', '.join(self.extensions)}."
-        else:
-            supported_extensions = ""
-
-        return {
-            "from_files": f"""
-        Construct the {datamodule} from lists of files and corresponding lists of targets.
-
-        {supported_extensions}
-
-        Example::
-
-            train_files = ["file1{extensions[0]}", "file2{extensions[0]}", "file3{extensions[0]}", ...]
-            train_targets = [0, 1, 0, ...
-
-            datamodule = {datamodule}.from_files(
-                train_dataset = train_dataset,
-                ...
-            )
-        """,
-            "from_folders": f"""
-        Construct the {datamodule} from folders.
-
-        {supported_extensions}
-
-        For train, test, and val data, the folders are expected to contain a sub-folder for each class.
-        Here's the required structure:
-
-        .. code-block::
-
-            train_folder
-            ├── class_1
-            │   ├── file1{extensions[0]}
-            │   ├── file2{extensions[0]}
-            │   ...
-            └── class_2
-                ├── file1{extensions[0]}
-                ├── file2{extensions[0]}
-                ...
-
-        For prediction, the folder is expected to contain the files for inference, like this:
-
-        .. code-block::
-
-            predict_folder
-            ├── file1{extensions[0]}
-            ├── file2{extensions[0]}
-            ...
-
-        Example::
-
-            datamodule = {datamodule}.from_folders(
-                train_folder = "./train_folder",
-                predict_folder = "./predict_folder",
-                ...
-            )
-        """,
-        }
 
     @staticmethod
     def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
