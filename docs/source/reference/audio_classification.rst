@@ -90,3 +90,7 @@ To view configuration options and options for running the audio classifier with 
 .. code-block:: bash
 
     flash audio_classification --help
+
+------
+
+.. include:: generated/AudioClassificationData.rst

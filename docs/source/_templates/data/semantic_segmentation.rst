@@ -1,18 +1,4 @@
-{% macro render_subsection(title) -%}
-{{ title }}
-{{ '_' * title|length }}
-
-{{ caller() }}
-{%- endmacro %}
-************
-Loading Data
-************
-
-This section details the available ways to load your own data into the {{ data_module }}.
-
-{% if 'folders' in data_sources %}
-{% call render_subsection('from_folders') %}
-
+{% extends "base.rst" %}
 {% block from_folders %}
 Construct the {{ data_module }} from folders.
 
@@ -23,17 +9,17 @@ The supported file extensions are: {{ data_sources['folders'].extensions|join(',
 {% set extension = '' %}
 {% endif %}
 
-For train, test, and val data, the folders are expected to contain a sub-folder for each class.
+For train, test, and val data, we expect a folder containing inputs and another folder containing the masks.
 Here's the required structure:
 
 .. code-block::
 
     train_folder
-    ├── class_1
+    ├── inputs
     │   ├── file1{{ extension }}
     │   ├── file2{{ extension }}
     │   ...
-    └── class_2
+    └── masks
         ├── file1{{ extension }}
         ├── file2{{ extension }}
         ...
@@ -50,18 +36,14 @@ For prediction, the folder is expected to contain the files for inference, like 
 Example::
 
     data_module = {{ data_module_raw }}.from_folders(
-        train_folder = "./train_folder",
+        train_folder = "./train_folder/inputs",
+        train_target_folder = "./train_folder/masks",
         predict_folder = "./predict_folder",
         ...
     )
 {% endblock %}
-{% endcall %}
-{% endif %}
-{% if 'files' in data_sources %}
-{% call render_subsection('from_files') %}
-
 {% block from_files %}
-Construct the {{ data_module }} from lists of files and corresponding lists of targets.
+Construct the {{ data_module }} from lists of input images and corresponding list of target images.
 
 {% if data_sources['files'].extensions is defined %}
 The supported file extensions are: {{ data_sources['files'].extensions|join(', ') }}.
@@ -73,7 +55,7 @@ The supported file extensions are: {{ data_sources['files'].extensions|join(', '
 Example::
 
     train_files = ["file1{{ extension }}", "file2{{ extension }}", "file3{{ extension }}", ...]
-    train_targets = [0, 1, 0, ...]
+    train_targets = ["mask1{{ extension }}", "mask2{{ extension }}", "mask3{{ extension }}", ...]
 
     datamodule = {{ data_module_raw }}.from_files(
         train_files = train_files,
@@ -81,24 +63,10 @@ Example::
         ...
     )
 {% endblock %}
-{% endcall %}
-{% endif %}
-{% if 'datasets' in data_sources %}
-{% call render_subsection('from_datasets') %}
-
 {% block from_datasets %}
-Construct the {{ data_module }} from the given datasets for each stage.
+{{ super() }}
 
-Example::
+.. note::
 
-    from torch.utils.data.dataset import Dataset
-
-    train_dataset: Dataset = ...
-
-    datamodule = {{ data_module_raw }}.from_datasets(
-        train_dataset = train_dataset,
-        ...
-    )
+    The ``__getitem__`` of your datasets should return a dictionary with ``"input"`` and ``"target"`` keys which map to the input and target images as tensors.
 {% endblock %}
-{% endcall %}
-{% endif %}

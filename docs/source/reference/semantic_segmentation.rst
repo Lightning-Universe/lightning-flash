@@ -64,6 +64,9 @@ To view configuration options and options for running the semantic segmentation 
 
     flash semantic_segmentation --help
 
+------
+
+.. include:: generated/SemanticSegmentationData.rst
 
 ------
 
