@@ -1,3 +1,9 @@
+{% macro render_subsection(title) -%}
+{{ title }}
+{{ '_' * title|length }}
+
+{{ caller() }}
+{%- endmacro %}
 ************
 Loading Data
 ************
@@ -5,8 +11,7 @@ Loading Data
 This section details the available ways to load your own data into the {{ data_module }}.
 
 {% if 'folders' in data_sources %}
-from_folders
-____________
+{% call render_subsection('from_folders') %}
 
 {% block from_folders %}
 Construct the {{ data_module }} from folders.
@@ -44,16 +49,16 @@ For prediction, the folder is expected to contain the files for inference, like 
 
 Example::
 
-    data_module = {{ data_module }}.from_folders(
+    data_module = {{ data_module_raw }}.from_folders(
         train_folder = "./train_folder",
         predict_folder = "./predict_folder",
         ...
     )
 {% endblock %}
+{% endcall %}
 {% endif %}
 {% if 'files' in data_sources %}
-from_files
-__________
+{% call render_subsection('from_files') %}
 
 {% block from_files %}
 Construct the {{ data_module }} from lists of files and corresponding lists of targets.
@@ -70,15 +75,15 @@ Example::
     train_files = ["file1{{ extension }}", "file2{{ extension }}", "file3{{ extension }}", ...]
     train_targets = [0, 1, 0, ...]
 
-    datamodule = {datamodule}.from_files(
+    datamodule = {{ data_module_raw }}.from_files(
         train_dataset = train_dataset,
         ...
     )
 {% endblock %}
+{% endcall %}
 {% endif %}
 {% if 'datasets' in data_sources %}
-from_datasets
-_____________
+{% call render_subsection('from_datasets') %}
 
 {% block from_datasets %}
 Construct the {{ data_module }} from the given datasets for each stage.
@@ -89,9 +94,10 @@ Example::
 
     train_dataset: Dataset = ...
 
-    datamodule = {{ data_module }}.from_datasets(
+    datamodule = {{ data_module_raw }}.from_datasets(
         train_dataset = train_dataset,
         ...
     )
 {% endblock %}
+{% endcall %}
 {% endif %}

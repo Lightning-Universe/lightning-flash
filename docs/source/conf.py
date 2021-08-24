@@ -115,7 +115,11 @@ for data_module_path, data_module_name in data_modules:
         data_source: preprocess.data_source_of_name(data_source) for data_source in preprocess.available_data_sources()
     }
 
-    lines = base_template.render(data_module=data_module_name, data_sources=data_sources)
+    lines = base_template.render(
+        data_module=f":class:`~{data_module_path}.{data_module_name}`",
+        data_module_raw=data_module_name,
+        data_sources=data_sources,
+    )
 
     with open(os.path.join(generated_dir, f"{data_module_name}.rst"), "w") as f:
         f.writelines(lines)
