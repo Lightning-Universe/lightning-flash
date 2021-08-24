@@ -132,7 +132,8 @@ class ImageClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """{autodoc}
+        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given pandas
+        ``DataFrame`` objects.
 
         Args:
             input_field: The field (column) in the pandas ``DataFrame`` to use for the input.
@@ -228,7 +229,10 @@ class ImageClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """{autodoc}
+        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
+        files using the :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
+        :class:`~flash.core.data.process.Preprocess`.
 
         Args:
             input_field: The field (column) in the CSV file to use for the input.
