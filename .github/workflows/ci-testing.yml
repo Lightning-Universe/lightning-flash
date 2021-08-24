@@ -117,6 +117,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
+    - name: Install MacOS dependencies
+      if: runner.os == 'macOS'
+      run: |
+        pip install wheel
+
     - name: Install dependencies
       run: |
         python --version
