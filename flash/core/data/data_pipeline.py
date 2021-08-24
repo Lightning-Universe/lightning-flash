@@ -340,6 +340,7 @@ class DataPipeline:
                 dataloader.patch(model)
             else:
                 dataloader = _PatchDataLoader(dataloader)
+        return dataloader
 
     @staticmethod
     def _set_loader(model: "Task", loader_name: str, new_loader: DataLoader) -> None:
