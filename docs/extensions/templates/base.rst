@@ -4,9 +4,6 @@
 
 {{ caller() }}
 {%- endmacro %}
-************
-Loading Data
-************
 
 This section details the available ways to load your own data into the {{ data_module }}.
 

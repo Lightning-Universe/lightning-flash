@@ -21,6 +21,7 @@ import pt_lightning_sphinx_theme
 _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, "..", "..")
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
+sys.path.insert(0, os.path.abspath(os.path.join(_PATH_HERE, "..", "extensions")))
 
 
 def _load_py_module(fname, pkg="flash"):
@@ -88,10 +89,6 @@ os.makedirs(generated_dir, exist_ok=True)
 with open(os.path.join(generated_dir, "providers.rst"), "w") as f:
     f.writelines(sorted(lines, key=str.casefold))
 
-# -- Generate data docs ------------------------------------------------------
-
-_load_py_module("render_data.py", "docs/source")
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -114,6 +111,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_paramlinks",
     "sphinx_togglebutton",
+    "autodatasources",
 ]
 
 # autodoc: Default to members and undoc-members

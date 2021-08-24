@@ -79,7 +79,6 @@ docs/api/
 docs/notebooks/
 docs/source/api/generated/
 docs/source/integrations/generated/
-docs/source/reference/generated/
 docs/source/generated/
 
 # PyBuilder
