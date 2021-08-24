@@ -604,15 +604,6 @@ class DataModule(pl.LightningDataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_folders(
-                train_folder="train_folder",
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
         """
         return cls.from_data_source(
             DefaultDataSources.FOLDERS,
@@ -690,16 +681,6 @@ class DataModule(pl.LightningDataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_files(
-                train_files=["image_1.png", "image_2.png", "image_3.png"],
-                train_targets=[1, 0, 1],
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
         """
         return cls.from_data_source(
             DefaultDataSources.FILES,

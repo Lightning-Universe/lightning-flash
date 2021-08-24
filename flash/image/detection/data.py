@@ -39,6 +39,9 @@ if _ICEVISION_AVAILABLE:
     from icevision.parsers import COCOBBoxParser, Parser, VIABBoxParser, VOCBBoxParser
     from icevision.utils import ImgSize
 else:
+    COCOBBoxParser = object
+    VIABBoxParser = object
+    VOCBBoxParser = object
     Parser = object
 
 
