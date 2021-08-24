@@ -14,7 +14,7 @@
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
@@ -29,6 +29,7 @@ from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
 
 if TYPE_CHECKING:
     from flash.core.model import Task
@@ -332,6 +333,15 @@ class DataPipeline:
         return dataloader, attr_name
 
     @staticmethod
+    def _patch_dataloader(model: "Task", dataloader: Union[Callable, DataLoader], stage: RunningStage):
+        if isinstance(dataloader, DataLoader):
+            if _PL_GREATER_EQUAL_1_4_3:
+                dataloader = _PatchDataLoader(dataloader, _STAGES_PREFIX[stage])
+                dataloader.patch(model)
+            else:
+                dataloader = _PatchDataLoader(dataloader)
+
+    @staticmethod
     def _set_loader(model: "Task", loader_name: str, new_loader: DataLoader) -> None:
         """This function is used to set the loader to model and/or datamodule."""
         *intermediates, final_name = loader_name.split(".")
@@ -405,12 +415,7 @@ class DataPipeline:
                 if not was_seq:
                     dataloader = dataloader[0]
 
-                if isinstance(dataloader, DataLoader):
-                    try:
-                        dataloader = _PatchDataLoader(dataloader, _STAGES_PREFIX[stage])
-                        dataloader.patch(model)
-                    except TypeError:
-                        dataloader = _PatchDataLoader(dataloader)
+                self._patch_dataloader(model, dataloader, stage)
 
                 self._set_loader(model, whole_attr_name, dataloader)
 
@@ -539,12 +544,7 @@ class DataPipeline:
             if not was_seq:
                 dataloader = dataloader[0]
 
-            if isinstance(dataloader, DataLoader):
-                try:
-                    dataloader = _PatchDataLoader(dataloader, _STAGES_PREFIX[stage])
-                    dataloader.patch(model)
-                except TypeError:
-                    dataloader = _PatchDataLoader(dataloader)
+            self._patch_dataloader(dataloader, stage)
 
             self._set_loader(model, whole_attr_name, dataloader)
 
