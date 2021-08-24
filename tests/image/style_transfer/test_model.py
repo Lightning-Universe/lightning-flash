@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import re
 from unittest import mock
 
 import pytest
+import torch
 
 from flash.__main__ import main
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
@@ -40,25 +42,24 @@ def test_style_transfer_task_import():
         StyleTransfer()
 
 
-# TODO: Fix this
-# @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-# def test_jit(tmpdir):
-#     path = os.path.join(tmpdir, "test.pt")
-#
-#     model = StyleTransfer()
-#     model.eval()
-#
-#     model.loss_fn = None
-#     model.perceptual_loss = None  # TODO: Document this
-#
-#     model = torch.jit.trace(model, torch.rand(1, 3, 32, 32))  # torch.jit.script doesn't work with pystiche
-#
-#     torch.jit.save(model, path)
-#     model = torch.jit.load(path)
-#
-#     out = model(torch.rand(1, 3, 32, 32))
-#     assert isinstance(out, torch.Tensor)
-#     assert out.shape == torch.Size([1, 3, 32, 32])
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_jit(tmpdir):
+    path = os.path.join(tmpdir, "test.pt")
+
+    model = StyleTransfer()
+    model.eval()
+
+    model.loss_fn = None
+    model.perceptual_loss = None  # TODO: Document this
+
+    model = torch.jit.trace(model, torch.rand(1, 3, 32, 32))  # torch.jit.script doesn't work with pystiche
+
+    torch.jit.save(model, path)
+    model = torch.jit.load(path)
+
+    out = model(torch.rand(1, 3, 32, 32))
+    assert isinstance(out, torch.Tensor)
+    assert out.shape == torch.Size([1, 3, 32, 32])
 
 
 @pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
