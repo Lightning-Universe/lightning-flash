@@ -44,7 +44,7 @@ from flash.core.utilities.imports import (
     requires,
     requires_extras,
 )
-from flash.image.data import ImageDeserializer
+from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, train_default_transforms
 
@@ -64,9 +64,7 @@ else:
 if _TORCHVISION_AVAILABLE:
     import torchvision
     import torchvision.transforms.functional as FT
-    from torchvision.datasets.folder import default_loader, has_file_allowed_extension, IMG_EXTENSIONS
-else:
-    IMG_EXTENSIONS = None
+    from torchvision.datasets.folder import default_loader, has_file_allowed_extension
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
@@ -86,7 +84,6 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
 
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
-    @requires_extras("image")
     def __init__(self):
         super().__init__(IMG_EXTENSIONS)
 
@@ -168,7 +165,6 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
 
 class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
-    @requires_extras("image")
     def __init__(self, label_field: str = "ground_truth"):
         super().__init__(label_field=label_field)
         self._fo_dataset_name = None
@@ -222,7 +218,6 @@ class SemanticSegmentationDeserializer(ImageDeserializer):
 
 
 class SemanticSegmentationPreprocess(Preprocess):
-    @requires_extras("image")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
