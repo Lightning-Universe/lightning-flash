@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
+import os
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
@@ -31,9 +32,10 @@ class TemplateLoader:
         self.templates[name] = content
 
 
+_PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 TEMPLATE_LOADER = TemplateLoader()
 ENVIRONMENT = Environment(
-    loader=ChoiceLoader([FileSystemLoader("extensions/templates"), FunctionLoader(TEMPLATE_LOADER)])
+    loader=ChoiceLoader([FileSystemLoader(os.path.join(_PATH_HERE, "templates")), FunctionLoader(TEMPLATE_LOADER)])
 )
 
 
