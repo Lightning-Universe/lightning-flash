@@ -66,9 +66,7 @@ TUTORIAL_LIST_START = """
    <div id="tutorial-cards">
    <div class="list">
 
-.. Add tutorial cards below this line
-
-.. Learning PyTorch
+.. Tutorial cards below this line
 
 """
 
