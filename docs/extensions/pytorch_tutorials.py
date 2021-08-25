@@ -102,14 +102,14 @@ class CustomCardItemDirective(SphinxDirective):
 CARD_TEMPLATE = """
 .. raw:: html
 
-    <div class="col-md-12 tutorials-cardnode-container" data-tags={tags}>
-    <div class="cardnode tutorials-cardnode">
+    <div class="col-md-12 tutorials-card-container" data-tags={tags}>
+    <div class="card tutorials-card">
     <a href="{link}">
-    <div class="cardnode-body">
-    <div class="cardnode-title-container">
+    <div class="card-body">
+    <div class="card-title-container">
         <h4>{header}</h4>
     </div>
-    <p class="cardnode-summary">{card_description}</p>
+    <p class="card-summary">{card_description}</p>
     <p class="tags">{tags}</p>
     <div class="tutorials-image">{image}</div>
     </div>
