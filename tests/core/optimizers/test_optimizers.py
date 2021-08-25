@@ -12,17 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
+import torch
 from torch import nn
 
 from flash.core.optimizers import LAMB, LARS, LinearWarmupCosineAnnealingLR
 
 
-@pytest.mark.parametrize("optim_fn, lr", [(LARS, 0.1), (LAMB, 1e-3)])
-def test_optim_call(tmpdir, optim_fn, lr):
+@pytest.mark.parametrize(
+    "optim_fn, lr, kwargs",
+    [
+        (LARS, 0.1, {}),
+        (LARS, 0.1, {"weight_decay": 0.001}),
+        (LARS, 0.1, {"momentum": 0.9}),
+        (LAMB, 1e-3, {}),
+        (LAMB, 1e-3, {"amsgrad": True}),
+        (LAMB, 1e-3, {"weight_decay": 0.001}),
+    ],
+)
+def test_optim_call(tmpdir, optim_fn, lr, kwargs):
     layer = nn.Linear(10, 1)
-    optimizer = optim_fn(layer.parameters(), lr=lr)
+    optimizer = optim_fn(layer.parameters(), lr=lr, **kwargs)
 
     for _ in range(10):
+        dummy_input = torch.rand(1, 10)
+        dummy_input.requires_grad = True
+        result = layer(dummy_input)
+        result.backward()
         optimizer.step()
 
 
@@ -34,5 +49,9 @@ def test_optim_with_scheduler(tmpdir, optim_fn, lr):
     scheduler = LinearWarmupCosineAnnealingLR(optimizer, warmup_epochs=2, max_epochs=max_epochs)
 
     for _ in range(max_epochs):
+        dummy_input = torch.rand(1, 10)
+        dummy_input.requires_grad = True
+        result = layer(dummy_input)
+        result.backward()
         optimizer.step()
         scheduler.step()

@@ -48,14 +48,25 @@ _____________________
     ~flash.core.finetuning.NoFreeze
     ~flash.core.finetuning.UnfreezeMilestones
 
-flash.core.integration.fiftyone
-_______________________________
+flash.core.integrations.fiftyone
+________________________________
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
     ~flash.core.integrations.fiftyone.utils.visualize
+
+flash.core.integrations.icevision
+_________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.integrations.icevision.transforms.IceVisionTransformAdapter
+    ~flash.core.integrations.icevision.transforms.default_transforms
+    ~flash.core.integrations.icevision.transforms.train_default_transforms
 
 flash.core.model
 ________________

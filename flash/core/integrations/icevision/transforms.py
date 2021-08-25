@@ -174,7 +174,7 @@ def from_icevision_record(record: "BaseRecord"):
 class IceVisionTransformAdapter(nn.Module):
     def __init__(self, transform):
         super().__init__()
-        self.transform = transform
+        self.transform = A.Adapter(transform)
 
     def forward(self, x):
         record = to_icevision_record(x)
@@ -186,7 +186,7 @@ class IceVisionTransformAdapter(nn.Module):
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default transforms from IceVision."""
     return {
-        "pre_tensor_transform": IceVisionTransformAdapter(A.Adapter([*A.resize_and_pad(image_size), A.Normalize()])),
+        "pre_tensor_transform": IceVisionTransformAdapter([*A.resize_and_pad(image_size), A.Normalize()]),
     }
 
 
@@ -194,5 +194,5 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default augmentations from IceVision."""
     return {
-        "pre_tensor_transform": IceVisionTransformAdapter(A.Adapter([*A.aug_tfms(size=image_size), A.Normalize()])),
+        "pre_tensor_transform": IceVisionTransformAdapter([*A.aug_tfms(size=image_size), A.Normalize()]),
     }

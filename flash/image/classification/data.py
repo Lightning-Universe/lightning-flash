@@ -42,10 +42,10 @@ else:
 
 
 class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
-    @requires_extras("image")
     def __init__(self):
         super().__init__(image_loader)
 
+    @requires_extras("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH
@@ -180,15 +180,6 @@ class ImageClassificationData(DataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = ImageClassificationData.from_data_frame(
-                "image_id",
-                "target",
-                train_data_frame=train_data,
-                train_images_root="data/train_images",
-            )
         """
         return cls.from_data_source(
             "data_frame",
@@ -288,15 +279,6 @@ class ImageClassificationData(DataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = ImageClassificationData.from_csv(
-                "image_id",
-                "target",
-                train_file="train_data.csv",
-                train_images_root="data/train_images",
-            )
         """
         return cls.from_data_source(
             DefaultDataSources.CSV,

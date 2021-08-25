@@ -1,5 +1,5 @@
 packaging
-torch
+torch>=1.7.1
 torchmetrics
 pytorch-lightning>=1.4.0
 pyDeprecate
