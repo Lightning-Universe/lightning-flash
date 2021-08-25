@@ -42,8 +42,9 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.splits import SplitDataset
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
 
@@ -460,9 +461,9 @@ class DataModule(pl.LightningDataModule):
         val_data: Any = None,
         test_data: Any = None,
         predict_data: Any = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
@@ -522,6 +523,20 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
+        if isinstance(train_transform, list):
+            train_transform = {
+                "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.Sequential(*train_transform))
+            }
+        elif callable(train_transform):
+            train_transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, train_transform)}
+
+        if isinstance(val_transform, list):
+            train_transform = {
+                "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.Sequential(*val_transform))
+            }
+        elif callable(val_transform):
+            train_transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, val_transform)}
+
         preprocess = preprocess or cls.preprocess_cls(
             train_transform,
             val_transform,
