@@ -63,7 +63,7 @@ class CustomCardItemDirective(SphinxDirective):
             if "image" in self.options:
                 image = "<img src='" + self.options["image"] + "'>"
             else:
-                image = "<img src='_static/images/logo.svg'>"
+                image = "<img src='_static/images/icon.svg'>"
 
             # TODO: This probably only works when the tutorial list directive is in index.html
             link = self.env.docname + ".html"

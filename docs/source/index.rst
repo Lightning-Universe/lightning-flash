@@ -6,8 +6,6 @@
 Lightning Flash
 ===============
 
-.. Add tutorial cards below this line
-
 .. tutoriallist::
 
 .. raw:: html
