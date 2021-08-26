@@ -6,4 +6,4 @@ if _VISSL_AVAILABLE:
     from flash.core.integrations.vissl.transforms.multicrop import StandardMultiCropSSLTransform  # noqa: F401
     from flash.core.integrations.vissl.transforms.utilities import vissl_collate_fn  # noqa: F401
 
-    register_transform("multi_crop_ssl_transform")(StandardMultiCropSSLTransform)
+    register_transform("multicrop_ssl_transform")(StandardMultiCropSSLTransform)
