@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Point Cloud Object Detection
+   :card_description: Learn to detect objects in point clouds with Flash and build an example detector with the KITTI data set.
+   :tags: Point-Cloud,Detection
 
 .. _pointcloud_object_detection:
 
