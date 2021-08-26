@@ -13,15 +13,16 @@
 # limitations under the License.
 import pytest
 
-from flash.image import ImageClassificationData
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import DefaultPreprocess
+from flash.core.data.transforms import ApplyToKeys
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.image import ImageClassificationData
 
 if _IMAGE_AVAILABLE:
-    from torchvision.datasets import CIFAR10
     from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
+    from torchvision.datasets import CIFAR10
+
     from flash.core.integrations.vissl.transforms import vissl_collate_fn
 
 
@@ -33,7 +34,7 @@ def test_multicrop_input_transform():
     size_crops = [160, 96]
     crop_scales = [[0.4, 1], [0.05, 0.4]]
 
-    multi_crop_transform = TRANSFORM_REGISTRY['multicrop_ssl_transform'](
+    multi_crop_transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
         total_crops, num_crops, size_crops, crop_scales
     )
 
@@ -43,13 +44,13 @@ def test_multicrop_input_transform():
     )
     preprocess = DefaultPreprocess(
         train_transform={
-            'to_tensor_transform': to_tensor_transform,
-            'collate': vissl_collate_fn,
+            "to_tensor_transform": to_tensor_transform,
+            "collate": vissl_collate_fn,
         }
     )
 
     datamodule = ImageClassificationData.from_datasets(
-        train_dataset=CIFAR10('.', download=True),
+        train_dataset=CIFAR10(".", download=True),
         preprocess=preprocess,
         batch_size=batch_size,
     )
