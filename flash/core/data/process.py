@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from flash.core.data.transforms import ApplyToKeys
 import inspect
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
@@ -283,6 +284,12 @@ class Preprocess(BasePreprocess, Properties):
         setattr(self, f"_{_STAGES_PREFIX[stage]}_collate_in_worker_from_transform", collate_in_worker)
         return transform
 
+    def _default_apply_to_keys(self, sample: Any, current_transform: Callable) -> Any:
+        if not isinstance(current_transform, ApplyToKeys) and sample.__class__ == dict:
+            current_transform = ApplyToKeys(DefaultDataKeys.INPUT, current_transform)
+
+        return current_transform
+
     @staticmethod
     def _identity(x: Any) -> Any:
         return x
@@ -338,14 +345,17 @@ class Preprocess(BasePreprocess, Properties):
 
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
+        self.current_transform = self._default_apply_to_keys(sample, self.current_transform)
         return self.current_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
+        self.current_transform = self._default_apply_to_keys(sample, self.current_transform)
         return self.current_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
+        self.current_transform = self._default_apply_to_keys(sample, self.current_transform)
         return self.current_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
