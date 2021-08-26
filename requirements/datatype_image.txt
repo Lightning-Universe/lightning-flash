@@ -8,5 +8,6 @@ segmentation-models-pytorch
 icevision>=0.8
 icedata
 effdet
+
 https://github.com/facebookresearch/vissl/archive/master.zip#egg=vissl
 classy_vision
