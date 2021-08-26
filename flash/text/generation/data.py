@@ -30,16 +30,17 @@ from flash.text.classification.data import TextDeserializer
 if _TEXT_AVAILABLE:
     import datasets
     from datasets import DatasetDict, load_dataset
-    from transformers import GPT2Tokenizer, default_data_collator
+    from transformers import default_data_collator, GPT2Tokenizer
+
 
 class GPTDataSource(DataSource):
     @requires_extras("text")
     def __init__(
-            self,
-            backbone: str,
-            max_source_length: int = 128,
-            max_target_length: int = 128,
-            padding: Union[str, bool] = "max_length",
+        self,
+        backbone: str,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
     ):
         super().__init__()
 
