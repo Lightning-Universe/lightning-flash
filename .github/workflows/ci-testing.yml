@@ -104,11 +104,6 @@ jobs:
       run: |
         sudo apt-get install graphviz
 
-    - name: Install libgeos
-      if: matrix.topic[1] == 'image_extras'
-      run: |
-        sudo apt-get install libgeos-dev
-
     - name: Set min. dependencies
       if: matrix.requires == 'minimal'
       run: |
@@ -137,6 +132,11 @@ jobs:
         key: ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
+
+    - name: Install vissl
+      if: matrix.topic[1] == 'image_extras'
+      run: |
+        pip install vissl
 
     - name: Install dependencies
       run: |
