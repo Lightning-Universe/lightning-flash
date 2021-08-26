@@ -2,7 +2,7 @@
    :header: Image Classification
    :card_description: Learn to classify images with Flash and build an example Ants / Bees classifier.
    :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/image_classification.jpg
-   :tags: Video,Classification
+   :tags: Image,Classification
 
 .. _image_classification:
 
