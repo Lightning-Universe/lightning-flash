@@ -1,4 +1,4 @@
 matplotlib
 fiftyone
 classy_vision
-vissl
+vissl>=0.1.5
