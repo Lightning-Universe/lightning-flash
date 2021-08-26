@@ -1,7 +1,7 @@
 .. customcarditem::
    :header: Translation
    :card_description: Learn to translate text with Flash and build an example model which translates from English to Romanian.
-   :tags: Text,Translation
+   :tags: Text,Translation,NLP
 
 .. _translation:
 
