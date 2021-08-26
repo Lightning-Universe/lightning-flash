@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Image Classification
+   :card_description: Learn to classify images with Flash and build an example Ants / Bees classifier.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/image_classification.jpg
+   :tags: Image,Classification
 
 .. _image_classification:
 
@@ -57,6 +62,42 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The image classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the hymenoptera example with:
+
+.. code-block:: bash
+
+    flash image_classification
+
+To view configuration options and options for running the image classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash image_classification --help
+
+------
+
+************
+Loading Data
+************
+
+.. autodatasources:: flash.image.classification.data ImageClassificationData
+
+    {% extends "base.rst" %}
+    {% block from_datasets %}
+    {{ super() }}
+
+    .. note::
+
+        The ``__getitem__`` of your datasets should return a dictionary with ``"input"`` and ``"target"`` keys which map to the input image (as a PIL.Image) and the target (as an int or list of ints) respectively.
+    {% endblock %}
+
+------
+
 **********************
 Custom Transformations
 **********************
@@ -105,25 +146,6 @@ We use the `post_tensor_transform` hook to apply the transformations after the i
     :hide:
 
     ...
-
-------
-
-**********
-Flash Zero
-**********
-
-The image classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
-You can run the hymenoptera example with:
-
-.. code-block:: bash
-
-    flash image_classification
-
-To view configuration options and options for running the image classifier with your own data, use:
-
-.. code-block:: bash
-
-    flash image_classification --help
 
 ------
 

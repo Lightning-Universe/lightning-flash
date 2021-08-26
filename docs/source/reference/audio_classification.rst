@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Audio Classification
+   :card_description: Learn to classify audio spectrogram images with Flash and build an example classifier for the UrbanSound8k data set.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/audio_classification.jpg
+   :tags: Audio,Classification
 
 .. _audio_classification:
 
@@ -90,3 +95,20 @@ To view configuration options and options for running the audio classifier with 
 .. code-block:: bash
 
     flash audio_classification --help
+
+------
+
+************
+Loading Data
+************
+
+.. autodatasources:: flash.audio.classification.data AudioClassificationData
+
+    {% extends "base.rst" %}
+    {% block from_datasets %}
+    {{ super() }}
+
+    .. note::
+
+        The ``__getitem__`` of your datasets should return a dictionary with ``"input"`` and ``"target"`` keys which map to the input spectrogram image (as a NumPy array) and the target (as an int or list of ints) respectively.
+    {% endblock %}
