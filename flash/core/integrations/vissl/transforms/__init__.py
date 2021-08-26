@@ -1,4 +1,3 @@
-
 from flash.core.utilities.imports import _VISSL_AVAILABLE  # noqa: F401
 
 if _VISSL_AVAILABLE:
