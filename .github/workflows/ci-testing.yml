@@ -104,6 +104,11 @@ jobs:
       run: |
         sudo apt-get install graphviz
 
+    - name: Install libgeos
+      if: matrix.topic[1] == 'image_extras'
+      run: |
+        sudo apt-get install libgeos-dev
+
     - name: Set min. dependencies
       if: matrix.requires == 'minimal'
       run: |
