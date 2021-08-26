@@ -17,8 +17,10 @@ from flash.core.data.data_source import DefaultDataKeys
 
 
 def vissl_collate_fn(samples):
-    """Run custom collate on only DefaultDataKeys.INPUT since VISSL transforms used along with this function only
-    affect DefaultDataKeys.INPUT."""
+    """Custom collate function for VISSL integration.
+
+    Run custom collate on a single key since VISSL transforms affect only DefaultDataKeys.INPUT
+    """
     result = []
 
     for batch_ele in samples:
