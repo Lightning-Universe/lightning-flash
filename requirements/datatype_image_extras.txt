@@ -1,2 +1,4 @@
 matplotlib
 fiftyone
+classy_vision
+git+https://github.com/facebookresearch/vissl.git@master

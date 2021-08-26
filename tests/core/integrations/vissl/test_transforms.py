@@ -16,17 +16,18 @@ import pytest
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import DefaultPreprocess
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _VISSL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image import ImageClassificationData
 
-if _IMAGE_AVAILABLE:
-    from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
+if _TORCHVISION_AVAILABLE:
     from torchvision.datasets import FakeData
 
+if _VISSL_AVAILABLE:
+    from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
     from flash.core.integrations.vissl.transforms import vissl_collate_fn
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="vissl not installed.")
+@pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 def test_multicrop_input_transform():
     batch_size = 8
     total_crops = 6
