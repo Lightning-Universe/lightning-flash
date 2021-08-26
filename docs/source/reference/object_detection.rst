@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Object Detection
+   :card_description: Learn to detect objects in images with Flash and build an example detector with the COCO data set.
+   :tags: Image,Detection
 
 .. _object_detection:
 

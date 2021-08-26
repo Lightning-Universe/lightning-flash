@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Multi-label Text Classification
+   :card_description: Learn to classify text in a multi-label setting with Flash and build an example comment toxicity classifier.
+   :tags: Text,Multi-label,Classification,NLP
+
 .. _text_classification_multi_label:
 
 ###############################

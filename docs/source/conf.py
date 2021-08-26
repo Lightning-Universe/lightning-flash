@@ -111,8 +111,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_paramlinks",
     "sphinx_togglebutton",
-    # "sphinx_gallery.gen_gallery",
-    "lightning_tutorials",
+    "pt_lightning_sphinx_theme.extensions.lightning_tutorials",
     "autodatasources",
 ]
 

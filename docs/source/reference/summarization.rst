@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Summarization
+   :card_description: Learn to summarize long passages of text with Flash and build an example model with the XSUM data set.
+   :tags: Text,Summarization,NLP
+
 .. _summarization:
 
 #############
