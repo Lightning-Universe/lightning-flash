@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Multi-label Image Classification
+   :card_description: Learn to classify images in a multi-label setting with Flash and build an example classifier which predicts genres from movie posters.
+   :tags: Image,Multi-label,Classification
 
 .. _image_classification_multi_label:
 

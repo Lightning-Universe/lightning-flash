@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Audio Classification
+   :card_description: Learn to classify audio spectrogram images with Flash and build an example classifier for the UrbanSound8k data set.
+   :tags: Audio,Classification
 
 .. _audio_classification:
 

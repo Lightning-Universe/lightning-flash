@@ -1,8 +1,7 @@
 .. customcarditem::
    :header: Image Classification
    :card_description: Learn to classify images with Flash and build an example Ants / Bees classifier.
-   :image: _static/images/icon.svg
-   :tags: Image/Video
+   :tags: Video,Classification
 
 .. _image_classification:
 

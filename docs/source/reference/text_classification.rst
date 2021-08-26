@@ -1,7 +1,7 @@
 .. customcarditem::
    :header: Text Classification
    :card_description: Learn to classify text with Flash and build an example sentiment analyser for IMDB reviews.
-   :tags: Text
+   :tags: Text,Classification
 
 .. _text_classification:
 
