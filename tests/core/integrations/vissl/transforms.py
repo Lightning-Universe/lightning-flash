@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-import torch
 
 from flash.image import ImageClassificationData
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
