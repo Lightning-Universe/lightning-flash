@@ -234,14 +234,11 @@ class Trainer(PlTrainer):
             model, stage = args
             self.call_hook(f"on_{stage}_dataloader")
             dataloader = getattr(model, f"{stage}_dataloader")()
-            if isinstance(dataloader, tuple):
-                dataloader = list(dataloader)
-            self.accelerator.barrier("get_dataloaders")
-            return dataloader
-        stage, model = args
-        hook = f"{stage.dataloader_prefix}_dataloader"
-        self.call_hook("on_" + hook, pl_module=model)
-        dataloader = self.call_hook(hook, pl_module=model)
+        else:
+            stage, model = args
+            hook = f"{stage.dataloader_prefix}_dataloader"
+            self.call_hook("on_" + hook, pl_module=model)
+            dataloader = self.call_hook(hook, pl_module=model)
         if isinstance(dataloader, tuple):
             dataloader = list(dataloader)
         self.accelerator.barrier("get_dataloaders")
