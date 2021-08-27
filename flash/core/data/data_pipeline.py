@@ -29,7 +29,6 @@ from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
-from flash.core.trainer import FlashPatchedDataloader
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
 
 if TYPE_CHECKING:
@@ -381,9 +380,6 @@ class DataPipeline:
             if not dataloader:
                 continue
 
-            if isinstance(dataloader, FlashPatchedDataloader):
-                dataloader = dataloader.dataloader_method
-
             if isinstance(dataloader, (_PatchDataLoader, Callable)):
                 dataloader = dataloader()
 
@@ -518,9 +514,6 @@ class DataPipeline:
 
             if not dataloader:
                 continue
-
-            if isinstance(dataloader, FlashPatchedDataloader):
-                dataloader = dataloader.dataloader_method
 
             if isinstance(dataloader, _PatchDataLoader):
                 dataloader = dataloader()
