@@ -220,3 +220,26 @@ class Trainer(PlTrainer):
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
+
+    def request_dataloader(
+        self,
+        *args,
+    ) -> Union[DataLoader, List[DataLoader]]:
+        """Handles downloading data in the GPU or TPU case.
+
+        Returns:
+            The dataloader
+        """
+        if isinstance(args[0], LightningModule):
+            model, stage = args
+            self.call_hook(f"on_{stage}_dataloader")
+            dataloader = getattr(model, f"{stage}_dataloader")()
+        else:
+            stage, model = args
+            hook = f"{stage.dataloader_prefix}_dataloader"
+            self.call_hook("on_" + hook, pl_module=model)
+            dataloader = self.call_hook(hook, pl_module=model)
+        if isinstance(dataloader, tuple):
+            dataloader = list(dataloader)
+        self.accelerator.barrier("get_dataloaders")
+        return dataloader
