@@ -20,7 +20,8 @@ from torch import Tensor
 import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState, LabelStudioTextDataSource
+from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
+from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
 
@@ -267,7 +268,7 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
                 "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.LABELSTUDIO: LabelStudioTextDataSource(
+                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
                     backbone=self.backbone, max_length=max_length
                 ),
             },

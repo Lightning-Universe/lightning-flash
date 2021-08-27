@@ -25,9 +25,9 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import (
     DefaultDataKeys,
     DefaultDataSources,
-    LabelStudioImageDataSource,
     LoaderDataFrameDataSource,
 )
+from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires, requires_extras
 from flash.image.classification.transforms import default_transforms, train_default_transforms
@@ -84,7 +84,7 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
                 "data_frame": ImageClassificationDataFrameDataSource(),
                 DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.LABELSTUDIO: LabelStudioImageDataSource(**data_source_kwargs),
+                DefaultDataSources.LABELSTUDIO: LabelStudioImageClassificationDataSource(**data_source_kwargs),
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,

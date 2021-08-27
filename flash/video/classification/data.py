@@ -25,9 +25,9 @@ from flash.core.data.data_source import (
     DefaultDataSources,
     FiftyOneDataSource,
     LabelsState,
-    LabelStudioVideoDataSource,
     PathsDataSource,
 )
+from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationDataSource
 from flash.core.data.process import Preprocess
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
@@ -257,7 +257,7 @@ class VideoClassificationPreprocess(Preprocess):
                     decoder=decoder,
                     **data_source_kwargs,
                 ),
-                DefaultDataSources.LABELSTUDIO: LabelStudioVideoDataSource(
+                DefaultDataSources.LABELSTUDIO: LabelStudioVideoClassificationDataSource(
                     clip_sampler=clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,

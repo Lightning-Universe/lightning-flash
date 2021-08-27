@@ -11,7 +11,7 @@ download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightnin
 datamodule = VideoClassificationData.from_labelstudio(
     export_json="data/project.json",
     data_folder="data/upload/",
-    val_split=0.8,
+    val_split=0.2,
     clip_sampler="uniform",
     clip_duration=1,
     decode_audio=False,

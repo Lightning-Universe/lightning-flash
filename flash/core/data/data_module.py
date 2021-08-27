@@ -1257,7 +1257,15 @@ class DataModule(pl.LightningDataModule):
     def from_labelstudio(
         cls,
         export_json: str = None,
+        train_export_json: str = None,
+        val_export_json: str = None,
+        test_export_json: str = None,
+        predict_export_json: str = None,
         data_folder: str = None,
+        train_data_folder: str = None,
+        val_data_folder: str = None,
+        test_data_folder: str = None,
+        predict_data_folder: str = None,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
@@ -1267,7 +1275,6 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
@@ -1278,7 +1285,15 @@ class DataModule(pl.LightningDataModule):
 
         Args:
             export_json: path to label studio export file
+            train_export_json: path to label studio export file for train
+            val_export_json: path to label studio export file for validation
+            test_export_json: path to label studio export file for test
+            predict_export_json: path to label studio export file for predict
             data_folder: path to label studio data folder
+            train_data_folder: path to label studio data folder for train data
+            val_data_folder: path to label studio data folder for validation data
+            test_data_folder: path to label studio data folder for test data
+            predict_data_folder: path to label studio data folder for predict data
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -1295,7 +1310,6 @@ class DataModule(pl.LightningDataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -1316,9 +1330,40 @@ class DataModule(pl.LightningDataModule):
             "split": val_split,
             "multi_label": preprocess_kwargs.get("multi_label", False),
         }
+        train_data = None
+        val_data = None
+        test_data = None
+        predict_data = None
+        if (train_data_folder or data_folder) and train_export_json:
+            train_data = {
+                "data_folder": train_data_folder or data_folder,
+                "export_json": train_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
+        if (val_data_folder or data_folder) and val_export_json:
+            val_data = {
+                "data_folder": val_data_folder or data_folder,
+                "export_json": val_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
+        if (test_data_folder or data_folder) and test_export_json:
+            test_data = {
+                "data_folder": test_data_folder or data_folder,
+                "export_json": test_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
+        if (predict_data_folder or data_folder) and predict_export_json:
+            predict_data = {
+                "data_folder": predict_data_folder or data_folder,
+                "export_json": predict_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
         return cls.from_data_source(
             DefaultDataSources.LABELSTUDIO,
-            train_data=data,
+            train_data=train_data if train_data else data,
+            val_data=val_data,
+            test_data=test_data,
+            predict_data=predict_data,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
