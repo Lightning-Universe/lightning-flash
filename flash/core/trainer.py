@@ -21,6 +21,8 @@ import torch
 from pytorch_lightning import LightningDataModule, LightningModule
 from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.trainer.connectors.data_connector import DataConnector
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -28,7 +30,39 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
+from flash.core.utilities.apply_func import _is_overriden
 from flash.core.utilities.imports import _SERVE_AVAILABLE
+
+
+class FlashPatchedDataloader:
+    def __init__(self, model: "flash.Task", stage: RunningStage, dataloader_method: Callable):
+        self.model = model
+        self.stage = stage
+        self.dataloader_method = dataloader_method
+
+        self.patch_loader_code = str(self.dataloader_method.__code__)
+
+    def __call__(self, *args, **kwargs):
+        self.model.attach(self.stage)
+        return self.dataloader_method()
+
+
+class FlashDataConnector(DataConnector):
+    def attach_datamodule(self, model: LightningModule, datamodule: Optional[LightningDataModule] = None) -> None:
+        super().attach_datamodule(model, datamodule)
+
+        print("called")
+
+        if datamodule is not None and isinstance(model, flash.Task):
+            dl_methods = (
+                (RunningStage.TRAINING, "train_dataloader"),
+                (RunningStage.VALIDATING, "val_dataloader"),
+                (RunningStage.TESTING, "test_dataloader"),
+                (RunningStage.PREDICTING, "predict_dataloader"),
+            )
+            for stage, method in dl_methods:
+                if _is_overriden(method, datamodule, LightningDataModule):
+                    setattr(model, method, FlashPatchedDataloader(model, stage, getattr(datamodule, method)))
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -85,6 +119,8 @@ class Trainer(PlTrainer):
             else:
                 kwargs["fast_dev_run"] = True
         super().__init__(*args, **kwargs)
+
+        self.data_connector = FlashDataConnector(self, self.data_connector.multiple_trainloader_mode)
 
         self.serve_sanity_check = serve_sanity_check
 

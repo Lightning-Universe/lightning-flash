@@ -653,29 +653,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     def postprocess(self) -> Postprocess:
         return getattr(self.data_pipeline, "_postprocess_pipeline", None)
 
-    def on_train_dataloader(self) -> None:
+    def attach(self, stage: RunningStage) -> None:
         if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
-        super().on_train_dataloader()
-
-    def on_val_dataloader(self) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
-            self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
-        super().on_val_dataloader()
-
-    def on_test_dataloader(self, *_) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
-        super().on_test_dataloader()
-
-    def on_predict_dataloader(self) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
-        super().on_predict_dataloader()
+            self.data_pipeline._detach_from_model(self, stage)
+            self.data_pipeline._attach_to_model(self, stage)
 
     def on_predict_end(self) -> None:
         if self.data_pipeline is not None:
