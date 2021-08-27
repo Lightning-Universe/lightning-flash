@@ -65,6 +65,7 @@ class StandardMultiCropSSLTransform(nn.Module):
            size_crops=[224, 96], crop_scales=[(0.14, 1.), (0.05, 0.14)])
            Extracts 3 crops total: 1 of size 224x224 and 2 of size 96x96
         """
+        super().__init__()
 
         assert np.sum(num_crops) == total_num_crops
         assert len(size_crops) == len(num_crops)
