@@ -445,10 +445,10 @@ class Preprocess(BasePreprocess, Properties):
 class DefaultPreprocess(Preprocess):
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         data_sources: Optional[Dict[str, "DataSource"]] = None,
         default_data_source: Optional[str] = None,
     ):
