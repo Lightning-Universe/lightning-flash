@@ -1,24 +1,17 @@
-from flash.core.data.data_source import DefaultDataKeys, has_len
-from pytorch_lightning.trainer.states import RunningStage
-from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
-from flash import DataSource
+import json
 import os
 from copy import deepcopy
-from typing import (
-    Any,
-    Mapping,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-)
-import json
+from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
+
 import torch
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.cloud_io import get_filesystem
-from flash.core.utilities.imports import (
-    _PYTORCHVIDEO_AVAILABLE,
-    _TEXT_AVAILABLE,
-)
+
+from flash import DataSource
+from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
+from flash.core.data.data_source import DefaultDataKeys, has_len
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
+
 if _PYTORCHVIDEO_AVAILABLE:
     from torchvision.datasets.folder import default_loader
 DATA_TYPE = TypeVar("DATA_TYPE")
@@ -51,15 +44,16 @@ class LabelStudioDataSource(DataSource):
                 _raw_data = json.load(f)
             self.multi_label = data.get("multi_label", False)
             self.split = data.get("split")
-            results, test_results, classes, data_types = LabelStudioDataSource._load_json_data(_raw_data,
-                                                      data_folder=data_folder,
-                                                      multi_label=self.multi_label)
+            results, test_results, classes, data_types = LabelStudioDataSource._load_json_data(
+                _raw_data, data_folder=data_folder, multi_label=self.multi_label
+            )
             self.classes = self.classes | classes
             self.data_types = self.data_types | data_types
             self.num_classes = len(self.classes)
             # splitting result to train and val sets
             if self.split:
                 import random
+
                 random.shuffle(results)
                 prop = int(len(results) * self.split)
                 self.val_results = results[:prop]
@@ -122,9 +116,7 @@ class LabelStudioDataSource(DataSource):
 
     @staticmethod
     def _load_json_data(data, data_folder, multi_label=False):
-        """
-        Utility method to extract data from Label Studio json files
-        """
+        """Utility method to extract data from Label Studio json files."""
         results = []
         test_results = []
         data_types = set()
@@ -197,6 +189,7 @@ class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
     Export data should point to text data
     """
+
     def __init__(self, backbone=None, max_length=128):
         super().__init__()
         if backbone:

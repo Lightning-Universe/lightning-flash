@@ -48,11 +48,7 @@ from tqdm import tqdm
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import (
-    _FIFTYONE_AVAILABLE,
-    lazy_import,
-    requires,
-)
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:

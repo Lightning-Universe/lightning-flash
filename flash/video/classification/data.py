@@ -27,8 +27,8 @@ from flash.core.data.data_source import (
     LabelsState,
     PathsDataSource,
 )
-from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationDataSource
 from flash.core.data.process import Preprocess
+from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationDataSource
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
 SampleCollection = None
