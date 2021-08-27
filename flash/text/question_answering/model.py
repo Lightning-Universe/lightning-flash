@@ -135,10 +135,10 @@ class QuestionAnsweringTask(Task):
                 }
 
             # Go through all possibilities for the `n_best_size` greater start and end logits.
-            start_indexes: List[int] = np.argsort(start_logits.clone().detach().numpy())[
+            start_indexes: List[int] = np.argsort(start_logits.clone().detach().cpu().numpy())[
                 -1 : -self.n_best_size - 1 : -1
             ].tolist()
-            end_indexes: List[int] = np.argsort(end_logits.clone().detach().numpy())[
+            end_indexes: List[int] = np.argsort(end_logits.clone().detach().cpu().numpy())[
                 -1 : -self.n_best_size - 1 : -1
             ].tolist()
 
