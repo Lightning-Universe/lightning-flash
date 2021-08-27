@@ -18,7 +18,6 @@ import pytest
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
-from torchvision.transforms import transforms
 
 from flash import Task, Trainer
 from flash.core.classification import Labels, LabelsState
@@ -148,6 +147,7 @@ def test_available_data_sources():
 
 
 def test_check_transforms():
-    transform = transforms.ColorJitter()
+    transform = torch.nn.Identity()
+
     DefaultPreprocess(train_transform=transform)
     DefaultPreprocess(train_transform=[transform])
