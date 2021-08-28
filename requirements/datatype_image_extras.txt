@@ -1,2 +1,4 @@
 matplotlib
 fiftyone
+classy_vision
+vissl>=0.1.5

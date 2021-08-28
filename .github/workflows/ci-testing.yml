@@ -133,6 +133,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
+    - name: Install vissl
+      if: matrix.topic[1] == 'image_extras'
+      run: |
+        pip install git+https://github.com/facebookresearch/vissl.git@master
+
     - name: Install dependencies
       run: |
         python --version
