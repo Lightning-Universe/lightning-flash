@@ -53,6 +53,7 @@ class LabelStudioDataSource(DataSource):
             # splitting result to train and val sets
             if self.split:
                 import random
+
                 random.shuffle(results)
                 prop = int(len(results) * self.split)
                 self.val_results = results[:prop]

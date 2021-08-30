@@ -2,9 +2,7 @@ from flash.core.integrations.labelstudio.data_source import LabelStudioDataSourc
 
 
 def test_utility_load():
-    """
-    Test for label studio json loader 
-    """
+    """Test for label studio json loader."""
     data = [
         {
             "id": 191,
