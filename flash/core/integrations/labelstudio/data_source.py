@@ -53,17 +53,14 @@ class LabelStudioDataSource(DataSource):
             # splitting result to train and val sets
             if self.split:
                 import random
-
                 random.shuffle(results)
                 prop = int(len(results) * self.split)
                 self.val_results = results[:prop]
                 self.results = results[prop:]
                 self.test_results = test_results
                 return self.results
-            else:
-                return results + test_results
-        else:
-            return []
+            return results + test_results
+        return []
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
         """Load 1 sample from dataset."""
