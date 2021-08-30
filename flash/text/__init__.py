@@ -9,3 +9,4 @@ from flash.text.seq2seq import (  # noqa: F401
     TranslationData,
     TranslationTask,
 )
+from flash.text.generation import TextGenerationData  # noqa: F401
