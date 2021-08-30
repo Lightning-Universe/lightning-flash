@@ -80,7 +80,7 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
                 "data_frame": ImageClassificationDataFrameDataSource(),
                 DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.LABELSTUDIO: LabelStudioImageClassificationDataSource(**data_source_kwargs),
+                DefaultDataSources.LABELSTUDIO: LabelStudioImageClassificationDataSource(),
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,
