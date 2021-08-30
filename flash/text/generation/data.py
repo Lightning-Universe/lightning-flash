@@ -26,7 +26,7 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
-    from transformers import GPT2Tokenizer, default_data_collator
+    from transformers import default_data_collator, GPT2Tokenizer
     from transformers.modeling_outputs import SequenceClassifierOutput
 
 
@@ -35,13 +35,18 @@ class TextGenerationDeserializer(Deserializer):
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
         super().__init__()
         self.backbone = backbone
-        self.tokenizer = GPT2Tokenizer.from_pretrained(backbone, use_fast=use_fast, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            backbone, use_fast=use_fast, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
         self.max_length = max_length
 
     def deserialize(self, text: str) -> Tensor:
-        return self.tokenizer('<|startoftext|>'+ text + '<|endoftext|>', max_length=self.max_length, truncation=True,
-                              padding="max_length")
+        return self.tokenizer(
+            "<|startoftext|>" + text + "<|endoftext|>",
+            max_length=self.max_length,
+            truncation=True,
+            padding="max_length",
+        )
 
     @property
     def example_input(self) -> str:
@@ -54,8 +59,9 @@ class TextGenerationDeserializer(Deserializer):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.backbone, use_fast=True, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
 
 
 class TextGenerationDataSource(DataSource):
@@ -64,20 +70,22 @@ class TextGenerationDataSource(DataSource):
         super().__init__()
 
         self.backbone = backbone
-        self.tokenizer = GPT2Tokenizer.from_pretrained(backbone, use_fast=True, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
         self.max_length = max_length
 
     def _tokenize_fn(
-            self,
-            ex: Union[Dict[str, str], str],
-            input: Optional[str] = None,
+        self,
+        ex: Union[Dict[str, str], str],
+        input: Optional[str] = None,
     ) -> Callable:
         """This function is used to tokenize sentences using the provided tokenizer."""
         if isinstance(ex, dict):
             ex = ex[input]
-        return self.tokenizer('<|startoftext|>' + ex + '<|endoftext|>', max_length=self.max_length, truncation=True,
-                              padding="max_length")
+        return self.tokenizer(
+            "<|startoftext|>" + ex + "<|endoftext|>", max_length=self.max_length, truncation=True, padding="max_length"
+        )
 
     @staticmethod
     def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
@@ -91,8 +99,9 @@ class TextGenerationDataSource(DataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.backbone, use_fast=True, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
 
 
 class TextGenerationFileDataSource(TextGenerationDataSource):
@@ -108,10 +117,10 @@ class TextGenerationFileDataSource(TextGenerationDataSource):
         return element
 
     def load_data(
-            self,
-            data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
-            dataset: Optional[Any] = None,
-            columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
+        self,
+        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        dataset: Optional[Any] = None,
+        columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
         if self.filetype == "json":
             file, input, target, field = data
@@ -190,8 +199,9 @@ class TextGenerationFileDataSource(TextGenerationDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.backbone, use_fast=True, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
 
 
 class TextGenerationCSVDataSource(TextGenerationFileDataSource):
@@ -205,8 +215,9 @@ class TextGenerationCSVDataSource(TextGenerationFileDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.backbone, use_fast=True, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
 
 
 class TextGenerationJSONDataSource(TextGenerationFileDataSource):
@@ -220,8 +231,9 @@ class TextGenerationJSONDataSource(TextGenerationFileDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.backbone, use_fast=True, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
 
 
 class TextGenerationSentencesDataSource(TextGenerationDataSource):
@@ -229,9 +241,9 @@ class TextGenerationSentencesDataSource(TextGenerationDataSource):
         super().__init__(backbone, max_length=max_length)
 
     def load_data(
-            self,
-            data: Union[str, List[str]],
-            dataset: Optional[Any] = None,
+        self,
+        data: Union[str, List[str]],
+        dataset: Optional[Any] = None,
     ) -> Union[Sequence[Mapping[str, Any]]]:
         if isinstance(data, str):
             data = [data]
@@ -249,20 +261,21 @@ class TextGenerationSentencesDataSource(TextGenerationDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.backbone, use_fast=True, bos_token='<|startoftext|>',
-                                                       eos_token='<|endoftext|>', pad_token='<|pad|>')
+        self.tokenizer = GPT2Tokenizer.from_pretrained(
+            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+        )
 
 
 class TextGenerationPreprocess(Preprocess):
     @requires_extras("text")
     def __init__(
-            self,
-            train_transform: Optional[Dict[str, Callable]] = None,
-            val_transform: Optional[Dict[str, Callable]] = None,
-            test_transform: Optional[Dict[str, Callable]] = None,
-            predict_transform: Optional[Dict[str, Callable]] = None,
-            backbone: str = "gpt2-small",
-            max_length: int = 128,
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        backbone: str = "gpt2-small",
+        max_length: int = 128,
     ):
         self.backbone = backbone
         self.max_length = max_length
