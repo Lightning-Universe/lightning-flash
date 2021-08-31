@@ -148,6 +148,5 @@ def test_available_data_sources():
 
 def test_check_transforms():
     transform = torch.nn.Identity()
-
     DefaultPreprocess(train_transform=transform)
     DefaultPreprocess(train_transform=[transform])
