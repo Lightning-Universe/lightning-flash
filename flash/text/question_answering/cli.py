@@ -51,7 +51,7 @@ def question_answering():
         },
     )
 
-    cli.trainer.save_checkpoint("question_answering_on_sqaud_v2.pt")
+    cli.trainer.save_checkpoint("question_answering_model.pt")
 
 
 if __name__ == "__main__":

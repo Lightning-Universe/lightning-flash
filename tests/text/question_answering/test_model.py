@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 import re
-from unittest import mock
 
 import pytest
 import torch
@@ -21,8 +20,7 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
-from flash.text.question_answering.data import QuestionAnsweringPostprocess, QuestionAnsweringPreprocess
-from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
+from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -54,17 +52,6 @@ def test_init_train(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
-
-
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-@mock.patch("flash._IS_TESTING", True)
-def test_serve():
-    model = QuestionAnsweringTask(TEST_BACKBONE)
-    # TODO: Currently only servable once a preprocess and postprocess have been attached
-    model._preprocess = QuestionAnsweringPreprocess(backbone=TEST_BACKBONE)
-    model._postprocess = QuestionAnsweringPostprocess()
-    model.eval()
-    model.serve()
 
 
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")

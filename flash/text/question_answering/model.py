@@ -193,11 +193,9 @@ class QuestionAnsweringTask(Task):
             if len(predictions) == 0 or (len(predictions) == 1 and predictions[0]["text"] == ""):
                 predictions.insert(0, {"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0})
 
-            # Compute the softmax of all scores (we do it with numpy to stay independent from torch/tf in this file,
-            # using the LogSumExp trick).
+            # Compute the softmax of all scores.
             scores: Tensor = torch.tensor([pred.pop("score") for pred in predictions])
-            exp_scores: Tensor = torch.exp(scores - torch.max(scores))
-            probs: Tensor = exp_scores / exp_scores.sum()
+            probs: Tensor = torch.softmax(scores, dim=0)
 
             # Include the probabilities in our predictions.
             for prob, pred in zip(probs, predictions):
@@ -241,16 +239,17 @@ class QuestionAnsweringTask(Task):
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
         generated_answers = self(batch)
-        self.compute_metrics(generated_answers, batch[DefaultDataKeys.METADATA], prefix)
+        result = self.compute_metrics(generated_answers, batch[DefaultDataKeys.METADATA])
+        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
 
-    def compute_metrics(self, generated_tokens, batch, prefix):
+    def compute_metrics(self, generated_tokens, batch):
         for example in batch:
             predicted_answer = generated_tokens[example["example_id"]]
             target_answer = example["answer"]["text"][0] if len(example["answer"]["text"]) > 0 else ""
             self.rouge.update(predicted_answer, target_answer)
 
         result = self.rouge.compute()
-        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
+        return result
 
     def validation_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):
         self.common_step("val", batch)

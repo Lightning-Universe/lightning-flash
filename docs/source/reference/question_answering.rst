@@ -40,8 +40,8 @@ Each JSON file looks like this:
 	}
     ...
 
-In the above, the context key represents the context used for the question and answer, the question key represents the question being asked with respect to the context, the answer key stores the answer(s) for the question.
-id and title are used for unique identification and grouping concepts together respectively.
+In the above, the ``context`` key represents the context used for the question and answer, the ``question`` key represents the question being asked with respect to the context, the ``answer`` key stores the answer(s) for the question.
+``id`` and ``title`` are used for unique identification and grouping concepts together respectively.
 Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.text.question_answering.data.QuestionAnsweringData`.
 We select a pre-trained backbone to use for our :class:`~flash.text.question_answering.model.QuestionAnsweringTask` and finetune on the SQUAD 2.0 data.
 The backbone can be any Question Answering model from `HuggingFace/transformers <https://huggingface.co/transformers/model_doc/auto.html#automodelforquestionanswering>`_.
