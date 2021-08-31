@@ -93,6 +93,8 @@ You can now perform inference from your client like this:
 
 ------
 
+.. _translation_ort:
+
 **********************************************
 Accelerate Training & Inference with Torch ORT
 **********************************************
