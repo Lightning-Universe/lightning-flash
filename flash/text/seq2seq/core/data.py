@@ -62,13 +62,20 @@ class Seq2SeqDataSource(DataSource):
             ex_input = ex
             ex_target = None
 
-        return self.tokenizer.prepare_seq2seq_batch(
-            src_texts=ex_input,
-            tgt_texts=ex_target,
+        model_inputs = self.tokenizer(
+            ex_input,
             max_length=self.max_source_length,
-            max_target_length=self.max_target_length,
-            padding=self.padding,
+            padding=self.padding
         )
+        with self.tokenizer.as_target_tokenizer():
+            labels = self.tokenizer(
+                ex_target,
+                max_length=self.max_target_length,
+                padding=self.padding,
+
+            )
+        model_inputs["labels"] = labels["input_ids"]
+        return model_inputs
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
