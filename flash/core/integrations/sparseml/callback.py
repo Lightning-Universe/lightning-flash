@@ -16,35 +16,32 @@ from typing import Optional
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+
 from flash.core.utilities.imports import _SPARSEML_AVAILABLE
+
 if _SPARSEML_AVAILABLE:
     from sparseml.pytorch.optim import ScheduledModifierManager
     from sparseml.pytorch.utils import ModuleExporter
 
 
 class SparseMLCallback(Callback):
-    """
-    Enables SparseML aware training. Requires a recipe to run during training.
+    """Enables SparseML aware training. Requires a recipe to run during training.
 
     Args:
         recipe_path: Path to a SparseML compatible yaml recipe.
             More information at https://docs.neuralmagic.com/sparseml/source/recipes.html
-
     """
+
     def __init__(self, recipe_path):
         if not _SPARSEML_AVAILABLE:
-            raise MisconfigurationException(
-                "SparseML has not be installed, install with pip install sparseml"
-            )
+            raise MisconfigurationException("SparseML has not be installed, install with pip install sparseml")
         self.manager = ScheduledModifierManager.from_yaml(recipe_path)
 
     def on_fit_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         optimizer = trainer.optimizers
 
         if len(optimizer) > 1:
-            raise MisconfigurationException(
-                "SparseML only supports training with one optimizer."
-            )
+            raise MisconfigurationException("SparseML only supports training with one optimizer.")
         optimizer = optimizer[0]
         print(self._num_training_steps_per_epoch(trainer))
         optimizer = self.manager.modify(pl_module, optimizer, self._num_training_steps_per_epoch(trainer), epoch=0)
@@ -69,16 +66,16 @@ class SparseMLCallback(Callback):
             num_devices = max(num_devices, trainer.tpu_cores)
 
         effective_batch_size = trainer.accumulate_grad_batches * num_devices
-        max_estimated_steps = (dataset_size // effective_batch_size)
+        max_estimated_steps = dataset_size // effective_batch_size
 
         if trainer.max_steps and trainer.max_steps < max_estimated_steps:
             return trainer.max_steps
         return max_estimated_steps
 
     @staticmethod
-    def export_to_sparse_onnx(model: "pl.LightningModule",
-                              output_dir: str,
-                              sample_batch: Optional[torch.Tensor] = None):
+    def export_to_sparse_onnx(
+        model: "pl.LightningModule", output_dir: str, sample_batch: Optional[torch.Tensor] = None
+    ):
         exporter = ModuleExporter(model, output_dir=output_dir)
         sample_batch = sample_batch if sample_batch is not None else model.example_input_array
         exporter.export_onnx(sample_batch=sample_batch)
