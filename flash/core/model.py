@@ -334,7 +334,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         output = {"y_hat": y_hat}
         y_hat = self.to_loss_format(output["y_hat"])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
-        logs = {}
+
         y_hat = self.to_metrics_format(output["y_hat"])
 
         logs = {}
