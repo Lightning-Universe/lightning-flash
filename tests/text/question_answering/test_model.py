@@ -13,11 +13,13 @@
 # limitations under the License.
 import os
 import re
+from unittest import mock
 
 import pytest
 import torch
 
 from flash import Trainer
+from flash.__main__ import main
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
 from tests.helpers.utils import _TEXT_TESTING
@@ -58,3 +60,13 @@ def test_init_train(tmpdir):
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[text]'")):
         QuestionAnsweringTask.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "question_answering", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass
