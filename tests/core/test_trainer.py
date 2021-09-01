@@ -156,9 +156,10 @@ def test_trainer_request_dataloaders_legacy(stage):
     assert trainer.recorded_on_dataloader_calls[stage]
 
 
+@pytest.mark.skip(reason="TODO: test can only be enabled once Lightning 1.5 is released.")
 @pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
 def test_trainer_request_dataloaders(stage):
-    """Test to ensure that ``request_dataloaders`` can take a combination of arguments, to new PL versions.
+    """Test to ensure that ``request_dataloaders`` can take a combination of arguments, for PL 1.5 and later.
 
     (stage, model) -> calls module on_dataloader hook (stage, model=model) -> calls module on_dataloader hook
     """
