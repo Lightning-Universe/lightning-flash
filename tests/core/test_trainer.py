@@ -19,13 +19,13 @@ import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from tests.helpers.boring_model import BoringModel
 from torch import nn
 from torch.nn import functional as F
 
 from flash import Trainer
 from flash.core.classification import ClassificationTask
 from flash.core.finetuning import NoFreeze
+from tests.helpers.boring_model import BoringModel
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -125,13 +125,14 @@ def test_from_argparse_args():
     assert trainer.max_epochs == 200
     assert isinstance(trainer, Trainer)
 
+
 @pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
 def test_trainer_request_dataloaders_legacy(stage):
-    """
-    Test to ensure that ``request_dataloaders`` can take the legacy PL ordering of arguments
+    """Test to ensure that ``request_dataloaders`` can take the legacy PL ordering of arguments.
 
     legacy: (model, stage)
     """
+
     class TestTrainer(Trainer):
         recorded_on_dataloader_calls = {}
 
@@ -157,11 +158,9 @@ def test_trainer_request_dataloaders_legacy(stage):
 
 @pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
 def test_trainer_request_dataloaders(stage):
-    """
-    Test to ensure that ``request_dataloaders`` can take a combination of arguments, to new PL versions
+    """Test to ensure that ``request_dataloaders`` can take a combination of arguments, to new PL versions.
 
-    (stage, model) -> calls module on_dataloader hook
-    (stage, model=model) -> calls module on_dataloader hook
+    (stage, model) -> calls module on_dataloader hook (stage, model=model) -> calls module on_dataloader hook
     """
 
     class TestModel(BoringModel):
