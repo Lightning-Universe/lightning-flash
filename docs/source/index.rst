@@ -68,6 +68,7 @@ Lightning Flash
 
    reference/text_classification
    reference/text_classification_multi_label
+   reference/question_answering
    reference/summarization
    reference/translation
 
