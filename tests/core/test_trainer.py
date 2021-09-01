@@ -148,11 +148,7 @@ def test_trainer_request_dataloaders_legacy(stage):
     model = BoringModel()
     trainer = TestTrainer()
 
-    trainer.request_dataloader(stage, model)
-    assert trainer.recorded_on_dataloader_calls[stage]
-
-    trainer = TestTrainer()
-    trainer.request_dataloader(stage, model=model)
+    trainer.request_dataloader(model, stage)
     assert trainer.recorded_on_dataloader_calls[stage]
 
 
