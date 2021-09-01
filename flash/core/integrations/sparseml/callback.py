@@ -14,7 +14,7 @@
 from typing import Optional
 
 import torch
-from pytorch_lightning import Callback
+from pytorch_lightning import Callback, LightningModule, Trainer
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.utilities.imports import _SPARSEML_AVAILABLE
@@ -37,20 +37,21 @@ class SparseMLCallback(Callback):
             raise MisconfigurationException("SparseML has not be installed, install with pip install sparseml")
         self.manager = ScheduledModifierManager.from_yaml(recipe_path)
 
-    def on_fit_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+    def on_fit_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         optimizer = trainer.optimizers
 
         if len(optimizer) > 1:
             raise MisconfigurationException("SparseML only supports training with one optimizer.")
         optimizer = optimizer[0]
-        print(self._num_training_steps_per_epoch(trainer))
-        optimizer = self.manager.modify(pl_module, optimizer, self._num_training_steps_per_epoch(trainer), epoch=0)
+        optimizer = self.manager.modify(
+            pl_module, optimizer, steps_per_epoch=self._num_training_steps_per_epoch(trainer), epoch=0
+        )
         trainer.optimizers = [optimizer]
 
-    def on_fit_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+    def on_fit_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.manager.finalize(pl_module)
 
-    def _num_training_steps_per_epoch(self, trainer: "pl.Trainer") -> int:
+    def _num_training_steps_per_epoch(self, trainer: Trainer) -> int:
         """Total training steps inferred from datamodule and devices."""
         if isinstance(trainer.limit_train_batches, int) and trainer.limit_train_batches != 0:
             dataset_size = trainer.limit_train_batches
@@ -73,9 +74,7 @@ class SparseMLCallback(Callback):
         return max_estimated_steps
 
     @staticmethod
-    def export_to_sparse_onnx(
-        model: "pl.LightningModule", output_dir: str, sample_batch: Optional[torch.Tensor] = None
-    ):
+    def export_to_sparse_onnx(model: LightningModule, output_dir: str, sample_batch: Optional[torch.Tensor] = None):
         exporter = ModuleExporter(model, output_dir=output_dir)
         sample_batch = sample_batch if sample_batch is not None else model.example_input_array
         exporter.export_onnx(sample_batch=sample_batch)
