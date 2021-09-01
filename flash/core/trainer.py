@@ -15,7 +15,7 @@ import inspect
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
-from typing import Callable, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from pytorch_lightning import LightningDataModule, LightningModule
@@ -221,21 +221,43 @@ class Trainer(PlTrainer):
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
 
+    def _parse_request_dataloader_args(self, args: Tuple, kwargs: Dict):
+        """Handles backwards compatibility for ``request_dataloader``.
+
+        Possible combinations:
+
+        legacy: (model, stage)
+        (stage, model)
+        (stage, model=model)
+        """
+        model, stage, is_legacy = None, None, False
+        if len(args) == 2:
+            # Check for legacy arguments: (model, stage)
+            if isinstance(args[0], LightningModule):
+                is_legacy = True
+                model, stage = args
+            else:  # (stage, model)
+                stage, model = args
+        else:
+            stage = kwargs.get("stage", args[0])
+            model = kwargs.get("model")
+        return model, stage, is_legacy
+
     def request_dataloader(
         self,
         *args,
+        **kwargs,
     ) -> Union[DataLoader, List[DataLoader]]:
         """Handles downloading data in the GPU or TPU case.
 
         Returns:
             The dataloader
         """
-        if isinstance(args[0], LightningModule):
-            model, stage = args
+        model, stage, is_legacy = self._parse_request_dataloader_args(args, kwargs)
+        if is_legacy:
             self.call_hook(f"on_{stage}_dataloader")
             dataloader = getattr(model, f"{stage}_dataloader")()
         else:
-            stage, model = args
             hook = f"{stage.dataloader_prefix}_dataloader"
             self.call_hook("on_" + hook, pl_module=model)
             dataloader = self.call_hook(hook, pl_module=model)
