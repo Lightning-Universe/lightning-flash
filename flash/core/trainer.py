@@ -239,7 +239,7 @@ class Trainer(PlTrainer):
             else:  # (stage, model)
                 stage, model = args
         else:
-            stage = kwargs["stage"] if "stage" in kwargs else args[0]
+            stage = kwargs.get("stage", args[0])
             model = kwargs.get("model")
         return model, stage, is_legacy
 

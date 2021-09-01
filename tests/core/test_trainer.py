@@ -126,7 +126,7 @@ def test_from_argparse_args():
     assert isinstance(trainer, Trainer)
 
 
-@pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
+@pytest.mark.parametrize("stage", ["train", "val", "test"])
 def test_trainer_request_dataloaders_legacy(stage):
     """Test to ensure that ``request_dataloaders`` can take the legacy PL ordering of arguments.
 
@@ -137,13 +137,13 @@ def test_trainer_request_dataloaders_legacy(stage):
         recorded_on_dataloader_calls = {}
 
         def on_train_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls[RunningStage.TRAINING] = True
+            self.recorded_on_dataloader_calls["train"] = True
 
         def on_val_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls[RunningStage.VALIDATING] = True
+            self.recorded_on_dataloader_calls["val"] = True
 
         def on_test_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls[RunningStage.TESTING] = True
+            self.recorded_on_dataloader_calls["test"] = True
 
     model = BoringModel()
     trainer = TestTrainer()
