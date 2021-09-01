@@ -17,7 +17,9 @@ from typing import Any
 import pytest
 import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from tests.helpers.boring_model import BoringModel
 from torch import nn
 from torch.nn import functional as F
 
@@ -122,3 +124,64 @@ def test_from_argparse_args():
     trainer = Trainer.from_argparse_args(args)
     assert trainer.max_epochs == 200
     assert isinstance(trainer, Trainer)
+
+@pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
+def test_trainer_request_dataloaders_legacy(stage):
+    """
+    Test to ensure that ``request_dataloaders`` can take the legacy PL ordering of arguments
+
+    legacy: (model, stage)
+    """
+    class TestTrainer(Trainer):
+        recorded_on_dataloader_calls = {}
+
+        def on_train_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.TRAINING] = True
+
+        def on_val_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.VALIDATING] = True
+
+        def on_test_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.TESTING] = True
+
+    model = BoringModel()
+    trainer = TestTrainer()
+
+    trainer.request_dataloader(stage, model)
+    assert trainer.recorded_on_dataloader_calls[stage]
+
+    trainer = TestTrainer()
+    trainer.request_dataloader(stage, model=model)
+    assert trainer.recorded_on_dataloader_calls[stage]
+
+
+@pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
+def test_trainer_request_dataloaders(stage):
+    """
+    Test to ensure that ``request_dataloaders`` can take a combination of arguments, to new PL versions
+
+    (stage, model) -> calls module on_dataloader hook
+    (stage, model=model) -> calls module on_dataloader hook
+    """
+
+    class TestModel(BoringModel):
+        recorded_on_dataloader_calls = {}
+
+        def on_train_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.TRAINING] = True
+
+        def on_val_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.VALIDATING] = True
+
+        def on_test_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.TESTING] = True
+
+    trainer = Trainer()
+
+    model = TestModel()
+    trainer.request_dataloader(stage, model)
+    assert model.recorded_on_dataloader_calls[stage]
+
+    model = TestModel()
+    trainer.request_dataloader(stage, model=model)
+    assert model.recorded_on_dataloader_calls[stage]
