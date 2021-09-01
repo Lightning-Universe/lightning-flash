@@ -6,6 +6,12 @@
 Lightning Flash
 ===============
 
+.. tutoriallist::
+
+.. raw:: html
+
+   <div style="display:none">
+
 .. toctree::
    :maxdepth: 1
    :caption: Getting started
@@ -62,6 +68,7 @@ Lightning Flash
 
    reference/text_classification
    reference/text_classification_multi_label
+   reference/question_answering
    reference/summarization
    reference/translation
 
@@ -128,9 +135,12 @@ Lightning Flash
 
    reference/template
 
+.. raw:: html
+
+   </div>
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

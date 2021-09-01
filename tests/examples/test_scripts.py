@@ -56,6 +56,10 @@ from tests.helpers.utils import (
         ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(
+            "question_answering.py",
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
+        ),
+        pytest.param(
             "semantic_segmentation.py",
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
