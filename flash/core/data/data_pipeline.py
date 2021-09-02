@@ -21,6 +21,7 @@ from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
 
 from flash.core.data.auto_dataset import IterableAutoDataset
@@ -322,7 +323,7 @@ class DataPipeline:
     @staticmethod
     def _get_dataloader(model: "Task", loader_name: str) -> Tuple[DataLoader, str]:
         dataloader, attr_name = None, None
-        if hasattr(model, loader_name):
+        if is_overridden(loader_name, model):
             dataloader = getattr(model, loader_name)
             attr_name = loader_name
 
