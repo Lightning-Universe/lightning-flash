@@ -23,12 +23,9 @@ from torch.utils.data import Dataset
 
 from flash.__main__ import main
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 from tests.helpers.utils import _IMAGE_TESTING
-
-if _ICEVISION_AVAILABLE:
-    from icevision.data import Prediction
 
 
 def collate_fn(samples):
@@ -81,10 +78,13 @@ def test_init():
     dl = model.process_predict_dataset(ds, batch_size=batch_size)
     data = next(iter(dl))
 
-    out = model(data)
+    out = model.forward(data[DefaultDataKeys.INPUT])
 
     assert len(out) == batch_size
-    assert all(isinstance(res, Prediction) for res in out)
+    assert all(isinstance(res, dict) for res in out)
+    assert all("bboxes" in res for res in out)
+    assert all("labels" in res for res in out)
+    assert all("scores" in res for res in out)
 
 
 @pytest.mark.parametrize("head", ["faster_rcnn", "retinanet"])

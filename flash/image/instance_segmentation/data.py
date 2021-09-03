@@ -17,11 +17,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.integrations.icevision.data import (
-    IceDataParserDataSource,
-    IceVisionParserDataSource,
-    IceVisionPathsDataSource,
-)
+from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
@@ -53,7 +49,7 @@ class InstanceSegmentationPreprocess(Preprocess):
                 "coco": IceVisionParserDataSource(parser=COCOMaskParser),
                 "voc": IceVisionParserDataSource(parser=VOCMaskParser),
                 DefaultDataSources.FILES: IceVisionPathsDataSource(),
-                DefaultDataSources.FOLDERS: IceDataParserDataSource(parser=parser),
+                DefaultDataSources.FOLDERS: IceVisionParserDataSource(parser=parser),
             },
             default_data_source=DefaultDataSources.FILES,
         )
