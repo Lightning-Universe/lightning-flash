@@ -151,10 +151,10 @@ def from_icevision_detection(record: "BaseRecord"):
             # TODO: Unpack keypoints_metadata
             result["keypoints_metadata"].append(keypoint.metadata)
 
-    if hasattr(detection, "label_ids"):
+    if getattr(detection, "label_ids", None) is not None:
         result["labels"] = list(detection.label_ids)
 
-    if hasattr(detection, "scores"):
+    if getattr(detection, "scores", None) is not None:
         result["scores"] = list(detection.scores)
 
     return result
@@ -163,11 +163,15 @@ def from_icevision_detection(record: "BaseRecord"):
 def from_icevision_record(record: "BaseRecord"):
     sample = {
         DefaultDataKeys.METADATA: {
-            "image_id": record.record_id,
             "size": (record.height, record.width),
-            "filepath": record.filepath,
         }
     }
+
+    if getattr(record, "record_id", None) is not None:
+        sample[DefaultDataKeys.METADATA]["image_id"] = record.image_id
+
+    if getattr(record, "filepath", None) is not None:
+        sample[DefaultDataKeys.METADATA]["filepath"] = record.filepath
 
     if record.img is not None:
         sample[DefaultDataKeys.INPUT] = record.img
@@ -179,7 +183,7 @@ def from_icevision_record(record: "BaseRecord"):
 
     sample[DefaultDataKeys.TARGET] = from_icevision_detection(record)
 
-    if hasattr(record.detection, "class_map"):
+    if getattr(record.detection, "class_map", None) is not None:
         sample[DefaultDataKeys.METADATA]["class_map"] = record.detection.class_map
 
     return sample
