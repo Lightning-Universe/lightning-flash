@@ -18,6 +18,7 @@ from torch.optim import Optimizer
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.process import Serializer
+from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
 from flash.image.keypoint_detection.backbones import KEYPOINT_DETECTION_HEADS
 
@@ -79,7 +80,7 @@ class KeypointDetector(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            serializer=serializer,
+            serializer=serializer or Preds(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
