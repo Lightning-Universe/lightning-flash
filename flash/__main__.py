@@ -52,6 +52,7 @@ tasks = [
     "flash.pointcloud.segmentation",
     "flash.tabular.classification",
     "flash.text.classification",
+    "flash.text.question_answering",
     "flash.text.seq2seq.summarization",
     "flash.text.seq2seq.translation",
     "flash.video.classification",

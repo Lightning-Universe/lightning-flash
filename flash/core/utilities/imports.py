@@ -99,6 +99,7 @@ _DATASETS_AVAILABLE = _module_available("datasets")
 _ICEVISION_AVAILABLE = _module_available("icevision")
 _ICEDATA_AVAILABLE = _module_available("icedata")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
+_VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -121,6 +122,7 @@ else:
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
+    _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
 
 _TEXT_AVAILABLE = all(
     [
@@ -131,7 +133,7 @@ _TEXT_AVAILABLE = all(
     ]
 )
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
-_VIDEO_AVAILABLE = _PYTORCHVIDEO_AVAILABLE
+_VIDEO_AVAILABLE = _TORCHVISION_AVAILABLE and _PIL_AVAILABLE and _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE
 _IMAGE_AVAILABLE = all(
     [
         _TORCHVISION_AVAILABLE,

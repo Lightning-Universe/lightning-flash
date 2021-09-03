@@ -460,9 +460,9 @@ class DataModule(pl.LightningDataModule):
         val_data: Any = None,
         test_data: Any = None,
         predict_data: Any = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
@@ -522,6 +522,7 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
+
         preprocess = preprocess or cls.preprocess_cls(
             train_transform,
             val_transform,
@@ -604,15 +605,6 @@ class DataModule(pl.LightningDataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_folders(
-                train_folder="train_folder",
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
         """
         return cls.from_data_source(
             DefaultDataSources.FOLDERS,
@@ -690,16 +682,6 @@ class DataModule(pl.LightningDataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_files(
-                train_files=["image_1.png", "image_2.png", "image_3.png"],
-                train_targets=[1, 0, 1],
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
         """
         return cls.from_data_source(
             DefaultDataSources.FILES,

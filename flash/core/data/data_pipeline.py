@@ -14,13 +14,14 @@
 import functools
 import inspect
 import weakref
-from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
 
 from flash.core.data.auto_dataset import IterableAutoDataset
@@ -29,6 +30,7 @@ from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
 
 if TYPE_CHECKING:
     from flash.core.model import Task
@@ -321,7 +323,7 @@ class DataPipeline:
     @staticmethod
     def _get_dataloader(model: "Task", loader_name: str) -> Tuple[DataLoader, str]:
         dataloader, attr_name = None, None
-        if hasattr(model, loader_name):
+        if is_overridden(loader_name, model):
             dataloader = getattr(model, loader_name)
             attr_name = loader_name
 
@@ -330,6 +332,16 @@ class DataPipeline:
             attr_name = f"trainer.datamodule.{loader_name}"
 
         return dataloader, attr_name
+
+    @staticmethod
+    def _patch_dataloader(model: "Task", dataloader: Union[Callable, DataLoader], stage: RunningStage):
+        if isinstance(dataloader, DataLoader):
+            if _PL_GREATER_EQUAL_1_4_3:
+                dataloader = _PatchDataLoader(dataloader, _STAGES_PREFIX[stage])
+                dataloader.patch(model)
+            else:
+                dataloader = _PatchDataLoader(dataloader)
+        return dataloader
 
     @staticmethod
     def _set_loader(model: "Task", loader_name: str, new_loader: DataLoader) -> None:
@@ -405,8 +417,7 @@ class DataPipeline:
                 if not was_seq:
                     dataloader = dataloader[0]
 
-                if isinstance(dataloader, DataLoader):
-                    dataloader = _PatchDataLoader(dataloader)
+                dataloader = self._patch_dataloader(model, dataloader, stage)
 
                 self._set_loader(model, whole_attr_name, dataloader)
 
@@ -535,8 +546,7 @@ class DataPipeline:
             if not was_seq:
                 dataloader = dataloader[0]
 
-            if isinstance(dataloader, DataLoader):
-                dataloader = _PatchDataLoader(dataloader)
+            dataloader = self._patch_dataloader(model, dataloader, stage)
 
             self._set_loader(model, whole_attr_name, dataloader)
 

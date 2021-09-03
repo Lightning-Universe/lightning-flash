@@ -43,10 +43,10 @@ else:
 
 
 class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
-    @requires_extras("image")
     def __init__(self):
         super().__init__(image_loader)
 
+    @requires_extras("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH
@@ -122,9 +122,9 @@ class ImageClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
@@ -182,15 +182,6 @@ class ImageClassificationData(DataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = ImageClassificationData.from_data_frame(
-                "image_id",
-                "target",
-                train_data_frame=train_data,
-                train_images_root="data/train_images",
-            )
         """
         return cls.from_data_source(
             "data_frame",
@@ -228,9 +219,9 @@ class ImageClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
@@ -290,15 +281,6 @@ class ImageClassificationData(DataModule):
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = ImageClassificationData.from_csv(
-                "image_id",
-                "target",
-                train_file="train_data.csv",
-                train_images_root="data/train_images",
-            )
         """
         return cls.from_data_source(
             DefaultDataSources.CSV,
