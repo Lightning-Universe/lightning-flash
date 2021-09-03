@@ -35,7 +35,7 @@ from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires_extras
 
 if _AUDIO_AVAILABLE:
-    import soundfile as sf
+    import librosa
     from datasets import Dataset as HFDataset
     from datasets import load_dataset
     from transformers import Wav2Vec2CTCTokenizer
@@ -48,7 +48,7 @@ class SpeechRecognitionDeserializer(Deserializer):
         encoded_with_padding = (sample + "===").encode("ascii")
         audio = base64.b64decode(encoded_with_padding)
         buffer = io.BytesIO(audio)
-        data, sampling_rate = sf.read(buffer)
+        data, sampling_rate = librosa.load(buffer, sr=16000)
         return {
             DefaultDataKeys.INPUT: data,
             DefaultDataKeys.METADATA: {"sampling_rate": sampling_rate},
@@ -69,7 +69,7 @@ class BaseSpeechRecognition:
             and "root" in sample[DefaultDataKeys.METADATA]
         ):
             path = os.path.join(sample[DefaultDataKeys.METADATA]["root"], path)
-        speech_array, sampling_rate = sf.read(path)
+        speech_array, sampling_rate = librosa.load(path, sr=16000)
         sample[DefaultDataKeys.INPUT] = speech_array
         sample[DefaultDataKeys.METADATA] = {"sampling_rate": sampling_rate}
         return sample
