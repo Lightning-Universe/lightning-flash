@@ -78,7 +78,7 @@ def test_init():
     dl = model.process_predict_dataset(ds, batch_size=batch_size)
     data = next(iter(dl))
 
-    out = model(data)
+    out = model.forward(data[DefaultDataKeys.INPUT])
 
     assert len(out) == batch_size
     assert all(isinstance(res, dict) for res in out)
