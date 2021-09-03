@@ -18,6 +18,7 @@ from torch.optim import Optimizer
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.process import Serializer
+from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
 from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
 
@@ -57,7 +58,7 @@ class ObjectDetector(AdapterTask):
         head: Optional[str] = "retinanet",
         pretrained: bool = True,
         optimizer: Type[Optimizer] = torch.optim.Adam,
-        learning_rate: float = 5e-4,
+        learning_rate: float = 5e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs: Any,
     ):
@@ -77,7 +78,7 @@ class ObjectDetector(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            serializer=serializer,
+            serializer=serializer or Preds(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
