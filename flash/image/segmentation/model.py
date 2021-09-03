@@ -35,8 +35,8 @@ if _KORNIA_AVAILABLE:
 class SemanticSegmentationPostprocess(Postprocess):
     def per_sample_transform(self, sample: Any) -> Any:
         resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA]["size"][-2:], interpolation="bilinear")
-        sample[DefaultDataKeys.PREDS] = resize(torch.stack(sample[DefaultDataKeys.PREDS]))
-        sample[DefaultDataKeys.INPUT] = resize(torch.stack(sample[DefaultDataKeys.INPUT]))
+        sample[DefaultDataKeys.PREDS] = resize(sample[DefaultDataKeys.PREDS])
+        sample[DefaultDataKeys.INPUT] = resize(sample[DefaultDataKeys.INPUT])
         return super().per_sample_transform(sample)
 
 

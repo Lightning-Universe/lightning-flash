@@ -108,16 +108,15 @@ def from_icevision_detection(record: "BaseRecord"):
     result = {}
 
     if hasattr(detection, "bboxes"):
-        result["bboxes"] = []
-        for bbox in detection.bboxes:
-            bbox_list = list(bbox.xywh)
-            bbox_dict = {
-                "xmin": bbox_list[0],
-                "ymin": bbox_list[1],
-                "width": bbox_list[2],
-                "height": bbox_list[3],
+        result["bboxes"] = [
+            {
+                "xmin": bbox.xmin,
+                "ymin": bbox.ymin,
+                "width": bbox.width,
+                "height": bbox.height,
             }
-            result["bboxes"].append(bbox_dict)
+            for bbox in detection.bboxes
+        ]
 
     if hasattr(detection, "masks"):
         masks = detection.masks
