@@ -167,7 +167,7 @@ def from_icevision_record(record: "BaseRecord"):
     }
 
     if getattr(record, "record_id", None) is not None:
-        sample[DefaultDataKeys.METADATA]["image_id"] = record.image_id
+        sample[DefaultDataKeys.METADATA]["image_id"] = record.record_id
 
     if getattr(record, "filepath", None) is not None:
         sample[DefaultDataKeys.METADATA]["filepath"] = record.filepath
