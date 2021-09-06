@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
 from torch.nn import functional as F
+from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Accuracy, Metric
 
 from flash.core.data.data_source import DefaultDataKeys
@@ -42,6 +43,9 @@ class ImageEmbedder(Task):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -61,6 +65,9 @@ class ImageEmbedder(Task):
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
         learning_rate: float = 1e-3,
         pooling_fn: Callable = torch.max,
@@ -69,6 +76,9 @@ class ImageEmbedder(Task):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
             preprocess=ImageClassificationPreprocess(),
