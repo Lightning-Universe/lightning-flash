@@ -39,8 +39,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -U pip wheel
-        pip install --upgrade nbconvert jupyter_client jupyter
-        pip install -e .[image,tabular,text] --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install -e .[notebooks,image,tabular,text] --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
 
     - name: Cache datasets
       uses: actions/cache@v2
