@@ -45,7 +45,6 @@ ________________
     detection.data.FiftyOneParser
     detection.data.ObjectDetectionFiftyOneDataSource
     detection.data.ObjectDetectionPreprocess
-    detection.serialization.DetectionLabels
     detection.serialization.FiftyOneDetectionLabels
 
 Keypoint Detection

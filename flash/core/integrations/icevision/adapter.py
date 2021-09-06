@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader, Sampler
 from flash.core.adapter import Adapter
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.integrations.icevision.transforms import to_icevision_record
+from flash.core.integrations.icevision.transforms import from_icevision_predictions, to_icevision_record
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
@@ -81,9 +81,12 @@ class IceVisionAdapter(Adapter):
     @staticmethod
     def _collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
         metadata = metadata or [None] * len(samples)
-        return collate_fn(
-            [to_icevision_record({**sample, DefaultDataKeys.METADATA: m}) for sample, m in zip(samples, metadata)]
-        )
+        return {
+            DefaultDataKeys.INPUT: collate_fn(
+                [to_icevision_record({**sample, DefaultDataKeys.METADATA: m}) for sample, m in zip(samples, metadata)]
+            ),
+            DefaultDataKeys.METADATA: metadata,
+        }
 
     def process_train_dataset(
         self,
@@ -178,19 +181,20 @@ class IceVisionAdapter(Adapter):
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
-        return self.icevision_adapter.training_step(batch, batch_idx)
+        return self.icevision_adapter.training_step(batch[DefaultDataKeys.INPUT], batch_idx)
 
     def validation_step(self, batch, batch_idx):
-        return self.icevision_adapter.validation_step(batch, batch_idx)
+        return self.icevision_adapter.validation_step(batch[DefaultDataKeys.INPUT], batch_idx)
 
     def test_step(self, batch, batch_idx):
-        return self.icevision_adapter.validation_step(batch, batch_idx)
+        return self.icevision_adapter.validation_step(batch[DefaultDataKeys.INPUT], batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self(batch)
+        batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
+        return batch
 
     def forward(self, batch: Any) -> Any:
-        return self.model_type.predict_from_dl(self.model, [batch], show_pbar=False)
+        return from_icevision_predictions(self.model_type.predict_from_dl(self.model, [batch], show_pbar=False))
 
     def training_epoch_end(self, outputs) -> None:
         return self.icevision_adapter.training_epoch_end(outputs)

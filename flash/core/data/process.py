@@ -14,7 +14,7 @@
 import inspect
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -28,6 +28,7 @@ from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 
 
@@ -177,10 +178,10 @@ class Preprocess(BasePreprocess, Properties):
 
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         data_sources: Optional[Dict[str, "DataSource"]] = None,
         deserializer: Optional["Deserializer"] = None,
         default_data_source: Optional[str] = None,
@@ -251,6 +252,11 @@ class Preprocess(BasePreprocess, Properties):
     ) -> Optional[Dict[str, Callable]]:
         if transform is None:
             return transform
+
+        if isinstance(transform, list):
+            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.Sequential(*transform))}
+        elif callable(transform):
+            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, transform)}
 
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
@@ -439,10 +445,10 @@ class Preprocess(BasePreprocess, Properties):
 class DefaultPreprocess(Preprocess):
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         data_sources: Optional[Dict[str, "DataSource"]] = None,
         default_data_source: Optional[str] = None,
     ):

@@ -460,9 +460,9 @@ class DataModule(pl.LightningDataModule):
         val_data: Any = None,
         test_data: Any = None,
         predict_data: Any = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
@@ -522,6 +522,7 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
+
         preprocess = preprocess or cls.preprocess_cls(
             train_transform,
             val_transform,
