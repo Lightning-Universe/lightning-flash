@@ -44,7 +44,6 @@ long_description = setup_tools._load_readme_description(
 
 extras = {
     "docs": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="docs.txt"),
-    "notebooks": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="notebooks.txt"),
     "test": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="test.txt"),
     "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_text.txt"),
     "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_tabular.txt"),
