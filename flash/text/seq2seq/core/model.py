@@ -105,7 +105,7 @@ class Seq2SeqTask(Task):
             metrics=metrics,
             learning_rate=learning_rate,
         )
-        self.model = backbone
+        self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.val_target_max_length = val_target_max_length
         self.num_beams = num_beams
