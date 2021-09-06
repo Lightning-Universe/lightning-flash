@@ -546,27 +546,18 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
 
         # Datamodule
-        if self.datamodule is not None and getattr(self.datamodule, "data_pipeline", None) is not None:
-            old_data_source = getattr(self.datamodule.data_pipeline, "data_source", None)
-            preprocess = getattr(self.datamodule.data_pipeline, "_preprocess_pipeline", None)
-            postprocess = getattr(self.datamodule.data_pipeline, "_postprocess_pipeline", None)
-            serializer = getattr(self.datamodule.data_pipeline, "_serializer", None)
-            deserializer = getattr(self.datamodule.data_pipeline, "_deserializer", None)
+        datamodule = None
+        if self.trainer is not None and hasattr(self.trainer, "datamodule"):
+            datamodule = self.trainer.datamodule
+        elif getattr(self, "datamodule", None) is not None:
+            datamodule = self.datamodule
 
-        elif (
-            self.trainer is not None
-            and hasattr(self.trainer, "datamodule")
-            and getattr(self.trainer.datamodule, "data_pipeline", None) is not None
-        ):
-            old_data_source = getattr(self.trainer.datamodule.data_pipeline, "data_source", None)
-            preprocess = getattr(self.trainer.datamodule.data_pipeline, "_preprocess_pipeline", None)
-            postprocess = getattr(self.trainer.datamodule.data_pipeline, "_postprocess_pipeline", None)
-            serializer = getattr(self.trainer.datamodule.data_pipeline, "_serializer", None)
-            deserializer = getattr(self.trainer.datamodule.data_pipeline, "_deserializer", None)
-        else:
-            # TODO: we should log with low severity level that we use defaults to create
-            # `preprocess`, `postprocess` and `serializer`.
-            pass
+        if getattr(datamodule, "data_pipeline", None) is not None:
+            old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
 
         # Defaults / task attributes
         deserializer, preprocess, postprocess, serializer = Task._resolve(
