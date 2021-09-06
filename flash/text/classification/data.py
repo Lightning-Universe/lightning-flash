@@ -32,10 +32,10 @@ if _TEXT_AVAILABLE:
 
 class TextDeserializer(Deserializer):
     @requires_extras("text")
-    def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
         super().__init__()
         self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
         self.max_length = max_length
 
     def deserialize(self, text: str) -> Tensor:
