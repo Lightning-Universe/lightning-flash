@@ -63,13 +63,21 @@ class Seq2SeqDataSource(DataSource):
             ex_input = ex
             ex_target = None
 
-        model_inputs = self.tokenizer(ex_input, max_length=self.max_source_length, padding=self.padding)
+        model_inputs = self.tokenizer(
+            ex_input,
+            max_length=self.max_source_length,
+            padding=self.padding,
+            add_special_tokens=True,
+            truncation=True,
+        )
         if ex_target is not None:
             with self.tokenizer.as_target_tokenizer():
                 labels = self.tokenizer(
                     ex_target,
                     max_length=self.max_target_length,
                     padding=self.padding,
+                    add_special_tokens=True,
+                    truncation=True,
                 )
             model_inputs["labels"] = labels["input_ids"]
         return model_inputs
