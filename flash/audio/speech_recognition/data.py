@@ -119,12 +119,12 @@ class SpeechRecognitionFileDataSource(DataSource, BaseSpeechRecognition):
 
 class SpeechRecognitionCSVDataSource(SpeechRecognitionFileDataSource):
     def __init__(self, sampling_rate: int):
-        super().__init__(filetype="csv", sampling_rate=sampling_rate)
+        super().__init__(sampling_rate, filetype="csv")
 
 
 class SpeechRecognitionJSONDataSource(SpeechRecognitionFileDataSource):
     def __init__(self, sampling_rate: int):
-        super().__init__(filetype="json", sampling_rate=sampling_rate)
+        super().__init__(sampling_rate, filetype="json")
 
 
 class SpeechRecognitionDatasetDataSource(DatasetDataSource, BaseSpeechRecognition):
