@@ -344,14 +344,20 @@ class Preprocess(BasePreprocess, Properties):
 
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:

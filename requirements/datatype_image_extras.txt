@@ -2,3 +2,4 @@ matplotlib
 fiftyone
 classy_vision
 vissl>=0.1.5
+git+https://github.com/learnables/learn2learn.git

@@ -39,6 +39,7 @@ _EFFDET = Provider("rwightman/efficientdet-pytorch", "https://github.com/rwightm
 _SEGMENTATION_MODELS = Provider(
     "qubvel/segmentation_models.pytorch", "https://github.com/qubvel/segmentation_models.pytorch"
 )
+_LEARN2LEARN = Provider("earnables/learn2learn", "https://github.com/learnables/learn2learn")
 _PYSTICHE = Provider("pystiche/pystiche", "https://github.com/pystiche/pystiche")
 _HUGGINGFACE = Provider("Hugging Face/transformers", "https://github.com/huggingface/transformers")
 _FAIRSEQ = Provider("PyTorch/fairseq", "https://github.com/pytorch/fairseq")
