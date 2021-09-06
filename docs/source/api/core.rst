@@ -91,6 +91,8 @@ ___________________
     :template: classtemplate.rst
 
     ~flash.core.registry.FlashRegistry
+    ~flash.core.registry.ExternalRegistry
+    ~flash.core.registry.ConcatRegistry
 
 flash.core.optimizers
 _____________________
