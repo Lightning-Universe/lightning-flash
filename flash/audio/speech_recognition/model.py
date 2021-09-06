@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Mapping, Optional, Type, Union
 
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
@@ -42,6 +43,9 @@ class SpeechRecognition(Task):
         backbone: str = "facebook/wav2vec2-base-960h",
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         learning_rate: float = 1e-5,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
@@ -58,6 +62,9 @@ class SpeechRecognition(Task):
             model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             learning_rate=learning_rate,
             serializer=serializer,
         )
