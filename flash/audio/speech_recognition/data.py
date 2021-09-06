@@ -129,7 +129,7 @@ class SpeechRecognitionDatasetDataSource(DatasetDataSource, BaseSpeechRecognitio
 
 class SpeechRecognitionPathsDataSource(PathsDataSource, BaseSpeechRecognition):
     def __init__(self):
-        super().__init__(("wav", "ogg", "flac", "mat"))
+        super().__init__(("wav", "ogg", "flac", "mat", "mp3"))
 
     def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
         return self._load_sample(sample)
