@@ -17,4 +17,3 @@ This is a comprehensive list of all the backbones that are available for the dif
        'botnet50ts_256',
        'cait_m36_384',
        'cait_m48_448'
-
