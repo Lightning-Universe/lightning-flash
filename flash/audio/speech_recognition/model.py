@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, Dict, Mapping, Optional, Type, Union
+from typing import Any, Dict, Mapping, Optional, Type, Union
 
 import torch
 import torch.nn as nn
@@ -33,6 +33,19 @@ if _AUDIO_AVAILABLE:
 
 
 class SpeechRecognition(Task):
+    """The ``SpeechRecognition`` task is a :class:`~flash.Task` for converting speech to text. For more details, see
+    :ref:`speech_recognition`.
+
+    Args:
+        backbone: Any speech recognition model from `HuggingFace/transformers
+            <https://huggingface.co/models?pipeline_tag=automatic-speech-recognition>`_.
+        optimizer: Optimizer to use for training.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+    """
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
 
@@ -41,7 +54,6 @@ class SpeechRecognition(Task):
     def __init__(
         self,
         backbone: str = "facebook/wav2vec2-base-960h",
-        loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
@@ -60,7 +72,6 @@ class SpeechRecognition(Task):
         )
         super().__init__(
             model=model,
-            loss_fn=loss_fn,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             scheduler=scheduler,
