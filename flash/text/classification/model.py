@@ -22,12 +22,21 @@ from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
+from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.providers import _HUGGINGFACE
 from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSequenceClassification
     from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
+
+
+HUGGINGFACE_BACKBONES = ExternalRegistry(
+    AutoModelForSequenceClassification.from_pretrained,
+    "backbones",
+    _HUGGINGFACE,
+)
 
 
 class TextClassifier(ClassificationTask):
@@ -53,6 +62,8 @@ class TextClassifier(ClassificationTask):
     """
 
     required_extras: str = "text"
+
+    backbones: FlashRegistry = FlashRegistry("backbones") + HUGGINGFACE_BACKBONES
 
     def __init__(
         self,
@@ -91,7 +102,7 @@ class TextClassifier(ClassificationTask):
             serializer=serializer or Labels(multi_label=multi_label),
         )
         self.enable_ort = enable_ort
-        self.model = AutoModelForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
+        self.model = self.backbones.get(backbone)(num_labels=num_classes)
         self.save_hyperparameters()
 
     @property

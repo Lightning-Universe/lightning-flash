@@ -47,6 +47,20 @@ class FlashRegistry:
         self.functions: List[_REGISTERED_FUNCTION] = []
         self._verbose = verbose
 
+    def __add__(self, other):
+        registries = []
+        if isinstance(self, ConcatRegistry):
+            registries += self.registries
+        else:
+            registries += [self]
+
+        if isinstance(other, ConcatRegistry):
+            registries += other.registries
+        else:
+            registries += [other]
+
+        return ConcatRegistry(*registries)
+
     def __len__(self) -> int:
         return len(self.functions)
 
@@ -154,3 +168,127 @@ class FlashRegistry:
 
     def available_keys(self) -> List[str]:
         return sorted(v["name"] for v in self.functions)
+
+
+class ExternalRegistry(FlashRegistry):
+    """The ``ExternalRegistry`` is a ``FlashRegistry`` that can point to an external provider via a getter
+    function.
+
+    Args:
+        getter: A function whose first argument is a key that can optionally take additional args and kwargs.
+        providers: The provider(/s) of entries in this registry.
+    """
+
+    # Prevent users from trying to remove or register items
+    remove = None
+    _register_function = None
+
+    def __init__(
+        self,
+        getter: Callable,
+        name: str,
+        providers: Optional[Union[Provider, List[Provider]]] = None,
+        verbose: bool = False,
+    ):
+        super().__init__(name, verbose=verbose)
+
+        self.getter = getter
+        self.providers = providers
+
+    def __contains__(self, item):
+        """Contains is always ``True`` for an ``ExternalRegistry`` as we can't know whether the getter will fail
+        without executing it."""
+        return True
+
+    def get(
+        self,
+        key: str,
+        with_metadata: bool = False,
+        strict: bool = True,
+        **metadata,
+    ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
+        """Returns a partial of the getter with the first argument as the given key and wrapped to print the
+        providers."""
+        fn = functools.partial(self.getter, key)
+        if self.providers is not None:
+            fn = print_provider_info(key, self.providers, fn)
+        return fn
+
+    def available_keys(self) -> List[str]:
+        """Since we don't know the available keys, just give a generic message."""
+        if self.providers is not None:
+            return [f"Anything available from: {','.join(str(provider) for provider in self.providers)}"]
+        return []
+
+
+class ConcatRegistry(FlashRegistry):
+    """The ``ConcatRegistry`` can be used to concatenate multiple registries of different types together."""
+
+    def __init__(self, *registries: FlashRegistry):
+        super().__init__(
+            ",".join({registry.name for registry in registries}),
+            verbose=any(registry._verbose for registry in registries),
+        )
+
+        self.registries = registries
+
+    def __len__(self) -> int:
+        return sum(len(registry) for registry in self.registries)
+
+    def __contains__(self, key) -> bool:
+        return any(key in registry for registry in self.registries)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(registries={self.registries})"
+
+    def get(
+        self,
+        key: str,
+        with_metadata: bool = False,
+        strict: bool = True,
+        **metadata,
+    ) -> Union[Callable, _REGISTERED_FUNCTION, List[_REGISTERED_FUNCTION], List[Callable]]:
+        matches = []
+        external_matches = []
+
+        for registry in self.registries:
+            if key in registry:
+                result = registry.get(key, with_metadata=with_metadata, strict=strict, **metadata)
+                if not isinstance(result, list):
+                    result = [result]
+
+                if isinstance(registry, ExternalRegistry):
+                    external_matches += result
+                else:
+                    matches += result
+
+        if not strict:
+            return matches + external_matches
+
+        if len(matches) > 0:
+            return matches[0]
+
+        if len(external_matches) == 1:
+            return external_matches[0]
+
+        raise KeyError("Multiple matches from external registries, a strict lookup is not possible.")
+
+    def remove(self, key: str) -> None:
+        for registry in self.registries:
+            if key in registry and getattr(registry, "remove", None) is not None:
+                registry.remove(key)
+
+    def _register_function(
+        self,
+        fn: Callable,
+        name: Optional[str] = None,
+        override: bool = False,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
+        """Register in the first available registry."""
+        for registry in self.registries:
+            if getattr(registry, "_register_function", None) is not None:
+                return registry._register_function(fn, name=name, override=override, metadata=metadata)
+
+    def available_keys(self) -> List[str]:
+        return sum(registry.available_keys() for registry in self.registries)
