@@ -24,14 +24,24 @@ from torchmetrics import Metric
 
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
+from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.providers import _HUGGINGFACE
 from flash.text.ort_callback import ORTCallback
 from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
+
+    HUGGINGFACE_BACKBONES = ExternalRegistry(
+        AutoModelForSeq2SeqLM.from_pretrained,
+        "backbones",
+        _HUGGINGFACE,
+    )
 else:
     AutoModelForSeq2SeqLM, PreTrainedTokenizerBase = None, None
+
+    HUGGINGFACE_BACKBONES = FlashRegistry("backbones")
 
 
 def _pad_tensors_to_max_len(model_cfg, tensor, max_length):
@@ -65,6 +75,8 @@ class Seq2SeqTask(Task):
 
     required_extras: str = "text"
 
+    backbones: FlashRegistry = FlashRegistry("backbones") + HUGGINGFACE_BACKBONES
+
     def __init__(
         self,
         backbone: str = "t5-small",
@@ -93,7 +105,7 @@ class Seq2SeqTask(Task):
             metrics=metrics,
             learning_rate=learning_rate,
         )
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(backbone)
+        self.model = backbone
         self.enable_ort = enable_ort
         self.val_target_max_length = val_target_max_length
         self.num_beams = num_beams

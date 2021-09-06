@@ -31,12 +31,13 @@ if _TEXT_AVAILABLE:
     from transformers import AutoModelForSequenceClassification
     from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
-
-HUGGINGFACE_BACKBONES = ExternalRegistry(
-    AutoModelForSequenceClassification.from_pretrained,
-    "backbones",
-    _HUGGINGFACE,
-)
+    HUGGINGFACE_BACKBONES = ExternalRegistry(
+        AutoModelForSequenceClassification.from_pretrained,
+        "backbones",
+        _HUGGINGFACE,
+    )
+else:
+    HUGGINGFACE_BACKBONES = FlashRegistry("backbones")
 
 
 class TextClassifier(ClassificationTask):
