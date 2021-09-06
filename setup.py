@@ -59,9 +59,7 @@ extras = {
 }
 
 extras["vision"] = list(set(extras["image"] + extras["video"]))
-extras["all"] = list(
-    set(extras["audio"] + extras["vision"] + extras["tabular"] + extras["text"])
-)  # + extras["pointcloud"] dependencies conflicts
+extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
 extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
