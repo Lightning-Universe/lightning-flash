@@ -63,13 +63,14 @@ class Seq2SeqDataSource(DataSource):
             ex_target = None
 
         model_inputs = self.tokenizer(ex_input, max_length=self.max_source_length, padding=self.padding)
-        with self.tokenizer.as_target_tokenizer():
-            labels = self.tokenizer(
-                ex_target,
-                max_length=self.max_target_length,
-                padding=self.padding,
-            )
-        model_inputs["labels"] = labels["input_ids"]
+        if ex_target is not None:
+            with self.tokenizer.as_target_tokenizer():
+                labels = self.tokenizer(
+                    ex_target,
+                    max_length=self.max_target_length,
+                    padding=self.padding,
+                )
+            model_inputs["labels"] = labels["input_ids"]
         return model_inputs
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
