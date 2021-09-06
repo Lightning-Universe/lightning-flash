@@ -14,6 +14,7 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
+from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
 from flash.text.seq2seq.core.metrics import BLEUScore
@@ -35,6 +36,9 @@ class TranslationTask(Seq2SeqTask):
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the BLEU metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `1e-5`
@@ -50,6 +54,9 @@ class TranslationTask(Seq2SeqTask):
         backbone: str = "t5-small",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-5,
         val_target_max_length: Optional[int] = 128,
@@ -63,6 +70,9 @@ class TranslationTask(Seq2SeqTask):
             backbone=backbone,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
             val_target_max_length=val_target_max_length,
