@@ -194,7 +194,7 @@ class ExternalRegistry(FlashRegistry):
         super().__init__(name, verbose=verbose)
 
         self.getter = getter
-        self.providers = providers if isinstance(providers, list) else [providers]
+        self.providers = providers if providers is None or isinstance(providers, list) else [providers]
 
     def __contains__(self, item):
         """Contains is always ``True`` for an ``ExternalRegistry`` as we can't know whether the getter will fail
@@ -218,7 +218,7 @@ class ExternalRegistry(FlashRegistry):
     def available_keys(self) -> List[str]:
         """Since we don't know the available keys, just give a generic message."""
         if self.providers is not None:
-            return [f"Anything available from: {','.join(str(provider) for provider in self.providers)}"]
+            return [f"Anything available from: {', '.join(str(provider) for provider in self.providers)}"]
         return []
 
 
