@@ -29,7 +29,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
 if _AUDIO_AVAILABLE:
-    from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+    from transformers import Wav2Vec2Processor
 
 
 class SpeechRecognition(Task):
@@ -67,9 +67,7 @@ class SpeechRecognition(Task):
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
 
-        model = (
-            self.backbones.get(backbone)() if backbone in self.backbones else Wav2Vec2ForCTC.from_pretrained(backbone)
-        )
+        model = self.backbones.get(backbone)()
         super().__init__(
             model=model,
             optimizer=optimizer,
