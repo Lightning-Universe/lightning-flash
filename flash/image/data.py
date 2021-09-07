@@ -38,7 +38,7 @@ else:
     IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
 
 
-NP_EXTENSIONS = (".npy", ".npz")
+NP_EXTENSIONS = (".npy",)
 
 
 def image_loader(filepath: str):
