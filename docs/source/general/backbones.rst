@@ -2,7 +2,7 @@
 Backbones
 **********
 
-Backbones are the pre trained models that can be used to fine tune a task. 
+Backbones are the pre trained models that can be used to fine tune a task.
 The backbones that are available can be found by using the :func:`Task.available_backbones`.
 
 To get the available backbones for a task like :class:`~flash.image.classification.model.ImageClassifier`, run:
@@ -16,4 +16,3 @@ To get the available backbones for a task like :class:`~flash.image.classificati
 
     # print the backbones
     print(backbones)
-
