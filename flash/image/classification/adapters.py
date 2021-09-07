@@ -16,10 +16,11 @@ import inspect
 import random
 from collections import defaultdict
 from functools import partial
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, List, Optional, Type
 
 import torch
 from pytorch_lightning import LightningModule
+from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Sampler
 
@@ -59,18 +60,6 @@ if _LEARN2LEARN_AVAILABLE:
                 remap = functools.partial(self.remap, mapping=mapping)
                 dd.transforms.append(remap)
             return task_description
-
-    class ConsecutiveLabels(l2l.data.transforms.TaskTransform):
-        def __init__(self, dataset):
-            super().__init__(dataset)
-            self.dataset = dataset
-
-        def __call__(self, task_description):
-            if task_description is None:
-                task_description = self.new_task()
-            pairs = [(dd, self.dataset.indices_to_labels[dd.index]) for dd in task_description]
-            pairs = sorted(pairs, key=lambda x: x[1])
-            return [p[0] for p in pairs]
 
 
 class NoModule:
@@ -130,7 +119,7 @@ class Learn2LearnAdapter(Adapter):
         task: AdapterTask,
         backbone: torch.nn.Module,
         head: torch.nn.Module,
-        algorithm: Type[LightningModule],
+        algorithm_cls: Type[LightningModule],
         ways: int,
         kshots: int,
         queries: int = 1,
@@ -141,12 +130,12 @@ class Learn2LearnAdapter(Adapter):
         self._task = NoModule(task)
         self.backbone = backbone
         self.head = head
-        self.algorithm = algorithm
+        self.algorithm_cls = algorithm_cls
         self.ways = ways
         self.kshots = kshots
         self.queries = queries
 
-        params = inspect.signature(self.algorithm).parameters
+        params = inspect.signature(self.algorithm_cls).parameters
 
         algorithm_kwargs["train_ways"] = ways
         algorithm_kwargs["test_ways"] = ways
@@ -155,7 +144,7 @@ class Learn2LearnAdapter(Adapter):
         algorithm_kwargs["test_shots"] = kshots - queries
 
         algorithm_kwargs["train_queries"] = queries
-        algorithm_kwargs["train_queries"] = queries
+        algorithm_kwargs["test_queries"] = queries
 
         if "model" in params:
             algorithm_kwargs["model"] = Model(backbone=backbone, head=head)
@@ -166,15 +155,17 @@ class Learn2LearnAdapter(Adapter):
         if "classifier" in params:
             algorithm_kwargs["classifier"] = head
 
-        self.model = self.algorithm(**algorithm_kwargs)
+        self.model = self.algorithm_cls(**algorithm_kwargs)
 
-    def _default_transform(self, dataset):
+        # this algorithm requires a special treatment
+        self._algorithm_has_validated = self.algorithm_cls != l2l.algorithms.LightningPrototypicalNetworks
+
+    def _default_transform(self, dataset) -> List[Callable]:
         return [
             l2l.data.transforms.FusedNWaysKShots(dataset, n=self.ways, k=self.kshots),
             l2l.data.transforms.LoadData(dataset),
             RemapLabels(dataset),
-            ConsecutiveLabels(dataset),
-            # l2l.vision.transforms.RandomClassRotation(dataset, [0.0, 90.0, 180.0, 270.0])
+            l2l.data.transforms.ConsecutiveLabels(dataset),
         ]
 
     @property
@@ -236,15 +227,21 @@ class Learn2LearnAdapter(Adapter):
         return self.model.training_step(input, batch_idx)
 
     def validation_step(self, batch, batch_idx):
+        # Should be True only for trainer.validate
+        if self.trainer.state.fn == TrainerFn.VALIDATING:
+            self._algorithm_has_validated = True
         input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return self.model.training_step(input, batch_idx)
+        return self.model.validation_step(input, batch_idx)
+
+    def validation_epoch_end(self, outpus: Any):
+        self.model.validation_epoch_end(outpus)
 
     def test_step(self, batch, batch_idx):
         input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return self.model.training_step(input, batch_idx)
+        return self.model.test_step(input, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        raise NotImplementedError
+        return self.model.predict_step(batch[DefaultDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
     def process_train_dataset(
         self,
@@ -327,9 +324,14 @@ class Learn2LearnAdapter(Adapter):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         assert batch_size == 1
-        raise NotImplementedError
+
+        if not self._algorithm_has_validated:
+            raise MisconfigurationException(
+                "This training_strategies requires to be validated. Call trainer.validate(...)."
+            )
+
         return super().process_predict_dataset(
-            self.convert_dataset(dataset),
+            dataset,
             batch_size,
             num_workers,
             pin_memory,
