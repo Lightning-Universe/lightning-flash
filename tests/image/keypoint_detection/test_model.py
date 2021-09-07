@@ -16,10 +16,11 @@ from unittest import mock
 import pytest
 
 from flash.__main__ import main
-from tests.helpers.utils import _IMAGE_TESTING
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 def test_cli():
     cli_args = ["flash", "keypoint_detection", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
