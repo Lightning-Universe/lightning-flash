@@ -69,6 +69,49 @@ def test_from_filepaths_smoke(tmpdir):
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.parametrize(
+    "data,from_function",
+    [
+        (torch.rand(3, 3, 64, 64), AudioClassificationData.from_tensors),
+        (np.random.rand(3, 3, 64, 64), AudioClassificationData.from_numpy),
+    ],
+)
+def test_from_data(data, from_function):
+    img_data = from_function(
+        train_data=data,
+        train_targets=[0, 3, 6],
+        val_data=data,
+        val_targets=[1, 4, 7],
+        test_data=data,
+        test_targets=[2, 5, 8],
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
+    assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
+
+    # check validation data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert list(labels.numpy()) == [1, 4]
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert list(labels.numpy()) == [2, 5]
+
+
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_numpy(tmpdir):
     tmpdir = Path(tmpdir)
 
