@@ -24,7 +24,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires, requires_extras
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     image_loader,
@@ -45,7 +45,7 @@ class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
     def __init__(self):
         super().__init__(image_loader)
 
-    @requires_extras("image")
+    @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH
@@ -315,7 +315,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
-    @requires_extras("image")
+    @requires("image")
     def _to_numpy(img: Union[np.ndarray, torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, np.ndarray):

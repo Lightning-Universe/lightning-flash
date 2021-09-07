@@ -49,7 +49,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import requires_extras
+from flash.core.utilities.imports import requires
 
 
 class ModuleWrapperBase:
@@ -258,11 +258,11 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = requires_extras(result.required_extras)(result.__init__)
+            result.__init__ = requires(result.required_extras)(result.__init__)
             load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
             if load_from_checkpoint is not None:
                 result.load_from_checkpoint = classmethod(
-                    requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
+                    requires(result.required_extras)(result.load_from_checkpoint.__func__)
                 )
         return result
 
@@ -282,7 +282,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
 
-    required_extras: Optional[str] = None
+    required_extras: Optional[Union[str, List[str]]] = None
 
     def __init__(
         self,
@@ -826,7 +826,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    @requires_extras("serve")
+    @requires("serve")
     def run_serve_sanity_check(self):
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
@@ -846,7 +846,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             resp = tc.post("http://0.0.0.0:8000/predict", json=body)
             print(f"Sanity check response: {resp.json()}")
 
-    @requires_extras("serve")
+    @requires("serve")
     def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> "Composition":
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
