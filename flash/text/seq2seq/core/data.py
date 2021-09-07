@@ -40,12 +40,13 @@ class Seq2SeqDataSource(DataSource):
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
-        **kwargs,
+        **backbone_kwargs,
     ):
         super().__init__()
 
         self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **kwargs)
+        self.backbone_kwargs = backbone_kwargs
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **backbone_kwargs)
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
         self.padding = padding
@@ -89,7 +90,7 @@ class Seq2SeqDataSource(DataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
 class Seq2SeqFileDataSource(Seq2SeqDataSource):
@@ -100,9 +101,9 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
-        **kwargs,
+        **backbone_kwargs,
     ):
-        super().__init__(backbone, max_source_length, max_target_length, padding, **kwargs)
+        super().__init__(backbone, max_source_length, max_target_length, padding, **backbone_kwargs)
 
         self.filetype = filetype
 
@@ -157,7 +158,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
 class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
@@ -167,7 +168,7 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
-        **kwargs,
+        **backbone_kwargs,
     ):
         super().__init__(
             "csv",
@@ -175,7 +176,7 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
-            **kwargs,
+            **backbone_kwargs,
         )
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
@@ -185,7 +186,7 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
 class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
@@ -195,7 +196,7 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
-        **kwargs,
+        **backbone_kwargs,
     ):
         super().__init__(
             "json",
@@ -203,7 +204,7 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
-            **kwargs,
+            **backbone_kwargs,
         )
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
@@ -213,7 +214,7 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
 class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
@@ -234,7 +235,7 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -259,7 +260,7 @@ class Seq2SeqPreprocess(Preprocess):
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
-        **kwargs,
+        **backbone_kwargs,
     ):
         self.backbone = backbone
         self.max_target_length = max_target_length
@@ -277,28 +278,28 @@ class Seq2SeqPreprocess(Preprocess):
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
-                    **kwargs,
+                    **backbone_kwargs,
                 ),
                 DefaultDataSources.JSON: Seq2SeqJSONDataSource(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
-                    **kwargs,
+                    **backbone_kwargs,
                 ),
                 "sentences": Seq2SeqSentencesDataSource(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
-                    **kwargs,
+                    **backbone_kwargs,
                 ),
             },
             default_data_source="sentences",
             deserializer=TextDeserializer(backbone, max_source_length),
         )
 
-        self.set_state(Seq2SeqBackboneState(self.backbone, kwargs))
+        self.set_state(Seq2SeqBackboneState(self.backbone, backbone_kwargs))
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
@@ -328,9 +329,7 @@ class Seq2SeqPostprocess(Postprocess):
 
     @property
     def backbone_state(self):
-        backbone_state = self.get_state(Seq2SeqBackboneState)
-        if backbone_state is not None:
-            return backbone_state
+        return self.get_state(Seq2SeqBackboneState)
 
     @property
     def tokenizer(self):
@@ -353,7 +352,7 @@ class Seq2SeqPostprocess(Postprocess):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        _ = self.tokenizer
 
 
 class Seq2SeqData(DataModule):
