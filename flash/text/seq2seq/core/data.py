@@ -352,6 +352,7 @@ class Seq2SeqPostprocess(Postprocess):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+        self._backbone = None
         _ = self.tokenizer
 
 
