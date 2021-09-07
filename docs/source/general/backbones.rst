@@ -2,19 +2,18 @@
 Backbones
 **********
 
-This is a comprehensive list of all the backbones that are available for the diffrent tasks provided by lightning flash.
+Backbones are the pre trained models that can be used to fine tune a task. 
+The backbones that are available can be found by using the :func:`Task.available_backbones`.
 
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
+To get the available backbones for a task like :class:`~flash.image.classification.model.ImageClassifier`, run:
 
-   * - Task
-     - BackBones
-   * - :class:`~flash.image.classification.model.ImageClassifier`
-     - 'adv_inception_v3',
-       'bat_resnext26ts',
-       'botnet26t_256',
-       'botnet50ts_256',
-       'cait_m36_384',
-       'cait_m48_448'
+.. code-block:: python
+
+    from flash.image import ImageClassifier
+
+    # get the backbones available for ImageClassifier
+    backbones = ImageClassifier.available_backbones()
+
+    # print the backbones
+    print(backbones)
 
