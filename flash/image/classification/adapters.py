@@ -327,6 +327,7 @@ class Learn2LearnAdapter(Adapter):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         assert batch_size == 1
+        raise NotImplementedError
         return super().process_predict_dataset(
             self.convert_dataset(dataset),
             batch_size,
