@@ -33,7 +33,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
     import datasets
@@ -42,7 +42,7 @@ if _TEXT_AVAILABLE:
 
 
 class QuestionAnsweringDataSource(DataSource):
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         backbone: str,
@@ -482,7 +482,7 @@ class QuestionAnsweringBackboneState(ProcessState):
 
 
 class QuestionAnsweringPreprocess(Preprocess):
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -582,7 +582,7 @@ class QuestionAnsweringPreprocess(Preprocess):
 
 
 class QuestionAnsweringPostprocess(Postprocess):
-    @requires_extras("text")
+    @requires("text")
     def __init__(self):
         super().__init__()
 

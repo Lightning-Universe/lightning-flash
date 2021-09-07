@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, List, Tuple
 from torch import nn
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import tasks
@@ -206,7 +206,7 @@ class IceVisionTransformAdapter(nn.Module):
         return from_icevision_record(record)
 
 
-@requires_extras("image")
+@requires(["image", "icevision"])
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default transforms from IceVision."""
     return {
@@ -214,7 +214,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     }
 
 
-@requires_extras("image")
+@requires(["image", "icevision"])
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default augmentations from IceVision."""
     return {

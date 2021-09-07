@@ -53,7 +53,7 @@ class KeypointDetector(AdapterTask):
 
     heads: FlashRegistry = KEYPOINT_DETECTION_HEADS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "icevision"]
 
     def __init__(
         self,
