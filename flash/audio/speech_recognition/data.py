@@ -32,7 +32,7 @@ from flash.core.data.data_source import (
 )
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
 
 if _AUDIO_AVAILABLE:
     import librosa
@@ -155,7 +155,7 @@ class SpeechRecognitionPathsDataSource(PathsDataSource, BaseSpeechRecognition):
 
 
 class SpeechRecognitionPreprocess(Preprocess):
-    @requires_extras("audio")
+    @requires("audio")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -197,7 +197,7 @@ class SpeechRecognitionBackboneState(ProcessState):
 
 
 class SpeechRecognitionPostprocess(Postprocess):
-    @requires_extras("audio")
+    @requires("audio")
     def __init__(self):
         super().__init__()
 

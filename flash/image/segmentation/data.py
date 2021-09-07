@@ -42,7 +42,6 @@ from flash.core.utilities.imports import (
     Image,
     lazy_import,
     requires,
-    requires_extras,
 )
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
 from flash.image.segmentation.serialization import SegmentationLabels
@@ -459,7 +458,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
     @staticmethod
-    @requires_extras("image")
+    @requires("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):

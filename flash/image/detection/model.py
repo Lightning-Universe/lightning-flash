@@ -53,7 +53,7 @@ class ObjectDetector(AdapterTask):
 
     heads: FlashRegistry = OBJECT_DETECTION_HEADS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "icevision", "effdet"]
 
     def __init__(
         self,
