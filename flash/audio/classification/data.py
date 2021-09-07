@@ -36,7 +36,7 @@ def spectrogram_loader(filepath: str):
         img = default_loader(filepath)
         data = np.array(img)
     else:
-        data = np.load(filepath)
+        data = np.load(filepath).astype(np.float32)
     return data
 
 
@@ -58,8 +58,8 @@ class AudioClassificationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: int = 80,
-        freq_mask_param: int = 80,
+        time_mask_param: Optional[int] = None,
+        freq_mask_param: Optional[int] = None,
         deserializer: Optional["Deserializer"] = None,
     ):
         self.spectrogram_size = spectrogram_size

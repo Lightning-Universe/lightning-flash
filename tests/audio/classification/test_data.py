@@ -43,8 +43,6 @@ def _rand_image(size: Tuple[int, int] = None):
 def test_from_filepaths_smoke(tmpdir):
     tmpdir = Path(tmpdir)
 
-    (tmpdir / "a").mkdir()
-    (tmpdir / "b").mkdir()
     _rand_image().save(tmpdir / "a_1.png")
     _rand_image().save(tmpdir / "b_1.png")
 
@@ -71,10 +69,38 @@ def test_from_filepaths_smoke(tmpdir):
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+def test_from_filepaths_numpy(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    np.save(str(tmpdir / "a_1.npy"), np.random.rand(64, 64, 3))
+    np.save(str(tmpdir / "b_1.npy"), np.random.rand(64, 64, 3))
+
+    train_images = [
+        str(tmpdir / "a_1.npy"),
+        str(tmpdir / "b_1.npy"),
+    ]
+
+    spectrograms_data = AudioClassificationData.from_files(
+        train_files=train_images,
+        train_targets=[1, 2],
+        batch_size=2,
+        num_workers=0,
+    )
+    assert spectrograms_data.train_dataloader() is not None
+    assert spectrograms_data.val_dataloader() is None
+    assert spectrograms_data.test_dataloader() is None
+
+    data = next(iter(spectrograms_data.train_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert sorted(list(labels.numpy())) == [1, 2]
+
+
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_list_image_paths(tmpdir):
     tmpdir = Path(tmpdir)
 
-    (tmpdir / "e").mkdir()
     _rand_image().save(tmpdir / "e_1.png")
 
     train_images = [
@@ -122,7 +148,6 @@ def test_from_filepaths_list_image_paths(tmpdir):
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
-    (tmpdir / "e").mkdir()
     _rand_image().save(tmpdir / "e_1.png")
 
     train_images = [
