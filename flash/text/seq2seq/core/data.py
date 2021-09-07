@@ -23,7 +23,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
@@ -33,7 +33,7 @@ if _TEXT_AVAILABLE:
 
 
 class Seq2SeqDataSource(DataSource):
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         backbone: str,
@@ -249,7 +249,7 @@ class Seq2SeqBackboneState(ProcessState):
 
 
 class Seq2SeqPreprocess(Preprocess):
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -320,7 +320,7 @@ class Seq2SeqPreprocess(Preprocess):
 
 
 class Seq2SeqPostprocess(Postprocess):
-    @requires_extras("text")
+    @requires("text")
     def __init__(self):
         super().__init__()
 

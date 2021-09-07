@@ -25,7 +25,6 @@ from flash.core.utilities.imports import (
     _MATPLOTLIB_AVAILABLE,
     lazy_import,
     requires,
-    requires_extras,
 )
 
 Segmentation = None
@@ -56,7 +55,7 @@ class SegmentationLabels(Serializer):
         visualize: Wether to visualize the image labels.
     """
 
-    @requires_extras("image")
+    @requires("image")
     def __init__(self, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None, visualize: bool = False):
         super().__init__()
         self.labels_map = labels_map

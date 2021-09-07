@@ -53,7 +53,7 @@ class InstanceSegmentation(AdapterTask):
 
     heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "icevision"]
 
     def __init__(
         self,
