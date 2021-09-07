@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+import inspect
 import random
 from collections import defaultdict
+from functools import partial
 from typing import Any, Callable, Optional, Type
 
 import torch
@@ -58,6 +60,18 @@ if _LEARN2LEARN_AVAILABLE:
                 dd.transforms.append(remap)
             return task_description
 
+    class ConsecutiveLabels(l2l.data.transforms.TaskTransform):
+        def __init__(self, dataset):
+            super().__init__(dataset)
+            self.dataset = dataset
+
+        def __call__(self, task_description):
+            if task_description is None:
+                task_description = self.new_task()
+            pairs = [(dd, self.dataset.indices_to_labels[dd.index]) for dd in task_description]
+            pairs = sorted(pairs, key=lambda x: x[1])
+            return [p[0] for p in pairs]
+
 
 class NoModule:
 
@@ -90,18 +104,8 @@ class Epochifier:
         return self.length
 
 
-class UserTransform:
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, task_description):
-        for dd in task_description:
-            dd.transforms.append(self.transforms)
-        return task_description
-
-
 class Model(torch.nn.Module):
-    def __init__(self, backbone, head):
+    def __init__(self, backbone: torch.nn.Module, head: Optional[torch.nn.Module]):
         super().__init__()
         self.backbone = backbone
         self.head = head
@@ -110,6 +114,8 @@ class Model(torch.nn.Module):
         x = self.backbone(x)
         if x.dim() == 4:
             x = x.mean(-1).mean(-1)
+        if self.head is None:
+            return x
         return self.head(x)
 
 
@@ -125,10 +131,9 @@ class Learn2LearnAdapter(Adapter):
         backbone: torch.nn.Module,
         head: torch.nn.Module,
         algorithm: Type[LightningModule],
-        train_samples: int,
-        train_ways: int,
-        test_samples: int,
-        test_ways: int,
+        ways: int,
+        kshots: int,
+        queries: int = 1,
         **algorithm_kwargs,
     ):
         super().__init__()
@@ -137,29 +142,39 @@ class Learn2LearnAdapter(Adapter):
         self.backbone = backbone
         self.head = head
         self.algorithm = algorithm
-        self.train_samples = train_samples
-        self.train_ways = train_ways
-        self.test_samples = test_samples
-        self.test_ways = test_ways
+        self.ways = ways
+        self.kshots = kshots
+        self.queries = queries
 
-        self.model = self.algorithm(Model(backbone=backbone, head=head), **algorithm_kwargs)
+        params = inspect.signature(self.algorithm).parameters
 
-    def _train_transforms(self, dataset):
+        algorithm_kwargs["train_ways"] = ways
+        algorithm_kwargs["test_ways"] = ways
+
+        algorithm_kwargs["train_shots"] = kshots - queries
+        algorithm_kwargs["test_shots"] = kshots - queries
+
+        algorithm_kwargs["train_queries"] = queries
+        algorithm_kwargs["train_queries"] = queries
+
+        if "model" in params:
+            algorithm_kwargs["model"] = Model(backbone=backbone, head=head)
+
+        if "features" in params:
+            algorithm_kwargs["features"] = Model(backbone=backbone, head=None)
+
+        if "classifier" in params:
+            algorithm_kwargs["classifier"] = head
+
+        self.model = self.algorithm(**algorithm_kwargs)
+
+    def _default_transform(self, dataset):
         return [
-            l2l.data.transforms.FusedNWaysKShots(dataset, n=self.train_ways, k=self.train_samples),
+            l2l.data.transforms.FusedNWaysKShots(dataset, n=self.ways, k=self.kshots),
             l2l.data.transforms.LoadData(dataset),
             RemapLabels(dataset),
-            # l2l.data.transforms.ConsecutiveLabels(dataset),
+            ConsecutiveLabels(dataset),
             # l2l.vision.transforms.RandomClassRotation(dataset, [0.0, 90.0, 180.0, 270.0])
-        ]
-
-    def _evaluation_transforms(self, dataset):
-        return [
-            l2l.data.transforms.FusedNWaysKShots(dataset, n=self.test_ways, k=self.test_samples),
-            l2l.data.transforms.LoadData(dataset),
-            l2l.data.transforms.RemapLabels(dataset),
-            l2l.data.transforms.ConsecutiveLabels(dataset),
-            l2l.vision.transforms.RandomClassRotation(dataset, [0.0, 90.0, 180.0, 270.0]),
         ]
 
     @property
@@ -176,13 +191,23 @@ class Learn2LearnAdapter(Adapter):
         for idx, label in indices_to_labels.items():
             labels_to_indices[label].append(idx)
 
+        if len(labels_to_indices) < self.ways:
+            raise MisconfigurationException(
+                "Provided `ways` should be lower or equal to number of classes within your dataset."
+            )
+
+        if min(len(indice) for indice in labels_to_indices.values()) < (self.kshots + self.queries):
+            raise MisconfigurationException(
+                "Provided `kshots` should be lower than the lowest number of sample per class."
+            )
+
         # convert the dataset to MetaDataset
         dataset = l2l.data.MetaDataset(
             dataset, indices_to_labels=indices_to_labels, labels_to_indices=labels_to_indices
         )
         taskset = l2l.data.TaskDataset(
             dataset=dataset,
-            task_transforms=self._train_transforms(dataset),
+            task_transforms=self._default_transform(dataset),
             num_tasks=-1,
             task_collate=self._identity_fn,
         )
@@ -257,7 +282,7 @@ class Learn2LearnAdapter(Adapter):
     ) -> DataLoader:
         assert batch_size == 1
         return super().process_val_dataset(
-            self.convert_dataset(dataset, collate_fn),
+            self.convert_dataset(dataset),
             batch_size,
             num_workers,
             pin_memory,
@@ -280,7 +305,7 @@ class Learn2LearnAdapter(Adapter):
     ) -> DataLoader:
         assert batch_size == 1
         return super().process_test_dataset(
-            self.convert_dataset(dataset, collate_fn),
+            self.convert_dataset(dataset),
             batch_size,
             num_workers,
             pin_memory,
@@ -303,7 +328,7 @@ class Learn2LearnAdapter(Adapter):
     ) -> DataLoader:
         assert batch_size == 1
         return super().process_predict_dataset(
-            self.convert_dataset(dataset, collate_fn),
+            self.convert_dataset(dataset),
             batch_size,
             num_workers,
             pin_memory,
@@ -367,24 +392,21 @@ class DefaultAdapter(Adapter):
         return self.head(x)
 
 
-def _fn():
-    pass
-
-
 TRAINING_STRATEGIES = FlashRegistry("training_strategies")
-TRAINING_STRATEGIES(name="default", fn=_fn, adapter=DefaultAdapter, algorithm=str)
+TRAINING_STRATEGIES(name="default", fn=partial(DefaultAdapter.from_task))
 
 if _LEARN2LEARN_AVAILABLE:
     from learn2learn import algorithms
 
     for algorithm in dir(algorithms):
+        # skip base class
+        if algorithm == "LightningEpisodicModule":
+            continue
         try:
             if "lightning" in algorithm.lower() and issubclass(getattr(algorithms, algorithm), LightningModule):
                 TRAINING_STRATEGIES(
                     name=algorithm.lower().replace("lightning", ""),
-                    fn=_fn,
-                    adapter=Learn2LearnAdapter,
-                    algorithm=getattr(algorithms, algorithm),
+                    fn=partial(Learn2LearnAdapter.from_task, algorithm=getattr(algorithms, algorithm)),
                     providers=[_LEARN2LEARN],
                 )
         except Exception:

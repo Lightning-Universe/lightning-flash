@@ -88,7 +88,7 @@ class ImageClassifier(ClassificationAdapterTask):
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-        training_strategy: Optional[str] = None,
+        training_strategy: Optional[str] = "default",
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
     ):
 
@@ -100,6 +100,12 @@ class ImageClassifier(ClassificationAdapterTask):
         if not training_strategy_kwargs:
             training_strategy_kwargs = {}
 
+        training_strategy_kwargs.update(
+            {
+                "ways": num_classes,
+            }
+        )
+
         if isinstance(backbone, tuple):
             backbone, num_features = backbone
         else:
@@ -110,13 +116,12 @@ class ImageClassifier(ClassificationAdapterTask):
             nn.Linear(num_features, num_classes),
         )
 
-        metadata = self.training_strategies.get(training_strategy or "default", with_metadata=True)
-        adapter = metadata["metadata"]["adapter"].from_task(
+        adapter_from_class = self.training_strategies.get(training_strategy)
+        adapter = adapter_from_class(
             task=self,
             num_classes=num_classes,
             backbone=backbone,
             head=head,
-            algorithm=metadata["metadata"]["algorithm"],
             pretrained=pretrained,
             **training_strategy_kwargs,
         )

@@ -464,6 +464,9 @@ class PathsDataSource(SequenceDataSource):
 
             data = make_dataset(data, class_to_idx, extensions=self.extensions)
             return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+        elif dataset is not None:
+            dataset.num_classes = len(np.unique(data[1]))
+
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),

@@ -21,12 +21,16 @@ from flash.image import ImageClassificationData, ImageClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
 datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    val_folder="data/hymenoptera_data/val/",
+    train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", batch_size=1
 )
 
 # 2. Build the task
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+model = ImageClassifier(
+    datamodule.num_classes,
+    backbone="resnet50",
+    training_strategy="maml",
+    training_strategy_kwargs={"train_samples": 4, "train_ways": 4, "test_samples": 10, "test_ways": 4},
+)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
