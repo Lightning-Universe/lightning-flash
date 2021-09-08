@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+import os
 from collections import defaultdict
 from functools import partial
 from typing import Any, Callable, List, Optional, Type
@@ -22,7 +23,7 @@ from pytorch_lightning.plugins import DDPPlugin, DDPSpawnPlugin
 from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.warnings import WarningCache
-from torch.utils.data import DataLoader, Sampler
+from torch.utils.data import DataLoader, IterableDataset, Sampler
 
 import flash
 from flash.core.adapter import Adapter, AdapterTask
@@ -113,6 +114,7 @@ class Learn2LearnAdapter(Adapter):
         test_shots: Optional[int] = None,
         test_queries: Optional[int] = None,
         default_transforms_fn: Optional[Callable] = None,
+        seed: int = 42,
         **algorithm_kwargs,
     ):
         """The ``Learn2LearnAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with `learn 2
@@ -146,6 +148,7 @@ class Learn2LearnAdapter(Adapter):
         self.meta_batch_size = meta_batch_size
         self.num_task = num_task
         self.default_transforms_fn = default_transforms_fn
+        self.seed = seed
 
         self.ways = ways
         self.shots = shots
@@ -211,7 +214,7 @@ class Learn2LearnAdapter(Adapter):
 
         if min(len(indice) for indice in labels_to_indices.values()) < (shots + queries):
             raise MisconfigurationException(
-                "Provided `shots` should be lower than the lowest number of sample per class."
+                "Provided `shots + queries` should be lower than the lowest number of sample per class."
             )
 
         # convert the dataset to MetaDataset
@@ -229,13 +232,15 @@ class Learn2LearnAdapter(Adapter):
         )
 
         if isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin)):
+            # when running in a distributed data parallel way,
+            # we are actually sampling one task per device.
             dataset = TaskDataParallel(
                 taskset=taskset,
                 global_rank=trainer.global_rank,
                 world_size=trainer.world_size,
                 num_workers=num_workers,
                 epoch_length=self.meta_batch_size,
-                seed=self.seed,
+                seed=os.getenv("PL_GLOBAL_SEED", self.seed),
             )
             self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
 
@@ -322,6 +327,9 @@ class Learn2LearnAdapter(Adapter):
             queries=self.queries,
             num_workers=num_workers,
         )
+        if isinstance(dataset, IterableDataset):
+            shuffle = False
+            sampler = None
         return super().process_train_dataset(
             dataset,
             trainer,
@@ -346,7 +354,6 @@ class Learn2LearnAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        assert batch_size == 1
         dataset = self._convert_dataset(
             trainer=trainer,
             dataset=dataset,
@@ -355,6 +362,9 @@ class Learn2LearnAdapter(Adapter):
             queries=self.test_queries,
             num_workers=num_workers,
         )
+        if isinstance(dataset, IterableDataset):
+            shuffle = False
+            sampler = None
         return super().process_train_dataset(
             dataset,
             trainer,
@@ -379,7 +389,6 @@ class Learn2LearnAdapter(Adapter):
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        assert batch_size == 1
         dataset = self._convert_dataset(
             trainer=trainer,
             dataset=dataset,
@@ -388,6 +397,9 @@ class Learn2LearnAdapter(Adapter):
             queries=self.test_queries,
             num_workers=num_workers,
         )
+        if isinstance(dataset, IterableDataset):
+            shuffle = False
+            sampler = None
         return super().process_train_dataset(
             dataset,
             trainer,
@@ -441,7 +453,6 @@ class DefaultAdapter(Adapter):
         self.backbone = backbone
         self.head = head
 
-    @torch.jit.unused
     @property
     def task(self) -> Task:
         return self._task.task
