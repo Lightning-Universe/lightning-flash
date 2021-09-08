@@ -68,7 +68,7 @@ class ModuleWrapperBase:
         self._children = []
 
         # TODO: create enum values to define what are the exact states
-        self._data_pipeline_state: Optional[DataPipelineState] = None
+        self._data_pipeline_state: DataPipelineState = DataPipelineState()
 
         # model own internal state shared with the data pipeline.
         self._state: Dict[Type[ProcessState], ProcessState] = {}

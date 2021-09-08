@@ -441,6 +441,7 @@ class DefaultAdapter(Adapter):
         self.backbone = backbone
         self.head = head
 
+    @torch.jit.unused
     @property
     def task(self) -> Task:
         return self._task.task
