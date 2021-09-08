@@ -1,6 +1,5 @@
 import json
 import os
-from copy import deepcopy
 from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
@@ -66,15 +65,13 @@ class LabelStudioDataSource(DataSource):
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
         """Load 1 sample from dataset."""
         # all other data types
-        input_data = deepcopy(sample)
-        try:
-            del input_data["label"]
-        except KeyError:
-            # no label in input data
-            pass
+        # separate label from data
+        label = self._get_labels_from_sample(sample["label"])
+        # delete label from input data
+        del sample["label"]
         result = {
-            DefaultDataKeys.INPUT: input_data,
-            DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"]),
+            DefaultDataKeys.INPUT: sample,
+            DefaultDataKeys.TARGET: label,
         }
         return result
 

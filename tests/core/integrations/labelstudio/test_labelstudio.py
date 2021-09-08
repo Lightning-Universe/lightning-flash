@@ -1,4 +1,12 @@
-from flash.core.integrations.labelstudio.data_source import LabelStudioDataSource
+from flash.text.classification.data import TextClassificationData
+
+from flash.video.classification.data import VideoClassificationPreprocess, VideoClassificationData
+
+from data.data_source import DefaultDataSources
+from flash.core.integrations.labelstudio.data_source import LabelStudioDataSource, \
+    LabelStudioImageClassificationDataSource, LabelStudioTextClassificationDataSource
+from flash.core.data.utils import download_data
+from image import ImageClassificationData
 
 
 def test_utility_load():
@@ -122,3 +130,120 @@ def test_utility_load():
     assert ds_multi[2] == {"Road", "Car", "Obstacle"}
     assert len(ds_multi[1]) == 0
     assert len(ds_multi[0]) == 5
+
+
+def test_datasource_labelstudio():
+    """
+    Test creation of LabelStudioDataSource
+    """
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
+    ds = LabelStudioDataSource()
+    data = {
+        "data_folder": "data/upload/",
+        "export_json": "data/project.json",
+        "split": 0.2,
+        "multi_label": False,
+    }
+    train, val, test, predict = ds.to_datasets(train_data=data)
+    sample = train[0]
+    assert sample
+    ds_no_split = LabelStudioDatsaSource()
+    data = {
+        "data_folder": "data/upload/",
+        "export_json": "data/project.json",
+        "multi_label": True,
+    }
+    train, val, test, predict = ds_no_split.to_datasets(train_data=data)
+    sample = train[0]
+    assert sample
+
+
+def test_datasource_labelstudio_image():
+    """
+    Test creation of LabelStudioImageClassificationDataSource and Datamodule from images
+    """
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
+
+    data = {
+        "data_folder": "data/upload/",
+        "export_json": "data/project.json",
+        "split": 0.2,
+        "multi_label": False,
+    }
+    ds = LabelStudioImageClassificationDataSource()
+    train, val, test, predict = ds.to_datasets(train_data=data, val_data=data, test_data=data, predict_data=data)
+    train_sample = train[0]
+    val_sample = val[0]
+    test_sample = test[0]
+    predict_sample = predict[0]
+    assert train_sample
+    assert val_sample
+    assert test_sample
+    assert predict_sample
+
+    datamodule = ImageClassificationData.from_labelstudio(
+        export_json="data/project.json",
+        data_folder="data/upload/",
+        val_split=0.5,
+    )
+    assert datamodule
+
+
+def test_datasource_labelstudio_text():
+    """
+    Test creation of LabelStudioTextClassificationDataSource and Datamodule from text
+    """
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
+    backbone = "prajjwal1/bert-medium"
+    data = {
+        "data_folder": "data/upload/",
+        "export_json": "data/project.json",
+        "split": 0.2,
+        "multi_label": False,
+    }
+    ds = LabelStudioTextClassificationDataSource(backbone=backbone)
+    train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
+    train_sample = train[0]
+    test_sample = test[0]
+    val_sample = val[0]
+
+    assert train_sample
+    assert test_sample
+    assert val_sample
+
+    datamodule = TextClassificationData.from_labelstudio(
+        export_json="data/project.json",
+        val_split=0.2,
+        backbone=backbone,
+    )
+    assert datamodule
+
+
+def test_datasource_labelstudio_video():
+    """
+    Test creation of Datamodule from video
+    """
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
+
+    data = {
+        "data_folder": "data/upload/",
+        "export_json": "data/project.json",
+        "multi_label": True
+    }
+    preprocess = VideoClassificationPreprocess()
+    ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
+
+    train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
+
+    assert train
+    assert test
+
+    datamodule = VideoClassificationData.from_labelstudio(
+        export_json="data/project.json",
+        data_folder="data/upload/",
+        val_split=0.2,
+        clip_sampler="uniform",
+        clip_duration=1,
+        decode_audio=False,
+    )
+    assert datamodule
