@@ -24,7 +24,7 @@ import torch
 from torch import tensor
 from torchmetrics import Metric
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.seq2seq.core.utils import add_newline_to_end_of_each_sentence
 
 if _TEXT_AVAILABLE:
@@ -153,7 +153,7 @@ class RougeMetric(Metric):
          'rougeLsum_recall': 0.25}
     """
 
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         rouge_newline_sep: bool = False,
