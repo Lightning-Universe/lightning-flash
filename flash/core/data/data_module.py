@@ -382,7 +382,6 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
-                trainer=self.trainer,
                 batch_size=batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,

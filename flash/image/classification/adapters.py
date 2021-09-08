@@ -403,7 +403,6 @@ class Learn2LearnAdapter(Adapter):
     def process_predict_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -418,9 +417,8 @@ class Learn2LearnAdapter(Adapter):
                 "This training_strategies requires to be validated. Call trainer.validate(...)."
             )
 
-        return super().process_train_dataset(
+        return super().process_predict_dataset(
             dataset,
-            trainer,
             batch_size,
             num_workers,
             pin_memory,
@@ -472,6 +470,9 @@ class DefaultAdapter(Adapter):
         return Task.test_step(self.task, batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        # Todo: Fix this extra dimension
+        if isinstance(batch, list):
+            batch = batch[0]
         batch[DefaultDataKeys.PREDS] = Task.predict_step(
             self.task, (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
         )

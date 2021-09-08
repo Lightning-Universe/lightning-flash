@@ -152,7 +152,6 @@ class AdapterTask(Task):
     def process_predict_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -162,5 +161,12 @@ class AdapterTask(Task):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_predict_dataset(
-            dataset, trainer, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
         )

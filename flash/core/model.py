@@ -202,7 +202,6 @@ class DatasetProcessor:
     def process_predict_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: "flash.Trainer",
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
