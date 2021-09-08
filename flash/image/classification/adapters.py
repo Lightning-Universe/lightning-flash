@@ -228,7 +228,7 @@ class Learn2LearnAdapter(Adapter):
             dataset=dataset,
             task_transforms=transform_fn(dataset, ways=ways, shots=shots),
             num_tasks=self.num_task,
-            task_collate=self._identity_fn,
+            task_collate=self._identity_task_collate_fn,
         )
 
         if isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin)):
@@ -251,7 +251,7 @@ class Learn2LearnAdapter(Adapter):
         return dataset
 
     @staticmethod
-    def _identity_fn(x: Any) -> Any:
+    def _identity_task_collate_fn(x: Any) -> Any:
         return x
 
     @classmethod
