@@ -88,7 +88,7 @@ def test_learn2learn_training_strategies(training_strategy, tmpdir):
         dm.num_classes,
         backbone="resnet18",
         training_strategy=training_strategy,
-        training_strategy_kwargs={"shots": 4, "epoch_length": 10},
+        training_strategy_kwargs={"shots": 4, "meta_batch_size": 10},
     )
 
     trainer = Trainer(fast_dev_run=2)
@@ -101,5 +101,5 @@ def test_wrongly_specified_training_strategies():
             2,
             backbone="resnet18",
             training_strategy="something",
-            training_strategy_kwargs={"shots": 4},
+            training_strategy_kwargs={"shots": 4, "meta_batch_size": 10},
         )

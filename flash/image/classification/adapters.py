@@ -21,6 +21,7 @@ from pytorch_lightning import LightningModule
 from pytorch_lightning.plugins import DDPPlugin, DDPSpawnPlugin
 from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.warnings import WarningCache
 from torch.utils.data import DataLoader, Sampler
 
 import flash
@@ -32,6 +33,9 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.url_error import catch_url_error
+
+warning_cache = WarningCache()
+
 
 if _LEARN2LEARN_AVAILABLE:
     import learn2learn as l2l
@@ -102,11 +106,13 @@ class Learn2LearnAdapter(Adapter):
         algorithm_cls: Type[LightningModule],
         ways: int,
         shots: int,
-        epoch_length: int,
+        meta_batch_size: int,
         queries: int = 1,
+        num_task: int = -1,
         test_ways: Optional[int] = None,
         test_shots: Optional[int] = None,
         test_queries: Optional[int] = None,
+        default_transforms_fn: Optional[Callable] = None,
         **algorithm_kwargs,
     ):
         """The ``Learn2LearnAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with `learn 2
@@ -120,11 +126,14 @@ class Learn2LearnAdapter(Adapter):
                 from: https://github.com/learnables/learn2learn/tree/master/learn2learn/algorithms/lightning
             ways: Number of classes conserved for generating the task.
             shots: The number of samples per label.
-            epoch_length: Number of task to be sampled per epoch.
+            meta_batch_size: Number of task to be sampled and optimized over before doing a meta optimizer step.
             queries: Number of support sample to be selected from the task.
+            num_task: Total number of tasks to be sampled during training. If -1, a new task will always be sampled.
             test_ways: Number of classes conserved for generating the val and test task.
             test_shots: The number of val or test samples per label.
             test_queries: Number of support sample to be selected from the val or test task.
+            default_transforms_fn: A Callable to create the task transform.
+                The callable should take the dataset, ways and shots as arguments.
             algorithm_kwargs: Keyword arguments to be provided to the algorithm class from learn2learn
         """
 
@@ -134,7 +143,9 @@ class Learn2LearnAdapter(Adapter):
         self.backbone = backbone
         self.head = head
         self.algorithm_cls = algorithm_cls
-        self.epoch_length = epoch_length
+        self.meta_batch_size = meta_batch_size
+        self.num_task = num_task
+        self.default_transforms_fn = default_transforms_fn
 
         self.ways = ways
         self.shots = shots
@@ -207,30 +218,30 @@ class Learn2LearnAdapter(Adapter):
         dataset = l2l.data.MetaDataset(
             dataset, indices_to_labels=indices_to_labels, labels_to_indices=labels_to_indices
         )
+
+        transform_fn = self.default_transforms_fn or self._default_transform
+
         taskset = l2l.data.TaskDataset(
             dataset=dataset,
-            task_transforms=self._default_transform(dataset, ways=ways, shots=shots),
-            num_tasks=-1,
+            task_transforms=transform_fn(dataset, ways=ways, shots=shots),
+            num_tasks=self.num_task,
             task_collate=self._identity_fn,
         )
 
         if isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin)):
-            accumulate_grad_batches = self.epoch_length / trainer.world_size
-
             dataset = TaskDataParallel(
                 taskset=taskset,
                 global_rank=trainer.global_rank,
                 world_size=trainer.world_size,
                 num_workers=num_workers,
-                epoch_length=self.epoch_length,
+                epoch_length=self.meta_batch_size,
                 seed=self.seed,
             )
-
-            self.trainer.accumulated_grad_batches = accumulate_grad_batches
+            self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
 
         else:
-            dataset = Epochifier(taskset, self.epoch_length)
-            self.trainer.accumulated_grad_batches = self.epoch_length
+            dataset = Epochifier(taskset, self.meta_batch_size)
+            self.trainer.accumulated_grad_batches = self.meta_batch_size
 
         return dataset
 
@@ -249,6 +260,16 @@ class Learn2LearnAdapter(Adapter):
         algorithm: Type[LightningModule],
         **kwargs,
     ) -> Adapter:
+        if "meta_batch_size" not in kwargs:
+            raise MisconfigurationException(
+                "The `meta_batch_size` should be provided as training_strategy_kwargs={'meta_batch_size'=...}. "
+                "This is equivalent to the epoch length."
+            )
+        if "shots" not in kwargs:
+            raise MisconfigurationException(
+                "The `shots` should be provided training_strategy_kwargs={'shots'=...}. "
+                "This is equivalent to the number of sample per label to select within a task."
+            )
         return cls(task, backbone, head, algorithm, **kwargs)
 
     def training_step(self, batch, batch_idx) -> Any:
@@ -272,6 +293,15 @@ class Learn2LearnAdapter(Adapter):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self.model.predict_step(batch[DefaultDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
+    def _sanetize_batch_size(self, batch_size: int) -> int:
+        if batch_size != 1:
+            warning_cache.warn(
+                "When using a meta-learning training_strategy, the batch_size should be set to 1. "
+                "HINT: You can modify the `meta_batch_size` to 100 for example by doing "
+                f"{type(self.task)}(training_strategies_kwargs={'meta_batch_size': 100})"
+            )
+        return 1
+
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
@@ -284,7 +314,6 @@ class Learn2LearnAdapter(Adapter):
         drop_last: bool,
         sampler: Optional[Sampler],
     ) -> DataLoader:
-        assert batch_size == 1
         dataset = self._convert_dataset(
             trainer=trainer,
             dataset=dataset,
@@ -296,7 +325,7 @@ class Learn2LearnAdapter(Adapter):
         return super().process_train_dataset(
             dataset,
             trainer,
-            batch_size,
+            self._sanetize_batch_size(batch_size),
             num_workers,
             pin_memory,
             collate_fn,
@@ -329,7 +358,7 @@ class Learn2LearnAdapter(Adapter):
         return super().process_train_dataset(
             dataset,
             trainer,
-            batch_size,
+            self._sanetize_batch_size(batch_size),
             num_workers,
             pin_memory,
             collate_fn,
@@ -362,7 +391,7 @@ class Learn2LearnAdapter(Adapter):
         return super().process_train_dataset(
             dataset,
             trainer,
-            batch_size,
+            self._sanetize_batch_size(batch_size),
             num_workers,
             pin_memory,
             collate_fn,
@@ -383,7 +412,6 @@ class Learn2LearnAdapter(Adapter):
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
-        assert batch_size == 1
 
         if not self._algorithm_has_validated:
             raise MisconfigurationException(
