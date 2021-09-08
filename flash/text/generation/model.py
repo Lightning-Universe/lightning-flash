@@ -24,7 +24,7 @@ from flash.core.model import Task
 from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
-    from transformers import GPT2Model, PreTrainedTokenizerBase
+    from transformers import AutoModelWithLMHead, PreTrainedTokenizerBase
     from transformers.models.gpt2.modeling_gpt2 import GPT2DoubleHeadsModelOutput
 
 else:
@@ -53,7 +53,7 @@ class TextGeneration(Task):
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
         super().__init__(loss_fn=loss_fn, optimizer=optimizer, metrics=metrics, learning_rate=learning_rate)
-        self.model = GPT2Model.from_pretrained(backbone)
+        self.model = AutoModelWithLMHead.from_pretrained(backbone)
         self.enable_ort = enable_ort
         self.val_target_max_length = val_target_max_length
         self.num_beams = num_beams

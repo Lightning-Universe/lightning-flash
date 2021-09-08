@@ -12,3 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash.text.generation.data import TextGenerationData  # noqa: F401
+from flash.text.generation.model import TextGeneration  # noqa: F401

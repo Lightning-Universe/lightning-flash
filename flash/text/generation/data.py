@@ -30,19 +30,23 @@ if _TEXT_AVAILABLE:
     from transformers.modeling_outputs import SequenceClassifierOutput
 
 
+BOS_TOKEN = "<|startoftext|>"
+EOS_TOKEN = "<|endoftext|>"
+PAD_TOKEN = "<|pad|>"
+
 class TextGenerationDeserializer(Deserializer):
     @requires_extras("text")
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
         super().__init__()
         self.backbone = backbone
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            backbone, use_fast=use_fast, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            backbone, use_fast=use_fast, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
         self.max_length = max_length
 
     def deserialize(self, text: str) -> Tensor:
         return self.tokenizer(
-            "<|startoftext|>" + text + "<|endoftext|>",
+            BOS_TOKEN + text + EOS_TOKEN,
             max_length=self.max_length,
             truncation=True,
             padding="max_length",
@@ -60,7 +64,7 @@ class TextGenerationDeserializer(Deserializer):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            self.backbone, use_fast=True,  bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
 
 
@@ -71,7 +75,7 @@ class TextGenerationDataSource(DataSource):
 
         self.backbone = backbone
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            backbone, use_fast=True,  bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
         self.max_length = max_length
 
@@ -84,7 +88,7 @@ class TextGenerationDataSource(DataSource):
         if isinstance(ex, dict):
             ex = ex[input]
         return self.tokenizer(
-            "<|startoftext|>" + ex + "<|endoftext|>", max_length=self.max_length, truncation=True, padding="max_length"
+            BOS_TOKEN + ex + EOS_TOKEN, max_length=self.max_length, truncation=True, padding="max_length"
         )
 
     @staticmethod
@@ -100,7 +104,7 @@ class TextGenerationDataSource(DataSource):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            self.backbone, use_fast=True, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
 
 
@@ -200,7 +204,7 @@ class TextGenerationFileDataSource(TextGenerationDataSource):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            self.backbone, use_fast=True, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
 
 
@@ -216,7 +220,7 @@ class TextGenerationCSVDataSource(TextGenerationFileDataSource):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            self.backbone, use_fast=True, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
 
 
@@ -232,7 +236,7 @@ class TextGenerationJSONDataSource(TextGenerationFileDataSource):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            self.backbone, use_fast=True, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
 
 
@@ -262,7 +266,7 @@ class TextGenerationSentencesDataSource(TextGenerationDataSource):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            self.backbone, use_fast=True, bos_token="<|startoftext|>", eos_token="<|endoftext|>", pad_token="<|pad|>"
+            self.backbone, use_fast=True, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
 
 

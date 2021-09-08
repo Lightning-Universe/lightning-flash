@@ -1,5 +1,5 @@
 from flash.text.classification import TextClassificationData, TextClassifier  # noqa: F401
-from flash.text.generation import TextGenerationData  # noqa: F401
+from flash.text.generation import TextGenerationData, TextGeneration  # noqa: F401
 from flash.text.seq2seq import (  # noqa: F401
     QuestionAnsweringData,
     QuestionAnsweringTask,
