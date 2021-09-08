@@ -2,7 +2,7 @@
 Backbones and Heads
 **********
 
-Backbones are the pre trained models that can be used to fine tune a task.   
+Backbones are the pre trained models that can be used to fine tune a task.
 The backbones or heads that are available can be found by using the ``available_backbones`` and ``available_heads`` functions.
 
 To get the available backbones for a task like :class:`~flash.image.classification.model.ImageClassifier`, run:
