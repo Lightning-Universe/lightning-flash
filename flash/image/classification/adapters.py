@@ -239,13 +239,13 @@ class Learn2LearnAdapter(Adapter):
                 global_rank=trainer.global_rank,
                 world_size=trainer.world_size,
                 num_workers=num_workers,
-                epoch_length=self.meta_batch_size,
+                meta_batch_size=self.meta_batch_size,
                 seed=os.getenv("PL_GLOBAL_SEED", self.seed),
             )
             self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
 
         else:
-            dataset = Epochifier(taskset, self.meta_batch_size)
+            dataset = Epochifier(taskset, meta_batch_size=self.meta_batch_size)
             self.trainer.accumulated_grad_batches = self.meta_batch_size
 
         return dataset
@@ -303,7 +303,7 @@ class Learn2LearnAdapter(Adapter):
             warning_cache.warn(
                 "When using a meta-learning training_strategy, the batch_size should be set to 1. "
                 "HINT: You can modify the `meta_batch_size` to 100 for example by doing "
-                f"{type(self.task)}(training_strategies_kwargs={'meta_batch_size': 100})"
+                f"{type(self.task)}" + "(training_strategies_kwargs={'meta_batch_size': 100})"
             )
         return 1
 

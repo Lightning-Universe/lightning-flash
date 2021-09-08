@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-
 import flash
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
@@ -34,7 +32,7 @@ model = ImageClassifier(
 )
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, limit_val_batches=2, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, limit_val_batches=2)
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
 # 5. Save the model!
@@ -42,7 +40,6 @@ trainer.save_checkpoint("image_classification_model.pt")
 
 
 # 6. Make predictions on new data !
-
 model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 datamodule = ImageClassificationData.from_folders(
     val_folder="data/hymenoptera_data/val/",  # newly labelled data

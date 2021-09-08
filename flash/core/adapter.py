@@ -60,7 +60,7 @@ class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
         pass
 
 
-def identity(x):
+def identity_collate_fn(x):
     return x
 
 
@@ -161,7 +161,7 @@ class AdapterTask(Task):
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = identity,
+        collate_fn: Callable = identity_collate_fn,
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
