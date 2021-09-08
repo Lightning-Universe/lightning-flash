@@ -470,15 +470,15 @@ class DefaultAdapter(Adapter):
         return Task.test_step(self.task, batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # Todo: Fix this extra dimension
-        if isinstance(batch, list):
-            batch = batch[0]
         batch[DefaultDataKeys.PREDS] = Task.predict_step(
             self.task, (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
         )
         return batch
 
     def forward(self, x) -> torch.Tensor:
+        # TODO: Resolve this hack
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
         x = self.backbone(x)
         if x.dim() == 4:
             x = x.mean(-1).mean(-1)

@@ -59,6 +59,10 @@ class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
         pass
 
 
+def identity(x):
+    return x
+
+
 class AdapterTask(Task):
     """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter`
     and forwards all of the hooks.
@@ -155,7 +159,7 @@ class AdapterTask(Task):
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = lambda x: x,
+        collate_fn: Callable = identity,
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,

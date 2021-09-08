@@ -23,7 +23,6 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 datamodule = ImageClassificationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
     val_folder="data/hymenoptera_data/val/",
-    batch_size=1,
 )
 
 # 2. Build the task
@@ -48,7 +47,6 @@ model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 datamodule = ImageClassificationData.from_folders(
     val_folder="data/hymenoptera_data/val/",  # newly labelled data
     predict_folder="data/hymenoptera_data/predict/",
-    batch_size=1,
 )
 # some `training_strategy` are required to be updated on the `newly labelled data`.
 trainer.validate(model, datamodule=datamodule)
