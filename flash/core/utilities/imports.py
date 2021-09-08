@@ -98,7 +98,7 @@ _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
 _ICEVISION_AVAILABLE = _module_available("icevision")
 _ICEDATA_AVAILABLE = _module_available("icedata")
-_LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("learn2learn", operator.lt, "0.1.6")
+_LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("learn2learn", operator.ge, "0.1.6")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
 
