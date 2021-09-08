@@ -51,6 +51,6 @@ def test_pointcloud_segmentation_data(tmpdir):
     trainer.fit(model, dm)
 
     predictions = model.predict(join(tmpdir, "SemanticKittiMicro", "predict"))
-    assert torch.stack(predictions[0][DefaultDataKeys.INPUT]).shape == torch.Size([45056, 3])
-    assert torch.stack(predictions[0][DefaultDataKeys.PREDS]).shape == torch.Size([45056, 19])
-    assert torch.stack(predictions[0][DefaultDataKeys.TARGET]).shape == torch.Size([45056])
+    assert predictions[0][DefaultDataKeys.INPUT].shape == torch.Size([45056, 3])
+    assert predictions[0][DefaultDataKeys.PREDS].shape == torch.Size([45056, 19])
+    assert predictions[0][DefaultDataKeys.TARGET].shape == torch.Size([45056])

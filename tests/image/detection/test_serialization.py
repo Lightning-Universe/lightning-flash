@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 
@@ -23,13 +24,18 @@ class TestFiftyOneDetectionLabels:
         labels_serial = FiftyOneDetectionLabels(labels=labels)
 
         sample = {
-            DefaultDataKeys.PREDS: [
-                {
-                    "boxes": [torch.tensor(20), torch.tensor(30), torch.tensor(40), torch.tensor(50)],
-                    "labels": torch.tensor(0),
-                    "scores": torch.tensor(0.5),
-                },
-            ],
+            DefaultDataKeys.PREDS: {
+                "bboxes": [
+                    {
+                        "xmin": torch.tensor(20),
+                        "ymin": torch.tensor(30),
+                        "width": torch.tensor(20),
+                        "height": torch.tensor(20),
+                    }
+                ],
+                "labels": [torch.tensor(0)],
+                "scores": [torch.tensor(0.5)],
+            },
             DefaultDataKeys.METADATA: {
                 "filepath": "something",
                 "size": (100, 100),
@@ -38,13 +44,13 @@ class TestFiftyOneDetectionLabels:
 
         detections = serial.serialize(sample)
         assert len(detections.detections) == 1
-        assert detections.detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5
         assert detections.detections[0].label == "0"
 
         detections = filepath_serial.serialize(sample)
         assert len(detections["predictions"].detections) == 1
-        assert detections["predictions"].detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        np.testing.assert_array_almost_equal(detections["predictions"].detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections["predictions"].detections[0].confidence == 0.5
         assert detections["filepath"] == "something"
 
@@ -53,6 +59,6 @@ class TestFiftyOneDetectionLabels:
 
         detections = labels_serial.serialize(sample)
         assert len(detections.detections) == 1
-        assert detections.detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5
         assert detections.detections[0].label == "class_1"

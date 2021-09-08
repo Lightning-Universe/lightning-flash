@@ -2,3 +2,6 @@ matplotlib
 fiftyone
 classy_vision
 vissl>=0.1.5
+icevision>=0.8
+icedata
+effdet

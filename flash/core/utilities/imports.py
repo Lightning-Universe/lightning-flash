@@ -16,7 +16,7 @@ import importlib
 import operator
 import types
 from importlib.util import find_spec
-from typing import Callable, List, Union
+from typing import List, Union
 from warnings import warn
 
 from pkg_resources import DistributionNotFound
@@ -88,7 +88,7 @@ _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
-_SOUNDFILE_AVAILABLE = _module_available("soundfile")
+_LIBROSA_AVAILABLE = _module_available("librosa")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
@@ -142,13 +142,11 @@ _IMAGE_AVAILABLE = all(
         _KORNIA_AVAILABLE,
         _PYSTICHE_AVAILABLE,
         _SEGMENTATION_MODELS_AVAILABLE,
-        _ICEVISION_AVAILABLE,
-        _ICEDATA_AVAILABLE,
     ]
 )
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
-_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _SOUNDFILE_AVAILABLE, _TRANSFORMERS_AVAILABLE])
+_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE])
 _GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
@@ -163,22 +161,33 @@ _EXTRAS_AVAILABLE = {
 }
 
 
-def _requires(
-    module_paths: Union[str, List],
-    module_available: Callable[[str], bool],
-    formatter: Callable[[List[str]], str],
-):
+def requires(module_paths: Union[str, List]):
 
     if not isinstance(module_paths, list):
         module_paths = [module_paths]
 
     def decorator(func):
-        if not all(module_available(module_path) for module_path in module_paths):
+        available = True
+        extras = []
+        modules = []
+        for module_path in module_paths:
+            if module_path in _EXTRAS_AVAILABLE:
+                extras.append(module_path)
+                if not _EXTRAS_AVAILABLE[module_path]:
+                    available = False
+            else:
+                modules.append(module_path)
+                if not _module_available(module_path):
+                    available = False
+
+        if not available:
+            modules = [f"'{module}'" for module in modules]
+            modules.append(f"'lightning-flash[{','.join(extras)}]'")
 
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 raise ModuleNotFoundError(
-                    f"Required dependencies not available. Please run: pip install {formatter(module_paths)}"
+                    f"Required dependencies not available. Please run: pip install {' '.join(modules)}"
                 )
 
             return wrapper
@@ -188,18 +197,8 @@ def _requires(
     return decorator
 
 
-def requires(module_paths: Union[str, List]):
-    return _requires(module_paths, _module_available, lambda module_paths: " ".join(module_paths))
-
-
-def requires_extras(extras: Union[str, List]):
-    return _requires(
-        extras, lambda extras: _EXTRAS_AVAILABLE[extras], lambda extras: f"'lightning-flash[{','.join(extras)}]'"
-    )
-
-
-def example_requires(extras: Union[str, List[str]]):
-    return requires_extras(extras)(lambda: None)()
+def example_requires(module_paths: Union[str, List[str]]):
+    return requires(module_paths)(lambda: None)()
 
 
 def lazy_import(module_name, callback=None):

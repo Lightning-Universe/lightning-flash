@@ -22,7 +22,7 @@ from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
@@ -31,11 +31,11 @@ if _TEXT_AVAILABLE:
 
 
 class TextDeserializer(Deserializer):
-    @requires_extras("text")
-    def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+    @requires("text")
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
         super().__init__()
         self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
         self.max_length = max_length
 
     def deserialize(self, text: str) -> Tensor:
@@ -56,7 +56,7 @@ class TextDeserializer(Deserializer):
 
 
 class TextDataSource(DataSource):
-    @requires_extras("text")
+    @requires("text")
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
 
@@ -245,7 +245,7 @@ class TextSentencesDataSource(TextDataSource):
 
 
 class TextClassificationPreprocess(Preprocess):
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
