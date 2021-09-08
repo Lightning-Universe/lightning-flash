@@ -1,5 +1,3 @@
-from flash.image.classification.data import ImageClassificationData
-
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
@@ -7,6 +5,7 @@ from flash.core.integrations.labelstudio.data_source import (
     LabelStudioImageClassificationDataSource,
     LabelStudioTextClassificationDataSource,
 )
+from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
 
