@@ -152,7 +152,8 @@ jobs:
     - name: Install serve test dependencies
       if: matrix.topic[0] == 'serve'
       run: |
-        pip install '.[all]' --upgrade
+        sudo apt-get install libsndfile1
+        pip install '.[all,audio]' --upgrade
 
     - name: Install audio test dependencies
       if: matrix.topic[0] == 'audio'

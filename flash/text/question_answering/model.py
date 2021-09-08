@@ -19,27 +19,38 @@
 import collections
 import os
 import warnings
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import numpy as np
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
+from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
+from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.providers import _HUGGINGFACE
 from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
 from flash.text.seq2seq.core.metrics import RougeMetric
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForQuestionAnswering
+
+    HUGGINGFACE_BACKBONES = ExternalRegistry(
+        AutoModelForQuestionAnswering.from_pretrained,
+        "backbones",
+        _HUGGINGFACE,
+    )
 else:
     AutoModelForQuestionAnswering = None
+
+    HUGGINGFACE_BACKBONES = FlashRegistry("backbones")
 
 
 class QuestionAnsweringTask(Task):
@@ -58,6 +69,9 @@ class QuestionAnsweringTask(Task):
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the ROUGE metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `3e-4`
@@ -75,11 +89,16 @@ class QuestionAnsweringTask(Task):
 
     required_extras: str = "text"
 
+    backbones: FlashRegistry = FlashRegistry("backbones") + HUGGINGFACE_BACKBONES
+
     def __init__(
         self,
         backbone: str = "distilbert-base-uncased",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
         enable_ort: bool = False,
@@ -95,8 +114,16 @@ class QuestionAnsweringTask(Task):
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
-        super().__init__(loss_fn=loss_fn, optimizer=optimizer, metrics=metrics, learning_rate=learning_rate)
-        self.model = AutoModelForQuestionAnswering.from_pretrained(backbone)
+        super().__init__(
+            loss_fn=loss_fn,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            metrics=metrics,
+            learning_rate=learning_rate,
+        )
+        self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.n_best_size = n_best_size
         self.version_2_with_negative = version_2_with_negative

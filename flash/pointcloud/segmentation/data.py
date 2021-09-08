@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import requires_extras
+from flash.core.utilities.imports import requires
 from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesDataset
 
 
@@ -30,7 +30,7 @@ class PointCloudSegmentationDatasetDataSource(DataSource):
 
 
 class PointCloudSegmentationFoldersDataSource(DataSource):
-    @requires_extras("pointcloud")
+    @requires("pointcloud")
     def load_data(
         self,
         folder: Any,

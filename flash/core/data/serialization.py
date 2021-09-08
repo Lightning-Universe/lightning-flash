@@ -11,20 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from unittest import mock
+from typing import Any, List, Union
 
-import pytest
-
-from flash.__main__ import main
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
-def test_cli():
-    cli_args = ["flash", "keypoint_detection", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
+class Preds(Serializer):
+    """A :class:`~flash.core.data.process.Serializer` which returns the "preds" from the model outputs."""
+
+    def serialize(self, sample: Any) -> Union[int, List[int]]:
+        return sample.get(DefaultDataKeys.PREDS, sample) if isinstance(sample, dict) else sample

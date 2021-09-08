@@ -29,7 +29,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires_extras
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
@@ -38,7 +38,7 @@ else:
     IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
 
 
-NP_EXTENSIONS = (".npy", ".npz")
+NP_EXTENSIONS = (".npy",)
 
 
 def image_loader(filepath: str):
@@ -55,7 +55,7 @@ def image_loader(filepath: str):
 
 
 class ImageDeserializer(Deserializer):
-    @requires_extras("image")
+    @requires("image")
     def deserialize(self, data: str) -> Dict:
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
@@ -75,7 +75,7 @@ class ImagePathsDataSource(PathsDataSource):
     def __init__(self):
         super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
-    @requires_extras("image")
+    @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH
