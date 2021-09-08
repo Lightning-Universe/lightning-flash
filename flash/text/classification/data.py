@@ -22,8 +22,8 @@ from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset

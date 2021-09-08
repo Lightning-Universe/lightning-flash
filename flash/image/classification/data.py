@@ -24,6 +24,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
 from flash.core.data.process import Deserializer, Preprocess
+from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
@@ -34,7 +35,6 @@ from flash.image.data import (
     ImagePathsDataSource,
     ImageTensorDataSource,
 )
-from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt

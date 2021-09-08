@@ -1,15 +1,14 @@
-from flash.text.classification.data import TextClassificationData
-
-from flash.video.classification.data import VideoClassificationPreprocess, VideoClassificationData
-
 from data.data_source import DefaultDataSources
+from image import ImageClassificationData
+
+from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
     LabelStudioDataSource,
     LabelStudioImageClassificationDataSource,
     LabelStudioTextClassificationDataSource,
 )
-from flash.core.data.utils import download_data
-from image import ImageClassificationData
+from flash.text.classification.data import TextClassificationData
+from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
 
 
 def test_utility_load():
@@ -136,9 +135,7 @@ def test_utility_load():
 
 
 def test_datasource_labelstudio():
-    """
-    Test creation of LabelStudioDataSource
-    """
+    """Test creation of LabelStudioDataSource."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
     ds = LabelStudioDataSource()
     data = {
@@ -162,9 +159,7 @@ def test_datasource_labelstudio():
 
 
 def test_datasource_labelstudio_image():
-    """
-    Test creation of LabelStudioImageClassificationDataSource and Datamodule from images
-    """
+    """Test creation of LabelStudioImageClassificationDataSource and Datamodule from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
 
     data = {
@@ -193,9 +188,7 @@ def test_datasource_labelstudio_image():
 
 
 def test_datasource_labelstudio_text():
-    """
-    Test creation of LabelStudioTextClassificationDataSource and Datamodule from text
-    """
+    """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
     backbone = "prajjwal1/bert-medium"
     data = {
@@ -223,16 +216,10 @@ def test_datasource_labelstudio_text():
 
 
 def test_datasource_labelstudio_video():
-    """
-    Test creation of Datamodule from video
-    """
+    """Test creation of Datamodule from video."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
 
-    data = {
-        "data_folder": "data/upload/",
-        "export_json": "data/project.json",
-        "multi_label": True
-    }
+    data = {"data_folder": "data/upload/", "export_json": "data/project.json", "multi_label": True}
     preprocess = VideoClassificationPreprocess()
     ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
 
