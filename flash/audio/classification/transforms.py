@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import torch
 from torch import nn
@@ -43,14 +43,17 @@ def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]
 
 
 def train_default_transforms(
-    spectrogram_size: Tuple[int, int], time_mask_param: int, freq_mask_param: int
+    spectrogram_size: Tuple[int, int], time_mask_param: Optional[int], freq_mask_param: Optional[int]
 ) -> Dict[str, Callable]:
-    """During training we apply the default transforms with additional ``TimeMasking`` and ``Frequency Masking``"""
-    transforms = {
-        "post_tensor_transform": nn.Sequential(
-            ApplyToKeys(DefaultDataKeys.INPUT, TAudio.TimeMasking(time_mask_param=time_mask_param)),
-            ApplyToKeys(DefaultDataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)),
-        )
-    }
+    """During training we apply the default transforms with optional ``TimeMasking`` and ``Frequency Masking``."""
+    augs = []
 
-    return merge_transforms(default_transforms(spectrogram_size), transforms)
+    if time_mask_param is not None:
+        augs.append(ApplyToKeys(DefaultDataKeys.INPUT, TAudio.TimeMasking(time_mask_param=time_mask_param)))
+
+    if freq_mask_param is not None:
+        augs.append(ApplyToKeys(DefaultDataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)))
+
+    if len(augs) > 0:
+        return merge_transforms(default_transforms(spectrogram_size), {"post_tensor_transform": nn.Sequential(*augs)})
+    return default_transforms(spectrogram_size)
