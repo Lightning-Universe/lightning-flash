@@ -1,5 +1,6 @@
-from flash.core.data.data_source import DefaultDataSources
 from image import ImageClassificationData
+
+from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
     LabelStudioDataSource,
