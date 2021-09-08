@@ -3,8 +3,11 @@ from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import VideoClassificationPreprocess, VideoClassificationData
 
 from data.data_source import DefaultDataSources
-from flash.core.integrations.labelstudio.data_source import LabelStudioDataSource, \
-    LabelStudioImageClassificationDataSource, LabelStudioTextClassificationDataSource
+from flash.core.integrations.labelstudio.data_source import (
+    LabelStudioDataSource,
+    LabelStudioImageClassificationDataSource,
+    LabelStudioTextClassificationDataSource,
+)
 from flash.core.data.utils import download_data
 from image import ImageClassificationData
 
@@ -147,7 +150,7 @@ def test_datasource_labelstudio():
     train, val, test, predict = ds.to_datasets(train_data=data)
     sample = train[0]
     assert sample
-    ds_no_split = LabelStudioDatsaSource()
+    ds_no_split = LabelStudioDataSource()
     data = {
         "data_folder": "data/upload/",
         "export_json": "data/project.json",
