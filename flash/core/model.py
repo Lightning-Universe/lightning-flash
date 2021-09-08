@@ -133,6 +133,7 @@ class DatasetProcessor:
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -155,6 +156,7 @@ class DatasetProcessor:
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -177,6 +179,7 @@ class DatasetProcessor:
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -199,6 +202,7 @@ class DatasetProcessor:
     def process_predict_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,

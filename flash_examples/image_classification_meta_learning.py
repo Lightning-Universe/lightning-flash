@@ -31,7 +31,7 @@ model = ImageClassifier(
     datamodule.num_classes,
     backbone="resnet18",
     training_strategy="prototypicalnetworks",
-    training_strategy_kwargs={"kshots": 4},
+    training_strategy_kwargs={"shots": 4, "epoch_length": 10},
 )
 
 # 3. Create the trainer and finetune the model

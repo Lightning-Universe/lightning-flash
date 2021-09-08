@@ -302,6 +302,7 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_train_dataset(
                 train_ds,
+                trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
@@ -330,6 +331,7 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_val_dataset(
                 val_ds,
+                trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
@@ -352,6 +354,7 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_test_dataset(
                 test_ds,
+                trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
@@ -379,6 +382,7 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
+                trainer=self.trainer,
                 batch_size=batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,

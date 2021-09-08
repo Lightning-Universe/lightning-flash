@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
 import inspect
-import random
 from collections import defaultdict
 from functools import partial
 from typing import Any, Callable, List, Optional, Type
 
 import torch
 from pytorch_lightning import LightningModule
+from pytorch_lightning.plugins import DDPPlugin, DDPSpawnPlugin
 from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Sampler
 
+import flash
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
@@ -35,31 +35,25 @@ from flash.core.utilities.url_error import catch_url_error
 
 if _LEARN2LEARN_AVAILABLE:
     import learn2learn as l2l
+    from learn2learn.data.transforms import RemapLabels as Learn2LearnRemapLabels
+    from learn2learn.utils.lightning import Epochifier, TaskDataParallel
+else:
 
-    class RemapLabels(l2l.data.transforms.TaskTransform):
-        def __init__(self, dataset, shuffle=True):
-            super().__init__(dataset)
-            self.dataset = dataset
-            self.shuffle = shuffle
+    class Learn2LearnRemapLabels:
+        pass
 
-        def remap(self, data, mapping):
-            data[DefaultDataKeys.TARGET] = mapping(data[DefaultDataKeys.TARGET])
-            return data
+    class Epochifier:
+        pass
 
-        def __call__(self, task_description):
-            if task_description is None:
-                task_description = self.new_task()
-            labels = list({self.dataset.indices_to_labels[dd.index] for dd in task_description})
-            if self.shuffle:
-                random.shuffle(labels)
+    class TaskDataParallel:
+        pass
 
-            def mapping(x):
-                return labels.index(x)
 
-            for dd in task_description:
-                remap = functools.partial(self.remap, mapping=mapping)
-                dd.transforms.append(remap)
-            return task_description
+class RemapLabels(Learn2LearnRemapLabels):
+    def remap(self, data, mapping):
+        # remap needs to be adapted to Flash API.
+        data[DefaultDataKeys.TARGET] = mapping(data[DefaultDataKeys.TARGET])
+        return data
 
 
 class NoModule:
@@ -81,18 +75,6 @@ class NoModule:
         setattr(self.task, key, value)
 
 
-class Epochifier:
-    def __init__(self, tasks, length):
-        self.tasks = tasks
-        self.length = length
-
-    def __getitem__(self, *args, **kwargs):
-        return self.tasks.sample()
-
-    def __len__(self):
-        return self.length
-
-
 class Model(torch.nn.Module):
     def __init__(self, backbone: torch.nn.Module, head: Optional[torch.nn.Module]):
         super().__init__()
@@ -109,8 +91,6 @@ class Model(torch.nn.Module):
 
 
 class Learn2LearnAdapter(Adapter):
-    """The ``Learn2LearnAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with learn 2 learn
-    library."""
 
     required_extras: str = "image"
 
@@ -121,30 +101,59 @@ class Learn2LearnAdapter(Adapter):
         head: torch.nn.Module,
         algorithm_cls: Type[LightningModule],
         ways: int,
-        kshots: int,
+        shots: int,
+        epoch_length: int,
         queries: int = 1,
+        test_ways: Optional[int] = None,
+        test_shots: Optional[int] = None,
+        test_queries: Optional[int] = None,
         **algorithm_kwargs,
     ):
+        """The ``Learn2LearnAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with `learn 2
+        learn` library (https://github.com/learnables/learn2learn).
+
+        Args:
+            task: Task to be used. This adapter should work with any Flash Classification task
+            backbone: Feature extractor to be used.
+            head: Predictive head.
+            algorithm_cls: Algorithm class coming
+                from: https://github.com/learnables/learn2learn/tree/master/learn2learn/algorithms/lightning
+            ways: Number of classes conserved for generating the task.
+            shots: The number of samples per label.
+            epoch_length: Number of task to be sampled per epoch.
+            queries: Number of support sample to be selected from the task.
+            test_ways: Number of classes conserved for generating the val and test task.
+            test_shots: The number of val or test samples per label.
+            test_queries: Number of support sample to be selected from the val or test task.
+            algorithm_kwargs: Keyword arguments to be provided to the algorithm class from learn2learn
+        """
+
         super().__init__()
 
         self._task = NoModule(task)
         self.backbone = backbone
         self.head = head
         self.algorithm_cls = algorithm_cls
+        self.epoch_length = epoch_length
+
         self.ways = ways
-        self.kshots = kshots
+        self.shots = shots
         self.queries = queries
+
+        self.test_ways = test_ways or ways
+        self.test_shots = test_shots or shots
+        self.test_queries = test_queries or queries
 
         params = inspect.signature(self.algorithm_cls).parameters
 
         algorithm_kwargs["train_ways"] = ways
         algorithm_kwargs["test_ways"] = ways
 
-        algorithm_kwargs["train_shots"] = kshots - queries
-        algorithm_kwargs["test_shots"] = kshots - queries
+        algorithm_kwargs["train_shots"] = shots - queries
+        algorithm_kwargs["test_shots"] = self.test_shots - self.test_queries
 
         algorithm_kwargs["train_queries"] = queries
-        algorithm_kwargs["test_queries"] = queries
+        algorithm_kwargs["test_queries"] = self.test_queries
 
         if "model" in params:
             algorithm_kwargs["model"] = Model(backbone=backbone, head=head)
@@ -160,9 +169,9 @@ class Learn2LearnAdapter(Adapter):
         # this algorithm requires a special treatment
         self._algorithm_has_validated = self.algorithm_cls != l2l.algorithms.LightningPrototypicalNetworks
 
-    def _default_transform(self, dataset) -> List[Callable]:
+    def _default_transform(self, dataset, ways: int, shots: int) -> List[Callable]:
         return [
-            l2l.data.transforms.FusedNWaysKShots(dataset, n=self.ways, k=self.kshots),
+            l2l.data.transforms.FusedNWaysKShots(dataset, n=ways, k=shots),
             l2l.data.transforms.LoadData(dataset),
             RemapLabels(dataset),
             l2l.data.transforms.ConsecutiveLabels(dataset),
@@ -172,7 +181,9 @@ class Learn2LearnAdapter(Adapter):
     def task(self) -> Task:
         return self._task.task
 
-    def convert_dataset(self, dataset):
+    def _convert_dataset(
+        self, trainer: flash.Trainer, dataset: BaseAutoDataset, ways: int, shots: int, queries: int, num_workers: int
+    ):
         metadata = getattr(dataset, "data", None)
         if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):
             raise MisconfigurationException("Only dataset built out of metadata is supported.")
@@ -182,14 +193,14 @@ class Learn2LearnAdapter(Adapter):
         for idx, label in indices_to_labels.items():
             labels_to_indices[label].append(idx)
 
-        if len(labels_to_indices) < self.ways:
+        if len(labels_to_indices) < ways:
             raise MisconfigurationException(
                 "Provided `ways` should be lower or equal to number of classes within your dataset."
             )
 
-        if min(len(indice) for indice in labels_to_indices.values()) < (self.kshots + self.queries):
+        if min(len(indice) for indice in labels_to_indices.values()) < (shots + queries):
             raise MisconfigurationException(
-                "Provided `kshots` should be lower than the lowest number of sample per class."
+                "Provided `shots` should be lower than the lowest number of sample per class."
             )
 
         # convert the dataset to MetaDataset
@@ -198,11 +209,29 @@ class Learn2LearnAdapter(Adapter):
         )
         taskset = l2l.data.TaskDataset(
             dataset=dataset,
-            task_transforms=self._default_transform(dataset),
+            task_transforms=self._default_transform(dataset, ways=ways, shots=shots),
             num_tasks=-1,
             task_collate=self._identity_fn,
         )
-        dataset = Epochifier(taskset, 100)
+
+        if isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin)):
+            accumulate_grad_batches = self.epoch_length / trainer.world_size
+
+            dataset = TaskDataParallel(
+                taskset=taskset,
+                global_rank=trainer.global_rank,
+                world_size=trainer.world_size,
+                num_workers=num_workers,
+                epoch_length=self.epoch_length,
+                seed=self.seed,
+            )
+
+            self.trainer.accumulated_grad_batches = accumulate_grad_batches
+
+        else:
+            dataset = Epochifier(taskset, self.epoch_length)
+            self.trainer.accumulated_grad_batches = self.epoch_length
+
         return dataset
 
     @staticmethod
@@ -246,6 +275,7 @@ class Learn2LearnAdapter(Adapter):
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: flash.Trainer,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -255,8 +285,17 @@ class Learn2LearnAdapter(Adapter):
         sampler: Optional[Sampler],
     ) -> DataLoader:
         assert batch_size == 1
+        dataset = self._convert_dataset(
+            trainer=trainer,
+            dataset=dataset,
+            ways=self.ways,
+            shots=self.shots,
+            queries=self.queries,
+            num_workers=num_workers,
+        )
         return super().process_train_dataset(
-            self.convert_dataset(dataset),
+            dataset,
+            trainer,
             batch_size,
             num_workers,
             pin_memory,
@@ -269,6 +308,7 @@ class Learn2LearnAdapter(Adapter):
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: flash.Trainer,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -278,20 +318,30 @@ class Learn2LearnAdapter(Adapter):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         assert batch_size == 1
-        return super().process_val_dataset(
-            self.convert_dataset(dataset),
+        dataset = self._convert_dataset(
+            trainer=trainer,
+            dataset=dataset,
+            ways=self.test_ways,
+            shots=self.test_shots,
+            queries=self.test_queries,
+            num_workers=num_workers,
+        )
+        return super().process_train_dataset(
+            dataset,
+            trainer,
             batch_size,
             num_workers,
             pin_memory,
             collate_fn,
-            shuffle,
-            drop_last,
-            sampler,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
         )
 
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: flash.Trainer,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -301,20 +351,30 @@ class Learn2LearnAdapter(Adapter):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         assert batch_size == 1
-        return super().process_test_dataset(
-            self.convert_dataset(dataset),
+        dataset = self._convert_dataset(
+            trainer=trainer,
+            dataset=dataset,
+            ways=self.test_ways,
+            shots=self.test_shots,
+            queries=self.test_queries,
+            num_workers=num_workers,
+        )
+        return super().process_train_dataset(
+            dataset,
+            trainer,
             batch_size,
             num_workers,
             pin_memory,
             collate_fn,
-            shuffle,
-            drop_last,
-            sampler,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
         )
 
     def process_predict_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: flash.Trainer,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -330,15 +390,16 @@ class Learn2LearnAdapter(Adapter):
                 "This training_strategies requires to be validated. Call trainer.validate(...)."
             )
 
-        return super().process_predict_dataset(
+        return super().process_train_dataset(
             dataset,
+            trainer,
             batch_size,
             num_workers,
             pin_memory,
             collate_fn,
-            shuffle,
-            drop_last,
-            sampler,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
         )
 
 
