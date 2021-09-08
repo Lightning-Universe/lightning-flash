@@ -340,6 +340,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=True,
         )
 
     def process_val_dataset(
@@ -375,6 +376,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=True,
         )
 
     def process_test_dataset(
@@ -410,6 +412,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=True,
         )
 
     def process_predict_dataset(
