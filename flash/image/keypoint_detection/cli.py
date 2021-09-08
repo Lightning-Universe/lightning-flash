@@ -14,7 +14,7 @@
 from typing import Callable, Optional
 
 from flash.core.utilities.flash_cli import FlashCLI
-from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires
 from flash.image import KeypointDetectionData, KeypointDetector
 
 if _ICEDATA_AVAILABLE:
@@ -23,7 +23,7 @@ if _ICEDATA_AVAILABLE:
 __all__ = ["keypoint_detection"]
 
 
-@requires_extras("image")
+@requires("image")
 def from_biwi(
     val_split: float = 0.1,
     batch_size: int = 4,

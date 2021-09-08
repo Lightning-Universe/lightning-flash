@@ -32,15 +32,25 @@ from torchmetrics import Metric
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
+from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.providers import _HUGGINGFACE
 from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
 from flash.text.seq2seq.core.metrics import RougeMetric
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForQuestionAnswering
+
+    HUGGINGFACE_BACKBONES = ExternalRegistry(
+        AutoModelForQuestionAnswering.from_pretrained,
+        "backbones",
+        _HUGGINGFACE,
+    )
 else:
     AutoModelForQuestionAnswering = None
+
+    HUGGINGFACE_BACKBONES = FlashRegistry("backbones")
 
 
 class QuestionAnsweringTask(Task):
@@ -79,6 +89,8 @@ class QuestionAnsweringTask(Task):
 
     required_extras: str = "text"
 
+    backbones: FlashRegistry = FlashRegistry("backbones") + HUGGINGFACE_BACKBONES
+
     def __init__(
         self,
         backbone: str = "distilbert-base-uncased",
@@ -111,7 +123,7 @@ class QuestionAnsweringTask(Task):
             metrics=metrics,
             learning_rate=learning_rate,
         )
-        self.model = AutoModelForQuestionAnswering.from_pretrained(backbone)
+        self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.n_best_size = n_best_size
         self.version_2_with_negative = version_2_with_negative
