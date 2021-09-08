@@ -1,4 +1,4 @@
-from image import ImageClassificationData
+from flash.image.classification.data import ImageClassificationData
 
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.utils import download_data
