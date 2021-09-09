@@ -16,6 +16,7 @@ import warnings
 from typing import Optional, Union, Callable, Mapping, Type, Sequence, List, Dict, Any
 
 from pytorch_lightning import Callback
+from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 import torch
 from flash.core.utilities.imports import _TEXT_AVAILABLE
@@ -46,13 +47,24 @@ class TextGeneration(Task):
             val_target_max_length: Optional[int] = None,
             num_beams: Optional[int] = None,
             enable_ort: bool = False,
+            optimizer_kwargs: Optional[Dict[str, Any]] = None,
+            scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+            scheduler_kwargs: Optional[Dict[str, Any]] = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
-        super().__init__(loss_fn=loss_fn, optimizer=optimizer, metrics=metrics, learning_rate=learning_rate)
+        super().__init__(
+            loss_fn=loss_fn,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            metrics=metrics,
+            learning_rate=learning_rate
+        )
         self.model = AutoModelWithLMHead.from_pretrained(backbone)
         self.enable_ort = enable_ort
         self.val_target_max_length = val_target_max_length
