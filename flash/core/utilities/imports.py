@@ -191,8 +191,7 @@ def requires(module_paths: Union[str, List]):
                 )
 
             return wrapper
-        else:
-            return func
+        return func
 
     return decorator
 
