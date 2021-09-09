@@ -10,6 +10,7 @@ from flash.core.integrations.labelstudio.data_source import (
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
+from integrations.labelstudio.app import launch_app
 from tests.helpers.utils import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 
 
@@ -202,6 +203,27 @@ def test_datamodule_labelstudio_image():
     assert datamodule
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_label_studio_predictions_visualization():
+    """Test creation of LabelStudioImageClassificationDataSource and Datamodule from images."""
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
+
+    datamodule = ImageClassificationData.from_labelstudio(
+        train_export_json="data/project.json",
+        train_data_folder="data/upload/",
+        test_export_json="data/project.json",
+        test_data_folder="data/upload/",
+        val_split=0.5,
+    )
+    assert datamodule
+    app = launch_app(datamodule)
+    predictions = [0, 1, 1, 0]
+    vis_predictions = app.show_predictions(predictions)
+    assert len(vis_predictions) == 4
+    assert vis_predictions[0]['result'][0]['id'] != vis_predictions[3]['result'][0]['id']
+    assert vis_predictions[1]['result'][0]['id'] != vis_predictions[2]['result'][0]['id']
+
+
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_datasource_labelstudio_text():
     """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
@@ -270,3 +292,4 @@ def test_datamodule_labelstudio_video():
         decode_audio=False,
     )
     assert datamodule
+

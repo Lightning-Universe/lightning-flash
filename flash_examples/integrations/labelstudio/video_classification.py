@@ -5,6 +5,8 @@ from flash.core.data.utils import download_data
 from flash.video import VideoClassificationData, VideoClassifier
 
 # 1 Download data
+from integrations.labelstudio.app import launch_app
+
 download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
 
 # 1. Load export data
@@ -33,3 +35,8 @@ print(predictions)
 
 # 5. Save the model!
 trainer.save_checkpoint("video_classification.pt")
+
+# 6. Visualize predictions
+app = launch_app(datamodule)
+# app.show_train_dataset()
+print(app.show_predictions(predictions))

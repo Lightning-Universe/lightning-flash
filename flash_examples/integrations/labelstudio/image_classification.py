@@ -5,6 +5,8 @@ from flash.core.finetuning import FreezeUnfreeze
 from flash.image import ImageClassificationData, ImageClassifier
 
 # 1 Download data
+from integrations.labelstudio.app import launch_app
+
 download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
 
 # 1. Load export data
@@ -39,4 +41,7 @@ predictions = model.predict(
     ]
 )
 
-print(predictions)
+# 4. Visualize predictions
+app = launch_app(datamodule)
+# app.show_train_dataset()
+print(app.show_predictions(predictions))

@@ -28,6 +28,7 @@ class LabelStudioDataSource(DataSource):
         self.val_results = []
         self.classes = set()
         self.data_types = set()
+        self.tag_types = set()
         self.num_classes = 0
         self._data_folder = ""
         self._raw_data = {}
@@ -44,12 +45,13 @@ class LabelStudioDataSource(DataSource):
                 _raw_data = json.load(f)
             self.multi_label = data.get("multi_label", False)
             self.split = data.get("split")
-            results, test_results, classes, data_types = LabelStudioDataSource._load_json_data(
+            results, test_results, classes, data_types, tag_types = LabelStudioDataSource._load_json_data(
                 _raw_data, data_folder=data_folder, multi_label=self.multi_label
             )
             self.classes = self.classes | classes
             self.data_types = self.data_types | data_types
             self.num_classes = len(self.classes)
+            self.tag_types = self.tag_types | tag_types
             # splitting result to train and val sets
             if self.split:
                 import random
@@ -116,6 +118,7 @@ class LabelStudioDataSource(DataSource):
         results = []
         test_results = []
         data_types = set()
+        tag_types = set()
         classes = set()
         for task in data:
             for annotation in task["annotations"]:
@@ -126,6 +129,7 @@ class LabelStudioDataSource(DataSource):
                 result = annotation["result"]
                 for res in result:
                     t = res["type"]
+                    tag_types.add(t)
                     for label in res["value"][t]:
                         # check if labeling result is a list of labels
                         if isinstance(label, list) and not multi_label:
@@ -140,7 +144,8 @@ class LabelStudioDataSource(DataSource):
                                     for key in temp["data"]:
                                         p = temp["data"].get(key)
                                     path = Path(p)
-                                    temp["file_upload"] = os.path.join(data_folder, path.name)
+                                    if path and data_folder:
+                                        temp["file_upload"] = os.path.join(data_folder, path.name)
                                 temp["label"] = sublabel
                                 temp["result"] = res.get("value")
                                 if annotation["ground_truth"]:
@@ -162,14 +167,15 @@ class LabelStudioDataSource(DataSource):
                                 for key in temp["data"]:
                                     p = temp["data"].get(key)
                                 path = Path(p)
-                                temp["file_upload"] = os.path.join(data_folder, path.name)
+                                if path and data_folder:
+                                    temp["file_upload"] = os.path.join(data_folder, path.name)
                             temp["label"] = label
                             temp["result"] = res.get("value")
                             if annotation["ground_truth"]:
                                 test_results.append(temp)
                             elif not annotation["ground_truth"]:
                                 results.append(temp)
-        return results, test_results, classes, data_types
+        return results, test_results, classes, data_types, tag_types
 
 
 class LabelStudioImageClassificationDataSource(LabelStudioDataSource):
