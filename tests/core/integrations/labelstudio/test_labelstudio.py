@@ -1,4 +1,5 @@
 import pytest
+
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
@@ -9,11 +10,8 @@ from flash.core.integrations.labelstudio.data_source import (
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
-from tests.helpers.utils import (
-    _VIDEO_TESTING,
-    _TEXT_TESTING,
-    _IMAGE_TESTING,
-)
+from tests.helpers.utils import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
+
 
 def test_utility_load():
     """Test for label studio json loader."""
