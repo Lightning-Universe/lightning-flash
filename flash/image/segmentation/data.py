@@ -42,11 +42,10 @@ from flash.core.utilities.imports import (
     Image,
     lazy_import,
     requires,
-    requires_extras,
 )
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
 from flash.image.segmentation.serialization import SegmentationLabels
-from flash.image.segmentation.transforms import default_transforms, train_default_transforms
+from flash.image.segmentation.transforms import default_transforms, predict_default_transforms, train_default_transforms
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -284,6 +283,9 @@ class SemanticSegmentationPreprocess(Preprocess):
     def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
         return train_default_transforms(self.image_size)
 
+    def predict_default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return predict_default_transforms(self.image_size)
+
 
 class SemanticSegmentationData(DataModule):
     """Data module for semantic segmentation tasks."""
@@ -456,7 +458,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
     @staticmethod
-    @requires_extras("image")
+    @requires("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):

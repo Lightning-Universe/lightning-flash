@@ -88,7 +88,6 @@ def test_serializer_mapping():
 
 
 def test_saving_with_serializers(tmpdir):
-
     checkpoint_file = os.path.join(tmpdir, "tmp.ckpt")
 
     class CustomModel(Task):
@@ -122,7 +121,6 @@ class CustomPreprocess(DefaultPreprocess):
 
 
 def test_data_source_of_name():
-
     preprocess = CustomPreprocess()
 
     assert preprocess.data_source_of_name("test")() == "test"
@@ -135,7 +133,6 @@ def test_data_source_of_name():
 
 
 def test_available_data_sources():
-
     preprocess = CustomPreprocess()
 
     assert DefaultDataSources.TENSORS in preprocess.available_data_sources()
@@ -147,3 +144,9 @@ def test_available_data_sources():
     assert DefaultDataSources.TENSORS in data_module.available_data_sources()
     assert "test" in data_module.available_data_sources()
     assert len(data_module.available_data_sources()) == 3
+
+
+def test_check_transforms():
+    transform = torch.nn.Identity()
+    DefaultPreprocess(train_transform=transform)
+    DefaultPreprocess(train_transform=[transform])

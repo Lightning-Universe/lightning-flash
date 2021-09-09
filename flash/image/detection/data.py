@@ -17,11 +17,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
 from flash.core.data.process import Preprocess
-from flash.core.integrations.icevision.data import (
-    IceDataParserDataSource,
-    IceVisionParserDataSource,
-    IceVisionPathsDataSource,
-)
+from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
 
@@ -160,7 +156,7 @@ class ObjectDetectionPreprocess(Preprocess):
                 "via": IceVisionParserDataSource(parser=VIABBoxParser),
                 "voc": IceVisionParserDataSource(parser=VOCBBoxParser),
                 DefaultDataSources.FILES: IceVisionPathsDataSource(),
-                DefaultDataSources.FOLDERS: IceDataParserDataSource(parser=parser),
+                DefaultDataSources.FOLDERS: IceVisionParserDataSource(parser=parser),
                 DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(**data_source_kwargs),
             },
             default_data_source=DefaultDataSources.FILES,
