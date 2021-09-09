@@ -1,3 +1,4 @@
+import pytest
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
@@ -8,7 +9,11 @@ from flash.core.integrations.labelstudio.data_source import (
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
-
+from tests.helpers.utils import (
+    _VIDEO_TESTING,
+    _TEXT_TESTING,
+    _IMAGE_TESTING,
+)
 
 def test_utility_load():
     """Test for label studio json loader."""
@@ -157,6 +162,7 @@ def test_datasource_labelstudio():
     assert sample
 
 
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_datasource_labelstudio_image():
     """Test creation of LabelStudioImageClassificationDataSource and Datamodule from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
@@ -186,6 +192,7 @@ def test_datasource_labelstudio_image():
     assert datamodule
 
 
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_datasource_labelstudio_text():
     """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
@@ -214,6 +221,7 @@ def test_datasource_labelstudio_text():
     assert datamodule
 
 
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_datasource_labelstudio_video():
     """Test creation of Datamodule from video."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
