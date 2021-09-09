@@ -165,7 +165,7 @@ def test_datasource_labelstudio():
     assert sample
 
 
-# @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_datasource_labelstudio_image():
     """Test creation of LabelStudioImageClassificationDataSource from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data_nofile.zip")
