@@ -15,10 +15,12 @@ import torch
 
 import flash
 from flash.core.data.utils import download_data
-from flash.text import TextGenerationData, TextGeneration
+from flash.text import TextGeneration, TextGenerationData
 
-download_data("https://raw.githubusercontent.com/adigoryl/Styled-Lyrics-Generator-GPT2/master/datasets"
-              "/genius_lyrics_v2.csv", "./data/")
+download_data(
+    "https://raw.githubusercontent.com/adigoryl/Styled-Lyrics-Generator-GPT2/master/datasets" "/genius_lyrics_v2.csv",
+    "./data/",
+)
 
 datamodule = TextGenerationData.from_csv(
     "lyrics",
@@ -34,8 +36,6 @@ model = TextGeneration()
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-predictions = model.predict(
-    "Turgid dialogue, feeble characterization"
-)
+predictions = model.predict("Turgid dialogue, feeble characterization")
 
 print(predictions)

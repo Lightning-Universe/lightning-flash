@@ -34,6 +34,7 @@ BOS_TOKEN = "<|startoftext|>"
 EOS_TOKEN = "<|endoftext|>"
 PAD_TOKEN = "<|pad|>"
 
+
 class TextGenerationDeserializer(Deserializer):
     @requires_extras("text")
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
@@ -64,7 +65,7 @@ class TextGenerationDeserializer(Deserializer):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            self.backbone, use_fast=True,  bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
+            self.backbone, use_fast=True, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
 
 
@@ -75,7 +76,7 @@ class TextGenerationDataSource(DataSource):
 
         self.backbone = backbone
         self.tokenizer = GPT2Tokenizer.from_pretrained(
-            backbone, use_fast=True,  bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
+            backbone, use_fast=True, bos_token=BOS_TOKEN, eos_token=EOS_TOKEN, pad_token=PAD_TOKEN
         )
         self.max_length = max_length
 

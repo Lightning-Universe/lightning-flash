@@ -13,15 +13,15 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Optional, Union, Callable, Mapping, Type, Sequence, List, Dict, Any
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
+import torch
 from pytorch_lightning import Callback
 from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
-import torch
-from flash.core.utilities.imports import _TEXT_AVAILABLE
 
 from flash.core.model import Task
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
@@ -31,25 +31,25 @@ if _TEXT_AVAILABLE:
 else:
     GPT2Model, PreTrainedTokenizerBase = None, None
 
-class TextGeneration(Task):
-    """
 
-    """
+class TextGeneration(Task):
+    """"""
+
     required_extras: str = "text"
 
     def __init__(
-            self,
-            backbone: str = "gpt2",
-            loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-            optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-            metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
-            learning_rate: float = 5e-5,
-            val_target_max_length: Optional[int] = None,
-            num_beams: Optional[int] = None,
-            enable_ort: bool = False,
-            optimizer_kwargs: Optional[Dict[str, Any]] = None,
-            scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-            scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        self,
+        backbone: str = "gpt2",
+        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
+        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        learning_rate: float = 5e-5,
+        val_target_max_length: Optional[int] = None,
+        num_beams: Optional[int] = None,
+        enable_ort: bool = False,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -63,7 +63,7 @@ class TextGeneration(Task):
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
-            learning_rate=learning_rate
+            learning_rate=learning_rate,
         )
         self.model = AutoModelWithLMHead.from_pretrained(backbone)
         self.enable_ort = enable_ort
