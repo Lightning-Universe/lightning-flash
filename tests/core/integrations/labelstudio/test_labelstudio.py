@@ -162,7 +162,7 @@ def test_datasource_labelstudio():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_datasource_labelstudio_image():
-    """Test creation of LabelStudioImageClassificationDataSource and Datamodule from images."""
+    """Test creation of LabelStudioImageClassificationDataSource from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
 
     data = {
@@ -182,13 +182,20 @@ def test_datasource_labelstudio_image():
     assert test_sample
     assert predict_sample
 
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_datamodule_labelstudio_image():
+    """Test creation of LabelStudioImageClassificationDataSource and Datamodule from images."""
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
+
     datamodule = ImageClassificationData.from_labelstudio(
-        export_json="data/project.json",
-        data_folder="data/upload/",
+        train_export_json="data/project.json",
+        train_data_folder="data/upload/",
+        test_export_json="data/project.json",
+        test_data_folder="data/upload/",
         val_split=0.5,
     )
     assert datamodule
-
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_datasource_labelstudio_text():
@@ -206,14 +213,25 @@ def test_datasource_labelstudio_text():
     train_sample = train[0]
     test_sample = test[0]
     val_sample = val[0]
-
     assert train_sample
     assert test_sample
     assert val_sample
+    assert not predict
 
+
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_datamodule_labelstudio_text():
+    """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip",
+                  "./data/")
+    backbone = "prajjwal1/bert-medium"
     datamodule = TextClassificationData.from_labelstudio(
-        export_json="data/project.json",
-        val_split=0.2,
+        train_export_json="data/project.json",
+        val_export_json="data/project.json",
+        test_export_json="data/project.json",
+        predict_export_json="data/project.json",
+        data_folder="data/upload/",
+        val_split=0.8,
         backbone=backbone,
     )
     assert datamodule
@@ -221,18 +239,22 @@ def test_datasource_labelstudio_text():
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_datasource_labelstudio_video():
-    """Test creation of Datamodule from video."""
+    """Test creation of LabelStudioVideoClassificationDataSource from video."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
-
     data = {"data_folder": "data/upload/", "export_json": "data/project.json", "multi_label": True}
     preprocess = VideoClassificationPreprocess()
     ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
-
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
-
     assert train
+    assert not val
     assert test
+    assert not predict
 
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_datamodule_labelstudio_video():
+    """Test creation of Datamodule from video."""
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
     datamodule = VideoClassificationData.from_labelstudio(
         export_json="data/project.json",
         data_folder="data/upload/",
