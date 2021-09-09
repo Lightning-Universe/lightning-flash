@@ -9,9 +9,13 @@ from pytorch_lightning.utilities.cloud_io import get_filesystem
 from flash import DataSource
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.core.data.data_source import DefaultDataKeys, has_len
-from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
+from flash.core.utilities.imports import (
+    _TORCHVISION_AVAILABLE,
+    _TEXT_AVAILABLE,
+    _PYTORCHVIDEO_AVAILABLE,
+)
 
-if _PYTORCHVIDEO_AVAILABLE:
+if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
 DATA_TYPE = TypeVar("DATA_TYPE")
 
@@ -215,6 +219,8 @@ class LabelStudioVideoClassificationDataSource(LabelStudioDataSource):
     Export data should point to video files"""
 
     def __init__(self, video_sampler=None, clip_sampler=None, decode_audio=False, decoder: str = "pyav"):
+        if not _PYTORCHVIDEO_AVAILABLE:
+            raise ModuleNotFoundError("Please, run `pip install pytorchvideo`.")
         super().__init__()
         self.video_sampler = video_sampler or torch.utils.data.RandomSampler
         self.clip_sampler = clip_sampler
