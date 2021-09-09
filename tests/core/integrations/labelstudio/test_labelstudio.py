@@ -197,6 +197,7 @@ def test_datamodule_labelstudio_image():
     )
     assert datamodule
 
+
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_datasource_labelstudio_text():
     """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
@@ -222,8 +223,7 @@ def test_datasource_labelstudio_text():
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_datamodule_labelstudio_text():
     """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
-    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip",
-                  "./data/")
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
     backbone = "prajjwal1/bert-medium"
     datamodule = TextClassificationData.from_labelstudio(
         train_export_json="data/project.json",
