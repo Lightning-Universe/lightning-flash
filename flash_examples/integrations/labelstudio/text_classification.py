@@ -1,6 +1,6 @@
 import flash
 from flash.core.data.utils import download_data
-from flash.core.integrations.labelstudio.app import launch_app
+from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.text import TextClassificationData, TextClassifier
 
 # 1. Create the DataModule
