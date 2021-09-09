@@ -1,8 +1,9 @@
 import os
+
 import flash
 from flash.core.data.utils import download_data
-from flash.video import VideoClassificationData, VideoClassifier
 from flash.core.integrations.labelstudio.app import launch_app
+from flash.video import VideoClassificationData, VideoClassifier
 
 # 1 Download data
 download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")

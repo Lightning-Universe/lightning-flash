@@ -2,8 +2,8 @@ import flash
 from flash.core.classification import Labels
 from flash.core.data.utils import download_data
 from flash.core.finetuning import FreezeUnfreeze
-from flash.image import ImageClassificationData, ImageClassifier
 from flash.core.integrations.labelstudio.app import launch_app
+from flash.image import ImageClassificationData, ImageClassifier
 
 # 1 Download data
 download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")

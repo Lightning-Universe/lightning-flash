@@ -1,28 +1,24 @@
-import string
 import random
+import string
+
 from flash.core.data.data_module import DataModule
 
 
 class App:
-    """
-    App for visualizing predictions in Label Studio results format
-    """
+    """App for visualizing predictions in Label Studio results format."""
+
     def __init__(self, datamodule: DataModule):
         self.datamodule = datamodule
 
     def show_predictions(self, predictions):
-        """
-        Converts predictions to Label Studio results
-        """
+        """Converts predictions to Label Studio results."""
         results = []
         for pred in predictions:
             results.append(self.construct_result(pred))
         return results
 
     def construct_result(self, pred):
-        """
-        Construction Label Studio result from data source and prediction values
-        """
+        """Construction Label Studio result from data source and prediction values."""
         ds = self.datamodule.data_source
         # get label
         if isinstance(pred, list):
@@ -38,14 +34,12 @@ class App:
                 {
                     "id": "".join(
                         random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
-                        for _ in
-                        range(10)),
+                        for _ in range(10)
+                    ),
                     "from_name": "tag",
                     "to_name": data_type,
                     "type": tag_type,
-                    "value": {
-                        tag_type: label if isinstance(label, list) else [label]
-                    }
+                    "value": {tag_type: label if isinstance(label, list) else [label]},
                 }
             ]
         }
