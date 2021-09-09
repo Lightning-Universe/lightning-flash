@@ -221,8 +221,8 @@ def test_label_studio_predictions_visualization():
     predictions = [0, 1, 1, 0]
     vis_predictions = app.show_predictions(predictions)
     assert len(vis_predictions) == 4
-    assert vis_predictions[0]['result'][0]['id'] != vis_predictions[3]['result'][0]['id']
-    assert vis_predictions[1]['result'][0]['id'] != vis_predictions[2]['result'][0]['id']
+    assert vis_predictions[0]["result"][0]["id"] != vis_predictions[3]["result"][0]["id"]
+    assert vis_predictions[1]["result"][0]["id"] != vis_predictions[2]["result"][0]["id"]
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")

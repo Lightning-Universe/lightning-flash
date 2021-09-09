@@ -36,7 +36,7 @@ class App:
         js = {
             "result": [
                 {
-                    "id": ''.join(
+                    "id": "".join(
                         random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                         for _ in
                         range(10)),
