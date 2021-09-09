@@ -19,8 +19,6 @@ def test_model_compute_call_method(lightning_squeezenet1_1_obj):
 def test_model_compute_dependencies(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
-
-    comp1.inputs.tag << comp2.outputs.predicted_tag
     res = [
         {
             "source_component": "callnum_2",
@@ -37,8 +35,6 @@ def test_model_compute_dependencies(lightning_squeezenet1_1_obj):
 def test_inverse_model_compute_component_dependencies(lightning_squeezenet1_1_obj):
     comp1 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
     comp2 = ClassificationInferenceComposable(lightning_squeezenet1_1_obj)
-
-    comp2.outputs.predicted_tag >> comp1.inputs.tag
 
     res = [
         {
@@ -115,7 +111,6 @@ def test_component_parameters(lightning_squeezenet1_1_obj):
     assert isinstance(first_tag.datatype, Label)
 
     assert first_tag.connections == []
-    first_tag >> second_tag
     assert str(first_tag.connections[0]) == ("callnum_1.outputs.predicted_tag >> callnum_2.inputs.tag")
     assert second_tag.connections == []
     assert first_tag.connections == comp1._flashserve_meta_.connections

@@ -177,7 +177,7 @@ def test_preprocessing_data_source_with_running_stage(with_dataset):
     assert len(dataset) == 10
 
     for idx in range(len(dataset)):
-        dataset[idx]
+        pass
 
     if with_dataset:
         assert dataset.train_load_sample_was_called

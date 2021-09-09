@@ -235,7 +235,6 @@ def reverse_dict(d):
     result = defaultdict(set)
     _add = set.add
     for k, vals in d.items():
-        result[k]
         for val in vals:
             _add(result[val], k)
     result.default_factory = None

@@ -161,7 +161,6 @@ def test_serving_composed(session_global_datadir, lightning_squeezenet1_1_obj):
 
     resnet_comp = ClassificationInference(lightning_squeezenet1_1_obj)
     seat_comp = SeatClassifier(lightning_squeezenet1_1_obj, config={"sport": "football"})
-    resnet_comp.outputs.prediction >> seat_comp.inputs.stadium
     ep = Endpoint(
         route="/predict_seat",
         inputs={
@@ -215,8 +214,6 @@ def test_composed_does_not_eliminate_endpoint_serialization(session_global_datad
 
     resnet_comp = ClassificationInference(lightning_squeezenet1_1_obj)
     seat_comp = SeatClassifier(lightning_squeezenet1_1_obj, config={"sport": "football"})
-
-    resnet_comp.outputs.prediction >> seat_comp.inputs.stadium
 
     ep = Endpoint(
         route="/predict_seat",
@@ -290,8 +287,6 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
 
     resnet_comp = ClassificationInference(lightning_squeezenet1_1_obj)
     seat_comp = SeatClassifier(lightning_squeezenet1_1_obj, config={"sport": "football"})
-
-    resnet_comp.outputs.prediction >> seat_comp.inputs.stadium
 
     ep = Endpoint(
         route="/predict_seat",
@@ -442,8 +437,6 @@ def test_composition_from_url_torchscript_servable(tmp_path):
 
     c_1 = ComponentTwoModels({"encoder": gm, "decoder": gm})
     c_2 = ComponentTwoModels({"encoder": gm, "decoder": gm})
-
-    c_1.outputs.output >> c_2.inputs.inp
 
     ep = Endpoint(
         route="/predictr",
