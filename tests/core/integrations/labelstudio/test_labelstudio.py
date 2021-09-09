@@ -147,8 +147,12 @@ def test_datasource_labelstudio():
         "multi_label": False,
     }
     train, val, test, predict = ds.to_datasets(train_data=data)
-    sample = train[0]
-    assert sample
+    train_sample = train[0]
+    val_sample = val[0]
+    assert train_sample
+    assert val_sample
+    assert not test
+    assert not predict
     ds_no_split = LabelStudioDataSource()
     data = {
         "data_folder": "data/upload/",
@@ -160,16 +164,16 @@ def test_datasource_labelstudio():
     assert sample
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+#@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_datasource_labelstudio_image():
     """Test creation of LabelStudioImageClassificationDataSource from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
 
     data = {
         "data_folder": "data/upload/",
-        "export_json": "data/project.json",
+        "export_json": "data/project_nofile.json",
         "split": 0.2,
-        "multi_label": False,
+        "multi_label": True,
     }
     ds = LabelStudioImageClassificationDataSource()
     train, val, test, predict = ds.to_datasets(train_data=data, val_data=data, test_data=data, predict_data=data)
@@ -245,10 +249,12 @@ def test_datasource_labelstudio_video():
     preprocess = VideoClassificationPreprocess()
     ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
+    sample = train[0]
     assert train
     assert not val
     assert test
     assert not predict
+    assert sample
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")

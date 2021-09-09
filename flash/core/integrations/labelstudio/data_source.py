@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
@@ -132,9 +133,14 @@ class LabelStudioDataSource(DataSource):
                                 classes.add(sublabel)
                                 temp = {}
                                 temp["file_upload"] = task.get("file_upload")
+                                temp["data"] = task.get("data")
                                 if temp["file_upload"]:
                                     temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
-                                temp["data"] = task.get("data")
+                                else:
+                                    for key in temp["data"]:
+                                        p = temp["data"].get(key)
+                                    path = Path(p)
+                                    temp["file_upload"] = os.path.join(data_folder, path.name)
                                 temp["label"] = sublabel
                                 temp["result"] = res.get("value")
                                 if annotation["ground_truth"]:
@@ -149,9 +155,14 @@ class LabelStudioDataSource(DataSource):
                                 classes.add(label)
                             temp = {}
                             temp["file_upload"] = task.get("file_upload")
+                            temp["data"] = task.get("data")
                             if temp["file_upload"] and data_folder:
                                 temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
-                            temp["data"] = task.get("data")
+                            else:
+                                for key in temp["data"]:
+                                    p = temp["data"].get(key)
+                                path = Path(p)
+                                temp["file_upload"] = os.path.join(data_folder, path.name)
                             temp["label"] = label
                             temp["result"] = res.get("value")
                             if annotation["ground_truth"]:
@@ -168,11 +179,7 @@ class LabelStudioImageClassificationDataSource(LabelStudioDataSource):
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
         """Load 1 sample from dataset."""
-        if sample["file_upload"]:
-            p = sample["file_upload"]
-        else:
-            for key in sample.get("data"):
-                p = sample.get("data").get(key)
+        p = sample["file_upload"]
         # loading image
         image = default_loader(p)
         result = {DefaultDataKeys.INPUT: image, DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
