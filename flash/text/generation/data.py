@@ -22,7 +22,7 @@ from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
@@ -36,7 +36,7 @@ PAD_TOKEN = "<|pad|>"
 
 
 class TextGenerationDeserializer(Deserializer):
-    @requires_extras("text")
+    @requires("text")
     def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
         super().__init__()
         self.backbone = backbone
@@ -70,7 +70,7 @@ class TextGenerationDeserializer(Deserializer):
 
 
 class TextGenerationDataSource(DataSource):
-    @requires_extras("text")
+    @requires("text")
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
 
@@ -272,7 +272,7 @@ class TextGenerationSentencesDataSource(TextGenerationDataSource):
 
 
 class TextGenerationPreprocess(Preprocess):
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
