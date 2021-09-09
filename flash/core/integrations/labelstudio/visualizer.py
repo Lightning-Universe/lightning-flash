@@ -47,7 +47,5 @@ class App:
 
 
 def launch_app(datamodule: DataModule) -> "App":
-    """
-    Creating instance of Visualizing App
-    """
+    """Creating instance of Visualizing App."""
     return App(datamodule)
