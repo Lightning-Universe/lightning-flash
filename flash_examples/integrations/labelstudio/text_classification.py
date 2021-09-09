@@ -1,10 +1,9 @@
 import flash
 from flash.core.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
+from flash.core.integrations.labelstudio.app import launch_app
 
 # 1. Create the DataModule
-from integrations.labelstudio.app import launch_app
-
 download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
 
 backbone = "prajjwal1/bert-medium"
@@ -36,5 +35,4 @@ trainer.save_checkpoint("text_classification_model.pt")
 
 # 6. Visualize predictions
 app = launch_app(datamodule)
-# app.show_train_dataset()
 print(app.show_predictions(predictions))

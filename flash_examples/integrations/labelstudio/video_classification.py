@@ -1,15 +1,13 @@
 import os
-
 import flash
 from flash.core.data.utils import download_data
 from flash.video import VideoClassificationData, VideoClassifier
+from flash.core.integrations.labelstudio.app import launch_app
 
 # 1 Download data
-from integrations.labelstudio.app import launch_app
-
 download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
 
-# 1. Load export data
+# 2. Load export data
 datamodule = VideoClassificationData.from_labelstudio(
     export_json="data/project.json",
     data_folder="data/upload/",
@@ -19,24 +17,23 @@ datamodule = VideoClassificationData.from_labelstudio(
     decode_audio=False,
 )
 
-# 2. Build the task
+# 3. Build the task
 model = VideoClassifier(
     backbone="slow_r50",
     num_classes=datamodule.num_classes,
 )
 
-# 3. Create the trainer and finetune the model
+# 4. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-# 4. Make a prediction
+# 5. Make a prediction
 predictions = model.predict(os.path.join(os.getcwd(), "data/test"))
 print(predictions)
 
-# 5. Save the model!
+# 6. Save the model!
 trainer.save_checkpoint("video_classification.pt")
 
-# 6. Visualize predictions
+# 7. Visualize predictions
 app = launch_app(datamodule)
-# app.show_train_dataset()
 print(app.show_predictions(predictions))

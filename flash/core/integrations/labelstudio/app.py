@@ -1,26 +1,28 @@
 import string
 import random
-import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys
+
 
 class App:
+    """
+    App for visualizing predictions in Label Studio results format
+    """
     def __init__(self, datamodule: DataModule):
         self.datamodule = datamodule
-        self._enabled = not flash._IS_TESTING
-
-    def get_dataset(self, stage: str = "train"):
-        dataloader = getattr(self.datamodule, f"{stage}_dataloader")()
-        return dataloader.dataset
 
     def show_predictions(self, predictions):
+        """
+        Converts predictions to Label Studio results
+        """
         results = []
-        if self._enabled:
-            for pred in predictions:
-                results.append(self.construct_result(pred))
+        for pred in predictions:
+            results.append(self.construct_result(pred))
         return results
 
     def construct_result(self, pred):
+        """
+        Construction Label Studio result from data source and prediction values
+        """
         ds = self.datamodule.data_source
         # get label
         if isinstance(pred, list):
