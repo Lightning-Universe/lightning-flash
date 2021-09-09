@@ -6,6 +6,7 @@ from flash.core.data.data_module import DataModule
 
 class App:
     """App for visualizing predictions in Label Studio results format."""
+
     def __init__(self, datamodule: DataModule):
         self.datamodule = datamodule
 

@@ -2,12 +2,12 @@ import pytest
 
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.utils import download_data
-from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.core.integrations.labelstudio.data_source import (
     LabelStudioDataSource,
     LabelStudioImageClassificationDataSource,
     LabelStudioTextClassificationDataSource,
 )
+from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
