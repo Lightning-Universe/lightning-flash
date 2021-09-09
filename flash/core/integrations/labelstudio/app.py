@@ -1,8 +1,10 @@
-import string
 import random
+import string
+
 import flash
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys
+
 
 class App:
     def __init__(self, datamodule: DataModule):
@@ -34,16 +36,14 @@ class App:
         js = {
             "result": [
                 {
-                    "id": ''.join(
+                    "id": "".join(
                         random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
-                        for _ in
-                        range(10)),
+                        for _ in range(10)
+                    ),
                     "from_name": "tag",
                     "to_name": data_type,
                     "type": tag_type,
-                    "value": {
-                        tag_type: label if isinstance(label, list) else [label]
-                    }
+                    "value": {tag_type: label if isinstance(label, list) else [label]},
                 }
             ]
         }

@@ -1,9 +1,9 @@
+# 1. Create the DataModule
+from integrations.labelstudio.app import launch_app
+
 import flash
 from flash.core.data.utils import download_data
 from flash.text import TextClassificationData, TextClassifier
-
-# 1. Create the DataModule
-from integrations.labelstudio.app import launch_app
 
 download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
 

@@ -1,4 +1,5 @@
 import pytest
+from integrations.labelstudio.app import launch_app
 
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.utils import download_data
@@ -10,7 +11,6 @@ from flash.core.integrations.labelstudio.data_source import (
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
-from integrations.labelstudio.app import launch_app
 from tests.helpers.utils import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 
 
@@ -220,8 +220,8 @@ def test_label_studio_predictions_visualization():
     predictions = [0, 1, 1, 0]
     vis_predictions = app.show_predictions(predictions)
     assert len(vis_predictions) == 4
-    assert vis_predictions[0]['result'][0]['id'] != vis_predictions[3]['result'][0]['id']
-    assert vis_predictions[1]['result'][0]['id'] != vis_predictions[2]['result'][0]['id']
+    assert vis_predictions[0]["result"][0]["id"] != vis_predictions[3]["result"][0]["id"]
+    assert vis_predictions[1]["result"][0]["id"] != vis_predictions[2]["result"][0]["id"]
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
@@ -292,4 +292,3 @@ def test_datamodule_labelstudio_video():
         decode_audio=False,
     )
     assert datamodule
-
