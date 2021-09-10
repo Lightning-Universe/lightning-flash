@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-from os import chflags
-from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import torch
@@ -41,7 +39,7 @@ class MockVISSLTask:
         self.model = vissl_model
 
         # set using device for backbone before hooks is applied
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda")
 
         self.iteration = 0
         self.max_iteration = 100000  # set using trainer
@@ -195,7 +193,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
             hook.on_forward(self.vissl_task)
 
         loss = self.loss_fn(out, target=None)
-        self.log_dict({"train_loss": loss})
+        self.adapter_task.log_dict({"train_loss": loss.item()})
 
         return loss
 
@@ -204,7 +202,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
         loss = self.loss_fn(out, target=None)
-        self.log_dict({"val_loss": loss})
+        self.adapter_task.log_dict({"val_loss": loss})
 
         return loss
 

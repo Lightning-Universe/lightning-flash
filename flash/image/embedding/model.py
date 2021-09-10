@@ -21,6 +21,11 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
+    import classy_vision
+
+    # patch this to avoid classy vision/vissl based distributed training
+    classy_vision.generic.distributed_util.get_world_size = lambda: 1
+
     from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
     from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
 else:
