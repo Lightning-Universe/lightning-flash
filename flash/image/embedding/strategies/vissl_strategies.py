@@ -23,7 +23,6 @@ if _VISSL_AVAILABLE:
     from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
 
 
-# TODO: update head creation using config?
 def dino(head: str = 'swav_head', **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get('dino_loss')(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
