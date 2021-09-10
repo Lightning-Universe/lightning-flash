@@ -75,9 +75,8 @@ datamodule = ImageClassificationData.from_tensors(
     train_transform=train_transform,
 )
 
-ways = 30
 model = ImageClassifier(
-    ways,  # n
+    datamodule.num_classes,  # ways
     backbone="resnet18",
     pretrained=True,
     training_strategy="prototypicalnetworks",

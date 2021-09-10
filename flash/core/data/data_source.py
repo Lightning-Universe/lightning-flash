@@ -626,6 +626,16 @@ class TensorDataSource(SequenceDataSource[torch.Tensor]):
     """The ``TensorDataSource`` is a ``SequenceDataSource`` which expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``torch.Tensor`` objects."""
 
+    def load_data(
+        self,
+        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
+        dataset: Optional[Any] = None,
+    ) -> Sequence[Mapping[str, Any]]:
+        # TODO: Bring back the code to work out how many classes there are
+        if len(data) == 2:
+            dataset.num_classes = len(torch.unique(data[1]))
+        return super().load_data(data, dataset)
+
 
 class NumpyDataSource(SequenceDataSource[np.ndarray]):
     """The ``NumpyDataSource`` is a ``SequenceDataSource`` which expects the input to
