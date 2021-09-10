@@ -34,8 +34,6 @@ def swav_head(
     normalize_feats: bool = True,
     activation_name: str = "ReLU",
     use_weight_norm_prototypes: bool = True,
-    batchnorm_eps: float = 1e-5,
-    batchnorm_momentum: float = 0.1,
     **kwargs,
 ) -> nn.Module:
     cfg = VISSLAdapter.get_model_config_template()

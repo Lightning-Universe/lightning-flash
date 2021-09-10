@@ -183,7 +183,13 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return cfg
 
     def forward(self, batch) -> Any:
-        return self.vissl_base_model(batch)
+        model_output = self.vissl_base_model(batch)
+
+        # vissl-specific
+        if len(model_output) == 1:
+            model_output = model_output[0]
+
+        return model_output
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         out = self(batch[DefaultDataKeys.INPUT])
@@ -193,22 +199,19 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         for hook in self.hooks:
             hook.on_forward(self.vissl_task)
 
-        # out can be torch.Tensor/List target is torch.Tensor
-        # loss = self.vissl_loss(out, target=None)
+        loss = self.loss_fn(out, target=None)
+        self.log_dict({'train_loss': loss})
 
-        # TODO: log
-        # TODO: Include call to ClassyHooks during training
-        # return loss
+        return loss
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
-        out = self(batch)
+        out = self(batch[DefaultDataKeys.INPUT])
+        self.task.last_batch['sample']['input'] = batch[DefaultDataKeys.INPUT]
 
-        # out can be torch.Tensor/List target is torch.Tensor
-        # loss = self.vissl_loss(out, target)
+        loss = self.loss_fn(out, target=None)
+        self.log_dict({'val_loss': loss})
 
-        # TODO: log
-        # TODO: Include call to ClassyHooks during training
-        # return loss
+        return loss
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         # vissl_input, target = batch
