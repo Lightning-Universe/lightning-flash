@@ -13,12 +13,12 @@
 # limitations under the License.
 import functools
 from os import chflags
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 from types import SimpleNamespace
-from classy_vision.hooks.classy_hook import ClassyHook
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import torch
 import torch.nn as nn
+from classy_vision.hooks.classy_hook import ClassyHook
 
 from flash.core.adapter import Adapter
 from flash.core.data.data_source import DefaultDataKeys
@@ -27,9 +27,9 @@ from flash.core.utilities.imports import _VISSL_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
 
 if _VISSL_AVAILABLE:
+    from classy_vision.losses import ClassyLoss
     from vissl.config.attr_dict import AttrDict
     from vissl.models.base_ssl_model import BaseSSLMultiInputOutputModel
-    from classy_vision.losses import ClassyLoss
 
     from flash.image.embedding.vissl.hooks import AdaptVISSLHooks
 
@@ -41,24 +41,20 @@ class MockVISSLTask:
         self.model = vissl_model
 
         # set using device for backbone before hooks is applied
-        self.device = torch.device('cpu')
+        self.device = torch.device("cpu")
 
         self.iteration = 0
-        self.max_iteration = 100000 # set using trainer
+        self.max_iteration = 100000  # set using trainer
 
         # set for momentum teacher based hooks
-        self.last_batch = AttrDict({
-            'sample': AttrDict({
-                'input': None
-            })
-        })
+        self.last_batch = AttrDict({"sample": AttrDict({"input": None})})
 
         # task.loss.checkpoint to None
         # task.loss.center
         # task.loss.teacher_output (does the hook set this?)
         # self.model.heads
         # task.model.parameters()
-        # for normalize_last_layer check 
+        # for normalize_last_layer check
         # task.loss.momentum_teacher.load_state_dict(task.model.state_dict()
         #  => populate task.model
 
@@ -104,29 +100,22 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         self.model_config.TRUNK = self.backbone.model_config.TRUNK
         self.model_config.HEAD = self.head[0].model_config.HEAD
-        self.task_config = AttrDict({
-            'MODEL': self.model_config,
-            'OPTIMIZER': self.optimizer_config
-        })
+        self.task_config = AttrDict({"MODEL": self.model_config, "OPTIMIZER": self.optimizer_config})
 
         self.vissl_base_model = BaseSSLMultiInputOutputModel(self.model_config, self.optimizer_config)
         # patch backbone and head
         self.vissl_base_model.trunk = backbone
         self.vissl_base_model.heads = nn.ModuleList(self.head)
 
-        self.vissl_task = MockVISSLTask(
-            self.loss_fn,
-            self.task_config,
-            self.vissl_base_model
-        )
+        self.vissl_task = MockVISSLTask(self.loss_fn, self.task_config, self.vissl_base_model)
 
         AdaptVISSLHooks.__init__(self, hooks=hooks, task=self.vissl_task)
 
         # task.config["MODEL"], task.config["OPTIMIZER"]
         # patch task.loss.momentum teacher, deepcopy from trunk
-        # mock task only needs to be passed for hooks, avoid all 
+        # mock task only needs to be passed for hooks, avoid all
         # vissl_task.base_model is vissl_trunk
-        # 
+        #
         # make sure momentum_teacher is not updated with backprop, only needs to
         # be updated with momentum hook
         # detach on teacher output or torch.no_grad()?
@@ -135,7 +124,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         # LOSS:
         #   name: loss_name
         #   loss_name:
-        #       param1: 
+        #       param1:
         #       param2:
         #       ...
 
@@ -162,23 +151,29 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
     @staticmethod
     def get_model_config_template():
-        cfg = AttrDict({
-            'SINGLE_PASS_EVERY_CROP': False,
-            'INPUT_TYPE': 'rgb',
-            'MULTI_INPUT_HEAD_MAPPING': [],
-            'TRUNK': AttrDict({}),
-            'HEAD': AttrDict({
-                'PARAMS': [],
-                'BATCHNORM_EPS': 1e-5,
-                'BATCHNORM_MOMENTUM': 0.1,
-                'PARAMS_MULTIPLIER': 1.0,
-            }),
-            'FEATURE_EVAL_SETTINGS': AttrDict({
-                'EVAL_MODE_ON': False,
-                'EXTRACT_TRUNK_FEATURES_ONLY': False,
-            }),
-            '_MODEL_INIT_SEED': 0,
-        })
+        cfg = AttrDict(
+            {
+                "SINGLE_PASS_EVERY_CROP": False,
+                "INPUT_TYPE": "rgb",
+                "MULTI_INPUT_HEAD_MAPPING": [],
+                "TRUNK": AttrDict({}),
+                "HEAD": AttrDict(
+                    {
+                        "PARAMS": [],
+                        "BATCHNORM_EPS": 1e-5,
+                        "BATCHNORM_MOMENTUM": 0.1,
+                        "PARAMS_MULTIPLIER": 1.0,
+                    }
+                ),
+                "FEATURE_EVAL_SETTINGS": AttrDict(
+                    {
+                        "EVAL_MODE_ON": False,
+                        "EXTRACT_TRUNK_FEATURES_ONLY": False,
+                    }
+                ),
+                "_MODEL_INIT_SEED": 0,
+            }
+        )
 
         return cfg
 
@@ -193,23 +188,23 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         out = self(batch[DefaultDataKeys.INPUT])
-        self.task.last_batch['sample']['input'] = batch[DefaultDataKeys.INPUT]
+        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
         # call forward hook from VISSL (momentum updates)
         for hook in self.hooks:
             hook.on_forward(self.vissl_task)
 
         loss = self.loss_fn(out, target=None)
-        self.log_dict({'train_loss': loss})
+        self.log_dict({"train_loss": loss})
 
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         out = self(batch[DefaultDataKeys.INPUT])
-        self.task.last_batch['sample']['input'] = batch[DefaultDataKeys.INPUT]
+        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
         loss = self.loss_fn(out, target=None)
-        self.log_dict({'val_loss': loss})
+        self.log_dict({"val_loss": loss})
 
         return loss
 

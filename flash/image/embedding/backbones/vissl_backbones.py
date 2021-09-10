@@ -40,25 +40,29 @@ def vision_transformer(
 ) -> nn.Module:
 
     cfg = VISSLAdapter.get_model_config_template()
-    cfg.TRUNK = AttrDict({
-        'NAME': 'vision_transformer',
-        'VISION_TRANSFORMERS': AttrDict({
-            "image_size": image_size,
-            "patch_size": patch_size,
-            "hidden_dim": hidden_dim,
-            "num_layers": num_layers,
-            "num_heads": num_heads,
-            "mlp_dim": mlp_dim,
-            "dropout_rate": dropout_rate,
-            "attention_dropout_rate": attention_dropout_rate,
-            "drop_path_rate": drop_path_rate,
-            "qkv_bias": qkv_bias,
-            "qk_scale": qk_scale,
-            "classifier": classifier,
-        })
-    })
+    cfg.TRUNK = AttrDict(
+        {
+            "NAME": "vision_transformer",
+            "VISION_TRANSFORMERS": AttrDict(
+                {
+                    "image_size": image_size,
+                    "patch_size": patch_size,
+                    "hidden_dim": hidden_dim,
+                    "num_layers": num_layers,
+                    "num_heads": num_heads,
+                    "mlp_dim": mlp_dim,
+                    "dropout_rate": dropout_rate,
+                    "attention_dropout_rate": attention_dropout_rate,
+                    "drop_path_rate": drop_path_rate,
+                    "qkv_bias": qkv_bias,
+                    "qk_scale": qk_scale,
+                    "classifier": classifier,
+                }
+            ),
+        }
+    )
 
-    trunk = MODEL_TRUNKS_REGISTRY["vision_transformer"](cfg, model_name='vision_transformer')
+    trunk = MODEL_TRUNKS_REGISTRY["vision_transformer"](cfg, model_name="vision_transformer")
     trunk.model_config = cfg
 
     return trunk, trunk.num_features
