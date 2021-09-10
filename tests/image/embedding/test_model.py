@@ -17,9 +17,10 @@ import re
 import pytest
 import torch
 
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageEmbedder
 from tests.helpers.utils import _IMAGE_TESTING
+from tests.image.embedding.utils import ssl_datamodule
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -44,3 +45,22 @@ def test_jit(tmpdir, jitter, args):
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         ImageEmbedder.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
+@pytest.mark.parametrize(
+    "backbone, training_strategy",
+    [
+        ('vision_transformer', 'dino'),
+        ('resnet50', 'simclr'),
+        ('resnet50', 'swav'),
+        ('resnet50', 'barlow_twins'),
+        ('resnet50', 'moco'),
+    ]
+)
+def test_vissl_training(tmpdir, backbone, training_strategy):
+    datamodule = ssl_datamodule()  # configure according to strategy
+    embedder = ImageEmbedder(backbone=backbone, training_strategy=training_strategy)
+
+    trainer = flash.Trainer(max_steps=3, gpus=torch.cuda.device_count())
+    trainer.fit(embedder, datamodule=datamodule)
