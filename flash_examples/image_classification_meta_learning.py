@@ -32,7 +32,7 @@ model = ImageClassifier(
 )
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, limit_val_batches=2)
+trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
 # 5. Save the model!
