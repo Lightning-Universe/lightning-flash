@@ -28,7 +28,7 @@ from flash.image import ImageClassificationData, ImageClassifier
 warnings.simplefilter("ignore")
 
 
-# reproduced from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
+# adapted from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
 # download MiniImagenet
 train_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="train", download=True)
 val_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="validation", download=True)
