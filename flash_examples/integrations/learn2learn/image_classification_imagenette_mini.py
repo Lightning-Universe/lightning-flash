@@ -21,6 +21,7 @@ from flash.image import ImageClassificationData, ImageClassifier
 
 warnings.simplefilter("ignore")
 
+
 # reproduced from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
 
 # download MiniImagenet
@@ -36,19 +37,20 @@ datamodule = ImageClassificationData.from_tensors(
     val_targets=torch.from_numpy(val_dataset.y.astype(int)),
     test_data=test_dataset.x,
     test_targets=torch.from_numpy(test_dataset.y.astype(int)),
+    num_workers=4,
 )
 
 ways = 30
 model = ImageClassifier(
     ways,  # n
     backbone="resnet18",
-    pretrained=False,
+    pretrained=True,
     training_strategy="prototypicalnetworks",
     optimizer=torch.optim.Adam,
     optimizer_kwargs={"lr": 0.001},
     training_strategy_kwargs={
         "epoch_length": 10 * 16,
-        "meta_batch_size": 16,
+        "meta_batch_size": 4,
         "num_tasks": 200,
         "test_num_tasks": 2000,
         "shots": 1,
@@ -58,5 +60,10 @@ model = ImageClassifier(
     },
 )
 
-trainer = flash.Trainer(max_epochs=200, gpus=1)
+trainer = flash.Trainer(
+    max_epochs=200,
+    gpus=4,
+    accelerator="ddp",
+    precision=16,
+)
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
