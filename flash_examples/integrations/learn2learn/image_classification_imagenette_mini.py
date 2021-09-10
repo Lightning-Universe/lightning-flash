@@ -26,7 +26,6 @@ test_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="test", downlo
 
 # construct datamodule
 datamodule = ImageClassificationData.from_tensors(
-    # NOTE: they return tensors for x but arrays for y -> I must manually convert it
     train_data=train_dataset.x,
     train_targets=torch.from_numpy(train_dataset.y.astype(int)),
     val_data=val_dataset.x,
@@ -54,5 +53,5 @@ model = ImageClassifier(
     },
 )
 
-trainer = flash.Trainer(max_epochs=200)
+trainer = flash.Trainer(max_epochs=200, gpus=1)
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
