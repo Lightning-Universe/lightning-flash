@@ -51,12 +51,12 @@ def test_load_from_checkpoint_dependency_error():
 @pytest.mark.parametrize(
     "backbone, training_strategy",
     [
-        ('vision_transformer', 'dino'),
-        ('resnet50', 'simclr'),
-        ('resnet50', 'swav'),
-        ('resnet50', 'barlow_twins'),
-        ('resnet50', 'moco'),
-    ]
+        ("vision_transformer", "dino"),
+        ("resnet50", "simclr"),
+        ("resnet50", "swav"),
+        ("resnet50", "barlow_twins"),
+        ("resnet50", "moco"),
+    ],
 )
 def test_vissl_training(tmpdir, backbone, training_strategy):
     datamodule = ssl_datamodule()  # configure according to strategy
