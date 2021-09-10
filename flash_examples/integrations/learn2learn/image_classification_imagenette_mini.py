@@ -17,10 +17,12 @@ import torch
 import flash
 from flash.image import ImageClassificationData, ImageClassifier
 
+# reproduced from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
+
 # download MiniImagenet
-train_dataset = l2l.vision.datasets.MiniImagenet(root="./data", mode="train", download=True)
-val_dataset = l2l.vision.datasets.MiniImagenet(root="./data", mode="validation", download=True)
-test_dataset = l2l.vision.datasets.MiniImagenet(root="./data", mode="test", download=True)
+train_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="train", download=True)
+val_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="validation", download=True)
+test_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="test", download=True)
 
 # construct datamodule
 datamodule = ImageClassificationData.from_tensors(
@@ -33,12 +35,24 @@ datamodule = ImageClassificationData.from_tensors(
     test_targets=torch.from_numpy(test_dataset.y.astype(int)),
 )
 
+ways = 30
 model = ImageClassifier(
-    64,  # NOTE: from_tensors apparently does not compute the num_classes automatically
+    ways,  # n
     backbone="resnet18",
     training_strategy="prototypicalnetworks",
-    training_strategy_kwargs={"shots": 4, "meta_batch_size": 10},
+    optimizer=torch.optim.Adam,
+    optimizer_kwargs={"lr": 0.001},
+    training_strategy_kwargs={
+        "epoch_length": 10 * 16,
+        "meta_batch_size": 16,
+        "num_tasks": 200,
+        "test_num_tasks": 2000,
+        "shots": 1,
+        "test_ways": 5,
+        "test_shots": 1,
+        "test_queries": 15,
+    },
 )
 
-trainer = flash.Trainer(fast_dev_run=True)
+trainer = flash.Trainer(max_epochs=200)
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")

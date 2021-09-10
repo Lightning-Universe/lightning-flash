@@ -110,9 +110,12 @@ class Learn2LearnAdapter(Adapter):
         meta_batch_size: int,
         queries: int = 1,
         num_task: int = -1,
+        epoch_length: Optional[int] = None,
+        test_epoch_length: Optional[int] = None,
         test_ways: Optional[int] = None,
         test_shots: Optional[int] = None,
         test_queries: Optional[int] = None,
+        test_num_task: Optional[int] = None,
         default_transforms_fn: Optional[Callable] = None,
         seed: int = 42,
         **algorithm_kwargs,
@@ -150,6 +153,7 @@ class Learn2LearnAdapter(Adapter):
         self.num_task = num_task
         self.default_transforms_fn = default_transforms_fn
         self.seed = seed
+        self.epoch_length = epoch_length or meta_batch_size
 
         self.ways = ways
         self.shots = shots
@@ -158,16 +162,17 @@ class Learn2LearnAdapter(Adapter):
         self.test_ways = test_ways or ways
         self.test_shots = test_shots or shots
         self.test_queries = test_queries or queries
+        self.test_num_task = test_num_task or num_task
+        self.test_epoch_length = test_epoch_length or epoch_length
 
         params = inspect.signature(self.algorithm_cls).parameters
 
         algorithm_kwargs["train_ways"] = ways
-        algorithm_kwargs["test_ways"] = ways
-
         algorithm_kwargs["train_shots"] = shots
-        algorithm_kwargs["test_shots"] = self.test_shots
-
         algorithm_kwargs["train_queries"] = queries
+
+        algorithm_kwargs["test_ways"] = self.test_ways
+        algorithm_kwargs["test_shots"] = self.test_shots
         algorithm_kwargs["test_queries"] = self.test_queries
 
         if "model" in params:
@@ -192,17 +197,32 @@ class Learn2LearnAdapter(Adapter):
             l2l.data.transforms.ConsecutiveLabels(dataset),
         ]
 
+    @staticmethod
+    def _labels_to_indices(data):
+        out = defaultdict(list)
+        for idx, sample in enumerate(data):
+            label = sample[DefaultDataKeys.TARGET]
+            if torch.is_tensor(label):
+                label = label.item()
+            out[label].append(idx)
+        return out
+
     def _convert_dataset(
-        self, trainer: flash.Trainer, dataset: BaseAutoDataset, ways: int, shots: int, queries: int, num_workers: int
+        self,
+        trainer: flash.Trainer,
+        dataset: BaseAutoDataset,
+        ways: int,
+        shots: int,
+        queries: int,
+        num_workers: int,
+        num_task: int,
+        epoch_length: int,
     ):
         metadata = getattr(dataset, "data", None)
         if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):
             raise MisconfigurationException("Only dataset built out of metadata is supported.")
 
-        indices_to_labels = {index: sample[DefaultDataKeys.TARGET] for index, sample in enumerate(dataset.data)}
-        labels_to_indices = defaultdict(list)
-        for idx, label in indices_to_labels.items():
-            labels_to_indices[label].append(idx)
+        labels_to_indices = self._labels_to_indices(dataset.data)
 
         if len(labels_to_indices) < ways:
             raise MisconfigurationException(
@@ -215,34 +235,34 @@ class Learn2LearnAdapter(Adapter):
             )
 
         # convert the dataset to MetaDataset
-        dataset = l2l.data.MetaDataset(
-            dataset, indices_to_labels=indices_to_labels, labels_to_indices=labels_to_indices
-        )
+        dataset = l2l.data.MetaDataset(dataset, indices_to_labels=None, labels_to_indices=labels_to_indices)
 
         transform_fn = self.default_transforms_fn or self._default_transform
 
         taskset = l2l.data.TaskDataset(
             dataset=dataset,
             task_transforms=transform_fn(dataset, ways=ways, shots=shots, queries=queries),
-            num_tasks=self.num_task,
+            num_tasks=num_task,
             task_collate=self._identity_task_collate_fn,
         )
 
         if isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin)):
             # when running in a distributed data parallel way,
             # we are actually sampling one task per device.
+
             dataset = TaskDataParallel(
                 taskset=taskset,
                 global_rank=trainer.global_rank,
                 world_size=trainer.world_size,
                 num_workers=num_workers,
-                meta_batch_size=self.meta_batch_size,
+                epoch_length=epoch_length,
                 seed=os.getenv("PL_GLOBAL_SEED", self.seed),
+                requires_divisible=trainer.training,
             )
             self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
 
         else:
-            dataset = Epochifier(taskset, meta_batch_size=self.meta_batch_size)
+            dataset = Epochifier(taskset, epoch_length=epoch_length)
             self.trainer.accumulated_grad_batches = self.meta_batch_size
 
         return dataset
@@ -323,6 +343,8 @@ class Learn2LearnAdapter(Adapter):
             shots=self.shots,
             queries=self.queries,
             num_workers=num_workers,
+            num_task=self.num_task,
+            epoch_length=self.epoch_length,
         )
         if isinstance(dataset, IterableDataset):
             shuffle = False
@@ -359,6 +381,8 @@ class Learn2LearnAdapter(Adapter):
             shots=self.test_shots,
             queries=self.test_queries,
             num_workers=num_workers,
+            num_task=self.test_num_task,
+            epoch_length=self.test_epoch_length,
         )
         if isinstance(dataset, IterableDataset):
             shuffle = False
@@ -395,6 +419,8 @@ class Learn2LearnAdapter(Adapter):
             shots=self.test_shots,
             queries=self.test_queries,
             num_workers=num_workers,
+            num_task=self.test_num_task,
+            epoch_length=self.test_epoch_length,
         )
         if isinstance(dataset, IterableDataset):
             shuffle = False
