@@ -15,6 +15,7 @@ from types import FunctionType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
@@ -100,11 +101,12 @@ class ImageClassifier(ClassificationAdapterTask):
         if not training_strategy_kwargs:
             training_strategy_kwargs = {}
 
-        training_strategy_kwargs.update(
-            {
-                "ways": num_classes,
-            }
-        )
+        if training_strategy_kwargs != "default":
+            if "ways" in training_strategy_kwargs and training_strategy_kwargs["ways"] != num_classes:
+                raise MisconfigurationException(
+                    "When providing ways, it should match `num_classes` as mapping is not supported yet."
+                )
+            training_strategy_kwargs.update({"ways": num_classes})
 
         if isinstance(backbone, tuple):
             backbone, num_features = backbone

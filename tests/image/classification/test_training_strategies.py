@@ -86,7 +86,7 @@ def _test_learn2learning_training_strategies(gpus, accelerator, training_strateg
         dm.num_classes,
         backbone="resnet18",
         training_strategy=training_strategy,
-        training_strategy_kwargs={"shots": 4, "meta_batch_size": 10},
+        training_strategy_kwargs={"shots": 4, "meta_batch_size": 4},
     )
 
     trainer = Trainer(fast_dev_run=2, gpus=gpus, accelerator=accelerator)

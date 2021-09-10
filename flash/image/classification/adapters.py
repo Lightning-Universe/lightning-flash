@@ -127,13 +127,14 @@ class Learn2LearnAdapter(Adapter):
             algorithm_cls: Algorithm class coming
                 from: https://github.com/learnables/learn2learn/tree/master/learn2learn/algorithms/lightning
             ways: Number of classes conserved for generating the task.
-            shots: The number of samples per label.
+            shots: Number of samples used for adaptation.
             meta_batch_size: Number of task to be sampled and optimized over before doing a meta optimizer step.
-            queries: Number of support sample to be selected from the task.
+            queries: Number of samples used for computing the meta loss after the adaption on the `shots` samples.
             num_task: Total number of tasks to be sampled during training. If -1, a new task will always be sampled.
-            test_ways: Number of classes conserved for generating the val and test task.
-            test_shots: The number of val or test samples per label.
-            test_queries: Number of support sample to be selected from the val or test task.
+            test_ways: Number of classes conserved for generating the validation and testing task.
+            test_shots: Number of samples used for adaptation during validation and testing phase.
+            test_queries: Number of samples used for computing the meta loss during validation or testing
+                after the adaption on `shots` samples.
             default_transforms_fn: A Callable to create the task transform.
                 The callable should take the dataset, ways and shots as arguments.
             algorithm_kwargs: Keyword arguments to be provided to the algorithm class from learn2learn
@@ -163,8 +164,8 @@ class Learn2LearnAdapter(Adapter):
         algorithm_kwargs["train_ways"] = ways
         algorithm_kwargs["test_ways"] = ways
 
-        algorithm_kwargs["train_shots"] = shots - queries
-        algorithm_kwargs["test_shots"] = self.test_shots - self.test_queries
+        algorithm_kwargs["train_shots"] = shots
+        algorithm_kwargs["test_shots"] = self.test_shots
 
         algorithm_kwargs["train_queries"] = queries
         algorithm_kwargs["test_queries"] = self.test_queries
@@ -183,9 +184,9 @@ class Learn2LearnAdapter(Adapter):
         # this algorithm requires a special treatment
         self._algorithm_has_validated = self.algorithm_cls != l2l.algorithms.LightningPrototypicalNetworks
 
-    def _default_transform(self, dataset, ways: int, shots: int) -> List[Callable]:
+    def _default_transform(self, dataset, ways: int, shots: int, queries) -> List[Callable]:
         return [
-            l2l.data.transforms.FusedNWaysKShots(dataset, n=ways, k=shots),
+            l2l.data.transforms.FusedNWaysKShots(dataset, n=ways, k=shots + queries),
             l2l.data.transforms.LoadData(dataset),
             RemapLabels(dataset),
             l2l.data.transforms.ConsecutiveLabels(dataset),
@@ -222,7 +223,7 @@ class Learn2LearnAdapter(Adapter):
 
         taskset = l2l.data.TaskDataset(
             dataset=dataset,
-            task_transforms=transform_fn(dataset, ways=ways, shots=shots),
+            task_transforms=transform_fn(dataset, ways=ways, shots=shots, queries=queries),
             num_tasks=self.num_task,
             task_collate=self._identity_task_collate_fn,
         )
