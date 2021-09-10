@@ -52,7 +52,7 @@ class ImageEmbedder(AdapterTask):
     training_strategy_registry: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
     backbones_registry: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
 
-    required_extras: str = "image_extras"
+    required_extras: str = "image"
 
     def __init__(
         self,
