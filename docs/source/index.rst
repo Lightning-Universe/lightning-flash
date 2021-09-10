@@ -34,6 +34,7 @@ Lightning Flash
    general/registry
    general/flash_zero
    general/serve
+   general/backbones
 
 .. toctree::
    :maxdepth: 1
