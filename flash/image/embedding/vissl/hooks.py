@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List
+from typing import List, Any
 
 from pytorch_lightning.core.hooks import ModelHooks
 
@@ -32,29 +32,9 @@ class AdaptVISSLHooks(ModelHooks):
         for hook in self.hooks:
             hook.on_start(self.task)
 
-    # def on_train_end(self) -> None:
-    #     for hook in self.hooks:
-    #         hook.on_end()
-
-    # def on_train_epoch_start(self) -> None:
-    #     for hook in self.hooks:
-    #         hook.on_phase_start()
+    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        self.task.iteration += 1
 
     def on_train_epoch_end(self) -> None:
         for hook in self.hooks:
             hook.on_update(self.task)
-            # hook.on_phase_end()
-
-        self.task.iteration += 1
-
-    # def on_train_batch_end(self, outputs, batch, batch_idx, dataloader_idx) -> None:
-    #     for hook in self.hooks:
-    #         hook.on_step()
-
-    # def on_after_backward(self) -> None:
-    #     for hook in self.hooks:
-    #         hook.on_backward()
-
-    # def on_before_zero_grad(self, optimizer) -> None:
-    #     for hook in self.hooks:
-    #         hook.on_loss_and_meter()
