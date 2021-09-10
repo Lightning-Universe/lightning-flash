@@ -11,11 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
+
 import learn2learn as l2l
 import torch
 
 import flash
 from flash.image import ImageClassificationData, ImageClassifier
+
+warnings.simplefilter("ignore")
 
 # reproduced from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
 
@@ -38,6 +42,7 @@ ways = 30
 model = ImageClassifier(
     ways,  # n
     backbone="resnet18",
+    pretrained=False,
     training_strategy="prototypicalnetworks",
     optimizer=torch.optim.Adam,
     optimizer_kwargs={"lr": 0.001},
