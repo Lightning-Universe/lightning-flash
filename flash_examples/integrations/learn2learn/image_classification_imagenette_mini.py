@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# adapted from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
+
 import warnings
 
 import kornia.augmentation as Ka
@@ -27,8 +30,6 @@ from flash.image import ImageClassificationData, ImageClassifier
 
 warnings.simplefilter("ignore")
 
-
-# adapted from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
 # download MiniImagenet
 train_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="train", download=True)
 val_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="validation", download=True)
@@ -43,25 +44,24 @@ train_transform = {
         DefaultDataKeys.INPUT,
         Kg.Resize((196, 196)),
         # SPATIAL
-        Ka.RandomHorizontalFlip(p=1),
-        Ka.RandomRotation(degrees=90.0, p=1),
-        Ka.RandomAffine(degrees=4 * 5.0, shear=4 / 5, translate=4 / 20, p=1),
-        Ka.RandomPerspective(distortion_scale=4 / 25, p=1),
+        Ka.RandomHorizontalFlip(p=0.25),
+        Ka.RandomRotation(degrees=90.0, p=0.25),
+        Ka.RandomAffine(degrees=1 * 5.0, shear=1 / 5, translate=1 / 20, p=0.25),
+        Ka.RandomPerspective(distortion_scale=1 / 25, p=0.25),
         # PIXEL-LEVEL
-        Ka.ColorJitter(brightness=4 / 30, p=1),  # brightness
-        Ka.ColorJitter(saturation=4 / 30, p=1),  # saturation
-        Ka.ColorJitter(contrast=4 / 30, p=1),  # contrast
-        Ka.ColorJitter(hue=4 / 30, p=1),  # hue
-        Ka.ColorJitter(p=0),  # identity
-        Ka.RandomMotionBlur(kernel_size=2 * (4 // 3) + 1, angle=4, direction=1.0, p=1),
-        Ka.RandomErasing(scale=(4 / 100, 4 / 50), ratio=(4 / 20, 4), p=1),
+        Ka.ColorJitter(brightness=1 / 30, p=0.25),  # brightness
+        Ka.ColorJitter(saturation=1 / 30, p=0.25),  # saturation
+        Ka.ColorJitter(contrast=1 / 30, p=0.25),  # contrast
+        Ka.ColorJitter(hue=1 / 30, p=0.25),  # hue
+        Ka.RandomMotionBlur(kernel_size=2 * (4 // 3) + 1, angle=1, direction=1.0, p=0.25),
+        Ka.RandomErasing(scale=(1 / 100, 1 / 50), ratio=(1 / 20, 1), p=0.25),
     ),
     "collate": kornia_collate,
     "per_batch_transform_on_device": ApplyToKeys(
         DefaultDataKeys.INPUT,
+        Ka.RandomHorizontalFlip(p=0.25),
     ),
 }
-
 
 # construct datamodule
 datamodule = ImageClassificationData.from_tensors(
@@ -76,9 +76,9 @@ datamodule = ImageClassificationData.from_tensors(
 )
 
 model = ImageClassifier(
-    datamodule.num_classes,  # ways
+    60,
     backbone="resnet18",
-    pretrained=True,
+    pretrained=False,
     training_strategy="prototypicalnetworks",
     optimizer=torch.optim.Adam,
     optimizer_kwargs={"lr": 0.001},
@@ -96,7 +96,7 @@ model = ImageClassifier(
 
 trainer = flash.Trainer(
     max_epochs=200,
-    gpus=4,
+    gpus=8,
     accelerator="ddp",
     precision=16,
 )
