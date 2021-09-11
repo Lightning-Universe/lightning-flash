@@ -5,8 +5,6 @@
 
 **The PyTorch AI Factory**
 
----
-
 <p align="center">
   <a href="#installation">Installation</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
@@ -34,8 +32,6 @@
 -->
 
 </div>
-
----
 
 <div align="center">
 <a href="https://lightning-flash.readthedocs.io/en/stable">
@@ -94,16 +90,21 @@ The lightning + Flash team is hard at work building more tasks for common deep-l
 
 Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ) and/or read our [CONTRIBUTING](https://github.com/PyTorchLightning/lightning-flash/blob/master/.github/CONTRIBUTING.md) guidelines to get help becoming a contributor!
 
+---
+
 ## Community
 Flash is maintained by our [core contributors](https://lightning-flash.readthedocs.io/en/latest/governance.html).
 
 For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)!
+
+---
 
 ## Citations
 We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
 
 Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), [timm](https://github.com/rwightman/pytorch-image-models), [open3d-ml](https://github.com/intel-isl/Open3D-ML) for pointcloud, [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/), and [asteroid](https://github.com/asteroid-team/asteroid) for the `vision`, `text`, `tabular`, and `audio` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
 
+---
+
 ## License
-Please observe the Apache 2.0 license that is listed in this repository. In addition
-the Lightning framework is Patent Pending.
+Please observe the Apache 2.0 license that is listed in this repository.
