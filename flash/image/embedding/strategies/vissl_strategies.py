@@ -17,7 +17,8 @@ from flash.core.utilities.providers import _VISSL
 
 if _VISSL_AVAILABLE:
     from vissl.hooks.dino_hooks import DINOHook
-    from vissl.hooks.moco_hooks import 
+
+    from vissl.hooks.moco_hooks import
     from vissl.hooks.swav
 
     from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
