@@ -24,4 +24,4 @@ Client Side
 
 
 Credits to @rlizzo, @hhsecond, @lantiga, @luiscape for building the Flash Serve Engine.
-Read all about it :ref:`here <_serve>`.
+Read all about it :ref:`here <serve>`.
