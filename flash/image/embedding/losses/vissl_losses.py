@@ -88,7 +88,7 @@ def swav_loss(
                     "start_iter": start_iter,
                     "local_queue_length": local_queue_length,
                 }
-            )
+            ),
         }
     )
 
@@ -96,11 +96,7 @@ def swav_loss(
     return loss_fn
 
 
-def barlow_twins_loss(
-    lambda_: float = 0.0051,
-    scale_loss: float = 0.024,
-    embedding_dim: int = 8192
-):
+def barlow_twins_loss(lambda_: float = 0.0051, scale_loss: float = 0.024, embedding_dim: int = 8192):
     cfg = AttrDict(
         {
             "lambda_": lambda_,
@@ -128,7 +124,7 @@ def simclr_loss(
                     "embedding_dim": embedding_dim,
                     "effective_batch_size": effective_batch_size,
                 }
-            )
+            ),
         }
     )
 
