@@ -1,8 +1,11 @@
-########################
-From Flash to Production
-########################
+###################
+Flash in Production
+###################
 
-Flash makes it simple to deploy models in production.
+Flash Serve
+===========
+
+Flash Serve makes model deployment simple.
 
 Server Side
 ^^^^^^^^^^^
@@ -20,4 +23,5 @@ Client Side
     :lines: 14-
 
 
-Credits to @rlizzo, @hhsecond, @lantiga, @luiscape for building Flash Serve Engine.
+Credits to @rlizzo, @hhsecond, @lantiga, @luiscape for building the Flash Serve Engine.
+Read all about it :ref:`here <_serve>`.
