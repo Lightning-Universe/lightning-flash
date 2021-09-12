@@ -97,7 +97,7 @@ model = ImageClassifier(
 trainer = flash.Trainer(
     max_epochs=200,
     gpus=2,
-    accelerator="dp",
+    accelerator="ddp_sharded",
     precision=16,
 )
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")

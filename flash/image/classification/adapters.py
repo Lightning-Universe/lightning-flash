@@ -246,7 +246,13 @@ class Learn2LearnAdapter(Adapter):
             task_collate=self._identity_task_collate_fn,
         )
 
-        if isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin)):
+        if isinstance(
+            trainer.training_type_plugin,
+            (
+                DDPPlugin,
+                DDPSpawnPlugin,
+            ),
+        ):
             # when running in a distributed data parallel way,
             # we are actually sampling one task per device.
             dataset = TaskDistributedDataParallel(
