@@ -36,9 +36,6 @@ from tests.helpers.utils import (
     "file",
     [
         pytest.param(
-            "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
-        ),
-        pytest.param(
             "audio_classification.py",
             marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed"),
         ),

@@ -11,7 +11,7 @@ To get started and view the available tasks, run:
 
     flash --help
 
-Customize Trainer and Model arguments
+Customize Trainer and Model Arguments
 _____________________________________
 
 Flash Zero is built on top of the
@@ -29,8 +29,8 @@ To view all of the available options for a task, run:
 
     flash image_classification --help
 
-Using Custom Data
-_________________
+Using Your Own Data
+___________________
 
 Flash Zero works with your own data through subcommands. The available subcommands for each task are given at the bottom
 of their help pages (e.g. when running :code:`flash image-classification --help`). You can then use the required
