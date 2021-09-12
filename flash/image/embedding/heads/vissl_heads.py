@@ -12,22 +12,86 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import List, Union
+from functools import partial
 
+import torch
 import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
-    from vissl.models.heads import MODEL_HEADS_REGISTRY
+    from vissl.models.heads import MODEL_HEADS_REGISTRY, register_model_head
+    from vissl.config.attr_dict import AttrDict
 
     from flash.image.embedding.vissl.adapter import VISSLAdapter
 
 
+@register_model_head("simclr_head")
+class SimCLRHead(nn.Module):
+    def __init__(
+        self,
+        model_config: AttrDict,
+        dims: List[int] = [2048, 2048, 128],
+        use_bn: bool = True,
+        **kwargs,
+    ) -> nn.Module:
+        super().__init__()
+
+        self.model_config = model_config
+        self.dims = dims
+        self.use_bn = use_bn
+
+        self.clf = self.create_mlp()
+
+    def create_mlp(self):
+        layers = []
+        last_dim = self.dims[0]
+
+        for dim in self.dims[1:-1]:
+            layers.append(nn.Linear(last_dim, dim))
+
+            if self.use_bn:
+                layers.append(
+                    nn.BatchNorm1d(
+                        dim,
+                        eps=self.model_config.HEAD.BATCHNORM_EPS,
+                        momentum=self.model_config.HEAD.BATCHNORM_MOMENTUM,
+                    )
+                )
+
+            layers.append(nn.ReLU(inplace=True))
+
+        layers.append(nn.Linear(last_dim, self.dims[-1]))
+        return nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.clf(x)
+
+
+def simclr_head(
+    dims: List[int] = [2048, 2048, 128],
+    use_bn: bool = True,
+    **kwargs,
+) -> nn.Module:
+    cfg = VISSLAdapter.get_model_config_template()
+    head_kwargs = {
+        "dims": dims,
+        "use_bn": use_bn,
+    }
+
+    cfg.HEAD.PARAMS.append(["simclr_head", head_kwargs])
+
+    head = MODEL_HEADS_REGISTRY["simclr_head"](cfg, **head_kwargs)
+    head.model_config = cfg
+
+    return head
+
+
 def swav_head(
-    dims: List[int] = [384, 2048, 2048, 256],
-    use_bn: bool = False,
-    num_clusters: Union[int, List[int]] = [65536],
+    dims: List[int] = [2048, 2048, 128],
+    use_bn: bool = True,
+    num_clusters: Union[int, List[int]] = [3000],
     use_bias: bool = True,
     return_embeddings: bool = False,
     skip_last_bn: bool = True,
@@ -57,5 +121,15 @@ def swav_head(
     return head
 
 
+barlow_twins_head = partial(simclr_head, dims=[2048, 8192, 8192, 8192])
+dino_head = partial(
+    swav_head,
+    dims=[384, 2048, 2048, 256],
+    use_bn=False,
+    num_clusters=[65536],
+)
+
+
 def register_vissl_heads(register: FlashRegistry):
-    register(swav_head)
+    for ssl_head in (swav_head, simclr_head, dino_head, barlow_twins_head):
+        register(ssl_head)

@@ -80,8 +80,7 @@ class ImageEmbedder(AdapterTask):
         # assert embedding_dim == num_features
 
         metadata = self.training_strategy_registry.get(training_strategy, with_metadata=True)
-        loss_fn, head = metadata["fn"](**kwargs)
-        hooks = metadata["metadata"]["hooks"]
+        loss_fn, head, hooks = metadata["fn"](**kwargs)
 
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
