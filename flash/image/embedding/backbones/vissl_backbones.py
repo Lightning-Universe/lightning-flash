@@ -18,8 +18,8 @@ from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
     from vissl.config.attr_dict import AttrDict
-    from vissl.models.trunks import MODEL_TRUNKS_REGISTRY
     from vissl.models.model_helpers import RESNET_NORM_LAYER
+    from vissl.models.trunks import MODEL_TRUNKS_REGISTRY
 
     from flash.image.embedding.vissl.adapter import VISSLAdapter
 
@@ -87,15 +87,15 @@ def resnet(
             "NAME": "resnet",
             "RESNETS": AttrDict(
                 {
-                    'DEPTH': depth,
-                    'WIDTH_MULTIPLIER': width_multiplier,
-                    'NORM': norm,
-                    'GROUPNORM_GROUPS': groupnorm_groups,
-                    'STANDARDIZE_CONVOLUTIONS': standardize_convolutions,
-                    'GROUPS': groups,
-                    'ZERO_INIT_RESIDUAL': zero_init_residual,
-                    'WIDTH_PER_GROUP': width_per_group,
-                    'LAYER4_STRIDE': layer4_stride,
+                    "DEPTH": depth,
+                    "WIDTH_MULTIPLIER": width_multiplier,
+                    "NORM": norm,
+                    "GROUPNORM_GROUPS": groupnorm_groups,
+                    "STANDARDIZE_CONVOLUTIONS": standardize_convolutions,
+                    "GROUPS": groups,
+                    "ZERO_INIT_RESIDUAL": zero_init_residual,
+                    "WIDTH_PER_GROUP": width_per_group,
+                    "LAYER4_STRIDE": layer4_stride,
                 }
             ),
         }

@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Union
 from functools import partial
+from typing import List, Union
 
 import torch
 import torch.nn as nn
@@ -21,8 +21,8 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
-    from vissl.models.heads import MODEL_HEADS_REGISTRY, register_model_head
     from vissl.config.attr_dict import AttrDict
+    from vissl.models.heads import MODEL_HEADS_REGISTRY, register_model_head
 
     from flash.image.embedding.vissl.adapter import VISSLAdapter
 
