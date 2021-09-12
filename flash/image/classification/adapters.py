@@ -19,7 +19,7 @@ from typing import Any, Callable, List, Optional, Type
 
 import torch
 from pytorch_lightning import LightningModule
-from pytorch_lightning.plugins import DDPPlugin, DDPSpawnPlugin
+from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlugin
 from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.warnings import WarningCache
@@ -41,13 +41,13 @@ warning_cache = WarningCache()
 if _LEARN2LEARN_AVAILABLE:
     import learn2learn as l2l
     from learn2learn.data.transforms import RemapLabels as Learn2LearnRemapLabels
-    from learn2learn.utils.lightning import Epochifier, TaskDataParallel
+    from learn2learn.utils.lightning import TaskDataParallel, TaskDistributedDataParallel
 else:
 
     class Learn2LearnRemapLabels:
         pass
 
-    class Epochifier:
+    class TaskDistributedDataParallel:
         pass
 
     class TaskDataParallel:
@@ -250,7 +250,7 @@ class Learn2LearnAdapter(Adapter):
             # when running in a distributed data parallel way,
             # we are actually sampling one task per device.
 
-            dataset = TaskDataParallel(
+            dataset = TaskDistributedDataParallel(
                 taskset=taskset,
                 global_rank=trainer.global_rank,
                 world_size=trainer.world_size,
@@ -262,7 +262,11 @@ class Learn2LearnAdapter(Adapter):
             self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
 
         else:
-            dataset = Epochifier(taskset, epoch_length=epoch_length)
+            devices = 1
+            if isinstance(trainer.training_type_plugin, DataParallelPlugin):
+                # when using DP, the task needs to be larger, so it can splitted across multiple device.
+                devices = trainer.accelerator_connector.devices
+            dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices)
             self.trainer.accumulated_grad_batches = self.meta_batch_size
 
         return dataset
@@ -349,6 +353,8 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
+        else:
+            return dataset
         return super().process_train_dataset(
             dataset,
             trainer,
@@ -387,6 +393,8 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
+        else:
+            return dataset
         return super().process_train_dataset(
             dataset,
             trainer,
@@ -425,6 +433,8 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
+        else:
+            return dataset
         return super().process_train_dataset(
             dataset,
             trainer,
