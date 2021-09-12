@@ -121,13 +121,12 @@ def swav_head(
     return head
 
 
-barlow_twins_head = partial(simclr_head, dims=[2048, 8192, 8192, 8192])
-dino_head = partial(
-    swav_head,
-    dims=[384, 2048, 2048, 256],
-    use_bn=False,
-    num_clusters=[65536],
-)
+def barlow_twins_head(**kwargs) -> nn.Module:
+    return simclr_head(dims=[2048, 8192, 8192, 8192], **kwargs)
+
+
+def dino_head(**kwargs) -> nn.Module:
+    return swav_head(dims=[384, 2048, 2048, 256], use_bn=False, num_clusters=[65536], **kwargs)
 
 
 def register_vissl_heads(register: FlashRegistry):
