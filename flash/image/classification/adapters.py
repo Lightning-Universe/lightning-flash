@@ -249,7 +249,6 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin)):
             # when running in a distributed data parallel way,
             # we are actually sampling one task per device.
-
             dataset = TaskDistributedDataParallel(
                 taskset=taskset,
                 global_rank=trainer.global_rank,
@@ -260,14 +259,13 @@ class Learn2LearnAdapter(Adapter):
                 requires_divisible=trainer.training,
             )
             self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
-
         else:
             devices = 1
             if isinstance(trainer.training_type_plugin, DataParallelPlugin):
-                # when using DP, the task needs to be larger, so it can splitted across multiple device.
+                # when using DP, we need to sample n tasks, so it can splitted across multiple devices.
                 devices = trainer.accelerator_connector.devices
             dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices)
-            self.trainer.accumulated_grad_batches = self.meta_batch_size
+            self.trainer.accumulated_grad_batches = self.meta_batch_size / devices
 
         return dataset
 
@@ -353,8 +351,6 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
-        else:
-            return dataset
         return super().process_train_dataset(
             dataset,
             trainer,
@@ -393,8 +389,6 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
-        else:
-            return dataset
         return super().process_train_dataset(
             dataset,
             trainer,
@@ -433,8 +427,6 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
-        else:
-            return dataset
         return super().process_train_dataset(
             dataset,
             trainer,
