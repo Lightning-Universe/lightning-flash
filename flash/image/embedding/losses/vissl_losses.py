@@ -17,6 +17,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
+    import vissl.losses  # noqa: F401
     from classy_vision.losses import ClassyLoss, LOSS_REGISTRY
     from vissl.config.attr_dict import AttrDict
 
