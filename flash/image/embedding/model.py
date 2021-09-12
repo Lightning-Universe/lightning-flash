@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
@@ -22,12 +22,13 @@ from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
     import classy_vision
-
-    # patch this to avoid classy vision/vissl based distributed training
-    classy_vision.generic.distributed_util.get_world_size = lambda: 1
+    import classy_vision.generic.distributed_util
 
     from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
     from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+
+    # patch this to avoid classy vision/vissl based distributed training
+    classy_vision.generic.distributed_util.get_world_size = lambda: 1
 else:
     IMAGE_EMBEDDER_BACKBONES = FlashRegistry("backbones")
     IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
@@ -54,8 +55,8 @@ class ImageEmbedder(AdapterTask):
         pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
     """
 
-    training_strategy_registry: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
-    backbones_registry: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
+    training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
+    backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
 
     required_extras: str = "image"
 
@@ -74,12 +75,12 @@ class ImageEmbedder(AdapterTask):
     ):
         self.save_hyperparameters()
 
-        backbone, num_features = self.backbones_registry.get(backbone)(pretrained=pretrained, **kwargs)
+        backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **kwargs)
 
         # TODO: add linear layer to backbone to get num_feature -> embedding_dim before applying heads
         # assert embedding_dim == num_features
 
-        metadata = self.training_strategy_registry.get(training_strategy, with_metadata=True)
+        metadata = self.training_strategies.get(training_strategy, with_metadata=True)
         loss_fn, head, hooks = metadata["fn"](**kwargs)
 
         adapter = metadata["metadata"]["adapter"].from_task(
@@ -93,3 +94,10 @@ class ImageEmbedder(AdapterTask):
         )
 
         super().__init__(adapter=adapter)
+
+    @classmethod
+    def available_training_strategies(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
+        if registry is None:
+            return []
+        return registry.available_keys()

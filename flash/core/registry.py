@@ -111,7 +111,11 @@ class FlashRegistry:
         if not callable(fn):
             raise MisconfigurationException(f"You can only register a callable, found: {fn}")
 
-        name = name or fn.__name__
+        if name is None:
+            if hasattr(fn, "func"):
+                name = fn.func.__name__
+            else:
+                name = fn.__name__
 
         if self._verbose:
             rank_zero_info(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")

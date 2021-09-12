@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, List, Union
 
 import torch
 import torch.nn as nn
@@ -39,7 +38,7 @@ class MockVISSLTask:
         self.model = vissl_model
 
         # set using device for backbone before hooks is applied
-        self.device = torch.device("cuda")
+        self.device = torch.device("cpu")
 
         self.iteration = 0
         self.max_iteration = 100000  # set using trainer
