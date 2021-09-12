@@ -170,6 +170,12 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
                     }
                 ),
                 "_MODEL_INIT_SEED": 0,
+                "ACTIVATION_CHECKPOINTING": AttrDict(
+                    {
+                        "USE_ACTIVATION_CHECKPOINTING": False,
+                        "NUM_ACTIVATION_CHECKPOINTING_SPLITS": 2,
+                    }
+                ),
             }
         )
 

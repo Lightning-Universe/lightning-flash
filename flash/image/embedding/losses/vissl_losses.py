@@ -141,6 +141,7 @@ def moco_loss(
     queue_size: int = 65536,
     momentum: float = 0.999,
     temperature: int = 0.2,
+    shuffle_batch: bool = True,
 ):
     cfg = AttrDict(
         {
@@ -148,6 +149,7 @@ def moco_loss(
             "queue_size": queue_size,
             "momentum": momentum,
             "temperature": temperature,
+            "shuffle_batch": shuffle_batch,
         }
     )
 
