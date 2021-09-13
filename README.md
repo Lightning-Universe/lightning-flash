@@ -5,10 +5,12 @@
 
 **Your PyTorch AI Factory**
 
+---
+  
 <p align="center">
-  <a href="#installation">Installation</a> •
+  <a href="#step-0-install">Installation</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
-  <a href="#complex-pytorch-recipes-made-simple">About</a> •
+  <a href="#how-to-use">How to Use</a> •
   <a href="#contribute">Contribute</a> •
   <a href="#community">Community</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
@@ -26,17 +28,23 @@
 
 </div>
 
+---
+
+## Flash Makes Complex PyTorch Recipes Simple
+
+Flash enables you to easily configure and run complex AI recipes for [over 15 tasks across 7 data domains](https://lightning-flash.readthedocs.io/en/stable/).
+
 <div align="center">
   <a href="https://lightning-flash.readthedocs.io/en/stable">
     <img src="https://pl-flash-data.s3.amazonaws.com/assets/banner.gif">
   </a>
 </div>
 
----
+## How to Use
 
-## Installation
+### Step 0: Install
 
-Pip / conda
+From PyPI:
 
 ```bash
 pip install lightning-flash
@@ -44,18 +52,8 @@ pip install lightning-flash
 
 See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
 
----
+### Step 1. Load your data
 
-## Complex PyTorch Recipes Made Simple
-
-Flash is an AI factory for PyTorch.
-It enables you to easily configure and run complex AI recipes for over 15 tasks across 7 different data domains.
-To use Flash, all you need is some data and a task you'd like to perform.
-You can browse the tasks that we support and filter by useful tags like data type from [our documentation](https://lightning-flash.readthedocs.io/en/stable/).
-
-### 1. Load your data
-
-The first step when implementing your recipe with Flash is to load the data.
 All data loading in Flash is performed via a `from_*` classmethod on a `DataModule`.
 Which `DataModule` to use and which `from_*` methods are available depends on the task you want to perform.
 For example, for image classification where your data is stored in folders, you would use the [`from_folders` method of the `ImageClassificationData` class](https://lightning-flash.readthedocs.io/en/latest/reference/image_classification.html#from-folders):
@@ -64,13 +62,37 @@ For example, for image classification where your data is stored in folders, you 
 from flash.image import ImageClassificationData
 
 data_module = ImageClassificationData.from_folders(
-    train_folder = "./train_folder",
-    predict_folder = "./predict_folder",
-    ...
+    train_folder = "./train_images",
+    val_folder = "./val_images",
+    image_size=(128, 128),
+    batch_size=64,
 )
 ```
 
-### 2. Configure your transforms
+### Step 2: Configure your model
+
+Our tasks come loaded with pre-trained backbones and (where applicable) heads.
+You can view the available backbones to use with your task using [`available_backbones`](https://lightning-flash.readthedocs.io/en/latest/general/backbones.html).
+Once you've chosen, create the model:
+
+```py
+from flash.image import ImageClassifier
+
+model = ImageClassifier("resnet18", num_classes=data_module.num_classes)
+```
+
+### Step 3: Finetune!
+
+```py
+from flash import Trainer
+
+trainer = Trainer(max_epochs=3)
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+```
+
+---
+
+## Custom Transform Recipes
 
 Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your augmentation recipe.
 To this end, Flash supports custom transformations backed by our powerful data pipeline.
@@ -136,12 +158,6 @@ datamodule = ImageClassificationData.from_folders(
     ...
 )
 ```
-
-### 3. Configure your model
-
-### 4. Define your pipeline
-
-### 5. Run it!
 
 ---
 
