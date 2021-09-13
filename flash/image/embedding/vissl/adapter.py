@@ -35,10 +35,11 @@ class MockVISSLTask:
     def __init__(self, vissl_loss, task_config, vissl_model) -> None:
         self.loss = vissl_loss
         self.config = task_config
-        self.model = vissl_model
+        self.base_model = vissl_model
+        self.model = self.base_model  # set by property in ClassyTask
 
         # set using device for backbone before hooks is applied
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda")
 
         self.iteration = 0
         self.max_iteration = 100000  # set using trainer
@@ -97,7 +98,18 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         self.model_config.TRUNK = self.backbone.model_config.TRUNK
         self.model_config.HEAD = self.head[0].model_config.HEAD
-        self.task_config = AttrDict({"MODEL": self.model_config, "OPTIMIZER": self.optimizer_config})
+        self.task_config = AttrDict(
+            {
+                "MODEL": self.model_config,
+                "OPTIMIZER": self.optimizer_config,
+                "LOSS": AttrDict(
+                    {
+                        "name": self.loss_fn.loss_name,
+                        self.loss_fn.loss_name: self.loss_fn.loss_config,
+                    }
+                ),
+            }
+        )
 
         self.vissl_base_model = BaseSSLMultiInputOutputModel(self.model_config, self.optimizer_config)
         # patch backbone and head

@@ -21,6 +21,28 @@ if _VISSL_AVAILABLE:
     from classy_vision.hooks.classy_hook import ClassyHook
 
 
+# class TrainingSetupHook(ClassyHook):
+#     on_start = ClassyHook._noop
+#     on_phase_start = ClassyHook._noop
+#     on_loss_and_meter = ClassyHook._noop
+#     on_backward = ClassyHook._noop
+#     on_step = ClassyHook._noop
+#     on_phase_end = ClassyHook._noop
+#     on_end = ClassyHook._noop
+#     on_update = ClassyHook._noop
+#     on_forward = ClassyHook._noop
+
+#     def __init__(self):
+#         super().__init__()
+
+#     @torch.no_grad()
+#     def on_start(self, task: "tasks.ClassyTask") -> None:
+#         task.device = # set to trainer device
+#         task.effective_batch_size = 
+#         task.world_size = 
+#         task.max_iteration = # max_epochs * num_iter per epoch
+
+
 class AdaptVISSLHooks(ModelHooks):
     def __init__(self, hooks: List[ClassyHook], task) -> None:
         super().__init__()

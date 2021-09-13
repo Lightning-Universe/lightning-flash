@@ -22,6 +22,13 @@ if _VISSL_AVAILABLE:
     from vissl.config.attr_dict import AttrDict
 
 
+def get_loss_fn(loss_name: str, cfg: AttrDict):
+    loss_fn = LOSS_REGISTRY[loss_name](cfg)
+    loss_fn.__dict__['loss_name'] = loss_name
+
+    return loss_fn
+
+
 def dino_loss(
     num_crops: int = 10,
     momentum: float = 0.996,
@@ -35,6 +42,7 @@ def dino_loss(
     output_dim: int = 65536,
     **kwargs,
 ) -> ClassyLoss:
+    loss_name = 'dino_loss'
     cfg = AttrDict(
         {
             "num_crops": num_crops,
@@ -50,8 +58,7 @@ def dino_loss(
         }
     )
 
-    loss_fn = LOSS_REGISTRY["dino_loss"](cfg)
-    return loss_fn
+    return get_loss_fn(loss_name, cfg)
 
 
 def swav_loss(
@@ -69,7 +76,8 @@ def swav_loss(
     queue_length: int = 0,
     start_iter: int = 0,
     local_queue_length: int = 0,
-):
+) -> ClassyLoss:
+    loss_name = 'swav_loss'
     cfg = AttrDict(
         {
             "embedding_dim": embedding_dim,
@@ -93,11 +101,11 @@ def swav_loss(
         }
     )
 
-    loss_fn = LOSS_REGISTRY["swav_loss"](cfg)
-    return loss_fn
+    return get_loss_fn(loss_name, cfg)
 
 
-def barlow_twins_loss(lambda_: float = 0.0051, scale_loss: float = 0.024, embedding_dim: int = 8192):
+def barlow_twins_loss(lambda_: float = 0.0051, scale_loss: float = 0.024, embedding_dim: int = 8192) -> ClassyLoss:
+    loss_name = 'barlow_twins_loss'
     cfg = AttrDict(
         {
             "lambda_": lambda_,
@@ -106,16 +114,16 @@ def barlow_twins_loss(lambda_: float = 0.0051, scale_loss: float = 0.024, embedd
         }
     )
 
-    loss_fn = LOSS_REGISTRY["barlow_twins_loss"](cfg)
-    return loss_fn
+    return get_loss_fn(loss_name, cfg)
 
 
 def simclr_loss(
     temperature: float = 0.1,
     embedding_dim: int = 128,
-    effective_batch_size: int = -1,
-    world_size: int = -1,
-):
+    effective_batch_size: int = 64,
+    world_size: int = 1,
+) -> ClassyLoss:
+    loss_name = 'simclr_info_nce_loss'
     cfg = AttrDict(
         {
             "temperature": temperature,
@@ -129,8 +137,7 @@ def simclr_loss(
         }
     )
 
-    loss_fn = LOSS_REGISTRY["simclr_info_nce_loss"](cfg)
-    return loss_fn
+    return get_loss_fn(loss_name, cfg)
 
 
 def moco_loss(
@@ -139,7 +146,8 @@ def moco_loss(
     momentum: float = 0.999,
     temperature: int = 0.2,
     shuffle_batch: bool = True,
-):
+) -> ClassyLoss:
+    loss_name = 'moco_loss'
     cfg = AttrDict(
         {
             "embedding_dim": embedding_dim,
@@ -150,8 +158,7 @@ def moco_loss(
         }
     )
 
-    loss_fn = LOSS_REGISTRY["moco_loss"](cfg)
-    return loss_fn
+    return get_loss_fn(loss_name, cfg)
 
 
 def register_vissl_losses(register: FlashRegistry):
