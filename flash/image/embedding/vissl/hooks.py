@@ -13,6 +13,7 @@
 # limitations under the License.
 from typing import Any, List
 
+import torch
 from pytorch_lightning.core.hooks import ModelHooks
 
 from flash.core.utilities.imports import _VISSL_AVAILABLE
@@ -21,26 +22,46 @@ if _VISSL_AVAILABLE:
     from classy_vision.hooks.classy_hook import ClassyHook
 
 
-# class TrainingSetupHook(ClassyHook):
-#     on_start = ClassyHook._noop
-#     on_phase_start = ClassyHook._noop
-#     on_loss_and_meter = ClassyHook._noop
-#     on_backward = ClassyHook._noop
-#     on_step = ClassyHook._noop
-#     on_phase_end = ClassyHook._noop
-#     on_end = ClassyHook._noop
-#     on_update = ClassyHook._noop
-#     on_forward = ClassyHook._noop
+class TrainingSetupHook(ClassyHook):
+    on_start = ClassyHook._noop
+    on_phase_start = ClassyHook._noop
+    on_loss_and_meter = ClassyHook._noop
+    on_backward = ClassyHook._noop
+    on_step = ClassyHook._noop
+    on_phase_end = ClassyHook._noop
+    on_end = ClassyHook._noop
+    on_update = ClassyHook._noop
+    on_forward = ClassyHook._noop
 
-#     def __init__(self):
-#         super().__init__()
+    def __init__(self):
+        super().__init__()
 
-#     @torch.no_grad()
-#     def on_start(self, task: "tasks.ClassyTask") -> None:
-#         task.device = # set to trainer device
-#         task.effective_batch_size = 
-#         task.world_size = 
-#         task.max_iteration = # max_epochs * num_iter per epoch
+    @torch.no_grad()
+    def on_start(self, task: "tasks.ClassyTask") -> None:
+        lightning_module = task.vissl_adapter.adapter_task
+        task.device = lightning_module.device
+
+        num_nodes = lightning_module.trainer.num_nodes
+        accelerator_per_node = len(lightning_module.trainer.accelerator_connector.parallel_device_ids)
+        task.world_size = num_nodes * accelerator_per_node
+
+        task.max_iteration = lightning_module.trainer.max_epochs * lightning_module.trainer.num_training_batches
+
+
+class SimCLRTrainingSetupHook(TrainingSetupHook):
+    def __init__(self):
+        super().__init__()
+
+    @torch.no_grad()
+    def on_start(self, task: "tasks.ClassyTask") -> None:
+        super().on_start(task)
+
+        lightning_module = task.vissl_adapter.adapter_task
+
+        task.loss.info_criterion.buffer_params.effective_batch_size = task.world_size * 2 * lightning_module.trainer.datamodule.batch_size
+        task.loss.info_criterion.buffer_params.world_size = task.world_size
+
+        task.loss.info_criterion.precompute_pos_neg_mask()
 
 
 class AdaptVISSLHooks(ModelHooks):

@@ -23,41 +23,49 @@ if _VISSL_AVAILABLE:
     from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
     from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
     from flash.image.embedding.vissl.adapter import VISSLAdapter
+    from flash.image.embedding.vissl.hooks import TrainingSetupHook, SimCLRTrainingSetupHook
 
 
 def dino(head: str = "dino_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("dino_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
 
-    return loss_fn, head, [DINOHook()]
+    return loss_fn, head, [DINOHook(), TrainingSetupHook()]
 
 
 def swav(head: str = "swav_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("swav_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
 
-    return loss_fn, head, [SwAVUpdateQueueScoresHook(), NormalizePrototypesHook()]
+    return loss_fn, head, [
+        SwAVUpdateQueueScoresHook(),
+        NormalizePrototypesHook(),
+        TrainingSetupHook()
+    ]
 
 
 def simclr(head: str = "simclr_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("simclr_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
 
-    return loss_fn, head, []
+    return loss_fn, head, [SimCLRTrainingSetupHook()]
 
 
 def moco(head: str = "simclr_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("moco_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
 
-    return loss_fn, head, [MoCoHook(loss_fn.loss_config.momentum, loss_fn.loss_config.shuffle_batch)]
+    return loss_fn, head, [
+        MoCoHook(loss_fn.loss_config.momentum, loss_fn.loss_config.shuffle_batch),
+        TrainingSetupHook()
+    ]
 
 
 def barlow_twins(head: str = "barlow_twins_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("barlow_twins_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
 
-    return loss_fn, head, []
+    return loss_fn, head, [TrainingSetupHook()]
 
 
 def register_vissl_strategies(register: FlashRegistry):

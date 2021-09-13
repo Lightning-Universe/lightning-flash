@@ -32,42 +32,21 @@ if _VISSL_AVAILABLE:
 
 
 class MockVISSLTask:
-    def __init__(self, vissl_loss, task_config, vissl_model) -> None:
+    def __init__(self, vissl_adapter, vissl_loss, task_config, vissl_model) -> None:
+        self.vissl_adapter = vissl_adapter
         self.loss = vissl_loss
         self.config = task_config
         self.base_model = vissl_model
         self.model = self.base_model  # set by property in ClassyTask
 
-        # set using device for backbone before hooks is applied
-        self.device = torch.device("cuda")
+        # set using trainingsetuphook
+        self.device = None
 
         self.iteration = 0
-        self.max_iteration = 100000  # set using trainer
+        self.max_iteration = 1  # set by training setup hook
 
         # set for momentum teacher based hooks
         self.last_batch = AttrDict({"sample": AttrDict({"input": None})})
-
-        # task.loss.checkpoint to None
-        # task.loss.center
-        # task.loss.teacher_output (does the hook set this?)
-        # self.model.heads
-        # task.model.parameters()
-        # for normalize_last_layer check
-        # task.loss.momentum_teacher.load_state_dict(task.model.state_dict()
-        #  => populate task.model
-
-        # mock vissl hook which updates this?
-        # for temp annealing
-        #   task.iteration -> current iteration
-        #   task.max_iteration -> total iteration
-
-        # set last batch into task
-        # task.last_batch
-
-        # model property in base class is set by base_model in VISSL task
-        # loss property is set by base_loss (num_train_samples param for memory bank)
-        #   self.base_loss = _build_loss() function or build_loss from vissl
-        #   self.base_model = _build_model() or build_model() from vissl
 
 
 class VISSLAdapter(Adapter, AdaptVISSLHooks):
@@ -116,7 +95,9 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         self.vissl_base_model.trunk = backbone
         self.vissl_base_model.heads = nn.ModuleList(self.head)
 
-        self.vissl_task = MockVISSLTask(self.loss_fn, self.task_config, self.vissl_base_model)
+        self.vissl_task = MockVISSLTask(
+            self, self.loss_fn, self.task_config, self.vissl_base_model
+        )
 
         AdaptVISSLHooks.__init__(self, hooks=hooks, task=self.vissl_task)
 
@@ -149,7 +130,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         hooks: List[ClassyHook],
         **kwargs,
     ) -> Adapter:
-        return cls(
+        result = cls(
             backbone=backbone,
             head=head,
             loss_fn=loss_fn,
@@ -157,6 +138,10 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
             hooks=hooks,
             **kwargs,
         )
+
+        result.__dict__["adapter_task"] = task
+
+        return result
 
     @staticmethod
     def get_model_config_template():
