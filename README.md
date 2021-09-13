@@ -6,7 +6,7 @@
 **Your PyTorch AI Factory**
 
 ---
-  
+
 <p align="center">
   <a href="#step-0-install">Installation</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
