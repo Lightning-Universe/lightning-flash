@@ -58,7 +58,9 @@ class SimCLRTrainingSetupHook(TrainingSetupHook):
 
         lightning_module = task.vissl_adapter.adapter_task
 
-        task.loss.info_criterion.buffer_params.effective_batch_size = task.world_size * 2 * lightning_module.trainer.datamodule.batch_size
+        task.loss.info_criterion.buffer_params.effective_batch_size = (
+            task.world_size * 2 * lightning_module.trainer.datamodule.batch_size
+        )
         task.loss.info_criterion.buffer_params.world_size = task.world_size
 
         task.loss.info_criterion.precompute_pos_neg_mask()
