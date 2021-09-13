@@ -3,7 +3,7 @@
 <img src="docs/source/_static/images/logo.svg" width="400px">
 
 
-**The PyTorch AI Factory**
+**Your PyTorch AI Factory**
 
 <p align="center">
   <a href="#installation">Installation</a> •
@@ -68,7 +68,7 @@ See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/in
 
 Flash is an AI factory for PyTorch.
 It enables you to easily configure and run complex AI recipes for over 15 tasks across 7 different data domains.
-To use Flash you need two things: some data, and a task you'd like to perform.
+To use Flash, all you need is some data and a task you'd like to perform.
 You can browse the tasks that we support and filter by useful tags like data type from [our documentation](https://lightning-flash.readthedocs.io/en/stable/).
 
 ### 1. Load your data
@@ -100,7 +100,7 @@ For help or questions, join our huge community on [Slack](https://join.slack.com
 ## Citations
 We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
 
-Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), [timm](https://github.com/rwightman/pytorch-image-models), [open3d-ml](https://github.com/intel-isl/Open3D-ML) for pointcloud, [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/), and [asteroid](https://github.com/asteroid-team/asteroid) for the `vision`, `text`, `tabular`, and `audio` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
+Flash leverages models from many different frameworks in order to cover such a wide range of domains and tasks. The full list of providers can be found in [our documentation](https://lightning-flash.readthedocs.io/en/latest/integrations/providers.html).
 
 ---
 
