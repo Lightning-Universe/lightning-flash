@@ -18,9 +18,8 @@ Lightning Flash
 
    quickstart
    installation
-   custom_task
-   reference/flash_to_pl
-   reference/flash_to_production
+   general/flash_zero
+   general/production
 
 .. toctree::
    :maxdepth: 1
@@ -32,8 +31,8 @@ Lightning Flash
    general/jit
    general/data
    general/registry
-   general/flash_zero
    general/serve
+   general/backbones
 
 .. toctree::
    :maxdepth: 1

@@ -141,7 +141,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
     def predict_load_data(self, data, dataset: Optional[BaseAutoDataset] = None):
         if (isinstance(data, str) and isfile(data)) or (isinstance(data, list) and all(isfile(p) for p in data)):
             return self.load_files(data, dataset)
-        elif isinstance(data, str) and isdir(data):
+        if isinstance(data, str) and isdir(data):
             raise NotImplementedError
 
     def predict_load_sample(self, data, dataset: Optional[BaseAutoDataset] = None):
