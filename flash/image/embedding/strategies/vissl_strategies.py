@@ -23,7 +23,7 @@ if _VISSL_AVAILABLE:
     from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
     from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
     from flash.image.embedding.vissl.adapter import VISSLAdapter
-    from flash.image.embedding.vissl.hooks import TrainingSetupHook, SimCLRTrainingSetupHook
+    from flash.image.embedding.vissl.hooks import SimCLRTrainingSetupHook, TrainingSetupHook
 
 
 def dino(head: str = "dino_head", **kwargs):
@@ -37,11 +37,7 @@ def swav(head: str = "swav_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("swav_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
 
-    return loss_fn, head, [
-        SwAVUpdateQueueScoresHook(),
-        NormalizePrototypesHook(),
-        TrainingSetupHook()
-    ]
+    return loss_fn, head, [SwAVUpdateQueueScoresHook(), NormalizePrototypesHook(), TrainingSetupHook()]
 
 
 def simclr(head: str = "simclr_head", **kwargs):
@@ -55,10 +51,11 @@ def moco(head: str = "simclr_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("moco_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
 
-    return loss_fn, head, [
-        MoCoHook(loss_fn.loss_config.momentum, loss_fn.loss_config.shuffle_batch),
-        TrainingSetupHook()
-    ]
+    return (
+        loss_fn,
+        head,
+        [MoCoHook(loss_fn.loss_config.momentum, loss_fn.loss_config.shuffle_batch), TrainingSetupHook()],
+    )
 
 
 def barlow_twins(head: str = "barlow_twins_head", **kwargs):

@@ -95,9 +95,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         self.vissl_base_model.trunk = backbone
         self.vissl_base_model.heads = nn.ModuleList(self.head)
 
-        self.vissl_task = MockVISSLTask(
-            self, self.loss_fn, self.task_config, self.vissl_base_model
-        )
+        self.vissl_task = MockVISSLTask(self, self.loss_fn, self.task_config, self.vissl_base_model)
 
         AdaptVISSLHooks.__init__(self, hooks=hooks, task=self.vissl_task)
 
