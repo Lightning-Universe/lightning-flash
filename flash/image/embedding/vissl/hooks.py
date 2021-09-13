@@ -42,7 +42,8 @@ class TrainingSetupHook(ClassyHook):
         task.device = lightning_module.device
 
         num_nodes = lightning_module.trainer.num_nodes
-        accelerator_per_node = len(lightning_module.trainer.accelerator_connector.parallel_device_ids)
+        accelerators_ids = lightning_module.trainer.accelerator_connector.parallel_device_ids
+        accelerator_per_node = len(accelerators_ids) if accelerators_ids is not None else 1
         task.world_size = num_nodes * accelerator_per_node
 
         task.max_iteration = lightning_module.trainer.max_epochs * lightning_module.trainer.num_training_batches
