@@ -115,14 +115,14 @@ from flash.image.classification.transforms import default_transforms
 def mixup(batch, alpha=1.0):
     images = batch["input"]
     targets = batch["target"].float().unsqueeze(1)
-    
+
     lam = np.random.beta(alpha, alpha)
     perm = torch.randperm(images.size(0))
-    
+
     batch["input"] = images * lam + images[perm] * (1 - lam)
     batch["target"] = targets * lam + targets[perm] * (1 - lam)
     return batch
-    
+
 train_transform = {
     "post_tensor_transform": ApplyToKeys("input", T.Compose([T.RandomHorizontalFlip(), T.ColorJitter()])),
     "per_batch_transform": mixup,
