@@ -26,3 +26,4 @@
 /.github/*.md                   @edenlightning @ethanwharris @ananyahjha93
 /.github/ISSUE_TEMPLATE/*.md    @edenlightning @ethanwharris @ananyahjha93
 /docs/source/conf.py            @borda @ethanwharris @ananyahjha93
+/flash/core/integrations/labelstudio	@KonstantinKorotaev @niklub
