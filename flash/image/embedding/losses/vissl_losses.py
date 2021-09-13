@@ -120,8 +120,8 @@ def barlow_twins_loss(lambda_: float = 0.0051, scale_loss: float = 0.024, embedd
 def simclr_loss(
     temperature: float = 0.1,
     embedding_dim: int = 128,
-    effective_batch_size: int = 64,
-    world_size: int = 1,
+    effective_batch_size: int = 1,  # set by setup training hook
+    world_size: int = 1,  # set by setup training hook
 ) -> ClassyLoss:
     loss_name = 'simclr_info_nce_loss'
     cfg = AttrDict(

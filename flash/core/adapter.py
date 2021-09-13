@@ -72,7 +72,6 @@ class AdapterTask(Task):
         super().__init__(**kwargs)
 
         self.adapter = adapter
-        self.adapter.__dict__["adapter_task"] = self
 
     @property
     def backbone(self) -> nn.Module:

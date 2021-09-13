@@ -95,6 +95,15 @@ class ImageEmbedder(AdapterTask):
 
         super().__init__(adapter=adapter)
 
+    def on_train_start(self) -> None:
+        self.adapter.on_train_start()
+
+    def on_train_epoch_end(self) -> None:
+        self.adapter.on_train_epoch_end()
+
+    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
+
     @classmethod
     def available_training_strategies(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
