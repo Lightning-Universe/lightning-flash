@@ -46,6 +46,9 @@ class TrainingSetupHook(ClassyHook):
         accelerator_per_node = len(accelerators_ids) if accelerators_ids is not None else 1
         task.world_size = num_nodes * accelerator_per_node
 
+        if lightning_module.trainer.max_epochs is None:
+            lightning_module.trainer.max_epochs = 1
+
         task.max_iteration = lightning_module.trainer.max_epochs * lightning_module.trainer.num_training_batches
 
 
