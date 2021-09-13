@@ -131,10 +131,10 @@ def dino_head(**kwargs) -> nn.Module:
         dims=[384, 2048, 2048, 256],
         use_bn=False,
         return_embeddings=False,
-        activation_name='GELU',
+        activation_name="GELU",
         num_clusters=[65536],
         use_weight_norm_prototypes=True,
-        **kwargs
+        **kwargs,
     )
 
 

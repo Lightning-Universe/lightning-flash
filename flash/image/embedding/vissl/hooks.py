@@ -38,8 +38,8 @@ if _VISSL_AVAILABLE:
 #     @torch.no_grad()
 #     def on_start(self, task: "tasks.ClassyTask") -> None:
 #         task.device = # set to trainer device
-#         task.effective_batch_size = 
-#         task.world_size = 
+#         task.effective_batch_size =
+#         task.world_size =
 #         task.max_iteration = # max_epochs * num_iter per epoch
 
 
