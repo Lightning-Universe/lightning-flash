@@ -8,7 +8,7 @@
 <p align="center">
   <a href="#installation">Installation</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
-  <a href="#what-is-flash--setting-up-your-recipe">About</a> •
+  <a href="#complex-pytorch-recipes-made-simple">About</a> •
   <a href="#contribute">Contribute</a> •
   <a href="#community">Community</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
