@@ -24,31 +24,13 @@
 ![CI testing](https://github.com/PyTorchLightning/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)
 [![codecov](https://codecov.io/gh/PyTorchLightning/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/PyTorchLightning/lightning-flash)
 
-<!--
-[![PyPI Status](https://pepy.tech/badge/lightning-flash)](https://pepy.tech/project/lightning-flash)
-![Check Docs](https://github.com/PyTorchLightning/lightning-flash/workflows/Check%20Docs/badge.svg?branch=master&event=push)
--->
-
 </div>
 
 <div align="center">
-<a href="https://lightning-flash.readthedocs.io/en/stable">
-<img src="https://pl-flash-data.s3.amazonaws.com/assets/banner.gif">
-</a>
+  <a href="https://lightning-flash.readthedocs.io/en/stable">
+    <img src="https://pl-flash-data.s3.amazonaws.com/assets/banner.gif">
+  </a>
 </div>
-
----
-
-## News
-
-- Jul 12: Flash Task-a-thon community sprint with 25+ community members
-- Jul 1: [Lightning Flash 0.4](https://devblog.pytorchlightning.ai/lightning-flash-0-4-flash-serve-fiftyone-multi-label-text-classification-and-jit-support-97428276c06f)
-- Jun 22: [Ushering in the New Age of Video Understanding with PyTorch](https://medium.com/pytorch/ushering-in-the-new-age-of-video-understanding-with-pytorch-1d85078e8015)
-- May 24: [Lightning Flash 0.3](https://devblog.pytorchlightning.ai/lightning-flash-0-3-new-tasks-visualization-tools-data-pipeline-and-flash-registry-api-1e236ba9530)
-- May 20: [Video Understanding with PyTorch](https://towardsdatascience.com/video-understanding-made-simple-with-pytorch-video-and-lightning-flash-c7d65583c37e)
-- Feb 2: [Read our launch blogpost](https://pytorch-lightning.medium.com/introducing-lightning-flash-the-fastest-way-to-get-started-with-deep-learning-202f196b3b98)
-
-__Note:__ Flash is currently being tested on real-world use cases and is in active development. Please [open an issue](https://github.com/PyTorchLightning/lightning-flash/issues/new/choose) if you find anything that isn't working as expected.
 
 ---
 
@@ -64,7 +46,7 @@ See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/in
 
 ---
 
-## What is Flash / Setting up Your Recipe
+## Complex PyTorch Recipes Made Simple
 
 Flash is an AI factory for PyTorch.
 It enables you to easily configure and run complex AI recipes for over 15 tasks across 7 different data domains.
@@ -73,13 +55,106 @@ You can browse the tasks that we support and filter by useful tags like data typ
 
 ### 1. Load your data
 
+The first step when implementing your recipe with Flash is to load the data.
+All data loading in Flash is performed via a `from_*` classmethod on a `DataModule`.
+Which `DataModule` to use and which `from_*` methods are available depends on the task you want to perform.
+For example, for image classification where your data is stored in folders, you would use the [`from_folders` method of the `ImageClassificationData` class](https://lightning-flash.readthedocs.io/en/latest/reference/image_classification.html#from-folders):
+
+```py
+from flash.image import ImageClassificationData
+
+data_module = ImageClassificationData.from_folders(
+    train_folder = "./train_folder",
+    predict_folder = "./predict_folder",
+    ...
+)
+```
+
 ### 2. Configure your transforms
+
+Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your augmentation recipe.
+To this end, Flash supports custom transformations backed by our powerful data pipeline.
+You can provide transforms to be applied per sample or per batch either on or off device.
+Transforms are applied to the whole data dict (typically containing "input", "target", and "metadata"), so you can implement complex transforms (like MixUp) with ease.
+
+To use this feature, just configure your transform recipe as a dictionary which maps the hook name (see the available hooks in our documentation) to the transform to apply.
+Here's a simple example:
+
+```py
+from torchvision import transforms as T
+from flash.core.data.transforms import ApplyToKeys, merge_transforms
+from flash.image import ImageClassificationData
+from flash.image.classification.transforms import default_transforms
+
+train_transform = {
+    "post_tensor_transform": ApplyToKeys("input", T.Compose([T.RandomHorizontalFlip(), T.ColorJitter()])),
+}
+train_transform = merge_transforms(default_transforms((64, 64)), train_transform)
+
+datamodule = ImageClassificationData.from_folders(
+    train_folder = "./train_folder",
+    predict_folder = "./predict_folder",
+    train_transform=train_transform,
+    ...
+)
+```
+
+The example makes use of our [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility to just apply the torchvision augmentations to the "input".
+The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our augmentations with the default transforms for images (which handle resizing and converting to a tensor).
+
+For a more advanced example, here's how you can include MixUp in your transform recipe:
+
+```py
+import torch
+import numpy as np
+from torchvision import transforms as T
+from flash.core.data.transforms import ApplyToKeys, merge_transforms
+from flash.image import ImageClassificationData
+from flash.image.classification.transforms import default_transforms
+
+def mixup(batch, alpha=1.0):
+    images = batch["input"]
+    targets = batch["target"].float().unsqueeze(1)
+    
+    lam = np.random.beta(alpha, alpha)
+    perm = torch.randperm(images.size(0))
+    
+    batch["input"] = images * lam + images[perm] * (1 - lam)
+    batch["target"] = targets * lam + targets[perm] * (1 - lam)
+    return batch
+    
+train_transform = {
+    "post_tensor_transform": ApplyToKeys("input", T.Compose([T.RandomHorizontalFlip(), T.ColorJitter()])),
+    "per_batch_transform": mixup,
+}
+train_transform = merge_transforms(default_transforms((64, 64)), train_transform)
+
+datamodule = ImageClassificationData.from_folders(
+    train_folder = "./train_folder",
+    predict_folder = "./predict_folder",
+    train_transform=train_transform,
+    ...
+)
+```
 
 ### 3. Configure your model
 
 ### 4. Define your pipeline
 
 ### 5. Run it!
+
+---
+
+## News
+
+- Jul 12: Flash Task-a-thon community sprint with 25+ community members
+- Jul 1: [Lightning Flash 0.4](https://devblog.pytorchlightning.ai/lightning-flash-0-4-flash-serve-fiftyone-multi-label-text-classification-and-jit-support-97428276c06f)
+- Jun 22: [Ushering in the New Age of Video Understanding with PyTorch](https://medium.com/pytorch/ushering-in-the-new-age-of-video-understanding-with-pytorch-1d85078e8015)
+- May 24: [Lightning Flash 0.3](https://devblog.pytorchlightning.ai/lightning-flash-0-3-new-tasks-visualization-tools-data-pipeline-and-flash-registry-api-1e236ba9530)
+- May 20: [Video Understanding with PyTorch](https://towardsdatascience.com/video-understanding-made-simple-with-pytorch-video-and-lightning-flash-c7d65583c37e)
+- Feb 2: [Read our launch blogpost](https://pytorch-lightning.medium.com/introducing-lightning-flash-the-fastest-way-to-get-started-with-deep-learning-202f196b3b98)
+
+__Note:__ Flash is currently being tested on real-world use cases and is in active development. Please [open an issue](https://github.com/PyTorchLightning/lightning-flash/issues/new/choose) if you find anything that isn't working as expected.
 
 ---
 
