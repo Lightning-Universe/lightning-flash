@@ -61,6 +61,7 @@ class SimCLRHead(nn.Module):
                 )
 
             layers.append(nn.ReLU(inplace=True))
+            last_dim = dim
 
         layers.append(nn.Linear(last_dim, self.dims[-1]))
         return nn.Sequential(*layers)
@@ -93,11 +94,11 @@ def swav_head(
     use_bn: bool = True,
     num_clusters: Union[int, List[int]] = [3000],
     use_bias: bool = True,
-    return_embeddings: bool = False,
+    return_embeddings: bool = True,
     skip_last_bn: bool = True,
     normalize_feats: bool = True,
     activation_name: str = "ReLU",
-    use_weight_norm_prototypes: bool = True,
+    use_weight_norm_prototypes: bool = False,
     **kwargs,
 ) -> nn.Module:
     cfg = VISSLAdapter.get_model_config_template()
@@ -126,7 +127,15 @@ def barlow_twins_head(**kwargs) -> nn.Module:
 
 
 def dino_head(**kwargs) -> nn.Module:
-    return swav_head(dims=[384, 2048, 2048, 256], use_bn=False, num_clusters=[65536], **kwargs)
+    return swav_head(
+        dims=[384, 2048, 2048, 256],
+        use_bn=False,
+        return_embeddings=False,
+        activation_name='GELU',
+        num_clusters=[65536],
+        use_weight_norm_prototypes=True,
+        **kwargs
+    )
 
 
 def register_vissl_heads(register: FlashRegistry):
