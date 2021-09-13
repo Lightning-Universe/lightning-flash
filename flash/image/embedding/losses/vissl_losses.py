@@ -24,7 +24,7 @@ if _VISSL_AVAILABLE:
 
 def get_loss_fn(loss_name: str, cfg: AttrDict):
     loss_fn = LOSS_REGISTRY[loss_name](cfg)
-    loss_fn.__dict__['loss_name'] = loss_name
+    loss_fn.__dict__["loss_name"] = loss_name
 
     return loss_fn
 
@@ -42,7 +42,7 @@ def dino_loss(
     output_dim: int = 65536,
     **kwargs,
 ) -> ClassyLoss:
-    loss_name = 'dino_loss'
+    loss_name = "dino_loss"
     cfg = AttrDict(
         {
             "num_crops": num_crops,
@@ -77,7 +77,7 @@ def swav_loss(
     start_iter: int = 0,
     local_queue_length: int = 0,
 ) -> ClassyLoss:
-    loss_name = 'swav_loss'
+    loss_name = "swav_loss"
     cfg = AttrDict(
         {
             "embedding_dim": embedding_dim,
@@ -105,7 +105,7 @@ def swav_loss(
 
 
 def barlow_twins_loss(lambda_: float = 0.0051, scale_loss: float = 0.024, embedding_dim: int = 8192) -> ClassyLoss:
-    loss_name = 'barlow_twins_loss'
+    loss_name = "barlow_twins_loss"
     cfg = AttrDict(
         {
             "lambda_": lambda_,
@@ -123,7 +123,7 @@ def simclr_loss(
     effective_batch_size: int = 1,  # set by setup training hook
     world_size: int = 1,  # set by setup training hook
 ) -> ClassyLoss:
-    loss_name = 'simclr_info_nce_loss'
+    loss_name = "simclr_info_nce_loss"
     cfg = AttrDict(
         {
             "temperature": temperature,
@@ -147,7 +147,7 @@ def moco_loss(
     temperature: int = 0.2,
     shuffle_batch: bool = True,
 ) -> ClassyLoss:
-    loss_name = 'moco_loss'
+    loss_name = "moco_loss"
     cfg = AttrDict(
         {
             "embedding_dim": embedding_dim,
