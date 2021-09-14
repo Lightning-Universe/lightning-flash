@@ -198,9 +198,7 @@ directly into lightning-flash
 and over [`lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
 
 <div align="center">
-  <a href="https://lightning-flash.readthedocs.io/en/stable">
-    <img src="https://pl-flash-data.s3.amazonaws.com/assets/flash_zero.gif"  width="50%">
-  </a>
+  <img src="https://pl-flash-data.s3.amazonaws.com/assets/flash_zero.gif"  width="50%">
 </div>
 
 To get started and view the available tasks, run:
