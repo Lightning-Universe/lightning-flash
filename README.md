@@ -9,8 +9,8 @@
 
 <p align="center">
   <a href="#getting-started">Installation</a> •
+  <a href="#flash-in-3-steps">Flash in 3 Steps</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
-  <a href="#how-to-use">How to Use</a> •
   <a href="#contribute">Contribute</a> •
   <a href="#community">Community</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
@@ -47,7 +47,7 @@ pip install lightning-flash
 
 See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
 
-## Flash in 3 steps
+## Flash in 3 Steps
 
 ### Step 1. Load your data
 
