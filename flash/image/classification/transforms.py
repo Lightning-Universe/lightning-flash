@@ -38,10 +38,12 @@ class AlbumentationsAdapter(torch.nn.Module):
         super().__init__()
         if not _ALBUMENTATIONS_AVAILABLE:
             raise MisconfigurationException("Please, run `pip install albumentations`")
+        if not isinstance(transform, list):
+            transform = [transform]
         self.transform = albumentations.Compose(transform)
 
     def forward(self, x):
-        return self.transform(image=x)["image"]
+        return torch.from_numpy(self.transform(image=x.numpy())["image"])
 
 
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:

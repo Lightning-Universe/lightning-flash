@@ -130,7 +130,7 @@ from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.image import ImageClassificationData
 from flash.image.classification.transforms import default_transforms, AlbumentationsAdapter
 
-def mixup(batch: Dict[str, Any], alpha=1.0) -> Dict[str, Any]:
+def mixup(batch, alpha=1.0):
     images = batch["input"]
     targets = batch["target"].float().unsqueeze(1)
 
@@ -139,13 +139,11 @@ def mixup(batch: Dict[str, Any], alpha=1.0) -> Dict[str, Any]:
 
     batch["input"] = images * lam + images[perm] * (1 - lam)
     batch["target"] = targets * lam + targets[perm] * (1 - lam)
-    batch["metadata"] = lam
     return batch
 
 train_transform = {
     # applied only on images as ApplyToKeys is used with `input`
-    "post_tensor_transform": ApplyToKeys("input", AlbumentationsAdapter(
-        [albumentations.Resize(224, 224), albumentations.HorizontalFlip(p=0.5)])),
+    "post_tensor_transform": ApplyToKeys("input", AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))),
 
     # applied to the entire dictionary as `ApplyToKeys` isn't used.
     # this would be applied on GPUS !
@@ -158,13 +156,11 @@ train_transform = {
 train_transform = merge_transforms(default_transforms((256, 256)), train_transform)
 
 datamodule = ImageClassificationData.from_folders(
-    train_folder = "./train_folder",
-    predict_folder = "./predict_folder",
+    train_folder = "data/train",
     train_transform=train_transform,
-    ...
 )
-```
 
+```
 
 ## Flash-Zero - no code experience !
 
