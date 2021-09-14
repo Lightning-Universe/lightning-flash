@@ -15,12 +15,11 @@ import os
 from typing import Callable, Dict, Tuple
 
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
-from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -34,10 +33,9 @@ if _ALBUMENTATIONS_AVAILABLE:
 
 
 class AlbumentationsAdapter(torch.nn.Module):
+    @requires("albumentations")
     def __init__(self, transform):
         super().__init__()
-        if not _ALBUMENTATIONS_AVAILABLE:
-            raise MisconfigurationException("Please, run `pip install albumentations`")
         if not isinstance(transform, list):
             transform = [transform]
         self.transform = albumentations.Compose(transform)

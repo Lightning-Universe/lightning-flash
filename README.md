@@ -52,7 +52,7 @@ pip install lightning-flash
 
 See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
 
-## Flash in 4 steps
+## Flash in 3 steps
 
 ### Step 1. Load your data
 
@@ -105,7 +105,11 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 trainer.save_checkpoint("semantic_segmentation_model.pt")
 ```
 
-### Step 4. Make predictions !
+---
+
+## PyTorch Recipes
+
+### Make predictions with Flash !
 
 Serve in just 2 lines.
 
@@ -129,10 +133,6 @@ trainer = Trainer(accelerator='ddp', gpus=2)
 dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
 predictions = trainer.predict(model, dm)
 ```
-
----
-
-## PyTorch Recipes
 
 ### Flash Transforms
 
