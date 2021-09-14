@@ -9,6 +9,7 @@ from flash.core.data.data_module import DataModule
 
 class App:
     """App for visualizing predictions in Label Studio results format."""
+
     def __init__(self, datamodule: DataModule):
         self.datamodule = datamodule
 
@@ -20,17 +21,11 @@ class App:
         return results
 
     def show_tasks(self, predictions, export_json=None):
-        """Converts predictions to tasks format"""
+        """Converts predictions to tasks format."""
         results = self.show_predictions(predictions)
         ds = self.datamodule.data_source
         data_type = list(ds.data_types)[0]
-        meta = {
-            "ids": [],
-            "data": [],
-            "meta": [],
-            "max_predictions_id": 0,
-            "project": None
-        }
+        meta = {"ids": [], "data": [], "meta": [], "max_predictions_id": 0, "project": None}
         if export_json:
             fs = get_filesystem(export_json)
             with fs.open(export_json) as f:
@@ -44,7 +39,7 @@ class App:
                     "id": meta["max_predictions_id"],
                     "model_version": "",
                     "score": 0.0,
-                    "task": task["id"]
+                    "task": task["id"],
                 }
                 if task.get("predictions"):
                     task["predictions"].append(temp)
@@ -60,14 +55,12 @@ class App:
                     "id": meta["max_predictions_id"],
                     "model_version": "",
                     "score": 0.0,
-                    "task": meta["max_predictions_id"]
+                    "task": meta["max_predictions_id"],
                 }
                 task = {
                     "id": meta["max_predictions_id"],
                     "predictions": [temp],
-                    "data": {
-                        data_type: ""
-                    },
+                    "data": {data_type: ""},
                     "project": 1,
                 }
                 meta["max_predictions_id"] = meta["max_predictions_id"] + 1
