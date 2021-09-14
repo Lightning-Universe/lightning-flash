@@ -196,7 +196,7 @@ datamodule = ImageClassificationData.from_folders(
 <div align="center">
 <img src="/docs/source/_static/images/flash_zero.gif?raw=true" width="90%">
 </div>
-  
+
 Flash Zero is a zero-code machine learning platform built
 directly into lightning-flash
 and over [`lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
