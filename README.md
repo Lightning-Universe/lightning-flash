@@ -111,23 +111,25 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your own augmentation recipe.
 To this end, Flash supports custom transformations backed by our powerful data pipeline.
-You can provide transforms to be applied per sample or per batch either on or off device.
-Data are being processed as a dictionary (typically containing `input`, `target`, and `metadata`),
-Transforms requires to be applied to be a specific key using [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility.
+The transform requires to be passed as a dictionary of transforms where the keys are the [hook's name](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.process.Preprocess.html?highlight=Preprocess).
+This enable transforms to be applied per sample or per batch either on or off device.
+It is important to note data are being processed as a dictionary for all tasks (typically containing `input`, `target`, and `metadata`),
+Therefore, transforms requires to be applied to be a specific key using [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility.
 Complex transforms (like MixUp) can then be implemented with ease.
 
-The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our augmentations with the default transforms for images (which handle resizing and converting to a tensor).
+The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our custom augmentations with the default transforms for images (which handle resizing and converting to a tensor).
 
 
 ```py
 import torch
+from typing import Any
 import numpy as np
 from torchvision import transforms as T
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.image import ImageClassificationData
 from flash.image.classification.transforms import default_transforms
 
-def mixup(batch, alpha=1.0):
+def mixup(batch: Dict[str, Any], alpha=1.0) -> Dict[str, Any]:
     images = batch["input"]
     targets = batch["target"].float().unsqueeze(1)
 
@@ -136,11 +138,19 @@ def mixup(batch, alpha=1.0):
 
     batch["input"] = images * lam + images[perm] * (1 - lam)
     batch["target"] = targets * lam + targets[perm] * (1 - lam)
+    batch["metadata"] = lam
     return batch
 
 train_transform = {
+    # applied only on images
     "post_tensor_transform": ApplyToKeys("input", T.Compose([T.RandomHorizontalFlip(), T.ColorJitter()])),
-    "per_batch_transform_on_device": mixup, # this would be applied on GPUS !
+    # applied to the entire dictionary as `ApplyToKeys` isn't used.
+
+    # this would be applied on GPUS !
+    "per_batch_transform_on_device": mixup,
+
+    # this would be applied on CPUS within the DataLoader workers !
+    # "per_batch_transform": mixup
 }
 # merge the default transform for this task with new one.
 train_transform = merge_transforms(default_transforms((256, 256)), train_transform)
