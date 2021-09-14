@@ -36,7 +36,7 @@ def test_smoke():
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
-@pytest.skip()
+@pytest.mark.skip()
 def test_train(tmpdir):
     """Tests that the model can be trained on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
@@ -48,7 +48,7 @@ def test_train(tmpdir):
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
-@pytest.skip()
+@pytest.mark.skip()
 def test_val(tmpdir):
     """Tests that the model can be validated on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
@@ -60,7 +60,7 @@ def test_val(tmpdir):
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
-@pytest.skip()
+@pytest.mark.skip()
 def test_test(tmpdir):
     """Tests that the model can be tested on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
@@ -72,7 +72,7 @@ def test_test(tmpdir):
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
-@pytest.skip()
+@pytest.mark.skip()
 def test_predict_dataset(tmpdir):
     """Tests that we can generate predictions from a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
@@ -83,7 +83,7 @@ def test_predict_dataset(tmpdir):
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
-@pytest.skip()
+@pytest.mark.skip()
 def test_cli():
     cli_args = ["flash", "graph_classification", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
