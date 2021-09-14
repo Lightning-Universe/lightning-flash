@@ -30,9 +30,9 @@
 
 ---
 
-<h4 align="center">
+<div align="center">
   Flash enables you to easily configure and run complex AI recipes for over 15 tasks across 7 data domains.
-</h4>
+</div>
 
 <div align="center">
   <a href="https://lightning-flash.readthedocs.io/en/stable">
