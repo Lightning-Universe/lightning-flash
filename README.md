@@ -50,7 +50,7 @@ pip install lightning-flash
 
 See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
 
-## Flash in 3 steps
+## Flash in 4 steps
 
 ### Step 1. Load your data
 
@@ -100,6 +100,16 @@ from flash import Trainer
 
 trainer = Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+trainer.save_checkpoint("semantic_segmentation_model.pt")
+```
+
+### Step 4. Serve in 2 lines !
+
+```py
+from flash.image import SemanticSegmentation
+
+model = SemanticSegmentation.load_from_checkpoint("semantic_segmentation_model.pt")
+model.serve()
 ```
 
 ---
