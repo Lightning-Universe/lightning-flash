@@ -28,6 +28,8 @@
 
 </div>
 
+---
+
 <div align="center">
   <b>
     Flash enables you to easily configure and run complex AI recipes for over 15 tasks across 7 data domains
