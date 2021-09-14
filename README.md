@@ -81,7 +81,7 @@ Once you've chosen, create the model:
 from flash.image import SemanticSegmentation
 
 print(SemanticSegmentation.available_heads())
-# ['deeplabv3', 'deeplabv3plus', 'fpn', 'linknet', 'manet', 'pan', 'pspnet', 'unet', 'unetplusplus']
+# ['deeplabv3', 'deeplabv3plus', 'fpn', ..., 'unetplusplus']
 
 print(SemanticSegmentation.available_backbones('fpn'))
 # ['densenet121', ..., 'xception'] # + 113 models
