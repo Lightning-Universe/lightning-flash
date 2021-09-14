@@ -42,7 +42,7 @@
   </a>
 </div>
 
-## Getting stated
+## Getting started
 
 From PyPI:
 
