@@ -138,6 +138,12 @@ jobs:
       run: |
         pip install git+https://github.com/facebookresearch/vissl.git@master
 
+    - name: Install graph test dependencies
+      if: matrix.topic[0] == 'graph'
+      run: |
+        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
+        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
+
     - name: Install dependencies
       run: |
         python --version
