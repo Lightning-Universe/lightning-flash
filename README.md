@@ -103,13 +103,21 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 trainer.save_checkpoint("semantic_segmentation_model.pt")
 ```
 
-### Step 4. Serve in 2 lines !
+### Step 4. Make predictions !
+
+Serve in 2 lines.
 
 ```py
 from flash.image import SemanticSegmentation
 
 model = SemanticSegmentation.load_from_checkpoint("semantic_segmentation_model.pt")
 model.serve()
+```
+
+or perform predictions from raw data directly.
+
+```py
+predictions = model.predict(["data/CameraRGB/F61-1.png", "data/CameraRGB/F62-1.png"])
 ```
 
 ---
