@@ -103,7 +103,7 @@ _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_visi
 _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 
 if _PIL_AVAILABLE:
-    from PIL import Image
+    pass
 else:
 
     class MetaImage(type):
