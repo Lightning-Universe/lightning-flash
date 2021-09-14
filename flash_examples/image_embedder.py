@@ -15,18 +15,16 @@ import torch
 import flash
 
 from torchvision.datasets import CIFAR10
-from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
 
 from flash.image import ImageEmbedder, ImageClassificationData
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.utils import download_data
 from flash.core.data.transforms import ApplyToKeys
 from flash.image.embedding.vissl.transforms import vissl_collate_fn
+from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
 
 # 1. Download the data and pre-process the data
-transform = TRANSFORM_REGISTRY['multicrop_ssl_transform'](
-    2, [2], [224], [[0.4, 1]]
-)
+transform = IMAGE_EMBEDDER_TRANSFORMS.get('simclr_transform')()
 
 to_tensor_transform = ApplyToKeys(
     DefaultDataKeys.INPUT,
