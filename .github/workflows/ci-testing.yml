@@ -175,6 +175,12 @@ jobs:
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
 
+    - name: CUDA Version
+      run: |
+        import torch
+        print(torch.version.cuda)
+      shell: python
+
     - name: Tests
       env:
         FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
