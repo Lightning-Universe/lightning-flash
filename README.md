@@ -209,7 +209,7 @@ To get started and view the available tasks, run:
   flash --help
 ```
 
-For example, to train an image classifier for 10 epochs with a `resnet50` backbone on 2 gpus over you own data, you can use:
+For example, to train an image classifier for 10 epochs with a `resnet50` backbone on 2 gpus over you own data, you can do:
 
 ```py
   flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 --train_folder {PATH_TO_DATA}
