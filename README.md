@@ -109,7 +109,7 @@ trainer.save_checkpoint("semantic_segmentation_model.pt")
 
 ## PyTorch Recipes
 
-### Make predictions with Flash !
+### Make predictions with Flash!
 
 Serve in just 2 lines.
 
