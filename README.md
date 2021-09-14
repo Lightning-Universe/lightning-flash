@@ -89,7 +89,8 @@ print(SemanticSegmentation.available_backbones('fpn'))
 print(SemanticSegmentation.available_pretrained_weights('efficientnet-b0'))
 # ['imagenet', 'advprop']
 
-model = SemanticSegmentation(head="fpn", backbone='efficientnet-b0', pretrained="advprop", num_classes=dm.num_classes)
+model = SemanticSegmentation(
+  head="fpn", backbone='efficientnet-b0', pretrained="advprop", num_classes=dm.num_classes)
 ```
 
 ### Step 3: Finetune!
@@ -111,13 +112,12 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your own augmentation recipe.
 To this end, Flash supports custom transformations backed by our powerful data pipeline.
 You can provide transforms to be applied per sample or per batch either on or off device.
-Transforms are applied to the whole data dict (typically containing "input", "target", and "metadata"),
-so you can implement complex transforms (like MixUp) with ease.
+Data are being processed as a dictionary (typically containing `input`, `target`, and `metadata`),
+Transforms requires to be applied to be a specific key using [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility.
+Complex transforms (like MixUp) can then be implemented with ease.
 
-The example makes use of our [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility to just apply the torchvision augmentations to the "input".
 The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our augmentations with the default transforms for images (which handle resizing and converting to a tensor).
 
-For a more advanced example, here's how you can include MixUp in your transform recipe:
 
 ```py
 import torch
@@ -142,7 +142,8 @@ train_transform = {
     "post_tensor_transform": ApplyToKeys("input", T.Compose([T.RandomHorizontalFlip(), T.ColorJitter()])),
     "per_batch_transform_on_device": mixup, # this would be applied on GPUS !
 }
-train_transform = merge_transforms(default_transforms((64, 64)), train_transform)
+# merge the default transform for this task with new one.
+train_transform = merge_transforms(default_transforms((256, 256)), train_transform)
 
 datamodule = ImageClassificationData.from_folders(
     train_folder = "./train_folder",
