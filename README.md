@@ -40,9 +40,7 @@ Flash enables you to easily configure and run complex AI recipes for [over 15 ta
   </a>
 </div>
 
-## Flash in 3 steps
-
-### Step 0: Install
+## Getting stated
 
 From PyPI:
 
@@ -51,6 +49,8 @@ pip install lightning-flash
 ```
 
 See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
+
+## Flash in 3 steps
 
 ### Step 1. Load your data
 
