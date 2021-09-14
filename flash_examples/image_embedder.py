@@ -12,21 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import torch
-import flash
-
-from torchvision.datasets import CIFAR10
 from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
+from torchvision.datasets import CIFAR10
 
-from flash.image import ImageEmbedder, ImageClassificationData
+import flash
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.utils import download_data
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.utils import download_data
+from flash.image import ImageClassificationData, ImageEmbedder
 from flash.image.embedding.vissl.transforms import vissl_collate_fn
 
 # 1. Download the data and pre-process the data
-transform = TRANSFORM_REGISTRY['multicrop_ssl_transform'](
-    2, [2], [224], [[0.4, 1]]
-)
+transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](2, [2], [224], [[0.4, 1]])
 
 to_tensor_transform = ApplyToKeys(
     DefaultDataKeys.INPUT,
@@ -34,19 +31,19 @@ to_tensor_transform = ApplyToKeys(
 )
 
 datamodule = ImageClassificationData.from_datasets(
-    train_dataset=CIFAR10('.', download=True),
+    train_dataset=CIFAR10(".", download=True),
     train_transform={
-        'to_tensor_transform': to_tensor_transform,
-        'collate': vissl_collate_fn,
+        "to_tensor_transform": to_tensor_transform,
+        "collate": vissl_collate_fn,
     },
     batch_size=16,
 )
 
 # 2. Build the task (here embedding_dim is a param for barlow_twins loss)
 embedder = ImageEmbedder(
-    backbone='resnet',
-    training_strategy='barlow_twins',
-    head='simclr_head',
+    backbone="resnet",
+    training_strategy="barlow_twins",
+    head="simclr_head",
     latent_embedding_dim=128,
 )
 
