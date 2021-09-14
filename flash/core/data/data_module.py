@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import platform
 from typing import (
     Any,
     Callable,
@@ -98,7 +97,7 @@ class DataModule(pl.LightningDataModule):
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
     ) -> None:
 
@@ -138,13 +137,10 @@ class DataModule(pl.LightningDataModule):
 
         self.batch_size = batch_size
 
-        # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            if platform.system() in ("Darwin", "Windows"):
-                num_workers = 0
-            else:
-                num_workers = os.cpu_count()
+            num_workers = 0
         self.num_workers = num_workers
+
         self.sampler = sampler
 
         self.set_running_stages()
@@ -468,7 +464,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -569,7 +565,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -643,7 +639,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -720,7 +716,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -807,7 +803,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -893,7 +889,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         field: Optional[str] = None,
         **preprocess_kwargs: Any,
@@ -1003,7 +999,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -1087,7 +1083,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -1168,7 +1164,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
