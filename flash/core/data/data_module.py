@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import platform
 from typing import (
     Any,
     Callable,
@@ -98,7 +97,7 @@ class DataModule(pl.LightningDataModule):
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: Optional[int] = 0,
         sampler: Optional[Type[Sampler]] = None,
     ) -> None:
 
@@ -137,13 +136,6 @@ class DataModule(pl.LightningDataModule):
             self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
-
-        # TODO: figure out best solution for setting num_workers
-        if num_workers is None:
-            if platform.system() in ("Darwin", "Windows"):
-                num_workers = 0
-            else:
-                num_workers = os.cpu_count()
         self.num_workers = num_workers
         self.sampler = sampler
 
