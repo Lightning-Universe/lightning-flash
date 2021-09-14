@@ -40,7 +40,7 @@ Flash enables you to easily configure and run complex AI recipes for [over 15 ta
   </a>
 </div>
 
-## How to Use
+## Flash in 3 steps
 
 ### Step 0: Install
 
@@ -56,17 +56,19 @@ See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/in
 
 All data loading in Flash is performed via a `from_*` classmethod on a `DataModule`.
 Which `DataModule` to use and which `from_*` methods are available depends on the task you want to perform.
-For example, for image classification where your data is stored in folders, you would use the [`from_folders` method of the `ImageClassificationData` class](https://lightning-flash.readthedocs.io/en/latest/reference/image_classification.html#from-folders):
+For example, for image segmentation where your data is stored in folders, you would use the [`from_folders` method of the `SemanticSegmentationData` class](https://lightning-flash.readthedocs.io/en/latest/reference/semantic_segmentation.html#from-folders):
 
 ```py
-from flash.image import ImageClassificationData
+from flash.image import SemanticSegmentationData
 
-data_module = ImageClassificationData.from_folders(
-    train_folder = "./train_images",
-    val_folder = "./val_images",
-    image_size=(128, 128),
-    batch_size=64,
+dm = SemanticSegmentationData.from_folders(
+    train_folder="data/CameraRGB",
+    train_target_folder="data/CameraSeg",
+    val_split=0.1,
+    image_size=(256, 256),
+    num_classes=21,
 )
+
 ```
 
 ### Step 2: Configure your model
@@ -76,9 +78,18 @@ You can view the available backbones to use with your task using [`available_bac
 Once you've chosen, create the model:
 
 ```py
-from flash.image import ImageClassifier
+from flash.image import SemanticSegmentation
 
-model = ImageClassifier("resnet18", num_classes=data_module.num_classes)
+print(SemanticSegmentation.available_heads())
+# ['deeplabv3', 'deeplabv3plus', 'fpn', 'linknet', 'manet', 'pan', 'pspnet', 'unet', 'unetplusplus']
+
+print(SemanticSegmentation.available_backbones('fpn'))
+# ['densenet121', ..., 'xception'] # + 113 models
+
+print(SemanticSegmentation.available_pretrained_weights('efficientnet-b0'))
+# ['imagenet', 'advprop']
+
+model = SemanticSegmentation(head="fpn", backbone='efficientnet-b0', pretrained="advprop", num_classes=dm.num_classes)
 ```
 
 ### Step 3: Finetune!
@@ -92,34 +103,16 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 ---
 
-## Custom Transform Recipes
+## Custom Recipes
 
-Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your augmentation recipe.
+### Flash Transforms
+
+
+Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your own augmentation recipe.
 To this end, Flash supports custom transformations backed by our powerful data pipeline.
 You can provide transforms to be applied per sample or per batch either on or off device.
-Transforms are applied to the whole data dict (typically containing "input", "target", and "metadata"), so you can implement complex transforms (like MixUp) with ease.
-
-To use this feature, just configure your transform recipe as a dictionary which maps the hook name (see the available hooks in our documentation) to the transform to apply.
-Here's a simple example:
-
-```py
-from torchvision import transforms as T
-from flash.core.data.transforms import ApplyToKeys, merge_transforms
-from flash.image import ImageClassificationData
-from flash.image.classification.transforms import default_transforms
-
-train_transform = {
-    "post_tensor_transform": ApplyToKeys("input", T.Compose([T.RandomHorizontalFlip(), T.ColorJitter()])),
-}
-train_transform = merge_transforms(default_transforms((64, 64)), train_transform)
-
-datamodule = ImageClassificationData.from_folders(
-    train_folder = "./train_folder",
-    predict_folder = "./predict_folder",
-    train_transform=train_transform,
-    ...
-)
-```
+Transforms are applied to the whole data dict (typically containing "input", "target", and "metadata"),
+so you can implement complex transforms (like MixUp) with ease.
 
 The example makes use of our [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility to just apply the torchvision augmentations to the "input".
 The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our augmentations with the default transforms for images (which handle resizing and converting to a tensor).
@@ -147,7 +140,7 @@ def mixup(batch, alpha=1.0):
 
 train_transform = {
     "post_tensor_transform": ApplyToKeys("input", T.Compose([T.RandomHorizontalFlip(), T.ColorJitter()])),
-    "per_batch_transform": mixup,
+    "per_batch_transform_on_device": mixup, # this would be applied on GPUS !
 }
 train_transform = merge_transforms(default_transforms((64, 64)), train_transform)
 
@@ -157,6 +150,22 @@ datamodule = ImageClassificationData.from_folders(
     train_transform=train_transform,
     ...
 )
+```
+
+
+## Flash-Zero - no code experience !
+
+Flash Zero is a zero-code machine learning platform built directly into lightning-flash and over [`lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
+To get started and view the available tasks, run:
+
+```bash
+  flash --help
+```
+
+For example, to train an image classifier for 10 epochs with a `resnet50` backbone on 2 gpus over you own data, you can use:
+
+```bash
+  flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 --train_folder {PATH_TO_DATA}
 ```
 
 ---
