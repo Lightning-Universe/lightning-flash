@@ -193,7 +193,16 @@ datamodule = ImageClassificationData.from_folders(
 
 ## Flash Zero - PyTorch Recipes from the Command Line !
 
-Flash Zero is a zero-code machine learning platform built directly into lightning-flash and over [`lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
+Flash Zero is a zero-code machine learning platform built
+directly into lightning-flash
+and over [`lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
+
+<div align="left">
+  <a href="https://lightning-flash.readthedocs.io/en/stable">
+    <img src="https://pl-flash-data.s3.amazonaws.com/assets/flash_zero.gif" width="50%">
+  </a>
+</div>
+
 To get started and view the available tasks, run:
 
 ```py
