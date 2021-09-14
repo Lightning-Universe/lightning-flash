@@ -141,8 +141,8 @@ jobs:
     - name: Install graph test dependencies
       if: matrix.topic[0] == 'graph'
       run: |
-        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
-        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
+        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.9.0+cu102.html
+        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.9.0+cu102.html
 
     - name: Install dependencies
       run: |
@@ -174,12 +174,6 @@ jobs:
         path: data # This path is specific to Ubuntu
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
-
-    - name: CUDA Version
-      run: |
-        import torch
-        print(torch.version.cuda)
-      shell: python
 
     - name: Tests
       env:
