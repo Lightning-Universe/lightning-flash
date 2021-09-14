@@ -172,8 +172,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: data # This path is specific to Ubuntu
-        key: lightning-flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
-        restore-keys: lightning-flash-datasets-
+        key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
+        restore-keys: flash-datasets-
 
     - name: Tests
       env:
