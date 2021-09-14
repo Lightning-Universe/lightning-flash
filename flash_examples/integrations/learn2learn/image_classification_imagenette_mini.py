@@ -76,7 +76,6 @@ datamodule = ImageClassificationData.from_tensors(
 )
 
 model = ImageClassifier(
-    datamodule.num_classes,
     backbone="resnet18",
     pretrained=False,
     training_strategy="prototypicalnetworks",
@@ -87,6 +86,7 @@ model = ImageClassifier(
         "meta_batch_size": 4,
         "num_tasks": 200,
         "test_num_tasks": 2000,
+        "ways": datamodule.num_classes,
         "shots": 1,
         "test_ways": 5,
         "test_shots": 1,
@@ -97,7 +97,7 @@ model = ImageClassifier(
 trainer = flash.Trainer(
     max_epochs=200,
     gpus=2,
-    accelerator="ddp_sharded",
+    acceletator="ddp_shared",
     precision=16,
 )
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
