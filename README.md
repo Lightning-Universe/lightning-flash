@@ -128,15 +128,7 @@ import albumentations
 from torchvision import transforms as T
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.image import ImageClassificationData
-from flash.image.classification.transforms import default_transforms
-
-class AlbumentationsAdapter(torch.nn.Module):
-    def __init__(self, transform):
-        super().__init__()
-        self.transform = transform
-
-    def forward(self, x):
-        return self.transform(image=x)["image"]
+from flash.image.classification.transforms import default_transforms, AlbumentationsAdapter
 
 def mixup(batch: Dict[str, Any], alpha=1.0) -> Dict[str, Any]:
     images = batch["input"]
@@ -153,7 +145,7 @@ def mixup(batch: Dict[str, Any], alpha=1.0) -> Dict[str, Any]:
 train_transform = {
     # applied only on images as ApplyToKeys is used with `input`
     "post_tensor_transform": ApplyToKeys("input", AlbumentationsAdapter(
-        albumentations.Compose([albumentations.Resize(224, 224), albumentations.HorizontalFlip(p=0.5)]))),
+        [albumentations.Resize(224, 224), albumentations.HorizontalFlip(p=0.5)])),
 
     # applied to the entire dictionary as `ApplyToKeys` isn't used.
     # this would be applied on GPUS !

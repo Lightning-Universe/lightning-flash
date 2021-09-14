@@ -100,6 +100,7 @@ _ICEVISION_AVAILABLE = _module_available("icevision")
 _ICEDATA_AVAILABLE = _module_available("icedata")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
+_ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 
 if _PIL_AVAILABLE:
     from PIL import Image
