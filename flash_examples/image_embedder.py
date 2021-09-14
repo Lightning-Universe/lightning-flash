@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import torch
-import flash
-
 from torchvision.datasets import CIFAR10
 
 import flash
@@ -21,11 +19,11 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageEmbedder
-from flash.image.embedding.vissl.transforms import vissl_collate_fn
 from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
+from flash.image.embedding.vissl.transforms import vissl_collate_fn
 
 # 1. Download the data and pre-process the data
-transform = IMAGE_EMBEDDER_TRANSFORMS.get('simclr_transform')()
+transform = IMAGE_EMBEDDER_TRANSFORMS.get("simclr_transform")()
 
 to_tensor_transform = ApplyToKeys(
     DefaultDataKeys.INPUT,

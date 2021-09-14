@@ -32,7 +32,7 @@ def simclr_transform(
     normalize: Optional[nn.Module] = None,
 ) -> nn.Module:
     """For simclr, barlow twins and moco."""
-    transform = TRANSFORM_REGISTRY['multicrop_ssl_transform'](
+    transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
         total_num_crops=total_num_crops,
         num_crops=num_crops,
         size_crops=size_crops,
@@ -55,7 +55,7 @@ def swav_transform(
     normalize: Optional[nn.Module] = None,
 ) -> nn.Module:
     """For swav and dino."""
-    transform = TRANSFORM_REGISTRY['multicrop_ssl_transform'](
+    transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
         total_num_crops=total_num_crops,
         num_crops=num_crops,
         size_crops=size_crops,
