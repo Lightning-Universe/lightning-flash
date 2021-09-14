@@ -31,7 +31,9 @@
 ---
 
 <div align="center">
-  Flash enables you to easily configure and run complex AI recipes for over 15 tasks across 7 data domains.
+  <b>
+    Flash enables you to easily configure and run complex AI recipes for over 15 tasks across 7 data domains
+  </b>
 </div>
 
 <div align="center">
