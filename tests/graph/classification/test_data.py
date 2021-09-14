@@ -41,6 +41,7 @@ class TestGraphClassificationData:
         dm = GraphClassificationData()
         assert dm is not None
 
+    @pytest.skip()
     def test_from_datasets(self, tmpdir):
         tudataset = TUDataset(root=tmpdir, name="KKI")
         train_dataset = tudataset
@@ -80,6 +81,7 @@ class TestGraphClassificationData:
         assert list(data.x.size())[1] == tudataset.num_features
         assert list(data.y.size()) == [2]
 
+    @pytest.skip()
     def test_transforms(self, tmpdir):
         tudataset = TUDataset(root=tmpdir, name="KKI")
         train_dataset = tudataset
