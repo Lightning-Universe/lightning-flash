@@ -8,7 +8,7 @@
 ---
 
 <p align="center">
-  <a href="#step-0-install">Installation</a> •
+  <a href="#getting-started">Installation</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
   <a href="#how-to-use">How to Use</a> •
   <a href="#contribute">Contribute</a> •
@@ -42,7 +42,7 @@
   </a>
 </div>
 
-## Getting started
+## Getting Started
 
 From PyPI:
 
