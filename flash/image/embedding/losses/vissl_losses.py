@@ -104,7 +104,9 @@ def swav_loss(
     return get_loss_fn(loss_name, cfg)
 
 
-def barlow_twins_loss(lambda_: float = 0.0051, scale_loss: float = 0.024, latent_embedding_dim: int = 8192) -> ClassyLoss:
+def barlow_twins_loss(
+    lambda_: float = 0.0051, scale_loss: float = 0.024, latent_embedding_dim: int = 8192
+) -> ClassyLoss:
     loss_name = "barlow_twins_loss"
     cfg = AttrDict(
         {

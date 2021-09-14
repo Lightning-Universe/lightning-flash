@@ -16,8 +16,8 @@ import re
 
 import pytest
 import torch
-import flash
 
+import flash
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageEmbedder
 from tests.helpers.utils import _IMAGE_TESTING
@@ -29,7 +29,7 @@ from tests.image.embedding.utils import ssl_datamodule
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 
-    model = ImageEmbedder(training_strategy='barlow_twins')
+    model = ImageEmbedder(training_strategy="barlow_twins")
     model.eval()
 
     model = jitter(model, *args)
@@ -61,7 +61,7 @@ def test_vissl_training(tmpdir, backbone, training_strategy):
     embedder = ImageEmbedder(
         backbone=backbone,
         training_strategy=training_strategy,
-        head='simclr_head',
+        head="simclr_head",
         latent_embedding_dim=128,
     )
 
