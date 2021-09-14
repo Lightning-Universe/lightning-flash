@@ -30,8 +30,6 @@
 
 ---
 
-## Flash makes complex PyTorch Recipes simple
-
 Flash enables you to easily configure and run complex AI recipes for [over 15 tasks across 7 data domains](https://lightning-flash.readthedocs.io/en/stable/).
 
 <div align="center">
@@ -189,7 +187,7 @@ datamodule = ImageClassificationData.from_folders(
 
 ```
 
-## Flash-Zero - no code experience !
+## Flash Zero - PyTorch Recipes from the Command Line !
 
 Flash Zero is a zero-code machine learning platform built directly into lightning-flash and over [`lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
 To get started and view the available tasks, run:
