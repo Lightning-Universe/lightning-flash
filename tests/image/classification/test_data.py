@@ -576,7 +576,8 @@ def test_from_bad_csv_no_image(bad_csv_no_image):
         _ = next(iter(img_data.train_dataloader()))
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ALBUMENTATIONS_AVAILABLE, reason="albumentations isn't installed.")
 def test_albumentations_mixup(single_target_csv):
     def mixup(batch, alpha=1.0):
         images = batch["input"]
