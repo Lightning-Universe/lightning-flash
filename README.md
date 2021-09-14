@@ -167,13 +167,13 @@ datamodule = ImageClassificationData.from_folders(
 Flash Zero is a zero-code machine learning platform built directly into lightning-flash and over [`lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
 To get started and view the available tasks, run:
 
-```bash
+```py
   flash --help
 ```
 
 For example, to train an image classifier for 10 epochs with a `resnet50` backbone on 2 gpus over you own data, you can use:
 
-```bash
+```py
   flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 --train_folder {PATH_TO_DATA}
 ```
 
