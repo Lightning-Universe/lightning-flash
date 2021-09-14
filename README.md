@@ -194,7 +194,7 @@ datamodule = ImageClassificationData.from_folders(
 ## Flash Zero - PyTorch Recipes from the Command Line!
 
 <div align="center">
-<img src="/docs/source/_static/images/flash_zero.gif?raw=true" width="90%">
+<img src="/docs/source/_static/images/flash_zero.gif?raw=true" width="75%">
 </div>
 
 Flash Zero is a zero-code machine learning platform built
