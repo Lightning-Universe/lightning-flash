@@ -8,7 +8,7 @@
 ---
 
 <p align="center">
-  <a href="#step-0-install">Installation</a> •
+  <a href="#getting-started">Installation</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
   <a href="#how-to-use">How to Use</a> •
   <a href="#contribute">Contribute</a> •
@@ -42,7 +42,7 @@
   </a>
 </div>
 
-## Getting stated
+## Getting Started
 
 From PyPI:
 
@@ -210,7 +210,7 @@ To get started and view the available tasks, run:
 For example, to train an image classifier for 10 epochs with a `resnet50` backbone on 2 gpus over you own data, you can do:
 
 ```py
-  flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 --train_folder {PATH_TO_DATA}
+  flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 from_folders --train_folder {PATH_TO_DATA}
 ```
 
 ---
