@@ -222,6 +222,10 @@ def test_label_studio_predictions_visualization():
     assert len(vis_predictions) == 4
     assert vis_predictions[0]["result"][0]["id"] != vis_predictions[3]["result"][0]["id"]
     assert vis_predictions[1]["result"][0]["id"] != vis_predictions[2]["result"][0]["id"]
+    tasks_predictions = app.show_tasks(predictions)
+    assert len(tasks_predictions) == 4
+    tasks_predictions_json = app.show_tasks(predictions, export_json="data/project.json")
+    assert tasks_predictions_json
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
@@ -271,10 +275,13 @@ def test_datasource_labelstudio_video():
     preprocess = VideoClassificationPreprocess()
     ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
+    sample_iter = iter(train)
+    sample = next(sample_iter)
     assert train
     assert not val
     assert test
     assert not predict
+    assert sample
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
