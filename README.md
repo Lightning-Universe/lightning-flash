@@ -113,8 +113,8 @@ Flash includes some simple augmentations for each task by default, however, you 
 To this end, Flash supports custom transformations backed by our powerful data pipeline.
 The transform requires to be passed as a dictionary of transforms where the keys are the [hook's name](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.process.Preprocess.html?highlight=Preprocess).
 This enable transforms to be applied per sample or per batch either on or off device.
-It is important to note data are being processed as a dictionary for all tasks (typically containing `input`, `target`, and `metadata`),
-Therefore, transforms requires to be applied to be a specific key using [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility.
+It is important to note that data are being processed as a dictionary for all tasks (typically containing `input`, `target`, and `metadata`),
+Therefore, you can use [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility to apply the transform to a specific key.
 Complex transforms (like MixUp) can then be implemented with ease.
 
 The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our custom augmentations with the default transforms for images (which handle resizing and converting to a tensor).
