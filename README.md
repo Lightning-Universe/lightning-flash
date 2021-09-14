@@ -29,9 +29,8 @@
 </div>
 
 ---
-
+Flash enables you to easily configure and run complex AI recipes for over [15 tasks across 7 different domains](https://lightning-flash.readthedocs.io/en/latest).
 <div align="center">
-  Flash enables you to easily configure and run complex AI recipes for over 15 tasks across 7 data domains
   <a href="https://lightning-flash.readthedocs.io/en/stable">
     <img src="https://pl-flash-data.s3.amazonaws.com/assets/banner.gif">
   </a>
