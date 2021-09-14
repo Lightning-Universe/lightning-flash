@@ -103,7 +103,7 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 ---
 
-## Custom Recipes
+## PyTorch Recipes
 
 ### Flash Transforms
 
