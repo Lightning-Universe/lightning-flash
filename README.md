@@ -120,7 +120,7 @@ or make predictions from raw data directly.
 predictions = model.predict(["data/CameraRGB/F61-1.png", "data/CameraRGB/F62-1.png"])
 ```
 
-or make predictions from on 2 GPUs.
+or make predictions with 2 GPUs.
 
 ```py
 trainer = Trainer(accelerator='ddp', gpus=2)
