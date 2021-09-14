@@ -120,6 +120,14 @@ or make predictions from raw data directly.
 predictions = model.predict(["data/CameraRGB/F61-1.png", "data/CameraRGB/F62-1.png"])
 ```
 
+or make predictions from on 2 GPUs.
+
+```py
+trainer = Trainer(accelerator='ddp', gpus=2)
+dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
+predictions = trainer.predict(model, dm)
+```
+
 ---
 
 ## PyTorch Recipes
