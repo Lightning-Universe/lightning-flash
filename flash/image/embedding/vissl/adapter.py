@@ -150,7 +150,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return cfg
 
-    def forward(self, batch) -> Any:
+    def forward(self, batch: torch.Tensor) -> Any:
         return self.vissl_base_model.trunk(batch, [])[0]
 
     def ssl_forward(self, batch) -> Any:

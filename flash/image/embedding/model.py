@@ -63,6 +63,7 @@ class ImageEmbedder(AdapterTask):
     def __init__(
         self,
         training_strategy: str,
+        embedding_dim: int = 128,
         backbone: str = "resnet",
         pretrained: bool = True,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,

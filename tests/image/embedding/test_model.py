@@ -62,7 +62,7 @@ def test_vissl_training(tmpdir, backbone, training_strategy):
         backbone=backbone,
         training_strategy=training_strategy,
         head='simclr_head',
-        embedding_dim=128,
+        latent_embedding_dim=128,
     )
 
     trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
