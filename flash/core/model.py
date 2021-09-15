@@ -394,7 +394,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
         self.log_dict({f"train_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()}, on_step=True, on_epoch=True, prog_bar=True)
-        return output[DefaultOutputDataKeys.OUTPUT]
+        return output[DefaultOutputDataKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
