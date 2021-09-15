@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import math
 from itertools import chain
 from numbers import Number
@@ -287,29 +288,30 @@ def test_available_backbones():
 def test_optimization(tmpdir):
 
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
-    optim = torch.optim.Adam(model.parameters())
-    task = ClassificationTask(model, optimizer=optim, scheduler=None)
+    # optim = functools.partial(torch.optim.Adam)  # (model.parameters())
+    # task = ClassificationTask(model, optimizer=optim, scheduler=None)
 
-    optimizer = task.configure_optimizers()
-    assert optimizer == optim
+    # optimizer = task.configure_optimizers()
+    # assert optimizer == optim
 
-    task = ClassificationTask(model, optimizer=torch.optim.Adadelta, optimizer_kwargs={"eps": 0.5}, scheduler=None)
+    task = ClassificationTask(model, optimizer=functools.partial(torch.optim.Adadelta, eps=0.5), scheduler=None)
     optimizer = task.configure_optimizers()
     assert isinstance(optimizer, torch.optim.Adadelta)
     assert optimizer.defaults["eps"] == 0.5
 
     task = ClassificationTask(
         model,
-        optimizer=torch.optim.Adadelta,
-        scheduler=torch.optim.lr_scheduler.StepLR,
-        scheduler_kwargs={"step_size": 1},
+        optimizer=functools.partial(torch.optim.Adadelta),
+        scheduler=functools.partial(torch.optim.lr_scheduler.StepLR, step_size=1),
+        # scheduler_kwargs={"step_size": 1},
     )
     optimizer, scheduler = task.configure_optimizers()
     assert isinstance(optimizer[0], torch.optim.Adadelta)
     assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
 
-    optim = torch.optim.Adadelta(model.parameters())
-    task = ClassificationTask(model, optimizer=optim, scheduler=torch.optim.lr_scheduler.StepLR(optim, step_size=1))
+    optim = functools.partial(torch.optim.Adadelta)  # (model.parameters())
+    scheduler = functools.partial(torch.optim.lr_scheduler.StepLR, step_size=1)
+    task = ClassificationTask(model, optimizer=optim, scheduler=scheduler)
     optimizer, scheduler = task.configure_optimizers()
     assert isinstance(optimizer[0], torch.optim.Adadelta)
     assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
@@ -319,7 +321,7 @@ def test_optimization(tmpdir):
 
         assert isinstance(task.available_schedulers(), list)
 
-        optim = torch.optim.Adadelta(model.parameters())
+        optim = functools.partial(torch.optim.Adadelta)  # (model.parameters())
         with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
             task = ClassificationTask(model, optimizer=optim, scheduler="linear_schedule_with_warmup")
             optimizer, scheduler = task.configure_optimizers()

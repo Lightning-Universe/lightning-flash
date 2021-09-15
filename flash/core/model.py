@@ -17,7 +17,7 @@ import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -29,6 +29,7 @@ from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
+from torch.functional import Tensor
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
@@ -302,9 +303,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self,
         model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        optimizer: Optional[Callable[[Iterable[Tensor]], Optimizer]] = functools.partial(torch.optim.Adam),
+        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[str, Callable[..., _LRScheduler]]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
@@ -319,8 +320,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.optimizer_kwargs = optimizer_kwargs or {}
-        self.scheduler_kwargs = scheduler_kwargs or {}
+        # self.optimizer_kwargs: Dict[str, Any] = optimizer_kwargs or {}
+        self.scheduler_kwargs: Dict[str, Any] = scheduler_kwargs or {}
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
@@ -464,11 +465,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return self(batch)
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
-        optimizer = self.optimizer
-        if not isinstance(self.optimizer, Optimizer):
-            self.optimizer_kwargs["lr"] = self.learning_rate
-            optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), **self.optimizer_kwargs)
-        if self.scheduler:
+        model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        optimizer: Optimizer = self.optimizer(model_parameters, lr=self.learning_rate)
+        # if not isinstance(self.optimizer, Optimizer):
+        #     self.optimizer_kwargs["lr"] = self.learning_rate
+        #     optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), **self.optimizer_kwargs)
+        if self.scheduler is not None:
             return [optimizer], [self._instantiate_scheduler(optimizer)]
         return optimizer
 
@@ -808,8 +810,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
         scheduler = self.scheduler
-        if isinstance(scheduler, _LRScheduler):
-            return scheduler
+        # if isinstance(scheduler, Callable):
+        #     return scheduler(optimizer)
         if isinstance(scheduler, str):
             scheduler_fn = self.schedulers.get(self.scheduler)
             num_training_steps: int = self.get_num_training_steps()
@@ -818,12 +820,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
                 num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
             )
             return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-        if issubclass(scheduler, _LRScheduler):
-            return scheduler(optimizer, **self.scheduler_kwargs)
-        raise MisconfigurationException(
-            "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
-            f"or a built-in scheduler in {self.available_schedulers()}"
-        )
+        # # if issubclass(scheduler, _LRScheduler):
+        # #     return scheduler(optimizer, **self.scheduler_kwargs)
+        # raise MisconfigurationException(
+        #     "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
+        #     f"or a built-in scheduler in {self.available_schedulers()}"
+        # )
+        return scheduler(optimizer)
 
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
