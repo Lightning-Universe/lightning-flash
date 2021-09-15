@@ -1,9 +1,9 @@
-from flash.image.embedding.vissl.transforms.utilities import multicrop_collate_fn
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import DefaultPreprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData
+from flash.image.embedding.vissl.transforms.utilities import multicrop_collate_fn
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets import FakeData
