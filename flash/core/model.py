@@ -266,6 +266,19 @@ class CheckDependenciesMeta(ABCMeta):
                 )
         return result
 
+class DefaultOutputDataKeys(LightningEnum):
+    """The ``DefaultDataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
+    targets."""
+
+    OUTPUT = "y_hat"
+    TARGET = "y"
+    LOGS = "logs"
+    LOSS = "loss"
+
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
+
 
 class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
@@ -331,11 +344,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         x, y = batch
         y_hat = self(x)
         y, y_hat = self.apply_filtering(y, y_hat)
-        output = {"y_hat": y_hat}
-        y_hat = self.to_loss_format(output["y_hat"])
+        output = {DefaultOutputDataKeys.OUTPUT: y_hat}
+        y_hat = self.to_loss_format(output[DefaultOutputDataKeys.OUTPUT])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
 
-        y_hat = self.to_metrics_format(output["y_hat"])
+        y_hat = self.to_metrics_format(output[DefaultOutputDataKeys.OUTPUT])
 
         logs = {}
 
@@ -350,9 +363,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             logs["total_loss"] = sum(losses.values())
             return logs["total_loss"], logs
 
-        output["loss"] = self.compute_loss(losses)
-        output["logs"] = self.compute_logs(logs, losses)
-        output["y"] = y
+        output[DefaultOutputDataKeys.LOSS] = self.compute_loss(losses)
+        output[DefaultOutputDataKeys.LOGS] = self.compute_logs(logs, losses)
+        output[DefaultOutputDataKeys.TARGET] = y
         return output
 
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
@@ -380,16 +393,16 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
-        self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
-        return output["loss"]
+        self.log_dict({f"train_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()}, on_step=True, on_epoch=True, prog_bar=True)
+        return output[DefaultOutputDataKeys.OUTPUT]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict({f"val_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict({f"test_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()}, on_step=False, on_epoch=True, prog_bar=True)
 
     @predict_context
     def predict(
