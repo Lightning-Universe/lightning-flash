@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-
 from flash.core.classification import Probabilities
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
@@ -31,9 +29,7 @@ datamodule = ImageClassificationData.from_folders(
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Probabilities())
 
 # 3. Create the trainer and finetune the model
-trainer = ActiveLearningTrainer(
-    max_epochs=3, limit_train_batches=2, limit_val_batches=2, gpus=torch.cuda.device_count()
-)
+trainer = ActiveLearningTrainer(max_epochs=3, imit_train_batches=2, limit_val_batches=2)
 
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
