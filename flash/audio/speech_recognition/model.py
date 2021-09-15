@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Dict, Mapping, Optional, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Type, Union
 
 import torch
 import torch.nn as nn
@@ -54,8 +54,8 @@ class SpeechRecognition(Task):
     def __init__(
         self,
         backbone: str = "facebook/wav2vec2-base-960h",
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
+        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         learning_rate: float = 1e-5,
@@ -71,7 +71,7 @@ class SpeechRecognition(Task):
         super().__init__(
             model=model,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
+            # optimizer_kwargs=optimizer_kwargs,
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
             learning_rate=learning_rate,

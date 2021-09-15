@@ -288,11 +288,11 @@ def test_available_backbones():
 def test_optimization(tmpdir):
 
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
-    # optim = functools.partial(torch.optim.Adam)  # (model.parameters())
-    # task = ClassificationTask(model, optimizer=optim, scheduler=None)
+    optim = "Adam"
+    task = ClassificationTask(model, optimizer=optim, scheduler=None)
 
-    # optimizer = task.configure_optimizers()
-    # assert optimizer == optim
+    optimizer = task.configure_optimizers()
+    assert isinstance(optimizer, torch.optim.Adam)
 
     task = ClassificationTask(model, optimizer=functools.partial(torch.optim.Adadelta, eps=0.5), scheduler=None)
     optimizer = task.configure_optimizers()
@@ -301,15 +301,14 @@ def test_optimization(tmpdir):
 
     task = ClassificationTask(
         model,
-        optimizer=functools.partial(torch.optim.Adadelta),
+        optimizer="Adadelta",
         scheduler=functools.partial(torch.optim.lr_scheduler.StepLR, step_size=1),
-        # scheduler_kwargs={"step_size": 1},
     )
     optimizer, scheduler = task.configure_optimizers()
     assert isinstance(optimizer[0], torch.optim.Adadelta)
     assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
 
-    optim = functools.partial(torch.optim.Adadelta)  # (model.parameters())
+    optim = functools.partial(torch.optim.Adadelta)
     scheduler = functools.partial(torch.optim.lr_scheduler.StepLR, step_size=1)
     task = ClassificationTask(model, optimizer=optim, scheduler=scheduler)
     optimizer, scheduler = task.configure_optimizers()
@@ -321,7 +320,7 @@ def test_optimization(tmpdir):
 
         assert isinstance(task.available_schedulers(), list)
 
-        optim = functools.partial(torch.optim.Adadelta)  # (model.parameters())
+        optim = functools.partial(torch.optim.Adadelta)
         with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
             task = ClassificationTask(model, optimizer=optim, scheduler="linear_schedule_with_warmup")
             optimizer, scheduler = task.configure_optimizers()

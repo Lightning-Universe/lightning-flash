@@ -17,7 +17,7 @@ import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -29,7 +29,6 @@ from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
-from torch.functional import Tensor
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
@@ -47,8 +46,8 @@ from flash.core.data.process import (
     SerializerMapping,
 )
 from flash.core.data.properties import ProcessState
+from flash.core.optimizers import _OPTIMIZERS_REGISTRY, _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
-from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
@@ -295,6 +294,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
     """
 
+    optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
 
     required_extras: Optional[Union[str, List[str]]] = None
@@ -303,12 +303,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self,
         model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Optional[Callable[[Iterable[Tensor]], Optimizer]] = functools.partial(torch.optim.Adam),
+        learning_rate: float = 5e-5,
+        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
         # optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[str, Callable[..., _LRScheduler]]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
         deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
@@ -465,6 +465,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return self(batch)
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
+        if isinstance(self.optimizer, str):
+            self.optimizer = self.optimizers.get(self.optimizer)
+
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         optimizer: Optimizer = self.optimizer(model_parameters, lr=self.learning_rate)
         # if not isinstance(self.optimizer, Optimizer):

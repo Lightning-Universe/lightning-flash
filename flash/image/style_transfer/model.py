@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, cast, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, cast, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from torch import nn
@@ -79,8 +79,8 @@ class StyleTransfer(Task):
         content_weight: float = 1e5,
         style_layers: Union[Sequence[str], str] = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"],
         style_weight: float = 1e10,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
+        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         learning_rate: float = 1e-3,
@@ -112,7 +112,7 @@ class StyleTransfer(Task):
             model=model,
             loss_fn=perceptual_loss,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
+            # optimizer_kwargs=optimizer_kwargs,
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
             learning_rate=learning_rate,

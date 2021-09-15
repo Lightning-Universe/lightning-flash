@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Mapping, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Type, Union
 
 import torch
-from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
@@ -62,8 +61,8 @@ class KeypointDetector(AdapterTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "keypoint_rcnn",
         pretrained: bool = True,
-        optimizer: Type[Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
+        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         learning_rate: float = 5e-4,
@@ -87,7 +86,7 @@ class KeypointDetector(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
+            # optimizer_kwargs=optimizer_kwargs,
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
             serializer=serializer or Preds(),
