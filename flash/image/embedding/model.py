@@ -75,7 +75,7 @@ class ImageEmbedder(AdapterTask):
     ):
         self.save_hyperparameters()
 
-        backbone, num_features = self.backbones.get(backbone)(**kwargs)
+        backbone, num_features = self.backbones.get(backbone)(**kwargs, pretrained=pretrained)
 
         # TODO: add linear layer to backbone to get num_feature -> embedding_dim before applying heads
         # assert embedding_dim == num_features
@@ -91,7 +91,14 @@ class ImageEmbedder(AdapterTask):
             hooks=hooks,
         )
 
-        super().__init__(adapter=adapter)
+        super().__init__(
+            adapter=adapter,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            learning_rate=learning_rate,
+        )
 
     def on_train_start(self) -> None:
         self.adapter.on_train_start()

@@ -185,16 +185,15 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return loss
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        # vissl_input, target = batch
-        # out = self(vissl_input)
+        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
+        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
-        # # out can be torch.Tensor/List target is torch.Tensor
-        # loss = self.vissl_loss(out, target)
+        loss = self.loss_fn(out, target=None)
+        self.adapter_task.log_dict({"test_loss": loss})
 
-        # # TODO: log
-        # # TODO: Include call to ClassyHooks during training
-        pass
+        return loss
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # TODO: return embedding here
-        pass
+        input_image = batch[DefaultDataKeys.INPUT]
+
+        return self(input_image)

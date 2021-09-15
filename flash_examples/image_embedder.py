@@ -20,7 +20,7 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageEmbedder
 from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
-from flash.image.embedding.vissl.transforms import vissl_collate_fn
+from flash.image.embedding.vissl.transforms import multicrop_collate_fn
 
 # 1. Download the data and pre-process the data
 transform = IMAGE_EMBEDDER_TRANSFORMS.get("simclr_transform")()
@@ -34,12 +34,12 @@ datamodule = ImageClassificationData.from_datasets(
     train_dataset=CIFAR10(".", download=True),
     train_transform={
         "to_tensor_transform": to_tensor_transform,
-        "collate": vissl_collate_fn,
+        "collate": multicrop_collate_fn,
     },
     batch_size=16,
 )
 
-# 2. Build the task (here embedding_dim is a param for barlow_twins loss)
+# 2. Build the task
 embedder = ImageEmbedder(
     backbone="resnet",
     training_strategy="barlow_twins",
@@ -48,12 +48,11 @@ embedder = ImageEmbedder(
 )
 
 # 3. Create the trainer and pre-train the encoder
-trainer = flash.Trainer(max_epochs=3, max_steps=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
 trainer.save_checkpoint("image_embedder_model.pt")
-exit(-1)
 
 # 5. Download the downstream prediction dataset and generate embeddings
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
