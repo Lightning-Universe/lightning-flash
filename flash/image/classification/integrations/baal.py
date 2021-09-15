@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from copy import deepcopy
-from typing import Any, Dict, Generator, Optional
+from functools import partial
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 import torch
@@ -20,6 +21,7 @@ from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import RunningStage, TrainerFn, TrainerStatus
+from torch.nn.modules.batchnorm import _BatchNorm
 
 import flash
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
@@ -33,7 +35,7 @@ class ActiveLearningTrainer(flash.Trainer):
     def __init__(self, *args, **kwags):
         super().__init__(*args, **kwags)
 
-        active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, heuristics=BALD())
+        active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, heuristics=BALD(reduction=np.mean))
         active_learning_loop.connect(self.fit_loop)
         self.fit_loop = active_learning_loop
         active_learning_loop.trainer = self
@@ -41,7 +43,7 @@ class ActiveLearningTrainer(flash.Trainer):
 
 class ActiveLearningLoop(Loop):
     @requires("baal")
-    def __init__(self, label_epoch_frequency: int, heuristics: "AbstractHeuristic"):
+    def __init__(self, label_epoch_frequency: int, heuristics: "AbstractHeuristic", inference_iteration: int = 2):
         super().__init__()
         self.label_epoch_frequency = label_epoch_frequency
         self.fit_loop: Optional[FitLoop] = None
@@ -49,6 +51,7 @@ class ActiveLearningLoop(Loop):
         self.progress = Progress()
         self.heuristics = heuristics
         self._should_continue: bool = False
+        self.inference_iteration = inference_iteration
 
     def __getattr__(self, key):
         if key not in self.__dict__:
@@ -85,15 +88,19 @@ class ActiveLearningLoop(Loop):
         self.fit_loop.run()
         self._reset_predicting()
         predictions = self.trainer.predict_loop.run()
-        self.heuristics(self._generator_prediction(predictions[0]))
-        breakpoint()
-        self._reset_training()
+        uncertainties = [self.heuristics.get_uncertainties(np.asarray(p)) for idx, p in enumerate(predictions)]
+        _ = np.argsort(uncertainties)
+        self._reset_fitting()
         self.progress.increment_processed()
 
     def on_advance_end(self) -> None:
         self.trainer.lightning_module.load_state_dict(self.state_dict)
         self.progress.increment_completed()
         return super().on_advance_end()
+
+    def on_run_end(self):
+        self.trainer.lightning_module.predict_step = self.trainer.lightning_module._predict_step
+        return super().on_run_end()
 
     @property
     def done(self) -> bool:
@@ -102,16 +109,35 @@ class ActiveLearningLoop(Loop):
     def reset(self) -> None:
         pass
 
-    def _reset_training(self):
+    @staticmethod
+    def _mc_inference(*args, predict_step_fn: Callable = None, inference_iteration: int = None, **kwargs):
+        out = []
+        for _ in range(inference_iteration):
+            out.append(predict_step_fn(*args, **kwargs))
+        return out
+
+    def _reset_fitting(self):
         self.trainer.state.fn = TrainerFn.FITTING
         self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.training = True
+        self.trainer.lightning_module.on_train_dataloader()
+
+    def _identity(self, *args, **kwargs):
+        pass
 
     def _reset_predicting(self):
         self.trainer.state.fn = TrainerFn.PREDICTING
         self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.predicting = True
-
-    def _generator_prediction(self, predictions) -> Generator:
-        for prediction in predictions:
-            yield np.argmax(prediction)
+        self.trainer.lightning_module.on_predict_dataloader()
+        self.trainer.lightning_module.on_predict_model_eval = self._identity
+        for _, module in self.trainer.lightning_module.named_modules():
+            if isinstance(module, _BatchNorm):
+                module.eval()
+        if getattr(self.trainer.lightning_module, "_predict_step", None) is None:
+            self.trainer.lightning_module._predict_step = self.trainer.lightning_module.predict_step
+        self.trainer.lightning_module.predict_step = partial(
+            self._mc_inference,
+            predict_step_fn=self.trainer.lightning_module._predict_step,
+            inference_iteration=self.inference_iteration,
+        )
