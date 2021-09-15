@@ -266,6 +266,7 @@ class CheckDependenciesMeta(ABCMeta):
                 )
         return result
 
+
 class DefaultOutputDataKeys(LightningEnum):
     """The ``DefaultDataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
     targets."""
@@ -393,16 +394,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
-        self.log_dict({f"train_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()}, on_step=True, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"train_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()},
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+        )
         return output[DefaultOutputDataKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"val_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"val_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"test_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"test_{k}": v for k, v in output[DefaultOutputDataKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     @predict_context
     def predict(
