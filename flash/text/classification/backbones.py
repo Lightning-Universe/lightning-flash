@@ -22,7 +22,6 @@ from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 
-
 TEXT_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
 if _TRANSFORMERS_AVAILABLE:
