@@ -16,7 +16,6 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
-
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
