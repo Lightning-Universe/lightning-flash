@@ -23,8 +23,8 @@ from torchmetrics import Metric
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
 from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.text.ort_callback import ORTCallback
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
+from flash.text.ort_callback import ORTCallback
 
 
 class TextClassifier(ClassificationTask):
