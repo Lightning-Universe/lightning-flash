@@ -16,48 +16,23 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
-from functools import partial
-from typing import Union
-
-from huggingface_hub import HfApi
 from transformers import AutoModelForSequenceClassification
 
-from flash.core.registry import ConcatRegistry, ExternalRegistry, FlashRegistry
+from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
-from flash.core.utilities.url_error import catch_url_error
 
 
-def register_trasformers_backbones() -> Union[FlashRegistry, ConcatRegistry]:
+def register_trasformers_backbones() -> FlashRegistry:
 
-    register = FlashRegistry("backbones")
-
-    try:
-
-        model_list = HfApi().list_models(filter=("pytorch", "text-classification"))
-
-        for model_name in map(lambda x: x.modelId, model_list):
-            register(
-                fn=catch_url_error(partial(AutoModelForSequenceClassification.from_pretrained, model_name)),
-                name=model_name,
-                providers=_HUGGINGFACE,
-            )
-
-    except:
-
-        register = register + ExternalRegistry(
-            getter=AutoModelForSequenceClassification.from_pretrained,
-            name="backbones",
-            providers=_HUGGINGFACE,
-        )
-
-    return register
+    return ExternalRegistry(
+        getter=AutoModelForSequenceClassification.from_pretrained,
+        name="backbones",
+        providers=_HUGGINGFACE,
+    )
 
 
 TEXT_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
 if _TRANSFORMERS_AVAILABLE:
     TEXT_CLASSIFIER_BACKBONES += register_trasformers_backbones()
-
-
-print(TEXT_CLASSIFIER_BACKBONES)
