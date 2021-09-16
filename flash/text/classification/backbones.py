@@ -23,7 +23,7 @@ from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 
 
-def register_trasformers_backbones() -> FlashRegistry:
+def register_trasformers_backbones() -> ExternalRegistry:
 
     return ExternalRegistry(
         getter=AutoModelForSequenceClassification.from_pretrained,
