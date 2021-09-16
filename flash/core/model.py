@@ -269,8 +269,7 @@ class CheckDependenciesMeta(ABCMeta):
 
 
 class OutputKeys(LightningEnum):
-    """The ``OutputKeys`` enum contains the keys that are used internally by the ``Task`` when handling
-    outputs."""
+    """The ``OutputKeys`` enum contains the keys that are used internally by the ``Task`` when handling outputs."""
 
     OUTPUT = "y_hat"
     TARGET = "y"
