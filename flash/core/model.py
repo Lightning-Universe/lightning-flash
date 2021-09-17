@@ -889,3 +889,33 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
+
+    def to_onnx(self, file_path: Union[str, Path], input_sample: Optional[Tensor] = None, **kwargs):
+        """
+        Saves the model in ONNX format.
+        Args:
+            file_path: The path of the file the onnx model should be saved to.
+            input_sample: An input Tensor for tracing. Default: None (Use self.example_input_array)
+            **kwargs: Will be passed to torch.onnx.export function.
+        """
+        mode = self.training
+
+        if input_sample is None:
+            if self.example_input_array is None:
+                raise ValueError(
+                    "Could not export to ONNX since neither `input_sample` nor"
+                    " `model.example_input_array` attribute is set."
+                )
+            input_sample = self.example_input_array
+
+        _input_sample = self._apply_batch_transfer_handler({DefaultDataKeys.INPUT: input_sample})[DefaultDataKeys.INPUT]
+
+        if "example_outputs" not in kwargs:
+            self.eval()
+            if isinstance(_input_sample, Tuple):
+                kwargs["example_outputs"] = self(*_input_sample)
+            else:
+                kwargs["example_outputs"] = self(_input_sample)
+
+        torch.onnx.export(self, _input_sample, file_path, **kwargs)
+        self.train(mode)
