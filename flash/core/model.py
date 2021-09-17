@@ -22,6 +22,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import pytorch_lightning as pl
 import torch
+from torch import Tensor
 import torchmetrics
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
@@ -37,7 +38,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource
+from flash.core.data.data_source import DataSource, DefaultDataKeys
 from flash.core.data.process import (
     Deserializer,
     DeserializerMapping,
