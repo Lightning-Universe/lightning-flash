@@ -17,6 +17,7 @@ import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import pytorch_lightning as pl
