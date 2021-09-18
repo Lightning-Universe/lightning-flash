@@ -41,6 +41,7 @@ import pandas as pd
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
@@ -146,6 +147,18 @@ class LabelsState(ProcessState):
 class ImageLabelsMap(ProcessState):
 
     labels_map: Optional[Dict[int, Tuple[int, int, int]]]
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class LabelledDataset:
+
+    data: Any = None
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class UnLabelledDataset:
+
+    data: Any = None
 
 
 class DefaultDataSources(LightningEnum):
@@ -305,6 +318,25 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         predict_dataset = self.generate_dataset(predict_data, RunningStage.PREDICTING)
         return train_dataset, val_dataset, test_dataset, predict_dataset
 
+    @staticmethod
+    def _convert_to_auto_dataset(
+        data: Any,
+        data_source: "DataSource",
+        running_stage: RunningStage,
+        metadata: Any,
+    ) -> BaseAutoDataset:
+        is_labelled = None
+        if isinstance(data, (LabelledDataset, UnLabelledDataset)):
+            is_labelled = isinstance(data, LabelledDataset)
+            data = data.data
+        if has_len(data):
+            dataset = AutoDataset(data, data_source, running_stage)
+        else:
+            dataset = IterableAutoDataset(data, data_source, running_stage)
+        dataset.__dict__.update(metadata)
+        dataset.is_labelled = is_labelled
+        return dataset
+
     def generate_dataset(
         self,
         data: Optional[DATA_TYPE],
@@ -340,12 +372,13 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
                 else:
                     data = load_data(data)
 
-            if has_len(data):
-                dataset = AutoDataset(data, self, running_stage)
-            else:
-                dataset = IterableAutoDataset(data, self, running_stage)
-            dataset.__dict__.update(mock_dataset.metadata)
-            return dataset
+            if isinstance(data, Sequence) and all(isinstance(p, (LabelledDataset, UnLabelledDataset)) for p in data):
+                datasets = [
+                    self._convert_to_auto_dataset(dataset, self, running_stage, mock_dataset.metadata)
+                    for dataset in data
+                ]
+                return datasets
+            return self._convert_to_auto_dataset(data, self, running_stage, mock_dataset.metadata)
 
 
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
@@ -450,20 +483,43 @@ class PathsDataSource(SequenceDataSource):
             # data is not path-like (e.g. it may be a list of paths)
             return False
 
-    def load_data(
-        self, data: Union[str, Tuple[List[str], List[Any]]], dataset: Optional[Any] = None
-    ) -> Sequence[Mapping[str, Any]]:
-        if self.isdir(data):
-            classes, class_to_idx = self.find_classes(data)
-            if not classes:
-                return self.predict_load_data(data)
-            self.set_state(LabelsState(classes))
+    def load_data(self, data: Union[str, Tuple[List[str], List[Any]]], dataset: Optional[Any] = None) -> Any:
 
-            if dataset is not None:
-                dataset.num_classes = len(classes)
+        if self.isdir(data) or (isinstance(data, list) and all(self.isdir(p) for p in data)):
 
-            data = make_dataset(data, class_to_idx, extensions=self.extensions)
-            return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+            if not isinstance(data, list):
+                data = [data]
+
+            if len(data) > 2:
+                raise MisconfigurationException("Flash doesn't support more than 2 folders.")
+
+            labelled_out = []
+            unlabelled_out = []
+            for directory in data:
+                classes, class_to_idx = self.find_classes(directory)
+
+                # unlabelled data
+                if not classes:
+                    unlabelled_out.extend(self.predict_load_data(directory))
+                else:
+                    dataset.num_classes = len(classes)
+                    self.set_state(LabelsState(classes))
+                    labelled_out.extend(
+                        [
+                            {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target}
+                            for input, target in make_dataset(directory, class_to_idx, extensions=self.extensions)
+                        ]
+                    )
+
+            if len(data) == 2 and (not labelled_out or not unlabelled_out):
+                raise MisconfigurationException(
+                    "When 2 folders are provided, there should be targetted to label and an unlabelled folder."
+                )
+            if labelled_out and unlabelled_out:
+                return LabelledDataset(labelled_out), UnLabelledDataset(unlabelled_out)
+            elif labelled_out:
+                return labelled_out
+            return unlabelled_out
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),
@@ -471,9 +527,7 @@ class PathsDataSource(SequenceDataSource):
             )
         )
 
-    def predict_load_data(
-        self, data: Union[str, List[str]], dataset: Optional[Any] = None
-    ) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(self, data: Union[str, List[str]], dataset: Optional[Any] = None) -> Any:
         if self.isdir(data):
             data = [os.path.join(data, file) for file in os.listdir(data)]
 

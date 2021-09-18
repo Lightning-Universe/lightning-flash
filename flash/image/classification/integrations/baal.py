@@ -13,29 +13,44 @@
 # limitations under the License.
 from copy import deepcopy
 from functools import partial
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Union
 
 import numpy as np
 import torch
 from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.progress import Progress
-from pytorch_lightning.trainer.states import RunningStage, TrainerFn, TrainerStatus
+from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
 from torch.nn.modules.batchnorm import _BatchNorm
 
 import flash
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 
 if _BAAL_AVAILABLE:
-    from baal.active import ActiveLearningDataset
     from baal.active.heuristics import AbstractHeuristic, BALD
 
 
 class ActiveLearningTrainer(flash.Trainer):
-    def __init__(self, *args, **kwags):
+    @requires("baal")
+    def __init__(
+        self,
+        *args,
+        val_size: Union[float, Callable] = 0,
+        labelisation_stopping_criteria: Optional[Callable] = None,
+        heuristic: "AbstractHeuristic" = BALD(reduction=np.mean),
+        dataset_transform_fn: Optional[Callable] = None,
+        label_epoch_frequency: int = 1,
+        **kwags
+    ):
         super().__init__(*args, **kwags)
 
-        active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, heuristics=BALD(reduction=np.mean))
+        active_learning_loop = ActiveLearningLoop(
+            dataset_transform_fn=dataset_transform_fn,
+            val_size=val_size,
+            heuristic=heuristic,
+            labelisation_stopping_criteria=labelisation_stopping_criteria,
+            label_epoch_frequency=label_epoch_frequency,
+        )
         active_learning_loop.connect(self.fit_loop)
         self.fit_loop = active_learning_loop
         active_learning_loop.trainer = self
@@ -43,13 +58,24 @@ class ActiveLearningTrainer(flash.Trainer):
 
 class ActiveLearningLoop(Loop):
     @requires("baal")
-    def __init__(self, label_epoch_frequency: int, heuristics: "AbstractHeuristic", inference_iteration: int = 2):
+    def __init__(
+        self,
+        dataset_transform_fn: Optional[Callable],
+        val_size: Union[float, Callable],
+        heuristic: "AbstractHeuristic",
+        labelisation_stopping_criteria: Optional[Callable],
+        label_epoch_frequency: int = 1,
+        inference_iteration: int = 2,
+    ):
         super().__init__()
         self.label_epoch_frequency = label_epoch_frequency
         self.fit_loop: Optional[FitLoop] = None
         self.state_dict: Optional[Dict[str, torch.Tensor]] = None
         self.progress = Progress()
-        self.heuristics = heuristics
+        self.dataset_transform_fn = dataset_transform_fn
+        self.val_size = val_size
+        self.labelisation_stopping_criteria = labelisation_stopping_criteria
+        self.heuristic = heuristic
         self._should_continue: bool = False
         self.inference_iteration = inference_iteration
 
@@ -63,24 +89,19 @@ class ActiveLearningLoop(Loop):
         self.max_epochs = self.fit_loop.max_epochs
         self.fit_loop.max_epochs = self.label_epoch_frequency
 
-    def _to_active_dataset(self, dataset):
-        return ActiveLearningDataset(dataset, labelled=torch.arange(len(dataset) - 10))
-
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
+        self._reorder_datasets()
         self.trainer.predict_loop._return_predictions = True
         self.state_dict = deepcopy(self.trainer.lightning_module.state_dict())
-        if self.trainer.datamodule is not None:
-            self.trainer.datamodule.register_dataset_hooks(self._to_active_dataset, RunningStage.TRAINING)
-            self.trainer.datamodule.register_dataset_hooks(self._to_active_dataset, RunningStage.VALIDATING)
-            self.trainer.datamodule.register_dataset_hooks(self._to_active_dataset, RunningStage.TESTING)
-            self.trainer.datamodule.register_dataset_hooks(self._to_active_dataset, RunningStage.PREDICTING)
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
+        self._merge_datasets()
         self.trainer.train_dataloader = None
         self.trainer.val_dataloaders = None
         self.trainer.lightning_module.train_dataloader.unpatch(self.trainer.lightning_module)
         self.trainer.lightning_module.train_dataloader.unpatch(self.trainer.lightning_module)
         self.trainer.reset_train_val_dataloaders(self.trainer.lightning_module)
+        self.trainer.lightning_module.predict_dataloader = self.trainer.datamodule.predict_dataloader
         self.trainer.reset_predict_dataloader(self.trainer.lightning_module)
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
@@ -88,7 +109,7 @@ class ActiveLearningLoop(Loop):
         self.fit_loop.run()
         self._reset_predicting()
         predictions = self.trainer.predict_loop.run()
-        uncertainties = [self.heuristics.get_uncertainties(np.asarray(p)) for idx, p in enumerate(predictions)]
+        uncertainties = [self.heuristic.get_uncertainties(np.asarray(p)) for idx, p in enumerate(predictions)]
         _ = np.argsort(uncertainties)
         self._reset_fitting()
         self.progress.increment_processed()
@@ -106,8 +127,15 @@ class ActiveLearningLoop(Loop):
     def done(self) -> bool:
         return self.progress.current.completed > self.max_epochs or self._should_continue
 
+    @property
+    def has_training_data(self) -> bool:
+        return self.trainer.datamodule._train_ds is not None
+
     def reset(self) -> None:
         pass
+
+    def request_label(self):
+        print("Requesting labellization.")
 
     @staticmethod
     def _mc_inference(*args, predict_step_fn: Callable = None, inference_iteration: int = None, **kwargs):
@@ -141,3 +169,19 @@ class ActiveLearningLoop(Loop):
             predict_step_fn=self.trainer.lightning_module._predict_step,
             inference_iteration=self.inference_iteration,
         )
+
+    def _merge_datasets(self) -> None:
+        pass
+
+    def _reorder_datasets(self) -> None:
+        train_ds = self.trainer.datamodule._train_ds
+
+        if isinstance(train_ds, list):
+            for ds in train_ds:
+                if ds.is_labelled:
+                    self.trainer.datamodule.train_ds = ds
+                else:
+                    self.trainer.datamodule.predict_ds = ds
+
+        if not self.has_training_data:
+            self.request_label()

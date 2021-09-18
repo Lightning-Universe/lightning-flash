@@ -106,6 +106,11 @@ class DataModule(pl.LightningDataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
+        self._train_ds = None
+        self._val_ds = None
+        self._test_ds = None
+        self._predict_ds = None
+
         self._data_source: DataSource = data_source
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
@@ -115,30 +120,18 @@ class DataModule(pl.LightningDataModule):
         # TODO: Preprocess can change
         self.data_fetcher.attach_to_preprocess(self.preprocess)
 
-        self._train_ds = train_dataset
-        self._val_ds = val_dataset
-        self._test_ds = test_dataset
-        self._predict_ds = predict_dataset
+        if train_dataset is not None and (val_split is not None and self._val_ds is None):
+            self.train_ds, self.val_ds = self._split_train_val(train_dataset, val_split)
+
+        self.train_ds = train_dataset
+        self.val_ds = val_dataset
+        self.test_ds = test_dataset
+        self.predict_ds = predict_dataset
 
         self._train_ds_hook: Optional[Callable] = None
         self._val_ds_hook: Optional[Callable] = None
         self._test_ds_hook: Optional[Callable] = None
         self._predict_ds_hook: Optional[Callable] = None
-
-        if self._train_ds is not None and (val_split is not None and self._val_ds is None):
-            self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
-
-        if self._train_ds:
-            self.train_dataloader = self._train_dataloader
-
-        if self._val_ds:
-            self.val_dataloader = self._val_dataloader
-
-        if self._test_ds:
-            self.test_dataloader = self._test_dataloader
-
-        if self._predict_ds:
-            self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
 
@@ -149,6 +142,50 @@ class DataModule(pl.LightningDataModule):
         self.sampler = sampler
 
         self.set_running_stages()
+
+    @property
+    def train_ds(self) -> Optional[BaseAutoDataset]:
+        return self._train_ds
+
+    @train_ds.setter
+    def train_ds(self, train_ds: Optional[BaseAutoDataset]) -> None:
+        self._shared_setter(train_ds, "train")
+
+    @property
+    def val_ds(self) -> Optional[BaseAutoDataset]:
+        return self._val_ds
+
+    @val_ds.setter
+    def val_ds(self, val_ds: Optional[BaseAutoDataset]) -> None:
+        self._shared_setter(val_ds, "val")
+
+    @property
+    def test_ds(self) -> Optional[BaseAutoDataset]:
+        return self._test_ds
+
+    @test_ds.setter
+    def test_ds(self, test_ds: Optional[BaseAutoDataset]) -> None:
+        self._shared_setter(test_ds, "test")
+
+    @property
+    def predict_ds(self) -> Optional[BaseAutoDataset]:
+        return self._predict_ds
+
+    @predict_ds.setter
+    def predict_ds(self, predict_ds: Optional[BaseAutoDataset]) -> None:
+        self._shared_setter(predict_ds, "predict")
+
+    def _shared_setter(self, ds: Optional[BaseAutoDataset], stage: str) -> None:
+        if ds:
+            setattr(self, f"_{stage}_ds", ds)
+            dataloader_fn = getattr(self, f"_{stage}_dataloader", None)
+            setattr(self, f"{stage}_dataloader", dataloader_fn)
+        else:
+
+            def fn(*_):
+                pass
+
+            setattr(self, f"{stage}_dataloader", fn)
 
     def register_dataset_hooks(self, hook: Callable, running_stage: RunningStage):
         if running_stage.TRAINING == RunningStage.TRAINING:
