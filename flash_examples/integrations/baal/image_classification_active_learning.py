@@ -14,22 +14,21 @@
 from flash.core.classification import Probabilities
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
-from flash.image.classification.integrations.baal import ActiveLearningTrainer
+from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningTrainer
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
-datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    val_folder="data/hymenoptera_data/val/",
-    predict_folder="data/hymenoptera_data/predict/",
+datamodule = ActiveLearningDataModule(
+    # labelled=ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/"),
+    unlabelled=ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/", batch_size=1),
 )
 
 # 2. Build the task
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Probabilities())
 
 # 3. Create the trainer and finetune the model
-trainer = ActiveLearningTrainer(max_epochs=3, imit_train_batches=2, limit_val_batches=2)
+trainer = ActiveLearningTrainer(max_epochs=3, limit_train_batches=2, limit_val_batches=2)
 
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
