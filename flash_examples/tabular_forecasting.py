@@ -86,8 +86,8 @@ datamodule = TabularForecastingData.from_data_frame(
     batch_size=64,
 )
 
-model = TabularForecaster.from_data(
-    datamodule,
+model = TabularForecaster(
+    datamodule.parameters,
     hidden_size=16,
     attention_head_size=1,
     dropout=0.1,
@@ -95,5 +95,5 @@ model = TabularForecaster.from_data(
     output_size=7,
 )
 
-trainer = flash.Trainer(max_epochs=3, limit_train_batches=30)
+trainer = flash.Trainer(max_epochs=30, gradient_clip_val=0.1)
 trainer.fit(model, datamodule=datamodule)

@@ -11,18 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
+from copy import copy
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
-
-from torch.utils.data import DataLoader, Dataset
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires
 
 if _PANDAS_AVAILABLE:
     from pandas.core.frame import DataFrame
@@ -34,15 +32,15 @@ if _FORECASTING_AVAILABLE:
 
 
 @dataclass(unsafe_hash=True, frozen=True)
-class TimeSeriesDataSetState(ProcessState):
+class TimeSeriesDataSetParametersState(ProcessState):
     """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
     label."""
 
-    time_series_dataset: Optional["TimeSeriesDataSet"]
+    time_series_dataset_parameters: Optional[Dict[str, Any]]
 
 
 class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
-    @requires_extras("tabular")
+    @requires("tabular")
     def __init__(self, time_idx: str, target: Union[str, List[str]], group_ids: List[str], **data_source_kwargs: Any):
         super().__init__()
         self.time_idx = time_idx
@@ -52,19 +50,26 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
 
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         if self.training:
-            dataset.time_series_dataset = TimeSeriesDataSet(
+            time_series_dataset = TimeSeriesDataSet(
                 data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target, **self.data_source_kwargs
             )
-            self.set_state(TimeSeriesDataSetState(dataset.time_series_dataset))
+            parameters = time_series_dataset.get_parameters()
+            self.set_state(TimeSeriesDataSetParametersState(parameters))
+
+            # Add some sample data so that we can recreate the `TimeSeriesDataSet` later on
+            parameters = copy(parameters)
+            parameters["data_sample"] = data.iloc[[0]]
+            dataset.parameters = parameters
         else:
-            train_time_series_dataset = self.get_state(TimeSeriesDataSetState).time_series_dataset
-            dataset.time_series_dataset = TimeSeriesDataSet.from_dataset(
-                train_time_series_dataset,
+            parameters = self.get_state(TimeSeriesDataSetParametersState).time_series_dataset_parameters
+            time_series_dataset = TimeSeriesDataSet.from_parameters(
+                parameters,
                 data,
                 predict=True,
                 stop_randomization=True,
             )
-        return dataset.time_series_dataset
+        dataset.time_series_dataset = time_series_dataset
+        return time_series_dataset
 
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
         return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
@@ -105,56 +110,9 @@ class TabularForecastingData(DataModule):
 
     preprocess_cls = TabularForecastingPreprocess
 
-    @staticmethod
-    def _collate_fn(collate_fn, samples):
-        samples = [(sample[DefaultDataKeys.INPUT], sample[DefaultDataKeys.TARGET]) for sample in samples]
-        batch = collate_fn(samples)
-        return {DefaultDataKeys.INPUT: batch[0], DefaultDataKeys.TARGET: batch[1]}
-
-    def _train_dataloader(self) -> DataLoader:
-        train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
-        time_series_dataset: TimeSeriesDataSet = train_ds.time_series_dataset
-        result = time_series_dataset.to_dataloader(
-            train=True,
-            batch_size=self.batch_size,
-        )
-        collate_fn = functools.partial(self._collate_fn, result.collate_fn)
-        batch_sampler = result.batch_sampler
-        return DataLoader(
-            train_ds,
-            collate_fn=collate_fn,
-            batch_sampler=batch_sampler,
-            num_workers=self.num_workers,
-            pin_memory=True,
-        )
-
-    def _eval_dataloader(self, dataset: Dataset) -> DataLoader:
-        time_series_dataset: TimeSeriesDataSet = dataset.time_series_dataset
-        result = time_series_dataset.to_dataloader(
-            train=False,
-            batch_size=self.batch_size,
-        )
-        collate_fn = functools.partial(self._collate_fn, result.collate_fn)
-        batch_sampler = result.batch_sampler
-        return DataLoader(
-            dataset,
-            collate_fn=collate_fn,
-            batch_sampler=batch_sampler,
-            num_workers=self.num_workers,
-            pin_memory=True,
-        )
-
-    def _val_dataloader(self) -> DataLoader:
-        val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
-        return self._eval_dataloader(val_ds)
-
-    def _test_dataloader(self) -> DataLoader:
-        test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
-        return self._eval_dataloader(test_ds)
-
-    def _predict_dataloader(self) -> DataLoader:
-        predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
-        return self._eval_dataloader(predict_ds)
+    @property
+    def parameters(self) -> Dict[str, Any]:
+        return self.train_dataset.parameters
 
     @classmethod
     def from_data_frame(
