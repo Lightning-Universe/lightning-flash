@@ -60,7 +60,6 @@ jobs:
       displayName: 'Testing'
 
     - bash: |
-        pip install git+https://github.com/tchaton/learn2learn@flash
         bash tests/special_tests.sh
       displayName: 'Testing: special'
 

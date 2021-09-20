@@ -34,6 +34,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.url_error import catch_url_error
+from flash.image.classification.integrations.learn2learn import TaskDataParallel, TaskDistributedDataParallel
 
 warning_cache = WarningCache()
 
@@ -41,16 +42,9 @@ warning_cache = WarningCache()
 if _LEARN2LEARN_AVAILABLE:
     import learn2learn as l2l
     from learn2learn.data.transforms import RemapLabels as Learn2LearnRemapLabels
-    from learn2learn.utils.lightning import TaskDataParallel, TaskDistributedDataParallel
 else:
 
     class Learn2LearnRemapLabels:
-        pass
-
-    class TaskDistributedDataParallel:
-        pass
-
-    class TaskDataParallel:
         pass
 
 
@@ -273,7 +267,7 @@ class Learn2LearnAdapter(Adapter):
             if isinstance(trainer.training_type_plugin, DataParallelPlugin):
                 # when using DP, we need to sample n tasks, so it can splitted across multiple devices.
                 devices = trainer.accelerator_connector.devices
-            dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices)
+            dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices, collate_fn=None)
             self.trainer.accumulated_grad_batches = self.meta_batch_size / devices
 
         return dataset

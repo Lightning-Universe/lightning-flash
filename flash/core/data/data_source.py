@@ -632,7 +632,7 @@ class TensorDataSource(SequenceDataSource[torch.Tensor]):
     ) -> Sequence[Mapping[str, Any]]:
         # TODO: Bring back the code to work out how many classes there are
         if len(data) == 2:
-            dataset.num_classes = len(torch.unique(data[1]))
+            dataset.num_classes = len(torch.unique(torch.tensor(data[1])))
         return super().load_data(data, dataset)
 
 
