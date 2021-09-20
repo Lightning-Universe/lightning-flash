@@ -30,7 +30,7 @@ from flash.text.ort_callback import ORTCallback
 
 
 class TextClassifier(ClassificationAdapterTask):
-    
+
     backbones: FlashRegistry = TEXT_CLASSIFIER_BACKBONES
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
 
@@ -115,12 +115,12 @@ class TextClassifier(ClassificationAdapterTask):
 
 # if __name__ == "__main__":
 #     from flash.core.data.data_source import DefaultDataKeys
-    
+
 #     batch = {
 #         DefaultDataKeys.INPUT: {
 #             "input_ids": torch.tensor([[1, 2, 3]]),
 #             "attention_mask": torch.tensor([[0, 0, 0]]),
-#         }, 
+#         },
 #         DefaultDataKeys.TARGET: None,
 #     }
 
