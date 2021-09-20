@@ -17,24 +17,21 @@ Note: This file will be deleted once
 https://github.com/learnables/learn2learn/pull/257/files is merged within Learn2Learn.
 """
 
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import pytorch_lightning as pl
 from torch.utils.data import IterableDataset
 from torch.utils.data._utils.collate import default_collate
 from torch.utils.data._utils.worker import get_worker_info
 
-from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, requires
-
-if _LEARN2LEARN_AVAILABLE:
-    import learn2learn as l2l
+from flash.core.utilities.imports import requires
 
 
 class TaskDataParallel(IterableDataset):
     @requires("learn2learn")
     def __init__(
         self,
-        tasks: "l2l.data.TaskDataset",
+        tasks: Any,
         epoch_length: int,
         devices: int = 1,
         collate_fn: Optional[Callable] = default_collate,
@@ -83,7 +80,7 @@ class TaskDistributedDataParallel(IterableDataset):
     @requires("learn2learn")
     def __init__(
         self,
-        taskset: "l2l.data.TaskDataset",
+        taskset: Any,
         global_rank: int,
         world_size: int,
         num_workers: int,
