@@ -101,7 +101,7 @@ class ImageClassifier(ClassificationAdapterTask):
         if not training_strategy_kwargs:
             training_strategy_kwargs = {}
 
-        if training_strategy_kwargs == "default":
+        if training_strategy == "default":
             if not num_classes:
                 raise MisconfigurationException("`num_classes` should be provided.")
         else:

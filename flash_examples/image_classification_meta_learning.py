@@ -25,10 +25,9 @@ datamodule = ImageClassificationData.from_folders(
 
 # 2. Build the task
 model = ImageClassifier(
-    datamodule.num_classes,
     backbone="resnet18",
     training_strategy="prototypicalnetworks",
-    training_strategy_kwargs={"shots": 4, "meta_batch_size": 10},
+    training_strategy_kwargs={"ways": datamodule.num_classes, "shots": 4, "meta_batch_size": 10},
 )
 
 # 3. Create the trainer and finetune the model
@@ -37,14 +36,3 @@ trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
 # 5. Save the model!
 trainer.save_checkpoint("image_classification_model.pt")
-
-
-# 6. Make predictions on new data !
-model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
-datamodule = ImageClassificationData.from_folders(
-    val_folder="data/hymenoptera_data/val/",  # newly labelled data
-    predict_folder="data/hymenoptera_data/predict/",
-)
-# some `training_strategy` are required to be updated on the `newly labelled data`.
-trainer.validate(model, datamodule=datamodule)
-predictions = trainer.predict(model, datamodule=datamodule)

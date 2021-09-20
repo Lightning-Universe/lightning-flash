@@ -150,6 +150,7 @@ class Learn2LearnAdapter(Adapter):
         self.head = head
         self.algorithm_cls = algorithm_cls
         self.meta_batch_size = meta_batch_size
+
         self.num_task = num_task
         self.default_transforms_fn = default_transforms_fn
         self.seed = seed
@@ -163,7 +164,7 @@ class Learn2LearnAdapter(Adapter):
         self.test_shots = test_shots or shots
         self.test_queries = test_queries or queries
         self.test_num_task = test_num_task or num_task
-        self.test_epoch_length = test_epoch_length or epoch_length
+        self.test_epoch_length = test_epoch_length or self.epoch_length
 
         params = inspect.signature(self.algorithm_cls).parameters
 
