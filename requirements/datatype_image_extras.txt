@@ -6,3 +6,4 @@ icevision>=0.8
 icedata
 effdet
 albumentations
+learn2learn

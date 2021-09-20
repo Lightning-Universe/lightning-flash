@@ -70,7 +70,7 @@ class ModuleWrapperBase:
         self._children = []
 
         # TODO: create enum values to define what are the exact states
-        self._data_pipeline_state: Optional[DataPipelineState] = None
+        self._data_pipeline_state: DataPipelineState = DataPipelineState()
 
         # model own internal state shared with the data pipeline.
         self._state: Dict[Type[ProcessState], ProcessState] = {}
@@ -120,6 +120,7 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         return DataLoader(
             dataset,
@@ -130,11 +131,13 @@ class DatasetProcessor:
             drop_last=drop_last,
             sampler=sampler,
             collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -142,6 +145,7 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -152,11 +156,13 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers and num_workers > 0,
         )
 
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -164,6 +170,7 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -174,11 +181,13 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers and num_workers > 0,
         )
 
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -186,6 +195,7 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -196,6 +206,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers and num_workers > 0,
         )
 
     def process_predict_dataset(
@@ -218,6 +229,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=False,
         )
 
 
@@ -452,6 +464,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         else:
             x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
+        x = x[0] if isinstance(x, list) else x
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(running_stage)(predictions)
         return predictions

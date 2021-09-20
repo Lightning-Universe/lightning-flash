@@ -25,12 +25,12 @@ def from_squad(
     num_workers: int = 0,
     **preprocess_kwargs,
 ) -> QuestionAnsweringData:
-    """Downloads and loads the XSum data set."""
-    download_data("https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json", "./data/")
-    download_data("https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json", "./data/")
+    """Downloads and loads a tiny subset of the squad V2 data set."""
+    download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
+
     return QuestionAnsweringData.from_squad_v2(
-        train_file="./data/train-v2.0.json",
-        val_file="./data/dev-v2.0.json",
+        train_file="./data/squad_tiny/train.json",
+        val_file="./data/squad_tiny/val.json",
         backbone=backbone,
         batch_size=batch_size,
         num_workers=num_workers,

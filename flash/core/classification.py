@@ -18,6 +18,7 @@ import torch.nn.functional as F
 import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
+from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
 from flash.core.model import Task
@@ -37,7 +38,29 @@ def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.
     return F.binary_cross_entropy_with_logits(x, y.float())
 
 
-class ClassificationTask(Task):
+class ClassificationMixin:
+    def _build(
+        self,
+        num_classes: Optional[int] = None,
+        loss_fn: Optional[Callable] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        multi_label: bool = False,
+    ):
+        if metrics is None:
+            metrics = torchmetrics.F1(num_classes) if (multi_label and num_classes) else torchmetrics.Accuracy()
+
+        if loss_fn is None:
+            loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
+
+        return metrics, loss_fn
+
+    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+        if getattr(self.hparams, "multi_label", False):
+            return torch.sigmoid(x)
+        return torch.softmax(x, dim=1)
+
+
+class ClassificationTask(Task, ClassificationMixin):
     def __init__(
         self,
         *args,
@@ -48,11 +71,9 @@ class ClassificationTask(Task):
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs,
     ) -> None:
-        if metrics is None:
-            metrics = torchmetrics.F1(num_classes) if (multi_label and num_classes) else torchmetrics.Accuracy()
 
-        if loss_fn is None:
-            loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
+        metrics, loss_fn = ClassificationMixin._build(self, num_classes, loss_fn, metrics, multi_label)
+
         super().__init__(
             *args,
             loss_fn=loss_fn,
@@ -61,11 +82,28 @@ class ClassificationTask(Task):
             **kwargs,
         )
 
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
-        if getattr(self.hparams, "multi_label", False):
-            return torch.sigmoid(x)
-        # we'll assume that the data always comes as `(B, C, ...)`
-        return torch.softmax(x, dim=1)
+
+class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
+    def __init__(
+        self,
+        *args,
+        num_classes: Optional[int] = None,
+        loss_fn: Optional[Callable] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        multi_label: bool = False,
+        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        **kwargs,
+    ) -> None:
+
+        metrics, loss_fn = ClassificationMixin._build(self, num_classes, loss_fn, metrics, multi_label)
+
+        super().__init__(
+            *args,
+            loss_fn=loss_fn,
+            metrics=metrics,
+            serializer=serializer or Classes(multi_label=multi_label),
+            **kwargs,
+        )
 
 
 class ClassificationSerializer(Serializer):
