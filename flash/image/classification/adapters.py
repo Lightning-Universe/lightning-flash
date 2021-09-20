@@ -215,33 +215,35 @@ class Learn2LearnAdapter(Adapter):
         num_task: int,
         epoch_length: int,
     ):
-        metadata = getattr(dataset, "data", None)
-        if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):
-            raise MisconfigurationException("Only dataset built out of metadata is supported.")
+        if isinstance(dataset, BaseAutoDataset):
 
-        labels_to_indices = self._labels_to_indices(dataset.data)
+            metadata = getattr(dataset, "data", None)
+            if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):
+                raise MisconfigurationException("Only dataset built out of metadata is supported.")
 
-        if len(labels_to_indices) < ways:
-            raise MisconfigurationException(
-                "Provided `ways` should be lower or equal to number of classes within your dataset."
+            labels_to_indices = self._labels_to_indices(dataset.data)
+
+            if len(labels_to_indices) < ways:
+                raise MisconfigurationException(
+                    "Provided `ways` should be lower or equal to number of classes within your dataset."
+                )
+
+            if min(len(indice) for indice in labels_to_indices.values()) < (shots + queries):
+                raise MisconfigurationException(
+                    "Provided `shots + queries` should be lower than the lowest number of sample per class."
+                )
+
+            # convert the dataset to MetaDataset
+            dataset = l2l.data.MetaDataset(dataset, indices_to_labels=None, labels_to_indices=labels_to_indices)
+
+            transform_fn = self.default_transforms_fn or self._default_transform
+
+            taskset = l2l.data.TaskDataset(
+                dataset=dataset,
+                task_transforms=transform_fn(dataset, ways=ways, shots=shots, queries=queries),
+                num_tasks=num_task,
+                task_collate=self._identity_task_collate_fn,
             )
-
-        if min(len(indice) for indice in labels_to_indices.values()) < (shots + queries):
-            raise MisconfigurationException(
-                "Provided `shots + queries` should be lower than the lowest number of sample per class."
-            )
-
-        # convert the dataset to MetaDataset
-        dataset = l2l.data.MetaDataset(dataset, indices_to_labels=None, labels_to_indices=labels_to_indices)
-
-        transform_fn = self.default_transforms_fn or self._default_transform
-
-        taskset = l2l.data.TaskDataset(
-            dataset=dataset,
-            task_transforms=transform_fn(dataset, ways=ways, shots=shots, queries=queries),
-            num_tasks=num_task,
-            task_collate=self._identity_task_collate_fn,
-        )
 
         if isinstance(
             trainer.training_type_plugin,

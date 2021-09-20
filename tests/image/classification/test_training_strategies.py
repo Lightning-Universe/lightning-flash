@@ -83,10 +83,9 @@ def _test_learn2learning_training_strategies(gpus, accelerator, training_strateg
     )
 
     model = ImageClassifier(
-        dm.num_classes,
         backbone="resnet18",
         training_strategy=training_strategy,
-        training_strategy_kwargs={"shots": 4, "meta_batch_size": 4},
+        training_strategy_kwargs={"ways": dm.num_classes, "shots": 4, "meta_batch_size": 4},
     )
 
     trainer = Trainer(fast_dev_run=2, gpus=gpus, accelerator=accelerator)
