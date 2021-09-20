@@ -35,7 +35,7 @@ def test_smoke():
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_train(tmpdir):
     """Tests that the model can be trained on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(num_features=tudataset.num_features, embedding_dimension=3)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     train_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
@@ -46,7 +46,7 @@ def test_train(tmpdir):
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_val(tmpdir):
     """Tests that the model can be validated on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(num_features=tudataset.num_features, embedding_dimension=3)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     val_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
@@ -57,7 +57,7 @@ def test_val(tmpdir):
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_test(tmpdir):
     """Tests that the model can be tested on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(num_features=tudataset.num_features, embedding_dimension=3)
     model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
     test_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
@@ -68,7 +68,7 @@ def test_test(tmpdir):
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
 def test_predict_dataset(tmpdir):
     """Tests that we can generate predictions from a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name='KKI')
+    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(num_features=tudataset.num_features, embedding_dimension=3)
     data_pipe = DataPipeline(preprocess=GraphClassificationPreprocess())
     out = model.predict(tudataset, data_source="dataset", data_pipeline=data_pipe)

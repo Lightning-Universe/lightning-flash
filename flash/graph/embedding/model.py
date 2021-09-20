@@ -26,8 +26,8 @@ from flash.graph.classification.data import GraphClassificationPreprocess
 
 
 class GraphEmbedder(Task):
-    """The ``GraphEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from graphs. For more
-    details, see :ref:`graph_embedder`.
+    """The ``GraphEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from graphs. For
+    more details, see :ref:`graph_embedder`.
 
     Args:
         embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
@@ -41,7 +41,6 @@ class GraphEmbedder(Task):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
-
     """
 
     backbones: FlashRegistry = GRAPH_BACKBONES
@@ -59,7 +58,7 @@ class GraphEmbedder(Task):
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
         learning_rate: float = 1e-3,
-        pooling_fn: Callable = torch.max
+        pooling_fn: Callable = torch.max,
     ):
         super().__init__(
             model=None,
@@ -67,7 +66,7 @@ class GraphEmbedder(Task):
             optimizer=optimizer,
             metrics=metrics,
             learning_rate=learning_rate,
-            preprocess=GraphClassificationPreprocess()
+            preprocess=GraphClassificationPreprocess(),
         )
 
         self.save_hyperparameters()
@@ -101,5 +100,5 @@ class GraphEmbedder(Task):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
+        batch = batch[DefaultDataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
