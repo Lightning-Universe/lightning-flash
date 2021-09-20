@@ -107,7 +107,9 @@ class ImageClassifier(ClassificationAdapterTask):
         else:
             num_classes = training_strategy_kwargs.get("ways", None)
             if not num_classes:
-                raise MisconfigurationException("`training_strategy_kwargs` should contain `ways`.")
+                raise MisconfigurationException(
+                    "`training_strategy_kwargs` should contain `ways`, `meta_batch_size` and `shots`."
+                )
 
         if isinstance(backbone, tuple):
             backbone, num_features = backbone
