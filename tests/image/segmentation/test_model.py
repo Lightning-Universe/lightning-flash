@@ -21,6 +21,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
@@ -124,7 +125,7 @@ def test_predict_numpy():
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.trace, (torch.rand(1, 3, 32, 32), ))])
+@pytest.mark.parametrize("jitter, args", [(torch.jit.trace, (torch.rand(1, 3, 32, 32),))])
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 
@@ -159,4 +160,14 @@ def test_load_from_checkpoint_dependency_error():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_available_pretrained_weights():
-    assert SemanticSegmentation.available_pretrained_weights("resnet18") == ['imagenet', 'ssl', 'swsl']
+    assert SemanticSegmentation.available_pretrained_weights("resnet18") == ["imagenet", "ssl", "swsl"]
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "semantic_segmentation", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

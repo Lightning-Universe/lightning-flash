@@ -20,7 +20,7 @@ import yaml
 from torch.utils.data import Dataset
 
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
-from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 _GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
 
@@ -60,9 +60,10 @@ class GraphDataSource:
         return sample
 
 
-class GraphDatasetDataSource(DatasetDataSource, GraphDataSource):
 
-    @requires_extras("graph")
+class GraphDatasetDataSource(DatasetDataSource, GraphDataSource):
+    @requires("graph")
+
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
         data = super().load_data(data, dataset=dataset)
         if not self.predicting:

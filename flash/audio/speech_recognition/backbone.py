@@ -13,8 +13,9 @@
 # limitations under the License.
 from functools import partial
 
-from flash.core.registry import FlashRegistry
+from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.providers import _FAIRSEQ, _HUGGINGFACE
 
 SPEECH_RECOGNITION_BACKBONES = FlashRegistry("backbones")
 
@@ -27,4 +28,9 @@ if _AUDIO_AVAILABLE:
         SPEECH_RECOGNITION_BACKBONES(
             fn=partial(Wav2Vec2ForCTC.from_pretrained, model_name),
             name=model_name,
+            providers=[_HUGGINGFACE, _FAIRSEQ],
         )
+
+    HUGGINGFACE_BACKBONES = ExternalRegistry(Wav2Vec2ForCTC.from_pretrained, "backbones", providers=_HUGGINGFACE)
+
+    SPEECH_RECOGNITION_BACKBONES += HUGGINGFACE_BACKBONES

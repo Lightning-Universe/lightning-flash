@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Graph Classification
+   :card_description: Learn to classify graphs with Flash and build an example classifier for the KKI data set.
+   :tags: Graph,Classification
+
 .. _graph_classification:
 
 ####################
@@ -31,3 +36,22 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/graph_classification.py
     :language: python
     :lines: 14-
+
+------
+
+**********
+Flash Zero
+**********
+
+The graph classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash graph_classification
+
+To view configuration options and options for running the graph classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash graph_classification --help

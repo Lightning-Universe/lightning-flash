@@ -31,10 +31,9 @@ def test_pointcloud_segmentation_data(tmpdir):
 
     download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiMicro.zip", tmpdir)
 
-    dm = PointCloudSegmentationData.from_folders(train_folder=join(tmpdir, "SemanticKittiMicro", "train"), )
+    dm = PointCloudSegmentationData.from_folders(train_folder=join(tmpdir, "SemanticKittiMicro", "train"))
 
     class MockModel(PointCloudSegmentation):
-
         def training_step(self, batch, batch_idx: int):
             assert batch[DefaultDataKeys.INPUT]["xyz"][0].shape == torch.Size([2, 45056, 3])
             assert batch[DefaultDataKeys.INPUT]["xyz"][1].shape == torch.Size([2, 11264, 3])
@@ -43,8 +42,8 @@ def test_pointcloud_segmentation_data(tmpdir):
             assert batch[DefaultDataKeys.INPUT]["labels"].shape == torch.Size([2, 45056])
             assert batch[DefaultDataKeys.INPUT]["labels"].max() == 19
             assert batch[DefaultDataKeys.INPUT]["labels"].min() == 0
-            assert batch[DefaultDataKeys.METADATA][0]["name"] == '00_000000'
-            assert batch[DefaultDataKeys.METADATA][1]["name"] == '00_000001'
+            assert batch[DefaultDataKeys.METADATA][0]["name"] in ("00_000000", "00_000001")
+            assert batch[DefaultDataKeys.METADATA][1]["name"] in ("00_000000", "00_000001")
 
     num_classes = 19
     model = MockModel(backbone="randlanet", num_classes=num_classes)
@@ -52,6 +51,6 @@ def test_pointcloud_segmentation_data(tmpdir):
     trainer.fit(model, dm)
 
     predictions = model.predict(join(tmpdir, "SemanticKittiMicro", "predict"))
-    assert torch.stack(predictions[0][DefaultDataKeys.INPUT]).shape == torch.Size([45056, 3])
-    assert torch.stack(predictions[0][DefaultDataKeys.PREDS]).shape == torch.Size([45056, 19])
-    assert torch.stack(predictions[0][DefaultDataKeys.TARGET]).shape == torch.Size([45056])
+    assert predictions[0][DefaultDataKeys.INPUT].shape == torch.Size([45056, 3])
+    assert predictions[0][DefaultDataKeys.PREDS].shape == torch.Size([45056, 19])
+    assert predictions[0][DefaultDataKeys.TARGET].shape == torch.Size([45056])

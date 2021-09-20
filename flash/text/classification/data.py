@@ -22,7 +22,7 @@ from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
@@ -31,12 +31,11 @@ if _TEXT_AVAILABLE:
 
 
 class TextDeserializer(Deserializer):
-
-    @requires_extras("text")
-    def __init__(self, backbone: str, max_length: int, use_fast: bool = True):
+    @requires("text")
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
         super().__init__()
         self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast)
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
         self.max_length = max_length
 
     def deserialize(self, text: str) -> Tensor:
@@ -57,8 +56,7 @@ class TextDeserializer(Deserializer):
 
 
 class TextDataSource(DataSource):
-
-    @requires_extras("text")
+    @requires("text")
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
 
@@ -92,7 +90,6 @@ class TextDataSource(DataSource):
 
 
 class TextFileDataSource(TextDataSource):
-
     def __init__(self, filetype: str, backbone: str, max_length: int = 128):
         super().__init__(backbone, max_length=max_length)
 
@@ -110,7 +107,7 @@ class TextFileDataSource(TextDataSource):
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
-        if self.filetype == 'json':
+        if self.filetype == "json":
             file, input, target, field = data
         else:
             file, input, target = data
@@ -123,22 +120,25 @@ class TextFileDataSource(TextDataSource):
         # FLASH_TESTING is set in the CI to run faster.
         if flash._IS_TESTING and not torch.cuda.is_available():
             try:
-                if self.filetype == 'json' and field is not None:
-                    dataset_dict = DatasetDict({
-                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'],
-                                            field=field)[0]
-                    })
+                if self.filetype == "json" and field is not None:
+                    dataset_dict = DatasetDict(
+                        {
+                            stage: load_dataset(
+                                self.filetype, data_files=data_files, split=[f"{stage}[:20]"], field=field
+                            )[0]
+                        }
+                    )
                 else:
-                    dataset_dict = DatasetDict({
-                        stage: load_dataset(self.filetype, data_files=data_files, split=[f'{stage}[:20]'])[0]
-                    })
+                    dataset_dict = DatasetDict(
+                        {stage: load_dataset(self.filetype, data_files=data_files, split=[f"{stage}[:20]"])[0]}
+                    )
             except Exception:
-                if self.filetype == 'json' and field is not None:
+                if self.filetype == "json" and field is not None:
                     dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
                 else:
                     dataset_dict = load_dataset(self.filetype, data_files=data_files)
         else:
-            if self.filetype == 'json' and field is not None:
+            if self.filetype == "json" and field is not None:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
             else:
                 dataset_dict = load_dataset(self.filetype, data_files=data_files)
@@ -146,10 +146,12 @@ class TextFileDataSource(TextDataSource):
         if not self.predicting:
             if isinstance(target, List):
                 # multi-target
+                dataset.multi_label = True
                 dataset_dict = dataset_dict.map(partial(self._multilabel_target, target))
                 dataset.num_classes = len(target)
                 self.set_state(LabelsState(target))
             else:
+                dataset.multi_label = False
                 if self.training:
                     labels = list(sorted(list(set(dataset_dict[stage][target]))))
                     dataset.num_classes = len(labels)
@@ -186,7 +188,6 @@ class TextFileDataSource(TextDataSource):
 
 
 class TextCSVDataSource(TextFileDataSource):
-
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__("csv", backbone, max_length=max_length)
 
@@ -201,7 +202,6 @@ class TextCSVDataSource(TextFileDataSource):
 
 
 class TextJSONDataSource(TextFileDataSource):
-
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__("json", backbone, max_length=max_length)
 
@@ -216,7 +216,6 @@ class TextJSONDataSource(TextFileDataSource):
 
 
 class TextSentencesDataSource(TextDataSource):
-
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__(backbone, max_length=max_length)
 
@@ -228,7 +227,12 @@ class TextSentencesDataSource(TextDataSource):
 
         if isinstance(data, str):
             data = [data]
-        return [self._tokenize_fn(s, ) for s in data]
+        return [
+            self._tokenize_fn(
+                s,
+            )
+            for s in data
+        ]
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -241,8 +245,7 @@ class TextSentencesDataSource(TextDataSource):
 
 
 class TextClassificationPreprocess(Preprocess):
-
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -288,14 +291,13 @@ class TextClassificationPreprocess(Preprocess):
         return batch
 
     def collate(self, samples: Any) -> Tensor:
-        """Override to convert a set of samples to a batch"""
+        """Override to convert a set of samples to a batch."""
         if isinstance(samples, dict):
             samples = [samples]
         return default_data_collator(samples)
 
 
 class TextClassificationPostprocess(Postprocess):
-
     def per_batch_transform(self, batch: Any) -> Any:
         if isinstance(batch, SequenceClassifierOutput):
             batch = batch.logits
@@ -303,7 +305,11 @@ class TextClassificationPostprocess(Postprocess):
 
 
 class TextClassificationData(DataModule):
-    """Data Module for text classification tasks"""
+    """Data Module for text classification tasks."""
 
     preprocess_cls = TextClassificationPreprocess
     postprocess_cls = TextClassificationPostprocess
+
+    @property
+    def backbone(self) -> Optional[str]:
+        return getattr(self.preprocess, "backbone", None)

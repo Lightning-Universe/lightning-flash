@@ -111,9 +111,7 @@ Here's an example:
     from flash.core.data.transforms import ApplyToKeys
     from flash.image import ImageClassificationData, ImageClassifier
 
-    transform = {
-        "to_tensor_transform": ApplyToKeys("input", my_to_tensor_transform)
-    }
+    transform = {"to_tensor_transform": ApplyToKeys("input", my_to_tensor_transform)}
 
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
@@ -131,11 +129,12 @@ Alternatively, the user may directly override the hooks for their needs like thi
     from typing import Any, Dict
     from flash.image import ImageClassificationData, ImageClassifier, ImageClassificationPreprocess
 
-    class CustomImageClassificationPreprocess(ImageClassificationPreprocess):
 
+    class CustomImageClassificationPreprocess(ImageClassificationPreprocess):
         def to_tensor_transform(sample: Dict[str, Any]) -> Dict[str, Any]:
             sample["input"] = my_to_tensor_transform(sample["input"])
             return sample
+
 
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
@@ -195,8 +194,8 @@ Here's the full ``ImageClassificationFoldersDataSource``:
     from typing import Any, Dict
     from flash.core.data.data_source import DataSource, DefaultDataKeys
 
-    class ImageClassificationFoldersDataSource(DataSource):
 
+    class ImageClassificationFoldersDataSource(DataSource):
         def load_data(self, folder: str, dataset: Any) -> Iterable:
             # The dataset is optional but can be useful to save some metadata.
 
@@ -213,14 +212,15 @@ Here's the full ``ImageClassificationFoldersDataSource``:
                 {
                     DefaultDataKeys.INPUT: file,
                     DefaultDataKeys.TARGET: target,
-                } for file, target in metadata
+                }
+                for file, target in metadata
             ]
 
         def predict_load_data(self, predict_folder: str) -> Iterable:
             # This returns [image_path_1, ... image_path_m].
             return [{DefaultDataKeys.INPUT: file} for file in os.listdir(folder)]
 
-        def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]
+        def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
             sample[DefaultDataKeys.INPUT] = Image.open(sample[DefaultDataKeys.INPUT])
             return sample
 
@@ -240,7 +240,6 @@ Next, implement your custom ``ImageClassificationPreprocess`` with some default 
 
     # Subclass `Preprocess`
     class ImageClassificationPreprocess(Preprocess):
-
         def __init__(
             self,
             train_transform: Optional[Dict[str, Callable]] = None,
@@ -267,9 +266,7 @@ Next, implement your custom ``ImageClassificationPreprocess`` with some default 
             return cls(**state_dict)
 
         def default_transforms(self) -> Dict[str, Callable]:
-            return {
-                "to_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.to_tensor)
-            }
+            return {"to_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.to_tensor)}
 
 4. The DataModule
 _________________
@@ -281,6 +278,7 @@ All we need to do is attach our :class:`~flash.core.data.process.Preprocess` cla
 .. code-block:: python
 
     from flash import DataModule
+
 
     class ImageClassificationDataModule(DataModule):
 

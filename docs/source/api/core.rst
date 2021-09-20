@@ -7,6 +7,17 @@ flash.core
     :local:
     :backlinks: top
 
+flash.core.adapter
+__________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.adapter.Adapter
+    ~flash.core.adapter.AdapterTask
+
 flash.core.classification
 _________________________
 
@@ -37,14 +48,25 @@ _____________________
     ~flash.core.finetuning.NoFreeze
     ~flash.core.finetuning.UnfreezeMilestones
 
-flash.core.integration.fiftyone
-_______________________________
+flash.core.integrations.fiftyone
+________________________________
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
     ~flash.core.integrations.fiftyone.utils.visualize
+
+flash.core.integrations.icevision
+_________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.integrations.icevision.transforms.IceVisionTransformAdapter
+    ~flash.core.integrations.icevision.transforms.default_transforms
+    ~flash.core.integrations.icevision.transforms.train_default_transforms
 
 flash.core.model
 ________________
@@ -56,6 +78,8 @@ ________________
 
     ~flash.core.model.BenchmarkConvergenceCI
     ~flash.core.model.CheckDependenciesMeta
+    ~flash.core.model.ModuleWrapperBase
+    ~flash.core.model.DatasetProcessor
     ~flash.core.model.Task
 
 flash.core.registry
@@ -67,6 +91,20 @@ ___________________
     :template: classtemplate.rst
 
     ~flash.core.registry.FlashRegistry
+    ~flash.core.registry.ExternalRegistry
+    ~flash.core.registry.ConcatRegistry
+
+flash.core.optimizers
+_____________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.optimizers.LARS
+    ~flash.core.optimizers.LAMB
+    ~flash.core.optimizers.LinearWarmupCosineAnnealingLR
 
 Utilities
 _________

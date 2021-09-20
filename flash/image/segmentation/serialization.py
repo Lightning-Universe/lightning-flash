@@ -25,7 +25,6 @@ from flash.core.utilities.imports import (
     _MATPLOTLIB_AVAILABLE,
     lazy_import,
     requires,
-    requires_extras,
 )
 
 Segmentation = None
@@ -48,16 +47,15 @@ else:
 
 
 class SegmentationLabels(Serializer):
-    """A :class:`.Serializer` which converts the model outputs to the label of
-    the argmax classification per pixel in the image for semantic segmentation
-    tasks.
+    """A :class:`.Serializer` which converts the model outputs to the label of the argmax classification per pixel
+    in the image for semantic segmentation tasks.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
         visualize: Wether to visualize the image labels.
     """
 
-    @requires_extras("image")
+    @requires("image")
     def __init__(self, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None, visualize: bool = False):
         super().__init__()
         self.labels_map = labels_map
@@ -65,14 +63,13 @@ class SegmentationLabels(Serializer):
 
     @staticmethod
     def labels_to_image(img_labels: torch.Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> torch.Tensor:
-        """Function that given an image with labels ids and their pixels intrensity mapping,
-           creates a RGB representation for visualisation purposes.
-        """
+        """Function that given an image with labels ids and their pixels intrensity mapping, creates a RGB
+        representation for visualisation purposes."""
         assert len(img_labels.shape) == 2, img_labels.shape
         H, W = img_labels.shape
         out = torch.empty(3, H, W, dtype=torch.uint8)
         for label_id, label_val in labels_map.items():
-            mask = (img_labels == label_id)
+            mask = img_labels == label_id
             for i in range(3):
                 out[i].masked_fill_(mask, label_val[i])
         return out
@@ -81,7 +78,7 @@ class SegmentationLabels(Serializer):
     def create_random_labels_map(num_classes: int) -> Dict[int, Tuple[int, int, int]]:
         labels_map: Dict[int, Tuple[int, int, int]] = {}
         for i in range(num_classes):
-            labels_map[i] = torch.randint(0, 255, (3, ))
+            labels_map[i] = torch.randint(0, 255, (3,))
         return labels_map
 
     @requires("matplotlib")
@@ -104,8 +101,7 @@ class SegmentationLabels(Serializer):
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
-    """A :class:`.Serializer` which converts the model outputs to FiftyOne
-    segmentation format.
+    """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.

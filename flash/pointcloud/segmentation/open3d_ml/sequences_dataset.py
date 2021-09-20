@@ -28,16 +28,15 @@ if _POINTCLOUD_AVAILABLE:
 
 
 class SequencesDataset(Dataset):
-
     def __init__(
         self,
         data,
-        cache_dir='./logs/cache',
+        cache_dir="./logs/cache",
         use_cache=False,
         num_points=65536,
         ignored_label_inds=[0],
         predicting=False,
-        **kwargs
+        **kwargs,
     ):
 
         super().__init__()
@@ -78,13 +77,13 @@ class SequencesDataset(Dataset):
                 f"The {root_dir} should contain a `meta.yaml` file about the pointcloud sequences."
             )
 
-        with open(meta_file, 'r') as f:
+        with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
 
         self.label_to_names = self.get_label_to_names()
         self.num_classes = len(self.label_to_names)
 
-        with open(meta_file, 'r') as f:
+        with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
 
         remap_dict_val = self.meta["learning_map"]
@@ -129,6 +128,7 @@ class SequencesDataset(Dataset):
 
     def get_label_to_names(self):
         """Returns a label to names dictonary object.
+
         Returns:
             A dict where keys are label numbers and
             values are the corresponding names.
@@ -137,7 +137,7 @@ class SequencesDataset(Dataset):
 
     def __getitem__(self, index):
         data = self.get_data(index)
-        data['attr'] = self.get_attr(index)
+        data["attr"] = self.get_attr(index)
         return data
 
     def get_data(self, idx):
@@ -146,21 +146,21 @@ class SequencesDataset(Dataset):
 
         dir, file = split(pc_path)
         if self.predicting:
-            label_path = join(dir, file[:-4] + '.label')
+            label_path = join(dir, file[:-4] + ".label")
         else:
-            label_path = join(dir, '../labels', file[:-4] + '.label')
+            label_path = join(dir, "../labels", file[:-4] + ".label")
         if not exists(label_path):
             labels = np.zeros(np.shape(points)[0], dtype=np.int32)
-            if self.split not in ['test', 'all']:
-                raise FileNotFoundError(f' Label file {label_path} not found')
+            if self.split not in ["test", "all"]:
+                raise FileNotFoundError(f" Label file {label_path} not found")
 
         else:
             labels = DataProcessing.load_label_kitti(label_path, self.remap_lut_val).astype(np.int32)
 
         data = {
-            'point': points[:, 0:3],
-            'feat': None,
-            'label': labels,
+            "point": points[:, 0:3],
+            "feat": None,
+            "label": labels,
         }
 
         return data
@@ -169,10 +169,10 @@ class SequencesDataset(Dataset):
         pc_path = self.path_list[idx]
         dir, file = split(pc_path)
         _, seq = split(split(dir)[0])
-        name = '{}_{}'.format(seq, file[:-4])
+        name = f"{seq}_{file[:-4]}"
 
         pc_path = str(pc_path)
-        attr = {'idx': idx, 'name': name, 'path': pc_path, 'split': self.split}
+        attr = {"idx": idx, "name": name, "path": pc_path, "split": self.split}
         return attr
 
     def __len__(self):

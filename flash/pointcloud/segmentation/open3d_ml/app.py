@@ -29,7 +29,6 @@ else:
 
 
 class Visualizer(Open3dVisualizer):
-
     def visualize_dataset(self, dataset, split, indices=None, width=1024, height=768):
         """Visualize a dataset.
 
@@ -61,7 +60,6 @@ class Visualizer(Open3dVisualizer):
 
 
 class App:
-
     def __init__(self, datamodule: DataModule):
         self.datamodule = datamodule
         self._enabled = True  # not flash._IS_TESTING
@@ -77,7 +75,7 @@ class App:
         if self._enabled:
             dataset = self.get_dataset("train")
             viz = Visualizer()
-            viz.visualize_dataset(dataset, 'all', indices=indices)
+            viz.visualize_dataset(dataset, "all", indices=indices)
 
     def show_predictions(self, predictions):
         if self._enabled:
@@ -86,12 +84,14 @@ class App:
 
             predictions_visualizations = []
             for pred in predictions:
-                predictions_visualizations.append({
-                    "points": torch.stack(pred[DefaultDataKeys.INPUT]),
-                    "labels": torch.stack(pred[DefaultDataKeys.TARGET]),
-                    "predictions": torch.argmax(torch.stack(pred[DefaultDataKeys.PREDS]), axis=-1) + 1,
-                    "name": pred[DefaultDataKeys.METADATA]["name"],
-                })
+                predictions_visualizations.append(
+                    {
+                        "points": pred[DefaultDataKeys.INPUT],
+                        "labels": pred[DefaultDataKeys.TARGET],
+                        "predictions": torch.argmax(pred[DefaultDataKeys.PREDS], axis=-1) + 1,
+                        "name": pred[DefaultDataKeys.METADATA]["name"],
+                    }
+                )
 
             viz = Visualizer()
             lut = LabelLUT()
@@ -103,5 +103,5 @@ class App:
             viz.visualize(predictions_visualizations)
 
 
-def launch_app(datamodule: DataModule) -> 'App':
+def launch_app(datamodule: DataModule) -> "App":
     return App(datamodule)

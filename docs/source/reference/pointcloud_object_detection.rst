@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Point Cloud Object Detection
+   :card_description: Learn to detect objects in point clouds with Flash and build an example detector with the KITTI data set.
+   :tags: Point-Cloud,Detection
 
 .. _pointcloud_object_detection:
 
@@ -76,7 +80,24 @@ Here's the full example:
     :language: python
     :lines: 14-
 
-
-
 .. image:: https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/docs/images/visualizer_BoundingBoxes.png
    :width: 100%
+
+------
+
+**********
+Flash Zero
+**********
+
+The point cloud object detector can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash pointcloud_detection
+
+To view configuration options and options for running the point cloud object detector with your own data, use:
+
+.. code-block:: bash
+
+    flash pointcloud_detection --help

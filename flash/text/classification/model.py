@@ -16,15 +16,19 @@ import warnings
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from torchmetrics import Accuracy, F1, Metric
+from pytorch_lightning import Callback
+from torch.optim.lr_scheduler import _LRScheduler
+from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
+from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
+from flash.text.ort_callback import ORTCallback
 
-if _TEXT_AVAILABLE:
-    from transformers import BertForSequenceClassification
-    from transformers.modeling_outputs import SequenceClassifierOutput
+if _TRANSFORMERS_AVAILABLE:
+    from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
 
 class TextClassifier(ClassificationTask):
@@ -36,6 +40,9 @@ class TextClassifier(ClassificationTask):
         num_classes: Number of classes to classify.
         backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -43,9 +50,12 @@ class TextClassifier(ClassificationTask):
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
     required_extras: str = "text"
+
+    backbones: FlashRegistry = TEXT_CLASSIFIER_BACKBONES
 
     def __init__(
         self,
@@ -53,10 +63,14 @@ class TextClassifier(ClassificationTask):
         backbone: str = "prajjwal1/bert-medium",
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        enable_ort: bool = False,
     ):
         self.save_hyperparameters()
 
@@ -67,33 +81,36 @@ class TextClassifier(ClassificationTask):
         os.environ["PYTHONWARNINGS"] = "ignore"
 
         super().__init__(
+            num_classes=num_classes,
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            metrics=metrics or (F1(num_classes) if multi_label else Accuracy()),
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
             serializer=serializer or Labels(multi_label=multi_label),
         )
-        self.model = BertForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
-
+        self.enable_ort = enable_ort
+        self.model = self.backbones.get(backbone)(num_labels=num_classes)
         self.save_hyperparameters()
 
     @property
     def backbone(self):
-        # see huggingface's BertForSequenceClassification
-        return self.model.bert
+        return self.model.base_model
 
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
 
     def to_loss_format(self, x) -> torch.Tensor:
-        if isinstance(x, SequenceClassifierOutput):
+        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             x = x.logits
         return super().to_loss_format(x)
 
     def to_metrics_format(self, x) -> torch.Tensor:
-        if isinstance(x, SequenceClassifierOutput):
+        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             x = x.logits
         return super().to_metrics_format(x)
 
@@ -106,10 +123,14 @@ class TextClassifier(ClassificationTask):
         return self(batch)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         if self.hparams.multi_label:
             assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
         else:
             assert history[-1]["val_accuracy"] > 0.70, history[-1]["val_accuracy"]
+
+    def configure_callbacks(self) -> List[Callback]:
+        callbacks = super().configure_callbacks() or []
+        if self.enable_ort:
+            callbacks.append(ORTCallback())
+        return callbacks

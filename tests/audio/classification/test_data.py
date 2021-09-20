@@ -43,8 +43,6 @@ def _rand_image(size: Tuple[int, int] = None):
 def test_from_filepaths_smoke(tmpdir):
     tmpdir = Path(tmpdir)
 
-    (tmpdir / "a").mkdir()
-    (tmpdir / "b").mkdir()
     _rand_image().save(tmpdir / "a_1.png")
     _rand_image().save(tmpdir / "b_1.png")
 
@@ -64,9 +62,81 @@ def test_from_filepaths_smoke(tmpdir):
     assert spectrograms_data.test_dataloader() is None
 
     data = next(iter(spectrograms_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert sorted(list(labels.numpy())) == [1, 2]
+
+
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.parametrize(
+    "data,from_function",
+    [
+        (torch.rand(3, 3, 64, 64), AudioClassificationData.from_tensors),
+        (np.random.rand(3, 3, 64, 64), AudioClassificationData.from_numpy),
+    ],
+)
+def test_from_data(data, from_function):
+    img_data = from_function(
+        train_data=data,
+        train_targets=[0, 3, 6],
+        val_data=data,
+        val_targets=[1, 4, 7],
+        test_data=data,
+        test_targets=[2, 5, 8],
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # check training data
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
+    assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
+
+    # check validation data
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert list(labels.numpy()) == [1, 4]
+
+    # check test data
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
+    assert list(labels.numpy()) == [2, 5]
+
+
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+def test_from_filepaths_numpy(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    np.save(str(tmpdir / "a_1.npy"), np.random.rand(64, 64, 3))
+    np.save(str(tmpdir / "b_1.npy"), np.random.rand(64, 64, 3))
+
+    train_images = [
+        str(tmpdir / "a_1.npy"),
+        str(tmpdir / "b_1.npy"),
+    ]
+
+    spectrograms_data = AudioClassificationData.from_files(
+        train_files=train_images,
+        train_targets=[1, 2],
+        batch_size=2,
+        num_workers=0,
+    )
+    assert spectrograms_data.train_dataloader() is not None
+    assert spectrograms_data.val_dataloader() is None
+    assert spectrograms_data.test_dataloader() is None
+
+    data = next(iter(spectrograms_data.train_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [1, 2]
 
 
@@ -74,7 +144,6 @@ def test_from_filepaths_smoke(tmpdir):
 def test_from_filepaths_list_image_paths(tmpdir):
     tmpdir = Path(tmpdir)
 
-    (tmpdir / "e").mkdir()
     _rand_image().save(tmpdir / "e_1.png")
 
     train_images = [
@@ -96,24 +165,24 @@ def test_from_filepaths_list_image_paths(tmpdir):
 
     # check training data
     data = next(iter(spectrograms_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
     assert labels.numpy()[0] in [0, 3, 6]  # data comes shuffled here
     assert labels.numpy()[1] in [0, 3, 6]  # data comes shuffled here
 
     # check validation data
     data = next(iter(spectrograms_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [1, 4]
 
     # check test data
     data = next(iter(spectrograms_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [2, 5]
 
 
@@ -122,7 +191,6 @@ def test_from_filepaths_list_image_paths(tmpdir):
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
 
-    (tmpdir / "e").mkdir()
     _rand_image().save(tmpdir / "e_1.png")
 
     train_images = [
@@ -201,7 +269,7 @@ def test_from_filepaths_splits(tmpdir):
     _rand_image(img_size).save(tmpdir / "s.png")
 
     num_samples: int = 10
-    val_split: float = .3
+    val_split: float = 0.3
 
     train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
 
@@ -212,7 +280,7 @@ def test_from_filepaths_splits(tmpdir):
     _to_tensor = {
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor)
+            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
         ),
     }
 
@@ -228,9 +296,9 @@ def test_from_filepaths_splits(tmpdir):
             spectrogram_size=img_size,
         )
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data['input'], data['target']
+        imgs, labels = data["input"], data["target"]
         assert imgs.shape == (B, 3, H, W)
-        assert labels.shape == (B, )
+        assert labels.shape == (B,)
 
     run(_to_tensor)
 
@@ -251,9 +319,9 @@ def test_from_folders_only_train(tmpdir):
     spectrograms_data = AudioClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
 
     data = next(iter(spectrograms_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (1, 3, 196, 196)
-    assert labels.shape == (1, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (1, 3, 128, 128)
+    assert labels.shape == (1,)
 
     assert spectrograms_data.val_dataloader() is None
     assert spectrograms_data.test_dataloader() is None
@@ -281,20 +349,20 @@ def test_from_folders_train_val(tmpdir):
     )
 
     data = next(iter(spectrograms_data.train_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
 
     data = next(iter(spectrograms_data.val_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [0, 0]
 
     data = next(iter(spectrograms_data.test_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
-    assert labels.shape == (2, )
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
+    assert labels.shape == (2,)
     assert list(labels.numpy()) == [0, 0]
 
 
@@ -323,18 +391,18 @@ def test_from_filepaths_multilabel(tmpdir):
     )
 
     data = next(iter(dm.train_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
     assert labels.shape == (2, 4)
 
     data = next(iter(dm.val_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
     assert labels.shape == (2, 4)
     torch.testing.assert_allclose(labels, torch.tensor(valid_labels))
 
     data = next(iter(dm.test_dataloader()))
-    imgs, labels = data['input'], data['target']
-    assert imgs.shape == (2, 3, 196, 196)
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (2, 3, 128, 128)
     assert labels.shape == (2, 4)
     torch.testing.assert_allclose(labels, torch.tensor(test_labels))

@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Object Detection
+   :card_description: Learn to detect objects in images with Flash and build an example detector with the COCO data set.
+   :tags: Image,Detection
 
 .. _object_detection:
 
@@ -10,6 +14,8 @@ The Task
 ********
 
 Object detection is the task of identifying objects in images and their associated classes and bounding boxes.
+
+The :class:`~flash.image.detection.model.ObjectDetector` and :class:`~flash.image.detection.data.ObjectDetectionData` classes internally rely on `IceVision <https://airctic.com/>`_.
 
 ------
 
@@ -47,3 +53,22 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/object_detection.py
     :language: python
     :lines: 14-
+
+------
+
+**********
+Flash Zero
+**********
+
+The object detector can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash object_detection
+
+To view configuration options and options for running the object detector with your own data, use:
+
+.. code-block:: bash
+
+    flash object_detection --help
