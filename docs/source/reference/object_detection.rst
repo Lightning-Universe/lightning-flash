@@ -76,21 +76,26 @@ To view configuration options and options for running the object detector with y
 ************
 Augmentation
 ************
-
+Flash automatically applies some default image transformations and augmentations, but you may wish to customize these for your own use case.
+The base :class:`~flash.core.data.process.Preprocess` defines 7 hooks for different stages in the data loading pipeline. For object-detection tasks, you can leverage the transformations functions directly from albumentations or for Icevision's albumentations adapter.
 .. code-block:: python
 
-    import albumentations as A
+    import albumentations as alb
+    from icevision.tfms import A
 
     from flash.core.integrations.icevision.transforms import IceVisionTransformAdapter
     from flash.image import ObjectDetectionData
 
     train_transform = {
-        "pre_tensor_transform": IceVisionTransformAdapter([A.HorizontalFlip(), A.Normalize()]),
+        "pre_tensor_transform": transforms.IceVisionTransformAdapter(
+            [*A.resize_and_pad(128), A.Normalize(), A.Flip(0.4), alb.RandomBrightnessContrast()]
+        )
     }
+
     datamodule = ObjectDetectionData.from_coco(
         train_folder="data/coco128/images/train2017/",
         train_ann_file="data/coco128/annotations/instances_train2017.json",
         val_split=0.1,
         image_size=128,
-        train_transform=transform,
+        train_transform=train_transform,
     )
