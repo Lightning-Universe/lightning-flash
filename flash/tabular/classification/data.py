@@ -339,7 +339,7 @@ class TabularClassificationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         is_regression: bool = False,
         **preprocess_kwargs: Any,
     ):
@@ -449,7 +449,7 @@ class TabularClassificationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         is_regression: bool = False,
         **preprocess_kwargs: Any,
     ) -> "DataModule":

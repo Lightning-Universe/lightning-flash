@@ -599,13 +599,12 @@ class LoaderDataFrameDataSource(
                 }
                 for _, row in data_frame.iterrows()
             ]
-        else:
-            return [
-                {
-                    DefaultDataKeys.INPUT: row[input_key],
-                }
-                for _, row in data_frame.iterrows()
-            ]
+        return [
+            {
+                DefaultDataKeys.INPUT: row[input_key],
+            }
+            for _, row in data_frame.iterrows()
+        ]
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         # TODO: simplify this duplicated code from PathsDataSource

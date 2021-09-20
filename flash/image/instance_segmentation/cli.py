@@ -15,7 +15,7 @@ from functools import partial
 from typing import Callable, Optional
 
 from flash.core.utilities.flash_cli import FlashCLI
-from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires
 from flash.image import InstanceSegmentation, InstanceSegmentationData
 
 if _ICEDATA_AVAILABLE:
@@ -24,11 +24,11 @@ if _ICEDATA_AVAILABLE:
 __all__ = ["instance_segmentation"]
 
 
-@requires_extras("image")
+@requires(["image", "icedata"])
 def from_pets(
     val_split: float = 0.1,
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     parser: Optional[Callable] = None,
     **preprocess_kwargs,
 ) -> InstanceSegmentationData:

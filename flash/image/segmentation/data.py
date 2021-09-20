@@ -42,11 +42,10 @@ from flash.core.utilities.imports import (
     Image,
     lazy_import,
     requires,
-    requires_extras,
 )
-from flash.image.data import ImageDeserializer
+from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
 from flash.image.segmentation.serialization import SegmentationLabels
-from flash.image.segmentation.transforms import default_transforms, train_default_transforms
+from flash.image.segmentation.transforms import default_transforms, predict_default_transforms, train_default_transforms
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -64,9 +63,7 @@ else:
 if _TORCHVISION_AVAILABLE:
     import torchvision
     import torchvision.transforms.functional as FT
-    from torchvision.datasets.folder import default_loader, has_file_allowed_extension, IMG_EXTENSIONS
-else:
-    IMG_EXTENSIONS = None
+    from torchvision.datasets.folder import default_loader, has_file_allowed_extension
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
@@ -86,7 +83,6 @@ class SemanticSegmentationTensorDataSource(TensorDataSource):
 
 
 class SemanticSegmentationPathsDataSource(PathsDataSource):
-    @requires_extras("image")
     def __init__(self):
         super().__init__(IMG_EXTENSIONS)
 
@@ -168,7 +164,6 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
 
 class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
-    @requires_extras("image")
     def __init__(self, label_field: str = "ground_truth"):
         super().__init__(label_field=label_field)
         self._fo_dataset_name = None
@@ -216,13 +211,12 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 class SemanticSegmentationDeserializer(ImageDeserializer):
     def deserialize(self, data: str) -> torch.Tensor:
         result = super().deserialize(data)
-        result[DefaultDataKeys.INPUT] = self.to_tensor(result[DefaultDataKeys.INPUT])
+        result[DefaultDataKeys.INPUT] = FT.to_tensor(result[DefaultDataKeys.INPUT])
         result[DefaultDataKeys.METADATA] = {"size": result[DefaultDataKeys.INPUT].shape}
         return result
 
 
 class SemanticSegmentationPreprocess(Preprocess):
-    @requires_extras("image")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -289,6 +283,9 @@ class SemanticSegmentationPreprocess(Preprocess):
     def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
         return train_default_transforms(self.image_size)
 
+    def predict_default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return predict_default_transforms(self.image_size)
+
 
 class SemanticSegmentationData(DataModule):
     """Data module for semantic segmentation tasks."""
@@ -321,7 +318,7 @@ class SemanticSegmentationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
 
@@ -379,7 +376,7 @@ class SemanticSegmentationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
         **preprocess_kwargs,
@@ -461,7 +458,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         self.labels_map: Dict[int, Tuple[int, int, int]] = labels_map
 
     @staticmethod
-    @requires_extras("image")
+    @requires("image")
     def _to_numpy(img: Union[torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, Image.Image):

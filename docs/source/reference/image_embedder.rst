@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Image Embedder
+   :card_description: Learn to generate embeddings from images with Flash.
+   :tags: Image,Embedding
 
 .. _image_embedder:
 

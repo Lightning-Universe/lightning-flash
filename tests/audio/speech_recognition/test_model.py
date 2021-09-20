@@ -24,6 +24,7 @@ from flash.__main__ import main
 from flash.audio import SpeechRecognition
 from flash.audio.speech_recognition.data import SpeechRecognitionPostprocess, SpeechRecognitionPreprocess
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -75,7 +76,6 @@ def test_jit(tmpdir):
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
@@ -86,7 +86,7 @@ def test_serve():
     model.serve()
 
 
-@pytest.mark.skipif(_AUDIO_TESTING, reason="audio libraries are installed.")
+@pytest.mark.skipif(_AUDIO_AVAILABLE, reason="audio libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[audio]'")):
         SpeechRecognition.load_from_checkpoint("not_a_real_checkpoint.pt")

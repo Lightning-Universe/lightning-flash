@@ -1,3 +1,7 @@
+.. customcarditem::
+   :header: Point Cloud Segmentation
+   :card_description: Learn to segment objects in point clouds with Flash and build an example network with the KITTI data set.
+   :tags: Point-Cloud,Segmentation
 
 .. _pointcloud_segmentation:
 

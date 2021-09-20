@@ -61,3 +61,16 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
             ),
         },
     )
+
+
+def predict_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    """During predict, we apply the default transforms only on DefaultDataKeys.INPUT."""
+    return {
+        "post_tensor_transform": nn.Sequential(
+            ApplyToKeys(
+                DefaultDataKeys.INPUT,
+                K.geometry.Resize(image_size, interpolation="nearest"),
+            ),
+        ),
+        "collate": kornia_collate,
+    }

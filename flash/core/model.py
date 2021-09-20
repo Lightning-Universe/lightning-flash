@@ -26,6 +26,7 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -49,7 +50,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import requires_extras
+from flash.core.utilities.imports import requires
 
 
 class ModuleWrapperBase:
@@ -258,13 +259,26 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = requires_extras(result.required_extras)(result.__init__)
+            result.__init__ = requires(result.required_extras)(result.__init__)
             load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
             if load_from_checkpoint is not None:
                 result.load_from_checkpoint = classmethod(
-                    requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
+                    requires(result.required_extras)(result.load_from_checkpoint.__func__)
                 )
         return result
+
+
+class OutputKeys(LightningEnum):
+    """The ``OutputKeys`` enum contains the keys that are used internally by the ``Task`` when handling outputs."""
+
+    OUTPUT = "y_hat"
+    TARGET = "y"
+    LOGS = "logs"
+    LOSS = "loss"
+
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
 
 
 class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=CheckDependenciesMeta):
@@ -282,7 +296,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
 
-    required_extras: Optional[str] = None
+    required_extras: Optional[Union[str, List[str]]] = None
 
     def __init__(
         self,
@@ -331,11 +345,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         x, y = batch
         y_hat = self(x)
         y, y_hat = self.apply_filtering(y, y_hat)
-        output = {"y_hat": y_hat}
-        y_hat = self.to_loss_format(output["y_hat"])
+        output = {OutputKeys.OUTPUT: y_hat}
+        y_hat = self.to_loss_format(output[OutputKeys.OUTPUT])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
-        logs = {}
-        y_hat = self.to_metrics_format(output["y_hat"])
+
+        y_hat = self.to_metrics_format(output[OutputKeys.OUTPUT])
 
         logs = {}
 
@@ -350,9 +364,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             logs["total_loss"] = sum(losses.values())
             return logs["total_loss"], logs
 
-        output["loss"] = self.compute_loss(losses)
-        output["logs"] = self.compute_logs(logs, losses)
-        output["y"] = y
+        output[OutputKeys.LOSS] = self.compute_loss(losses)
+        output[OutputKeys.LOGS] = self.compute_logs(logs, losses)
+        output[OutputKeys.TARGET] = y
         return output
 
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
@@ -380,16 +394,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
-        self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
-        return output["loss"]
+        self.log_dict(
+            {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+        )
+        return output[OutputKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     @predict_context
     def predict(
@@ -546,27 +575,18 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
 
         # Datamodule
-        if self.datamodule is not None and getattr(self.datamodule, "data_pipeline", None) is not None:
-            old_data_source = getattr(self.datamodule.data_pipeline, "data_source", None)
-            preprocess = getattr(self.datamodule.data_pipeline, "_preprocess_pipeline", None)
-            postprocess = getattr(self.datamodule.data_pipeline, "_postprocess_pipeline", None)
-            serializer = getattr(self.datamodule.data_pipeline, "_serializer", None)
-            deserializer = getattr(self.datamodule.data_pipeline, "_deserializer", None)
+        datamodule = None
+        if self.trainer is not None and hasattr(self.trainer, "datamodule"):
+            datamodule = self.trainer.datamodule
+        elif getattr(self, "datamodule", None) is not None:
+            datamodule = self.datamodule
 
-        elif (
-            self.trainer is not None
-            and hasattr(self.trainer, "datamodule")
-            and getattr(self.trainer.datamodule, "data_pipeline", None) is not None
-        ):
-            old_data_source = getattr(self.trainer.datamodule.data_pipeline, "data_source", None)
-            preprocess = getattr(self.trainer.datamodule.data_pipeline, "_preprocess_pipeline", None)
-            postprocess = getattr(self.trainer.datamodule.data_pipeline, "_postprocess_pipeline", None)
-            serializer = getattr(self.trainer.datamodule.data_pipeline, "_serializer", None)
-            deserializer = getattr(self.trainer.datamodule.data_pipeline, "_deserializer", None)
-        else:
-            # TODO: we should log with low severity level that we use defaults to create
-            # `preprocess`, `postprocess` and `serializer`.
-            pass
+        if getattr(datamodule, "data_pipeline", None) is not None:
+            old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
 
         # Defaults / task attributes
         deserializer, preprocess, postprocess, serializer = Task._resolve(
@@ -835,7 +855,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    @requires_extras("serve")
+    @requires("serve")
     def run_serve_sanity_check(self):
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
@@ -855,7 +875,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             resp = tc.post("http://0.0.0.0:8000/predict", json=body)
             print(f"Sanity check response: {resp.json()}")
 
-    @requires_extras("serve")
+    @requires("serve")
     def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> "Composition":
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
