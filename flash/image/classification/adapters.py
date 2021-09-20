@@ -134,10 +134,12 @@ class Learn2LearnAdapter(Adapter):
             meta_batch_size: Number of task to be sampled and optimized over before doing a meta optimizer step.
             queries: Number of samples used for computing the meta loss after the adaption on the `shots` samples.
             num_task: Total number of tasks to be sampled during training. If -1, a new task will always be sampled.
+            epoch_length: Total number of tasks to be sampled to make an epoch.
             test_ways: Number of classes conserved for generating the validation and testing task.
             test_shots: Number of samples used for adaptation during validation and testing phase.
             test_queries: Number of samples used for computing the meta loss during validation or testing
                 after the adaption on `shots` samples.
+            epoch_length: Total number of tasks to be sampled to make an epoch during validation and testing phase.
             default_transforms_fn: A Callable to create the task transform.
                 The callable should take the dataset, ways and shots as arguments.
             algorithm_kwargs: Keyword arguments to be provided to the algorithm class from learn2learn
