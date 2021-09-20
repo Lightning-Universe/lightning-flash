@@ -23,9 +23,7 @@ from flash.core.data.process import DefaultPreprocess
 
 
 def test_base_data_fetcher(tmpdir):
-
     class CheckData(BaseDataFetcher):
-
         def check(self):
             assert self.batches["val"]["load_sample"] == [0, 1, 2, 3, 4]
             assert self.batches["val"]["pre_tensor_transform"] == [0, 1, 2, 3, 4]
@@ -38,7 +36,6 @@ def test_base_data_fetcher(tmpdir):
             assert self.batches["predict"] == {}
 
     class CustomDataModule(DataModule):
-
         @staticmethod
         def configure_data_fetcher():
             return CheckData()
@@ -70,13 +67,11 @@ def test_base_data_fetcher(tmpdir):
 
     data_fetcher.check()
     data_fetcher.reset()
-    assert data_fetcher.batches == {'train': {}, 'test': {}, 'val': {}, 'predict': {}}
+    assert data_fetcher.batches == {"train": {}, "test": {}, "val": {}, "predict": {}}
 
 
 def test_data_loaders_num_workers_to_0(tmpdir):
-    """
-    num_workers should be set to `0` internally for visualization and not for training.
-    """
+    """num_workers should be set to `0` internally for visualization and not for training."""
 
     datamodule = DataModule(train_dataset=range(10), num_workers=3)
     iterator = datamodule._reset_iterator(RunningStage.TRAINING)

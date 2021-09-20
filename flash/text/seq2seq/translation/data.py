@@ -17,7 +17,6 @@ from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2Se
 
 
 class TranslationPreprocess(Seq2SeqPreprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -27,7 +26,8 @@ class TranslationPreprocess(Seq2SeqPreprocess):
         backbone: str = "t5-small",
         max_source_length: int = 128,
         max_target_length: int = 128,
-        padding: Union[str, bool] = 'max_length'
+        padding: Union[str, bool] = "max_length",
+        **kwargs,
     ):
         super().__init__(
             train_transform=train_transform,
@@ -38,6 +38,7 @@ class TranslationPreprocess(Seq2SeqPreprocess):
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
+            **kwargs,
         )
 
 

@@ -16,46 +16,51 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import numpy as np
 import torch
 
 import flash
 from flash.core.data.data_source import (
     DefaultDataKeys,
     FiftyOneDataSource,
+    has_file_allowed_extension,
     NumpyDataSource,
     PathsDataSource,
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
-    IMG_EXTENSIONS = []
+    IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
 
-if _PIL_AVAILABLE:
-    from PIL import Image as PILImage
-else:
 
-    class Image:
-        Image = None
+NP_EXTENSIONS = (".npy",)
+
+
+def image_loader(filepath: str):
+    if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
+        img = default_loader(filepath)
+    elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
+        img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
+    else:
+        raise ValueError(
+            f"File: {filepath} has an unsupported extension. Supported extensions: "
+            f"{list(IMG_EXTENSIONS + NP_EXTENSIONS)}."
+        )
+    return img
 
 
 class ImageDeserializer(Deserializer):
-
-    @requires_extras("image")
-    def __init__(self):
-        super().__init__()
-        self.to_tensor = torchvision.transforms.ToTensor()
-
+    @requires("image")
     def deserialize(self, data: str) -> Dict:
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
-        img = PILImage.open(buffer, mode="r")
+        img = Image.open(buffer, mode="r")
         return {
             DefaultDataKeys.INPUT: img,
         }
@@ -67,25 +72,18 @@ class ImageDeserializer(Deserializer):
 
 
 class ImagePathsDataSource(PathsDataSource):
-
-    @requires_extras("image")
     def __init__(self):
-        super().__init__(extensions=IMG_EXTENSIONS)
+        super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
+    @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
-        img = default_loader(img_path)
-        sample[DefaultDataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {
-            "filepath": img_path,
-            "size": (h, w),
-        }
+        sample = super().load_sample(sample, dataset)
+        w, h = sample[DefaultDataKeys.INPUT].size  # WxH
+        sample[DefaultDataKeys.METADATA]["size"] = (h, w)
         return sample
 
 
 class ImageTensorDataSource(TensorDataSource):
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = to_pil_image(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.INPUT] = img
@@ -95,7 +93,6 @@ class ImageTensorDataSource(TensorDataSource):
 
 
 class ImageNumpyDataSource(NumpyDataSource):
-
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
         sample[DefaultDataKeys.INPUT] = img
@@ -105,7 +102,6 @@ class ImageNumpyDataSource(NumpyDataSource):
 
 
 class ImageFiftyOneDataSource(FiftyOneDataSource):
-
     @staticmethod
     def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]

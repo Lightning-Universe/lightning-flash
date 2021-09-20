@@ -21,21 +21,27 @@ TEMPLATE_BACKBONES = FlashRegistry("backbones")
 @TEMPLATE_BACKBONES(name="mlp-128", namespace="template/classification")
 def load_mlp_128(num_features, **_):
     """A simple MLP backbone with 128 hidden units."""
-    return nn.Sequential(
-        nn.Linear(num_features, 128),
-        nn.ReLU(True),
-        nn.BatchNorm1d(128),
-    ), 128
+    return (
+        nn.Sequential(
+            nn.Linear(num_features, 128),
+            nn.ReLU(True),
+            nn.BatchNorm1d(128),
+        ),
+        128,
+    )
 
 
 @TEMPLATE_BACKBONES(name="mlp-128-256", namespace="template/classification")
 def load_mlp_128_256(num_features, **_):
     """An two layer MLP backbone with 128 and 256 hidden units respectively."""
-    return nn.Sequential(
-        nn.Linear(num_features, 128),
-        nn.ReLU(True),
-        nn.BatchNorm1d(128),
-        nn.Linear(128, 256),
-        nn.ReLU(True),
-        nn.BatchNorm1d(256),
-    ), 256
+    return (
+        nn.Sequential(
+            nn.Linear(num_features, 128),
+            nn.ReLU(True),
+            nn.BatchNorm1d(128),
+            nn.Linear(128, 256),
+            nn.ReLU(True),
+            nn.BatchNorm1d(256),
+        ),
+        256,
+    )

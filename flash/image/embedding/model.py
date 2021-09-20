@@ -11,29 +11,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
 from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn
 from torch.nn import functional as F
+from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Accuracy, Metric
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.isinstance import _isinstance
 from flash.image.classification.data import ImageClassificationPreprocess
 
 if _IMAGE_AVAILABLE:
-    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+    from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 else:
     IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
 
 class ImageEmbedder(Task):
-    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For more
-    details, see :ref:`image_embedder`.
+    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For
+    more details, see :ref:`image_embedder`.
 
     Args:
         embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
@@ -41,13 +43,15 @@ class ImageEmbedder(Task):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
-
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
@@ -61,17 +65,23 @@ class ImageEmbedder(Task):
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
         learning_rate: float = 1e-3,
-        pooling_fn: Callable = torch.max
+        pooling_fn: Callable = torch.max,
     ):
         super().__init__(
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
-            preprocess=ImageClassificationPreprocess()
+            preprocess=ImageClassificationPreprocess(),
         )
 
         self.save_hyperparameters()
@@ -89,14 +99,14 @@ class ImageEmbedder(Task):
                 nn.Flatten(),
                 nn.Linear(num_features, embedding_dim),
             )
-            rank_zero_warn('Adding linear layer on top of backbone. Remember to finetune first before using!')
+            rank_zero_warn("Adding linear layer on top of backbone. Remember to finetune first before using!")
 
     def apply_pool(self, x):
         x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+        if _isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
             x = x[0]
         x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
+        if _isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
             x = x[0]
         return x
 
@@ -107,7 +117,7 @@ class ImageEmbedder(Task):
         if isinstance(x, tuple):
             x = x[-1]
 
-        if x.dim() == 4 and self.embedding_dim:
+        if x.dim() == 4 and not self.embedding_dim:
             x = self.apply_pool(x)
 
         x = self.head(x)
@@ -126,5 +136,5 @@ class ImageEmbedder(Task):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
+        batch = batch[DefaultDataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)

@@ -18,6 +18,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import Linear
+from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
@@ -36,6 +37,9 @@ class GraphClassifier(ClassificationTask):
         backbone: Name of the backbone to use.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         model: GraphNN used, defaults to BaseGraphModel.
@@ -55,6 +59,9 @@ class GraphClassifier(ClassificationTask):
         head: Optional[Union[FunctionType, nn.Module]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
     ):
@@ -64,6 +71,9 @@ class GraphClassifier(ClassificationTask):
         super().__init__(
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
         )

@@ -53,7 +53,7 @@ def cull(dsk, keys):
 
 
 def default_fused_linear_keys_renamer(keys):
-    """Create new keys for fused tasks"""
+    """Create new keys for fused tasks."""
     typ = type(keys[0])
     if typ is str:
         names = [key_split(x) for x in keys[:0:-1]]
@@ -62,7 +62,7 @@ def default_fused_linear_keys_renamer(keys):
     if typ is tuple and len(keys[0]) > 0 and isinstance(keys[0][0], str):
         names = [key_split(x) for x in keys[:0:-1]]
         names.append(keys[0][0])
-        return ("-".join(names), ) + keys[0][1:]
+        return ("-".join(names),) + keys[0][1:]
     return None
 
 
@@ -265,7 +265,7 @@ def inline(dsk, keys=None, inline_constants=True, dependencies=None):
 
 
 def inline_functions(dsk, output, fast_functions=None, inline_constants=False, dependencies=None):
-    """Inline cheap functions into larger operations
+    """Inline cheap functions into larger operations.
 
     Examples
     --------
@@ -320,7 +320,7 @@ def unwrap_partial(func):
 
 
 def functions_of(task):
-    """Set of functions contained within nested task
+    """Set of functions contained within nested task.
 
     Examples
     --------
@@ -350,9 +350,8 @@ def functions_of(task):
 def default_fused_keys_renamer(keys, max_fused_key_length=120):
     """Create new keys for ``fuse`` tasks.
 
-    The optional parameter `max_fused_key_length` is used to limit the maximum
-    string length for each renamed key. If this parameter is set to `None`,
-    there is no limit.
+    The optional parameter `max_fused_key_length` is used to limit the maximum string length for each renamed key. If
+    this parameter is set to `None`, there is no limit.
     """
     it = reversed(keys)
     first_key = next(it)
@@ -382,7 +381,7 @@ def default_fused_keys_renamer(keys, max_fused_key_length=120):
         names = sorted(names)
         names.append(first_key[0])
         concatenated_name = "-".join(names)
-        return (_enforce_max_key_limit(concatenated_name), ) + first_key[1:]
+        return (_enforce_max_key_limit(concatenated_name),) + first_key[1:]
 
 
 # PEP-484 compliant singleton constant
@@ -553,16 +552,18 @@ def fuse(
                 children_stack_pop()
                 # This is a leaf node in the reduction region
                 # key, task, fused_keys, height, width, number of nodes, fudge, set of edges
-                info_stack_append((
-                    child,
-                    rv[child],
-                    [child] if rename_keys else None,
-                    1,
-                    1,
-                    1,
-                    0,
-                    deps[child] - reducible,
-                ))
+                info_stack_append(
+                    (
+                        child,
+                        rv[child],
+                        [child] if rename_keys else None,
+                        1,
+                        1,
+                        1,
+                        0,
+                        deps[child] - reducible,
+                    )
+                )
             else:
                 children_stack_pop()
                 # Calculate metrics and fuse as appropriate
@@ -592,7 +593,7 @@ def fuse(
                         fudge += 1
 
                     # Sanity check; don't go too deep if new levels introduce new edge dependencies
-                    if ((num_nodes + fudge) / height <= ave_width and (no_new_edges or height < max_depth_new_edges)):
+                    if (num_nodes + fudge) / height <= ave_width and (no_new_edges or height < max_depth_new_edges):
                         # Perform substitutions as we go
                         val = subs(dsk[parent], child_key, child_task)
                         deps_parent.remove(child_key)
@@ -607,27 +608,31 @@ def fuse(
                         if children_stack:
                             if no_new_edges:
                                 # Linear fuse
-                                info_stack_append((
-                                    parent,
-                                    val,
-                                    child_keys,
-                                    height,
-                                    width,
-                                    num_nodes,
-                                    fudge,
-                                    edges,
-                                ))
+                                info_stack_append(
+                                    (
+                                        parent,
+                                        val,
+                                        child_keys,
+                                        height,
+                                        width,
+                                        num_nodes,
+                                        fudge,
+                                        edges,
+                                    )
+                                )
                             else:
-                                info_stack_append((
-                                    parent,
-                                    val,
-                                    child_keys,
-                                    height + 1,
-                                    width,
-                                    num_nodes + 1,
-                                    fudge,
-                                    edges,
-                                ))
+                                info_stack_append(
+                                    (
+                                        parent,
+                                        val,
+                                        child_keys,
+                                        height + 1,
+                                        width,
+                                        num_nodes + 1,
+                                        fudge,
+                                        edges,
+                                    )
+                                )
                         else:
                             rv[parent] = val
                             break
@@ -640,16 +645,18 @@ def fuse(
                             if fudge > int(ave_width - 1):
                                 fudge = int(ave_width - 1)
                             # This task *implicitly* depends on `edges`
-                            info_stack_append((
-                                parent,
-                                rv[parent],
-                                [parent] if rename_keys else None,
-                                1,
-                                width,
-                                1,
-                                fudge,
-                                edges,
-                            ))
+                            info_stack_append(
+                                (
+                                    parent,
+                                    rv[parent],
+                                    [parent] if rename_keys else None,
+                                    1,
+                                    width,
+                                    1,
+                                    fudge,
+                                    edges,
+                                )
+                            )
                         else:
                             break
                 else:
@@ -717,16 +724,18 @@ def fuse(
                             fused_trees[parent] = child_keys
 
                         if children_stack:
-                            info_stack_append((
-                                parent,
-                                val,
-                                child_keys,
-                                height + 1,
-                                width,
-                                num_nodes + 1,
-                                fudge,
-                                edges,
-                            ))
+                            info_stack_append(
+                                (
+                                    parent,
+                                    val,
+                                    child_keys,
+                                    height + 1,
+                                    width,
+                                    num_nodes + 1,
+                                    fudge,
+                                    edges,
+                                )
+                            )
                         else:
                             rv[parent] = val
                             break
@@ -743,16 +752,18 @@ def fuse(
                                 fudge = int(ave_width - 1)
                             # key, task, height, width, number of nodes, fudge, set of edges
                             # This task *implicitly* depends on `edges`
-                            info_stack_append((
-                                parent,
-                                rv[parent],
-                                [parent] if rename_keys else None,
-                                1,
-                                width,
-                                1,
-                                fudge,
-                                edges,
-                            ))
+                            info_stack_append(
+                                (
+                                    parent,
+                                    rv[parent],
+                                    [parent] if rename_keys else None,
+                                    1,
+                                    width,
+                                    1,
+                                    fudge,
+                                    edges,
+                                )
+                            )
                         else:
                             break
                 # Traverse upwards
@@ -774,7 +785,7 @@ def fuse(
 
 
 def _inplace_fuse_subgraphs(dsk, keys, dependencies, fused_trees, rename_keys):
-    """Subroutine of fuse.Mutates dsk, depenencies, and fused_trees inplace"""
+    """Subroutine of fuse.Mutates dsk, depenencies, and fused_trees inplace."""
     # locate all members of linear chains
     child2parent = {}
     unfusible = set()
@@ -828,7 +839,7 @@ def _inplace_fuse_subgraphs(dsk, keys, dependencies, fused_trees, rename_keys):
 
         # Create new task
         inkeys = tuple(inkeys_set)
-        dsk[outkey] = (SubgraphCallable(subgraph, outkey, inkeys), ) + inkeys
+        dsk[outkey] = (SubgraphCallable(subgraph, outkey, inkeys),) + inkeys
 
         # Mutate `fused_trees` if key renaming is needed (renaming done in fuse)
         if rename_keys:

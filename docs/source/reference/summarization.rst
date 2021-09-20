@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Summarization
+   :card_description: Learn to summarize long passages of text with Flash and build an example model with the XSUM data set.
+   :tags: Text,Summarization,NLP
+
 .. _summarization:
 
 #############
@@ -49,6 +54,25 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The summarization task can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash summarization
+
+To view configuration options and options for running the summarization task with your own data, use:
+
+.. code-block:: bash
+
+    flash summarization --help
+
+------
+
 *******
 Serving
 *******
@@ -66,3 +90,23 @@ You can now perform inference from your client like this:
 .. literalinclude:: ../../../flash_examples/serve/summarization/client.py
     :language: python
     :lines: 14-
+
+------
+
+.. _summarization_ort:
+
+**********************************************
+Accelerate Training & Inference with Torch ORT
+**********************************************
+
+`Torch ORT <https://cloudblogs.microsoft.com/opensource/2021/07/13/accelerate-pytorch-training-with-torch-ort/>`__ converts your model into an optimized ONNX graph, speeding up training & inference when using NVIDIA or AMD GPUs. Enabling Torch ORT requires a single flag passed to the ``SummarizationTask`` once installed. See installation instructions `here <https://github.com/pytorch/ort#install-in-a-local-python-environment>`__.
+
+.. note::
+
+    Not all Transformer models are supported. See `this table <https://github.com/microsoft/onnxruntime-training-examples#examples>`__ for supported models + branches containing fixes for certain models.
+
+.. code-block:: python
+
+    ...
+
+    model = SummarizationTask(backbone="t5-large", num_classes=datamodule.num_classes, enable_ort=True)

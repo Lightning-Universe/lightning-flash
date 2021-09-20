@@ -102,9 +102,9 @@ class TestDefaultUncollate:
 
     def test_sequence(self):
         batch = {
-            'a': torch.rand(self.BATCH_SIZE, 4),
-            'b': torch.rand(self.BATCH_SIZE, 2),
-            'c': torch.rand(self.BATCH_SIZE)
+            "a": torch.rand(self.BATCH_SIZE, 4),
+            "b": torch.rand(self.BATCH_SIZE, 2),
+            "c": torch.rand(self.BATCH_SIZE),
         }
 
         output = default_uncollate(batch)
@@ -112,13 +112,13 @@ class TestDefaultUncollate:
         assert len(batch) == self.BATCH_SIZE
 
         for sample in output:
-            assert list(sample.keys()) == ['a', 'b', 'c']
-            assert isinstance(sample['a'], list)
-            assert len(sample['a']) == 4
-            assert isinstance(sample['b'], list)
-            assert len(sample['b']) == 2
-            assert isinstance(sample['c'], torch.Tensor)
-            assert len(sample['c'].shape) == 0
+            assert list(sample.keys()) == ["a", "b", "c"]
+            assert isinstance(sample["a"], torch.Tensor)
+            assert len(sample["a"]) == 4
+            assert isinstance(sample["b"], torch.Tensor)
+            assert len(sample["b"]) == 2
+            assert isinstance(sample["c"], torch.Tensor)
+            assert len(sample["c"].shape) == 0
 
     def test_named_tuple(self):
         Batch = namedtuple("Batch", ["x", "y"])
@@ -130,7 +130,7 @@ class TestDefaultUncollate:
 
         for sample in output:
             assert isinstance(sample, Batch)
-            assert isinstance(sample.x, list)
+            assert isinstance(sample.x, torch.Tensor)
             assert len(sample.x) == 4
             assert isinstance(sample.y, torch.Tensor)
             assert len(sample.y.shape) == 0

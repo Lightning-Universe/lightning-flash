@@ -11,55 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, List, Mapping, Optional, Type, Union
 
 import torch
-from torch import nn, tensor
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.adapter import AdapterTask
 from flash.core.data.process import Serializer
-from flash.core.model import Task
+from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from flash.image.backbones import OBJ_DETECTION_BACKBONES
-from flash.image.detection.finetuning import ObjectDetectionFineTuning
-from flash.image.detection.serialization import DetectionLabels
-
-if _TORCHVISION_AVAILABLE:
-    import torchvision
-    from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
-    from torchvision.models.detection.retinanet import RetinaNet, RetinaNetHead
-    from torchvision.models.detection.rpn import AnchorGenerator
-    from torchvision.ops import box_iou
-
-    _models = {
-        "fasterrcnn": torchvision.models.detection.fasterrcnn_resnet50_fpn,
-        "retinanet": torchvision.models.detection.retinanet_resnet50_fpn,
-    }
-
-else:
-    AnchorGenerator = None
+from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
 
 
-def _evaluate_iou(target, pred):
-    """
-    Evaluate intersection over union (IOU) for target from dataset and output prediction from model
-    """
-    if pred["boxes"].shape[0] == 0:
-        # no box detected, 0 IOU
-        return tensor(0.0, device=pred["boxes"].device)
-    return box_iou(target["boxes"], pred["boxes"]).diag().mean()
-
-
-class ObjectDetector(Task):
+class ObjectDetector(AdapterTask):
     """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
     :ref:`object_detection`.
 
     Args:
         num_classes: the number of classes for detection, including background
         model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretained backbone CNN architecture. Constructs a model with a
+        backbone: Pretrained backbone CNN architecture. Constructs a model with a
             ResNet-50-FPN backbone when no backbone is specified.
         fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
         pretrained: if true, returns a model pre-trained on COCO train2017
@@ -70,141 +42,55 @@ class ObjectDetector(Task):
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
         optimizer: The optimizer to use for training. Can either be the actual class or the class name.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
             Has no effect for custom models.
         learning_rate: The learning rate to use for training
 
     """
 
-    backbones: FlashRegistry = OBJ_DETECTION_BACKBONES
+    heads: FlashRegistry = OBJECT_DETECTION_HEADS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "icevision", "effdet"]
 
     def __init__(
         self,
         num_classes: int,
-        model: str = "fasterrcnn",
-        backbone: Optional[str] = None,
-        fpn: bool = True,
+        backbone: Optional[str] = "resnet18_fpn",
+        head: Optional[str] = "retinanet",
         pretrained: bool = True,
-        pretrained_backbone: bool = True,
-        trainable_backbone_layers: int = 3,
-        anchor_generator: Optional[Type['AnchorGenerator']] = None,
-        loss=None,
-        metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
-        optimizer: Type[Optimizer] = torch.optim.AdamW,
-        learning_rate: float = 1e-3,
+        optimizer: Type[Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        learning_rate: float = 5e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
 
-        if model in _models:
-            model = ObjectDetector.get_model(
-                model, num_classes, backbone, fpn, pretrained, pretrained_backbone, trainable_backbone_layers,
-                anchor_generator, **kwargs
-            )
-        else:
-            ValueError(f"{model} is not supported yet.")
-
-        super().__init__(
-            model=model,
-            loss_fn=loss,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
-            serializer=serializer or DetectionLabels(),
+        metadata = self.heads.get(head, with_metadata=True)
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
+            num_classes=num_classes,
+            backbone=backbone,
+            head=head,
+            pretrained=pretrained,
+            **kwargs,
         )
 
-    @staticmethod
-    def get_model(
-        model_name,
-        num_classes,
-        backbone,
-        fpn,
-        pretrained,
-        pretrained_backbone,
-        trainable_backbone_layers,
-        anchor_generator,
-        **kwargs,
-    ):
-        if backbone is None:
-            # Constructs a model with a ResNet-50-FPN backbone when no backbone is specified.
-            if model_name == "fasterrcnn":
-                model = _models[model_name](
-                    pretrained=pretrained,
-                    pretrained_backbone=pretrained_backbone,
-                    trainable_backbone_layers=trainable_backbone_layers,
-                )
-                in_features = model.roi_heads.box_predictor.cls_score.in_features
-                head = FastRCNNPredictor(in_features, num_classes)
-                model.roi_heads.box_predictor = head
-            else:
-                model = _models[model_name](pretrained=pretrained, pretrained_backbone=pretrained_backbone)
-                model.head = RetinaNetHead(
-                    in_channels=model.backbone.out_channels,
-                    num_anchors=model.head.classification_head.num_anchors,
-                    num_classes=num_classes,
-                    **kwargs
-                )
-        else:
-            backbone_model, num_features = ObjectDetector.backbones.get(backbone)(
-                pretrained=pretrained_backbone,
-                trainable_layers=trainable_backbone_layers,
-                **kwargs,
-            )
-            backbone_model.out_channels = num_features
-            if anchor_generator is None:
-                anchor_generator = AnchorGenerator(
-                    sizes=((32, 64, 128, 256, 512), ), aspect_ratios=((0.5, 1.0, 2.0), )
-                ) if not hasattr(backbone_model, "fpn") else None
-
-            if model_name == "fasterrcnn":
-                model = FasterRCNN(backbone_model, num_classes=num_classes, rpn_anchor_generator=anchor_generator)
-            else:
-                model = RetinaNet(backbone_model, num_classes=num_classes, anchor_generator=anchor_generator)
-        return model
-
-    def forward(self, x: List[torch.Tensor]) -> Any:
-        return self.model(x)
-
-    def training_step(self, batch, batch_idx) -> Any:
-        """The training step. Overrides ``Task.training_step``
-        """
-        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
-        targets = [dict(t.items()) for t in targets]
-
-        # fasterrcnn takes both images and targets for training, returns loss_dict
-        loss_dict = self.model(images, targets)
-        loss = sum(loss_dict.values())
-        self.log_dict({f"train_{k}": v for k, v in loss_dict.items()}, on_step=True, on_epoch=True, prog_bar=True)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
-        # fasterrcnn takes only images for eval() mode
-        outs = self(images)
-        iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
-        self.log("val_iou", iou)
-
-    def test_step(self, batch, batch_idx):
-        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
-        # fasterrcnn takes only images for eval() mode
-        outs = self(images)
-        iou = torch.stack([_evaluate_iou(t, o) for t, o in zip(targets, outs)]).mean()
-        self.log("test_iou", iou)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        images = batch[DefaultDataKeys.INPUT]
-        batch[DefaultDataKeys.PREDS] = self(images)
-        return batch
-
-    def configure_finetune_callback(self):
-        return [ObjectDetectionFineTuning(train_bn=True)]
+        super().__init__(
+            adapter,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            serializer=serializer or Preds(),
+        )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
-        """
-        This function is used only for debugging usage with CI
-        """
-        # todo (tchaton) Improve convergence
-        # history[-1]["val_iou"]
+        """This function is used only for debugging usage with CI."""
+        # todo

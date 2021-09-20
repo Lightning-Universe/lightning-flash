@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
 from flash.core.data.utils import download_data
 from flash.text import TranslationData, TranslationTask
@@ -30,15 +32,17 @@ datamodule = TranslationData.from_csv(
 model = TranslationTask(backbone="Helsinki-NLP/opus-mt-en-ro")
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Translate something!
-predictions = model.predict([
-    "BBC News went to meet one of the project's first graduates.",
-    "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
-    "Of course, it's still early in the election cycle.",
-])
+predictions = model.predict(
+    [
+        "BBC News went to meet one of the project's first graduates.",
+        "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
+        "Of course, it's still early in the election cycle.",
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

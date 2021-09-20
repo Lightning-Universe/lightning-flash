@@ -21,7 +21,6 @@ from tests.helpers.utils import _IMAGE_TESTING
 
 
 class TestSemanticSegmentationLabels:
-
     @pytest.mark.skipif(not _IMAGE_TESTING, "image libraries aren't installed.")
     @staticmethod
     def test_smoke():
@@ -69,9 +68,7 @@ class TestSemanticSegmentationLabels:
 
         sample = {
             DefaultDataKeys.PREDS: preds,
-            DefaultDataKeys.METADATA: {
-                "filepath": "something"
-            },
+            DefaultDataKeys.METADATA: {"filepath": "something"},
         }
 
         segmentation = serial.serialize(sample)

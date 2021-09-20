@@ -25,15 +25,16 @@ root = Path(__file__).parent.parent.parent
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
-    "folder, file", [
+    "folder, file",
+    [
         pytest.param(
             "fiftyone",
             "image_classification.py",
             marks=pytest.mark.skipif(
                 not (_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
-            )
+            ),
         ),
-    ]
+    ],
 )
 def test_integrations(tmpdir, folder, file):
     run_test(str(root / "flash_examples" / "integrations" / folder / file))

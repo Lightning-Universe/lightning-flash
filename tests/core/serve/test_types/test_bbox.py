@@ -6,7 +6,7 @@ from flash.core.serve.types import BBox
 
 def test_deserialize():
     bbox = BBox()
-    assert torch.allclose(bbox.deserialize((0, 0, 0, 0)), torch.zeros((4, )))
+    assert torch.allclose(bbox.deserialize((0, 0, 0, 0)), torch.zeros((4,)))
     assert bbox.deserialize((0, 0, 0, 0)).shape == torch.Size([4])
     with pytest.raises(ValueError):
         # only three elements, need four
@@ -19,15 +19,17 @@ def test_deserialize():
         bbox.deserialize({1: 1, 2: 2, 3: 3, 4: 4})
     with pytest.raises(ValueError):
         # tuple instead of float
-        bbox.deserialize((
+        bbox.deserialize(
             (
-                0,
-                0,
-            ),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-        ))
+                (
+                    0,
+                    0,
+                ),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+            )
+        )
 
 
 def test_serialize():

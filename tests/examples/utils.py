@@ -21,10 +21,10 @@ def call_script(
     args: Optional[List[str]] = None,
     timeout: Optional[int] = 60 * 10,
 ) -> Tuple[int, str, str]:
-    with open(filepath, 'r') as original:
+    with open(filepath) as original:
         data = original.read()
 
-    with open(filepath, 'w') as modified:
+    with open(filepath, "w") as modified:
         modified.write("import pytorch_lightning as pl\npl.seed_everything(42)\n" + data)
 
     if args is None:
@@ -41,7 +41,7 @@ def call_script(
     stdout = stdout.decode("utf-8")
     stderr = stderr.decode("utf-8")
 
-    with open(filepath, 'w') as modified:
+    with open(filepath, "w") as modified:
         modified.write(data)
 
     return p.returncode, stdout, stderr

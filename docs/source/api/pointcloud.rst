@@ -24,7 +24,6 @@ ____________
     segmentation.data.PointCloudSegmentationFoldersDataSource
     segmentation.data.PointCloudSegmentationDatasetDataSource
 
-
 Object Detection
 ________________
 

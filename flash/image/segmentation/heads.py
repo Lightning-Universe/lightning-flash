@@ -18,13 +18,21 @@ from torch import nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
+from flash.core.utilities.providers import _SEGMENTATION_MODELS
 
 if _SEGMENTATION_MODELS_AVAILABLE:
     import segmentation_models_pytorch as smp
 
     SMP_MODEL_CLASS = [
-        smp.Unet, smp.UnetPlusPlus, smp.MAnet, smp.Linknet, smp.FPN, smp.PSPNet, smp.DeepLabV3, smp.DeepLabV3Plus,
-        smp.PAN
+        smp.Unet,
+        smp.UnetPlusPlus,
+        smp.MAnet,
+        smp.Linknet,
+        smp.FPN,
+        smp.PSPNet,
+        smp.DeepLabV3,
+        smp.DeepLabV3Plus,
+        smp.PAN,
     ]
     SMP_MODELS = {a.__name__.lower(): a for a in SMP_MODEL_CLASS}
 
@@ -64,5 +72,5 @@ if _SEGMENTATION_MODELS_AVAILABLE:
             partial(_load_smp_head, head=model_name),
             name=model_name,
             namespace="image/segmentation",
-            package="segmentation_models.pytorch"
+            providers=_SEGMENTATION_MODELS,
         )

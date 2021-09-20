@@ -89,35 +89,21 @@ def test_serving_single_component_and_endpoint_no_composition(session_global_dat
         assert meta.json() == {
             "definitions": {
                 "Ep_Ep_In_Image": {
-                    "properties": {
-                        "data": {
-                            "title": "Data",
-                            "type": "string"
-                        }
-                    },
+                    "properties": {"data": {"title": "Data", "type": "string"}},
                     "required": ["data"],
                     "title": "Ep_Ep_In_Image",
                     "type": "object",
                 },
                 "Ep_Payload": {
-                    "properties": {
-                        "ep_in_image": {
-                            "$ref": "#/definitions/Ep_Ep_In_Image"
-                        }
-                    },
+                    "properties": {"ep_in_image": {"$ref": "#/definitions/Ep_Ep_In_Image"}},
                     "required": ["ep_in_image"],
                     "title": "Ep_Payload",
                     "type": "object",
                 },
             },
             "properties": {
-                "payload": {
-                    "$ref": "#/definitions/Ep_Payload"
-                },
-                "session": {
-                    "title": "Session",
-                    "type": "string"
-                },
+                "payload": {"$ref": "#/definitions/Ep_Payload"},
+                "session": {"title": "Session", "type": "string"},
             },
             "required": ["payload"],
             "title": "Ep_RequestModel",
@@ -134,9 +120,7 @@ def test_serving_single_component_and_endpoint_no_composition(session_global_dat
         assert "result" in success.json()
         expected = {
             "session": "UUID",
-            "result": {
-                "ep_out_prediction": "goldfish, Carassius auratus"
-            },
+            "result": {"ep_out_prediction": "goldfish, Carassius auratus"},
         }
         assert expected == success.json()
 
@@ -209,26 +193,15 @@ def test_serving_composed(session_global_datadir, lightning_squeezenet1_1_obj):
         body = {
             "session": "UUID",
             "payload": {
-                "image": {
-                    "data": imgstr
-                },
-                "section": {
-                    "num": 10
-                },
-                "isle": {
-                    "num": 4
-                },
-                "row": {
-                    "num": 53
-                },
+                "image": {"data": imgstr},
+                "section": {"num": 10},
+                "isle": {"num": 4},
+                "row": {"num": 53},
             },
         }
         success = tc.post("http://127.0.0.1:8000/predict_seat", json=body)
         assert success.json() == {
-            "result": {
-                "seat_number": 4799680,
-                "team": "buffalo bills, the ralph"
-            },
+            "result": {"seat_number": 4799680, "team": "buffalo bills, the ralph"},
             "session": "UUID",
         }
         resp = tc.get("http://127.0.0.1:8000/predict_seat/dag")
@@ -295,26 +268,15 @@ def test_composed_does_not_eliminate_endpoint_serialization(session_global_datad
         body = {
             "session": "UUID",
             "payload": {
-                "image": {
-                    "data": imgstr
-                },
-                "section": {
-                    "num": 10
-                },
-                "isle": {
-                    "num": 4
-                },
-                "row": {
-                    "num": 53
-                },
+                "image": {"data": imgstr},
+                "section": {"num": 10},
+                "isle": {"num": 4},
+                "row": {"num": 53},
             },
         }
         success = tc.post("http://127.0.0.1:8000/predict_seat", json=body)
         assert success.json() == {
-            "result": {
-                "seat_number_out": 4799680,
-                "team_out": "buffalo bills, the ralph"
-            },
+            "result": {"seat_number_out": 4799680, "team_out": "buffalo bills, the ralph"},
             "session": "UUID",
         }
         resp = tc.get("http://127.0.0.1:8000/predict_seat/dag")
@@ -339,10 +301,7 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
             "section": seat_comp.inputs.section,
             "row": seat_comp.inputs.row,
         },
-        outputs={
-            "seat_number": seat_comp.outputs.seat_number,
-            "team": seat_comp.outputs.team
-        },
+        outputs={"seat_number": seat_comp.outputs.seat_number, "team": seat_comp.outputs.team},
     )
     ep2 = Endpoint(
         route="/predict_seat_img",
@@ -366,10 +325,7 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
             "section": seat_comp.inputs.section,
             "row": seat_comp.inputs.row,
         },
-        outputs={
-            "seat_number": seat_comp.outputs.seat_number,
-            "team": seat_comp.outputs.team
-        },
+        outputs={"seat_number": seat_comp.outputs.seat_number, "team": seat_comp.outputs.team},
     )
 
     composit = Composition(
@@ -402,26 +358,15 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
         body = {
             "session": "UUID",
             "payload": {
-                "image": {
-                    "data": imgstr
-                },
-                "section": {
-                    "num": 10
-                },
-                "isle": {
-                    "num": 4
-                },
-                "row": {
-                    "num": 53
-                },
+                "image": {"data": imgstr},
+                "section": {"num": 10},
+                "isle": {"num": 4},
+                "row": {"num": 53},
             },
         }
         success = tc.post("http://127.0.0.1:8000/predict_seat", json=body)
         assert success.json() == {
-            "result": {
-                "seat_number": 4799680,
-                "team": "buffalo bills, the ralph"
-            },
+            "result": {"seat_number": 4799680, "team": "buffalo bills, the ralph"},
             "session": "UUID",
         }
 
@@ -438,26 +383,15 @@ def test_endpoint_overwrite_connection_dag(session_global_datadir, lightning_squ
         body = {
             "session": "UUID",
             "payload": {
-                "stadium": {
-                    "label": "buffalo bills, the ralph"
-                },
-                "section": {
-                    "num": 10
-                },
-                "isle": {
-                    "num": 4
-                },
-                "row": {
-                    "num": 53
-                },
+                "stadium": {"label": "buffalo bills, the ralph"},
+                "section": {"num": 10},
+                "isle": {"num": 4},
+                "row": {"num": 53},
             },
         }
         success = tc.post("http://127.0.0.1:8000/predict_seat_img_two", json=body)
         assert success.json() == {
-            "result": {
-                "seat_number": 16960000,
-                "team": "buffalo bills, the ralph"
-            },
+            "result": {"seat_number": 16960000, "team": "buffalo bills, the ralph"},
             "session": "UUID",
         }
 
@@ -476,6 +410,7 @@ def test_cycle_in_connection_fails(session_global_datadir, lightning_squeezenet1
 def test_composition_from_url_torchscript_servable(tmp_path):
     from flash.core.serve import expose, ModelComponent, Servable
     from flash.core.serve.types import Number
+
     """
     # Tensor x Tensor
     class MyModule(torch.nn.Module):
@@ -494,7 +429,6 @@ def test_composition_from_url_torchscript_servable(tmp_path):
     TORCHSCRIPT_DOWNLOAD_URL = "https://github.com/pytorch/pytorch/raw/95489b590f00801bdee7f41783f30874883cf6bb/test/jit/fixtures/test_versioned_div_tensor_inplace_v3.pt"  # noqa E501
 
     class ComponentTwoModels(ModelComponent):
-
         def __init__(self, model):
             self.encoder = model["encoder"]
             self.decoder = model["decoder"]
@@ -523,15 +457,11 @@ def test_composition_from_url_torchscript_servable(tmp_path):
         body = {
             "session": "UUID",
             "payload": {
-                "ep_in": {
-                    "num": 10
-                },
+                "ep_in": {"num": 10},
             },
         }
         success = tc.post("http://127.0.0.1:8000/predictr", json=body)
         assert success.json() == {
-            "result": {
-                "ep_out": 1.0
-            },
+            "result": {"ep_out": 1.0},
             "session": "UUID",
         }
