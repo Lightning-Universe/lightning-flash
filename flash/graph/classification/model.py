@@ -45,6 +45,7 @@ class GraphClassifier(ClassificationTask):
         model: GraphNN used, defaults to BaseGraphModel.
         conv_cls: kind of convolution used in model, defaults to GCNConv
     """
+
     backbones: FlashRegistry = GRAPH_BACKBONES
 
     required_extras: str = "graph"
@@ -83,8 +84,9 @@ class GraphClassifier(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, num_out_features = backbone
         else:
-            self.backbone = self.backbones.get(backbone
-                                               )(in_channels=num_features, pretrained=pretrained, **backbone_kwargs)
+            self.backbone = self.backbones.get(backbone)(
+                in_channels=num_features, pretrained=pretrained, **backbone_kwargs
+            )
             num_out_features = backbone.hidden_channels
 
         head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
@@ -103,9 +105,9 @@ class GraphClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = super().predict_step((batch[DefaultDataKeys.INPUT]),
-                                                            batch_idx,
-                                                            dataloader_idx=dataloader_idx)
+        batch[DefaultDataKeys.PREDS] = super().predict_step(
+            (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+        )
         return batch
 
     def forward(self, x) -> torch.Tensor:
@@ -114,7 +116,6 @@ class GraphClassifier(ClassificationTask):
 
 
 class default_head(torch.nn.Module):
-
     def __init__(self, hidden_channels, num_classes, dropout=0.5):
         self.lin1 = Linear(hidden_channels, hidden_channels)
         self.lin2 = Linear(hidden_channels, num_classes)

@@ -30,7 +30,7 @@ def load_GCN(
     pretrained: bool = False,
 ):
     if pretrained:
-        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
+        raise NotImplementedError("pretrained option for graph backbones not implemented yet")
     """GCN backbone from torch geometric"""
     return models.GCN(in_channels, hidden_channels, num_layers)
 
@@ -43,7 +43,7 @@ def load_GraphSAGE(
     pretrained: bool = False,
 ):
     if pretrained:
-        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
+        raise NotImplementedError("pretrained option for graph backbones not implemented yet")
     """GraphSAGE backbone from torch geometric"""
     return models.GraphSAGE(in_channels, hidden_channels, num_layers)
 
@@ -56,7 +56,7 @@ def load_GAT(
     pretrained: bool = False,
 ):
     if pretrained:
-        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
+        raise NotImplementedError("pretrained option for graph backbones not implemented yet")
     """GAT backbone from torch geometric"""
     return models.GAT(in_channels, hidden_channels, num_layers)
 
@@ -69,6 +69,6 @@ def load_GIN(
     pretrained: bool = False,
 ):
     if pretrained:
-        raise NotImplementedError('pretrained option for graph backbones not implemented yet')
+        raise NotImplementedError("pretrained option for graph backbones not implemented yet")
     """GIN backbone from torch geometric"""
     return models.GIN(in_channels, hidden_channels, num_layers)
