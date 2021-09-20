@@ -103,10 +103,9 @@ def test_learn2learn_training_strategies(training_strategy, tmpdir):
 def test_wrongly_specified_training_strategies():
     with pytest.raises(KeyError, match="something is not in FlashRegistry"):
         ImageClassifier(
-            2,
             backbone="resnet18",
             training_strategy="something",
-            training_strategy_kwargs={"shots": 4, "meta_batch_size": 10},
+            training_strategy_kwargs={"ways": 2, "shots": 4, "meta_batch_size": 10},
         )
 
 
