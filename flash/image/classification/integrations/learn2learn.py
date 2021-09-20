@@ -59,7 +59,7 @@ class TaskDataParallel(IterableDataset):
         self.collate_fn = collate_fn
         self.counter = 0
 
-    def __iter__(self) -> "TaskDataParallel":
+    def __iter__(self):
         self.counter = 0
         return self
 
