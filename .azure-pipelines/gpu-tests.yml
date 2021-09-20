@@ -60,6 +60,10 @@ jobs:
       displayName: 'Testing'
 
     - bash: |
+        bash tests/special_tests.sh
+      displayName: 'Testing: special'
+
+    - bash: |
         python -m coverage report
         python -m coverage xml
         python -m coverage html
