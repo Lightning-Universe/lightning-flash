@@ -30,8 +30,10 @@ class GraphEmbedder(Task):
     more details, see :ref:`graph_embedder`.
 
     Args:
-        embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
-        backbone: A model to use to extract image features, defaults to ``"GraphUNet"``.
+        num_features (int): The number of features in the input.
+        embedding_dim (int): Dimension of the embedded vector. ``None`` uses the default from the backbone.
+        backbone: A model to use to extract image features, defaults to ``"GCN"``.
+        backbone_kwargs (dict): Keyword arguments to pass to the backbone constructor.
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.

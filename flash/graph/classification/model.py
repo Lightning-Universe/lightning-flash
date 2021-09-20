@@ -31,10 +31,13 @@ class GraphClassifier(ClassificationTask):
     :ref:`graph_classification`.
 
     Args:
-        num_classes: Number of classes to classify.
+        num_features (int): The number of features in the input.
+        num_classes (int): Number of classes to classify.
+        backbone: Name of the backbone to use, defaults to ``"GCN"``.
         backbone_kwargs: Dictionary dependent on the backbone, containing for example in_channels, out_channels,
             hidden_channels or depth (number of layers).
-        backbone: Name of the backbone to use.
+        pretrained (bool): If True, loads a pretrained model for re-use.
+        head: The head to use.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
         optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
