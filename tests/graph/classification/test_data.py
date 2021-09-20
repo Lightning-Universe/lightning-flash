@@ -154,47 +154,47 @@ class TestGraphClassificationData:
     def test_from_folder(self, tmpdir):
         G = nx.karate_club_graph()
 
-        write_adjlist(G, tmpdir / 'data.adjlist')
+        write_adjlist(G, tmpdir / "data.adjlist")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_edgelist(G, tmpdir / 'data.edgelist')
+        write_edgelist(G, tmpdir / "data.edgelist")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_gexf(G, tmpdir / 'data.gexf')
+        write_gexf(G, tmpdir / "data.gexf")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_gml(G, tmpdir / 'data.gml')
+        write_gml(G, tmpdir / "data.gml")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_graphml(G, tmpdir / 'data.graphml')
+        write_graphml(G, tmpdir / "data.graphml")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_gpickle(G, tmpdir / 'data.gpickle')
+        write_gpickle(G, tmpdir / "data.gpickle")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_pajek(G, tmpdir / 'data.net')
+        write_pajek(G, tmpdir / "data.net")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        write_shp(G, tmpdir / 'data.shp')
+        write_shp(G, tmpdir / "data.shp")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        yaml.dump(G, tmpdir / 'data.yaml')
+        yaml.dump(G, tmpdir / "data.yaml")
         GraphClassificationData.from_folders(train_folder=tmpdir)
 
-        node_link_data(G, tmpdir / 'data.json')
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='node_link')
+        node_link_data(G, tmpdir / "data.json")
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="node_link")
 
-        adjacency_data(G, tmpdir / 'data.json')
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='adjacency')
+        adjacency_data(G, tmpdir / "data.json")
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="adjacency")
 
-        cytoscape_data(G, tmpdir / 'data.json')
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='cytoscape')
+        cytoscape_data(G, tmpdir / "data.json")
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="cytoscape")
 
-        tree_data(G, tmpdir / 'data.json')
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='tree')
+        tree_data(G, tmpdir / "data.json")
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="tree")
 
-        jit_data(G, tmpdir / 'data.json')
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type='jit')
+        jit_data(G, tmpdir / "data.json")
+        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="jit")
 
     def test_from_data_sequence(self):
         G = nx.karate_club_graph()

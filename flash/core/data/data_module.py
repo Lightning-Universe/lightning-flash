@@ -808,7 +808,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 4,
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
-    ) -> 'DataModule':
+    ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
         :class:`~flash.core.data.data_source.DataSource`
         of name :attr:`~flash.core.data.data_source.DefaultDataSources.SEQUENCE`

@@ -22,7 +22,7 @@ from torch.utils.data import Dataset
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, PathsDataSource, SequenceDataSource
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
-_GRAPH_EXTENSIONS = ('.gexf', '.gml', '.gpickle', '.graphml', '.leda', '.yaml', '.net', '.edgelist', '.adjlist')
+_GRAPH_EXTENSIONS = (".gexf", ".gml", ".gpickle", ".graphml", ".leda", ".yaml", ".net", ".edgelist", ".adjlist")
 
 if _GRAPH_AVAILABLE:
     from networkx.readwrite import (
@@ -48,7 +48,6 @@ else:
 
 
 class GraphDataSource:
-
     def _build_sample(self, sample: Any) -> Mapping[str, Any]:
         target = None
         if isinstance(sample, tuple) and len(sample) == 2:
@@ -60,10 +59,8 @@ class GraphDataSource:
         return sample
 
 
-
 class GraphDatasetDataSource(DatasetDataSource, GraphDataSource):
     @requires("graph")
-
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
         data = super().load_data(data, dataset=dataset)
         if not self.predicting:
@@ -77,7 +74,6 @@ class GraphDatasetDataSource(DatasetDataSource, GraphDataSource):
 
 
 class GraphSequenceDataSource(SequenceDataSource[Data], GraphDataSource):
-
     @requires_extras("graph")
     def load_data(self, data: Sequence[Data], dataset: Optional[Any] = None) -> Sequence:
         data, targets = data
@@ -94,14 +90,13 @@ class GraphSequenceDataSource(SequenceDataSource[Data], GraphDataSource):
 
 
 class GraphPathsDataSource(PathsDataSource, GraphDataSource):
-
     def __init__(self, json_data_type=None):
         super().__init__(extensions=_GRAPH_EXTENSIONS)
         self.json_data_type = json_data_type
 
     @requires_extras("graph")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        """json_data_type required only if data format is .json"""
+        """json_data_type required only if data format is .json."""
         graph_path = sample[DefaultDataKeys.INPUT]
         graph = self.default_loader(graph_path, self.json_data_type)
         data = from_networkx(graph)
@@ -147,4 +142,4 @@ class GraphPathsDataSource(PathsDataSource, GraphDataSource):
             elif self.json_data_type == "tree":
                 return tree_graph(data)
         else:
-            raise ValueError("Unknown graph file format: {}".format(path))
+            raise ValueError(f"Unknown graph file format: {path}")

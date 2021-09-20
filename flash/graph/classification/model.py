@@ -83,7 +83,9 @@ class BaseGraphModel(nn.Module):
 
 
 class GraphClassifier(ClassificationTask):
-    """The ``GraphClassifier`` is a :class:`~flash.Task` for classifying graphs. For more details, see
+    """The ``GraphClassifier`` is a :class:`~flash.Task` for classifying graphs.
+
+    For more details, see
     :ref:`graph_classification`.
     Args:
         num_features: Number of columns in table (not including target column).

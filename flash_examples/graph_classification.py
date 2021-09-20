@@ -14,14 +14,12 @@
 import torch
 
 import flash
-
 from flash.core.utilities.imports import example_requires
 from flash.graph import GraphClassificationData, GraphClassifier
 
 example_requires("graph")
 
 from torch_geometric.datasets import TUDataset  # noqa: E402
-
 
 # 1. Create the DataModule
 dataset = TUDataset(root="data", name="KKI").shuffle()

@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, Optional
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Preprocess
-
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
 from flash.graph.data import GraphDatasetDataSource, GraphPathsDataSource, GraphSequenceDataSource
 
@@ -41,9 +40,9 @@ class GraphClassificationPreprocess(Preprocess):
             data_sources={
                 DefaultDataSources.DATASET: GraphDatasetDataSource(),
                 DefaultDataSources.SEQUENCE: GraphSequenceDataSource(),
-                DefaultDataSources.FOLDERS: GraphPathsDataSource()
+                DefaultDataSources.FOLDERS: GraphPathsDataSource(),
             },
-            default_data_source=DefaultDataSources.SEQUENCE
+            default_data_source=DefaultDataSources.SEQUENCE,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
