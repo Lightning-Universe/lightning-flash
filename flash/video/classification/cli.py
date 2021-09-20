@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Optional
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
@@ -26,7 +25,7 @@ def from_kinetics(
     clip_duration: int = 1,
     decode_audio: bool = False,
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     **preprocess_kwargs,
 ) -> VideoClassificationData:
     """Downloads and loads the Kinetics data set."""
