@@ -15,18 +15,19 @@ from types import FunctionType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
-from flash.core.classification import ClassificationTask, Labels
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.classification import ClassificationAdapterTask, Labels
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
+from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
 
-class ImageClassifier(ClassificationTask):
+class ImageClassifier(ClassificationAdapterTask):
     """The ``ImageClassifier`` is a :class:`~flash.Task` for classifying images. For more details, see
     :ref:`image_classification`. The ``ImageClassifier`` also supports multi-label classification with
     ``multi_label=True``. For more details, see :ref:`image_classification_multi_label`.
@@ -68,12 +69,13 @@ class ImageClassifier(ClassificationTask):
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+    training_strategies: FlashRegistry = TRAINING_STRATEGIES
 
     required_extras: str = "image"
 
     def __init__(
         self,
-        num_classes: int,
+        num_classes: Optional[int] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
@@ -87,59 +89,61 @@ class ImageClassifier(ClassificationTask):
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        training_strategy: Optional[str] = "default",
+        training_strategy_kwargs: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(
-            num_classes=num_classes,
-            model=None,
-            loss_fn=loss_fn,
-            optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            multi_label=multi_label,
-            serializer=serializer or Labels(multi_label=multi_label),
-        )
 
         self.save_hyperparameters()
 
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        if isinstance(backbone, tuple):
-            self.backbone, num_features = backbone
+        if not training_strategy_kwargs:
+            training_strategy_kwargs = {}
+
+        if training_strategy == "default":
+            if not num_classes:
+                raise MisconfigurationException("`num_classes` should be provided.")
         else:
-            self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+            num_classes = training_strategy_kwargs.get("ways", None)
+            if not num_classes:
+                raise MisconfigurationException(
+                    "`training_strategy_kwargs` should contain `ways`, `meta_batch_size` and `shots`."
+                )
+
+        if isinstance(backbone, tuple):
+            backbone, num_features = backbone
+        else:
+            backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(
+        head = head or nn.Sequential(
             nn.Linear(num_features, num_classes),
         )
 
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
-
-    def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
-
-    def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = super().predict_step(
-            (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+        adapter_from_class = self.training_strategies.get(training_strategy)
+        adapter = adapter_from_class(
+            task=self,
+            num_classes=num_classes,
+            backbone=backbone,
+            head=head,
+            pretrained=pretrained,
+            **training_strategy_kwargs,
         )
-        return batch
 
-    def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
-        if x.dim() == 4:
-            x = x.mean(-1).mean(-1)
-        return self.head(x)
+        super().__init__(
+            adapter,
+            num_classes=num_classes,
+            loss_fn=loss_fn,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            multi_label=multi_label,
+            serializer=serializer or Labels(multi_label=multi_label),
+        )
 
     @classmethod
     def available_pretrained_weights(cls, backbone: str):
