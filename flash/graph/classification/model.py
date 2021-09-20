@@ -53,7 +53,7 @@ class GraphClassifier(ClassificationTask):
         self,
         num_features: int,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "GCNWithJK",
+        backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
         backbone_kwargs: Optional[Dict] = {},
         pretrained: Optional[bool] = False,  # todo: implement True here
         head: Optional[Union[FunctionType, nn.Module]] = None,

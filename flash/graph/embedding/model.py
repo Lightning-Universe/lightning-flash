@@ -52,7 +52,7 @@ class GraphEmbedder(Task):
         self,
         num_features: int,
         embedding_dimension: Optional[int] = None,
-        backbone: Union[str, Tuple[nn.Module, int]] = "GCNWithJK",
+        backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
         backbone_kwargs: Optional[Dict] = {},
         pretrained: Optional[bool] = None,
         loss_fn: Callable = F.cross_entropy,
