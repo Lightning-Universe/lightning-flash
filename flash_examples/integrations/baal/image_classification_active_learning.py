@@ -28,7 +28,7 @@ datamodule = ActiveLearningDataModule(
 model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Probabilities())
 
 # 3. Create the trainer and finetune the model
-trainer = ActiveLearningTrainer(max_epochs=3, limit_train_batches=2, limit_val_batches=2)
+trainer = ActiveLearningTrainer(max_epochs=3)
 
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
