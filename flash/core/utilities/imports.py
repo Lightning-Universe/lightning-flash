@@ -101,9 +101,10 @@ _ICEDATA_AVAILABLE = _module_available("icedata")
 _LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("learn2learn", operator.ge, "0.1.6")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
+_ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 
 if _PIL_AVAILABLE:
-    from PIL import Image
+    from PIL import Image  # noqa: F401
 else:
 
     class MetaImage(type):
