@@ -31,7 +31,7 @@ class TrasformerTokenizer:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         # NOTE: self..tokenizer.model_max_length returns crazy value
-        self.max_length = AutoConfig.from_pretrained("prajjwal1/bert-medium").max_position_embeddings
+        self.max_length = AutoConfig.from_pretrained(model_name).max_position_embeddings
         self.is_fit = pretrained
 
         if not pretrained:
