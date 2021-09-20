@@ -72,3 +72,25 @@ To view configuration options and options for running the object detector with y
 .. code-block:: bash
 
     flash object_detection --help
+
+************
+Augmentation
+************
+
+.. code-block:: python
+
+    import albumentations as A
+
+    from flash.core.integrations.icevision.transforms import IceVisionTransformAdapter
+    from flash.image import ObjectDetectionData
+
+    train_transform = {
+        "pre_tensor_transform": IceVisionTransformAdapter([A.HorizontalFlip(), A.Normalize()]),
+    }
+    datamodule = ObjectDetectionData.from_coco(
+        train_folder="data/coco128/images/train2017/",
+        train_ann_file="data/coco128/annotations/instances_train2017.json",
+        val_split=0.1,
+        image_size=128,
+        train_transform=transform,
+    )
