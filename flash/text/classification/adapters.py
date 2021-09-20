@@ -62,8 +62,6 @@ class Model(torch.nn.Module):
 
     def forward(self, x):
         x = self.backbone(x)
-        if x.dim() == 4:
-            x = x.mean(-1).mean(-1)
         if self.head is None:
             return x
         return self.head(x)
@@ -78,8 +76,7 @@ class DefaultAdapter(Adapter):
         super().__init__()
 
         self._task = NoModule(task)
-        self.backbone = backbone
-        self.head = head
+        self.model = Model(backbone=backbone, head=head)
 
     @classmethod
     @catch_url_error
@@ -112,8 +109,7 @@ class DefaultAdapter(Adapter):
         return batch
 
     def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
-        return self.head(x)
+        return self.model(x)
 
 
 TRAINING_STRATEGIES = FlashRegistry("training_strategies")
