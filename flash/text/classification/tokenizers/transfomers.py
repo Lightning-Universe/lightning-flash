@@ -16,14 +16,14 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
+from typing import Generator, List
+
 import datasets
-from transformers import AutoTokenizer, AutoConfig
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from typing import List, Generator
+from transformers import AutoConfig, AutoTokenizer
 
 
 class TrasformerTokenizer:
-    
     def __init__(self, model_name: bool, pretrained: bool = True, **kwargs):
         self.model_name = model_name
         self.pretrained = pretrained
@@ -33,30 +33,29 @@ class TrasformerTokenizer:
         # NOTE: self..tokenizer.model_max_length returns crazy value
         self.max_length = AutoConfig.from_pretrained("prajjwal1/bert-medium").max_position_embeddings
         self.is_fit = pretrained
-        
+
         if not pretrained:
             if not kwargs or "vocab_size" not in kwargs:
                 MisconfigurationException("When pretrained=False, `vocab_size` must be passed as a `tokenizer_kwargs`")
             else:
                 self.vocab_size = kwargs.get("vocab_size")
 
-    
     def fit(self, batch_iterator: Generator[List[str], None, None]):
         if self.is_fit:
             return
         self.tokenizer = self.tokenizer.train_new_from_iterator(batch_iterator, vocab_size=self.vocab_size)
         self.is_fit = True
-    
+
     def __call__(self, x):
         return self.tokenizer(
-            x, 
-            return_token_type_ids=False, 
-            return_tensors="pt", 
-            padding=True, 
-            truncation=True, 
+            x,
+            return_token_type_ids=False,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
             max_length=self.max_length,
         )
-        
+
     @staticmethod
     def _batch_iterator(dataset: datasets.Dataset, input_fields: str, batch_size: int = 1000):
         for i in range(0, len(dataset), batch_size):
@@ -77,5 +76,3 @@ def _trasformer_tokenizer(
 # if __name__ == "__main__":
 #     tok = TrasformerTokenizer("prajjwal1/bert-medium", pretrained=True)
 #     print(tok(["My name is Flash", "I love maccheroni"]))
-    
-
