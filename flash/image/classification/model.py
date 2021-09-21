@@ -118,7 +118,6 @@ class ImageClassifier(ClassificationAdapterTask):
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
         head = head or nn.Sequential(
-            nn.Dropout(p=0.1),
             nn.Linear(num_features, num_classes),
         )
 
