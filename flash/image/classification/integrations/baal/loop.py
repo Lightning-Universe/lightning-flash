@@ -15,124 +15,16 @@ from copy import deepcopy
 from functools import partial
 from typing import Any, Callable, Dict, Optional
 
-import numpy as np
 import torch
-from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import RunningStage, TrainerFn, TrainerStatus
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn.modules.batchnorm import _BatchNorm
-from torch.utils.data import DataLoader
 
-import flash
-from flash import DataModule
-from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_pipeline import DataPipeline
-from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
-
-if _BAAL_AVAILABLE:
-    from baal.active.dataset import ActiveLearningDataset
-    from baal.active.heuristics import AbstractHeuristic, BALD
-
-
-def dataset_to_non_labelled_tensor(dataset: BaseAutoDataset) -> torch.tensor:
-    return torch.zeros(len(dataset))
-
-
-class ActiveLearningDataModule(LightningDataModule):
-    @requires("baal")
-    def __init__(
-        self,
-        labelled: Optional[DataModule] = None,
-        unlabelled: Optional[DataModule] = None,
-        heuristic: "AbstractHeuristic" = BALD(reduction=np.mean),
-        map_dataset_to_labelled: Optional[Callable] = dataset_to_non_labelled_tensor,
-    ):
-        self.labelled = labelled
-        self.unlabelled = unlabelled
-        self.heuristic = heuristic
-        self.map_dataset_to_labelled = map_dataset_to_labelled
-
-        if self.unlabelled:
-            raise MisconfigurationException("The unlabelled `datamodule` isn't support yet.")
-
-        if self.labelled and (
-            self.labelled._val_ds is not None
-            or self.labelled._test_ds is not None
-            or self.labelled._predict_ds is not None
-        ):
-            raise MisconfigurationException("The labelled `datamodule` should have only train data.")
-
-        self._dataset: Optional[ActiveLearningDataset] = None
-
-        self._initialize_active_learning_dataset()
-
-    def _initialize_active_learning_dataset(self):
-        if self.labelled and self.unlabelled:
-            raise MisconfigurationException("This isn't supported yet")
-
-        if self.labelled:
-            if not self.labelled.num_classes:
-                raise MisconfigurationException("The labelled dataset should be labelled")
-
-            dataset = self.labelled._train_ds
-            self._dataset = ActiveLearningDataset(dataset, labelled=self.map_dataset_to_labelled(dataset))
-
-            if not len(self._dataset):
-                self.label(indices=[0])
-
-    @property
-    def num_classes(self) -> Optional[int]:
-        return getattr(self.labelled, "num_classes", None) or getattr(self.unlabelled, "num_classes", None)
-
-    @property
-    def data_pipeline(self) -> "DataPipeline":
-        if self.labelled:
-            return self.labelled.data_pipeline
-        return self.unlabelled.data_pipeline
-
-    def train_dataloader(self) -> "DataLoader":
-        if self.labelled:
-            self.labelled._train_ds = self._dataset
-            return self.labelled.train_dataloader()
-        raise NotImplementedError
-
-    def predict_dataloader(self) -> "DataLoader":
-        if self.labelled:
-            self.labelled._train_ds = self._dataset.pool
-            return self.labelled.train_dataloader()
-        raise NotImplementedError
-
-    def label(self, predictions: Any = None, indices=None):
-        if predictions and indices:
-            raise MisconfigurationException(
-                "The `predictions` and `indices` are mutually exclusive, pass only of one them."
-            )
-        if predictions:
-            uncertainties = [self.heuristic.get_uncertainties(np.asarray(p)) for idx, p in enumerate(predictions)]
-            indices = np.argsort(uncertainties)
-        if self._dataset is not None:
-            self._dataset.labelled[indices] = True
-
-    def state_dict(self) -> Dict[str, torch.Tensor]:
-        return self._dataset.state_dict()
-
-    def load_state_dict(self, state_dict) -> None:
-        return self._dataset.load_state_dict(state_dict)
-
-
-class ActiveLearningTrainer(flash.Trainer):
-    def __init__(self, *args, **kwags):
-        kwags["reload_dataloaders_every_n_epochs"] = 1
-        super().__init__(*args, **kwags)
-
-        active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1)
-        active_learning_loop.connect(self.fit_loop)
-        self.fit_loop = active_learning_loop
-        active_learning_loop.trainer = self
+from flash.core.utilities.imports import requires
+from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 
 
 class ActiveLearningLoop(Loop):
@@ -141,10 +33,8 @@ class ActiveLearningLoop(Loop):
         super().__init__()
         self.label_epoch_frequency = label_epoch_frequency
         self.inference_iteration = inference_iteration
-
         self.fit_loop: Optional[FitLoop] = None
         self.progress = Progress()
-
         self._should_continue: bool = False
         self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
 
@@ -160,15 +50,12 @@ class ActiveLearningLoop(Loop):
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
         self.trainer.predict_loop._return_predictions = True
         self._model_state_dict = deepcopy(self.trainer.lightning_module.state_dict())
+        assert isinstance(self.trainer.datamodule, ActiveLearningDataModule)
 
     def reset(self) -> None:
-        if self.restarting:
-            self.progress.current.reset_on_restart()
-
-            self.datamodule.load_state_dict()
+        pass
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
-        # This is a hack and we need to clean this on the Lightning side.
         self._reset_dataloader_for_stage(RunningStage.TRAINING)
         self._reset_dataloader_for_stage(RunningStage.PREDICTING)
 
