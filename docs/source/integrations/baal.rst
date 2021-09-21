@@ -17,12 +17,12 @@ library developed at `ElementAI <https://www.elementai.com/>`_.
 Active Learning is an AI sub-field focusing on adding human in the loop.
 The most uncertain samples will be labelled to accelerate model training cycle.
 
-Credit to ElementAI / Baal Team for the designing this flow diagram
-
 .. raw:: html
 
   <div style="margin-top: 20px; margin-bottom: 20px">
-    <img src="https://github.com/ElementAI/baal/blob/master/docs/literature/images/Baalscheme.svg" width="400px">
+    <img src="https://raw.githubusercontent.com/ElementAI/baal/master/docs/literature/images/Baalscheme.svg" width="400px">
+    <p align="center">Credit to ElementAI / Baal Team for creating this diagram flow</p>
+    <br />
   </div>
 
 With its integration within Flash, Active Learning process is made even simpler than before.

@@ -19,6 +19,7 @@ from flash.image.classification.integrations.baal import ActiveLearningDataModul
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
+# Implement the research use-case where we mask labels from labelled dataset.
 datamodule = ActiveLearningDataModule(
     ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/"),
 )
