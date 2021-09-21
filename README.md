@@ -186,6 +186,36 @@ datamodule = ImageClassificationData.from_folders(
 
 ```
 
+### Flash Training Strategies
+
+Training strategy are PyTorch SOTA Training Recipes which can be utilized with a given task.
+
+#### Meta Learning Strategies
+
+
+Check out this [example](https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/integrations/learn2learn/image_classification_imagenette_mini.py) where the `ImageClassifier` supports 4 training algorithm from [Learn2Learn](https://github.com/learnables/learn2learn).
+This is particularly useful if you use this model in production and want to make sure the model adapts quickly to its new environment with minimal labelled data.
+
+```py
+model = ImageClassifier(
+    backbone="resnet18",
+    optimizer=torch.optim.Adam,
+    optimizer_kwargs={"lr": 0.001},
+    training_strategy="prototypicalnetworks",
+    training_strategy_kwargs={
+        "epoch_length": 10 * 16,
+        "meta_batch_size": 4,
+        "num_tasks": 200,
+        "test_num_tasks": 2000,
+        "ways": datamodule.num_classes,
+        "shots": 1,
+        "test_ways": 5,
+        "test_shots": 1,
+        "test_queries": 15,
+    },
+)
+```
+
 ## Flash Zero - PyTorch Recipes from the Command Line!
 
 <div align="center">
