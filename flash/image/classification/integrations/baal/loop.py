@@ -30,6 +30,22 @@ from flash.image.classification.integrations.baal.data import ActiveLearningData
 class ActiveLearningLoop(Loop):
     @requires("baal")
     def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2):
+        """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
+        `ActiveLearningTrainer`
+
+        while data are still unlabelled or criteria not reached:
+
+            if labelled data
+                train model on the labelled data
+
+            if non labelled data:
+                evaluate uncertainty of the unlabelled data
+                request labellelisation on the most ones
+
+        Args:
+            label_epoch_frequency: Number of epoch to train on before requesting labellisation.
+            inference_iteration: Number of inference to perform to compute uncertainty.
+        """
         super().__init__()
         self.label_epoch_frequency = label_epoch_frequency
         self.inference_iteration = inference_iteration
