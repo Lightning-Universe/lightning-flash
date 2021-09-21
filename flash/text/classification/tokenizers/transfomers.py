@@ -62,7 +62,6 @@ class TrasformerTokenizer:
         return self.tokenizer(
             x,
             return_token_type_ids=False,
-            return_tensors="pt",
             padding=True,  # pads to longest string in the batch, more efficient than "max_length"
             truncation=True,  # truncate to max_length supported by the model
             max_length=self.max_length,
