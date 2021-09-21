@@ -46,7 +46,6 @@ class ActiveLearningDataModule(LightningDataModule):
     def __init__(
         self,
         labelled: Optional[DataModule] = None,
-        unlabelled: Optional[DataModule] = None,
         heuristic: "AbstractHeuristic" = BALD(reduction=np.mean),
         map_dataset_to_labelled: Optional[Callable] = dataset_to_non_labelled_tensor,
     ):
