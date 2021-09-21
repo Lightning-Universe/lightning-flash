@@ -28,6 +28,7 @@ if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
     from transformers import AutoTokenizer, default_data_collator
     from transformers.modeling_outputs import SequenceClassifierOutput
+
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 

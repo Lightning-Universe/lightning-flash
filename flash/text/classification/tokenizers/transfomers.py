@@ -17,8 +17,9 @@
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
 from typing import Generator, List, Tuple, Union
-import torch
+
 import datasets
+import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from transformers import AutoConfig, AutoTokenizer
 
