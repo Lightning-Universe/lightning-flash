@@ -16,7 +16,7 @@ import torch
 from flash.core.data.data_source import DefaultDataKeys
 
 
-def vissl_collate_fn(samples):
+def multicrop_collate_fn(samples):
     """Custom collate function for VISSL integration.
 
     Run custom collate on a single key since VISSL transforms affect only DefaultDataKeys.INPUT
