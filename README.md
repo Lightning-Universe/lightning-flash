@@ -131,7 +131,7 @@ predictions = trainer.predict(model, dm)
 
 ### Flash Training Strategies
 
-Training strategy are PyTorch SOTA Training Recipes which can be utilized with a given task.
+Training strategies are PyTorch SOTA Training Recipes which can be utilized with a given task.
 
 
 Check out this [example](https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/integrations/learn2learn/image_classification_imagenette_mini.py) where the `ImageClassifier` supports 4 [Meta Learning Algorithms](https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html) from [Learn2Learn](https://github.com/learnables/learn2learn).
