@@ -117,6 +117,12 @@ class ActiveLearningDataModule(LightningDataModule):
         if self._dataset is not None:
             self._dataset.labelled[indices] = True
 
+    def state_dict(self) -> Dict[str, torch.Tensor]:
+        return self._dataset.state_dict()
+
+    def load_state_dict(self, state_dict) -> None:
+        return self._dataset.load_state_dict(state_dict)
+
 
 class ActiveLearningTrainer(flash.Trainer):
     def __init__(self, *args, **kwags):
@@ -156,7 +162,10 @@ class ActiveLearningLoop(Loop):
         self._model_state_dict = deepcopy(self.trainer.lightning_module.state_dict())
 
     def reset(self) -> None:
-        pass
+        if self.restarting:
+            self.progress.current.reset_on_restart()
+
+            self.datamodule.load_state_dict()
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
         # This is a hack and we need to clean this on the Lightning side.
@@ -180,6 +189,12 @@ class ActiveLearningLoop(Loop):
     def on_run_end(self):
         self.trainer.lightning_module.predict_step = self.trainer.lightning_module._predict_step
         return super().on_run_end()
+
+    def on_save_checkpoint(self) -> Dict:
+        return {"datamodule_state_dict": self.trainer.datamodule.state_dict()}
+
+    def on_load_checkpoint(self, state_dict) -> None:
+        self.trainer.datamodule.load_state_dict(state_dict.pop("datamodule_state_dict"))
 
     def __getattr__(self, key):
         if key not in self.__dict__:
@@ -211,7 +226,7 @@ class ActiveLearningLoop(Loop):
 
     def _enable_mc_dropout(self):
         # prevent the model to put into val model - hack
-        self.trainer.lightning_module.on_predict_model_eval = self._identity
+        self.trainer.lightning_module.on_predict_model_eval = self._do_nothing
         for _, module in self.trainer.lightning_module.named_modules():
             if isinstance(module, _BatchNorm):
                 module.eval()
@@ -224,7 +239,7 @@ class ActiveLearningLoop(Loop):
             inference_iteration=self.inference_iteration,
         )
 
-    def _identity(self, *args, **kwargs):
+    def _do_nothing(self, *args, **kwargs):
         pass
 
     @staticmethod
