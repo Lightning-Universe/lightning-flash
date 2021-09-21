@@ -27,6 +27,14 @@ from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 if _BAAL_AVAILABLE:
     from baal.active.dataset import ActiveLearningDataset
     from baal.active.heuristics import AbstractHeuristic, BALD
+else:
+
+    class AbstractHeuristic:
+        pass
+
+    class BALD(AbstractHeuristic):
+        def __init__(self, reduction: Callable):
+            super().__init__()
 
 
 def dataset_to_non_labelled_tensor(dataset: BaseAutoDataset) -> torch.tensor:
@@ -47,19 +55,13 @@ class ActiveLearningDataModule(LightningDataModule):
         Args:
             labelled: DataModule containing labelled train data for research use-case.
                 The labelled data would be masked.
-            unlabelled: DataModule containing unlabelled train data for production use case.
-                The data would be labelled in real time.
             heuristic: Sorting algorithm used to rank samples on how likely they can help with model performance.
             map_dataset_to_labelled: Function used to emulate masking on labelled dataset.
         """
         self.labelled = labelled
-        self.unlabelled = unlabelled
         self.heuristic = heuristic
         self.map_dataset_to_labelled = map_dataset_to_labelled
         self._dataset: Optional[ActiveLearningDataset] = None
-
-        if self.unlabelled:
-            raise MisconfigurationException("The unlabelled `datamodule` isn't support yet.")
 
         if not self.labelled:
             raise MisconfigurationException("The labelled `datamodule` should be provided.")
@@ -92,21 +94,15 @@ class ActiveLearningDataModule(LightningDataModule):
 
     @property
     def data_pipeline(self) -> "DataPipeline":
-        if self.labelled:
-            return self.labelled.data_pipeline
-        return self.unlabelled.data_pipeline
+        return self.labelled.data_pipeline
 
     def train_dataloader(self) -> "DataLoader":
-        if self.labelled:
-            self.labelled._train_ds = self._dataset
-            return self.labelled.train_dataloader()
-        raise NotImplementedError
+        self.labelled._train_ds = self._dataset
+        return self.labelled.train_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
-        if self.labelled:
-            self.labelled._train_ds = self._dataset.pool
-            return self.labelled.train_dataloader()
-        raise NotImplementedError
+        self.labelled._train_ds = self._dataset.pool
+        return self.labelled.train_dataloader()
 
     def label(self, predictions: Any = None, indices=None):
         if predictions and indices:
