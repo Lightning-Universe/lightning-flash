@@ -342,17 +342,22 @@ class Preprocess(BasePreprocess, Properties):
         """
         return None
 
+    def _apply_sample_transform(self, sample: Any) -> Any:
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
+        return self.current_transform(sample)
+
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        return self.current_transform(sample)
+        return self._apply_sample_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
-        return self.current_transform(sample)
+        return self._apply_sample_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
-        return self.current_transform(sample)
+        return self._apply_sample_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
