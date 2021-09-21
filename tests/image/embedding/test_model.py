@@ -48,19 +48,21 @@ def test_load_from_checkpoint_dependency_error():
 
 
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
-@pytest.mark.parametrize(
-    "backbone, training_strategy",
-    [
-        ("vision_transformer", "dino"),
-        ("resnet50", "simclr"),
-        ("resnet50", "swav"),
-        ("resnet50", "barlow_twins"),
-        ("resnet50", "moco"),
-    ],
-)
+@pytest.mark.parametrize("backbone, training_strategy", [("resnet", "barlow_twins")])
 def test_vissl_training(tmpdir, backbone, training_strategy):
-    datamodule = ssl_datamodule()  # configure according to strategy
-    embedder = ImageEmbedder(backbone=backbone, training_strategy=training_strategy)
+    datamodule = ssl_datamodule(
+        total_crops=2,
+        num_crops=[2],
+        size_crops=[96],
+        crop_scales=[[0.4, 1]],
+    )
 
-    trainer = flash.Trainer(max_steps=3, gpus=torch.cuda.device_count())
+    embedder = ImageEmbedder(
+        backbone=backbone,
+        training_strategy=training_strategy,
+        head="simclr_head",
+        latent_embedding_dim=128,
+    )
+
+    trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
     trainer.fit(embedder, datamodule=datamodule)
