@@ -16,10 +16,13 @@ from typing import Any, List
 import torch
 from pytorch_lightning.core.hooks import ModelHooks
 
+import flash
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
     from classy_vision.hooks.classy_hook import ClassyHook
+else:
+    ClassyHook = object
 
 
 class TrainingSetupHook(ClassyHook):
@@ -37,7 +40,7 @@ class TrainingSetupHook(ClassyHook):
         super().__init__()
 
     @torch.no_grad()
-    def on_start(self, task: "MockVISSLTask") -> None:
+    def on_start(self, task: "flash.image.embedding.vissl.adapter.MockVISSLTask") -> None:
         lightning_module = task.vissl_adapter.adapter_task
         task.device = lightning_module.device
 
@@ -57,7 +60,7 @@ class SimCLRTrainingSetupHook(TrainingSetupHook):
         super().__init__()
 
     @torch.no_grad()
-    def on_start(self, task: "MockVISSLTask") -> None:
+    def on_start(self, task: "flash.image.embedding.vissl.adapter.MockVISSLTask") -> None:
         super().on_start(task)
 
         lightning_module = task.vissl_adapter.adapter_task

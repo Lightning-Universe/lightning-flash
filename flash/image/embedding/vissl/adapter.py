@@ -15,15 +15,14 @@ from typing import Any, List, Union
 
 import torch
 import torch.nn as nn
-from classy_vision.hooks.classy_hook import ClassyHook
 
 from flash.core.adapter import Adapter
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.utilities.imports import _VISSL_AVAILABLE
-from flash.core.utilities.url_error import catch_url_error
 
 if _VISSL_AVAILABLE:
+    from classy_vision.hooks.classy_hook import ClassyHook
     from classy_vision.losses import ClassyLoss
     from vissl.config.attr_dict import AttrDict
     from vissl.models.base_ssl_model import BaseSSLMultiInputOutputModel

@@ -20,6 +20,8 @@ if _VISSL_AVAILABLE:
     import vissl.losses  # noqa: F401
     from classy_vision.losses import ClassyLoss, LOSS_REGISTRY
     from vissl.config.attr_dict import AttrDict
+else:
+    AttrDict = object
 
 
 def get_loss_fn(loss_name: str, cfg: AttrDict):
