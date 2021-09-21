@@ -14,16 +14,15 @@
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 from flash.core.utilities.providers import _VISSL
+from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
+from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
+from flash.image.embedding.vissl.adapter import VISSLAdapter
+from flash.image.embedding.vissl.hooks import SimCLRTrainingSetupHook, TrainingSetupHook
 
 if _VISSL_AVAILABLE:
     from vissl.hooks.dino_hooks import DINOHook
     from vissl.hooks.moco_hooks import MoCoHook
     from vissl.hooks.swav_hooks import NormalizePrototypesHook, SwAVUpdateQueueScoresHook
-
-    from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
-    from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
-    from flash.image.embedding.vissl.adapter import VISSLAdapter
-    from flash.image.embedding.vissl.hooks import SimCLRTrainingSetupHook, TrainingSetupHook
 
 
 def dino(head: str = "dino_head", **kwargs):
@@ -66,5 +65,6 @@ def barlow_twins(head: str = "barlow_twins_head", **kwargs):
 
 
 def register_vissl_strategies(register: FlashRegistry):
-    for training_strategy in (dino, swav, simclr, moco, barlow_twins):
-        register(training_strategy, name=training_strategy.__name__, adapter=VISSLAdapter, providers=_VISSL)
+    if _VISSL_AVAILABLE:
+        for training_strategy in (dino, swav, simclr, moco, barlow_twins):
+            register(training_strategy, name=training_strategy.__name__, adapter=VISSLAdapter, providers=_VISSL)

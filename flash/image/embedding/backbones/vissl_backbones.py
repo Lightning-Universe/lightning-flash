@@ -22,6 +22,8 @@ if _VISSL_AVAILABLE:
     from vissl.models.trunks import MODEL_TRUNKS_REGISTRY
 
     from flash.image.embedding.vissl.adapter import VISSLAdapter
+else:
+    RESNET_NORM_LAYER = object
 
 
 def vision_transformer(
@@ -72,7 +74,7 @@ def vision_transformer(
 def resnet(
     depth: int = 50,
     width_multiplier: int = 1,
-    norm: RESNET_NORM_LAYER = RESNET_NORM_LAYER.BatchNorm,
+    norm: RESNET_NORM_LAYER = None,
     groupnorm_groups: int = 32,
     standardize_convolutions: bool = False,
     groups: int = 1,
@@ -81,6 +83,8 @@ def resnet(
     layer4_stride: int = 2,
     **kwargs,
 ) -> nn.Module:
+    if norm is None:
+        norm = RESNET_NORM_LAYER.BatchNorm
     cfg = VISSLAdapter.get_model_config_template()
     cfg.TRUNK = AttrDict(
         {
@@ -108,5 +112,6 @@ def resnet(
 
 
 def register_vissl_backbones(register: FlashRegistry):
-    for backbone in (vision_transformer, resnet):
-        register(backbone)
+    if _VISSL_AVAILABLE:
+        for backbone in (vision_transformer, resnet):
+            register(backbone)

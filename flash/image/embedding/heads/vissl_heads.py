@@ -24,9 +24,10 @@ if _VISSL_AVAILABLE:
     from vissl.models.heads import MODEL_HEADS_REGISTRY, register_model_head
 
     from flash.image.embedding.vissl.adapter import VISSLAdapter
+else:
+    AttrDict = object
 
 
-@register_model_head("simclr_head")
 class SimCLRHead(nn.Module):
     def __init__(
         self,
@@ -67,6 +68,10 @@ class SimCLRHead(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.clf(x)
+
+
+if _VISSL_AVAILABLE:
+    SimCLRHead = register_model_head("simclr_head")(SimCLRHead)
 
 
 def simclr_head(
