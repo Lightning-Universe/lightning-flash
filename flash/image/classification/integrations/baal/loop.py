@@ -62,14 +62,16 @@ class ActiveLearningLoop(Loop):
     def advance(self, *args: Any, **kwargs: Any) -> None:
         self.progress.increment_started()
         self.fit_loop.run()
-        self._reset_predicting()
-        predictions = self.trainer.predict_loop.run()
-        self.trainer.datamodule.label(predictions=predictions)
+        if self.trainer.datamodule.has_unlabelled_data:
+            self._reset_predicting()
+            predictions = self.trainer.predict_loop.run()
+            self.trainer.datamodule.label(predictions=predictions)
         self._reset_fitting()
         self.progress.increment_processed()
 
     def on_advance_end(self) -> None:
-        self.trainer.lightning_module.load_state_dict(self._model_state_dict)
+        if self.trainer.datamodule.has_unlabelled_data:
+            self.trainer.lightning_module.load_state_dict(self._model_state_dict)
         self.progress.increment_completed()
         return super().on_advance_end()
 

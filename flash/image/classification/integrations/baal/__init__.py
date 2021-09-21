@@ -25,6 +25,7 @@ class ActiveLearningTrainer(flash.Trainer):
         active_learning_loop = ActiveLearningLoop(
             label_epoch_frequency=label_epoch_frequency, inference_iteration=inference_iteration
         )
+        # the `active_learning_loop` wraps the current fit_loop
         active_learning_loop.connect(self.fit_loop)
         self.fit_loop = active_learning_loop
         active_learning_loop.trainer = self

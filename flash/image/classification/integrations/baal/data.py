@@ -83,6 +83,10 @@ class ActiveLearningDataModule(LightningDataModule):
             self.label(indices=[0])
 
     @property
+    def has_unlabelled_data(self) -> bool:
+        return self._dataset.n_unlabelled > 0
+
+    @property
     def num_classes(self) -> Optional[int]:
         return getattr(self.labelled, "num_classes", None) or getattr(self.unlabelled, "num_classes", None)
 
