@@ -27,6 +27,8 @@ if _VISSL_AVAILABLE:
     from classy_vision.losses import ClassyLoss
     from vissl.config.attr_dict import AttrDict
     from vissl.models.base_ssl_model import BaseSSLMultiInputOutputModel
+else:
+    ClassyLoss = object
 
 
 class MockVISSLTask:
