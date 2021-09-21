@@ -33,14 +33,17 @@ class ActiveLearningLoop(Loop):
         """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
         `ActiveLearningTrainer`
 
-        while data are still unlabelled or criteria not reached:
+        Example::
 
-            if labelled data
-                train model on the labelled data
+            while unlabelled data or budget critera not reached:
 
-            if non labelled data:
-                evaluate uncertainty of the unlabelled data
-                request labellelisation on the most ones
+                if labelled data
+                    trainer.fit(model, labelled data)
+
+                if unlabelled data:
+                    predictions = trainer.predict(model, unlabelled data)
+                    uncertainties = heuristic(predictions)
+                    request labellelisation for the sample with highest uncertainties under a given budget
 
         Args:
             label_epoch_frequency: Number of epoch to train on before requesting labellisation.
