@@ -142,10 +142,9 @@ class ActiveLearningLoop(Loop):
         self._should_continue: bool = False
         self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
 
-    def __getattr__(self, key):
-        if key not in self.__dict__:
-            return getattr(self.fit_loop, key)
-        return self.__dict__[key]
+    @property
+    def done(self) -> bool:
+        return self.progress.current.completed > self.max_epochs or self._should_continue
 
     def connect(self, fit_loop: FitLoop):
         self.fit_loop = fit_loop
@@ -155,6 +154,9 @@ class ActiveLearningLoop(Loop):
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
         self.trainer.predict_loop._return_predictions = True
         self._model_state_dict = deepcopy(self.trainer.lightning_module.state_dict())
+
+    def reset(self) -> None:
+        pass
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
         # This is a hack and we need to clean this on the Lightning side.
@@ -179,12 +181,10 @@ class ActiveLearningLoop(Loop):
         self.trainer.lightning_module.predict_step = self.trainer.lightning_module._predict_step
         return super().on_run_end()
 
-    @property
-    def done(self) -> bool:
-        return self.progress.current.completed > self.max_epochs or self._should_continue
-
-    def reset(self) -> None:
-        pass
+    def __getattr__(self, key):
+        if key not in self.__dict__:
+            return getattr(self.fit_loop, key)
+        return self.__dict__[key]
 
     def _reset_fitting(self):
         self.trainer.state.fn = TrainerFn.FITTING
