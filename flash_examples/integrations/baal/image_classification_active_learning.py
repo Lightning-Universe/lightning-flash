@@ -20,8 +20,7 @@ from flash.image.classification.integrations.baal import ActiveLearningDataModul
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
 datamodule = ActiveLearningDataModule(
-    # labelled=ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/"),
-    unlabelled=ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/", batch_size=1),
+    ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/"),
 )
 
 # 2. Build the task
@@ -33,13 +32,7 @@ trainer = ActiveLearningTrainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
-predictions = model.predict(
-    [
-        "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
-        "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
-        "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
-    ]
-)
+predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
 print(predictions)
 
 # 5. Save the model!

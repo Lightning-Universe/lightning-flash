@@ -29,6 +29,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash import DataModule
+from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 
@@ -37,28 +38,51 @@ if _BAAL_AVAILABLE:
     from baal.active.heuristics import AbstractHeuristic, BALD
 
 
+def dataset_to_non_labelled_tensor(dataset: BaseAutoDataset) -> torch.tensor:
+    return torch.zeros(len(dataset))
+
+
 class ActiveLearningDataModule(LightningDataModule):
-    def __init__(self, labelled: Optional[DataModule] = None, unlabelled: Optional[DataModule] = None):
+    @requires("baal")
+    def __init__(
+        self,
+        labelled: Optional[DataModule] = None,
+        unlabelled: Optional[DataModule] = None,
+        heuristic: "AbstractHeuristic" = BALD(reduction=np.mean),
+        map_dataset_to_labelled: Optional[Callable] = dataset_to_non_labelled_tensor,
+    ):
         self.labelled = labelled
         self.unlabelled = unlabelled
+        self.heuristic = heuristic
+        self.map_dataset_to_labelled = map_dataset_to_labelled
 
-        self.reload_dataloaders_every_n_epochs = 1
+        if self.unlabelled:
+            raise MisconfigurationException("The unlabelled `datamodule` isn't support yet.")
 
-        if (
-            self.unlabelled._val_ds is not None
-            or self.unlabelled._test_ds is not None
-            or self.unlabelled._predict_ds is not None
+        if self.labelled and (
+            self.labelled._val_ds is not None
+            or self.labelled._test_ds is not None
+            or self.labelled._predict_ds is not None
         ):
-            raise MisconfigurationException("The unlabelled `datamodule` should have only train data.")
+            raise MisconfigurationException("The labelled `datamodule` should have only train data.")
 
-        self._train_ds: Optional[ActiveLearningDataset] = None
+        self._dataset: Optional[ActiveLearningDataset] = None
 
-    def initialize(self):
-        if not self.labelled:
-            if self.unlabelled.num_classes:
-                labelled = torch.zeros(len(self.unlabelled._train_ds))
-                labelled[0] = True
-                self._train_ds = ActiveLearningDataset(self.unlabelled._train_ds, labelled=labelled)
+        self._initialize_active_learning_dataset()
+
+    def _initialize_active_learning_dataset(self):
+        if self.labelled and self.unlabelled:
+            raise MisconfigurationException("This isn't supported yet")
+
+        if self.labelled:
+            if not self.labelled.num_classes:
+                raise MisconfigurationException("The labelled dataset should be labelled")
+
+            dataset = self.labelled._train_ds
+            self._dataset = ActiveLearningDataset(dataset, labelled=self.map_dataset_to_labelled(dataset))
+
+            if not len(self._dataset):
+                self.label(indices=[0])
 
     @property
     def num_classes(self) -> Optional[int]:
@@ -72,17 +96,26 @@ class ActiveLearningDataModule(LightningDataModule):
 
     def train_dataloader(self) -> "DataLoader":
         if self.labelled:
+            self.labelled._train_ds = self._dataset
             return self.labelled.train_dataloader()
-        self.unlabelled._train_ds = self._train_ds
-        return self.unlabelled.train_dataloader()
+        raise NotImplementedError
 
     def predict_dataloader(self) -> "DataLoader":
-        self.unlabelled._train_ds = self._train_ds.pool
-        return self.unlabelled.train_dataloader()
+        if self.labelled:
+            self.labelled._train_ds = self._dataset.pool
+            return self.labelled.train_dataloader()
+        raise NotImplementedError
 
-    def fake_label(self, indices):
-        if self.unlabelled:
-            self.unlabelled._train_ds.labelled[indices[:50]] = True
+    def label(self, predictions: Any = None, indices=None):
+        if predictions and indices:
+            raise MisconfigurationException(
+                "The `predictions` and `indices` are mutually exclusive, pass only of one them."
+            )
+        if predictions:
+            uncertainties = [self.heuristic.get_uncertainties(np.asarray(p)) for idx, p in enumerate(predictions)]
+            indices = np.argsort(uncertainties)
+        if self._dataset is not None:
+            self._dataset.labelled[indices] = True
 
 
 class ActiveLearningTrainer(flash.Trainer):
@@ -90,7 +123,7 @@ class ActiveLearningTrainer(flash.Trainer):
         kwags["reload_dataloaders_every_n_epochs"] = 1
         super().__init__(*args, **kwags)
 
-        active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, heuristics=BALD(reduction=np.mean))
+        active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1)
         active_learning_loop.connect(self.fit_loop)
         self.fit_loop = active_learning_loop
         active_learning_loop.trainer = self
@@ -98,15 +131,16 @@ class ActiveLearningTrainer(flash.Trainer):
 
 class ActiveLearningLoop(Loop):
     @requires("baal")
-    def __init__(self, label_epoch_frequency: int, heuristics: "AbstractHeuristic", inference_iteration: int = 2):
+    def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2):
         super().__init__()
         self.label_epoch_frequency = label_epoch_frequency
-        self.fit_loop: Optional[FitLoop] = None
-        self.state_dict: Optional[Dict[str, torch.Tensor]] = None
-        self.progress = Progress()
-        self.heuristics = heuristics
-        self._should_continue: bool = False
         self.inference_iteration = inference_iteration
+
+        self.fit_loop: Optional[FitLoop] = None
+        self.progress = Progress()
+
+        self._should_continue: bool = False
+        self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
 
     def __getattr__(self, key):
         if key not in self.__dict__:
@@ -120,35 +154,24 @@ class ActiveLearningLoop(Loop):
 
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
         self.trainer.predict_loop._return_predictions = True
-        self.state_dict = deepcopy(self.trainer.lightning_module.state_dict())
-        self.trainer.datamodule.initialize()
+        self._model_state_dict = deepcopy(self.trainer.lightning_module.state_dict())
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
         # This is a hack and we need to clean this on the Lightning side.
-        self.trainer.lightning_module.predict_dataloader = _PatchDataLoader(
-            self.trainer.datamodule.predict_dataloader(), RunningStage.PREDICTING
-        )
-        self.trainer.lightning_module.train_dataloader = _PatchDataLoader(
-            self.trainer.datamodule.train_dataloader(), RunningStage.TRAINING
-        )
-        self.trainer.train_dataloader = None
-        self.trainer.reset_train_dataloader(self.trainer.lightning_module)
-        self.trainer.predict_dataloaders = None
-        self.trainer.reset_predict_dataloader(self.trainer.lightning_module)
+        self._reset_dataloader_for_stage(RunningStage.TRAINING)
+        self._reset_dataloader_for_stage(RunningStage.PREDICTING)
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
         self.progress.increment_started()
-        self._reset_fitting()
         self.fit_loop.run()
         self._reset_predicting()
         predictions = self.trainer.predict_loop.run()
-        uncertainties = [self.heuristics.get_uncertainties(np.asarray(p)) for idx, p in enumerate(predictions)]
-        indices = np.argsort(uncertainties)
-        self.trainer.datamodule.fake_label(indices)
+        self.trainer.datamodule.label(predictions=predictions)
+        self._reset_fitting()
         self.progress.increment_processed()
 
     def on_advance_end(self) -> None:
-        self.trainer.lightning_module.load_state_dict(self.state_dict)
+        self.trainer.lightning_module.load_state_dict(self._model_state_dict)
         self.progress.increment_completed()
         return super().on_advance_end()
 
@@ -163,31 +186,36 @@ class ActiveLearningLoop(Loop):
     def reset(self) -> None:
         pass
 
-    @staticmethod
-    def _mc_inference(*args, predict_step_fn: Callable = None, inference_iteration: int = None, **kwargs):
-        out = []
-        for _ in range(inference_iteration):
-            out.append(predict_step_fn(*args, **kwargs))
-        return out
-
     def _reset_fitting(self):
         self.trainer.state.fn = TrainerFn.FITTING
         self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.training = True
         self.trainer.lightning_module.on_train_dataloader()
 
-    def _identity(self, *args, **kwargs):
-        pass
-
     def _reset_predicting(self):
         self.trainer.state.fn = TrainerFn.PREDICTING
         self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.predicting = True
         self.trainer.lightning_module.on_predict_dataloader()
+        self._enable_mc_dropout()
+
+    def _reset_dataloader_for_stage(self, running_state: RunningStage):
+        dataloader_name = f"{running_state.value}_dataloader"
+        setattr(
+            self.trainer.lightning_module,
+            dataloader_name,
+            _PatchDataLoader(getattr(self.trainer.datamodule, dataloader_name)(), running_state),
+        )
+        setattr(self.trainer, dataloader_name, None)
+        getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
+
+    def _enable_mc_dropout(self):
+        # prevent the model to put into val model - hack
         self.trainer.lightning_module.on_predict_model_eval = self._identity
         for _, module in self.trainer.lightning_module.named_modules():
             if isinstance(module, _BatchNorm):
                 module.eval()
+        # save the predict_step and replace it within a mc_inference function
         if getattr(self.trainer.lightning_module, "_predict_step", None) is None:
             self.trainer.lightning_module._predict_step = self.trainer.lightning_module.predict_step
         self.trainer.lightning_module.predict_step = partial(
@@ -195,3 +223,13 @@ class ActiveLearningLoop(Loop):
             predict_step_fn=self.trainer.lightning_module._predict_step,
             inference_iteration=self.inference_iteration,
         )
+
+    def _identity(self, *args, **kwargs):
+        pass
+
+    @staticmethod
+    def _mc_inference(*args, predict_step_fn: Callable = None, inference_iteration: int = None, **kwargs):
+        out = []
+        for _ in range(inference_iteration):
+            out.append(predict_step_fn(*args, **kwargs))
+        return out

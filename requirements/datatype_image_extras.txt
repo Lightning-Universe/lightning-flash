@@ -7,3 +7,4 @@ icedata
 effdet
 albumentations
 learn2learn
+baal

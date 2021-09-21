@@ -117,7 +117,7 @@ class ImageClassifier(ClassificationAdapterTask):
             backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or nn.Sequential(
+        head = head or nn.Sequential(
             nn.Dropout(p=0.1),
             nn.Linear(num_features, num_classes),
         )
