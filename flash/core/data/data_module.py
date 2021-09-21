@@ -120,11 +120,6 @@ class DataModule(pl.LightningDataModule):
         self._test_ds = test_dataset
         self._predict_ds = predict_dataset
 
-        self._train_ds_hook: Optional[Callable] = None
-        self._val_ds_hook: Optional[Callable] = None
-        self._test_ds_hook: Optional[Callable] = None
-        self._predict_ds_hook: Optional[Callable] = None
-
         if self._train_ds is not None and (val_split is not None and self._val_ds is None):
             self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
 
@@ -149,16 +144,6 @@ class DataModule(pl.LightningDataModule):
         self.sampler = sampler
 
         self.set_running_stages()
-
-    def register_dataset_hooks(self, hook: Callable, running_stage: RunningStage):
-        if running_stage.TRAINING == RunningStage.TRAINING:
-            self._train_ds_hook = hook
-        elif running_stage.VALIDATING == RunningStage.VALIDATING:
-            self._val_ds_hook = hook
-        elif running_stage.TESTING == RunningStage.TESTING:
-            self._test_ds_hook = hook
-        else:
-            self._predict_ds = hook
 
     @property
     def train_dataset(self) -> Optional[Dataset]:
@@ -296,10 +281,6 @@ class DataModule(pl.LightningDataModule):
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
-
-        if self._train_ds_hook:
-            train_ds = self._train_ds_hook(train_ds)
-
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
         if isinstance(train_ds, IterableAutoDataset):
@@ -343,9 +324,6 @@ class DataModule(pl.LightningDataModule):
         collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
         pin_memory = True
 
-        if self._val_ds_hook:
-            val_ds = self._val_ds_hook(val_ds)
-
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_val_dataset(
                 val_ds,
@@ -369,9 +347,6 @@ class DataModule(pl.LightningDataModule):
         collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
         pin_memory = True
 
-        if self._test_ds_hook:
-            test_ds = self._test_ds_hook(test_ds)
-
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_test_dataset(
                 test_ds,
@@ -392,9 +367,6 @@ class DataModule(pl.LightningDataModule):
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
-
-        if self._predict_ds_hook:
-            predict_ds = self._predict_ds_hook(predict_ds)
 
         if isinstance(predict_ds, IterableAutoDataset):
             batch_size = self.batch_size
