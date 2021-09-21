@@ -106,6 +106,8 @@ class ActiveLearningLoop(Loop):
     def on_load_checkpoint(self, state_dict) -> None:
         self.trainer.datamodule.load_state_dict(state_dict.pop("datamodule_state_dict"))
 
+    ############## UTILS ##############
+
     def __getattr__(self, key):
         if key not in self.__dict__:
             return getattr(self.fit_loop, key)
