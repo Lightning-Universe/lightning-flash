@@ -11,7 +11,7 @@ if _TORCHVISION_AVAILABLE:
 if _VISSL_AVAILABLE:
     from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
 
-    from flash.image.embedding.vissl.transforms import multicrop_collate_fn
+    from flash.image.embedding.vissl.transforms import multicrop_collate_fn  # noqa: F401
 
 
 def ssl_datamodule(

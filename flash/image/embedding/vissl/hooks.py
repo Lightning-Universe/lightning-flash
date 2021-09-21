@@ -37,7 +37,7 @@ class TrainingSetupHook(ClassyHook):
         super().__init__()
 
     @torch.no_grad()
-    def on_start(self, task: "MockVISSLTask") -> None:
+    def on_start(self, task: "adapter.MockVISSLTask") -> None:
         lightning_module = task.vissl_adapter.adapter_task
         task.device = lightning_module.device
 
@@ -57,7 +57,7 @@ class SimCLRTrainingSetupHook(TrainingSetupHook):
         super().__init__()
 
     @torch.no_grad()
-    def on_start(self, task: "MockVISSLTask") -> None:
+    def on_start(self, task: "adapter.MockVISSLTask") -> None:
         super().on_start(task)
 
         lightning_module = task.vissl_adapter.adapter_task
