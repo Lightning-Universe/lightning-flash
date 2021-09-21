@@ -22,7 +22,9 @@ from flash.core.utilities.imports import _VISSL_AVAILABLE
 if _VISSL_AVAILABLE:
     from classy_vision.hooks.classy_hook import ClassyHook
 else:
-    ClassyHook = object
+
+    class ClassyHook:
+        _noop = object
 
 
 class TrainingSetupHook(ClassyHook):

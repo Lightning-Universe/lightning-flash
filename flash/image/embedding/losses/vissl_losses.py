@@ -22,6 +22,7 @@ if _VISSL_AVAILABLE:
     from vissl.config.attr_dict import AttrDict
 else:
     AttrDict = object
+    ClassyLoss = object
 
 
 def get_loss_fn(loss_name: str, cfg: AttrDict):
