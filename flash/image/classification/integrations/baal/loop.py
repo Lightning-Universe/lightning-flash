@@ -58,6 +58,7 @@ class ActiveLearningLoop(Loop):
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
         self._reset_dataloader_for_stage(RunningStage.TRAINING)
         self._reset_dataloader_for_stage(RunningStage.PREDICTING)
+        self.progress.increment_ready()
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
         self.progress.increment_started()
@@ -71,6 +72,7 @@ class ActiveLearningLoop(Loop):
 
     def on_advance_end(self) -> None:
         if self.trainer.datamodule.has_unlabelled_data:
+            # reload the weights to retrain from scratch with the new labelled data.
             self.trainer.lightning_module.load_state_dict(self._model_state_dict)
         self.progress.increment_completed()
         return super().on_advance_end()
