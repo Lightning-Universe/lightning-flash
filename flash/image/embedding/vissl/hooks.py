@@ -37,7 +37,7 @@ class TrainingSetupHook(ClassyHook):
         super().__init__()
 
     @torch.no_grad()
-    def on_start(self, task: "tasks.ClassyTask") -> None:
+    def on_start(self, task: "MockVISSLTask") -> None:
         lightning_module = task.vissl_adapter.adapter_task
         task.device = lightning_module.device
 
@@ -45,6 +45,9 @@ class TrainingSetupHook(ClassyHook):
         accelerators_ids = lightning_module.trainer.accelerator_connector.parallel_device_ids
         accelerator_per_node = len(accelerators_ids) if accelerators_ids is not None else 1
         task.world_size = num_nodes * accelerator_per_node
+
+        if lightning_module.trainer.max_epochs is None:
+            lightning_module.trainer.max_epochs = 1
 
         task.max_iteration = lightning_module.trainer.max_epochs * lightning_module.trainer.num_training_batches
 
@@ -54,7 +57,7 @@ class SimCLRTrainingSetupHook(TrainingSetupHook):
         super().__init__()
 
     @torch.no_grad()
-    def on_start(self, task: "tasks.ClassyTask") -> None:
+    def on_start(self, task: "MockVISSLTask") -> None:
         super().on_start(task)
 
         lightning_module = task.vissl_adapter.adapter_task

@@ -17,6 +17,7 @@ import re
 import pytest
 import torch
 
+import flash
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageEmbedder
 from tests.helpers.utils import _IMAGE_TESTING
@@ -24,11 +25,11 @@ from tests.image.embedding.utils import ssl_datamodule
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32),))])
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 64, 64),))])
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 
-    model = ImageEmbedder(embedding_dim=128)
+    model = ImageEmbedder(training_strategy="barlow_twins")
     model.eval()
 
     model = jitter(model, *args)
@@ -36,9 +37,9 @@ def test_jit(tmpdir, jitter, args):
     torch.jit.save(model, path)
     model = torch.jit.load(path)
 
-    out = model(torch.rand(1, 3, 32, 32))
+    out = model(torch.rand(1, 3, 64, 64))
     assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 128])
+    assert out.shape == torch.Size([1, 2048])
 
 
 @pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")

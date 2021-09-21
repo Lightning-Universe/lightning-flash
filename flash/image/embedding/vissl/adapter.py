@@ -59,9 +59,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         backbone: nn.Module,
         head: nn.Module,
         loss_fn: ClassyLoss,
-        embedding_dim: int,
         hooks: List[ClassyHook],
-        **kwargs,
     ) -> None:
 
         Adapter.__init__(self)
@@ -72,7 +70,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         self.backbone = backbone
         self.head = [head] if not isinstance(head, list) else head
         self.loss_fn = loss_fn
-        self.embedding_dim = embedding_dim
         self.hooks = hooks
 
         self.model_config.TRUNK = self.backbone.model_config.TRUNK
@@ -99,42 +96,20 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         AdaptVISSLHooks.__init__(self, hooks=hooks, task=self.vissl_task)
 
-        # task.config["MODEL"], task.config["OPTIMIZER"]
-        # patch task.loss.momentum teacher, deepcopy from trunk
-        # mock task only needs to be passed for hooks, avoid all
-        # vissl_task.base_model is vissl_trunk
-        #
-        # make sure momentum_teacher is not updated with backprop, only needs to
-        # be updated with momentum hook
-        # detach on teacher output or torch.no_grad()?
-
-        # Loss config is as follows:
-        # LOSS:
-        #   name: loss_name
-        #   loss_name:
-        #       param1:
-        #       param2:
-        #       ...
-
     @classmethod
-    @catch_url_error
     def from_task(
         cls,
         task: Task,
         loss_fn: ClassyLoss,
         backbone: nn.Module,
-        embedding_dim: int,
         head: Union[nn.Module, List[nn.Module]],
         hooks: List[ClassyHook],
-        **kwargs,
     ) -> Adapter:
         result = cls(
             backbone=backbone,
             head=head,
             loss_fn=loss_fn,
-            embedding_dim=embedding_dim,
             hooks=hooks,
-            **kwargs,
         )
 
         result.__dict__["adapter_task"] = task
@@ -175,7 +150,10 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return cfg
 
-    def forward(self, batch) -> Any:
+    def forward(self, batch: torch.Tensor) -> Any:
+        return self.vissl_base_model.trunk(batch, [])[0]
+
+    def ssl_forward(self, batch) -> Any:
         model_output = self.vissl_base_model(batch)
 
         # vissl-specific
@@ -185,7 +163,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return model_output
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        out = self(batch[DefaultDataKeys.INPUT])
+        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
         self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
         # call forward hook from VISSL (momentum updates)
@@ -198,7 +176,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
-        out = self(batch[DefaultDataKeys.INPUT])
+        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
         self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
         loss = self.loss_fn(out, target=None)
@@ -207,16 +185,15 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return loss
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        # vissl_input, target = batch
-        # out = self(vissl_input)
+        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
+        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
-        # # out can be torch.Tensor/List target is torch.Tensor
-        # loss = self.vissl_loss(out, target)
+        loss = self.loss_fn(out, target=None)
+        self.adapter_task.log_dict({"test_loss": loss})
 
-        # # TODO: log
-        # # TODO: Include call to ClassyHooks during training
-        pass
+        return loss
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # TODO: return embedding here
-        pass
+        input_image = batch[DefaultDataKeys.INPUT]
+
+        return self(input_image)
