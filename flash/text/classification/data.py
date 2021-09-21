@@ -28,18 +28,19 @@ if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset
     from transformers import AutoTokenizer, default_data_collator
     from transformers.modeling_outputs import SequenceClassifierOutput
+    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 
 class TextDeserializer(Deserializer):
     @requires("text")
-    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
+    def __init__(self, backbone: str, **backbone_kwargs):
         super().__init__()
         self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
-        self.max_length = max_length
+        self.backbone_kwargs = backbone_kwargs
+        self.tokenizer, self.vocab = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
 
-    def deserialize(self, text: str) -> Tensor:
-        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
+    def deserialize(self, text: Union[str, List[str]]) -> Tensor:
+        return self.tokenizer(text)
 
     @property
     def example_input(self) -> str:
@@ -52,17 +53,17 @@ class TextDeserializer(Deserializer):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
 
 class TextDataSource(DataSource):
     @requires("text")
-    def __init__(self, backbone: str, max_length: int = 128):
+    def __init__(self, backbone: str, **backbone_kwargs):
         super().__init__()
 
         self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        self.max_length = max_length
+        self.backbone_kwargs = backbone_kwargs
+        self.tokenizer, self.vocab = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
 
     def _tokenize_fn(
         self,
@@ -72,7 +73,7 @@ class TextDataSource(DataSource):
         """This function is used to tokenize sentences using the provided tokenizer."""
         if isinstance(ex, dict):
             ex = ex[input]
-        return self.tokenizer(ex, max_length=self.max_length, truncation=True, padding="max_length")
+        return self.tokenizer(ex)
 
     @staticmethod
     def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
@@ -86,12 +87,12 @@ class TextDataSource(DataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
 
 class TextFileDataSource(TextDataSource):
-    def __init__(self, filetype: str, backbone: str, max_length: int = 128):
-        super().__init__(backbone, max_length=max_length)
+    def __init__(self, filetype: str, backbone: str, **backbone_kwargs):
+        super().__init__(backbone, **backbone_kwargs)
 
         self.filetype = filetype
 
@@ -184,12 +185,12 @@ class TextFileDataSource(TextDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
 
 class TextCSVDataSource(TextFileDataSource):
-    def __init__(self, backbone: str, max_length: int = 128):
-        super().__init__("csv", backbone, max_length=max_length)
+    def __init__(self, backbone: str, **backbone_kwargs):
+        super().__init__("csv", backbone, **backbone_kwargs)
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -198,12 +199,12 @@ class TextCSVDataSource(TextFileDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
 
 class TextJSONDataSource(TextFileDataSource):
-    def __init__(self, backbone: str, max_length: int = 128):
-        super().__init__("json", backbone, max_length=max_length)
+    def __init__(self, backbone: str, **backbone_kwargs):
+        super().__init__("json", backbone, **backbone_kwargs)
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -212,12 +213,12 @@ class TextJSONDataSource(TextFileDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
 
 class TextSentencesDataSource(TextDataSource):
-    def __init__(self, backbone: str, max_length: int = 128):
-        super().__init__(backbone, max_length=max_length)
+    def __init__(self, backbone: str, **backbone_kwargs):
+        super().__init__(backbone, **backbone_kwargs)
 
     def load_data(
         self,
@@ -241,7 +242,7 @@ class TextSentencesDataSource(TextDataSource):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
 
 class TextClassificationPreprocess(Preprocess):
@@ -253,10 +254,10 @@ class TextClassificationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         backbone: str = "prajjwal1/bert-tiny",
-        max_length: int = 128,
+        **backbone_kwargs,
     ):
         self.backbone = backbone
-        self.max_length = max_length
+        self.backbone_kwargs = backbone_kwargs
 
         super().__init__(
             train_transform=train_transform,
@@ -264,19 +265,18 @@ class TextClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
-                "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.CSV: TextCSVDataSource(self.backbone, **backbone_kwargs),
+                DefaultDataSources.JSON: TextJSONDataSource(self.backbone, **backbone_kwargs),
+                "sentences": TextSentencesDataSource(self.backbone, **backbone_kwargs),
             },
             default_data_source="sentences",
-            deserializer=TextDeserializer(backbone, max_length),
+            deserializer=TextDeserializer(self.backbone, **self.backbone_kwargs),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
             **self.transforms,
             "backbone": self.backbone,
-            "max_length": self.max_length,
         }
 
     @classmethod
@@ -313,3 +313,16 @@ class TextClassificationData(DataModule):
     @property
     def backbone(self) -> Optional[str]:
         return getattr(self.preprocess, "backbone", None)
+
+
+# if __name__ == "__main__":
+#     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS.get
+#     from flash.text.classification.data import TextClassificationData
+
+#     datamodule = TextClassificationData.from_csv(
+#         train_file="/Users/49796/Documents/GitHub/lightning-flash/flash_notebooks/data/imdb/train.csv",
+#         input_fields="review",
+#         target_fields="sentiment",
+#         backbone="prajjwal1/bert-tiny",
+#         backbone_kwargs={"pretrained": True},
+#     )
