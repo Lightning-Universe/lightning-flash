@@ -62,7 +62,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "da
 embeddings = embedder.predict(
     [
         "data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg",
-        "data/hymenoptera_data/predict/2039585088_c6f47c592e.jpg"
+        "data/hymenoptera_data/predict/2039585088_c6f47c592e.jpg",
     ]
 )
 # list of embeddings for images sent to the predict function

@@ -168,7 +168,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         # for moco and dino
         self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
-        if 'data_momentum' in batch.keys():
+        if "data_momentum" in batch.keys():
             self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
 
         if train:
