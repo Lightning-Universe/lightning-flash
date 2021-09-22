@@ -18,6 +18,9 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
 from flash.core.registry import FlashRegistry
+from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.states import CollateFn, ToTensorTransform
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
@@ -26,12 +29,14 @@ if _VISSL_AVAILABLE:
 
     from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
     from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+    from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
 
     # patch this to avoid classy vision/vissl based distributed training
     classy_vision.generic.distributed_util.get_world_size = lambda: 1
 else:
     IMAGE_EMBEDDER_BACKBONES = FlashRegistry("backbones")
     IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
+    IMAGE_EMBEDDER_TRANSFORMS = FlashRegistry("embedder_transforms")
 
 
 class ImageEmbedder(AdapterTask):
@@ -57,6 +62,7 @@ class ImageEmbedder(AdapterTask):
 
     training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
     backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
+    transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
     required_extras: str = "image"
 
@@ -64,6 +70,7 @@ class ImageEmbedder(AdapterTask):
         self,
         training_strategy: str,
         head: str,
+        pretraining_transform: str,
         backbone: str = "resnet",
         pretrained: bool = True,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
@@ -73,6 +80,7 @@ class ImageEmbedder(AdapterTask):
         learning_rate: float = 1e-3,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
+        pretraining_transform_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self.save_hyperparameters()
 
@@ -103,6 +111,15 @@ class ImageEmbedder(AdapterTask):
             scheduler_kwargs=scheduler_kwargs,
             learning_rate=learning_rate,
         )
+
+        transform, collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
+        to_tensor_transform = ApplyToKeys(
+            DefaultDataKeys.INPUT,
+            transform,
+        )
+
+        self.adapter.set_state(CollateFn(collate_fn))
+        self.adapter.set_state(ToTensorTransform(to_tensor_transform))
 
     def on_train_start(self) -> None:
         self.adapter.on_train_start()

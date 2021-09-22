@@ -15,27 +15,12 @@ import torch
 from torchvision.datasets import CIFAR10
 
 import flash
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageEmbedder
-from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
-from flash.image.embedding.vissl.transforms import simclr_collate_fn
 
-# 1. Download the data and pre-process the data
-transform = IMAGE_EMBEDDER_TRANSFORMS.get("simclr_transform")()
-
-to_tensor_transform = ApplyToKeys(
-    DefaultDataKeys.INPUT,
-    transform,
-)
-
+# 1. Download the data and prepare the datamodule
 datamodule = ImageClassificationData.from_datasets(
     train_dataset=CIFAR10(".", download=True),
-    train_transform={
-        "to_tensor_transform": to_tensor_transform,
-        "collate": simclr_collate_fn,
-    },
     batch_size=16,
 )
 
@@ -44,13 +29,15 @@ embedder = ImageEmbedder(
     backbone="resnet",
     training_strategy="barlow_twins",
     head="simclr_head",
+    pretraining_transform='barlow_twins_transform',
     training_strategy_kwargs={"latent_embedding_dim": 128},
+    pretraining_transform_kwargs={"size_crops": [196]}
 )
 
 # 3. Create the trainer and pre-train the encoder
 # use accelerator='ddp' when using GPU(s),
 # i.e. flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
