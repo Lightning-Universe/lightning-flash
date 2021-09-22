@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from io import StringIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data.sampler import Sampler
 
 from flash.core.classification import LabelsState
 from flash.core.data.callback import BaseDataFetcher
@@ -344,6 +345,7 @@ class TabularData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given data frames.
@@ -372,6 +374,7 @@ class TabularData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -420,6 +423,7 @@ class TabularData(DataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
             cat_cols=categorical_fields,
             num_cols=numerical_fields,
             target_col=target_fields,
@@ -451,6 +455,7 @@ class TabularData(DataModule):
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given CSV files.
@@ -479,6 +484,7 @@ class TabularData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
             preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
                 if ``preprocess = None``.
 
@@ -506,4 +512,6 @@ class TabularData(DataModule):
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
         )
