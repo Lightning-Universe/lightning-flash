@@ -110,7 +110,7 @@ class AdapterTask(Task):
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -120,13 +120,21 @@ class AdapterTask(Task):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_train_dataset(
-            dataset, trainer, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
         )
 
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -136,13 +144,21 @@ class AdapterTask(Task):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_val_dataset(
-            dataset, trainer, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
         )
 
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -152,7 +168,15 @@ class AdapterTask(Task):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_test_dataset(
-            dataset, trainer, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
         )
 
     def process_predict_dataset(
