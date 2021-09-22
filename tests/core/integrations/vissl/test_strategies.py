@@ -11,37 +11,41 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.registry import FlashRegistry
 import pytest
 
+from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image.embedding.heads.vissl_heads import SimCLRHead
 from flash.image.embedding.vissl.hooks import TrainingSetupHook
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
-    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
-
-    from vissl.losses.barlow_twins_loss import BarlowTwinsLoss
-    from vissl.losses.moco_loss import MoCoLoss
-    from vissl.losses.swav_loss import SwAVLoss
-    from vissl.losses.dino_loss import DINOLoss
-
-    from vissl.models.heads.swav_prototypes_head import SwAVPrototypesHead
-
     from vissl.hooks.dino_hooks import DINOHook
     from vissl.hooks.moco_hooks import MoCoHook
     from vissl.hooks.swav_hooks import NormalizePrototypesHook, SwAVUpdateQueueScoresHook
+    from vissl.losses.barlow_twins_loss import BarlowTwinsLoss
+    from vissl.losses.dino_loss import DINOLoss
+    from vissl.losses.moco_loss import MoCoLoss
+    from vissl.losses.swav_loss import SwAVLoss
+    from vissl.models.heads.swav_prototypes_head import SwAVPrototypesHead
+
+    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
 
 
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
-    "training_strategy, head_name, loss_fn_class, head_class, hooks_list", 
+    "training_strategy, head_name, loss_fn_class, head_class, hooks_list",
     [
         ("barlow_twins", "barlow_twins_head", BarlowTwinsLoss, SimCLRHead, [TrainingSetupHook]),
         ("moco", "moco_head", MoCoLoss, SimCLRHead, [MoCoHook, TrainingSetupHook]),
-        ("swav", "swav_head", SwAVLoss, SwAVPrototypesHead, [SwAVUpdateQueueScoresHook, NormalizePrototypesHook, TrainingSetupHook]),
+        (
+            "swav",
+            "swav_head",
+            SwAVLoss,
+            SwAVPrototypesHead,
+            [SwAVUpdateQueueScoresHook, NormalizePrototypesHook, TrainingSetupHook],
+        ),
         ("dino", "dino_head", DINOLoss, SwAVPrototypesHead, [DINOHook, TrainingSetupHook]),
-    ]
+    ],
 )
 def test_vissl_strategies(tmpdir, training_strategy, head_name, loss_fn_class, head_class, hooks_list):
     ret_loss_fn, ret_head, ret_hooks = IMAGE_EMBEDDER_STRATEGIES.get(training_strategy)(head=head_name)
