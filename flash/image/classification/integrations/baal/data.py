@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, random_split
 
 from flash import DataModule
 from flash.core.data.auto_dataset import BaseAutoDataset
@@ -45,6 +45,13 @@ def filter_unlabelled_data(dataset: BaseAutoDataset) -> Dataset:
     return dataset
 
 
+def train_val_split(dataset: ActiveLearningDataset, val_size=0.1):
+    L = len(dataset)
+    train_size = int(L * (1 - val_size))
+    val_size = L - train_size
+    return random_split(dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42))
+
+
 class ActiveLearningDataModule(LightningDataModule):
     @requires("baal")
     def __init__(
@@ -53,6 +60,8 @@ class ActiveLearningDataModule(LightningDataModule):
         heuristic: "AbstractHeuristic" = BALD(reduction=np.mean),
         map_dataset_to_labelled: Optional[Callable] = dataset_to_non_labelled_tensor,
         filter_unlabelled_data: Optional[Callable] = filter_unlabelled_data,
+        num_label_randomly: int = 5,
+        val_split: Optional[float] = None,
     ):
         """The `ActiveLearningDataModule` handles data manipulation for ActiveLearning.
 
@@ -62,11 +71,15 @@ class ActiveLearningDataModule(LightningDataModule):
             heuristic: Sorting algorithm used to rank samples on how likely they can help with model performance.
             map_dataset_to_labelled: Function used to emulate masking on labelled dataset.
             filter_unlabelled_data: Function used to filter the unlabelled data while computing uncertainties.
+            num_label_randomly: Number of samples to randomly labelled from the uncertaintie scores
+            val_split: Float to split train dataset into train and validation set.
         """
         self.labelled = labelled
         self.heuristic = heuristic
         self.map_dataset_to_labelled = map_dataset_to_labelled
         self.filter_unlabelled_data = filter_unlabelled_data
+        self.num_label_randomly = num_label_randomly
+        self.val_split = val_split
         self._dataset: Optional[ActiveLearningDataset] = None
 
         if not self.labelled:
@@ -86,6 +99,11 @@ class ActiveLearningDataModule(LightningDataModule):
             self.labelled._train_ds, labelled=self.map_dataset_to_labelled(self.labelled._train_ds)
         )
 
+        if not self.val_split or not self.has_labelled_data:
+            self.val_dataloader = None
+        elif self.val_split < 0 or self.val_split > 1:
+            raise MisconfigurationException("The `val_split` should a float between 0 and 1.")
+
     @property
     def has_labelled_data(self) -> bool:
         return self._dataset.n_labelled > 0
@@ -103,23 +121,35 @@ class ActiveLearningDataModule(LightningDataModule):
         return self.labelled.data_pipeline
 
     def train_dataloader(self) -> "DataLoader":
-        self.labelled._train_ds = self._dataset
+        if self.val_split:
+            self.labelled._train_ds = train_val_split(self._dataset, self.val_split)[0]
+        else:
+            self.labelled._train_ds = self._dataset
+
+        if self.has_labelled_data and self.val_split:
+            self.val_dataloader = self._val_dataloader
+
         return self.labelled.train_dataloader()
+
+    def _val_dataloader(self) -> "DataLoader":
+        self.labelled._val_ds = train_val_split(self._dataset, self.val_split)[1]
+        return self.labelled._val_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
         self.labelled._train_ds = self.filter_unlabelled_data(self._dataset.pool)
         return self.labelled.train_dataloader()
 
-    def label(self, predictions: Any = None, indices=None):
-        if predictions and indices:
+    def label(self, uncertainties: Any = None, indices=None):
+        if uncertainties and indices:
             raise MisconfigurationException(
-                "The `predictions` and `indices` are mutually exclusive, pass only of one them."
+                "The `uncertainties` and `indices` are mutually exclusive, pass only of one them."
             )
-        if predictions:
-            uncertainties = [self.heuristic.get_uncertainties(np.asarray(p)) for idx, p in enumerate(predictions)]
+        if uncertainties:
             indices = np.argsort(uncertainties)
-        if self._dataset is not None:
-            self._dataset.labelled[indices] = True
+            if self._dataset is not None:
+                self._dataset.labelled[indices[-self.num_label_randomly :]] = True
+        else:
+            self._dataset.label_randomly(self.num_label_randomly)
 
     def state_dict(self) -> Dict[str, torch.Tensor]:
         return self._dataset.state_dict()

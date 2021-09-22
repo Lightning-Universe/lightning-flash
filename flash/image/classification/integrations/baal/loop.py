@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from copy import deepcopy
+from itertools import chain
 from typing import Any, Dict, Optional
 
 import torch
@@ -19,10 +20,11 @@ from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
-from pytorch_lightning.trainer.states import RunningStage, TrainerFn, TrainerStatus
+from pytorch_lightning.trainer.states import RunningStage, TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 import flash
+from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 
@@ -31,7 +33,7 @@ if _BAAL_AVAILABLE:
 
 
 class InferenceMCDropoutTask(flash.Task):
-    def __init__(self, module: flash.Task, inference_iteration: int):
+    def __init__(self, module: flash.Task, inference_iteration: int, heuristic):
         super().__init__()
         self.parent_module = module
         self.trainer = module.trainer
@@ -39,12 +41,14 @@ class InferenceMCDropoutTask(flash.Task):
         if not changed:
             raise MisconfigurationException("The model should contain at least 1 dropout layer.")
         self.inference_iteration = inference_iteration
+        self.heuristic = heuristic
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
         out = []
         for _ in range(self.inference_iteration):
             out.append(self.parent_module.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx))
-        return out
+        # BaaL expects a shape [num_samples, num_classes, num_iterations]
+        return [self.heuristic.get_uncertainties(torch.tensor(o).unsqueeze(0)) for o in out]
 
 
 class ActiveLearningLoop(Loop):
@@ -75,13 +79,12 @@ class ActiveLearningLoop(Loop):
         self.should_reset_weights = should_reset_weights
         self.fit_loop: Optional[FitLoop] = None
         self.progress = Progress()
-        self._should_continue: bool = False
         self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
         self._lightning_module: Optional[flash.Task] = None
 
     @property
     def done(self) -> bool:
-        return self.progress.current.completed > self.max_epochs or self._should_continue
+        return self.progress.current.completed > self.max_epochs
 
     def connect(self, fit_loop: FitLoop):
         self.fit_loop = fit_loop
@@ -93,7 +96,9 @@ class ActiveLearningLoop(Loop):
         self.trainer.predict_loop._return_predictions = True
         self._lightning_module = self.trainer.lightning_module
         self._model_state_dict = deepcopy(self._lightning_module.state_dict())
-        self.inference_model = InferenceMCDropoutTask(self._lightning_module, self.inference_iteration)
+        self.inference_model = InferenceMCDropoutTask(
+            self._lightning_module, self.inference_iteration, self.trainer.datamodule.heuristic
+        )
 
     def reset(self) -> None:
         pass
@@ -101,6 +106,7 @@ class ActiveLearningLoop(Loop):
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
         if self.trainer.datamodule.has_labelled_data:
             self._reset_dataloader_for_stage(RunningStage.TRAINING)
+            self._reset_dataloader_for_stage(RunningStage.VALIDATING)
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_dataloader_for_stage(RunningStage.PREDICTING)
         self.progress.increment_ready()
@@ -111,8 +117,8 @@ class ActiveLearningLoop(Loop):
             self.fit_loop.run()
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_predicting()
-            predictions = self.trainer.predict_loop.run()
-            self.trainer.datamodule.label(predictions=predictions)
+            uncertainties = self.trainer.predict_loop.run()
+            self.trainer.datamodule.label(uncertainties=list(chain(*uncertainties)))
         self._reset_fitting()
         self.progress.increment_processed()
 
@@ -139,20 +145,18 @@ class ActiveLearningLoop(Loop):
 
     def _reset_fitting(self):
         self.trainer.state.fn = TrainerFn.FITTING
-        self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.training = True
         self.trainer.lightning_module.on_train_dataloader()
         self.trainer.accelerator.connect(self._lightning_module)
 
     def _reset_predicting(self):
         self.trainer.state.fn = TrainerFn.PREDICTING
-        self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.predicting = True
         self.trainer.lightning_module.on_predict_dataloader()
         self.trainer.accelerator.connect(self.inference_model)
 
     def _reset_dataloader_for_stage(self, running_state: RunningStage):
-        dataloader_name = f"{running_state.value}_dataloader"
+        dataloader_name = f"{_STAGES_PREFIX[running_state]}_dataloader"
         setattr(
             self.trainer.lightning_module,
             dataloader_name,

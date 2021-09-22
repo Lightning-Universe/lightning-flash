@@ -24,7 +24,8 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 
 # Implement the research use-case where we mask labels from labelled dataset.
 datamodule = ActiveLearningDataModule(
-    ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/"),
+    ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/", batch_size=2),
+    val_split=0.1,
 )
 
 # 2. Build the task
