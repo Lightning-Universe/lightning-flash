@@ -11,29 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
-from pytorch_lightning.utilities import rank_zero_warn
-from torch import nn
-from torch.nn import functional as F
 from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Accuracy, Metric
 
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.model import Task
+from flash.core.adapter import AdapterTask
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from flash.core.utilities.isinstance import _isinstance
-from flash.image.classification.data import ImageClassificationPreprocess
+from flash.core.utilities.imports import _VISSL_AVAILABLE
 
-if _IMAGE_AVAILABLE:
-    from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+if _VISSL_AVAILABLE:
+    import classy_vision
+    import classy_vision.generic.distributed_util
+
+    from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
+    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+
+    # patch this to avoid classy vision/vissl based distributed training
+    classy_vision.generic.distributed_util.get_world_size = lambda: 1
 else:
-    IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
+    IMAGE_EMBEDDER_BACKBONES = FlashRegistry("backbones")
+    IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
 
 
-class ImageEmbedder(Task):
+class ImageEmbedder(AdapterTask):
     """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For
     more details, see :ref:`image_embedder`.
 
@@ -54,87 +55,63 @@ class ImageEmbedder(Task):
         pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
     """
 
-    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+    training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
+    backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
 
     required_extras: str = "image"
 
     def __init__(
         self,
-        embedding_dim: Optional[int] = None,
-        backbone: str = "resnet101",
+        training_strategy: str,
+        embedding_dim: int = 128,
+        backbone: str = "resnet",
         pretrained: bool = True,
-        loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
         learning_rate: float = 1e-3,
-        pooling_fn: Callable = torch.max,
+        **kwargs: Any,
     ):
-        super().__init__(
-            model=None,
+        self.save_hyperparameters()
+
+        backbone, num_features = self.backbones.get(backbone)(**kwargs, pretrained=pretrained)
+
+        # TODO: add linear layer to backbone to get num_feature -> embedding_dim before applying heads
+        # assert embedding_dim == num_features
+
+        metadata = self.training_strategies.get(training_strategy, with_metadata=True)
+        loss_fn, head, hooks = metadata["fn"](**kwargs)
+
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
             loss_fn=loss_fn,
+            backbone=backbone,
+            head=head,
+            hooks=hooks,
+        )
+
+        super().__init__(
+            adapter=adapter,
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
-            metrics=metrics,
             learning_rate=learning_rate,
-            preprocess=ImageClassificationPreprocess(),
         )
 
-        self.save_hyperparameters()
-        self.backbone_name = backbone
-        self.embedding_dim = embedding_dim
-        assert pooling_fn in [torch.mean, torch.max]
-        self.pooling_fn = pooling_fn
+    def on_train_start(self) -> None:
+        self.adapter.on_train_start()
 
-        self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained)
+    def on_train_epoch_end(self) -> None:
+        self.adapter.on_train_epoch_end()
 
-        if embedding_dim is None:
-            self.head = nn.Identity()
-        else:
-            self.head = nn.Sequential(
-                nn.Flatten(),
-                nn.Linear(num_features, embedding_dim),
-            )
-            rank_zero_warn("Adding linear layer on top of backbone. Remember to finetune first before using!")
+    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
 
-    def apply_pool(self, x):
-        x = self.pooling_fn(x, dim=-1)
-        if _isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
-            x = x[0]
-        x = self.pooling_fn(x, dim=-1)
-        if _isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
-            x = x[0]
-        return x
-
-    def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
-
-        # bolts ssl models return lists
-        if isinstance(x, tuple):
-            x = x[-1]
-
-        if x.dim() == 4 and not self.embedding_dim:
-            x = self.apply_pool(x)
-
-        x = self.head(x)
-        return x
-
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
-
-    def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
-
-    def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = batch[DefaultDataKeys.INPUT]
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+    @classmethod
+    def available_training_strategies(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
+        if registry is None:
+            return []
+        return registry.available_keys()

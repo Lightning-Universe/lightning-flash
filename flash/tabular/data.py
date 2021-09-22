@@ -343,7 +343,7 @@ class TabularData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given data frames.
@@ -450,7 +450,7 @@ class TabularData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.tabular.data.TabularData` object from the given CSV files.

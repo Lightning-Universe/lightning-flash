@@ -28,7 +28,7 @@ __all__ = ["instance_segmentation"]
 def from_pets(
     val_split: float = 0.1,
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     parser: Optional[Callable] = None,
     **preprocess_kwargs,
 ) -> InstanceSegmentationData:

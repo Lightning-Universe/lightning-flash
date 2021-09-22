@@ -534,7 +534,7 @@ class DataPipeline:
                     if isinstance(dl_args["collate_fn"], _Preprocessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
 
-                        if isinstance(dl_args["dataset"], IterableAutoDataset):
+                        if isinstance(dl_args["dataset"], (IterableAutoDataset, IterableDataset)):
                             del dl_args["sampler"]
 
                         del dl_args["batch_sampler"]

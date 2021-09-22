@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Extractive Question Answering
+   :card_description: Learn to answer questions pertaining to some known textual context.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/default.svg
+   :tags: NLP,Text
+
 .. _question_answering:
 
 ##################
