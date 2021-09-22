@@ -334,14 +334,15 @@ class Learn2LearnAdapter(Adapter):
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
         collate_fn: Callable,
-        shuffle: bool,
-        drop_last: bool,
-        sampler: Optional[Sampler],
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -366,13 +367,13 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=True,
+            persistent_workers=persistent_workers,
         )
 
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -380,6 +381,7 @@ class Learn2LearnAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -404,13 +406,13 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=True,
+            persistent_workers=persistent_workers,
         )
 
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -418,6 +420,7 @@ class Learn2LearnAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -442,7 +445,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=True,
+            persistent_workers=persistent_workers,
         )
 
     def process_predict_dataset(
