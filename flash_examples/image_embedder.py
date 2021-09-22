@@ -20,7 +20,7 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageEmbedder
 from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
-from flash.image.embedding.vissl.transforms import multicrop_collate_fn
+from flash.image.embedding.vissl.transforms import simclr_collate_fn
 
 # 1. Download the data and pre-process the data
 transform = IMAGE_EMBEDDER_TRANSFORMS.get("simclr_transform")()
@@ -34,7 +34,7 @@ datamodule = ImageClassificationData.from_datasets(
     train_dataset=CIFAR10(".", download=True),
     train_transform={
         "to_tensor_transform": to_tensor_transform,
-        "collate": multicrop_collate_fn,
+        "collate": simclr_collate_fn,
     },
     batch_size=16,
 )
@@ -48,6 +48,8 @@ embedder = ImageEmbedder(
 )
 
 # 3. Create the trainer and pre-train the encoder
+# use accelerator='ddp' when using GPU(s),
+# i.e. flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(embedder, datamodule=datamodule)
 
@@ -57,5 +59,11 @@ trainer.save_checkpoint("image_embedder_model.pt")
 # 5. Download the downstream prediction dataset and generate embeddings
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
-embeddings = embedder.predict(["data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg"])
+embeddings = embedder.predict(
+    [
+        "data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg",
+        "data/hymenoptera_data/predict/2039585088_c6f47c592e.jpg"
+    ]
+)
+# list of embeddings for images sent to the predict function
 print(embeddings)

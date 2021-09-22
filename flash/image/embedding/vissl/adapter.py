@@ -163,7 +163,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return model_output
 
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
+    def shared_step(self, batch: Any, train: bool = True) -> Any:
         out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
 
         # for moco and dino
@@ -171,33 +171,29 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         if 'data_momentum' in batch.keys():
             self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
 
-        # call forward hook from VISSL (momentum updates)
-        for hook in self.hooks:
-            hook.on_forward(self.vissl_task)
+        if train:
+            # call forward hook from VISSL (momentum updates)
+            for hook in self.hooks:
+                hook.on_forward(self.vissl_task)
 
         loss = self.loss_fn(out, target=None)
+
+        return loss
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        loss = self.shared_step(batch)
         self.adapter_task.log_dict({"train_loss": loss.item()})
 
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
-        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
-
-        # for moco and dino
-        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
-        if 'data_momentum' in batch.keys():
-            self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
-
-        loss = self.loss_fn(out, target=None)
+        loss = self.shared_step(batch, train=False)
         self.adapter_task.log_dict({"val_loss": loss})
 
         return loss
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
-        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
-
-        loss = self.loss_fn(out, target=None)
+        loss = self.shared_step(batch, train=False)
         self.adapter_task.log_dict({"test_loss": loss})
 
         return loss
