@@ -4,7 +4,7 @@
 Learn2Learn
 ###########
 
-`Learn2Learn <https://github.com/learnables/learn2learn>`_ is a software library for meta-learning research by `Sébastien M. R. Arnold and al.` (Aug 2020)
+`Learn2Learn <https://github.com/learnables/learn2learn>`__ is a software library for meta-learning research by `Sébastien M. R. Arnold and al.` (Aug 2020)
 
 .. raw:: html
 
@@ -77,5 +77,5 @@ Here is an example using `miniImageNet dataset <https://github.com/learnables/le
 
 You can read their paper `Learn2Learn: A Library for Meta-Learning Research <https://arxiv.org/abs/2008.12284>`_.
 
-And don't forget to cite `Learn2Learn <https://github.com/learnables/learn2learn>`_ repository in your academic publications.
+And don't forget to cite `Learn2Learn <https://github.com/learnables/learn2learn>`__ repository in your academic publications.
 Find their Biblex on their repository.
