@@ -318,8 +318,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         learning_rate: float = 5e-5,
         optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
         # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[str, Callable[..., _LRScheduler]]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[str, Callable, Tuple[str, Tuple[Any, ...]]]] = None,
+        # scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
         preprocess: Optional[Preprocess] = None,
@@ -332,8 +332,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer = optimizer
         self.scheduler = scheduler
+        if isinstance(self.scheduler, Tuple):
+            assert isinstance(self.scheduler[0], str)
         # self.optimizer_kwargs: Dict[str, Any] = optimizer_kwargs or {}
-        self.scheduler_kwargs: Dict[str, Any] = scheduler_kwargs or {}
+        # self.scheduler_kwargs: Dict[str, Any] = scheduler_kwargs or {}
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
@@ -825,24 +827,36 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return round(num_warmup_steps)
 
     def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
-        scheduler = self.scheduler
+        if isinstance(self.scheduler, Tuple):
+            scheduler_key = self.scheduler[0]
+            scheduler_args = self.scheduler[1]
+            return self.schedulers.get(scheduler_key)(optimizer, *scheduler_args)
+
+        if isinstance(self.scheduler, str):
+            self.scheduler = self.schedulers.get(self.scheduler)  # , with_metadata=True)
+
+            # If provider is `huggingface`, then maybe use
+        # else:
+        #     # Otherwise self.scheduler is a Callable
+        #     pass
+
         # if isinstance(scheduler, Callable):
         #     return scheduler(optimizer)
-        if isinstance(scheduler, str):
-            scheduler_fn = self.schedulers.get(self.scheduler)
-            num_training_steps: int = self.get_num_training_steps()
-            num_warmup_steps: int = self._compute_warmup(
-                num_training_steps=num_training_steps,
-                num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
-            )
-            return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
+        # if isinstance(scheduler, str):
+        #     scheduler_fn = self.schedulers.get(self.scheduler)
+        #     num_training_steps: int = self.get_num_training_steps()
+        #     num_warmup_steps: int = self._compute_warmup(
+        #         num_training_steps=num_training_steps,
+        #         num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
+        #     )
+        #     return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
         # # if issubclass(scheduler, _LRScheduler):
         # #     return scheduler(optimizer, **self.scheduler_kwargs)
         # raise MisconfigurationException(
         #     "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
         #     f"or a built-in scheduler in {self.available_schedulers()}"
         # )
-        return scheduler(optimizer)
+        return self.scheduler(optimizer)
 
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
