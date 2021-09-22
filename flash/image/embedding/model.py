@@ -95,9 +95,6 @@ class ImageEmbedder(AdapterTask):
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
         loss_fn, head, hooks = metadata["fn"](head=head, **training_strategy_kwargs)
 
-        print(head)
-        exit(-1)
-
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             loss_fn=loss_fn,
