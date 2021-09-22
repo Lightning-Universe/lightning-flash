@@ -29,6 +29,20 @@ if _VISSL_AVAILABLE:
     from vissl.models.heads.swav_prototypes_head import SwAVPrototypesHead
 
     from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+else:
+    DINOHook = object
+    MoCoHook = object
+    NormalizePrototypesHook = object
+    SwAVUpdateQueueScoresHook = object
+
+    BarlowTwinsLoss = object
+    DINOLoss = object
+    MoCoLoss = object
+    SwAVLoss = object
+
+    SwAVPrototypesHead = object
+
+    IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
 
 
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
