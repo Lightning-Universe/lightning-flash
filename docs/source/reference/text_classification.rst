@@ -1,6 +1,7 @@
 .. customcarditem::
    :header: Text Classification
    :card_description: Learn to classify text with Flash and build an example sentiment analyser for IMDB reviews.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/text_classification.svg
    :tags: Text,Classification,NLP
 
 .. _text_classification:

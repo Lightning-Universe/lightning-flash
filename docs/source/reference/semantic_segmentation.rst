@@ -1,6 +1,7 @@
 .. customcarditem::
    :header: Semantic Segmentation
    :card_description: Learn to segment images with Flash and build a model which segments images from the CARLA driving simulator.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/semantic_segmentation.svg
    :tags: Image,Segmentation
 
 .. _semantic_segmentation:
