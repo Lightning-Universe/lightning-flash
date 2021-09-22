@@ -49,7 +49,7 @@ class InferenceMCDropoutTask(flash.Task):
 
 class ActiveLearningLoop(Loop):
     @requires("baal")
-    def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2):
+    def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2, should_reset_weights: bool = True):
         """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
         `ActiveLearningTrainer`
 
@@ -72,6 +72,7 @@ class ActiveLearningLoop(Loop):
         super().__init__()
         self.label_epoch_frequency = label_epoch_frequency
         self.inference_iteration = inference_iteration
+        self.should_reset_weights = should_reset_weights
         self.fit_loop: Optional[FitLoop] = None
         self.progress = Progress()
         self._should_continue: bool = False
@@ -116,7 +117,7 @@ class ActiveLearningLoop(Loop):
         self.progress.increment_processed()
 
     def on_advance_end(self) -> None:
-        if self.trainer.datamodule.has_unlabelled_data:
+        if self.trainer.datamodule.has_unlabelled_data and self.should_reset_weights:
             # reload the weights to retrain from scratch with the new labelled data.
             self._lightning_module.load_state_dict(self._model_state_dict)
         self.progress.increment_completed()
