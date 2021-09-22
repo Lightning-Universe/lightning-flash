@@ -399,7 +399,7 @@ class TextClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given pandas
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given pandas
         ``DataFrame`` objects.
 
         Args:
