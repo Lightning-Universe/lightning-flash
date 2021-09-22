@@ -74,11 +74,15 @@ To view configuration options and options for running the object detector with y
 
     flash object_detection --help
 
-************
-Augmentation
-************
-Flash automatically applies some default image transformations and augmentations, but you may wish to customize these for your own use case.
-The base :class:`~flash.core.data.process.Preprocess` defines 7 hooks for different stages in the data loading pipeline. For object-detection tasks, you can leverage the transformations functions directly from albumentations or for Icevision's albumentations adapter.
+------
+
+**********************
+Custom Transformations
+**********************
+
+Flash automatically applies some default image / mask transformations and augmentations, but you may wish to customize these for your own use case.
+The base :class:`~flash.core.data.process.Preprocess` defines 7 hooks for different stages in the data loading pipeline.
+For object-detection tasks, you can leverage the transformations from `Albumentations <https://github.com/albumentations-team/albumentations>`__ with the :class:`~flash.core.integrations.icevision.transforms.IceVisionTransformAdapter`.
 .. code-block:: python
 
     import albumentations as alb
