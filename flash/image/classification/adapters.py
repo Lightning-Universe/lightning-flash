@@ -206,7 +206,7 @@ class Learn2LearnAdapter(Adapter):
 
     def _convert_dataset(
         self,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         dataset: BaseAutoDataset,
         ways: int,
         shots: int,
