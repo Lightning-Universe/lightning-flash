@@ -1,6 +1,7 @@
 .. customcarditem::
    :header: Speech Recognition
    :card_description: Learn to recognize speech Flash (speech-to-text) and train a model on the TIMIT corpus.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/speech_recognition.svg
    :tags: Audio,Speech-Recognition,NLP
 
 .. _speech_recognition:
