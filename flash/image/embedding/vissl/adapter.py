@@ -47,7 +47,7 @@ class MockVISSLTask:
         self.max_iteration = 1  # set by training setup hook
 
         # set for momentum teacher based hooks
-        self.last_batch = AttrDict({"sample": AttrDict({"input": None})})
+        self.last_batch = AttrDict({"sample": AttrDict({"input": None, "data_momentum": None})})
 
 
 class VISSLAdapter(Adapter, AdaptVISSLHooks):
@@ -163,33 +163,37 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return model_output
 
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
+    def shared_step(self, batch: Any, train: bool = True) -> Any:
         out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
-        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
 
-        # call forward hook from VISSL (momentum updates)
-        for hook in self.hooks:
-            hook.on_forward(self.vissl_task)
+        # for moco and dino
+        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
+        if "data_momentum" in batch.keys():
+            self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
+
+        if train:
+            # call forward hook from VISSL (momentum updates)
+            for hook in self.hooks:
+                hook.on_forward(self.vissl_task)
 
         loss = self.loss_fn(out, target=None)
+
+        return loss
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        loss = self.shared_step(batch)
         self.adapter_task.log_dict({"train_loss": loss.item()})
 
         return loss
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
-        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
-        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
-
-        loss = self.loss_fn(out, target=None)
+        loss = self.shared_step(batch, train=False)
         self.adapter_task.log_dict({"val_loss": loss})
 
         return loss
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
-        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
-
-        loss = self.loss_fn(out, target=None)
+        loss = self.shared_step(batch, train=False)
         self.adapter_task.log_dict({"test_loss": loss})
 
         return loss

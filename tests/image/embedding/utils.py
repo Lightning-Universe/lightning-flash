@@ -14,14 +14,14 @@ if _VISSL_AVAILABLE:
 
 def ssl_datamodule(
     batch_size=2,
-    total_crops=4,
+    total_num_crops=4,
     num_crops=[2, 2],
     size_crops=[160, 96],
     crop_scales=[[0.4, 1], [0.05, 0.4]],
     collate_fn=multicrop_collate_fn,
 ):
     multi_crop_transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
-        total_crops, num_crops, size_crops, crop_scales
+        total_num_crops, num_crops, size_crops, crop_scales
     )
 
     to_tensor_transform = ApplyToKeys(

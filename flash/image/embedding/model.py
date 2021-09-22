@@ -11,12 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
 from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.states import CollateFn, PostTensorTransform, PreTensorTransform, ToTensorTransform
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
@@ -26,12 +30,14 @@ if _VISSL_AVAILABLE:
 
     from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
     from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+    from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
 
     # patch this to avoid classy vision/vissl based distributed training
     classy_vision.generic.distributed_util.get_world_size = lambda: 1
 else:
     IMAGE_EMBEDDER_BACKBONES = FlashRegistry("backbones")
     IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
+    IMAGE_EMBEDDER_TRANSFORMS = FlashRegistry("embedder_transforms")
 
 
 class ImageEmbedder(AdapterTask):
@@ -57,13 +63,15 @@ class ImageEmbedder(AdapterTask):
 
     training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
     backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
+    transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
     required_extras: str = "image"
 
     def __init__(
         self,
         training_strategy: str,
-        embedding_dim: int = 128,
+        head: str,
+        pretraining_transform: str,
         backbone: str = "resnet",
         pretrained: bool = True,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
@@ -71,17 +79,22 @@ class ImageEmbedder(AdapterTask):
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         learning_rate: float = 1e-3,
-        **kwargs: Any,
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
+        training_strategy_kwargs: Optional[Dict[str, Any]] = None,
+        pretraining_transform_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self.save_hyperparameters()
 
-        backbone, num_features = self.backbones.get(backbone)(**kwargs, pretrained=pretrained)
+        if backbone_kwargs is None:
+            backbone_kwargs = {}
 
-        # TODO: add linear layer to backbone to get num_feature -> embedding_dim before applying heads
-        # assert embedding_dim == num_features
+        if training_strategy_kwargs is None:
+            training_strategy_kwargs = {}
+
+        backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
-        loss_fn, head, hooks = metadata["fn"](**kwargs)
+        loss_fn, head, hooks = metadata["fn"](head=head, **training_strategy_kwargs)
 
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
@@ -98,6 +111,22 @@ class ImageEmbedder(AdapterTask):
             scheduler=scheduler,
             scheduler_kwargs=scheduler_kwargs,
             learning_rate=learning_rate,
+        )
+
+        transform, collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
+        to_tensor_transform = ApplyToKeys(
+            DefaultDataKeys.INPUT,
+            transform,
+        )
+
+        self.adapter.set_state(CollateFn(collate_fn))
+        self.adapter.set_state(ToTensorTransform(to_tensor_transform))
+        self.adapter.set_state(PostTensorTransform(None))
+        self.adapter.set_state(PreTensorTransform(None))
+
+        warnings.warn(
+            "Warning: VISSL ImageEmbedder overrides any user provided transforms"
+            " with pre-defined transforms for the training strategy."
         )
 
     def on_train_start(self) -> None:
