@@ -46,6 +46,7 @@ class TrainingSetupHook(ClassyHook):
         lightning_module = task.vissl_adapter.adapter_task
         task.device = lightning_module.device
 
+        # get around vissl distributed training by setting MockTask flags
         num_nodes = lightning_module.trainer.num_nodes
         accelerators_ids = lightning_module.trainer.accelerator_connector.parallel_device_ids
         accelerator_per_node = len(accelerators_ids) if accelerators_ids is not None else 1
@@ -67,6 +68,7 @@ class SimCLRTrainingSetupHook(TrainingSetupHook):
 
         lightning_module = task.vissl_adapter.adapter_task
 
+        # specific to simclr in VISSL
         task.loss.info_criterion.buffer_params.effective_batch_size = (
             task.world_size * 2 * lightning_module.trainer.datamodule.batch_size
         )
