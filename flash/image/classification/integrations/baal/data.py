@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from flash import DataModule
 from flash.core.data.auto_dataset import BaseAutoDataset
@@ -41,6 +41,10 @@ def dataset_to_non_labelled_tensor(dataset: BaseAutoDataset) -> torch.tensor:
     return torch.zeros(len(dataset))
 
 
+def filter_unlabelled_data(dataset: BaseAutoDataset) -> Dataset:
+    return dataset
+
+
 class ActiveLearningDataModule(LightningDataModule):
     @requires("baal")
     def __init__(
@@ -48,6 +52,7 @@ class ActiveLearningDataModule(LightningDataModule):
         labelled: Optional[DataModule] = None,
         heuristic: "AbstractHeuristic" = BALD(reduction=np.mean),
         map_dataset_to_labelled: Optional[Callable] = dataset_to_non_labelled_tensor,
+        filter_unlabelled_data: Optional[Callable] = filter_unlabelled_data,
     ):
         """The `ActiveLearningDataModule` handles data manipulation for ActiveLearning.
 
@@ -56,10 +61,12 @@ class ActiveLearningDataModule(LightningDataModule):
                 The labelled data would be masked.
             heuristic: Sorting algorithm used to rank samples on how likely they can help with model performance.
             map_dataset_to_labelled: Function used to emulate masking on labelled dataset.
+            filter_unlabelled_data: Function used to filter the unlabelled data while computing uncertainties.
         """
         self.labelled = labelled
         self.heuristic = heuristic
         self.map_dataset_to_labelled = map_dataset_to_labelled
+        self.filter_unlabelled_data = filter_unlabelled_data
         self._dataset: Optional[ActiveLearningDataset] = None
 
         if not self.labelled:
@@ -79,9 +86,9 @@ class ActiveLearningDataModule(LightningDataModule):
             self.labelled._train_ds, labelled=self.map_dataset_to_labelled(self.labelled._train_ds)
         )
 
-        # hack to enable training.
-        if not len(self._dataset):
-            self.label(indices=[0])
+    @property
+    def has_labelled_data(self) -> bool:
+        return self._dataset.n_labelled > 0
 
     @property
     def has_unlabelled_data(self) -> bool:
@@ -100,7 +107,7 @@ class ActiveLearningDataModule(LightningDataModule):
         return self.labelled.train_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
-        self.labelled._train_ds = self._dataset.pool
+        self.labelled._train_ds = self.filter_unlabelled_data(self._dataset.pool)
         return self.labelled.train_dataloader()
 
     def label(self, predictions: Any = None, indices=None):

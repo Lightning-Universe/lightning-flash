@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from copy import deepcopy
-from functools import partial
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 import torch
 from pytorch_lightning.loops import Loop
@@ -21,10 +20,31 @@ from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import RunningStage, TrainerFn, TrainerStatus
-from torch.nn.modules.batchnorm import _BatchNorm
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.utilities.imports import requires
+import flash
+from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
+
+if _BAAL_AVAILABLE:
+    from baal.bayesian.dropout import _patch_dropout_layers
+
+
+class InferenceMCDropoutTask(flash.Task):
+    def __init__(self, module: flash.Task, inference_iteration: int):
+        super().__init__()
+        self.parent_module = module
+        self.trainer = module.trainer
+        changed = _patch_dropout_layers(self.parent_module)
+        if not changed:
+            raise MisconfigurationException("The model should contain at least 1 dropout layer.")
+        self.inference_iteration = inference_iteration
+
+    def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
+        out = []
+        for _ in range(self.inference_iteration):
+            out.append(self.parent_module.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx))
+        return out
 
 
 class ActiveLearningLoop(Loop):
@@ -56,6 +76,7 @@ class ActiveLearningLoop(Loop):
         self.progress = Progress()
         self._should_continue: bool = False
         self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
+        self._lightning_module: Optional[flash.Task] = None
 
     @property
     def done(self) -> bool:
@@ -67,21 +88,26 @@ class ActiveLearningLoop(Loop):
         self.fit_loop.max_epochs = self.label_epoch_frequency
 
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
-        self.trainer.predict_loop._return_predictions = True
-        self._model_state_dict = deepcopy(self.trainer.lightning_module.state_dict())
         assert isinstance(self.trainer.datamodule, ActiveLearningDataModule)
+        self.trainer.predict_loop._return_predictions = True
+        self._lightning_module = self.trainer.lightning_module
+        self._model_state_dict = deepcopy(self._lightning_module.state_dict())
+        self.inference_model = InferenceMCDropoutTask(self._lightning_module, self.inference_iteration)
 
     def reset(self) -> None:
         pass
 
     def on_advance_start(self, *args: Any, **kwargs: Any) -> None:
-        self._reset_dataloader_for_stage(RunningStage.TRAINING)
-        self._reset_dataloader_for_stage(RunningStage.PREDICTING)
+        if self.trainer.datamodule.has_labelled_data:
+            self._reset_dataloader_for_stage(RunningStage.TRAINING)
+        if self.trainer.datamodule.has_unlabelled_data:
+            self._reset_dataloader_for_stage(RunningStage.PREDICTING)
         self.progress.increment_ready()
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
         self.progress.increment_started()
-        self.fit_loop.run()
+        if self.trainer.datamodule.has_labelled_data:
+            self.fit_loop.run()
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_predicting()
             predictions = self.trainer.predict_loop.run()
@@ -92,12 +118,11 @@ class ActiveLearningLoop(Loop):
     def on_advance_end(self) -> None:
         if self.trainer.datamodule.has_unlabelled_data:
             # reload the weights to retrain from scratch with the new labelled data.
-            self.trainer.lightning_module.load_state_dict(self._model_state_dict)
+            self._lightning_module.load_state_dict(self._model_state_dict)
         self.progress.increment_completed()
         return super().on_advance_end()
 
     def on_run_end(self):
-        self.trainer.lightning_module.predict_step = self.trainer.lightning_module._predict_step
         return super().on_run_end()
 
     def on_save_checkpoint(self) -> Dict:
@@ -105,8 +130,6 @@ class ActiveLearningLoop(Loop):
 
     def on_load_checkpoint(self, state_dict) -> None:
         self.trainer.datamodule.load_state_dict(state_dict.pop("datamodule_state_dict"))
-
-    ############## UTILS ##############
 
     def __getattr__(self, key):
         if key not in self.__dict__:
@@ -118,13 +141,14 @@ class ActiveLearningLoop(Loop):
         self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.training = True
         self.trainer.lightning_module.on_train_dataloader()
+        self.trainer.accelerator.connect(self._lightning_module)
 
     def _reset_predicting(self):
         self.trainer.state.fn = TrainerFn.PREDICTING
         self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.predicting = True
         self.trainer.lightning_module.on_predict_dataloader()
-        self._enable_mc_dropout()
+        self.trainer.accelerator.connect(self.inference_model)
 
     def _reset_dataloader_for_stage(self, running_state: RunningStage):
         dataloader_name = f"{running_state.value}_dataloader"
@@ -135,28 +159,3 @@ class ActiveLearningLoop(Loop):
         )
         setattr(self.trainer, dataloader_name, None)
         getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
-
-    def _enable_mc_dropout(self):
-        # prevent the model to put into val model - hack
-        self.trainer.lightning_module.on_predict_model_eval = self._do_nothing
-        for _, module in self.trainer.lightning_module.named_modules():
-            if isinstance(module, _BatchNorm):
-                module.eval()
-        # save the predict_step and replace it within a mc_inference function
-        if getattr(self.trainer.lightning_module, "_predict_step", None) is None:
-            self.trainer.lightning_module._predict_step = self.trainer.lightning_module.predict_step
-        self.trainer.lightning_module.predict_step = partial(
-            self._mc_inference,
-            predict_step_fn=self.trainer.lightning_module._predict_step,
-            inference_iteration=self.inference_iteration,
-        )
-
-    def _do_nothing(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def _mc_inference(*args, predict_step_fn: Callable = None, inference_iteration: int = None, **kwargs):
-        out = []
-        for _ in range(inference_iteration):
-            out.append(predict_step_fn(*args, **kwargs))
-        return out

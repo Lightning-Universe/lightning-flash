@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from torch import nn
+
+import flash
 from flash.core.classification import Probabilities
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
-from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningTrainer
+from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
@@ -25,11 +28,22 @@ datamodule = ActiveLearningDataModule(
 )
 
 # 2. Build the task
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, serializer=Probabilities())
+head = nn.Sequential(
+    nn.Dropout(p=0.1),
+    nn.Linear(512, datamodule.num_classes),
+)
+model = ImageClassifier(backbone="resnet18", head=head, num_classes=datamodule.num_classes, serializer=Probabilities())
 
-# 3. Create the trainer and finetune the model
-trainer = ActiveLearningTrainer(max_epochs=3)
 
+# 3.1 Create the trainer
+trainer = flash.Trainer(max_epochs=3)
+
+# 3.2 Create the active learning loop and connect it to the trainer
+active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1)
+active_learning_loop.connect(trainer.fit_loop)
+trainer.fit_loop = active_learning_loop
+
+# 3.3 Finetune
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
