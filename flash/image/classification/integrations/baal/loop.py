@@ -21,34 +21,12 @@ from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import RunningStage, TrainerFn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
+from flash.core.utilities.imports import requires
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
-
-if _BAAL_AVAILABLE:
-    from baal.bayesian.dropout import _patch_dropout_layers
-
-
-class InferenceMCDropoutTask(flash.Task):
-    def __init__(self, module: flash.Task, inference_iteration: int, heuristic):
-        super().__init__()
-        self.parent_module = module
-        self.trainer = module.trainer
-        changed = _patch_dropout_layers(self.parent_module)
-        if not changed:
-            raise MisconfigurationException("The model should contain at least 1 dropout layer.")
-        self.inference_iteration = inference_iteration
-        self.heuristic = heuristic
-
-    def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
-        out = []
-        for _ in range(self.inference_iteration):
-            out.append(self.parent_module.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx))
-        # BaaL expects a shape [num_samples, num_classes, num_iterations]
-        return [self.heuristic.get_uncertainties(torch.tensor(o).unsqueeze(0)) for o in out]
+from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
 
 
 class ActiveLearningLoop(Loop):
