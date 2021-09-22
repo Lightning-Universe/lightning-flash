@@ -17,10 +17,10 @@ import torch
 from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
-from flash.core.registry import FlashRegistry
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.states import CollateFn, ToTensorTransform
+from flash.core.data.transforms import ApplyToKeys
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:

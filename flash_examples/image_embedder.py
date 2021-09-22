@@ -29,15 +29,15 @@ embedder = ImageEmbedder(
     backbone="resnet",
     training_strategy="barlow_twins",
     head="simclr_head",
-    pretraining_transform='barlow_twins_transform',
+    pretraining_transform="barlow_twins_transform",
     training_strategy_kwargs={"latent_embedding_dim": 128},
-    pretraining_transform_kwargs={"size_crops": [196]}
+    pretraining_transform_kwargs={"size_crops": [196]},
 )
 
 # 3. Create the trainer and pre-train the encoder
 # use accelerator='ddp' when using GPU(s),
 # i.e. flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
-trainer = flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
+trainer = flash.Trainer(max_epochs=3, gpus=1, accelerator="ddp")
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
