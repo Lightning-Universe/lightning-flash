@@ -90,10 +90,13 @@ class ImageEmbedder(AdapterTask):
         if training_strategy_kwargs is None:
             training_strategy_kwargs = {}
 
-        backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+        backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
         loss_fn, head, hooks = metadata["fn"](head=head, **training_strategy_kwargs)
+
+        print(head)
+        exit(-1)
 
         adapter = metadata["metadata"]["adapter"].from_task(
             self,

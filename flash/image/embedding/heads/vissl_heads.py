@@ -130,6 +130,10 @@ def barlow_twins_head(**kwargs) -> nn.Module:
     return simclr_head(dims=[2048, 8192, 8192, 8192], **kwargs)
 
 
+def moco_head(**kwargs) -> nn.Module:
+    return simclr_head(**kwargs)
+
+
 def dino_head(**kwargs) -> nn.Module:
     return swav_head(
         dims=[384, 2048, 2048, 256],
@@ -143,5 +147,5 @@ def dino_head(**kwargs) -> nn.Module:
 
 
 def register_vissl_heads(register: FlashRegistry):
-    for ssl_head in (swav_head, simclr_head, dino_head, barlow_twins_head):
+    for ssl_head in (swav_head, simclr_head, moco_head, dino_head, barlow_twins_head):
         register(ssl_head)
