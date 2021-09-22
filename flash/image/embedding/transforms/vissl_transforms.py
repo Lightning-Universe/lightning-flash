@@ -12,17 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Optional, Sequence, Callable
+from typing import Callable, Optional, Sequence
 
 import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
-from flash.image.embedding.vissl.transforms import (
-    multicrop_collate_fn,
-    simclr_collate_fn,
-    moco_collate_fn,
-)
+from flash.image.embedding.vissl.transforms import moco_collate_fn, multicrop_collate_fn, simclr_collate_fn
 
 if _VISSL_AVAILABLE:
     from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
@@ -78,12 +74,7 @@ def swav_transform(
 
 barlow_twins_transform = partial(simclr_transform, collate_fn=simclr_collate_fn)
 moco_transform = partial(simclr_transform, collate_fn=moco_collate_fn)
-dino_transform = partial(
-    swav_transform,
-    total_num_crops=10,
-    num_crops=[2, 8],
-    collate_fn=multicrop_collate_fn
-)
+dino_transform = partial(swav_transform, total_num_crops=10, num_crops=[2, 8], collate_fn=multicrop_collate_fn)
 
 
 transforms = [
@@ -96,11 +87,13 @@ transforms = [
 
 
 def register_vissl_transforms(register: FlashRegistry):
-    for idx, transform in enumerate((
-        simclr_transform,
-        swav_transform,
-        barlow_twins_transform,
-        moco_transform,
-        dino_transform,
-    )):
+    for idx, transform in enumerate(
+        (
+            simclr_transform,
+            swav_transform,
+            barlow_twins_transform,
+            moco_transform,
+            dino_transform,
+        )
+    ):
         register(transform, name=transforms[idx])
