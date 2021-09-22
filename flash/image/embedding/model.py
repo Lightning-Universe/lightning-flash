@@ -14,13 +14,19 @@
 from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
+import warnings
 from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.states import CollateFn, ToTensorTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
+from flash.core.data.states import (
+    CollateFn,
+    ToTensorTransform,
+    PostTensorTransform,
+    PreTensorTransform,
+)
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
@@ -120,6 +126,11 @@ class ImageEmbedder(AdapterTask):
 
         self.adapter.set_state(CollateFn(collate_fn))
         self.adapter.set_state(ToTensorTransform(to_tensor_transform))
+        self.adapter.set_state(PostTensorTransform(None))
+        self.adapter.set_state(PreTensorTransform(None))
+
+        warnings.warn("Warning: VISSL ImageEmbedder overrides any user provided transforms"
+                      " with pre-defined transforms for the training strategy.")
 
     def on_train_start(self) -> None:
         self.adapter.on_train_start()

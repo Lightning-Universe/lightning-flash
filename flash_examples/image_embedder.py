@@ -13,6 +13,7 @@
 # limitations under the License.
 from torchvision.datasets import CIFAR10
 
+import torch
 import flash
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageEmbedder
@@ -36,7 +37,7 @@ embedder = ImageEmbedder(
 # 3. Create the trainer and pre-train the encoder
 # use accelerator='ddp' when using GPU(s),
 # i.e. flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
-trainer = flash.Trainer(max_epochs=3, gpus=1, accelerator="ddp")
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
