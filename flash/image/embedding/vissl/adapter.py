@@ -47,7 +47,7 @@ class MockVISSLTask:
         self.max_iteration = 1  # set by training setup hook
 
         # set for momentum teacher based hooks
-        self.last_batch = AttrDict({"sample": AttrDict({"input": None})})
+        self.last_batch = AttrDict({"sample": AttrDict({"input": None, "data_momentum": None})})
 
 
 class VISSLAdapter(Adapter, AdaptVISSLHooks):
@@ -165,7 +165,11 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
+
+        # for moco and dino
         self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
+        if 'data_momentum' in batch.keys():
+            self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
 
         # call forward hook from VISSL (momentum updates)
         for hook in self.hooks:
@@ -178,7 +182,11 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
+
+        # for moco and dino
         self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
+        if 'data_momentum' in batch.keys():
+            self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
 
         loss = self.loss_fn(out, target=None)
         self.adapter_task.log_dict({"val_loss": loss})
