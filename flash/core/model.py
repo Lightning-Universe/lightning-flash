@@ -144,7 +144,6 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
-        persistent_workers: bool = True,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -155,7 +154,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=persistent_workers and num_workers > 0,
+            persistent_workers=num_workers > 0,
         )
 
     def process_val_dataset(
@@ -169,7 +168,6 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
-        persistent_workers: bool = True,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -180,7 +178,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=persistent_workers and num_workers > 0,
+            persistent_workers=num_workers > 0,
         )
 
     def process_test_dataset(
@@ -194,7 +192,6 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
-        persistent_workers: bool = True,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
@@ -205,7 +202,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=persistent_workers and num_workers > 0,
+            persistent_workers=num_workers > 0,
         )
 
     def process_predict_dataset(
