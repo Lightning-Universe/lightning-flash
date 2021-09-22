@@ -1,6 +1,7 @@
 .. customcarditem::
    :header: Instance Segmentation
    :card_description: Learn to segment objects in images with Flash and build a model for segmenting images of pets.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/instance_segmentation.svg
    :tags: Image,Segmentation,Detection
 
 .. _instance_segmentation:
