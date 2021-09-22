@@ -118,7 +118,6 @@ class AdapterTask(Task):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
-        persistent_workers: bool = True,
     ) -> DataLoader:
         return self.adapter.process_train_dataset(
             dataset,
@@ -130,7 +129,6 @@ class AdapterTask(Task):
             shuffle,
             drop_last,
             sampler,
-            persistent_workers,
         )
 
     def process_val_dataset(
@@ -144,7 +142,6 @@ class AdapterTask(Task):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
-        persistent_workers: bool = True,
     ) -> DataLoader:
         return self.adapter.process_val_dataset(
             dataset,
@@ -156,7 +153,6 @@ class AdapterTask(Task):
             shuffle,
             drop_last,
             sampler,
-            persistent_workers,
         )
 
     def process_test_dataset(
@@ -170,7 +166,6 @@ class AdapterTask(Task):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
-        persistent_workers: bool = True,
     ) -> DataLoader:
         return self.adapter.process_test_dataset(
             dataset,
@@ -182,7 +177,6 @@ class AdapterTask(Task):
             shuffle,
             drop_last,
             sampler,
-            persistent_workers,
         )
 
     def process_predict_dataset(
