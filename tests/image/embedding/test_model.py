@@ -18,7 +18,7 @@ import torch
 
 import flash
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
-from flash.image import ImageEmbedder, ImageClassificationData
+from flash.image import ImageClassificationData, ImageEmbedder
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets import FakeData
