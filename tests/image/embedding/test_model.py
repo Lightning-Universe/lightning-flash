@@ -18,8 +18,12 @@ import torch
 
 import flash
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
-from flash.image import ImageEmbedder
-from tests.image.embedding.utils import ssl_datamodule
+from flash.image import ImageEmbedder, ImageClassificationData
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.datasets import FakeData
+else:
+    FakeData = object
 
 # TODO: Figure out why VISSL can't be jitted
 # @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
@@ -49,7 +53,10 @@ def test_load_from_checkpoint_dependency_error():
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize("backbone, training_strategy", [("resnet", "barlow_twins")])
 def test_vissl_training(tmpdir, backbone, training_strategy):
-    datamodule = ssl_datamodule()
+    datamodule = ImageClassificationData.from_datasets(
+        train_dataset=FakeData(),
+        batch_size=4,
+    )
 
     embedder = ImageEmbedder(
         backbone=backbone,
@@ -58,7 +65,7 @@ def test_vissl_training(tmpdir, backbone, training_strategy):
         pretraining_transform="barlow_twins_transform",
         training_strategy_kwargs={"latent_embedding_dim": 128},
         pretraining_transform_kwargs={
-            "total_crops": 2,
+            "total_num_crops": 2,
             "num_crops": [2],
             "size_crops": [96],
             "crop_scales": [[0.4, 1]],
