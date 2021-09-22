@@ -45,7 +45,7 @@ def filter_unlabelled_data(dataset: BaseAutoDataset) -> Dataset:
     return dataset
 
 
-def train_val_split(dataset: ActiveLearningDataset, val_size=0.1):
+def train_val_split(dataset: Dataset, val_size=0.1):
     L = len(dataset)
     train_size = int(L * (1 - val_size))
     val_size = L - train_size
