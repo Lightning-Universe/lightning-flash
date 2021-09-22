@@ -85,6 +85,6 @@ def moco_collate_fn(samples):
         inputs.append(torch.stack(batch_ele[DefaultDataKeys.INPUT]))
 
     result[DefaultDataKeys.INPUT] = torch.stack(inputs).squeeze()[:, 0, :, :, :].squeeze()
-    result['data_momentum'] = torch.stack(inputs).squeeze()[:, 1, :, :, :].squeeze()
+    result["data_momentum"] = torch.stack(inputs).squeeze()[:, 1, :, :, :].squeeze()
 
     return result
