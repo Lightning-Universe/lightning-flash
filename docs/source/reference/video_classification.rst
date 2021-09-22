@@ -1,6 +1,7 @@
 .. customcarditem::
    :header: Video Classification
    :card_description: Learn to classify videos with Flash and build an example action classifier.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/video_classification.svg
    :tags: Video,Classification
 
 .. _video_classification:

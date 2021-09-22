@@ -111,6 +111,8 @@ def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     This function removes that dimension and then
     applies ``torch.utils.data._utils.collate.default_collate``.
     """
+    if len(samples) == 1 and isinstance(samples[0], list):
+        samples = samples[0]
     for sample in samples:
         for key in sample.keys():
             if torch.is_tensor(sample[key]) and sample[key].ndim == 4:
