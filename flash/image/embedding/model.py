@@ -63,7 +63,7 @@ class ImageEmbedder(AdapterTask):
     def __init__(
         self,
         training_strategy: str,
-        embedding_dim: int = 128,
+        head: str,
         backbone: str = "resnet",
         pretrained: bool = True,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
@@ -71,17 +71,21 @@ class ImageEmbedder(AdapterTask):
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         learning_rate: float = 1e-3,
-        **kwargs: Any,
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
+        training_strategy_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self.save_hyperparameters()
 
-        backbone, num_features = self.backbones.get(backbone)(**kwargs, pretrained=pretrained)
+        if backbone_kwargs is None:
+            backbone_kwargs = {}
 
-        # TODO: add linear layer to backbone to get num_feature -> embedding_dim before applying heads
-        # assert embedding_dim == num_features
+        if training_strategy_kwargs is None:
+            training_strategy_kwargs = {}
+
+        backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
-        loss_fn, head, hooks = metadata["fn"](**kwargs)
+        loss_fn, head, hooks = metadata["fn"](head=head, **training_strategy_kwargs)
 
         adapter = metadata["metadata"]["adapter"].from_task(
             self,

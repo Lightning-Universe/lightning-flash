@@ -44,7 +44,7 @@ embedder = ImageEmbedder(
     backbone="resnet",
     training_strategy="barlow_twins",
     head="simclr_head",
-    latent_embedding_dim=128,
+    training_strategy_kwargs={"latent_embedding_dim": 128},
 )
 
 # 3. Create the trainer and pre-train the encoder
