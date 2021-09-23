@@ -92,6 +92,7 @@ Lightning Flash
    integrations/fiftyone
    integrations/learn2learn
    integrations/icevision
+   integrations/vissl
 
 .. toctree::
    :maxdepth: 1
