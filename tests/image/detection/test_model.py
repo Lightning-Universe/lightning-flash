@@ -93,8 +93,8 @@ def test_init():
 def test_training(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
-    dl = model.process_train_dataset(ds, 2, 0, False, None)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    dl = model.process_train_dataset(ds, trainer, 2, 0, False, None)
     trainer.fit(model, dl)
 
 

@@ -90,6 +90,7 @@ Lightning Flash
 
    integrations/providers
    integrations/fiftyone
+   integrations/learn2learn
    integrations/icevision
 
 .. toctree::

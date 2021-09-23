@@ -23,6 +23,7 @@ from tests.examples.utils import run_test
 root = Path(__file__).parent.parent.parent
 
 
+@pytest.mark.skipif(True, reason="Need to update the weights")
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
     "folder, file",

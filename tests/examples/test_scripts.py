@@ -18,7 +18,7 @@ from unittest import mock
 import pytest
 
 import flash
-from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
     _AUDIO_TESTING,
@@ -50,6 +50,12 @@ from tests.helpers.utils import (
         pytest.param(
             "image_classification_multi_label.py",
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
+        ),
+        pytest.param(
+            "image_classification_meta_learning.py.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_TESTING and _LEARN2LEARN_AVAILABLE), reason="image/learn2learn libraries aren't installed"
+            ),
         ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(

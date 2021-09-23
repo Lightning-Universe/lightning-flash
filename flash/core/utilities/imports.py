@@ -17,7 +17,6 @@ import operator
 import types
 from importlib.util import find_spec
 from typing import List, Union
-from warnings import warn
 
 from pkg_resources import DistributionNotFound
 
@@ -99,6 +98,7 @@ _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
 _ICEVISION_AVAILABLE = _module_available("icevision")
 _ICEDATA_AVAILABLE = _module_available("icedata")
+_LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("learn2learn", operator.ge, "0.1.6")
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
 _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
@@ -107,19 +107,8 @@ if _PIL_AVAILABLE:
     from PIL import Image  # noqa: F401
 else:
 
-    class MetaImage(type):
-        def __init__(cls, name, bases, dct):
-            super().__init__(name, bases, dct)
-
-            cls._Image = None
-
-        @property
-        def Image(cls):
-            warn("Mock object called due to missing PIL library. Please use \"pip install 'lightning-flash[image]'\".")
-            return cls._Image
-
-    class Image(metaclass=MetaImage):
-        pass
+    class Image:
+        Image = object
 
 
 if Version:

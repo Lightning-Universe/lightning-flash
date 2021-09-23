@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from torch.utils.data import DataLoader, Sampler
 
+import flash
 from flash.core.adapter import Adapter
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
@@ -91,6 +92,7 @@ class IceVisionAdapter(Adapter):
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -114,6 +116,7 @@ class IceVisionAdapter(Adapter):
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -137,6 +140,7 @@ class IceVisionAdapter(Adapter):
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,

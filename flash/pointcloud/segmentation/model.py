@@ -192,6 +192,7 @@ class PointCloudSegmentation(ClassificationTask):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        **kwargs
     ) -> DataLoader:
 
         if not _POINTCLOUD_AVAILABLE:
