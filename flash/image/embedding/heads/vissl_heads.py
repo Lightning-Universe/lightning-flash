@@ -29,6 +29,19 @@ else:
 
 
 class SimCLRHead(nn.Module):
+    """VISSL adpots a complicated config input to create an MLP.
+
+    This class simplifies the standard SimCLR projection head.
+    Can be configured to be used with barlow twins and moco as well.
+
+    Returns MLP according to dimensions provided as a list.
+    linear-layer -> batch-norm (if flag) -> Relu -> ...
+
+    Args:
+        model_config: Model config AttrDict from VISSL
+        dims: list of dimensions for creating a projection head
+        use_bn: use batch-norm after each linear layer or not
+    """
     def __init__(
         self,
         model_config: AttrDict,

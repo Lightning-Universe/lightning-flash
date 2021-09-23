@@ -45,20 +45,20 @@ class ImageEmbedder(AdapterTask):
     more details, see :ref:`image_embedder`.
 
     Args:
-        embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
-        backbone: A model to use to extract image features, defaults to ``"swav-imagenet"``.
-        pretrained: Use a pretrained backbone, defaults to ``True``.
-        loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
+        training_strategy: Training strategy from VISSL, select between 'simclr', 'swav', 'dino', 'moco', or 'barlow_twins'.
+        head: projection head used for task, select between 'simclr_head', 'swav_head', 'dino_head', 'moco_head', or 'barlow_twins_head'.
+        pretraining_transform: transform applied to input image for pre-training SSL model.
+            Select between 'simclr_transform', 'swav_transform', 'dino_transform', 'moco_transform', or 'barlow_twins_transform'.
+        backbone: VISSL backbone, defaults to ``resnet``.
+        pretrained: Use a pretrained backbone, defaults to ``False``.
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
         optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
         scheduler: The scheduler or scheduler class to use.
         scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
-        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
-            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
-            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
-            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
+        backbone_kwargs: arguments to be passed to VISSL backbones, i.e. ``vision_transformer`` and ``resnet``.
+        training_strategy_kwargs: arguments passed to VISSL loss function, projection head and training hooks.
+        pretraining_transform_kwargs: arguments passed to VISSL transforms.
     """
 
     training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
@@ -73,7 +73,7 @@ class ImageEmbedder(AdapterTask):
         head: str,
         pretraining_transform: str,
         backbone: str = "resnet",
-        pretrained: bool = True,
+        pretrained: bool = False,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
