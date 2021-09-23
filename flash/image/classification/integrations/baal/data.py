@@ -33,8 +33,7 @@ else:
         pass
 
     class BALD(AbstractHeuristic):
-        def __init__(self, reduction: Optional[Callable]):
-            super().__init__()
+        pass
 
 
 def dataset_to_non_labelled_tensor(dataset: BaseAutoDataset) -> torch.tensor:
