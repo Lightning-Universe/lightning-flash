@@ -17,11 +17,11 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
 if _GRAPH_AVAILABLE:
-    from torch_geometric.nn.models import GCN, GraphSAGE, GAT, GIN
+    import torch_geometric.nn.models as models
 
 GRAPH_BACKBONES = FlashRegistry("backbones")
 
-MODELS = [GCN, GraphSAGE, GAT, GIN]
+MODELS = [models.GCN, models.GAT, models.GIN, models.GraphSAGE]
 
 
 def _load_graph_backbone(
