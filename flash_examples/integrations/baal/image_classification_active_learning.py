@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from torch import nn
+import torch
 
 import flash
 from flash.core.classification import Probabilities
@@ -29,9 +29,9 @@ datamodule = ActiveLearningDataModule(
 )
 
 # 2. Build the task
-head = nn.Sequential(
-    nn.Dropout(p=0.1),
-    nn.Linear(512, datamodule.num_classes),
+head = torch.nn.Sequential(
+    torch.nn.Dropout(p=0.1),
+    torch.nn.Linear(512, datamodule.num_classes),
 )
 model = ImageClassifier(backbone="resnet18", head=head, num_classes=datamodule.num_classes, serializer=Probabilities())
 
