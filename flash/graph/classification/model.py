@@ -36,7 +36,6 @@ class GraphClassifier(ClassificationTask):
         backbone: Name of the backbone to use, defaults to ``"GCN"``.
         backbone_kwargs: Dictionary dependent on the backbone, containing for example in_channels, out_channels,
             hidden_channels or depth (number of layers).
-        pretrained (bool): If True, loads a pretrained model for re-use.
         head: The head to use.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
@@ -59,7 +58,6 @@ class GraphClassifier(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
         backbone_kwargs: Optional[Dict] = {},
-        pretrained: Optional[bool] = False,  # todo: implement True here
         head: Optional[Union[FunctionType, nn.Module]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
@@ -88,7 +86,7 @@ class GraphClassifier(ClassificationTask):
             self.backbone, num_out_features = backbone
         else:
             self.backbone = self.backbones.get(backbone)(
-                in_channels=num_features, pretrained=pretrained, **backbone_kwargs
+                in_channels=num_features, **backbone_kwargs
             )
             num_out_features = backbone.hidden_channels
 

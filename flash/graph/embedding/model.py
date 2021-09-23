@@ -34,7 +34,6 @@ class GraphEmbedder(Task):
         embedding_dim (int): Dimension of the embedded vector. ``None`` uses the default from the backbone.
         backbone: A model to use to extract image features, defaults to ``"GCN"``.
         backbone_kwargs (dict): Keyword arguments to pass to the backbone constructor.
-        pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
@@ -55,7 +54,6 @@ class GraphEmbedder(Task):
         embedding_dimension: Optional[int] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
         backbone_kwargs: Optional[Dict] = {},
-        pretrained: Optional[bool] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
@@ -77,7 +75,7 @@ class GraphEmbedder(Task):
         assert pooling_fn in [torch.mean, torch.max]
         self.pooling_fn = pooling_fn
 
-        self.backbone = self.backbones.get(backbone)(in_channels=num_features, pretrained=pretrained, **backbone_kwargs)
+        self.backbone = self.backbones.get(backbone)(in_channels=num_features, **backbone_kwargs)
         num_out_features = backbone.hidden_channels
         if self.embedding_dimension is not None:
             self.head = nn.Sequential(nn.Linear(num_out_features, self.embedding_dimension))
