@@ -14,6 +14,8 @@
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
+from functools import partial
+
 if _GRAPH_AVAILABLE:
     import torch_geometric.nn.models as models
 
