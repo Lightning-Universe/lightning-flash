@@ -28,10 +28,15 @@ if _PANDAS_AVAILABLE:
 
 if _FORECASTING_AVAILABLE:
     from pytorch_forecasting import TimeSeriesDataSet
+else:
+    TimeSeriesDataSet = object
 
 
 class PatchTimeSeriesDataSet(TimeSeriesDataSet):
-    """Hack to prevent index construction when instantiating model."""
+    """Hack to prevent index construction when instantiating model.
+
+    This enables the ``TimeSeriesDataSet`` to be created from a single row of data.
+    """
 
     def _construct_index(self, data: DataFrame, predict_mode: bool) -> DataFrame:
         return DataFrame()
@@ -41,18 +46,18 @@ class PyTorchForecastingAdapter(Adapter):
     """The ``PyTorchForecastingAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with PyTorch
     Forecasting."""
 
-    @staticmethod
-    def _collate_fn(collate_fn, samples):
-        samples = [(sample[DefaultDataKeys.INPUT], sample[DefaultDataKeys.TARGET]) for sample in samples]
-        batch = collate_fn(samples)
-        return {DefaultDataKeys.INPUT: batch[0], DefaultDataKeys.TARGET: batch[1]}
-
     def __init__(self, backbone, collate_fn):
         super().__init__()
 
         self.backbone = backbone
 
         self.set_state(CollateFn(partial(PyTorchForecastingAdapter._collate_fn, collate_fn)))
+
+    @staticmethod
+    def _collate_fn(collate_fn, samples):
+        samples = [(sample[DefaultDataKeys.INPUT], sample[DefaultDataKeys.TARGET]) for sample in samples]
+        batch = collate_fn(samples)
+        return {DefaultDataKeys.INPUT: batch[0], DefaultDataKeys.TARGET: batch[1]}
 
     @classmethod
     def from_task(
