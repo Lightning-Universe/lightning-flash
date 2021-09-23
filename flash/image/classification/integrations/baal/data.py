@@ -71,7 +71,7 @@ class ActiveLearningDataModule(LightningDataModule):
             heuristic: Sorting algorithm used to rank samples on how likely they can help with model performance.
             map_dataset_to_labelled: Function used to emulate masking on labelled dataset.
             filter_unlabelled_data: Function used to filter the unlabelled data while computing uncertainties.
-            num_label_randomly: Number of samples to randomly labelled from the uncertaintie scores
+            num_label_randomly: Number of samples to randomly label from the uncertainty scores.
             val_split: Float to split train dataset into train and validation set.
         """
         super().__init__()

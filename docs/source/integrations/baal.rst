@@ -25,8 +25,7 @@ The most uncertain samples will be labelled by the human to accelerate the model
     <br />
   </div>
 
-With its integration within Flash, Active Learning process is made even simpler than before.
-
+With its integration within Flash, the Active Learning process is simpler than ever before.
 
 .. literalinclude:: ../../../flash_examples/integrations/baal/image_classification_active_learning.py
     :language: python
