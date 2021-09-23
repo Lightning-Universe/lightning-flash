@@ -136,7 +136,8 @@ jobs:
     - name: Install vissl
       if: matrix.topic[1] == 'image_extras'
       run: |
-        pip install git+https://github.com/facebookresearch/vissl.git@master
+        pip install git+https://github.com/facebookresearch/ClassyVision.git
+        pip install git+https://github.com/facebookresearch/vissl.git
 
     - name: Install graph test dependencies
       if: matrix.topic[0] == 'graph'

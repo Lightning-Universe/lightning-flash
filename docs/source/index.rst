@@ -89,8 +89,11 @@ Lightning Flash
    :caption: Integrations
 
    integrations/providers
+   integrations/baal
    integrations/fiftyone
    integrations/icevision
+   integrations/learn2learn
+   integrations/vissl
 
 .. toctree::
    :maxdepth: 1
