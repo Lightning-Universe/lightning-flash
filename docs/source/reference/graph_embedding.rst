@@ -7,7 +7,7 @@ Graph Embedding
 ********
 The Task
 ********
-This task consist on creating an embedding of a graph. That is, a vector of features which can be used for a downstream task.
+This task consists of creating an embedding of a graph. That is, a vector of features which can be used for a downstream task.
 The :class:`~flash.graph.classification.model.GraphEmbedder` and :class:`~flash.graph.classification.data.GraphClassificationData` classes internally rely on `pytorch-geometric <https://github.com/rusty1s/pytorch_geometric>`_.
 
 ------
