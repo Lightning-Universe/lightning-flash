@@ -68,7 +68,7 @@ class FlashImageClassifierLabelStudioML(LabelStudioMLBase):
         image_urls = [self._firstv(task["data"]) for task in tasks]
         predict_files = [self._download_image(url) for url in image_urls]
 
-        datamodule = ImageClassificationData.from_files(predict_files=predict_files)
+        datamodule = ImageClassificationData.from_files(predict_files=predict_files, batch_size=1)
         trainer = flash.Trainer(max_epochs=1, gpus=int(torch.cuda.is_available()))
         predictions = trainer.predict(self.model, datamodule=datamodule)
         predictions = torch.tensor(predictions)
