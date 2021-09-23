@@ -42,6 +42,7 @@ class SimCLRHead(nn.Module):
         dims: list of dimensions for creating a projection head
         use_bn: use batch-norm after each linear layer or not
     """
+
     def __init__(
         self,
         model_config: AttrDict,
