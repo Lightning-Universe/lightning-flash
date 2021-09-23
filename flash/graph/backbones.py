@@ -24,6 +24,7 @@ GRAPH_BACKBONES = FlashRegistry("backbones")
 MODEL_NAMES = ["GCN", "GraphSAGE", "GAT", "GIN"]
 MOD = [GCN, GraphSAGE, GAT, GIN]
 
+
 def _load_graph_backbone(
     model,
     in_channels: int,
