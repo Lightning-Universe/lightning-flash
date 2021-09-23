@@ -22,7 +22,7 @@ example_requires("graph")
 from torch_geometric.datasets import TUDataset  # noqa: E402
 
 # 1. Create the DataModule
-dataset = TUDataset(root="data", name="KKI").shuffle()
+dataset = TUDataset(root="data", name="KKI")
 
 datamodule = GraphClassificationData.from_datasets(
     train_dataset=dataset,
