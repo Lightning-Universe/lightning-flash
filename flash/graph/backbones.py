@@ -18,6 +18,7 @@ from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn.models import GAT, GCN, GIN, GraphSAGE
+
     MODELS = {"GCN": GCN, "GraphSAGE": GraphSAGE, "GAT": GAT, "GIN": GIN}
 else:
     MODELS = {}
