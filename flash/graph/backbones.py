@@ -20,6 +20,9 @@ if _GRAPH_AVAILABLE:
     from torch_geometric.nn.models import GCN, GraphSAGE, GAT, GIN
     MOD = [GCN, GraphSAGE, GAT, GIN]
     MODEL_NAMES = ["GCN", "GraphSAGE", "GAT", "GIN"]
+else:
+    MOD = []
+    MODEL_NAMES = []
 
 GRAPH_BACKBONES = FlashRegistry("backbones")
 
