@@ -367,6 +367,7 @@ class DataModule(pl.LightningDataModule):
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+
         if isinstance(predict_ds, IterableAutoDataset):
             batch_size = self.batch_size
         else:
