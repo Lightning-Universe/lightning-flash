@@ -85,9 +85,7 @@ class GraphClassifier(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, num_out_features = backbone
         else:
-            self.backbone = self.backbones.get(backbone)(
-                in_channels=num_features, **backbone_kwargs
-            )
+            self.backbone = self.backbones.get(backbone)(in_channels=num_features, **backbone_kwargs)
             num_out_features = backbone.hidden_channels
 
         head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
