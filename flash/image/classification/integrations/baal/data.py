@@ -32,7 +32,7 @@ else:
     class AbstractHeuristic:
         pass
 
-    class BatchBALD(AbstractHeuristic):
+    class BALD(AbstractHeuristic):
         def __init__(self, reduction: Optional[Callable]):
             super().__init__()
 
