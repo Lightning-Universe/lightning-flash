@@ -23,6 +23,7 @@ GRAPH_BACKBONES = FlashRegistry("backbones")
 
 MODELS = ["GCN", "GraphSAGE", "GAT", "GIN"]
 
+
 def _load_graph_backbone(
     model,
     in_channels: int,
@@ -30,6 +31,7 @@ def _load_graph_backbone(
     num_layers: int = 4,
 ):
     return model(in_channels, hidden_channels, num_layers)
+
 
 for model in MODELS:
     GRAPH_BACKBONES(name=model, namespace="graph")(partial(_load_graph_backbone, getattr(models, model)))
