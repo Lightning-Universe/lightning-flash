@@ -34,4 +34,4 @@ def _load_graph_backbone(
 
 
 for model in MODELS:
-    GRAPH_BACKBONES(name=model, namespace="graph")(partial(_load_graph_backbone, getattr(models, model)))
+    GRAPH_BACKBONES(name=model, namespace="graph")(partial(_load_graph_backbone, getattr(MODELS, model)))
