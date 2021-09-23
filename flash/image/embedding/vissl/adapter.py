@@ -33,6 +33,8 @@ else:
 
 
 class MockVISSLTask:
+    """Mock task class from VISSL to support loss, configs, base_model, last batch etc."""
+
     def __init__(self, vissl_adapter, vissl_loss, task_config, vissl_model) -> None:
         self.vissl_adapter = vissl_adapter
         self.loss = vissl_loss
@@ -51,7 +53,10 @@ class MockVISSLTask:
 
 
 class VISSLAdapter(Adapter, AdaptVISSLHooks):
-    """The ``VISSLAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with VISSL."""
+    """The ``VISSLAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with VISSL.
+
+    Also inherits from ``AdaptVISSLHooks`` to support VISSL hooks.
+    """
 
     required_extras: str = "image"
 
