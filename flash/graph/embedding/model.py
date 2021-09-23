@@ -105,6 +105,7 @@ class GraphEmbedder(Task):
         batch = batch[DefaultDataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
+    @classmethod
     def load_from_checkpoint(self, path: str, strict: bool = True) -> None:
         checkpoint = torch.load(checkpoint)
 
