@@ -104,3 +104,14 @@ class GraphEmbedder(Task):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch = batch[DefaultDataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+
+    def load_from_checkpoint(self, path: str, strict: bool = True) -> None:
+        checkpoint = torch.load(checkpoint)
+
+        self.backbone.load_state_dict(checkpoint["backbone"], strict=strict)
+        #self.head.load_state_dict(state_dict["head"], strict=strict)
+
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.learning_rate = checkpoint['learning_rate']
+        self.loss_fn = checkpoint['loss_fn']
+        self.metrics = checkpoint['metrics']

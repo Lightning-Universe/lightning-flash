@@ -24,6 +24,6 @@ Then, we load a trained :class:`~flash.graph.classification.model.GraphEmbedder`
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/graph_classification.py
+.. literalinclude:: ../../../flash_examples/graph_embedding.py
     :language: python
     :lines: 14
