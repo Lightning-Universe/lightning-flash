@@ -22,7 +22,7 @@ if _GRAPH_AVAILABLE:
 GRAPH_BACKBONES = FlashRegistry("backbones")
 
 MODELS = [models.GCN, models.GAT, models.GIN, models.GraphSAGE]
-model_names = ['GCN', 'GAT', 'GIN', 'GraphSAGE']
+model_names = ["GCN", "GAT", "GIN", "GraphSAGE"]
 
 
 def _load_graph_backbone(
