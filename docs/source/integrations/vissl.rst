@@ -13,6 +13,7 @@ Using VISSL with Flash
 The ImageEmbedder task in Flash can be configured with different backbones, projection heads, image transforms and loss functions so that you can train your feature extractor using a SOTA SSL method.
 
 .. code-block:: python
+
     from flash.image import ImageEmbedder
 
     embedder = ImageEmbedder(
