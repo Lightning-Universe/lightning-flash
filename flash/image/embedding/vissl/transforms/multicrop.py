@@ -27,6 +27,7 @@ class StandardMultiCropSSLTransform(nn.Module):
     crops.
 
     This transform was proposed in SwAV - https://arxiv.org/abs/2006.09882
+    This transform can act as a base transform class for SimCLR, SwAV, MoCo, Barlow Twins and DINO from VISSL.
 
     This transform has been modified from the ImgPilToMultiCrop code present at
     https://github.com/facebookresearch/vissl/blob/master/vissl/data/ssl_transforms/img_pil_to_multicrop.py
