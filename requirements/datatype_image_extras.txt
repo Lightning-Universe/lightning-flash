@@ -8,3 +8,4 @@ effdet
 albumentations
 learn2learn
 baal
+fastface
