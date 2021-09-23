@@ -21,7 +21,7 @@ if _GRAPH_AVAILABLE:
 
 GRAPH_BACKBONES = FlashRegistry("backbones")
 
-MODELS = [models.GCN, models.GAT, models.GIN, models.GraphSAGE]
+MODEL_list = [models.GCN, models.GAT, models.GIN, models.GraphSAGE]
 model_names = ['GCN', 'GAT', 'GIN', 'GraphSAGE']
 
 
@@ -34,5 +34,5 @@ def _load_graph_backbone(
     return model(in_channels, hidden_channels, num_layers)
 
 
-for model, model_name in zip(MODELS, model_names):
+for model, model_name in zip(MODEL_list, model_names):
     GRAPH_BACKBONES(name=model_name, namespace="graph")(partial(_load_graph_backbone, model))
