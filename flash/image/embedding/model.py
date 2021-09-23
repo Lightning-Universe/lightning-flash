@@ -45,10 +45,13 @@ class ImageEmbedder(AdapterTask):
     more details, see :ref:`image_embedder`.
 
     Args:
-        training_strategy: Training strategy from VISSL, select between 'simclr', 'swav', 'dino', 'moco', or 'barlow_twins'.
-        head: projection head used for task, select between 'simclr_head', 'swav_head', 'dino_head', 'moco_head', or 'barlow_twins_head'.
+        training_strategy: Training strategy from VISSL,
+            select between 'simclr', 'swav', 'dino', 'moco', or 'barlow_twins'.
+        head: projection head used for task, select between
+            'simclr_head', 'swav_head', 'dino_head', 'moco_head', or 'barlow_twins_head'.
         pretraining_transform: transform applied to input image for pre-training SSL model.
-            Select between 'simclr_transform', 'swav_transform', 'dino_transform', 'moco_transform', or 'barlow_twins_transform'.
+            Select between 'simclr_transform', 'swav_transform', 'dino_transform',
+            'moco_transform', or 'barlow_twins_transform'.
         backbone: VISSL backbone, defaults to ``resnet``.
         pretrained: Use a pretrained backbone, defaults to ``False``.
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
