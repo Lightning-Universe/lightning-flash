@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from copy import deepcopy
-from itertools import chain
 from typing import Any, Dict, Optional
 
 import torch
@@ -74,9 +73,7 @@ class ActiveLearningLoop(Loop):
         self.trainer.predict_loop._return_predictions = True
         self._lightning_module = self.trainer.lightning_module
         self._model_state_dict = deepcopy(self._lightning_module.state_dict())
-        self.inference_model = InferenceMCDropoutTask(
-            self._lightning_module, self.inference_iteration, self.trainer.datamodule.heuristic
-        )
+        self.inference_model = InferenceMCDropoutTask(self._lightning_module, self.inference_iteration)
 
     def reset(self) -> None:
         pass
@@ -91,14 +88,20 @@ class ActiveLearningLoop(Loop):
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
         self.progress.increment_started()
+
         if self.trainer.datamodule.has_labelled_data:
             self.fit_loop.run()
+
+        if self.trainer.datamodule.has_test:
+            self.trainer.test_loop.run()
+
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_predicting()
-            uncertainties = self.trainer.predict_loop.run()
-            self.trainer.datamodule.label(uncertainties=list(chain(*uncertainties)))
+            probabilities = self.trainer.predict_loop.run()
+            self.trainer.datamodule.label(probabilities=probabilities)
         else:
             raise StopIteration
+
         self._reset_fitting()
         self.progress.increment_processed()
 

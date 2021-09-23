@@ -52,7 +52,9 @@ def test_active_learning_training(tmpdir):
     dm = ImageClassificationData.from_files(
         train_files=[str(pa_1)] * n + [str(pa_2)] * n + [str(pb_1)] * n + [str(pb_2)] * n,
         train_targets=[0] * n + [1] * n + [2] * n + [3] * n,
-        batch_size=1,
+        test_files=[str(pa_1)] * n,
+        test_targets=[0] * n,
+        batch_size=2,
         num_workers=0,
         image_size=image_size,
     )
@@ -80,4 +82,4 @@ def test_active_learning_training(tmpdir):
     assert active_learning_loop.progress.total.completed == 3
     labelled = active_learning_loop.state_dict()["state_dict"]["datamodule_state_dict"]["labelled"]
     assert isinstance(labelled, np.ndarray)
-    assert len(active_learning_dm.val_dataloader()) == 8
+    assert len(active_learning_dm.val_dataloader()) == 4

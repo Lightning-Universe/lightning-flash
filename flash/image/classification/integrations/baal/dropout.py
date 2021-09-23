@@ -22,7 +22,7 @@ if _BAAL_AVAILABLE:
 
 
 class InferenceMCDropoutTask(flash.Task):
-    def __init__(self, module: flash.Task, inference_iteration: int, heuristic):
+    def __init__(self, module: flash.Task, inference_iteration: int):
         super().__init__()
         self.parent_module = module
         self.trainer = module.trainer
@@ -30,14 +30,11 @@ class InferenceMCDropoutTask(flash.Task):
         if not changed:
             raise MisconfigurationException("The model should contain at least 1 dropout layer.")
         self.inference_iteration = inference_iteration
-        self.heuristic = heuristic
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
         out = []
         for _ in range(self.inference_iteration):
             out.append(self.parent_module.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx))
+
         # BaaL expects a shape [num_samples, num_classes, num_iterations]
-        uncertainties = [
-            self.heuristic.get_uncertainties(torch.tensor(o).unsqueeze(0)) for o in torch.tensor(out).permute((1, 2, 0))
-        ]
-        return uncertainties
+        return torch.tensor(out).permute((1, 2, 0))

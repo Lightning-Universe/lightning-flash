@@ -14,8 +14,8 @@ library developed at `ElementAI <https://www.elementai.com/>`_.
   </div>
 
 
-Active Learning is an AI sub-field focusing on adding human in the loop.
-The most uncertain samples will be labelled to accelerate model training cycle.
+Active Learning is a sub-field in AI, focusing on adding a human in the learning loop.
+The most uncertain samples will be labelled by the human to accelerate the model training cycle.
 
 .. raw:: html
 

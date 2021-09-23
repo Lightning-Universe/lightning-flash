@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -32,8 +32,8 @@ else:
     class AbstractHeuristic:
         pass
 
-    class BALD(AbstractHeuristic):
-        def __init__(self, reduction: Callable):
+    class BatchBALD(AbstractHeuristic):
+        def __init__(self, reduction: Optional[Callable]):
             super().__init__()
 
 
@@ -45,7 +45,7 @@ def filter_unlabelled_data(dataset: BaseAutoDataset) -> Dataset:
     return dataset
 
 
-def train_val_split(dataset: Dataset, val_size=0.1):
+def train_val_split(dataset: Dataset, val_size: float = 0.1):
     L = len(dataset)
     train_size = int(L * (1 - val_size))
     val_size = L - train_size
@@ -57,7 +57,7 @@ class ActiveLearningDataModule(LightningDataModule):
     def __init__(
         self,
         labelled: Optional[DataModule] = None,
-        heuristic: "AbstractHeuristic" = BALD(reduction=np.mean),
+        heuristic: "AbstractHeuristic" = BALD(),
         map_dataset_to_labelled: Optional[Callable] = dataset_to_non_labelled_tensor,
         filter_unlabelled_data: Optional[Callable] = filter_unlabelled_data,
         num_label_randomly: int = 5,
@@ -89,11 +89,7 @@ class ActiveLearningDataModule(LightningDataModule):
         if not self.labelled.num_classes:
             raise MisconfigurationException("The labelled dataset should be labelled")
 
-        if self.labelled and (
-            self.labelled._val_ds is not None
-            or self.labelled._test_ds is not None
-            or self.labelled._predict_ds is not None
-        ):
+        if self.labelled and (self.labelled._val_ds is not None or self.labelled._predict_ds is not None):
             raise MisconfigurationException("The labelled `datamodule` should have only train data.")
 
         self._dataset = ActiveLearningDataset(
@@ -104,6 +100,13 @@ class ActiveLearningDataModule(LightningDataModule):
             self.val_dataloader = None
         elif self.val_split < 0 or self.val_split > 1:
             raise MisconfigurationException("The `val_split` should a float between 0 and 1.")
+
+        if self.labelled._test_ds:
+            self.test_dataloader = self._test_dataloader
+
+    @property
+    def has_test(self) -> bool:
+        return self.labelled._test_ds is not None
 
     @property
     def has_labelled_data(self) -> bool:
@@ -136,16 +139,20 @@ class ActiveLearningDataModule(LightningDataModule):
         self.labelled._val_ds = train_val_split(self._dataset, self.val_split)[1]
         return self.labelled._val_dataloader()
 
+    def _test_dataloader(self) -> "DataLoader":
+        return self.labelled.test_dataloader()
+
     def predict_dataloader(self) -> "DataLoader":
         self.labelled._train_ds = self.filter_unlabelled_data(self._dataset.pool)
         return self.labelled.train_dataloader()
 
-    def label(self, uncertainties: Any = None, indices=None):
-        if uncertainties and indices:
+    def label(self, probabilities: List[torch.Tensor] = None, indices=None):
+        if probabilities is not None and indices:
             raise MisconfigurationException(
-                "The `uncertainties` and `indices` are mutually exclusive, pass only of one them."
+                "The `probabilities` and `indices` are mutually exclusive, pass only of one them."
             )
-        if uncertainties:
+        if probabilities is not None:
+            uncertainties = self.heuristic.get_uncertainties(torch.cat(probabilities, dim=0))
             indices = np.argsort(uncertainties)
             if self._dataset is not None:
                 unlabelled_mask = self._dataset.labelled == False  # noqa E712
