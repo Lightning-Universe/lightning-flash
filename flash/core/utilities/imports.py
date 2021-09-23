@@ -102,6 +102,7 @@ _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
 _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 _BAAL_AVAILABLE = _module_available("baal")
+_LABEL_STUDIO_ML_AVAILABLE = _module_available("label_studio_ml")
 
 if _PIL_AVAILABLE:
     from PIL import Image  # noqa: F401
