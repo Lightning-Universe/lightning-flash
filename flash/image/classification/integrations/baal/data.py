@@ -74,6 +74,7 @@ class ActiveLearningDataModule(LightningDataModule):
             num_label_randomly: Number of samples to randomly labelled from the uncertaintie scores
             val_split: Float to split train dataset into train and validation set.
         """
+        super().__init__()
         self.labelled = labelled
         self.heuristic = heuristic
         self.map_dataset_to_labelled = map_dataset_to_labelled
