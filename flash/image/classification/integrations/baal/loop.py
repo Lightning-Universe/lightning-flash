@@ -62,7 +62,7 @@ class ActiveLearningLoop(Loop):
 
     @property
     def done(self) -> bool:
-        return self.progress.current.completed > self.max_epochs
+        return self.progress.current.completed >= self.max_epochs
 
     def connect(self, fit_loop: FitLoop):
         self.fit_loop = fit_loop
@@ -97,6 +97,8 @@ class ActiveLearningLoop(Loop):
             self._reset_predicting()
             uncertainties = self.trainer.predict_loop.run()
             self.trainer.datamodule.label(uncertainties=list(chain(*uncertainties)))
+        else:
+            raise StopIteration
         self._reset_fitting()
         self.progress.increment_processed()
 
@@ -108,6 +110,7 @@ class ActiveLearningLoop(Loop):
         return super().on_advance_end()
 
     def on_run_end(self):
+        self._reset_fitting()
         return super().on_run_end()
 
     def on_save_checkpoint(self) -> Dict:

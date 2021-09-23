@@ -37,6 +37,7 @@ class InferenceMCDropoutTask(flash.Task):
         for _ in range(self.inference_iteration):
             out.append(self.parent_module.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx))
         # BaaL expects a shape [num_samples, num_classes, num_iterations]
-        return [
-            self.heuristic.get_uncertainties(torch.tensor(o).unsqueeze(0)) for o in torch.tensor(out).permute((2, 1, 0))
+        uncertainties = [
+            self.heuristic.get_uncertainties(torch.tensor(o).unsqueeze(0)) for o in torch.tensor(out).permute((1, 2, 0))
         ]
+        return uncertainties

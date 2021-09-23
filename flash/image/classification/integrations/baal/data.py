@@ -147,7 +147,10 @@ class ActiveLearningDataModule(LightningDataModule):
         if uncertainties:
             indices = np.argsort(uncertainties)
             if self._dataset is not None:
-                self._dataset.labelled[indices[-self.num_label_randomly :]] = True
+                unlabelled_mask = self._dataset.labelled == False  # noqa E712
+                unlabelled = self._dataset.labelled[unlabelled_mask]
+                unlabelled[indices[-self.num_label_randomly :]] = True
+                self._dataset.labelled[unlabelled_mask] = unlabelled
         else:
             self._dataset.label_randomly(self.num_label_randomly)
 
