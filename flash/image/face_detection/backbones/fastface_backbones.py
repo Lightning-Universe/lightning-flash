@@ -25,17 +25,19 @@ model_name = ["lffd_slim", "lffd_original"]
 
 def fastface_backbone(model_name, pretrained, **kwargs):
     if pretrained:
-        model = ff.FaceDetector.from_pretrained(model_name, **kwargs)
+        pl_model = ff.FaceDetector.from_pretrained(model_name, **kwargs)
     else:
         arch, config = model_name.split("_")
-        model = ff.FaceDetector.build(arch, config, **kwargs)
+        pl_model = ff.FaceDetector.build(arch, config, **kwargs)
 
-    return model
+    backbone = getattr(pl_model, "arch")
+
+    return backbone, pl_model
 
 
 def register_ff_backbones(register: FlashRegistry):
-    backbones = [partial(fastface_backbone, model_name=name) for name in model_name]
-
     if _FASTFACE_AVAILABLE:
+        backbones = [partial(fastface_backbone, model_name=name) for name in model_name]
+
         for idx, backbone in enumerate(backbones):
             register(backbone, name=model_name[idx])

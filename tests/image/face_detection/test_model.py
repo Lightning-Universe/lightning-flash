@@ -20,8 +20,8 @@ from flash.image import FaceDetectionData, FaceDetector
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
-
     from fastface.arch.lffd import LFFD
+
     from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 else:
     FACE_DETECTION_BACKBONES = FlashRegistry("face_detection_backbones")
@@ -42,8 +42,8 @@ def test_fastface_training():
 @pytest.mark.skipif(not _FASTFACE_AVAILABLE, reason="fastface not installed.")
 def test_fastface_backbones_registry():
     backbones = FACE_DETECTION_BACKBONES.available_keys()
-    assert 'lffd_slim' in backbones
-    assert 'lffd_original' in backbones
+    assert "lffd_slim" in backbones
+    assert "lffd_original" in backbones
 
-    backbone = FACE_DETECTION_BACKBONES.get('lffd_original')
+    backbone, _ = FACE_DETECTION_BACKBONES.get("lffd_original")(pretrained=True)
     assert isinstance(backbone, LFFD)

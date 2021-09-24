@@ -98,10 +98,7 @@ class FaceDetector(Task):
         pretrained,
         **kwargs,
     ):
-        pl_model = FACE_DETECTION_BACKBONES.get(model_name)(pretrained=pretrained, **kwargs)
-
-        # get torch.nn.Module
-        model = getattr(pl_model, "arch")
+        model, pl_model = FACE_DETECTION_BACKBONES.get(model_name)(pretrained=pretrained, **kwargs)
 
         # set preprocess params
         model.register_buffer("normalizer", getattr(pl_model, "normalizer"))
