@@ -83,7 +83,7 @@ class GraphEmbedder(Task):
             self.head = nn.Sequential(nn.Linear(num_out_features, num_out_features))
 
     def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
+        x = self.backbone(x.x, x.edge_index)
         x = self.head(x)
         return x
 
@@ -105,7 +105,7 @@ class GraphEmbedder(Task):
 
     @classmethod
     def load_from_checkpoint(self, path: str, strict: bool = True) -> None:
-        checkpoint = torch.load(checkpoint)
+        checkpoint = torch.load(path)
 
         self.backbone.load_state_dict(checkpoint["backbone"], strict=strict)
         # self.head.load_state_dict(state_dict["head"], strict=strict)
