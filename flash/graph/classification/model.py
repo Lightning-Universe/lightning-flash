@@ -110,7 +110,7 @@ class GraphClassifier(ClassificationTask):
         return batch
 
     def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
+        x = self.backbone(x.x, x.edge_index)
         return self.head(x)
 
 
