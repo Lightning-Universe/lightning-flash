@@ -22,7 +22,7 @@ import torch
 
 import flash
 from flash.core.classification import Probabilities
-from flash.core.utilities.imports import _BAAL_AVAILABLE, _LABEL_STUDIO_ML_AVAILABLE
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _LABEL_STUDIO_ML_AVAILABLE, requires
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
 
@@ -39,9 +39,12 @@ else:
         pass
 
 
-class FlashImageClassifierLabelStudioML(LabelStudioMLBase):
+class ImageClassifierAPI(LabelStudioMLBase):
 
     _IMAGE_CACHE_DIR: str
+
+    requires("baal")
+    requires("label_studio_ml")
 
     def __init__(self, source: str, **kwargs):
         super().__init__(**kwargs)
