@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.graph import GraphClassificationData, GraphClassifier
@@ -23,7 +22,7 @@ def from_tu_dataset(
     name: str = "KKI",
     val_split: float = 0.1,
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     **preprocess_kwargs,
 ) -> GraphClassificationData:
     """Downloads and loads the TU Dataset."""

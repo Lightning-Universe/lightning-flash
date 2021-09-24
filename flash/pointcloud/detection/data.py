@@ -89,7 +89,7 @@ class PointCloudObjectDetectorData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         scans_folder_name: Optional[str] = "scans",
         labels_folder_name: Optional[str] = "labels",

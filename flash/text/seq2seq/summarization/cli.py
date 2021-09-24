@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
@@ -23,7 +22,7 @@ __all__ = ["summarization"]
 def from_xsum(
     backbone: str = "sshleifer/distilbart-xsum-1-1",
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     **preprocess_kwargs,
 ) -> SummarizationData:
     """Downloads and loads the XSum data set."""

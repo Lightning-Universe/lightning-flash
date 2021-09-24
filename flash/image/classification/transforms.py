@@ -19,7 +19,7 @@ from torch import nn
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -27,6 +27,21 @@ if _KORNIA_AVAILABLE:
 if _TORCHVISION_AVAILABLE:
     import torchvision
     from torchvision import transforms as T
+
+if _ALBUMENTATIONS_AVAILABLE:
+    import albumentations
+
+
+class AlbumentationsAdapter(torch.nn.Module):
+    @requires("albumentations")
+    def __init__(self, transform):
+        super().__init__()
+        if not isinstance(transform, list):
+            transform = [transform]
+        self.transform = albumentations.Compose(transform)
+
+    def forward(self, x):
+        return torch.from_numpy(self.transform(image=x.numpy())["image"])
 
 
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:

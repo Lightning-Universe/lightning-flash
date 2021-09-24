@@ -68,8 +68,7 @@ class IceVisionParserDataSource(IceVisionPathsDataSource):
             self.set_state(LabelsState([parser.class_map.get_by_id(i) for i in range(dataset.num_classes)]))
             records = parser.parse(data_splitter=SingleSplitSplitter())
             return [{DefaultDataKeys.INPUT: record} for record in records[0]]
-        else:
-            raise ValueError("The parser argument must be provided.")
+        raise ValueError("The parser argument must be provided.")
 
     def predict_load_data(self, data: Any, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         result = super().predict_load_data(data, dataset)

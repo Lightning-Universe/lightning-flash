@@ -14,12 +14,14 @@
 import os
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
 from flash.text.classification.data import (
     TextCSVDataSource,
+    TextDataFrameDataSource,
     TextDataSource,
     TextFileDataSource,
     TextJSONDataSource,
@@ -49,6 +51,11 @@ TEST_JSON_DATA_FIELD = """{"data": [
 {"sentence": "this is a sentence two","lab":1},
 {"sentence": "this is a sentence three","lab":0}]}
 """
+
+
+TEST_DATA_FRAME_DATA = pd.DataFrame(
+    {"sentence": ["this is a sentence one", "this is a sentence two", "this is a sentence three"], "lab": [0, 1, 0]},
+)
 
 
 def csv_data(tmpdir):
@@ -123,6 +130,17 @@ def test_from_json_with_field(tmpdir):
     assert "input_ids" in batch
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_data_frame():
+    dm = TextClassificationData.from_data_frame(
+        "sentence", "lab", backbone=TEST_BACKBONE, train_data_frame=TEST_DATA_FRAME_DATA, batch_size=1
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
+
+
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
@@ -138,6 +156,7 @@ def test_text_module_not_found_error():
         (TextFileDataSource, {"filetype": "csv"}),
         (TextCSVDataSource, {}),
         (TextJSONDataSource, {}),
+        (TextDataFrameDataSource, {}),
         (TextSentencesDataSource, {}),
     ],
 )

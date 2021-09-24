@@ -645,7 +645,7 @@ class QuestionAnsweringData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given data
@@ -713,7 +713,7 @@ class QuestionAnsweringData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Sampler] = None,
         field: Optional[str] = None,
         **preprocess_kwargs: Any,
@@ -814,7 +814,7 @@ class QuestionAnsweringData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Sampler] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":

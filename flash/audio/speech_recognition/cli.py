@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 from flash.audio import SpeechRecognition, SpeechRecognitionData
 from flash.core.data.utils import download_data
@@ -23,7 +22,7 @@ __all__ = ["speech_recognition"]
 def from_timit(
     val_split: float = 0.1,
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     **preprocess_kwargs,
 ) -> SpeechRecognitionData:
     """Downloads and loads the timit data set."""

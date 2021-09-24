@@ -52,10 +52,6 @@ Standard best practices
 ^^^^^^^^^^^^^^^^^^^^^^^
 Flash tasks implement the standard best practices for a variety of different models and domains, to save you time digging through different implementations. Flash abstracts even more details than Lightning, allowing deep learning experts to share their tips and tricks for solving scoped deep learning problems.
 
-.. tip::
-
-    Read :doc:`here <reference/flash_to_pl>` to understand when to use Flash vs Lightning.
-
 ------
 
 Tasks

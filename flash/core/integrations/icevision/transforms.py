@@ -196,7 +196,13 @@ def from_icevision_predictions(predictions: List["Prediction"]):
 
 
 class IceVisionTransformAdapter(nn.Module):
-    def __init__(self, transform):
+    """
+    Args:
+        transform: list of transformation functions to apply
+
+    """
+
+    def __init__(self, transform: List[Callable]):
         super().__init__()
         self.transform = A.Adapter(transform)
 
