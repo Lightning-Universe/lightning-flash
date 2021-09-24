@@ -30,7 +30,7 @@ datamodule = FaceDetectionData.from_datasets(train_dataset=train_dataset, val_da
 model = FaceDetector(model="lffd_slim")
 
 # # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3, limit_train_batches=0.1, limit_val_batches=0.1)
+trainer = flash.Trainer(max_steps=3, limit_train_batches=0.1, limit_val_batches=0.1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect faces in a few images!

@@ -24,6 +24,7 @@ from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.image.face_detection.data import FaceDetectionPreprocess
+from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
@@ -97,12 +98,7 @@ class FaceDetector(Task):
         pretrained,
         **kwargs,
     ):
-
-        if pretrained:
-            pl_model = ff.FaceDetector.from_pretrained(model_name, **kwargs)
-        else:
-            arch, config = model_name.split("_")
-            pl_model = ff.FaceDetector.build(arch, config, **kwargs)
+        pl_model = FACE_DETECTION_BACKBONES.get(model_name)(pretrained=pretrained, **kwargs)
 
         # get torch.nn.Module
         model = getattr(pl_model, "arch")
