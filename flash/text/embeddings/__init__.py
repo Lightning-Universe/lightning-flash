@@ -1,3 +1,1 @@
-
-
-from flash.text.embeddings.sentence_embeddings import SentenceEmbeddings  
+from flash.text.embeddings.sentence_embeddings import SentenceEmbeddings

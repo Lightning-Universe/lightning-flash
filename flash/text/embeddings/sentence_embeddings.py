@@ -12,29 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sentence_transformers import SentenceTransformer
 from typing import List, Union
+
 from numpy import ndarray
-from torch import  Tensor
-class SentenceEmbeddings():
+from sentence_transformers import SentenceTransformer
+from torch import Tensor
+
+
+class SentenceEmbeddings:
     def __init__(self, model_name: str):
         self.model_name = model_name
-        self.model=SentenceTransformer(model_name_or_path=self.model_name)
-        
-    def return_embeddings(self, sentences: Union[str, List[str]],
-               batch_size: int = 32,
-               show_progress_bar: bool = None,
-               output_value: str = 'sentence_embedding',
-               convert_to_numpy: bool = True,
-               convert_to_tensor: bool = False,
-               device: str = None,
-               normalize_embeddings: bool = False) -> Union[List[Tensor], ndarray, Tensor]:
-        return self.model.encode(sentences=sentences,
-                            batch_size=batch_size,
-                            show_progress_bar=show_progress_bar,
-                            output_value=output_value,
-                            convert_to_numpy=convert_to_numpy,
-                            convert_to_tensor=convert_to_tensor,
-                            device=device,
-                            normalize_embeddings=normalize_embeddings)
-        
+        self.model = SentenceTransformer(model_name_or_path=self.model_name)
+
+    def return_embeddings(
+        self,
+        sentences: Union[str, List[str]],
+        batch_size: int = 32,
+        show_progress_bar: bool = None,
+        output_value: str = "sentence_embedding",
+        convert_to_numpy: bool = True,
+        convert_to_tensor: bool = False,
+        device: str = None,
+        normalize_embeddings: bool = False,
+    ) -> Union[List[Tensor], ndarray, Tensor]:
+        return self.model.encode(
+            sentences=sentences,
+            batch_size=batch_size,
+            show_progress_bar=show_progress_bar,
+            output_value=output_value,
+            convert_to_numpy=convert_to_numpy,
+            convert_to_tensor=convert_to_tensor,
+            device=device,
+            normalize_embeddings=normalize_embeddings,
+        )
