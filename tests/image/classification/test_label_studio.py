@@ -21,6 +21,8 @@ from flash.core.utilities.imports import _BAAL_AVAILABLE, _LABEL_STUDIO_ML_AVAIL
 from flash.image.classification.integrations.labelstudio.handler import ImageClassifierAPI
 
 
+# this test can't be run without forcing download in the ci
+# label_studio_ml isn't released on pypi yet.
 @pytest.mark.skipif(
     not (_LABEL_STUDIO_ML_AVAILABLE and _BAAL_AVAILABLE), reason="baal and label-studio-ml libraries aren't installed."
 )
