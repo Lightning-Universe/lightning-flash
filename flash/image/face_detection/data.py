@@ -15,7 +15,6 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
-import torchvision
 from torch.utils.data import Dataset
 
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, DefaultDataSources
@@ -26,6 +25,7 @@ from flash.image.data import ImagePathsDataSource
 from flash.image.detection import ObjectDetectionData
 
 if _TORCHVISION_AVAILABLE:
+    import torchvision
     from torchvision.datasets.folder import default_loader
 
 if _FASTFACE_AVAILABLE:
