@@ -17,7 +17,7 @@ import flash
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.image import FaceDetectionData, FaceDetector
 
-if  _FASTFACE_AVAILABLE:
+if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
