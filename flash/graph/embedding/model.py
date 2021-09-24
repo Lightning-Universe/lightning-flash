@@ -76,7 +76,7 @@ class GraphEmbedder(Task):
         self.pooling_fn = pooling_fn
 
         self.backbone = self.backbones.get(backbone)(in_channels=num_features, **backbone_kwargs)
-        num_out_features = backbone.hidden_channels
+        num_out_features = self.backbone.hidden_channels
         if self.embedding_dimension is not None:
             self.head = nn.Sequential(nn.Linear(num_out_features, self.embedding_dimension))
         else:

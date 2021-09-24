@@ -25,7 +25,6 @@ else:
 
 GRAPH_BACKBONES = FlashRegistry("backbones")
 
-
 def _load_graph_backbone(
     model_name: str,
     in_channels: int,
@@ -34,7 +33,6 @@ def _load_graph_backbone(
 ):
     model = MODELS[model_name]
     return model(in_channels, hidden_channels, num_layers)
-
 
 for model_name in MODELS.keys():
     GRAPH_BACKBONES(name=model_name, namespace="graph")(partial(_load_graph_backbone, model_name))
