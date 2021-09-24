@@ -83,3 +83,4 @@ def test_active_learning_training(tmpdir):
     labelled = active_learning_loop.state_dict()["state_dict"]["datamodule_state_dict"]["labelled"]
     assert isinstance(labelled, np.ndarray)
     assert len(active_learning_dm.val_dataloader()) == 4
+    assert len(active_learning_loop._history_metrics_testing) == 3

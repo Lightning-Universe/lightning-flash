@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from copy import deepcopy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import torch
-from pytorch_lightning.loops import Loop
+from pytorch_lightning.loops.base import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
@@ -58,6 +58,7 @@ class ActiveLearningLoop(Loop):
         self.progress = Progress()
         self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
         self._lightning_module: Optional[flash.Task] = None
+        self._history_metrics_testing: List[Dict[str, float]] = []
 
     @property
     def done(self) -> bool:
@@ -82,6 +83,10 @@ class ActiveLearningLoop(Loop):
         if self.trainer.datamodule.has_labelled_data:
             self._reset_dataloader_for_stage(RunningStage.TRAINING)
             self._reset_dataloader_for_stage(RunningStage.VALIDATING)
+
+        if self.trainer.datamodule.has_test:
+            self._reset_dataloader_for_stage(RunningStage.TESTING)
+
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_dataloader_for_stage(RunningStage.PREDICTING)
         self.progress.increment_ready()
@@ -93,7 +98,8 @@ class ActiveLearningLoop(Loop):
             self.fit_loop.run()
 
         if self.trainer.datamodule.has_test:
-            self.trainer.test_loop.run()
+            self._reset_testing()
+            self._history_metrics_testing.append(self.trainer.test_loop.run())
 
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_predicting()
@@ -130,13 +136,15 @@ class ActiveLearningLoop(Loop):
     def _reset_fitting(self):
         self.trainer.state.fn = TrainerFn.FITTING
         self.trainer.training = True
-        self.trainer.lightning_module.on_train_dataloader()
         self.trainer.accelerator.connect(self._lightning_module)
+
+    def _reset_testing(self):
+        self.trainer.state.fn = TrainerFn.TESTING
+        self.trainer.testing = True
 
     def _reset_predicting(self):
         self.trainer.state.fn = TrainerFn.PREDICTING
         self.trainer.predicting = True
-        self.trainer.lightning_module.on_predict_dataloader()
         self.trainer.accelerator.connect(self.inference_model)
 
     def _reset_dataloader_for_stage(self, running_state: RunningStage):

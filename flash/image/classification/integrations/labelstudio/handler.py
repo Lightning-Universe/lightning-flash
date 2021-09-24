@@ -24,6 +24,7 @@ import flash
 from flash.core.classification import Probabilities
 from flash.core.utilities.imports import _BAAL_AVAILABLE, _LABEL_STUDIO_ML_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
+from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
 
 if _BAAL_AVAILABLE:
     from baal.active.heuristics import BALD
@@ -59,6 +60,8 @@ class FlashImageClassifierLabelStudioML(LabelStudioMLBase):
             backbone="resnet18", num_classes=num_classes, head=head, serializer=Probabilities()
         )
 
+        self.predict_model = InferenceMCDropoutTask(self.model, 2)
+
         self.heuristic = BALD()
 
         self._IMAGE_CACHE_DIR = os.path.join(os.path.dirname(source), "image_cache")
@@ -68,12 +71,14 @@ class FlashImageClassifierLabelStudioML(LabelStudioMLBase):
         image_urls = [self._firstv(task["data"]) for task in tasks]
         predict_files = [self._download_image(url) for url in image_urls]
 
-        datamodule = ImageClassificationData.from_files(predict_files=predict_files, batch_size=1)
+        datamodule = ImageClassificationData.from_files(predict_files=predict_files, batch_size=2)
         trainer = flash.Trainer(max_epochs=1, gpus=int(torch.cuda.is_available()))
-        predictions = trainer.predict(self.model, datamodule=datamodule)
-        predictions = torch.tensor(predictions)
-        predicted_label_indices = predictions[0].argmax(-1)
-        predicted_scores = self.heuristic.get_uncertainties(predictions)
+        predictions = trainer.predict(self.predict_model, datamodule=datamodule)
+
+        # remove the dataloader list.
+        predictions = predictions[0]
+        predicted_scores = [self.heuristic.get_uncertainties(p.unsqueeze(0)) for p in predictions]
+        predicted_label_indices = [p.mean(-1).argmax(-1) for p in predictions]
 
         predictions = []
         for idx, score in zip(predicted_label_indices, predicted_scores):
@@ -93,7 +98,7 @@ class FlashImageClassifierLabelStudioML(LabelStudioMLBase):
 
         return predictions
 
-    def fit(self, completions, workdir=None, batch_size=32, num_epochs=10, **kwargs):
+    def fit(self, completions, workdir=None, **kwargs):
         image_urls, image_classes = [], []
         for completion in completions:
 
@@ -108,7 +113,7 @@ class FlashImageClassifierLabelStudioML(LabelStudioMLBase):
         datamodule = ImageClassificationData.from_files(train_files=train_files, train_targets=train_targets)
         trainer = flash.Trainer(max_epochs=1, gpus=int(torch.cuda.is_available()))
         trainer.fit(self.model, datamodule=datamodule)
-        model_path = os.path.join(".", "model.pt")
+        model_path = os.path.join(workdir, "model.pt")
         trainer.save_checkpoint(model_path)
         return {"model_path": model_path}
 
