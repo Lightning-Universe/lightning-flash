@@ -46,7 +46,7 @@ Here is the list of currently supported tasks.
 
 .. code-block:: bash
 
-    flash image_classification from_folders --train_folder ./hymenoptera_data/train
+    flash image_classification from_folders --train_folder data/hymenoptera_data/train
 
 
 3. Modify the model and training parameters
@@ -54,13 +54,11 @@ Here is the list of currently supported tasks.
 
 .. code-block:: bash
 
-    flash image_classification from_folders --train_folder ./hymenoptera_data/train --trainer.max_epochs 10 --model.backbone resnet50
+    flash image_classification --trainer.max_epochs 10 --model.backbone resnet50 from_folders --train_folder data/hymenoptera_data/train
 
-To find all available parameters, use the following ``--help``.
+.. note::
 
-.. code-block:: bash
-
-    flash image_classification --help
+    The trainer and model arguments should be placed before the ``source`` subcommand. Here it is ``from_folders``.
 
 
 Other Examples
@@ -75,11 +73,21 @@ To train an Object Detector on `COCO 2017 dataset <https://cocodataset.org/>`_, 
 
     flash object_detection from_coco --train_folder data/coco128/images/train2017/ --train_ann_file data/coco128/annotations/instances_train2017.json --val_split .3 --batch_size 8 --num_workers 4
 
-The object_detection uses `IceVision <https://airctic.com/>`_ as its backend and therefore
+
+Image Object Segmentation
+=========================
+
+To train an Image Segmenter on `CARLA driving simulator dataset <http://carla.org/>`_
 
 .. code-block:: bash
 
-    flash object_detection from_coco --train_folder data/coco128/images/train2017/ --train_ann_file data/coco128/annotations/instances_train2017.json --val_split .3 --batch_size 8 --num_workers 4
+    flash semantic_segmentation from_folders --train_folder data/CameraRGB --train_target_folder data/CameraSeg --num_classes 21
+
+Below is an example where the head, the backbone and its pretrained weights are customized.
+
+.. code-block:: bash
+
+    flash semantic_segmentation --model.head fpn --model.backbone efficientnet-b0 --model.pretrained advprop from_folders --train_folder data/CameraRGB --train_target_folder data/CameraSeg --num_classes 21
 
 Video Classification
 ====================
@@ -129,19 +137,16 @@ Now train with Flash Zero:
 
     flash image_classification from_folders --train_folder ./hymenoptera_data/train
 
-You can view the help page for each subcommand. For example, to view the options for training an image classifier from
-folders, you can run:
-
-.. code-block:: bash
-
-    flash image_classification from_folders --help
-
+Getting Help
+____________
 
 To find all available tasks, you can run:
 
 .. code-block:: bash
 
     flash --help
+
+This will output the following:
 
 .. code-block:: bash
 
@@ -171,7 +176,14 @@ To get more information about a specific task, you can do the following:
 
     flash image_classification --help
 
-To generate a `config.yaml` file from the client to ease parameters modification, you can do the following:
+You can view the help page for each subcommand. For example, to view the options for training an image classifier from
+folders, you can run:
+
+.. code-block:: bash
+
+    flash image_classification from_folders --help
+
+Finally, you can generate a `config.yaml` file from the client to ease parameters modification by running:
 
 .. code-block:: bash
 
