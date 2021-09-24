@@ -6,3 +6,4 @@ pyDeprecate
 pandas<1.3.0
 jsonargparse[signatures]>=3.17.0
 click>=7.1.2
+sentence_transformers
