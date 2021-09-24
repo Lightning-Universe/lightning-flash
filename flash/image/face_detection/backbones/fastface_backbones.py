@@ -20,7 +20,7 @@ if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
-model_name = ['lffd_slim', 'lffd_original']
+model_name = ["lffd_slim", "lffd_original"]
 
 
 def fastface_backbone(model_name, pretrained, **kwargs):

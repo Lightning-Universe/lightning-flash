@@ -23,8 +23,8 @@ from flash.core.data.process import Preprocess, Serializer
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
-from flash.image.face_detection.data import FaceDetectionPreprocess
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
+from flash.image.face_detection.data import FaceDetectionPreprocess
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
