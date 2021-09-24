@@ -7,67 +7,93 @@ Flash Zero
 Flash Zero is a zero-code machine learning platform.
 Here's an image classification example to illustrate with one of the dozens tasks available.
 
-.. code-block:: bash
 
-    flash image_classification from_folders --train_folder ./hymenoptera_data/train
-
-
-See more tasks by running:
-
-.. code-block:: bash
-
-    flash --help
-
-3 steps to use Flash zero
-___________________________
+Flash Zero in 3 steps
+_____________________
 
 1. Select your task
+===================
 
 .. code-block:: bash
 
-    flash image_classification
-    # flash text_summarization
-    # flast ...
+    flash {TASK_NAME}
 
-2. Select the models and options for the task
+Here is the list of currently supported tasks.
 
 .. code-block:: bash
 
-    flash image_classification --trainer.max_epochs 10 --model.backbone resnet50
-    # flash text_summarization --trainer.max_epochs 10 --model.backbone bert
-    # flast ...
+    audio_classification     Classify audio spectrograms.
+    graph_classification     Classify graphs.
+    image_classification     Classify images.
+    instance_segmentation    Segment object instances in images.
+    keypoint_detection       Detect keypoints in images.
+    object_detection         Detect objects in images.
+    pointcloud_detection     Detect objects in point clouds.
+    pointcloud_segmentation  Segment objects in point clouds.
+    question_answering       Extractive Question Answering.
+    semantic_segmentation    Segment objects in images.
+    speech_recognition       Speech recognition.
+    style_transfer           Image style transfer.
+    summarization            Summarize text.
+    tabular_classification   Classify tabular data.
+    text_classification      Classify text.
+    translation              Translate text.
+    video_classification     Classify videos.
 
-3. Pass in your own data
 
-.. code-block:: bash
-
-    flash image_classification --trainer.max_epochs 10 --model.backbone resnet50 from_folders --train_folder ./hymenoptera_data/train
-
-
-Some examples:
-______________
-
-Image classification
+2. Pass in your own data
+========================
 
 .. code-block:: bash
 
     flash image_classification from_folders --train_folder ./hymenoptera_data/train
 
-Other task 2
+
+3. Modify the model and training parameters
+===========================================
 
 .. code-block:: bash
 
-    flash task_2 from_folders --train_folder ./hymenoptera_data/train
+    flash image_classification from_folders --train_folder ./hymenoptera_data/train --trainer.max_epochs 10 --model.backbone resnet50
 
-Other task 3
+To find all available parameters, use the following ``--help``.
 
 .. code-block:: bash
 
-    flash task_3 from_folders --train_folder ./hymenoptera_data/train
+    flash image_classification --help
+
+
+Other Examples
+______________
+
+Image Object Detection
+======================
+
+To train an Object Detector on `COCO 2017 dataset <https://cocodataset.org/>`_, you could use the following command:
+
+.. code-block:: bash
+
+    flash object_detection from_coco --train_folder data/coco128/images/train2017/ --train_ann_file data/coco128/annotations/instances_train2017.json --val_split .3 --batch_size 8 --num_workers 4
+
+The object_detection uses `IceVision <https://airctic.com/>`_ as its backend and therefore
+
+.. code-block:: bash
+
+    flash object_detection from_coco --train_folder data/coco128/images/train2017/ --train_ann_file data/coco128/annotations/instances_train2017.json --val_split .3 --batch_size 8 --num_workers 4
+
+Video Classification
+====================
+
+To train an Video Classifier on the `Kinetics dataset <https://deepmind.com/research/open-source/kinetics>`_, you could use the following command:
+
+
+.. code-block:: bash
+
+    flash video_classification from_folders --train_folder data/kinetics/train/ --clip_duration 1 --num_workers 0
+
 
 CLI options
 ___________
-
 
 Flash Zero is built on top of the
 `lightning CLI <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html>`_, so the trainer and
@@ -109,3 +135,44 @@ folders, you can run:
 .. code-block:: bash
 
     flash image_classification from_folders --help
+
+
+To find all available tasks, you can run:
+
+.. code-block:: bash
+
+    flash --help
+
+.. code-block:: bash
+
+    Commands:
+    audio_classification     Classify audio spectrograms.
+    graph_classification     Classify graphs.
+    image_classification     Classify images.
+    instance_segmentation    Segment object instances in images.
+    keypoint_detection       Detect keypoints in images.
+    object_detection         Detect objects in images.
+    pointcloud_detection     Detect objects in point clouds.
+    pointcloud_segmentation  Segment objects in point clouds.
+    question_answering       Extractive Question Answering.
+    semantic_segmentation    Segment objects in images.
+    speech_recognition       Speech recognition.
+    style_transfer           Image style transfer.
+    summarization            Summarize text.
+    tabular_classification   Classify tabular data.
+    text_classification      Classify text.
+    translation              Translate text.
+    video_classification     Classify videos.
+
+
+To get more information about a specific task, you can do the following:
+
+.. code-block:: bash
+
+    flash image_classification --help
+
+To generate a `config.yaml` file from the client to ease parameters modification, you can do the following:
+
+.. code-block:: bash
+
+    flash image_classification --print_config > config.yaml
