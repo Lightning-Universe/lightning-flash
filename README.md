@@ -274,7 +274,7 @@ For help or questions, join our huge community on [Slack](https://join.slack.com
 ---
 
 ## Citations
-We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and [fast.ai](https://arxiv.org/abs/2002.04688) (arXiv:2002.04688 - Jeremy Howard, Sylvain Gugger). When/if additional papers are written about this, we’ll be happy to cite these frameworks and the corresponding authors.
+We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and [fast.ai](https://arxiv.org/abs/2002.04688). When/if additional papers are written about this, we’ll be happy to cite these frameworks and the corresponding authors.
 
 Flash leverages models from many different frameworks in order to cover such a wide range of domains and tasks. The full list of providers can be found in [our documentation](https://lightning-flash.readthedocs.io/en/latest/integrations/providers.html).
 
