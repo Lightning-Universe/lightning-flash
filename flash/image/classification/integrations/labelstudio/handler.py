@@ -41,6 +41,8 @@ else:
 
 class ImageClassifierAPI(LabelStudioMLBase):
 
+    """This class is deploy a Flash Classifier to be used as ML backend to LabelStudio."""
+
     _IMAGE_CACHE_DIR: str
 
     requires("baal")
