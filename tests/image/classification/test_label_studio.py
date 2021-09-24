@@ -16,6 +16,7 @@ import os
 
 import pytest
 
+from flash import _PACKAGE_ROOT
 from flash.core.utilities.imports import _BAAL_AVAILABLE, _LABEL_STUDIO_ML_AVAILABLE
 from flash.image.classification.integrations.labelstudio.handler import ImageClassifierAPI
 
@@ -42,6 +43,8 @@ def test_image_classifier_api(tmpdir):
         "train_output": {"model_path": ""},
     }
     api = ImageClassifierAPI(source=__file__, **kwargs)
+    api._IMAGE_CACHE_DIR = os.path.join(_PACKAGE_ROOT, "data", "label_studio")
+    os.makedirs(api._IMAGE_CACHE_DIR, exist_ok=True)
 
     tasks = [
         {
