@@ -11,21 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Type, Union, Dict
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
-import torch
 import pytorch_lightning as pl
-
+import torch
 from torch import nn
 from torch.optim import Optimizer
 
-from flash.core.model import Task
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Postprocess
 from flash.core.data.process import Preprocess, Serializer
-from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.core.finetuning import FlashBaseFinetuning
-from flash.image.face_detection.data import FaceDetectionPreprocess, FaceDetectionPostProcess
+from flash.core.model import Task
+from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.image.face_detection.data import FaceDetectionPreprocess
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
@@ -48,7 +46,9 @@ class DetectionLabels(Serializer):
 
 
 class FaceDetector(Task):
-    """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images. For more details, see
+    """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images.
+
+    For more details, see
     :ref:`face_detection`.
     Args:
         model: a string of :attr`_models`. Defaults to 'lffd_slim'.

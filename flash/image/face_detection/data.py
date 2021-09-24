@@ -11,30 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Mapping
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 
 import torch
-import torchvision
 import torch.nn as nn
-
+import torchvision
 from torch.utils.data import Dataset
 
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Preprocess, Postprocess
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _ICEVISION_AVAILABLE, _FASTFACE_AVAILABLE
+from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.transforms import ApplyToKeys
+from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
-from flash.core.integrations.icevision.data import IceVisionParserDataSource
-from flash.core.integrations.icevision.transforms import default_transforms
 from flash.image.detection import ObjectDetectionData
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
-
-if _ICEVISION_AVAILABLE:
-    from icevision.parsers import COCOBBoxParser
-else:
-    COCOBBoxParser = object
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
@@ -77,7 +69,7 @@ class FastFaceDataSource(DatasetDataSource):
                         dict(
                             boxes=targets["target_boxes"],
                             labels=[1 for _ in range(targets["target_boxes"].shape[0])],
-                        )
+                        ),
                     )
                 )
             )
@@ -99,7 +91,6 @@ class FastFaceDataSource(DatasetDataSource):
 
 
 class FaceDetectionPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -137,9 +128,9 @@ class FaceDetectionPreprocess(Preprocess):
                 ApplyToKeys(
                     DefaultDataKeys.TARGET,
                     nn.Sequential(
-                        ApplyToKeys('boxes', torch.as_tensor),
-                        ApplyToKeys('labels', torch.as_tensor),
-                    )
+                        ApplyToKeys("boxes", torch.as_tensor),
+                        ApplyToKeys("labels", torch.as_tensor),
+                    ),
                 ),
             ),
             "collate": fastface_collate_fn,
@@ -149,11 +140,11 @@ class FaceDetectionPreprocess(Preprocess):
 class FaceDetectionPostProcess(Postprocess):
     @staticmethod
     def per_batch_transform(batch: Any) -> Any:
-        scales = batch['scales']
-        paddings = batch['paddings']
+        scales = batch["scales"]
+        paddings = batch["paddings"]
 
-        batch.pop('scales', None)
-        batch.pop('paddings', None)
+        batch.pop("scales", None)
+        batch.pop("paddings", None)
 
         preds = batch[DefaultDataKeys.PREDS]
 

@@ -164,7 +164,7 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
                 zip_ref.extractall(path)
     elif local_filename.endswith(".tar.gz") or local_filename.endswith(".tgz"):
         extract_tarfile(local_filename, path, "r:gz")
-    elif local_filename.endswith('.tar.bz2') or local_filename.endswith('.tbz'):
+    elif local_filename.endswith(".tar.bz2") or local_filename.endswith(".tbz"):
         extract_tarfile(local_filename, path, "r:bz2")
 
 

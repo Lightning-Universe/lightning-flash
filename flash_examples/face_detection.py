@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
-
-from flash.core.data.utils import download_data
-from flash.core.data.data_module import DataModule
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
-from flash.image import FaceDetector
-from flash.image.face_detection.data import FaceDetectionPreprocess, FaceDetectionPostProcess
-from flash.image import FaceDetectionData
+from flash.image import FaceDetectionData, FaceDetector
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
@@ -29,9 +24,7 @@ else:
 train_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="train")
 val_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="val")
 
-datamodule = FaceDetectionData.from_datasets(
-    train_dataset=train_dataset, val_dataset=val_dataset, batch_size=2
-)
+datamodule = FaceDetectionData.from_datasets(train_dataset=train_dataset, val_dataset=val_dataset, batch_size=2)
 
 # # 2. Build the task
 model = FaceDetector(model="lffd_slim")
@@ -41,11 +34,13 @@ trainer = flash.Trainer(max_epochs=3, limit_train_batches=0.1, limit_val_batches
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect faces in a few images!
-predictions = model.predict([
-    "data/2002/07/19/big/img_18.jpg",
-    "data/2002/07/19/big/img_65.jpg",
-    "data/2002/07/19/big/img_255.jpg",
-])
+predictions = model.predict(
+    [
+        "data/2002/07/19/big/img_18.jpg",
+        "data/2002/07/19/big/img_65.jpg",
+        "data/2002/07/19/big/img_255.jpg",
+    ]
+)
 print(predictions)
 
 # # 5. Save the model!
