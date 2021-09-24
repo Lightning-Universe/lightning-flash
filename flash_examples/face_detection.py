@@ -12,30 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import flash
+
+from flash.core.data.utils import download_data
 from flash.core.data.data_module import DataModule
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.image import FaceDetector
-from flash.image.face_detection.data import FaceDetectionPreprocess
+from flash.image.face_detection.data import FaceDetectionPreprocess, FaceDetectionPostProcess
+from flash.image import FaceDetectionData
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
 else:
-    raise ModuleNotFoundError("Please, pip install -e '.[image]'")
+    raise ModuleNotFoundError("Please, pip install --upgrade 'lightning-flash[image_extras]'")
 
-# 1. Create the DataModule
+# # 1. Create the DataModule
 train_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="train")
 val_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="val")
 
-datamodule = DataModule.from_data_source(
-    "fastface", train_data=train_dataset, val_data=val_dataset, preprocess=FaceDetectionPreprocess()
+datamodule = FaceDetectionData.from_datasets(
+    train_dataset=train_dataset, val_dataset=val_dataset, batch_size=2
 )
 
-# 2. Build the task
+# # 2. Build the task
 model = FaceDetector(model="lffd_slim")
 
-# 3. Create the trainer and finetune the model
+# # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, limit_train_batches=0.1, limit_val_batches=0.1)
-
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect faces in a few images!
@@ -46,5 +48,5 @@ predictions = model.predict([
 ])
 print(predictions)
 
-# 5. Save the model!
+# # 5. Save the model!
 trainer.save_checkpoint("face_detection_model.pt")
