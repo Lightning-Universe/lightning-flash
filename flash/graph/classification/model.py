@@ -88,8 +88,10 @@ class GraphClassifier(ClassificationTask):
             self.backbone = self.backbones.get(backbone)(in_channels=num_features, **backbone_kwargs)
             num_out_features = self.backbone.hidden_channels
 
-        head = head(num_out_features, num_classes) if isinstance(head, FunctionType) else head
-        self.head = head or default_head(num_out_features, num_classes)
+        if head is not None:
+            self.head = head
+        else:
+            self.head = default_head(num_out_features, num_classes)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
