@@ -129,6 +129,41 @@ dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
 predictions = trainer.predict(model, dm)
 ```
 
+### Flash Training Strategies
+
+Training strategies are PyTorch SOTA Training Recipes which can be utilized with a given task.
+
+
+Check out this [example](https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/integrations/learn2learn/image_classification_imagenette_mini.py) where the `ImageClassifier` supports 4 [Meta Learning Algorithms](https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html) from [Learn2Learn](https://github.com/learnables/learn2learn).
+This is particularly useful if you use this model in production and want to make sure the model adapts quickly to its new environment with minimal labelled data.
+
+```py
+model = ImageClassifier(
+    backbone="resnet18",
+    optimizer=torch.optim.Adam,
+    optimizer_kwargs={"lr": 0.001},
+    training_strategy="prototypicalnetworks",
+    training_strategy_kwargs={
+        "epoch_length": 10 * 16,
+        "meta_batch_size": 4,
+        "num_tasks": 200,
+        "test_num_tasks": 2000,
+        "ways": datamodule.num_classes,
+        "shots": 1,
+        "test_ways": 5,
+        "test_shots": 1,
+        "test_queries": 15,
+    },
+)
+```
+
+In detail, the following methods are currently implemented:
+
+* **[prototypicalnetworks](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_protonet.py)** : from Snell *et al.* 2017, [Prototypical Networks for Few-shot Learning](https://arxiv.org/abs/1703.05175)
+* **[maml](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_maml.py)** : from Finn *et al.* 2017, [Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks](https://arxiv.org/abs/1703.03400)
+* **[metaoptnet](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_metaoptnet.py)** : from Lee *et al.* 2019, [Meta-Learning with Differentiable Convex Optimization](https://arxiv.org/abs/1904.03758)
+* **[anil](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_anil.py)** : from Raghu *et al.* 2020, [Rapid Learning or Feature Reuse? Towards Understanding the Effectiveness of MAML](https://arxiv.org/abs/1909.09157)
+
 ### Flash Transforms
 
 
@@ -212,6 +247,7 @@ For example, to train an image classifier for 10 epochs with a `resnet50` backbo
 
 ## News
 
+- Sept 9: [Lightning Flash 0.5](https://devblog.pytorchlightning.ai/flash-0-5-your-pytorch-ai-factory-81b172ff0d76)
 - Jul 12: Flash Task-a-thon community sprint with 25+ community members
 - Jul 1: [Lightning Flash 0.4](https://devblog.pytorchlightning.ai/lightning-flash-0-4-flash-serve-fiftyone-multi-label-text-classification-and-jit-support-97428276c06f)
 - Jun 22: [Ushering in the New Age of Video Understanding with PyTorch](https://medium.com/pytorch/ushering-in-the-new-age-of-video-understanding-with-pytorch-1d85078e8015)
@@ -238,7 +274,7 @@ For help or questions, join our huge community on [Slack](https://join.slack.com
 ---
 
 ## Citations
-We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
+We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and [fast.ai](https://arxiv.org/abs/2002.04688). When/if additional papers are written about this, we’ll be happy to cite these frameworks and the corresponding authors.
 
 Flash leverages models from many different frameworks in order to cover such a wide range of domains and tasks. The full list of providers can be found in [our documentation](https://lightning-flash.readthedocs.io/en/latest/integrations/providers.html).
 
