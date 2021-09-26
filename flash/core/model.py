@@ -45,6 +45,7 @@ from flash.core.data.process import (
     SerializerMapping,
 )
 from flash.core.data.properties import ProcessState
+from flash.core.hooks import FineTuningHook
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
@@ -292,7 +293,7 @@ class OutputKeys(LightningEnum):
         return hash(self.value)
 
 
-class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=CheckDependenciesMeta):
+class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
