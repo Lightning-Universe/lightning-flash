@@ -49,6 +49,7 @@ from flash.core.data.properties import ProcessState
 from flash.core.optimizers import _OPTIMIZERS_REGISTRY, _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
+from flash.core.utilities import providers
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
 
@@ -824,36 +825,50 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return round(num_warmup_steps)
 
     def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
-        if isinstance(self.scheduler, Tuple):
-            scheduler_key = self.scheduler[0]
-            scheduler_args = self.scheduler[1]
-            return self.schedulers.get(scheduler_key)(optimizer, *scheduler_args)
+        if isinstance(self.scheduler, Callable):
+            return self.scheduler(optimizer)
 
         if isinstance(self.scheduler, str):
-            self.scheduler = self.schedulers.get(self.scheduler)  # , with_metadata=True)
+            return self.schedulers.get(self.scheduler)(optimizer)
 
-            # If provider is `huggingface`, then maybe use
-        # else:
-        #     # Otherwise self.scheduler is a Callable
-        #     pass
+        if not isinstance(self.scheduler, Tuple):
+            raise TypeError("")  # Add message
 
-        # if isinstance(scheduler, Callable):
-        #     return scheduler(optimizer)
-        # if isinstance(scheduler, str):
-        #     scheduler_fn = self.schedulers.get(self.scheduler)
-        #     num_training_steps: int = self.get_num_training_steps()
-        #     num_warmup_steps: int = self._compute_warmup(
-        #         num_training_steps=num_training_steps,
-        #         num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
-        #     )
-        #     return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-        # # if issubclass(scheduler, _LRScheduler):
-        # #     return scheduler(optimizer, **self.scheduler_kwargs)
-        # raise MisconfigurationException(
-        #     "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
-        #     f"or a built-in scheduler in {self.available_schedulers()}"
-        # )
-        return self.scheduler(optimizer)
+        # By default it is Tuple[str, Tuple[Any, ...]] type now.
+        scheduler_key = self.scheduler[0]
+        scheduler_args = self.scheduler[1]
+
+        scheduler = self.schedulers.get(scheduler_key, with_metadata=True)
+        scheduler_fn = scheduler["fn"]
+        scheduler_metadata = scheduler["metadata"]
+
+        if "providers" in scheduler_metadata.keys():
+            if scheduler_metadata["providers"] == providers._HUGGINGFACE:
+                num_training_steps: int = self.get_num_training_steps()
+                num_warmup_steps: int = self._compute_warmup(
+                    num_training_steps=num_training_steps,
+                    num_warmup_steps=scheduler_args[0],  # num_warmup_steps is the first arg in all schedulers
+                )
+                if scheduler["name"] == "constant_schedule_with_warmup":
+                    scheduler_args = (num_warmup_steps, *scheduler_args[1:])
+                else:
+                    scheduler_args = (num_warmup_steps, num_training_steps, *scheduler_args[1:])
+
+            # if isinstance(scheduler, str):
+            #     scheduler_fn = self.schedulers.get(self.scheduler)
+            #     num_training_steps: int = self.get_num_training_steps()
+            #     num_warmup_steps: int = self._compute_warmup(
+            #         num_training_steps=num_training_steps,
+            #         num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
+            #     )
+            #     return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
+            # # if issubclass(scheduler, _LRScheduler):
+            # #     return scheduler(optimizer, **self.scheduler_kwargs)
+            # raise MisconfigurationException(
+            #     "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
+            #     f"or a built-in scheduler in {self.available_schedulers()}"
+            # )
+        return scheduler_fn(optimizer, *scheduler_args)
 
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs

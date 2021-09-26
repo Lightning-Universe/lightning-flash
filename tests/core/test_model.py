@@ -302,9 +302,8 @@ def custom_steplr_configuration(optimizer):
         ("StepLR", (1,)),
     ],
 )
-def test_optimization(tmpdir, optim, sched):
+def test_optimizers_and_schedulers(tmpdir, optim, sched):
 
-    # Test optimizer: str and scheduler = None
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     task = ClassificationTask(model, optimizer=optim, scheduler=sched)
 
@@ -316,88 +315,31 @@ def test_optimization(tmpdir, optim, sched):
         assert isinstance(optimizer[0], torch.optim.Adadelta)
         assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
 
-    # # Test optimizer: Callable and scheduler = None
-    # task = ClassificationTask(model, optimizer=functools.partial(torch.optim.Adadelta, eps=0.5), scheduler=None)
-    # optimizer = task.configure_optimizers()
-    # assert isinstance(optimizer, torch.optim.Adadelta)
-    # assert optimizer.defaults["eps"] == 0.5
 
-    # # Test optimizer: str and scheduler: Callable
-    # task = ClassificationTask(
-    #     model,
-    #     optimizer="Adadelta",
-    #     scheduler=functools.partial(torch.optim.lr_scheduler.StepLR, step_size=1),
-    # )
+@pytest.mark.parametrize("optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5)])
+@pytest.mark.parametrize(
+    "sched",
+    [
+        "constant_schedule",
+        ("cosine_schedule_with_warmup", (0.1,)),
+        ("cosine_with_hard_restarts_schedule_with_warmup", (0.1, 3)),
+    ],
+)
+def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
 
-    # # Test optimizer: Callable and scheduler: Callable
-    # optim = functools.partial(torch.optim.Adadelta)
-    # scheduler =
-    # task = ClassificationTask(model, optimizer=optim, scheduler=scheduler)
-    # optimizer, scheduler = task.configure_optimizers()
-    # assert isinstance(optimizer[0], torch.optim.Adadelta)
-    # assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
-
-    # # Test optimizer: str and scheduler: Tuple
-    # task = ClassificationTask(
-    #     model,
-    #     optimizer="Adadelta",
-    #     scheduler=,
-    # )
-    # optimizer, scheduler = task.configure_optimizers()
-    # assert isinstance(optimizer[0], torch.optim.Adadelta)
-    # assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
-
-    # # Test optimizer: Callable and scheduler: Tuple
-    # optim = functools.partial(torch.optim.Adadelta)
-    # scheduler = ("StepLR", (1,))
-    # task = ClassificationTask(model, optimizer=optim, scheduler=scheduler)
-    # optimizer, scheduler = task.configure_optimizers()
-    # assert isinstance(optimizer[0], torch.optim.Adadelta)
-    # assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
-
-    # # Test optimizer: str and scheduler: str
-    # task = ClassificationTask(
-    #     model,
-    #     optimizer="Adadelta",
-    #     scheduler="custom_steplr_configuration",
-    # )
-    # optimizer, scheduler = task.configure_optimizers()
-    # assert isinstance(optimizer[0], torch.optim.Adadelta)
-    # assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
-
-    # # Test optimizer: Callable and scheduler: str
-    # optim = functools.partial(torch.optim.Adadelta)
-    # scheduler = "custom_steplr_configuration"
-    # task = ClassificationTask(model, optimizer=optim, scheduler=scheduler)
-    # optimizer, scheduler = task.configure_optimizers()
-    # assert isinstance(optimizer[0], torch.optim.Adadelta)
-    # assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
-
-    # if _TEXT_AVAILABLE:
-    #     from transformers.optimization import get_linear_schedule_with_warmup
-
-    #     assert isinstance(task.available_schedulers(), list)
-
-    #     optim = functools.partial(torch.optim.Adadelta)
     #     with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
     #         task = ClassificationTask(model, optimizer=optim, scheduler="linear_schedule_with_warmup")
     #         optimizer, scheduler = task.configure_optimizers()
 
-    #     task = ClassificationTask(
-    #         model,
-    #         optimizer=optim,
-    #         scheduler=("linear_schedule_with_warmup", ()),
-    #         scheduler_kwargs={"num_warmup_steps": 0.1},
-    #         loss_fn=F.nll_loss,
-    #     )
-    #     trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
-    #     ds = DummyDataset()
-    #     trainer.fit(task, train_dataloader=DataLoader(ds))
-    #     optimizer, scheduler = task.configure_optimizers()
-    #     assert isinstance(optimizer[0], torch.optim.Adadelta)
-    #     assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
-    #     expected = get_linear_schedule_with_warmup.__name__
-    #     assert scheduler[0].lr_lambdas[0].__qualname__.split(".")[0] == expected
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+    task = ClassificationTask(model, optimizer=optim, scheduler=sched, loss_fn=F.nll_loss)
+    trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
+    ds = DummyDataset()
+    trainer.fit(task, train_dataloader=DataLoader(ds))
+
+    optimizer, scheduler = task.configure_optimizers()
+    assert isinstance(optimizer[0], torch.optim.Adadelta)
+    assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
 
 
 def test_classification_task_metrics():
