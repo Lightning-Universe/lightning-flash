@@ -12,24 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Callable
-
-from asteroid.models.base_models import BaseModel
-from torch import nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ASTEROID_AVAILABLE
+from flash.core.utilities.providers import _ASTEROID
+
+ASTEROID_BACKBONES = FlashRegistry("backbones")
+
 
 if _ASTEROID_AVAILABLE:
+
     import asteroid.models as ast
     from asteroid.models import BaseModel
 
     ASTEROID_BACKBONE_CLASS = [ast.ConvTasNet, ast.DPRNNTasNet]
     ASTEROID_CLASSES = {a.__name__.lower(): a for a in ASTEROID_BACKBONE_CLASS}
-
-ASTEROID_BACKBONES = FlashRegistry("backbones")
-
-if _ASTEROID_AVAILABLE:
 
     def _load_asteroid_model(
         backbone: str,
@@ -53,6 +50,7 @@ if _ASTEROID_AVAILABLE:
             name=backbone,
             namespace="audio/sourceseparation",
             package="asteroid",
+            providers=_ASTEROID,
         )
 
     def _load_pretrained_model(
@@ -72,11 +70,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri1mix_enhsingle_16k",
             n_src=1,
-            url="JorisCos/ConvTasNet_Libri1Mix_enhsingle_16k"
+            url="JorisCos/ConvTasNet_Libri1Mix_enhsingle_16k",
         ),
         name="convtasnet_libri1mix_enhsingle_16k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -84,11 +83,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri2mix_sepclean_16k",
             n_src=2,
-            url="JorisCos/ConvTasNet_Libri2Mix_sepclean_16k"
+            url="JorisCos/ConvTasNet_Libri2Mix_sepclean_16k",
         ),
         name="convtasnet_libri2mix_sepclean_16k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -96,11 +96,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri2mix_sepclean_8k",
             n_src=2,
-            url="JorisCos/ConvTasNet_Libri2Mix_sepclean_8k"
+            url="JorisCos/ConvTasNet_Libri2Mix_sepclean_8k",
         ),
         name="convtasnet_libri2mix_sepclean_8k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -108,11 +109,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri2mix_sepnoisy_16k",
             n_src=2,
-            url="JorisCos/ConvTasNet_Libri2Mix_sepnoisy_16k"
+            url="JorisCos/ConvTasNet_Libri2Mix_sepnoisy_16k",
         ),
         name="convtasnet_libri2mix_sepnoisy_16k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -120,11 +122,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri2mix_sepnoisy_8k",
             n_src=2,
-            url="JorisCos/ConvTasNet_Libri2Mix_sepnoisy_8k"
+            url="JorisCos/ConvTasNet_Libri2Mix_sepnoisy_8k",
         ),
         name="convtasnet_libri2mix_sepnoisy_8k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -132,11 +135,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri3mix_sepclean_16k",
             n_src=3,
-            url="JorisCos/ConvTasNet_Libri3Mix_sepclean_16k"
+            url="JorisCos/ConvTasNet_Libri3Mix_sepclean_16k",
         ),
         name="convtasnet_libri3mix_sepclean_16k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -144,11 +148,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri3mix_sepclean_8k",
             n_src=3,
-            url="JorisCos/ConvTasNet_Libri3Mix_sepclean_8k"
+            url="JorisCos/ConvTasNet_Libri3Mix_sepclean_8k",
         ),
         name="convtasnet_libri3mix_sepclean_8k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -156,11 +161,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri3mix_sepnoisy_16k",
             n_src=3,
-            url="JorisCos/ConvTasNet_Libri3Mix_sepnoisy_16k"
+            url="JorisCos/ConvTasNet_Libri3Mix_sepnoisy_16k",
         ),
         name="convtasnet_libri3mix_sepnoisy_16k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -168,11 +174,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="convtasnet_libri3mix_sepnoisy_8k",
             n_src=3,
-            url="JorisCos/ConvTasNet_Libri3Mix_sepnoisy_8k"
+            url="JorisCos/ConvTasNet_Libri3Mix_sepnoisy_8k",
         ),
         name="convtasnet_libri3mix_sepnoisy_8k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -180,11 +187,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="dprnntasnet-ks2_libri1mix_enhsingle_16k",
             n_src=1,
-            url="JorisCos/DPRNNTasNet-ks2_Libri1Mix_enhsingle_16k"
+            url="JorisCos/DPRNNTasNet-ks2_Libri1Mix_enhsingle_16k",
         ),
         name="dprnntasnet-ks2_libri1mix_enhsingle_16k",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -192,11 +200,12 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="dprnntasnet-ks16_wham_sepclean",
             n_src=2,
-            url="julien-c/DPRNNTasNet-ks16_WHAM_sepclean"
+            url="julien-c/DPRNNTasNet-ks16_WHAM_sepclean",
         ),
         name="dprnntasnet-ks16_wham_sepclean",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
 
     ASTEROID_BACKBONES(
@@ -204,9 +213,10 @@ if _ASTEROID_AVAILABLE:
             _load_pretrained_model,
             backbone="dprnntasnet-ks2_wham_sepclean",
             n_src=2,
-            url="mpariente/DPRNNTasNet-ks2_WHAM_sepclean"
+            url="mpariente/DPRNNTasNet-ks2_WHAM_sepclean",
         ),
         name="dprnntasnet-ks2_wham_sepclean",
         namespace="audio/sourceseparation",
         package="asteroid",
+        providers=_ASTEROID,
     )
