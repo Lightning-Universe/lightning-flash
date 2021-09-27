@@ -82,7 +82,7 @@ class ImageClassifier(ClassificationAdapterTask):
         pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
         scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,

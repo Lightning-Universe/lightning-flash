@@ -164,6 +164,25 @@ In detail, the following methods are currently implemented:
 * **[metaoptnet](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_metaoptnet.py)** : from Lee *et al.* 2019, [Meta-Learning with Differentiable Convex Optimization](https://arxiv.org/abs/1904.03758)
 * **[anil](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_anil.py)** : from Raghu *et al.* 2020, [Rapid Learning or Feature Reuse? Towards Understanding the Effectiveness of MAML](https://arxiv.org/abs/1909.09157)
 
+
+### Flash Optimizers / Schedulers
+
+With Flash, swapping among 40+ optimizers and 15 + schedulers recipes are simple. Find the list of available optimizers, schedulers as follows:
+
+```py
+ImageClassifier.available_optimizers()
+# ['A2GradExp', ..., 'Yogi']
+
+ImageClassifier.available_schedulers()
+# ['CosineAnnealingLR', 'CosineAnnealingWarmRestarts', ..., 'polynomial_decay_schedule_with_warmup']
+```
+
+Once you've chosen, create the model:
+
+```py
+model = ImageClassifier(backbone="resnet18", optimizer='yogi', scheduler="cosine_with_hard_restarts_schedule_with_warmup", num_classes=2)
+```
+
 ### Flash Transforms
 
 

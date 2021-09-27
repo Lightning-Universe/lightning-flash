@@ -23,6 +23,7 @@ import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
+import torchmetrics
 from pytorch_lightning.callbacks import Callback
 
 # from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -148,7 +149,7 @@ class AdapterParent(Parent):
 # ================================
 
 
-@pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])
+@pytest.mark.parametrize("metrics", [None, torchmetrics.Accuracy(), {"accuracy": torchmetrics.Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -300,12 +301,20 @@ def custom_steplr_configuration(optimizer):
         "custom_steplr_configuration",
         functools.partial(torch.optim.lr_scheduler.StepLR, step_size=1),
         ("StepLR", (1,)),
+        (
+            {
+                "scheduler": "StepLR",
+                "interval": None,  # after epoch is over
+            },
+            (1,),
+        ),
     ],
 )
 def test_optimizers_and_schedulers(tmpdir, optim, sched):
 
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     task = ClassificationTask(model, optimizer=optim, scheduler=sched)
+    train_dl = torch.utils.data.DataLoader(DummyDataset())
 
     if sched is None:
         optimizer = task.configure_optimizers()
@@ -313,7 +322,20 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched):
     else:
         optimizer, scheduler = task.configure_optimizers()
         assert isinstance(optimizer[0], torch.optim.Adadelta)
-        assert isinstance(scheduler[0], torch.optim.lr_scheduler.StepLR)
+        scheduler = scheduler[0]
+        if isinstance(scheduler, dict):
+            assert isinstance(scheduler["scheduler"], torch.optim.lr_scheduler.StepLR)
+            assert scheduler["interval"] == "step"
+        else:
+            assert isinstance(scheduler, torch.optim.lr_scheduler.StepLR)
+
+    # generate a checkpoint
+    trainer = flash.Trainer(
+        default_root_dir=tmpdir,
+        limit_train_batches=10,
+        max_epochs=1,
+    )
+    trainer.fit(task, train_dl)
 
 
 @pytest.mark.parametrize("optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5)])

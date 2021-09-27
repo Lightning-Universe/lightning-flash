@@ -24,6 +24,7 @@ import torch
 import torchmetrics
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
+from pytorch_lightning.trainer.optimizers import _get_default_scheduler_config
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -316,7 +317,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         learning_rate: float = 5e-5,
         optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
         # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[str, Callable, Tuple[str, Tuple[Any, ...]]]] = None,
+        scheduler: Optional[
+            Union[Union[str, Dict[str, Any]], Callable, Tuple[Union[str, Dict[str, Any]], Tuple[Any, ...]]]
+        ] = None,
         # scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
@@ -331,9 +334,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self.optimizer = optimizer
         self.scheduler = scheduler
         if isinstance(self.scheduler, Tuple):
-            assert isinstance(self.scheduler[0], str)
-        # self.optimizer_kwargs: Dict[str, Any] = optimizer_kwargs or {}
-        # self.scheduler_kwargs: Dict[str, Any] = scheduler_kwargs or {}
+            assert isinstance(self.scheduler[0], (str, dict))
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
@@ -479,7 +480,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         if isinstance(self.optimizer, str):
-            self.optimizer = self.optimizers.get(self.optimizer)
+            self.optimizer = self.optimizers.get(self.optimizer.lower())
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         optimizer: Optimizer = self.optimizer(model_parameters, lr=self.learning_rate)
@@ -783,6 +784,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return list(inspect.signature(registry.get(key)).parameters.items())
 
     @classmethod
+    def available_optimizers(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "optimizers", None)
+        if registry is None:
+            return []
+        return registry.available_keys()
+
+    @classmethod
     def available_schedulers(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "schedulers", None)
         if registry is None:
@@ -824,7 +832,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             num_warmup_steps *= num_training_steps
         return round(num_warmup_steps)
 
-    def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
+    def _instantiate_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
         if isinstance(self.scheduler, Callable):
             return self.scheduler(optimizer)
 
@@ -832,13 +840,22 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             return self.schedulers.get(self.scheduler)(optimizer)
 
         if not isinstance(self.scheduler, Tuple):
-            raise TypeError("")  # Add message
+            raise TypeError("The scheduler arguments should be provided as a tuple.")
 
-        # By default it is Tuple[str, Tuple[Any, ...]] type now.
-        scheduler_key = self.scheduler[0]
+        scheduler_key_or_config = self.scheduler[0]
         scheduler_args = self.scheduler[1]
 
-        scheduler = self.schedulers.get(scheduler_key, with_metadata=True)
+        if isinstance(scheduler_key_or_config, dict):
+            scheduler_key = scheduler_key_or_config["scheduler"]
+            scheduler_config = scheduler_key_or_config
+        else:
+            scheduler_key = scheduler_key_or_config
+            scheduler_config = _get_default_scheduler_config()
+            scheduler_config["interval"] = None
+
+        scheduler_config = deepcopy(scheduler_config)
+
+        scheduler = self.schedulers.get(scheduler_key.lower(), with_metadata=True)
         scheduler_fn = scheduler["fn"]
         scheduler_metadata = scheduler["metadata"]
 
@@ -854,21 +871,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
                 else:
                     scheduler_args = (num_warmup_steps, num_training_steps, *scheduler_args[1:])
 
-            # if isinstance(scheduler, str):
-            #     scheduler_fn = self.schedulers.get(self.scheduler)
-            #     num_training_steps: int = self.get_num_training_steps()
-            #     num_warmup_steps: int = self._compute_warmup(
-            #         num_training_steps=num_training_steps,
-            #         num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
-            #     )
-            #     return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-            # # if issubclass(scheduler, _LRScheduler):
-            # #     return scheduler(optimizer, **self.scheduler_kwargs)
-            # raise MisconfigurationException(
-            #     "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
-            #     f"or a built-in scheduler in {self.available_schedulers()}"
-            # )
-        return scheduler_fn(optimizer, *scheduler_args)
+        scheduler_config["scheduler"] = scheduler_fn(optimizer, *scheduler_args)
+        scheduler_config["interval"] = scheduler_config["interval"] or scheduler_metadata["interval"]
+        return scheduler_config
 
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs

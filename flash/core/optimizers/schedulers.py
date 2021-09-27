@@ -2,13 +2,21 @@ import inspect
 from typing import Callable, List
 
 from torch.optim import lr_scheduler
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import (
+    _LRScheduler,
+    CosineAnnealingLR,
+    CosineAnnealingWarmRestarts,
+    CyclicLR,
+    MultiStepLR,
+    StepLR,
+)
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 
 _SCHEDULERS_REGISTRY = FlashRegistry("scheduler")
+_STEP_SCHEDULERS = (StepLR, MultiStepLR, CosineAnnealingLR, CyclicLR, CosineAnnealingWarmRestarts)
 
 schedulers: List[_LRScheduler] = []
 for n in dir(lr_scheduler):
@@ -19,7 +27,8 @@ for n in dir(lr_scheduler):
 
 
 for scheduler in schedulers:
-    _SCHEDULERS_REGISTRY(scheduler, name=scheduler.__name__)
+    interval = "step" if issubclass(scheduler, _STEP_SCHEDULERS) else "epoch"
+    _SCHEDULERS_REGISTRY(scheduler, name=scheduler.__name__.lower(), interval=interval)
 
 if _TRANSFORMERS_AVAILABLE:
     from transformers import optimization
@@ -30,4 +39,4 @@ if _TRANSFORMERS_AVAILABLE:
             functions.append(getattr(optimization, n))
 
     for fn in functions:
-        _SCHEDULERS_REGISTRY(fn, name=fn.__name__[4:], providers=_HUGGINGFACE)
+        _SCHEDULERS_REGISTRY(fn, name=fn.__name__[4:].lower(), providers=_HUGGINGFACE, interval="step")
