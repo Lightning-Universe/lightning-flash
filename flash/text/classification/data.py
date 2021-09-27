@@ -517,7 +517,8 @@ class TextClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given Python list.
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given Python
+        list.
 
         Args:
             train_data: A list to use as the train inputs.
