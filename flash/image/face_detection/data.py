@@ -33,7 +33,9 @@ if _FASTFACE_AVAILABLE:
 
 
 def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence[Any]]:
-    """"""
+    """Collate function from fastface.
+    Organizes individual elements in a batch, calls prepare_batch from fastface and prepares the targets.
+    """
     samples = {key: [sample[key] for sample in samples] for key in samples[0]}
 
     images, scales, paddings = ff.utils.preprocess.prepare_batch(
@@ -60,6 +62,8 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
 
 
 class FastFaceDataSource(DatasetDataSource):
+    """Logic for loading from FDDBDataset.
+    """
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
         new_data = []
         for img_file_path, targets in zip(data.ids, data.targets):
@@ -92,6 +96,8 @@ class FastFaceDataSource(DatasetDataSource):
 
 
 class FaceDetectionPreprocess(Preprocess):
+    """Applies default transform and collate_fn for fastface on FastFaceDataSource
+    """
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -139,6 +145,8 @@ class FaceDetectionPreprocess(Preprocess):
 
 
 class FaceDetectionPostProcess(Postprocess):
+    """Generates preds from model output.
+    """
     @staticmethod
     def per_batch_transform(batch: Any) -> Any:
         scales = batch["scales"]
