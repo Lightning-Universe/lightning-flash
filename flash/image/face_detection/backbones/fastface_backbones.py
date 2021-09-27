@@ -19,8 +19,9 @@ from flash.core.utilities.imports import _FASTFACE_AVAILABLE, requires
 if _FASTFACE_AVAILABLE:
     import fastface as ff
 
-
-_MODEL_NAMES = ff.list_pretrained_models()
+    _MODEL_NAMES = ff.list_pretrained_models()
+else:
+    _MODEL_NAMES = []
 
 
 def fastface_backbone(model_name, pretrained, **kwargs):
