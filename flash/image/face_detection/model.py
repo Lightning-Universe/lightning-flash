@@ -42,8 +42,7 @@ class DetectionLabels(Serializer):
     """A :class:`.Serializer` which extracts predictions from sample dict."""
 
     def serialize(self, sample: Any) -> Dict[str, Any]:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        return sample
+        return sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
 
 
 class FaceDetector(Task):
