@@ -21,6 +21,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
@@ -56,12 +57,12 @@ def test_smoke():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.parametrize("num_classes", [8, 256])
-@pytest.mark.parametrize("img_shape", [(1, 3, 224, 192), (2, 3, 127, 212)])
+@pytest.mark.parametrize("img_shape", [(1, 3, 224, 192), (2, 3, 128, 256)])
 def test_forward(num_classes, img_shape):
     model = SemanticSegmentation(
         num_classes=num_classes,
         backbone="resnet50",
-        head="fcn",
+        head="fpn",
     )
 
     B, C, H, W = img_shape
@@ -103,28 +104,28 @@ def test_unfreeze():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_predict_tensor():
-    img = torch.rand(1, 3, 10, 20)
-    model = SemanticSegmentation(2)
+    img = torch.rand(1, 3, 64, 64)
+    model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
-    assert len(out[0]) == 10
-    assert len(out[0][0]) == 20
+    assert len(out[0]) == 64
+    assert len(out[0][0]) == 64
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_predict_numpy():
-    img = np.ones((1, 3, 10, 20))
-    model = SemanticSegmentation(2)
+    img = np.ones((1, 3, 64, 64))
+    model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
     out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
-    assert len(out[0]) == 10
-    assert len(out[0][0]) == 20
+    assert len(out[0]) == 64
+    assert len(out[0][0]) == 64
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32), ))])
+@pytest.mark.parametrize("jitter, args", [(torch.jit.trace, (torch.rand(1, 3, 32, 32),))])
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 
@@ -155,3 +156,18 @@ def test_serve():
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         SemanticSegmentation.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_available_pretrained_weights():
+    assert SemanticSegmentation.available_pretrained_weights("resnet18") == ["imagenet", "ssl", "swsl"]
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "semantic_segmentation", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

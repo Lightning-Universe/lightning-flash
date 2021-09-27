@@ -22,7 +22,6 @@ from flash.core.data.data_source import DataSource
 
 
 class _AutoDatasetTestDataSource(DataSource):
-
     def __init__(self, with_dset: bool):
         self._callbacks: List[FlashCallback] = []
         self.load_data_count = 0

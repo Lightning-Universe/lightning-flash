@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Multi-label Image Classification
+   :card_description: Learn to classify images in a multi-label setting with Flash and build an example classifier which predicts genres from movie posters.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/multi_label_image_classification.svg
+   :tags: Image,Multi-label,Classification
 
 .. _image_classification_multi_label:
 
@@ -48,6 +53,27 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/image_classification_multi_label.py
     :language: python
     :lines: 14-
+
+
+------
+
+**********
+Flash Zero
+**********
+
+The multi-label image classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the movie posters example with:
+
+.. code-block:: bash
+
+    flash image_classification from_movie_posters
+
+To view configuration options and options for running the image classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash image_classification --help
+
 
 ------
 

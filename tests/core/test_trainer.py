@@ -17,6 +17,7 @@ from typing import Any
 import pytest
 import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
@@ -24,10 +25,10 @@ from torch.nn import functional as F
 from flash import Trainer
 from flash.core.classification import ClassificationTask
 from flash.core.finetuning import NoFreeze
+from tests.helpers.boring_model import BoringModel
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __init__(self, predict: bool = False):
         self._predict = predict
 
@@ -35,14 +36,13 @@ class DummyDataset(torch.utils.data.Dataset):
         sample = torch.rand(1, 28, 28)
         if self._predict:
             return sample
-        return sample, torch.randint(10, size=(1, )).item()
+        return sample, torch.randint(10, size=(1,)).item()
 
     def __len__(self) -> int:
         return 100
 
 
 class DummyClassifier(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.backbone = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
@@ -85,7 +85,6 @@ def test_resolve_callbacks_invalid_strategy(tmpdir):
 
 
 class MultiFinetuneClassificationTask(ClassificationTask):
-
     def configure_finetune_callback(self):
         return [NoFreeze(), NoFreeze()]
 
@@ -99,7 +98,6 @@ def test_resolve_callbacks_multi_error(tmpdir):
 
 
 class FinetuneClassificationTask(ClassificationTask):
-
     def configure_finetune_callback(self):
         return [NoFreeze()]
 
@@ -115,14 +113,71 @@ def test_resolve_callbacks_override_warning(tmpdir):
 def test_add_argparse_args():
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    args = parser.parse_args(['--gpus=1'])
+    args = parser.parse_args(["--gpus=1"])
     assert args.gpus == 1
 
 
 def test_from_argparse_args():
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
-    args = parser.parse_args(['--max_epochs=200'])
+    args = parser.parse_args(["--max_epochs=200"])
     trainer = Trainer.from_argparse_args(args)
     assert trainer.max_epochs == 200
     assert isinstance(trainer, Trainer)
+
+
+@pytest.mark.parametrize("stage", ["train", "val", "test"])
+def test_trainer_request_dataloaders_legacy(stage):
+    """Test to ensure that ``request_dataloaders`` can take the legacy PL ordering of arguments.
+
+    legacy: (model, stage)
+    """
+
+    class TestTrainer(Trainer):
+        recorded_on_dataloader_calls = {}
+
+        def on_train_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls["train"] = True
+
+        def on_val_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls["val"] = True
+
+        def on_test_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls["test"] = True
+
+    model = BoringModel()
+    trainer = TestTrainer()
+
+    trainer.request_dataloader(model, stage)
+    assert trainer.recorded_on_dataloader_calls[stage]
+
+
+@pytest.mark.skip(reason="TODO: test can only be enabled once Lightning 1.5 is released.")
+@pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
+def test_trainer_request_dataloaders(stage):
+    """Test to ensure that ``request_dataloaders`` can take a combination of arguments, for PL 1.5 and later.
+
+    (stage, model) -> calls module on_dataloader hook (stage, model=model) -> calls module on_dataloader hook
+    """
+
+    class TestModel(BoringModel):
+        recorded_on_dataloader_calls = {}
+
+        def on_train_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.TRAINING] = True
+
+        def on_val_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.VALIDATING] = True
+
+        def on_test_dataloader(self) -> None:
+            self.recorded_on_dataloader_calls[RunningStage.TESTING] = True
+
+    trainer = Trainer()
+
+    model = TestModel()
+    trainer.request_dataloader(stage, model)
+    assert model.recorded_on_dataloader_calls[stage]
+
+    model = TestModel()
+    trainer.request_dataloader(stage, model=model)
+    assert model.recorded_on_dataloader_calls[stage]

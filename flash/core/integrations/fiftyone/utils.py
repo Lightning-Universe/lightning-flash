@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Dict, List, Optional, TYPE_CHECKING, Union
 
 import flash
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 Label, Session = None, None
 if _FIFTYONE_AVAILABLE:
@@ -13,6 +13,7 @@ else:
     fo = None
 
 
+@requires("fiftyone")
 def visualize(
     predictions: Union[List[Label], List[Dict[str, Label]]],
     filepaths: Optional[List[str]] = None,
@@ -56,8 +57,6 @@ def visualize(
     Returns:
         a :class:`fiftyone:fiftyone.core.session.Session`
     """
-    if not _FIFTYONE_AVAILABLE:
-        raise ModuleNotFoundError("Please, `pip install fiftyone`.")
     if flash._IS_TESTING:
         return None
 

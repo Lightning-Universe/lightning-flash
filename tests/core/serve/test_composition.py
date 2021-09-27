@@ -23,10 +23,7 @@ def test_composit_endpoint_data(lightning_squeezenet1_1_obj):
     actual_endpoints = {k: asdict(v) for k, v in composit.endpoints.items()}
     assert actual_endpoints == {
         "classify_ENDPOINT": {
-            "inputs": {
-                "img": "callnum_1.inputs.img",
-                "tag": "callnum_1.inputs.tag"
-            },
+            "inputs": {"img": "callnum_1.inputs.img", "tag": "callnum_1.inputs.tag"},
             "outputs": {
                 "cropped_img": "callnum_1.outputs.cropped_img",
                 "predicted_tag": "callnum_1.outputs.predicted_tag",
@@ -50,10 +47,7 @@ def test_composit_endpoint_data(lightning_squeezenet1_1_obj):
     actual_endpoints = {k: asdict(v) for k, v in composit.endpoints.items()}
     assert actual_endpoints == {
         "predict_ep": {
-            "inputs": {
-                "label_1": "callnum_1.inputs.img",
-                "tag_1": "callnum_1.inputs.tag"
-            },
+            "inputs": {"label_1": "callnum_1.inputs.img", "tag_1": "callnum_1.inputs.tag"},
             "outputs": {
                 "cropped": "callnum_1.outputs.cropped_img",
                 "prediction": "callnum_1.outputs.predicted_tag",
@@ -381,21 +375,13 @@ def test_start_server_from_composition(tmp_path, squeezenet_servable, session_gl
     data = {
         "session": "session_uuid",
         "payload": {
-            "img_1": {
-                "data": cat_imgstr
-            },
-            "img_2": {
-                "data": fish_imgstr
-            },
-            "tag_1": {
-                "label": "stingray"
-            },
+            "img_1": {"data": cat_imgstr},
+            "img_2": {"data": fish_imgstr},
+            "tag_1": {"label": "stingray"},
         },
     }
     expected_response = {
-        "result": {
-            "prediction": "goldfish, Carassius auratus"
-        },
+        "result": {"prediction": "goldfish, Carassius auratus"},
         "session": "session_uuid",
     }
 

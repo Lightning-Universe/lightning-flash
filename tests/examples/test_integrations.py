@@ -17,21 +17,29 @@ from unittest import mock
 
 import pytest
 
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from tests.examples.utils import run_test
-from tests.helpers.utils import _IMAGE_TESTING
 
 root = Path(__file__).parent.parent.parent
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
-    "folder, file", [
+    "folder, file",
+    [
         pytest.param(
             "fiftyone",
             "image_classification.py",
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="fiftyone library isn't installed")
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
+            ),
         ),
-    ]
+        pytest.param(
+            "baal",
+            "image_classification_active_learning.py",
+            marks=pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="baal library isn't installed"),
+        ),
+    ],
 )
 def test_integrations(tmpdir, folder, file):
     run_test(str(root / "flash_examples" / "integrations" / folder / file))

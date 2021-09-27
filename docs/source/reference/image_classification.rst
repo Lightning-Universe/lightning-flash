@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Image Classification
+   :card_description: Learn to classify images with Flash and build an example Ants / Bees classifier.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/image_classification.svg
+   :tags: Image,Classification
 
 .. _image_classification:
 
@@ -57,12 +62,99 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The image classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the hymenoptera example with:
+
+.. code-block:: bash
+
+    flash image_classification
+
+To view configuration options and options for running the image classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash image_classification --help
+
+------
+
+************
+Loading Data
+************
+
+.. autodatasources:: flash.image.classification.data ImageClassificationData
+
+    {% extends "base.rst" %}
+    {% block from_datasets %}
+    {{ super() }}
+
+    .. note::
+
+        The ``__getitem__`` of your datasets should return a dictionary with ``"input"`` and ``"target"`` keys which map to the input image (as a PIL.Image) and the target (as an int or list of ints) respectively.
+    {% endblock %}
+
+------
+
+**********************
+Custom Transformations
+**********************
+
+Flash automatically applies some default image transformations and augmentations, but you may wish to customize these for your own use case.
+The base :class:`~flash.core.data.process.Preprocess` defines 7 hooks for different stages in the data loading pipeline.
+To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them using the :func:`~flash.core.data.transforms.merge_transforms` helper function.
+Here's an example where we load the default transforms and merge with custom `torchvision` transformations.
+We use the `post_tensor_transform` hook to apply the transformations after the image has been converted to a `torch.Tensor`.
+
+
+.. testsetup:: transformations
+
+    from flash.core.data.utils import download_data
+
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
+
+.. testcode:: transformations
+
+    from torchvision import transforms as T
+
+    import flash
+    from flash.core.data.data_source import DefaultDataKeys
+    from flash.core.data.transforms import ApplyToKeys, merge_transforms
+    from flash.image import ImageClassificationData, ImageClassifier
+    from flash.image.classification.transforms import default_transforms
+
+    post_tensor_transform = ApplyToKeys(
+        DefaultDataKeys.INPUT,
+        T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
+    )
+
+    new_transforms = merge_transforms(default_transforms((64, 64)), {"post_tensor_transform": post_tensor_transform})
+
+    datamodule = ImageClassificationData.from_folders(
+        train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", train_transform=new_transforms
+    )
+
+    model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+
+    trainer = flash.Trainer(max_epochs=1)
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+
+
+.. testoutput:: transformations
+    :hide:
+
+    ...
+
+------
+
 *******
 Serving
 *******
 
 The :class:`~flash.image.classification.model.ImageClassifier` is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
 .. literalinclude:: ../../../flash_examples/serve/image_classification/inference_server.py

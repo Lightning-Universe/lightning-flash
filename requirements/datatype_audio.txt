@@ -1,0 +1,4 @@
+torchaudio
+librosa>=0.8.1
+transformers>=4.5
+datasets>=1.8

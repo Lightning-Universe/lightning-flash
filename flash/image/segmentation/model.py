@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type,
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import IoU, Metric
 
 from flash.core.classification import ClassificationTask
@@ -23,6 +24,7 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Postprocess, Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE
+from flash.core.utilities.isinstance import _isinstance
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.serialization import SegmentationLabels
@@ -32,11 +34,10 @@ if _KORNIA_AVAILABLE:
 
 
 class SemanticSegmentationPostprocess(Postprocess):
-
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA]["size"][-2:], interpolation='bilinear')
-        sample[DefaultDataKeys.PREDS] = resize(torch.stack(sample[DefaultDataKeys.PREDS]))
-        sample[DefaultDataKeys.INPUT] = resize(torch.stack(sample[DefaultDataKeys.INPUT]))
+        resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA]["size"][-2:], interpolation="bilinear")
+        sample[DefaultDataKeys.PREDS] = resize(sample[DefaultDataKeys.PREDS])
+        sample[DefaultDataKeys.INPUT] = resize(sample[DefaultDataKeys.INPUT])
         return super().per_sample_transform(sample)
 
 
@@ -53,6 +54,9 @@ class SemanticSegmentation(ClassificationTask):
         pretrained: Use a pretrained backbone.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -75,11 +79,14 @@ class SemanticSegmentation(ClassificationTask):
         num_classes: int,
         backbone: Union[str, nn.Module] = "resnet50",
         backbone_kwargs: Optional[Dict] = None,
-        head: str = "fcn",
+        head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
-        pretrained: bool = True,
+        pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
@@ -100,10 +107,13 @@ class SemanticSegmentation(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
             serializer=serializer or SegmentationLabels(),
-            postprocess=postprocess or self.postprocess_cls()
+            postprocess=postprocess or self.postprocess_cls(),
         )
 
         self.save_hyperparameters()
@@ -117,9 +127,12 @@ class SemanticSegmentation(ClassificationTask):
         if isinstance(backbone, nn.Module):
             self.backbone = backbone
         else:
-            self.backbone = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+            self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
 
-        self.head = self.heads.get(head)(self.backbone, num_classes, **head_kwargs)
+        self.head: nn.Module = self.heads.get(head)(
+            backbone=self.backbone, num_classes=num_classes, pretrained=pretrained, **head_kwargs
+        )
+        self.backbone = self.head.encoder
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
@@ -134,7 +147,7 @@ class SemanticSegmentation(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch_input = (batch[DefaultDataKeys.INPUT])
+        batch_input = batch[DefaultDataKeys.INPUT]
         batch[DefaultDataKeys.PREDS] = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
         return batch
 
@@ -144,18 +157,22 @@ class SemanticSegmentation(ClassificationTask):
         # some frameworks like torchvision return a dict.
         # In particular, torchvision segmentation models return the output logits
         # in the key `out`.
-        if torch.jit.isinstance(res, Dict[str, torch.Tensor]):
-            out = res['out']
-        elif torch.is_tensor(res):
-            out = res
-        else:
-            raise NotImplementedError(f"Unsupported output type: {type(res)}")
+        if _isinstance(res, Dict[str, torch.Tensor]):
+            res = res["out"]
 
-        return out
+        return res
+
+    @classmethod
+    def available_pretrained_weights(cls, backbone: str):
+        result = cls.backbones.get(backbone, with_metadata=True)
+        pretrained_weights = None
+
+        if "weights_paths" in result["metadata"]:
+            pretrained_weights = list(result["metadata"]["weights_paths"])
+
+        return pretrained_weights
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         assert history[-1]["val_iou"] > 0.2

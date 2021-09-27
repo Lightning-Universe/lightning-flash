@@ -1,8 +1,8 @@
+.. _serve:
+
 ###########
 Flash Serve
 ###########
-
-.. _serve:
 
 Flash Serve is a library to easily serve models in production.
 
@@ -32,7 +32,7 @@ Here are common terms you need to be familiar with:
      - The :class:`~flash.core.serve.Composition` defines the computations / endpoints to create & run
    * - :func:`~flash.core.serve.decorators.expose`
      - The :func:`~flash.core.serve.decorators.expose` function is a python decorator used to
-        augment the :class:`~flash.core.serve.ModelComponent` inference function with de-serialization, serialization.
+       augment the :class:`~flash.core.serve.ModelComponent` inference function with de-serialization, serialization.
 
 
 *******

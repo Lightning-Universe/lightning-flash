@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-import torch
-from pytorch_lightning.utilities import _TORCHVISION_AVAILABLE
 
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 
 
-@pytest.mark.parametrize(["backbone"], [
-    pytest.param("resnet50", marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")),
-    pytest.param("mobilenet_v3_large", marks=pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="No torchvision")),
-])
+@pytest.mark.parametrize(
+    ["backbone"],
+    [
+        pytest.param("resnet50", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
+        pytest.param("dpn131", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
+    ],
+)
 def test_semantic_segmentation_backbones_registry(backbone):
-    img = torch.rand(1, 3, 32, 32)
-    backbone = SEMANTIC_SEGMENTATION_BACKBONES.get(backbone)(pretrained=False)
+    backbone = SEMANTIC_SEGMENTATION_BACKBONES.get(backbone)()
     assert backbone
-    backbone.eval()
-    assert backbone(img) is not None
+    assert isinstance(backbone, str)

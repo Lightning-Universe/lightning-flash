@@ -35,6 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 try:
     from typing import ForwardRef
+
     RequestModel = ForwardRef("RequestModel")
     ResponseModel = ForwardRef("ResponseModel")
 except ImportError:
@@ -47,7 +48,6 @@ def _build_endpoint(
     dsk_composition: TaskComposition,
     response_model: ResponseModel,
 ) -> Callable[[RequestModel], ResponseModel]:
-
     def endpoint_fn(body: request_model):
         session = body.session if body.session else str(uuid.uuid4())
         _res = get(
@@ -67,7 +67,6 @@ def _build_endpoint(
 
 
 def _build_meta(Body: RequestModel) -> Callable[[], Dict[str, Any]]:
-
     def meta() -> Dict[str, Any]:
         nonlocal Body
         return Body.schema()
@@ -76,7 +75,6 @@ def _build_meta(Body: RequestModel) -> Callable[[], Dict[str, Any]]:
 
 
 def _build_alive_check() -> Callable[[], Alive]:
-
     def alive() -> Alive:
         return Alive.construct(alive=True)
 
@@ -89,7 +87,6 @@ def _build_visualization(
     *,
     no_optimization: bool = False,
 ):
-
     def endpoint_visualization(request: Request):
         nonlocal dsk_composition, templates, no_optimization
         with BytesIO() as f:
@@ -104,8 +101,8 @@ def _build_visualization(
 
 
 def _build_dag_json(
-    components: Dict[str, 'ModelComponent'],
-    ep_proto: Optional['EndpointProtocol'],
+    components: Dict[str, "ModelComponent"],
+    ep_proto: Optional["EndpointProtocol"],
     *,
     show_connected_components: bool = True,
 ):
@@ -122,7 +119,7 @@ def _build_dag_json(
     return dag_json
 
 
-def setup_http_app(composition: 'Composition', debug: bool) -> 'FastAPI':
+def setup_http_app(composition: "Composition", debug: bool) -> "FastAPI":
     from flash import __version__
 
     app = FastAPI(
@@ -163,11 +160,13 @@ def setup_http_app(composition: 'Composition', debug: bool) -> 'FastAPI':
         name="components JSON DAG",
         summary="JSON representation of component DAG",
         response_model=ComponentJSON,
-    )(_build_dag_json(
-        components=composition.components,
-        ep_proto=None,
-        show_connected_components=False,
-    ))
+    )(
+        _build_dag_json(
+            components=composition.components,
+            ep_proto=None,
+            show_connected_components=False,
+        )
+    )
 
     for ep_name, ep_proto in composition.endpoint_protocols.items():
         dsk = build_composition(
@@ -221,9 +220,11 @@ def setup_http_app(composition: 'Composition', debug: bool) -> 'FastAPI':
             tags=[ep_name],
             summary="JSON representatino of DAG",
             response_model=MergedJSON,
-        )(_build_dag_json(
-            components=composition.components,
-            ep_proto=ep_proto,
-            show_connected_components=True,
-        ))
+        )(
+            _build_dag_json(
+                components=composition.components,
+                ep_proto=ep_proto,
+                show_connected_components=True,
+            )
+        )
     return app

@@ -33,8 +33,11 @@ else:
 
 
 class TemplateNumpyDataSource(NumpyDataSource):
-    """An example data source that records ``num_features`` on the dataset. We extend
-    :class:`~flash.core.data.data_source.NumpyDataSource` so that we can use ``super().load_data``."""
+    """An example data source that records ``num_features`` on the dataset.
+
+    We extend
+    :class:`~flash.core.data.data_source.NumpyDataSource` so that we can use ``super().load_data``.
+    """
 
     def load_data(self, data: Tuple[np.ndarray, Sequence[Any]], dataset: Any) -> Sequence[Mapping[str, Any]]:
         """Sets the ``num_features`` attribute and calls ``super().load_data``.
@@ -109,16 +112,18 @@ class TemplatePreprocess(Preprocess):
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        """For serialization, you have control over what to save with the ``get_state_dict`` method. It's usually a good
-        idea to save the transforms. So we just return them here. If you had any other attributes you wanted to save,
-        this is where you would return them.
+        """For serialization, you have control over what to save with the ``get_state_dict`` method.
+
+        It's usually a good idea to save the transforms. So we just return them here. If you had any other attributes
+        you wanted to save, this is where you would return them.
         """
         return self.transforms
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        """This methods gets whatever we returned from ``get_state_dict`` as an input. Now we re-create the class with
-        the transforms we saved.
+        """This methods gets whatever we returned from ``get_state_dict`` as an input.
+
+        Now we re-create the class with the transforms we saved.
         """
         return cls(**state_dict)
 
@@ -147,8 +152,10 @@ class TemplatePreprocess(Preprocess):
 
 class TemplateData(DataModule):
     """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the ``preprocess_cls``
-    attribute. We get the ``from_numpy`` method for free as we've configured a ``DefaultDataSources.NUMPY`` data source.
-    We'll also add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnDataSource. Finally, we define the
+    attribute.
+
+    We get the ``from_numpy`` method for free as we've configured a ``DefaultDataSources.NUMPY`` data source. We'll also
+    add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnDataSource. Finally, we define the
     ``num_features`` property for convenience.
     """
 
@@ -169,7 +176,7 @@ class TemplateData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them
@@ -232,13 +239,17 @@ class TemplateData(DataModule):
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        """We can, *optionally*, provide a data visualization callback using the ``configure_data_fetcher`` method."""
+        """We can, *optionally*, provide a data visualization callback using the ``configure_data_fetcher``
+        method."""
         return TemplateVisualization(*args, **kwargs)
 
 
 class TemplateVisualization(BaseVisualization):
-    """The ``TemplateVisualization`` class is a :class:`~flash.core.data.callbacks.BaseVisualization` that just prints
-    the data. If you want to provide a visualization with your task, you can override these hooks."""
+    """The ``TemplateVisualization`` class is a :class:`~flash.core.data.callbacks.BaseVisualization` that just
+    prints the data.
+
+    If you want to provide a visualization with your task, you can override these hooks.
+    """
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         print(samples)

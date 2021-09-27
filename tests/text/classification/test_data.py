@@ -14,12 +14,14 @@
 import os
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
 from flash.text.classification.data import (
     TextCSVDataSource,
+    TextDataFrameDataSource,
     TextDataSource,
     TextFileDataSource,
     TextJSONDataSource,
@@ -44,6 +46,17 @@ TEST_JSON_DATA = """
 {"sentence": "this is a sentence three","lab":0}
 """
 
+TEST_JSON_DATA_FIELD = """{"data": [
+{"sentence": "this is a sentence one","lab":0},
+{"sentence": "this is a sentence two","lab":1},
+{"sentence": "this is a sentence three","lab":0}]}
+"""
+
+
+TEST_DATA_FRAME_DATA = pd.DataFrame(
+    {"sentence": ["this is a sentence one", "this is a sentence two", "this is a sentence three"], "lab": [0, 1, 0]},
+)
+
 
 def csv_data(tmpdir):
     path = Path(tmpdir) / "data.csv"
@@ -54,6 +67,12 @@ def csv_data(tmpdir):
 def json_data(tmpdir):
     path = Path(tmpdir) / "data.json"
     path.write_text(TEST_JSON_DATA)
+    return path
+
+
+def json_data_with_field(tmpdir):
+    path = Path(tmpdir) / "data.json"
+    path.write_text(TEST_JSON_DATA_FIELD)
     return path
 
 
@@ -78,7 +97,7 @@ def test_test_valid(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
-        batch_size=1
+        batch_size=1,
     )
     batch = next(iter(dm.val_dataloader()))
     assert batch["labels"].item() in [0, 1]
@@ -99,6 +118,29 @@ def test_from_json(tmpdir):
     assert "input_ids" in batch
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_json_with_field(tmpdir):
+    json_path = json_data_with_field(tmpdir)
+    dm = TextClassificationData.from_json(
+        "sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, field="data"
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_data_frame():
+    dm = TextClassificationData.from_data_frame(
+        "sentence", "lab", backbone=TEST_BACKBONE, train_data_frame=TEST_DATA_FRAME_DATA, batch_size=1
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
+
+
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
@@ -111,11 +153,10 @@ def test_text_module_not_found_error():
     "cls, kwargs",
     [
         (TextDataSource, {}),
-        (TextFileDataSource, {
-            "filetype": "csv"
-        }),
+        (TextFileDataSource, {"filetype": "csv"}),
         (TextCSVDataSource, {}),
         (TextJSONDataSource, {}),
+        (TextDataFrameDataSource, {}),
         (TextSentencesDataSource, {}),
     ],
 )

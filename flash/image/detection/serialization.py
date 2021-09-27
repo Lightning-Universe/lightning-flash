@@ -17,7 +17,7 @@ from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 Detections = None
 if _FIFTYONE_AVAILABLE:
@@ -26,14 +26,6 @@ if _FIFTYONE_AVAILABLE:
         from fiftyone import Detections
 else:
     fo = None
-
-
-class DetectionLabels(Serializer):
-    """A :class:`.Serializer` which extracts predictions from sample dict."""
-
-    def serialize(self, sample: Any) -> Dict[str, Any]:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        return sample
 
 
 class FiftyOneDetectionLabels(Serializer):
@@ -48,15 +40,13 @@ class FiftyOneDetectionLabels(Serializer):
             list of FiftyOne labels (False)
     """
 
+    @requires("fiftyone")
     def __init__(
         self,
         labels: Optional[List[str]] = None,
         threshold: Optional[float] = None,
         return_filepath: bool = False,
     ):
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
-
         super().__init__()
         self._labels = labels
         self.threshold = threshold
@@ -83,31 +73,35 @@ class FiftyOneDetectionLabels(Serializer):
 
         detections = []
 
-        for det in sample[DefaultDataKeys.PREDS]:
-            confidence = det["scores"].tolist()
+        preds = sample[DefaultDataKeys.PREDS]
+
+        for bbox, label, score in zip(preds["bboxes"], preds["labels"], preds["scores"]):
+            confidence = score.tolist()
 
             if self.threshold is not None and confidence < self.threshold:
                 continue
 
-            xmin, ymin, xmax, ymax = [c.tolist() for c in det["boxes"]]
+            xmin, ymin, box_width, box_height = bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"]
             box = [
-                xmin / width,
-                ymin / height,
-                (xmax - xmin) / width,
-                (ymax - ymin) / height,
+                (xmin / width).item(),
+                (ymin / height).item(),
+                (box_width / width).item(),
+                (box_height / height).item(),
             ]
 
-            label = det["labels"].tolist()
+            label = label.item()
             if labels is not None:
                 label = labels[label]
             else:
                 label = str(int(label))
 
-            detections.append(fo.Detection(
-                label=label,
-                bounding_box=box,
-                confidence=confidence,
-            ))
+            detections.append(
+                fo.Detection(
+                    label=label,
+                    bounding_box=box,
+                    confidence=confidence,
+                )
+            )
         fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]

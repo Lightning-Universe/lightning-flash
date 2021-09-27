@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import platform
-
 import torch
 
 from flash import DataModule
@@ -21,9 +19,8 @@ from flash import DataModule
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index):
-        return torch.rand(1, 28, 28), torch.randint(10, size=(1, )).item()
+        return torch.rand(1, 28, 28), torch.randint(10, size=(1,)).item()
 
     def __len__(self) -> int:
         return 10
@@ -49,13 +46,10 @@ def test_dataloaders():
         dm.test_dataloader(),
     ]:
         x, y = next(iter(dl))
-        assert x.shape == (1, 1, 28, 28)
+        assert x.shape == (4, 1, 28, 28)
 
 
 def test_cpu_count_none():
     train_ds = DummyDataset()
     dm = DataModule(train_ds, num_workers=None)
-    if platform.system() == "Darwin" or platform.system() == "Windows":
-        assert dm.num_workers == 0
-    else:
-        assert dm.num_workers > 0
+    assert dm.num_workers == 0

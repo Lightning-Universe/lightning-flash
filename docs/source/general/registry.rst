@@ -62,6 +62,7 @@ Your custom functions can be registered within a :class:`~flash.core.registry.Fl
         backbone, num_features = None, None
         return backbone, num_features
 
+
     # HINT 1: Use `from functools import partial` if you want to store some arguments.
     MyImageClassifier.backbones(fn=partial(fn, backbone="my_backbone"), name="username/partial_backbone")
 
@@ -98,9 +99,10 @@ Flash provides populated registries containing lots of available backbones.
 
 Example::
 
-    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES, OBJ_DETECTION_BACKBONES
+    from flash.image.backbones import OBJ_DETECTION_BACKBONES
+    from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
-    print(IMAGE_CLASSIFIER_BACKBONES.available_models())
+    print(IMAGE_CLASSIFIER_BACKBONES.available_keys())
     """ out:
     ['adv_inception_v3', 'cspdarknet53', 'cspdarknet53_iabn', 430+.., 'xception71']
     """

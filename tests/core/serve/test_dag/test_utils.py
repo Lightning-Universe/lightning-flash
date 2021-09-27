@@ -12,7 +12,6 @@ if _CYTOOLZ_AVAILABLE:
 
 
 def test_funcname_long():
-
     def a_long_function_name_11111111111111111111111111111111111111111111111():
         pass
 
@@ -23,7 +22,6 @@ def test_funcname_long():
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library `cytoolz` is not installed.")
 def test_funcname_cytoolz():
-
     @curry
     def foo(a, b, c):
         pass
@@ -45,14 +43,13 @@ def test_partial_by_order():
 def test_funcname():
     assert funcname(np.floor_divide) == "floor_divide"
     assert funcname(partial(bool)) == "bool"
-    assert (funcname(operator.methodcaller("__getitem__")) == "operator.methodcaller('__getitem__')")
+    assert funcname(operator.methodcaller("__getitem__")) == "operator.methodcaller('__getitem__')"
     assert funcname(lambda x: x) == "lambda"
 
 
 def test_numpy_vectorize_funcname():
-
     def myfunc(a, b):
-        "Return a-b if a>b, otherwise return a+b"
+        """Return a-b if a>b, otherwise return a+b."""
         if a > b:
             return a - b
         return a + b

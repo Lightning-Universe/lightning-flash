@@ -20,7 +20,6 @@ from flash.core.utilities.apply_func import get_callable_dict, get_callable_name
 
 
 class A:
-
     def __call__(self, x):
         return True
 
@@ -54,4 +53,4 @@ def test_get_callable_dict():
 def test_download_data(tmpdir):
     path = os.path.join(tmpdir, "data")
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", path)
-    assert set(os.listdir(path)) == {'titanic', 'titanic.zip'}
+    assert set(os.listdir(path)) == {"titanic", "titanic.zip"}

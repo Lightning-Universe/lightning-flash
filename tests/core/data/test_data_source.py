@@ -17,7 +17,7 @@ from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys
 def test_dataset_data_source():
     data_source = DatasetDataSource()
 
-    input, target = 'test', 3
+    input, target = "test", 3
 
     assert data_source.load_sample((input, target)) == {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target}
     assert data_source.load_sample(input) == {DefaultDataKeys.INPUT: input}

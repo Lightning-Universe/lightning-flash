@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import inspect
+import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -21,15 +22,19 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 import pytorch_lightning as pl
 import torch
 import torchmetrics
-from pytorch_lightning import LightningModule
+from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
+from torch.utils.data import DataLoader, Sampler
 
 import flash
+from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import (
@@ -40,19 +45,195 @@ from flash.core.data.process import (
     Serializer,
     SerializerMapping,
 )
+from flash.core.data.properties import ProcessState
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _requires_extras
+from flash.core.utilities.imports import requires
+
+
+class ModuleWrapperBase:
+    """The ``ModuleWrapperBase`` is a base for classes which wrap a ``LightningModule`` or an instance of
+    ``ModuleWrapperBase``.
+
+    This class ensures that trainer attributes are forwarded to any wrapped or nested
+    ``LightningModule`` instances so that nested calls to ``.log`` are handled correctly. The ``ModuleWrapperBase`` is
+    also stateful, meaning that a :class:`~flash.core.data.data_pipeline.DataPipelineState` can be attached. Attached
+    state will be forwarded to any nested ``ModuleWrapperBase`` instances.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self._children = []
+
+        # TODO: create enum values to define what are the exact states
+        self._data_pipeline_state: DataPipelineState = DataPipelineState()
+
+        # model own internal state shared with the data pipeline.
+        self._state: Dict[Type[ProcessState], ProcessState] = {}
+
+    def __setattr__(self, key, value):
+        if isinstance(value, (LightningModule, ModuleWrapperBase)):
+            self._children.append(key)
+        patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results", "_data_pipeline_state"]
+        if isinstance(value, Trainer) or key in patched_attributes:
+            if hasattr(self, "_children"):
+                for child in self._children:
+                    setattr(getattr(self, child), key, value)
+        super().__setattr__(key, value)
+
+    def get_state(self, state_type):
+        if state_type in self._state:
+            return self._state[state_type]
+        if self._data_pipeline_state is not None:
+            return self._data_pipeline_state.get_state(state_type)
+        return None
+
+    def set_state(self, state: ProcessState):
+        self._state[type(state)] = state
+        if self._data_pipeline_state is not None:
+            self._data_pipeline_state.set_state(state)
+
+    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
+        for state in self._state.values():
+            data_pipeline_state.set_state(state)
+        for child in self._children:
+            child = getattr(self, child)
+            if hasattr(child, "attach_data_pipeline_state"):
+                child.attach_data_pipeline_state(data_pipeline_state)
+
+
+class DatasetProcessor:
+    """The ``DatasetProcessor`` mixin provides hooks for classes which need custom logic for producing the data
+    loaders for each running stage given the corresponding dataset."""
+
+    def _process_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
+    ) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
+        )
+
+    def process_train_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=num_workers > 0,
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=num_workers > 0,
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=num_workers > 0,
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int = 1,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        collate_fn: Callable = None,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self._process_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=False,
+        )
 
 
 class BenchmarkConvergenceCI(Callback):
-
     def __init__(self):
         self.history = []
 
-    def on_validation_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
+    def on_validation_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         self.history.append(deepcopy(trainer.callback_metrics))
         if trainer.current_epoch == trainer.max_epochs - 1:
             fn = getattr(pl_module, "_ci_benchmark_fn", None)
@@ -63,10 +244,8 @@ class BenchmarkConvergenceCI(Callback):
 
 
 def predict_context(func: Callable) -> Callable:
-    """
-    This decorator is used as context manager
-    to put model in eval mode before running predict and reset to train after.
-    """
+    """This decorator is used as context manager to put model in eval mode before running predict and reset to
+    train after."""
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
@@ -86,20 +265,32 @@ def predict_context(func: Callable) -> Callable:
 
 
 class CheckDependenciesMeta(ABCMeta):
-
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = _requires_extras(result.required_extras)(result.__init__)
+            result.__init__ = requires(result.required_extras)(result.__init__)
             load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
             if load_from_checkpoint is not None:
                 result.load_from_checkpoint = classmethod(
-                    _requires_extras(result.required_extras)(result.load_from_checkpoint.__func__)
+                    requires(result.required_extras)(result.load_from_checkpoint.__func__)
                 )
         return result
 
 
-class Task(LightningModule, metaclass=CheckDependenciesMeta):
+class OutputKeys(LightningEnum):
+    """The ``OutputKeys`` enum contains the keys that are used internally by the ``Task`` when handling outputs."""
+
+    OUTPUT = "y_hat"
+    TARGET = "y"
+    LOGS = "logs"
+    LOSS = "loss"
+
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+
+class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
@@ -114,7 +305,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
 
-    required_extras: Optional[str] = None
+    required_extras: Optional[Union[str, List[str]]] = None
 
     def __init__(
         self,
@@ -151,38 +342,53 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
 
-        # TODO: create enum values to define what are the exact states
-        self._data_pipeline_state: Optional[DataPipelineState] = None
-
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
         self.serializer = serializer
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
-        """
-        The training/validation/test step. Override for custom behavior.
+        """The training/validation/test step.
+
+        Override for custom behavior.
         """
         x, y = batch
         y_hat = self(x)
-        output = {"y_hat": y_hat}
-        y_hat = self.to_loss_format(output["y_hat"])
+        y, y_hat = self.apply_filtering(y, y_hat)
+        output = {OutputKeys.OUTPUT: y_hat}
+        y_hat = self.to_loss_format(output[OutputKeys.OUTPUT])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
+
+        y_hat = self.to_metrics_format(output[OutputKeys.OUTPUT])
+
         logs = {}
-        y_hat = self.to_metrics_format(output["y_hat"])
+
         for name, metric in metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)
-        logs.update(losses)
+
         if len(losses.values()) > 1:
             logs["total_loss"] = sum(losses.values())
             return logs["total_loss"], logs
-        output["loss"] = list(losses.values())[0]
-        output["logs"] = logs
-        output["y"] = y
+
+        output[OutputKeys.LOSS] = self.compute_loss(losses)
+        output[OutputKeys.LOGS] = self.compute_logs(logs, losses)
+        output[OutputKeys.TARGET] = y
         return output
+
+    def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
+        return list(losses.values())[0]
+
+    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
+        logs.update(losses)
+        return logs
+
+    @staticmethod
+    def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """This function is used to filter some labels or predictions which aren't conform."""
+        return y, y_hat
 
     @staticmethod
     def to_loss_format(x: torch.Tensor) -> torch.Tensor:
@@ -197,16 +403,31 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
-        self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
-        return output["loss"]
+        self.log_dict(
+            {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+        )
+        return output[OutputKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     @predict_context
     def predict(
@@ -216,8 +437,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
-        """
-        Predict function for raw data or processed data
+        """Predict function for raw data or processed data.
 
         Args:
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
@@ -230,14 +450,17 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        x = list(data_pipeline.data_source.generate_dataset(x, running_stage))
-        x = data_pipeline.worker_preprocessor(running_stage)(x)
+        dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
+        dataloader = self.process_predict_dataset(dataset)
+        x = list(dataloader.dataset)
+        x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
             x = self.transfer_batch_to_device(x, self.device, 0)
         else:
             x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
+        x = x[0] if isinstance(x, list) else x
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(running_stage)(predictions)
         return predictions
@@ -323,8 +546,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def serializer(self) -> Optional[Serializer]:
-        """The current :class:`.Serializer` associated with this model. If this property was set to a mapping
-        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`."""
+        """The current :class:`.Serializer` associated with this model.
+
+        If this property was set to a mapping
+        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`.
+        """
         return self._serializer
 
     @torch.jit.unused
@@ -359,25 +585,18 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
 
         # Datamodule
-        if self.datamodule is not None and getattr(self.datamodule, 'data_pipeline', None) is not None:
-            old_data_source = getattr(self.datamodule.data_pipeline, 'data_source', None)
-            preprocess = getattr(self.datamodule.data_pipeline, '_preprocess_pipeline', None)
-            postprocess = getattr(self.datamodule.data_pipeline, '_postprocess_pipeline', None)
-            serializer = getattr(self.datamodule.data_pipeline, '_serializer', None)
-            deserializer = getattr(self.datamodule.data_pipeline, '_deserializer', None)
+        datamodule = None
+        if self.trainer is not None and hasattr(self.trainer, "datamodule"):
+            datamodule = self.trainer.datamodule
+        elif getattr(self, "datamodule", None) is not None:
+            datamodule = self.datamodule
 
-        elif self.trainer is not None and hasattr(self.trainer, 'datamodule') and getattr(
-            self.trainer.datamodule, 'data_pipeline', None
-        ) is not None:
-            old_data_source = getattr(self.trainer.datamodule.data_pipeline, 'data_source', None)
-            preprocess = getattr(self.trainer.datamodule.data_pipeline, '_preprocess_pipeline', None)
-            postprocess = getattr(self.trainer.datamodule.data_pipeline, '_postprocess_pipeline', None)
-            serializer = getattr(self.trainer.datamodule.data_pipeline, '_serializer', None)
-            deserializer = getattr(self.trainer.datamodule.data_pipeline, '_deserializer', None)
-        else:
-            # TODO: we should log with low severity level that we use defaults to create
-            # `preprocess`, `postprocess` and `serializer`.
-            pass
+        if getattr(datamodule, "data_pipeline", None) is not None:
+            old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
 
         # Defaults / task attributes
         deserializer, preprocess, postprocess, serializer = Task._resolve(
@@ -398,10 +617,10 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
                 preprocess,
                 postprocess,
                 serializer,
-                getattr(data_pipeline, '_deserializer', None),
-                getattr(data_pipeline, '_preprocess_pipeline', None),
-                getattr(data_pipeline, '_postprocess_pipeline', None),
-                getattr(data_pipeline, '_serializer', None),
+                getattr(data_pipeline, "_deserializer", None),
+                getattr(data_pipeline, "_preprocess_pipeline", None),
+                getattr(data_pipeline, "_postprocess_pipeline", None),
+                getattr(data_pipeline, "_serializer", None),
             )
 
         data_source = data_source or old_data_source
@@ -416,6 +635,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
         data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
+        self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+        self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
 
@@ -427,8 +648,11 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def data_pipeline(self) -> DataPipeline:
-        """The current :class:`.DataPipeline`. If set, the new value will override the :class:`.Task` defaults. See
-        :py:meth:`~build_data_pipeline` for more details on the resolution order."""
+        """The current :class:`.DataPipeline`.
+
+        If set, the new value will override the :class:`.Task` defaults. See
+        :py:meth:`~build_data_pipeline` for more details on the resolution order.
+        """
         return self.build_data_pipeline()
 
     @torch.jit.unused
@@ -439,11 +663,12 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             self._preprocess,
             self._postprocess,
             self._serializer,
-            getattr(data_pipeline, '_deserializer', None),
-            getattr(data_pipeline, '_preprocess_pipeline', None),
-            getattr(data_pipeline, '_postprocess_pipeline', None),
-            getattr(data_pipeline, '_serializer', None),
+            getattr(data_pipeline, "_deserializer", None),
+            getattr(data_pipeline, "_preprocess_pipeline", None),
+            getattr(data_pipeline, "_postprocess_pipeline", None),
+            getattr(data_pipeline, "_serializer", None),
         )
+
         # self._preprocess.state_dict()
         if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
@@ -451,12 +676,12 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     @torch.jit.unused
     @property
     def preprocess(self) -> Preprocess:
-        return getattr(self.data_pipeline, '_preprocess_pipeline', None)
+        return getattr(self.data_pipeline, "_preprocess_pipeline", None)
 
     @torch.jit.unused
     @property
     def postprocess(self) -> Postprocess:
-        return getattr(self.data_pipeline, '_postprocess_pipeline', None)
+        return getattr(self.data_pipeline, "_postprocess_pipeline", None)
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:
@@ -495,25 +720,45 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # This may be an issue since here we create the same problems with pickle as in
         # https://pytorch.org/docs/stable/notes/serialization.html
-        if self.data_pipeline is not None and 'data_pipeline' not in checkpoint:
-            checkpoint['data_pipeline'] = self.data_pipeline
-        if self._data_pipeline_state is not None and '_data_pipeline_state' not in checkpoint:
-            checkpoint['_data_pipeline_state'] = self._data_pipeline_state
+        if self.data_pipeline is not None and "data_pipeline" not in checkpoint:
+            try:
+                pickle.dumps(self.data_pipeline)  # TODO: DataPipeline not always pickleable
+                checkpoint["data_pipeline"] = self.data_pipeline
+            except AttributeError:
+                rank_zero_warn("DataPipeline couldn't be added to the checkpoint.")
+        if self._data_pipeline_state is not None and "_data_pipeline_state" not in checkpoint:
+            checkpoint["_data_pipeline_state"] = self._data_pipeline_state
         super().on_save_checkpoint(checkpoint)
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)
-        if 'data_pipeline' in checkpoint:
-            self.data_pipeline = checkpoint['data_pipeline']
-        if '_data_pipeline_state' in checkpoint:
-            self._data_pipeline_state = checkpoint['_data_pipeline_state']
+        if "data_pipeline" in checkpoint:
+            self.data_pipeline = checkpoint["data_pipeline"]
+        if "_data_pipeline_state" in checkpoint:
+            self._data_pipeline_state = checkpoint["_data_pipeline_state"]
 
     @classmethod
-    def available_backbones(cls) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
-        if registry is None:
-            return []
-        return registry.available_keys()
+    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
+        if head is None:
+            registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
+            if registry is not None:
+                return registry.available_keys()
+            heads = cls.available_heads()
+        else:
+            heads = [head]
+
+        result = {}
+        for head in heads:
+            metadata = cls.heads.get(head, with_metadata=True)["metadata"]
+            if "backbones" in metadata:
+                backbones = metadata["backbones"].available_keys()
+            else:
+                backbones = cls.available_backbones()
+            result[head] = backbones
+
+        if len(result) == 1:
+            result = next(iter(result.values()))
+        return result
 
     @classmethod
     def available_heads(cls) -> List[str]:
@@ -593,14 +838,13 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
     ):
-        if 'preprocess.state_dict' in state_dict:
+        if "preprocess.state_dict" in state_dict:
             try:
                 preprocess_state_dict = state_dict["preprocess.state_dict"]
                 meta = preprocess_state_dict["_meta"]
                 cls = getattr(import_module(meta["module"]), meta["class_name"])
                 self._preprocess = cls.load_state_dict(
-                    {k: v
-                     for k, v in preprocess_state_dict.items() if k != '_meta'},
+                    {k: v for k, v in preprocess_state_dict.items() if k != "_meta"},
                     strict=strict,
                 )
                 self._preprocess._state = meta["_state"]
@@ -621,7 +865,7 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
 
-    @_requires_extras("serve")
+    @requires("serve")
     def run_serve_sanity_check(self):
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
@@ -641,8 +885,8 @@ class Task(LightningModule, metaclass=CheckDependenciesMeta):
             resp = tc.post("http://0.0.0.0:8000/predict", json=body)
             print(f"Sanity check response: {resp.json()}")
 
-    @_requires_extras("serve")
-    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> 'Composition':
+    @requires("serve")
+    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> "Composition":
         if not self.is_servable:
             raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
 

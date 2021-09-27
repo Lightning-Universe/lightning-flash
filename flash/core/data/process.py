@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -24,30 +25,28 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataSources
+from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.properties import Properties
+from flash.core.data.states import CollateFn
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 
 
 class BasePreprocess(ABC):
-
     @abstractmethod
     def get_state_dict(self) -> Dict[str, Any]:
-        """
-        Override this method to return state_dict
-        """
+        """Override this method to return state_dict."""
 
     @abstractclassmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        """
-        Override this method to load from state_dict
-        """
+        """Override this method to load from state_dict."""
 
 
 class Preprocess(BasePreprocess, Properties):
-    """The :class:`~flash.core.data.process.Preprocess` encapsulates all the data processing logic that should run before
-    the data is passed to the model. It is particularly useful when you want to provide an end to end implementation
-    which works with 4 different stages: ``train``, ``validation``, ``test``,  and inference (``predict``).
+    """The :class:`~flash.core.data.process.Preprocess` encapsulates all the data processing logic that should run
+    before the data is passed to the model. It is particularly useful when you want to provide an end to end
+    implementation which works with 4 different stages: ``train``, ``validation``, ``test``,  and inference
+    (``predict``).
 
     The :class:`~flash.core.data.process.Preprocess` supports the following hooks:
 
@@ -175,17 +174,16 @@ class Preprocess(BasePreprocess, Properties):
 
                 elif self.predicting:
                     # logic for predicting
-
     """
 
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, 'DataSource']] = None,
-        deserializer: Optional['Deserializer'] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        data_sources: Optional[Dict[str, "DataSource"]] = None,
+        deserializer: Optional["Deserializer"] = None,
         default_data_source: Optional[str] = None,
     ):
         super().__init__()
@@ -213,8 +211,8 @@ class Preprocess(BasePreprocess, Properties):
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
 
-        if DefaultDataSources.DATASET not in data_sources:
-            data_sources[DefaultDataSources.DATASET] = DatasetDataSource()
+        if DefaultDataSources.DATASETS not in data_sources:
+            data_sources[DefaultDataSources.DATASETS] = DatasetDataSource()
 
         self._data_sources = data_sources
         self._deserializer = deserializer
@@ -223,7 +221,7 @@ class Preprocess(BasePreprocess, Properties):
         self._default_collate: Callable = default_collate
 
     @property
-    def deserializer(self) -> Optional['Deserializer']:
+    def deserializer(self) -> Optional["Deserializer"]:
         return self._deserializer
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
@@ -245,19 +243,24 @@ class Preprocess(BasePreprocess, Properties):
         preprocess_state_dict["_meta"]["module"] = self.__module__
         preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
         preprocess_state_dict["_meta"]["_state"] = self._state
-        destination['preprocess.state_dict'] = preprocess_state_dict
-        self._ddp_params_and_buffers_to_ignore = ['preprocess.state_dict']
+        destination["preprocess.state_dict"] = preprocess_state_dict
+        self._ddp_params_and_buffers_to_ignore = ["preprocess.state_dict"]
         return super()._save_to_state_dict(destination, prefix, keep_vars)
 
-    def _check_transforms(self, transform: Optional[Dict[str, Callable]],
-                          stage: RunningStage) -> Optional[Dict[str, Callable]]:
+    def _check_transforms(
+        self, transform: Optional[Dict[str, Callable]], stage: RunningStage
+    ) -> Optional[Dict[str, Callable]]:
         if transform is None:
             return transform
 
+        if isinstance(transform, list):
+            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.Sequential(*transform))}
+        elif callable(transform):
+            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, transform)}
+
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
-                "Transform should be a dict. "
-                f"Here are the available keys for your transforms: {_PREPROCESS_FUNCS}."
+                "Transform should be a dict. " f"Here are the available keys for your transforms: {_PREPROCESS_FUNCS}."
             )
 
         keys_diff = set(transform.keys()).difference(_PREPROCESS_FUNCS)
@@ -272,8 +275,7 @@ class Preprocess(BasePreprocess, Properties):
 
         if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
             raise MisconfigurationException(
-                f'{transform}: `per_batch_transform` and `per_sample_transform_on_device` '
-                f'are mutually exclusive.'
+                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` " f"are mutually exclusive."
             )
 
         collate_in_worker: Optional[bool] = None
@@ -310,7 +312,7 @@ class Preprocess(BasePreprocess, Properties):
 
     @property
     def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
-        """ The transforms currently being used by this :class:`~flash.core.data.process.Preprocess`. """
+        """The transforms currently being used by this :class:`~flash.core.data.process.Preprocess`."""
         return {
             "train_transform": self.train_transform,
             "val_transform": self.val_transform,
@@ -319,35 +321,43 @@ class Preprocess(BasePreprocess, Properties):
         }
 
     @property
-    def callbacks(self) -> List['FlashCallback']:
+    def callbacks(self) -> List["FlashCallback"]:
         if not hasattr(self, "_callbacks"):
             self._callbacks: List[FlashCallback] = []
         return self._callbacks
 
     @callbacks.setter
-    def callbacks(self, callbacks: List['FlashCallback']):
+    def callbacks(self, callbacks: List["FlashCallback"]):
         self._callbacks = callbacks
 
-    def add_callbacks(self, callbacks: List['FlashCallback']):
+    def add_callbacks(self, callbacks: List["FlashCallback"]):
         _callbacks = [c for c in callbacks if c not in self._callbacks]
         self._callbacks.extend(_callbacks)
 
     @staticmethod
     def default_transforms() -> Optional[Dict[str, Callable]]:
-        """ The default transforms to use. Will be overridden by transforms passed to the ``__init__``. """
+        """The default transforms to use.
+
+        Will be overridden by transforms passed to the ``__init__``.
+        """
         return None
 
-    def pre_tensor_transform(self, sample: Any) -> Any:
-        """ Transforms to apply on a single object. """
+    def _apply_sample_transform(self, sample: Any) -> Any:
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
+
+    def pre_tensor_transform(self, sample: Any) -> Any:
+        """Transforms to apply on a single object."""
+        return self._apply_sample_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
-        """ Transforms to convert single object to a tensor. """
-        return self.current_transform(sample)
+        """Transforms to convert single object to a tensor."""
+        return self._apply_sample_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
-        """ Transforms to apply on a tensor. """
-        return self.current_transform(sample)
+        """Transforms to apply on a tensor."""
+        return self._apply_sample_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -359,12 +369,24 @@ class Preprocess(BasePreprocess, Properties):
         """
         return self.current_transform(batch)
 
-    def collate(self, samples: Sequence) -> Any:
-        """ Transform to convert a sequence of samples to a collated batch. """
+    def collate(self, samples: Sequence, metadata=None) -> Any:
+        """Transform to convert a sequence of samples to a collated batch."""
         current_transform = self.current_transform
         if current_transform is self._identity:
-            return self._default_collate(samples)
-        return self.current_transform(samples)
+            current_transform = self._default_collate
+
+        # the model can provide a custom ``collate_fn``.
+        collate_fn = self.get_state(CollateFn)
+        if collate_fn is not None:
+            collate_fn = collate_fn.collate_fn
+        else:
+            collate_fn = current_transform
+            # return collate_fn.collate_fn(samples)
+
+        parameters = inspect.signature(collate_fn).parameters
+        if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
+            return collate_fn(samples, metadata)
+        return collate_fn(samples)
 
     def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
@@ -382,8 +404,7 @@ class Preprocess(BasePreprocess, Properties):
         return self.current_transform(sample)
 
     def per_batch_transform_on_device(self, batch: Any) -> Any:
-        """
-        Transforms to apply to a whole batch (if possible use this for efficiency).
+        """Transforms to apply to a whole batch (if possible use this for efficiency).
 
         .. note::
 
@@ -393,7 +414,8 @@ class Preprocess(BasePreprocess, Properties):
         return self.current_transform(batch)
 
     def available_data_sources(self) -> Sequence[str]:
-        """Get the list of available data source names for use with this :class:`~flash.core.data.process.Preprocess`.
+        """Get the list of available data source names for use with this
+        :class:`~flash.core.data.process.Preprocess`.
 
         Returns:
             The list of data source names.
@@ -426,14 +448,13 @@ class Preprocess(BasePreprocess, Properties):
 
 
 class DefaultPreprocess(Preprocess):
-
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_sources: Optional[Dict[str, 'DataSource']] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        data_sources: Optional[Dict[str, "DataSource"]] = None,
         default_data_source: Optional[str] = None,
     ):
         super().__init__(
@@ -454,10 +475,8 @@ class DefaultPreprocess(Preprocess):
 
 
 class Postprocess(Properties):
-    """
-    The :class:`~flash.core.data.process.Postprocess` encapsulates all the data processing logic that should run after
-    the model.
-    """
+    """The :class:`~flash.core.data.process.Postprocess` encapsulates all the data processing logic that should run
+    after the model."""
 
     def __init__(self, save_path: Optional[str] = None):
         super().__init__()
@@ -467,6 +486,7 @@ class Postprocess(Properties):
     @staticmethod
     def per_batch_transform(batch: Any) -> Any:
         """Transforms to apply on a whole batch before uncollation to individual samples.
+
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return batch
@@ -474,19 +494,22 @@ class Postprocess(Properties):
     @staticmethod
     def per_sample_transform(sample: Any) -> Any:
         """Transforms to apply to a single sample after splitting up the batch.
+
         Can involve both CPU and Device transforms as this is not applied in separate workers.
         """
         return sample
 
     @staticmethod
     def uncollate(batch: Any) -> Any:
-        """Uncollates a batch into single samples. Tries to preserve the type whereever possible."""
+        """Uncollates a batch into single samples.
+
+        Tries to preserve the type whereever possible.
+        """
         return default_uncollate(batch)
 
     @staticmethod
     def save_data(data: Any, path: str) -> None:
-        """Saves all data together to a single path.
-        """
+        """Saves all data together to a single path."""
         torch.save(data, path)
 
     @staticmethod
@@ -496,7 +519,7 @@ class Postprocess(Properties):
 
     # TODO: Are those needed ?
     def format_sample_save_path(self, path: str) -> str:
-        path = os.path.join(path, f'sample_{self._saved_samples}.ptl')
+        path = os.path.join(path, f"sample_{self._saved_samples}.ptl")
         self._saved_samples += 1
         return path
 
@@ -508,8 +531,8 @@ class Postprocess(Properties):
 
 
 class Serializer(Properties):
-    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model output into
-    the desired output format when predicting."""
+    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model output
+    into the desired output format when predicting."""
 
     def __init__(self):
         super().__init__()
@@ -542,8 +565,8 @@ class Serializer(Properties):
 
 
 class SerializerMapping(Serializer):
-    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the dictionary
-    to be passed to it's own :class:`.Serializer`."""
+    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the
+    dictionary to be passed to it's own :class:`.Serializer`."""
 
     def __init__(self, serializers: Mapping[str, Serializer]):
         super().__init__()
@@ -555,13 +578,13 @@ class SerializerMapping(Serializer):
             return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
         raise ValueError("The model output must be a mapping when using a SerializerMapping.")
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
         for serializer in self._serializers.values():
             serializer.attach_data_pipeline_state(data_pipeline_state)
 
 
 class Deserializer(Properties):
-    """"""
+    """Deserializer."""
 
     def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
         raise NotImplementedError
@@ -577,7 +600,7 @@ class Deserializer(Properties):
 
 class DeserializerMapping(Deserializer):
     # TODO: This is essentially a duplicate of SerializerMapping, should be abstracted away somewhere
-    """"""
+    """Deserializer Mapping."""
 
     def __init__(self, deserializers: Mapping[str, Deserializer]):
         super().__init__()
@@ -589,6 +612,6 @@ class DeserializerMapping(Deserializer):
             return {key: deserializer.deserialize(sample[key]) for key, deserializer in self._deserializers.items()}
         raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
 
-    def attach_data_pipeline_state(self, data_pipeline_state: 'flash.core.data.data_pipeline.DataPipelineState'):
+    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
         for deserializer in self._deserializers.values():
             deserializer.attach_data_pipeline_state(data_pipeline_state)

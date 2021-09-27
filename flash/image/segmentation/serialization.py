@@ -19,7 +19,13 @@ import torch
 import flash
 from flash.core.data.data_source import DefaultDataKeys, ImageLabelsMap
 from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _MATPLOTLIB_AVAILABLE, lazy_import
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _KORNIA_AVAILABLE,
+    _MATPLOTLIB_AVAILABLE,
+    lazy_import,
+    requires,
+)
 
 Segmentation = None
 if _FIFTYONE_AVAILABLE:
@@ -41,15 +47,15 @@ else:
 
 
 class SegmentationLabels(Serializer):
-    """A :class:`.Serializer` which converts the model outputs to the label of
-    the argmax classification per pixel in the image for semantic segmentation
-    tasks.
+    """A :class:`.Serializer` which converts the model outputs to the label of the argmax classification per pixel
+    in the image for semantic segmentation tasks.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
         visualize: Wether to visualize the image labels.
     """
 
+    @requires("image")
     def __init__(self, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None, visualize: bool = False):
         super().__init__()
         self.labels_map = labels_map
@@ -57,14 +63,13 @@ class SegmentationLabels(Serializer):
 
     @staticmethod
     def labels_to_image(img_labels: torch.Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> torch.Tensor:
-        """Function that given an image with labels ids and their pixels intrensity mapping,
-           creates a RGB representation for visualisation purposes.
-        """
+        """Function that given an image with labels ids and their pixels intrensity mapping, creates a RGB
+        representation for visualisation purposes."""
         assert len(img_labels.shape) == 2, img_labels.shape
         H, W = img_labels.shape
         out = torch.empty(3, H, W, dtype=torch.uint8)
         for label_id, label_val in labels_map.items():
-            mask = (img_labels == label_id)
+            mask = img_labels == label_id
             for i in range(3):
                 out[i].masked_fill_(mask, label_val[i])
         return out
@@ -73,8 +78,17 @@ class SegmentationLabels(Serializer):
     def create_random_labels_map(num_classes: int) -> Dict[int, Tuple[int, int, int]]:
         labels_map: Dict[int, Tuple[int, int, int]] = {}
         for i in range(num_classes):
-            labels_map[i] = torch.randint(0, 255, (3, ))
+            labels_map[i] = torch.randint(0, 255, (3,))
         return labels_map
+
+    @requires("matplotlib")
+    def _visualize(self, labels):
+        if self.labels_map is None:
+            self.labels_map = self.get_state(ImageLabelsMap).labels_map
+        labels_vis = self.labels_to_image(labels, self.labels_map)
+        labels_vis = K.utils.tensor_to_image(labels_vis)
+        plt.imshow(labels_vis)
+        plt.show()
 
     def serialize(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
         preds = sample[DefaultDataKeys.PREDS]
@@ -82,18 +96,12 @@ class SegmentationLabels(Serializer):
         labels = torch.argmax(preds, dim=-3)  # HxW
 
         if self.visualize and not flash._IS_TESTING:
-            if self.labels_map is None:
-                self.labels_map = self.get_state(ImageLabelsMap).labels_map
-            labels_vis = self.labels_to_image(labels, self.labels_map)
-            labels_vis = K.utils.tensor_to_image(labels_vis)
-            plt.imshow(labels_vis)
-            plt.show()
+            self._visualize(labels)
         return labels.tolist()
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
-    """A :class:`.Serializer` which converts the model outputs to FiftyOne
-    segmentation format.
+    """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
@@ -103,15 +111,13 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
             FiftyOne labels (False).
     """
 
+    @requires("fiftyone")
     def __init__(
         self,
         labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None,
         visualize: bool = False,
         return_filepath: bool = False,
     ):
-        if not _FIFTYONE_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install fiftyone`.")
-
         super().__init__(labels_map=labels_map, visualize=visualize)
 
         self.return_filepath = return_filepath

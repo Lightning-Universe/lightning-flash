@@ -46,24 +46,23 @@ class BaseType(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def serialize(self, data):  # pragma: no cover
-        """Serialize the incoming data to send it through the network"""
+        """Serialize the incoming data to send it through the network."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def deserialize(self, *args, **kwargs):  # pragma: no cover
-        """Take the inputs from the network and deserilize/convert them them. Output from
-        this method will go to the exposed method as arguments.
+        """Take the inputs from the network and deserilize/convert them them.
+
+        Output from this method will go to the exposed method as arguments.
         """
         raise NotImplementedError
 
     def packed_deserialize(self, kwargs):
         """Unpacks data (assuming kwargs) and calls deserialize method of child class.
 
-        While it does not seem to be doing much, and always does one thing, the
-        benefit comes when building sophisticated datatypes (such as Repeated)
-        where the developer wants to dictate how the unpacking happens. For simple
-        cases like Image or Bbox etc, developer would never need to know the
-        existence of this. Task graph would never call deserialize directly
-        but always call this method.
+        While it does not seem to be doing much, and always does one thing, the benefit comes when building
+        sophisticated datatypes (such as Repeated) where the developer wants to dictate how the unpacking happens. For
+        simple cases like Image or Bbox etc, developer would never need to know the existence of this. Task graph would
+        never call deserialize directly but always call this method.
         """
         return self.deserialize(**kwargs)

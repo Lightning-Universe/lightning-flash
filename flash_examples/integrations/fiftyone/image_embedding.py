@@ -28,7 +28,7 @@ dataset = fo.Dataset.from_dir(
 )
 
 # 3 Load model
-embedder = ImageEmbedder(backbone="resnet101", embedding_dim=128)
+embedder = ImageEmbedder(backbone="resnet101")
 
 # 4 Generate embeddings
 filepaths = dataset.values("filepath")

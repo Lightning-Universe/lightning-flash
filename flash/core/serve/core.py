@@ -8,7 +8,7 @@ import torch
 
 from flash.core.serve.types.base import BaseType
 from flash.core.serve.utils import download_file
-from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, _requires_extras
+from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, requires
 
 if _PYDANTIC_AVAILABLE:
     from pydantic import FilePath, HttpUrl, parse_obj_as, ValidationError
@@ -20,7 +20,7 @@ else:
 
 @dataclass
 class Endpoint:
-    """An endpoint maps a route and request/response payload to components
+    """An endpoint maps a route and request/response payload to components.
 
     Parameters
     ----------
@@ -41,8 +41,7 @@ class Endpoint:
     def __post_init__(self):
         if not isinstance(self.route, str):
             raise TypeError(
-                f"route parameter must be type={str}, recieved "
-                f"route={self.route} of type={type(self.route)}"
+                f"route parameter must be type={str}, recieved " f"route={self.route} of type={type(self.route)}"
             )
         if not self.route.startswith("/"):
             raise ValueError("route must begin with a `slash` character (ie `/`).")
@@ -76,12 +75,15 @@ class FlashServeScriptLoader:
         return self.instance(*args, **kwargs)
 
 
-ServableValidArgs_T = Union[Tuple[Type[pl.LightningModule], Union[HttpUrl, FilePath]], Tuple[HttpUrl],
-                            Tuple[FilePath], ]
+ServableValidArgs_T = Union[
+    Tuple[Type[pl.LightningModule], Union[HttpUrl, FilePath]],
+    Tuple[HttpUrl],
+    Tuple[FilePath],
+]
 
 
 class Servable:
-    """Wrapper around a model object to enable serving at scale.
+    """ModuleWrapperBase around a model object to enable serving at scale.
 
     Create a ``Servable`` from either (LM, LOCATION) or (LOCATION,)
 
@@ -100,12 +102,12 @@ class Servable:
     *  How to handle ``__init__`` args not recorded in hparams of ``pl.LightningModule``
     """
 
-    @_requires_extras("serve")
+    @requires("serve")
     def __init__(
         self,
         *args: ServableValidArgs_T,
         download_path: Optional[Path] = None,
-        script_loader_cls: Type[FlashServeScriptLoader] = FlashServeScriptLoader
+        script_loader_cls: Type[FlashServeScriptLoader] = FlashServeScriptLoader,
     ):
         try:
             loc = args[-1]  # last element in args is always loc
@@ -175,16 +177,13 @@ class Connection(NamedTuple):
 
     def __str__(self):
         return (
-            f"{self.source_component}.outputs.{self.source_key} >> "
-            f"{self.target_component}.inputs.{self.target_key}"
+            f"{self.source_component}.outputs.{self.source_key} >> " f"{self.target_component}.inputs.{self.target_key}"
         )
 
 
 @dataclass
 class Parameter:
-    """
-    Holder class for each grid type of a component and connections from those
-    to the types of other components.
+    """Holder class for each grid type of a component and connections from those to the types of other components.
 
     Parameters
     ----------
@@ -208,7 +207,7 @@ class Parameter:
         return f"{self.component_uid}.{self.position}.{self.name}"
 
     def __terminate_invalid_connection_request(self, other: "Parameter", dunder_meth_called: str) -> None:
-        """verify that components can be composed
+        """verify that components can be composed.
 
         Parameters
         ----------
@@ -255,7 +254,7 @@ class Parameter:
             )
 
     def __lshift__(self, other: "Parameter"):
-        """Implements composition connecting Parameter << Parameter"""
+        """Implements composition connecting Parameter << Parameter."""
         self.__terminate_invalid_connection_request(other, "__lshift__")
         con = Connection(
             source_component=other.component_uid,
@@ -266,7 +265,7 @@ class Parameter:
         self.connections.append(con)
 
     def __rshift__(self, other: "Parameter"):
-        """Implements composition connecting Parameter >> Parameter"""
+        """Implements composition connecting Parameter >> Parameter."""
         self.__terminate_invalid_connection_request(other, "__rshift__")
         con = Connection(
             source_component=self.component_uid,
@@ -278,7 +277,6 @@ class Parameter:
 
 
 class DictAttrAccessBase:
-
     def __grid_fields__(self) -> Iterator[str]:
         for field in dataclasses.fields(self):  # noqa F402
             yield field.name
@@ -324,16 +322,17 @@ def make_parameter_container(data: Dict[str, Parameter]) -> ParameterContainer:
     ParameterContainer = make_dataclass(
         "ParameterContainer",
         dataclass_fields,
-        bases=(DictAttrAccessBase, ),
+        bases=(DictAttrAccessBase,),
         frozen=True,
         unsafe_hash=True,
     )
     return ParameterContainer(**data)
 
 
-def make_param_dict(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType],
-                    component_uid: str) -> Tuple[Dict[str, Parameter], Dict[str, Parameter]]:
-    """Convert exposed input/outputs parameters / dtypes to parameter objects
+def make_param_dict(
+    inputs: Dict[str, BaseType], outputs: Dict[str, BaseType], component_uid: str
+) -> Tuple[Dict[str, Parameter], Dict[str, Parameter]]:
+    """Convert exposed input/outputs parameters / dtypes to parameter objects.
 
     Returns
     -------

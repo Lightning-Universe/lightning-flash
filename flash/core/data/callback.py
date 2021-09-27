@@ -10,6 +10,16 @@ from flash.core.data.utils import _STAGES_PREFIX
 
 
 class FlashCallback(Callback):
+    """``FlashCallback`` is an extension of :class:`pytorch_lightning.callbacks.Callback`.
+
+    A callback is a self-contained program that can be reused across projects. Flash and Lightning have a callback
+    system to execute callbacks when needed. Callbacks should capture any NON-ESSENTIAL logic that is NOT required for
+    your lightning module to run.
+
+    Same as PyTorch Lightning, Callbacks can be provided directly to the Trainer::
+
+        trainer = Trainer(callbacks=[MyCustomCallback()])
+    """
 
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
         """Called once a sample has been loaded using ``load_sample``."""
@@ -37,7 +47,6 @@ class FlashCallback(Callback):
 
 
 class ControlFlow(FlashCallback):
-
     def __init__(self, callbacks: List[FlashCallback]):
         self._callbacks = callbacks
 
@@ -72,8 +81,7 @@ class ControlFlow(FlashCallback):
 
 
 class BaseDataFetcher(FlashCallback):
-    """
-    This class is used to profile :class:`~flash.core.data.process.Preprocess` hook outputs.
+    """This class is used to profile :class:`~flash.core.data.process.Preprocess` hook outputs.
 
     By default, the callback won't profile the data being processed as it may lead to ``OOMError``.
 
@@ -155,7 +163,6 @@ class BaseDataFetcher(FlashCallback):
             'val': {},
             'predict': {}
         }
-
     """
 
     def __init__(self, enabled: bool = False):
@@ -195,12 +202,12 @@ class BaseDataFetcher(FlashCallback):
 
     @contextmanager
     def enable(self):
-        """This function is used to enable to BaseDataFetcher"""
+        """This function is used to enable to BaseDataFetcher."""
         self.enabled = True
         yield
         self.enabled = False
 
-    def attach_to_preprocess(self, preprocess: 'flash.core.data.process.Preprocess') -> None:
+    def attach_to_preprocess(self, preprocess: "flash.core.data.process.Preprocess") -> None:
         preprocess.add_callbacks([self])
         self._preprocess = preprocess
 

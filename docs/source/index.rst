@@ -6,15 +6,20 @@
 Lightning Flash
 ===============
 
+.. tutoriallist::
+
+.. raw:: html
+
+   <div style="display:none">
+
 .. toctree::
    :maxdepth: 1
    :caption: Getting started
 
    quickstart
    installation
-   custom_task
-   reference/flash_to_pl
-   reference/flash_to_production
+   general/flash_zero
+   general/production
 
 .. toctree::
    :maxdepth: 1
@@ -24,6 +29,10 @@ Lightning Flash
    general/finetuning
    general/predictions
    general/jit
+   general/data
+   general/registry
+   general/serve
+   general/backbones
 
 .. toctree::
    :maxdepth: 1
@@ -33,9 +42,19 @@ Lightning Flash
    reference/image_classification_multi_label
    reference/image_embedder
    reference/object_detection
+   reference/keypoint_detection
+   reference/instance_segmentation
    reference/semantic_segmentation
    reference/style_transfer
    reference/video_classification
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Audio
+
+   reference/audio_classification
+   reference/speech_recognition
+   reference/audio_source_separation
 
 .. toctree::
    :maxdepth: 1
@@ -49,36 +68,49 @@ Lightning Flash
 
    reference/text_classification
    reference/text_classification_multi_label
+   reference/question_answering
    reference/summarization
    reference/translation
 
 .. toctree::
    :maxdepth: 1
-   :caption: Audio
+   :caption: Point Cloud
 
-   reference/audio_source_separation
+   reference/pointcloud_segmentation
+   reference/pointcloud_object_detection
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Graph
+
+   reference/graph_classification
 
 .. toctree::
    :maxdepth: 1
    :caption: Integrations
 
+   integrations/providers
+   integrations/baal
    integrations/fiftyone
+   integrations/icevision
+   integrations/learn2learn
+   integrations/vissl
 
 .. toctree::
    :maxdepth: 1
    :caption: API Reference
 
-   general/data
-   general/callback
-   general/registry
-   general/serve
-   code/core
-   code/data
-   code/image
-   code/tabular
-   code/text
-   code/video
-   code/audio
+   api/flash
+   api/core
+   api/data
+   api/serve
+   api/image
+   api/audio
+   api/pointcloud
+   api/tabular
+   api/text
+   api/video
+   api/graph
 
 .. toctree::
    :maxdepth: 1
@@ -94,13 +126,24 @@ Lightning Flash
    template/docs
 
 .. toctree::
+   :maxdepth: 1
+   :caption: Community
+
+   governance
+   generated/CONTRIBUTING.md
+   generated/CHANGELOG.md
+
+.. toctree::
    :hidden:
 
    reference/template
+
+.. raw:: html
+
+   </div>
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

@@ -15,12 +15,13 @@ import inspect
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
-from typing import Callable, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from pytorch_lightning import LightningDataModule, LightningModule
 from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -32,8 +33,8 @@ from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
-    """Modified version of ``pytorch_lightning.utilities.argparse.from_argparse_args`` which populates ``valid_kwargs``
-    from ``pytorch_lightning.Trainer``."""
+    """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
+    ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
     if isinstance(args, ArgumentParser):
         args = cls.parse_argparser(args)
 
@@ -48,8 +49,10 @@ def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
 
 
 def _defaults_from_env_vars(fn: Callable) -> Callable:
-    """Copy of ``pytorch_lightning.trainer.connectors.env_vars_connector._defaults_from_env_vars``. Required to fix
-    build error in readthedocs."""
+    """Copy of ``pytorch_lightning.trainer.connectors.env_vars_connector._defaults_from_env_vars``.
+
+    Required to fix build error in readthedocs.
+    """
 
     @wraps(fn)
     def insert_env_defaults(self, *args, **kwargs):
@@ -70,7 +73,6 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 
 
 class Trainer(PlTrainer):
-
     @_defaults_from_env_vars
     def __init__(self, *args, serve_sanity_check: bool = False, **kwargs):
         if flash._IS_TESTING:
@@ -99,6 +101,28 @@ class Trainer(PlTrainer):
 
         if self.serve_sanity_check and ref_model.is_servable and _SERVE_AVAILABLE:
             ref_model.run_serve_sanity_check()
+
+    # TODO @(tchaton) remove `reset_train_val_dataloaders` from run_train function
+    def _run_train(self) -> None:
+        self._pre_training_routine()
+
+        if not self.is_global_zero and self.progress_bar_callback is not None:
+            self.progress_bar_callback.disable()
+
+        self._run_sanity_check(self.lightning_module)
+
+        # enable train mode
+        self.model.train()
+        torch.set_grad_enabled(True)
+
+        # reload data when needed
+        model = self.lightning_module
+
+        if isinstance(self.fit_loop, FitLoop):
+            self.reset_train_val_dataloaders(model)
+
+        self.fit_loop.trainer = self
+        self.fit_loop.run()
 
     def fit(
         self,
@@ -164,9 +188,7 @@ class Trainer(PlTrainer):
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
     def _resolve_callbacks(self, model, strategy):
-        """
-        This function is used to select the `BaseFinetuning` to be used for finetuning.
-        """
+        """This function is used to select the `BaseFinetuning` to be used for finetuning."""
         if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
             raise MisconfigurationException(
                 "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
@@ -186,7 +208,8 @@ class Trainer(PlTrainer):
                 if strategy is not None:
                     rank_zero_warn(
                         "The model contains a default finetune callback. The provided {strategy} will be overriden.\n"
-                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ", UserWarning
+                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ",
+                        UserWarning,
                     )
                 callback = model_callback
             else:
@@ -196,10 +219,8 @@ class Trainer(PlTrainer):
 
     @staticmethod
     def _merge_callbacks(old_callbacks: List, new_callbacks: List) -> List:
-        """
-        This function keeps only 1 instance of each callback type,
-        extending new_callbacks with old_callbacks
-        """
+        """This function keeps only 1 instance of each callback type, extending new_callbacks with
+        old_callbacks."""
         if len(new_callbacks) == 0:
             return old_callbacks
         new_callbacks_types = {type(c) for c in new_callbacks}
@@ -210,12 +231,60 @@ class Trainer(PlTrainer):
 
     @classmethod
     def add_argparse_args(cls, *args, **kwargs) -> ArgumentParser:
+        """See :func:`pytorch_lightning.utilities.argparse.add_argparse_args`."""
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return add_argparse_args(PlTrainer, *args, **kwargs)
 
     @classmethod
-    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> 'Trainer':
+    def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs) -> "Trainer":
+        """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
+        ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
+
+    def _parse_request_dataloader_args(self, args: Tuple, kwargs: Dict):
+        """Handles backwards compatibility for ``request_dataloader``.
+
+        Possible combinations:
+
+        legacy: (model, stage)
+        (stage, model)
+        (stage, model=model)
+        """
+        model, stage, is_legacy = None, None, False
+        if len(args) == 2:
+            # Check for legacy arguments: (model, stage)
+            if isinstance(args[0], LightningModule):
+                is_legacy = True
+                model, stage = args
+            else:  # (stage, model)
+                stage, model = args
+        else:
+            stage = kwargs.get("stage", args[0])
+            model = kwargs.get("model")
+        return model, stage, is_legacy
+
+    def request_dataloader(
+        self,
+        *args,
+        **kwargs,
+    ) -> Union[DataLoader, List[DataLoader]]:
+        """Handles downloading data in the GPU or TPU case.
+
+        Returns:
+            The dataloader
+        """
+        model, stage, is_legacy = self._parse_request_dataloader_args(args, kwargs)
+        if is_legacy:
+            self.call_hook(f"on_{stage}_dataloader")
+            dataloader = getattr(model, f"{stage}_dataloader")()
+        else:
+            hook = f"{stage.dataloader_prefix}_dataloader"
+            self.call_hook("on_" + hook, pl_module=model)
+            dataloader = self.call_hook(hook, pl_module=model)
+        if isinstance(dataloader, tuple):
+            dataloader = list(dataloader)
+        self.accelerator.barrier("get_dataloaders")
+        return dataloader

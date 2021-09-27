@@ -65,14 +65,7 @@ def test_deserialize():
     with pytest.raises(RuntimeError):
         table.deserialize({"title1": {0: 100}, "title2": {0: 200}})
     assert torch.allclose(
-        table.deserialize({
-            "t1": {
-                0: 100.0
-            },
-            "t2": {
-                1: 200.0
-            }
-        }),
+        table.deserialize({"t1": {0: 100.0}, "t2": {1: 200.0}}),
         torch.tensor([[100.0, float("nan")], [float("nan"), 200.0]], dtype=torch.float64),
         equal_nan=True,
     )

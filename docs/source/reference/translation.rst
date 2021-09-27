@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Translation
+   :card_description: Learn to translate text with Flash and build an example model which translates from English to Romanian.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/translation.svg
+   :tags: Text,Translation,NLP
+
 .. _translation:
 
 ###########
@@ -49,12 +55,31 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The translation task can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash translation
+
+To view configuration options and options for running the translation task with your own data, use:
+
+.. code-block:: bash
+
+    flash translation --help
+
+------
+
 *******
 Serving
 *******
 
 The :class:`~flash.text.seq2seq.translation.model.TranslationTask` is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
 .. literalinclude:: ../../../flash_examples/serve/translation/inference_server.py
@@ -66,3 +91,23 @@ You can now perform inference from your client like this:
 .. literalinclude:: ../../../flash_examples/serve/translation/client.py
     :language: python
     :lines: 14-
+
+------
+
+.. _translation_ort:
+
+**********************************************
+Accelerate Training & Inference with Torch ORT
+**********************************************
+
+`Torch ORT <https://cloudblogs.microsoft.com/opensource/2021/07/13/accelerate-pytorch-training-with-torch-ort/>`__ converts your model into an optimized ONNX graph, speeding up training & inference when using NVIDIA or AMD GPUs. Enabling Torch ORT requires a single flag passed to the ``TranslationTask`` once installed. See installation instructions `here <https://github.com/pytorch/ort#install-in-a-local-python-environment>`__.
+
+.. note::
+
+    Not all Transformer models are supported. See `this table <https://github.com/microsoft/onnxruntime-training-examples#examples>`__ for supported models + branches containing fixes for certain models.
+
+.. code-block:: python
+
+    ...
+
+    model = TranslationTask(backbone="t5-large", num_classes=datamodule.num_classes, enable_ort=True)

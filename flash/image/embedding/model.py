@@ -11,120 +11,139 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
+import warnings
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
-from pytorch_lightning.utilities import rank_zero_warn
-from torch import nn
-from torch.nn import functional as F
-from torchmetrics import Accuracy, Metric
+from torch.optim.lr_scheduler import _LRScheduler
 
+from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.model import Task
+from flash.core.data.states import CollateFn, PostTensorTransform, PreTensorTransform, ToTensorTransform
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from flash.image.classification.data import ImageClassificationPreprocess
+from flash.core.utilities.imports import _VISSL_AVAILABLE
 
-if _IMAGE_AVAILABLE:
-    from flash.image.backbones import IMAGE_CLASSIFIER_BACKBONES
+if _VISSL_AVAILABLE:
+    import classy_vision
+    import classy_vision.generic.distributed_util
+
+    from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
+    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+    from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
+
+    # patch this to avoid classy vision/vissl based distributed training
+    classy_vision.generic.distributed_util.get_world_size = lambda: 1
 else:
-    IMAGE_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
+    IMAGE_EMBEDDER_BACKBONES = FlashRegistry("backbones")
+    IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
+    IMAGE_EMBEDDER_TRANSFORMS = FlashRegistry("embedder_transforms")
 
 
-class ImageEmbedder(Task):
-    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For more
-    details, see :ref:`image_embedder`.
+class ImageEmbedder(AdapterTask):
+    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For
+    more details, see :ref:`image_embedder`.
 
     Args:
-        embedding_dim: Dimension of the embedded vector. ``None`` uses the default from the backbone.
-        backbone: A model to use to extract image features, defaults to ``"swav-imagenet"``.
-        pretrained: Use a pretrained backbone, defaults to ``True``.
-        loss_fn: Loss function for training and finetuning, defaults to :func:`torch.nn.functional.cross_entropy`
+        training_strategy: Training strategy from VISSL,
+            select between 'simclr', 'swav', 'dino', 'moco', or 'barlow_twins'.
+        head: projection head used for task, select between
+            'simclr_head', 'swav_head', 'dino_head', 'moco_head', or 'barlow_twins_head'.
+        pretraining_transform: transform applied to input image for pre-training SSL model.
+            Select between 'simclr_transform', 'swav_transform', 'dino_transform',
+            'moco_transform', or 'barlow_twins_transform'.
+        backbone: VISSL backbone, defaults to ``resnet``.
+        pretrained: Use a pretrained backbone, defaults to ``False``.
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
-        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
-            package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
-            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
-            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        pooling_fn: Function used to pool image to generate embeddings, defaults to :func:`torch.max`.
-
+        backbone_kwargs: arguments to be passed to VISSL backbones, i.e. ``vision_transformer`` and ``resnet``.
+        training_strategy_kwargs: arguments passed to VISSL loss function, projection head and training hooks.
+        pretraining_transform_kwargs: arguments passed to VISSL transforms.
     """
 
-    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+    training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
+    backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
+    transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
     required_extras: str = "image"
 
     def __init__(
         self,
-        embedding_dim: Optional[int] = None,
-        backbone: str = "resnet101",
-        pretrained: bool = True,
-        loss_fn: Callable = F.cross_entropy,
+        training_strategy: str,
+        head: str,
+        pretraining_transform: str,
+        backbone: str = "resnet",
+        pretrained: bool = False,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = (Accuracy()),
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         learning_rate: float = 1e-3,
-        pooling_fn: Callable = torch.max
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
+        training_strategy_kwargs: Optional[Dict[str, Any]] = None,
+        pretraining_transform_kwargs: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(
-            model=None,
+        self.save_hyperparameters()
+
+        if backbone_kwargs is None:
+            backbone_kwargs = {}
+
+        if training_strategy_kwargs is None:
+            training_strategy_kwargs = {}
+
+        backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+
+        metadata = self.training_strategies.get(training_strategy, with_metadata=True)
+        loss_fn, head, hooks = metadata["fn"](head=head, **training_strategy_kwargs)
+
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
             loss_fn=loss_fn,
-            optimizer=optimizer,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            preprocess=ImageClassificationPreprocess()
+            backbone=backbone,
+            head=head,
+            hooks=hooks,
         )
 
-        self.save_hyperparameters()
-        self.backbone_name = backbone
-        self.embedding_dim = embedding_dim
-        assert pooling_fn in [torch.mean, torch.max]
-        self.pooling_fn = pooling_fn
+        super().__init__(
+            adapter=adapter,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
+            learning_rate=learning_rate,
+        )
 
-        self.backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained)
+        transform, collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
+        to_tensor_transform = ApplyToKeys(
+            DefaultDataKeys.INPUT,
+            transform,
+        )
 
-        if embedding_dim is None:
-            self.head = nn.Identity()
-        else:
-            self.head = nn.Sequential(
-                nn.Flatten(),
-                nn.Linear(num_features, embedding_dim),
-            )
-            rank_zero_warn('Adding linear layer on top of backbone. Remember to finetune first before using!')
+        self.adapter.set_state(CollateFn(collate_fn))
+        self.adapter.set_state(ToTensorTransform(to_tensor_transform))
+        self.adapter.set_state(PostTensorTransform(None))
+        self.adapter.set_state(PreTensorTransform(None))
 
-    def apply_pool(self, x):
-        x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
-            x = x[0]
-        x = self.pooling_fn(x, dim=-1)
-        if torch.jit.isinstance(x, Tuple[torch.Tensor, torch.Tensor]):
-            x = x[0]
-        return x
+        warnings.warn(
+            "Warning: VISSL ImageEmbedder overrides any user provided transforms"
+            " with pre-defined transforms for the training strategy."
+        )
 
-    def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x)
+    def on_train_start(self) -> None:
+        self.adapter.on_train_start()
 
-        # bolts ssl models return lists
-        if isinstance(x, tuple):
-            x = x[-1]
+    def on_train_epoch_end(self) -> None:
+        self.adapter.on_train_epoch_end()
 
-        if x.dim() == 4 and self.embedding_dim:
-            x = self.apply_pool(x)
+    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
 
-        x = self.head(x)
-        return x
-
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
-
-    def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
-
-    def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT])
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+    @classmethod
+    def available_training_strategies(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
+        if registry is None:
+            return []
+        return registry.available_keys()

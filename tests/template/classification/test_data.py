@@ -49,7 +49,7 @@ class TestTemplateData:
     def test_from_numpy(self):
         """Tests that ``TemplateData`` is properly created when using the ``from_numpy`` method."""
         data = np.random.rand(10, self.num_features)
-        targets = np.random.randint(0, self.num_classes, (10, ))
+        targets = np.random.randint(0, self.num_classes, (10,))
 
         # instantiate the data module
         dm = TemplateData.from_numpy(
@@ -71,19 +71,19 @@ class TestTemplateData:
         data = next(iter(dm.train_dataloader()))
         rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
-        assert targets.shape == (2, )
+        assert targets.shape == (2,)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
-        assert targets.shape == (2, )
+        assert targets.shape == (2,)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
-        assert targets.shape == (2, )
+        assert targets.shape == (2,)
 
     @staticmethod
     def test_from_sklearn():
@@ -107,16 +107,16 @@ class TestTemplateData:
         data = next(iter(dm.train_dataloader()))
         rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
-        assert targets.shape == (2, )
+        assert targets.shape == (2,)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
         rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
-        assert targets.shape == (2, )
+        assert targets.shape == (2,)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
         rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
-        assert targets.shape == (2, )
+        assert targets.shape == (2,)

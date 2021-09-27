@@ -35,7 +35,7 @@ Here's an example of finetuning.
     model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
     # 3. Create the trainer (run one epoch for demo)
-    trainer = flash.Trainer(max_epochs=1)
+    trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 
     # 4. Finetune the model
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
@@ -58,7 +58,12 @@ Once you've finetuned, use the model to predict:
     # Serialize predictions as labels, automatically inferred from the training data in part 2.
     model.serializer = Labels()
 
-    predictions = model.predict(["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg"])
+    predictions = model.predict(
+        [
+            "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
+            "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg",
+        ]
+    )
     print(predictions)
 
 We get the following output:
@@ -86,4 +91,4 @@ Or you can use the saved model for prediction anywhere you want!
     # load finetuned checkpoint
     model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
-    predictions = model.predict('path/to/your/own/image.png')
+    predictions = model.predict("path/to/your/own/image.png")

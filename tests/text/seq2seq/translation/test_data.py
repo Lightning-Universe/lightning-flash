@@ -33,6 +33,12 @@ TEST_JSON_DATA = """
 {"input": "this is a sentence three","target":"this is a translated sentence three"}
 """
 
+TEST_JSON_DATA_FIELD = """{"data": [
+{"input": "this is a sentence one","target":"this is a translated sentence one"},
+{"input": "this is a sentence two","target":"this is a translated sentence two"},
+{"input": "this is a sentence three","target":"this is a translated sentence three"}]}
+"""
+
 
 def csv_data(tmpdir):
     path = Path(tmpdir) / "data.csv"
@@ -46,11 +52,25 @@ def json_data(tmpdir):
     return path
 
 
+def json_data_with_field(tmpdir):
+    path = Path(tmpdir) / "data.json"
+    path.write_text(TEST_JSON_DATA_FIELD)
+    return path
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = TranslationData.from_csv("input", "target", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
+    dm = TranslationData.from_csv(
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=csv_path,
+        batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
@@ -67,7 +87,9 @@ def test_from_files(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
-        batch_size=1
+        batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
     )
     batch = next(iter(dm.val_dataloader()))
     assert "labels" in batch
@@ -82,7 +104,34 @@ def test_from_files(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
-    dm = TranslationData.from_json("input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
+    dm = TranslationData.from_json(
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert "labels" in batch
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_json_with_field(tmpdir):
+    json_path = json_data_with_field(tmpdir)
+    dm = TranslationData.from_json(
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1,
+        field="data",
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch

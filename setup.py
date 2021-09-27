@@ -33,8 +33,8 @@ def _load_py_module(fname, pkg="flash"):
     return py
 
 
-about = _load_py_module('__about__.py')
-setup_tools = _load_py_module('setup_tools.py')
+about = _load_py_module("__about__.py")
+setup_tools = _load_py_module("setup_tools.py")
 
 long_description = setup_tools._load_readme_description(
     _PATH_ROOT,
@@ -49,11 +49,15 @@ extras = {
     "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_text.txt"),
     "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_tabular.txt"),
     "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image.txt"),
+    "image_extras": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image_extras.txt"),
     "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
+    "pointcloud": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_pointcloud.txt"),
+    "video_extras": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video_extras.txt"),
     "serve": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="serve.txt"),
+    "audio": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_audio.txt"),
+    "graph": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_graph.txt"),
 }
 
-# remove possible duplicate.
 extras["vision"] = list(set(extras["image"] + extras["video"]))
 extras["all"] = list(set(extras["vision"] + extras["tabular"] + extras["text"]))
 extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
@@ -77,10 +81,13 @@ setup(
     long_description_content_type="text/markdown",
     include_package_data=True,
     extras_require=extras,
+    entry_points={
+        "console_scripts": ["flash=flash.__main__:main"],
+    },
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
-    install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name='requirements.txt'),
+    install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name="requirements.txt"),
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",

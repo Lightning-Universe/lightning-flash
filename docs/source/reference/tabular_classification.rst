@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Tabular Classification
+   :card_description: Learn to classify tabular records with Flash and build an example model to predict survival rates on the Titanic.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/tabular_classification.svg
+   :tags: Tabular,Classification
+
 .. _tabular_classification:
 
 ######################
@@ -48,12 +54,31 @@ Here's the full example:
 
 ------
 
+**********
+Flash Zero
+**********
+
+The tabular classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash tabular_classifier
+
+To view configuration options and options for running the tabular classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash tabular_classifier --help
+
+------
+
 *******
 Serving
 *******
 
 The :class:`~flash.tabular.classification.model.TabularClassifier` is servable.
-This means you can call ``.serve`` to serve your :class:`~flash.Task`.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
 .. literalinclude:: ../../../flash_examples/serve/tabular_classification/inference_server.py

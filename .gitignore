@@ -75,6 +75,11 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api/
+docs/notebooks/
+docs/source/api/generated/
+docs/source/integrations/generated/
+docs/source/generated/
 
 # PyBuilder
 target/
@@ -133,8 +138,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-docs/notebooks/
-docs/api/
 titanic.csv
 .vscode
 .venv
@@ -158,3 +161,10 @@ CameraRGB
 CameraSeg
 jigsaw_toxic_comments
 flash_examples/serve/tabular_classification/data
+logs/cache/*
+flash_examples/data
+flash_examples/checkpoints
+timit/
+urban8k_images/
+__MACOSX
+*-v2.0.json

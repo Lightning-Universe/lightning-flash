@@ -23,6 +23,6 @@ clean:
 	rm -rf $(shell find . -name "mlruns")
 	rm -rf .mypy_cache
 	rm -rf .pytest_cache
+	rm -rf **/__pycache__
 	rm -rf ./docs/build
 	rm -rf ./docs/source/**/generated
-	rm -rf ./docs/source/api

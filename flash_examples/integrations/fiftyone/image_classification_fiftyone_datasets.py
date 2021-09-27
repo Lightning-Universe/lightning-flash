@@ -14,6 +14,7 @@
 from itertools import chain
 
 import fiftyone as fo
+import torch
 
 import flash
 from flash.core.classification import FiftyOneLabels, Labels
@@ -53,6 +54,7 @@ model = ImageClassifier(
 )
 trainer = flash.Trainer(
     max_epochs=1,
+    gpus=torch.cuda.device_count(),
     limit_train_batches=1,
     limit_val_batches=1,
 )
