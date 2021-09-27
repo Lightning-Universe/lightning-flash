@@ -24,7 +24,7 @@ class SentenceEmbeddings:
         self.model_name = model_name
         self.model = SentenceTransformer(model_name_or_path=self.model_name)
 
-    def return_embeddings(
+    def generate_embeddings(
         self,
         sentences: Union[str, List[str]],
         batch_size: int = 32,
