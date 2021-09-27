@@ -21,7 +21,6 @@ example_requires("fastface")
 
 import fastface as ff  # noqa: E402
 
-
 # # 1. Create the DataModule
 train_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="train")
 val_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="val")
