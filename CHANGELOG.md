@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added graph classification backbones and graph embedding task ([#592](https://github.com/PyTorchLightning/lightning-flash/pull/592))
+- Added backbones for `Graph Classification` and `Graph Embedding` Tasks ([#592](https://github.com/PyTorchLightning/lightning-flash/pull/592))
 
 - Added support `learn2learn` training_strategy for `ImageClassifier` ([#737](https://github.com/PyTorchLightning/lightning-flash/pull/737))
 
