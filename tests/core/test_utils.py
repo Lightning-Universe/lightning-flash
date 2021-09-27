@@ -53,4 +53,12 @@ def test_get_callable_dict():
 def test_download_data(tmpdir):
     path = os.path.join(tmpdir, "data")
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", path)
-    assert set(os.listdir(path)) == {"titanic", "titanic.zip"}
+    assert "titanic" in set(os.listdir(path))
+    assert "titanic.zip" in set(os.listdir(path))
+
+
+def test_download_data_tar(tmpdir):
+    path = os.path.join(tmpdir, "data")
+    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.tar.gz", path)
+    assert "titanic" in set(os.listdir(path))
+    assert "titanic.tar.gz" in set(os.listdir(path))

@@ -84,7 +84,7 @@ class FaceDetector(Task):
         super().__init__(
             model=model,
             loss_fn=loss,
-            metrics=metrics or {"AP": ff.metric.AveragePrecision()},
+            metrics=metrics or {"AP": ff.metric.AveragePrecision()},  # TODO: replace with torch metrics MAP
             learning_rate=learning_rate,
             optimizer=optimizer,
             serializer=serializer or DetectionLabels(),
@@ -105,6 +105,8 @@ class FaceDetector(Task):
         model.register_buffer("std", getattr(pl_model, "std"))
 
         # set postprocess function
+        # this is called from FaceDetector lightning module form fastface itself
+        # https://github.com/borhanMorphy/fastface/blob/master/fastface/module.py#L200
         setattr(model, "_postprocess", getattr(pl_model, "_postprocess"))
 
         return model
@@ -125,11 +127,11 @@ class FaceDetector(Task):
         return batch
 
     def _compute_metrics(self, logits, targets):
-        preds = self.model.logits_to_preds(logits)
         # preds: torch.Tensor(B, N, 5)
+        preds = self.model.logits_to_preds(logits)
 
-        preds = self.model._postprocess(preds)
         # preds: torch.Tensor(N, 6) as x1,y1,x2,y2,score,batch_idx
+        preds = self.model._postprocess(preds)
 
         target_boxes = [target["target_boxes"] for target in targets]
         pred_boxes = [preds[preds[:, 5] == batch_idx, :5] for batch_idx in range(len(targets))]
@@ -137,7 +139,7 @@ class FaceDetector(Task):
         for metric in self.val_metrics.values():
             metric.update(pred_boxes, target_boxes)
 
-    def shared_step(self, batch, train=False) -> Any:
+    def __shared_step(self, batch, train=False) -> Any:
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         images = self._prepare_batch(images)
         logits = self.model(images)
@@ -145,16 +147,16 @@ class FaceDetector(Task):
 
         self._compute_metrics(logits, targets)
 
-        return loss, logits
+        return loss
 
     def training_step(self, batch, batch_idx) -> Any:
-        loss, _ = self.shared_step(batch)
+        loss, _ = self.__shared_step(batch)
 
         self.log_dict({f"train_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, logits = self.shared_step(batch)
+        loss = self.__shared_step(batch)
 
         self.log_dict({f"val_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
@@ -164,7 +166,7 @@ class FaceDetector(Task):
         self.log_dict({f"val_{k}": v for k, v in metric_results.items()}, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
-        loss, logits = self.shared_step(batch)
+        loss = self.__shared_step(batch)
 
         self.log_dict({f"test_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
