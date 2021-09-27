@@ -54,6 +54,6 @@ pip install 'git+https://github.com/PyTorchLightning/lightning-flash.git#egg=lig
 You can again install dependencies for multiple domains by separating them with commas as above.
 
 
-## Installation Issues
+## Troubleshooting
 
 As of September 26th, 2021 there is a known issue with some packages used by Flash that cause installation issues. If you experience an issue installing Flash, see  [Issue 803](https://github.com/PyTorchLightning/lightning-flash/issues/803) for potential workarounds.
