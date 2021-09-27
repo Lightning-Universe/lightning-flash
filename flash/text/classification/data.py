@@ -281,7 +281,7 @@ class TextDataFrameDataSource(TextDataSource):
 class TextListDataSource(TextDataSource):
     def load_data(
         self,
-        data: Tuple[List[str], List[Any]],
+        data: Tuple[List[str], Union[List[Any], List[List[Any]]]],
         dataset: Optional[Any] = None,
         columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
@@ -289,19 +289,25 @@ class TextListDataSource(TextDataSource):
         hf_dataset = Dataset.from_dict({"input": input, "labels": target})
 
         if not self.predicting:
-            dataset.multi_label = False
-            if self.training:
-                labels = list(sorted(list(set(hf_dataset["labels"]))))
-                dataset.num_classes = len(labels)
-                self.set_state(LabelsState(labels))
+            if isinstance(target[0], List):
+                # multi-target
+                dataset.multi_label = True
+                dataset.num_classes = len(target[0])
+                self.set_state(LabelsState(target))
+            else:
+                dataset.multi_label = False
+                if self.training:
+                    labels = list(sorted(list(set(hf_dataset["labels"]))))
+                    dataset.num_classes = len(labels)
+                    self.set_state(LabelsState(labels))
 
-                labels = self.get_state(LabelsState)
+                    labels = self.get_state(LabelsState)
 
-            # convert labels to ids
-            if labels is not None:
-                labels = labels.labels
-                label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, "labels"))
+                # convert labels to ids
+                if labels is not None:
+                    labels = labels.labels
+                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
+                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, "labels"))
 
         hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input="input"), batched=True)
         hf_dataset.set_format("torch", columns=columns)
@@ -372,9 +378,9 @@ class TextClassificationPreprocess(Preprocess):
             data_sources={
                 DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
-                "data_frame": TextDataFrameDataSource(self.backbone, max_length=max_length),
-                "list": TextListDataSource(self.backbone, max_length=max_length),
-                "sentences": TextSentencesDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.SENTENCES: TextSentencesDataSource(self.backbone, max_length=max_length),
             },
             default_data_source="sentences",
             deserializer=TextDeserializer(backbone, max_length),
@@ -477,7 +483,7 @@ class TextClassificationData(DataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            "data_frame",
+            DefaultDataSources.DATAFRAME,
             (train_data_frame, input_field, target_fields),
             (val_data_frame, input_field, target_fields),
             (test_data_frame, input_field, target_fields),
@@ -496,14 +502,14 @@ class TextClassificationData(DataModule):
         )
 
     @classmethod
-    def from_list(
+    def from_lists(
         cls,
         train_data: Optional[List[str]] = None,
-        train_targets: Optional[List[Any]] = None,
+        train_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
         val_data: Optional[List[str]] = None,
-        val_targets: Optional[List[Any]] = None,
+        val_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
         test_data: Optional[List[str]] = None,
-        test_targets: Optional[List[Any]] = None,
+        test_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
         predict_data: Optional[List[str]] = None,
         train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
@@ -518,16 +524,19 @@ class TextClassificationData(DataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given Python
-        list.
+        lists.
 
         Args:
-            train_data: A list to use as the train inputs.
-            train_targets: A sequence of targets (one per train input) to use as the train targets.
-            val_data: A list to use as the validation inputs.
-            val_targets: A sequence of targets (one per validation input) to use as the validation targets.
-            test_data: A list to use as the test inputs.
-            test_targets: A sequence of targets (one per test input) to use as the test targets.
-            predict_data: A list to use when predicting.
+            train_data: A list of sentences to use as the train inputs.
+            train_targets: A list of targets to use as the train targets. For multi-label classification, the targets
+                should be provided as a list of lists, where each inner list contains the targets for a sample.
+            val_data: A list of sentences to use as the validation inputs.
+            val_targets: A list of targets to use as the validation targets. For multi-label classification, the targets
+                should be provided as a list of lists, where each inner list contains the targets for a sample.
+            test_data: A list of sentences to use as the test inputs.
+            test_targets: A list of targets to use as the test targets. For multi-label classification, the targets
+                should be provided as a list of lists, where each inner list contains the targets for a sample.
+            predict_data: A list of sentences to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -552,7 +561,7 @@ class TextClassificationData(DataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            "list",
+            DefaultDataSources.LISTS,
             (train_data, train_targets),
             (val_data, val_targets),
             (test_data, test_targets),
