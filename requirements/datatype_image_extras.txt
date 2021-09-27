@@ -8,4 +8,4 @@ effdet
 albumentations
 learn2learn
 baal
-git+https://github.com/heartexlabs/label-studio-ml-backend
+label-studio-ml
