@@ -17,10 +17,10 @@ import flash
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, example_requires
 from flash.image import FaceDetectionData, FaceDetector
 
-example_requires("fastface")
-
-import fastface as ff  # noqa: E402
-
+if _FASTFACE_AVAILABLE:
+    import fastface as ff
+else:
+    example_requires("fastface")
 
 # # 1. Create the DataModule
 train_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="train")
