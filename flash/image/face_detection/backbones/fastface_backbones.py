@@ -14,7 +14,7 @@
 from functools import partial
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FASTFACE_AVAILABLE, requires
+from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
