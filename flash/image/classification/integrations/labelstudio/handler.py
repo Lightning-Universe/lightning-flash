@@ -116,6 +116,7 @@ class ImageClassifierAPI(LabelStudioMLBase):
         class_to_id = {c: id for id, c in enumerate(np.unique(image_classes))}
         train_targets = np.vectorize(class_to_id.get)(image_classes)
         datamodule = ImageClassificationData.from_files(train_files=train_files, train_targets=train_targets)
+        # currently label studio does not support passing parameters to the learning loop.
         trainer = flash.Trainer(max_epochs=1, gpus=int(torch.cuda.is_available()))
         trainer.fit(self.model, datamodule=datamodule)
         model_path = os.path.join(workdir, "model.pt")
