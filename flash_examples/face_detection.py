@@ -14,13 +14,13 @@
 import torch
 
 import flash
-from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.core.utilities.imports import _FASTFACE_AVAILABLE, example_requires
 from flash.image import FaceDetectionData, FaceDetector
 
-if _FASTFACE_AVAILABLE:
-    import fastface as ff
-else:
-    raise ModuleNotFoundError("Please, pip install --upgrade 'lightning-flash[image_extras]'")
+example_requires("fastface")
+
+import fastface as ff  # noqa: E402
+
 
 # # 1. Create the DataModule
 train_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="train")

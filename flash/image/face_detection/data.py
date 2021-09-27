@@ -33,6 +33,8 @@ if _FASTFACE_AVAILABLE:
 
 
 def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence[Any]]:
+    """
+    """
     samples = {key: [sample[key] for sample in samples] for key in samples[0]}
 
     images, scales, paddings = ff.utils.preprocess.prepare_batch(

@@ -14,13 +14,13 @@
 from functools import partial
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.core.utilities.imports import _FASTFACE_AVAILABLE, requires
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
-model_name = ["lffd_slim", "lffd_original"]
+_MODEL_NAMES = ff.list_pretrained_models()
 
 
 def fastface_backbone(model_name, pretrained, **kwargs):
@@ -35,9 +35,9 @@ def fastface_backbone(model_name, pretrained, **kwargs):
     return backbone, pl_model
 
 
+@requires("fastface")
 def register_ff_backbones(register: FlashRegistry):
-    if _FASTFACE_AVAILABLE:
-        backbones = [partial(fastface_backbone, model_name=name) for name in model_name]
+    backbones = [partial(fastface_backbone, model_name=name) for name in _MODEL_NAMES]
 
-        for idx, backbone in enumerate(backbones):
-            register(backbone, name=model_name[idx])
+    for idx, backbone in enumerate(backbones):
+        register(backbone, name=_MODEL_NAMES[idx])

@@ -144,8 +144,7 @@ class FaceDetector(Task):
         logits = self.model(images)
         loss = self.model.compute_loss(logits, targets)
 
-        if not train:
-            self._compute_metrics(logits, targets)
+        self._compute_metrics(logits, targets)
 
         return loss, logits
 
@@ -154,10 +153,6 @@ class FaceDetector(Task):
 
         self.log_dict({f"train_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
-
-    def on_validation_epoch_start(self) -> None:
-        for metric in self.val_metrics.values():
-            metric.reset()
 
     def validation_step(self, batch, batch_idx):
         loss, logits = self.shared_step(batch)
@@ -168,10 +163,6 @@ class FaceDetector(Task):
     def validation_epoch_end(self, outputs) -> None:
         metric_results = {name: metric.compute() for name, metric in self.val_metrics.items()}
         self.log_dict({f"val_{k}": v for k, v in metric_results.items()}, on_epoch=True)
-
-    def on_test_epoch_start(self) -> None:
-        for metric in self.val_metrics.values():
-            metric.reset()
 
     def test_step(self, batch, batch_idx):
         loss, logits = self.shared_step(batch)
