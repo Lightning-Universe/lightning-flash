@@ -35,9 +35,9 @@ def fastface_backbone(model_name, pretrained, **kwargs):
     return backbone, pl_model
 
 
-@requires("fastface")
 def register_ff_backbones(register: FlashRegistry):
-    backbones = [partial(fastface_backbone, model_name=name) for name in _MODEL_NAMES]
+    if _FASTFACE_AVAILABLE:
+        backbones = [partial(fastface_backbone, model_name=name) for name in _MODEL_NAMES]
 
-    for idx, backbone in enumerate(backbones):
-        register(backbone, name=_MODEL_NAMES[idx])
+        for idx, backbone in enumerate(backbones):
+            register(backbone, name=_MODEL_NAMES[idx])
