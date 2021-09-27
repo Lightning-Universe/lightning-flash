@@ -15,6 +15,7 @@ from functools import partial
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
+from flash.core.utilities.providers import _SEGMENTATION_MODELS
 
 if _SEGMENTATION_MODELS_AVAILABLE:
     import segmentation_models_pytorch as smp
@@ -39,4 +40,5 @@ if _SEGMENTATION_MODELS_AVAILABLE:
             name=short_name,
             namespace="image/segmentation",
             weights_paths=available_weights,
+            providers=_SEGMENTATION_MODELS,
         )

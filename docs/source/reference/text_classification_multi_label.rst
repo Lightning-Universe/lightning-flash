@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Multi-label Text Classification
+   :card_description: Learn to classify text in a multi-label setting with Flash and build an example comment toxicity classifier.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/multi_label_text_classification.svg
+   :tags: Text,Multi-label,Classification,NLP
+
 .. _text_classification_multi_label:
 
 ###############################
@@ -44,6 +50,25 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/text_classification_multi_label.py
     :language: python
     :lines: 14-
+
+------
+
+**********
+Flash Zero
+**********
+
+The multi-label text classifier can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash text_classification from_toxic
+
+To view configuration options and options for running the text classifier with your own data, use:
+
+.. code-block:: bash
+
+    flash text_classification --help
 
 ------
 

@@ -28,7 +28,7 @@ def test_rouge():
 
 @pytest.mark.parametrize("smooth, expected", [(False, 0.7598), (True, 0.8091)])
 def test_bleu_score(smooth, expected):
-    translate_corpus = ['the cat is on the mat'.split()]
-    reference_corpus = [['there is a cat on the mat'.split(), 'a cat is on the mat'.split()]]
+    translate_corpus = ["the cat is on the mat".split()]
+    reference_corpus = [["there is a cat on the mat".split(), "a cat is on the mat".split()]]
     metric = BLEUScore(smooth=smooth)
     assert torch.allclose(metric(translate_corpus, reference_corpus), torch.tensor(expected), 1e-4)

@@ -6,15 +6,20 @@
 Lightning Flash
 ===============
 
+.. tutoriallist::
+
+.. raw:: html
+
+   <div style="display:none">
+
 .. toctree::
    :maxdepth: 1
    :caption: Getting started
 
    quickstart
    installation
-   custom_task
-   reference/flash_to_pl
-   reference/flash_to_production
+   general/flash_zero
+   general/production
 
 .. toctree::
    :maxdepth: 1
@@ -27,6 +32,7 @@ Lightning Flash
    general/data
    general/registry
    general/serve
+   general/backbones
 
 .. toctree::
    :maxdepth: 1
@@ -36,6 +42,8 @@ Lightning Flash
    reference/image_classification_multi_label
    reference/image_embedder
    reference/object_detection
+   reference/keypoint_detection
+   reference/instance_segmentation
    reference/semantic_segmentation
    reference/style_transfer
    reference/video_classification
@@ -45,6 +53,7 @@ Lightning Flash
    :caption: Audio
 
    reference/audio_classification
+   reference/speech_recognition
 
 .. toctree::
    :maxdepth: 1
@@ -58,6 +67,7 @@ Lightning Flash
 
    reference/text_classification
    reference/text_classification_multi_label
+   reference/question_answering
    reference/summarization
    reference/translation
 
@@ -78,7 +88,12 @@ Lightning Flash
    :maxdepth: 1
    :caption: Integrations
 
+   integrations/providers
+   integrations/baal
    integrations/fiftyone
+   integrations/icevision
+   integrations/learn2learn
+   integrations/vissl
 
 .. toctree::
    :maxdepth: 1
@@ -110,13 +125,24 @@ Lightning Flash
    template/docs
 
 .. toctree::
+   :maxdepth: 1
+   :caption: Community
+
+   governance
+   generated/CONTRIBUTING.md
+   generated/CHANGELOG.md
+
+.. toctree::
    :hidden:
 
    reference/template
+
+.. raw:: html
+
+   </div>
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

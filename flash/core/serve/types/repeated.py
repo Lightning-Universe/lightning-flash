@@ -50,7 +50,7 @@ class Repeated(BaseType):
     def deserialize(self, *args: Dict) -> Tuple[Tensor, ...]:
         if (self.max_len is not None) and (len(args) > self.max_len):
             raise ValueError(f"len(arg)={len(args)} > self.max_len={self.max_len}")
-        return tuple((self.dtype.deserialize(**item) for item in args))
+        return tuple(self.dtype.deserialize(**item) for item in args)
 
     def packed_deserialize(self, args):
         """Arguments are positional arguments for deserialize, unlike other datatypes."""
@@ -59,4 +59,4 @@ class Repeated(BaseType):
     def serialize(self, args: Sequence) -> Tuple[Any, ...]:
         if (self.max_len is not None) and (len(args) > self.max_len):
             raise ValueError(f"len(arg)={len(args)} > self.max_len={self.max_len}")
-        return tuple((self.dtype.serialize(item) for item in args))
+        return tuple(self.dtype.serialize(item) for item in args)

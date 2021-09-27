@@ -21,17 +21,17 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 
 def test_classification_serializers():
     example_output = torch.tensor([-0.1, 0.2, 0.3])  # 3 classes
-    labels = ['class_1', 'class_2', 'class_3']
+    labels = ["class_1", "class_2", "class_3"]
 
     assert torch.allclose(torch.tensor(Logits().serialize(example_output)), example_output)
     assert torch.allclose(torch.tensor(Probabilities().serialize(example_output)), torch.softmax(example_output, -1))
     assert Classes().serialize(example_output) == 2
-    assert Labels(labels).serialize(example_output) == 'class_3'
+    assert Labels(labels).serialize(example_output) == "class_3"
 
 
 def test_classification_serializers_multi_label():
     example_output = torch.tensor([-0.1, 0.2, 0.3])  # 3 classes
-    labels = ['class_1', 'class_2', 'class_3']
+    labels = ["class_1", "class_2", "class_3"]
 
     assert torch.allclose(torch.tensor(Logits(multi_label=True).serialize(example_output)), example_output)
     assert torch.allclose(
@@ -39,7 +39,7 @@ def test_classification_serializers_multi_label():
         torch.sigmoid(example_output),
     )
     assert Classes(multi_label=True).serialize(example_output) == [1, 2]
-    assert Labels(labels, multi_label=True).serialize(example_output) == ['class_2', 'class_3']
+    assert Labels(labels, multi_label=True).serialize(example_output) == ["class_2", "class_3"]
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -48,24 +48,24 @@ def test_classification_serializers_fiftyone():
 
     logits = torch.tensor([-0.1, 0.2, 0.3])
     example_output = {DefaultDataKeys.PREDS: logits, DefaultDataKeys.METADATA: {"filepath": "something"}}  # 3 classes
-    labels = ['class_1', 'class_2', 'class_3']
+    labels = ["class_1", "class_2", "class_3"]
 
     predictions = FiftyOneLabels(return_filepath=True).serialize(example_output)
-    assert predictions["predictions"].label == '2'
+    assert predictions["predictions"].label == "2"
     assert predictions["filepath"] == "something"
     predictions = FiftyOneLabels(labels, return_filepath=True).serialize(example_output)
-    assert predictions["predictions"].label == 'class_3'
+    assert predictions["predictions"].label == "class_3"
     assert predictions["filepath"] == "something"
 
     predictions = FiftyOneLabels(store_logits=True).serialize(example_output)
     assert torch.allclose(torch.tensor(predictions.logits), logits)
     assert torch.allclose(torch.tensor(predictions.confidence), torch.softmax(logits, -1)[-1])
-    assert predictions.label == '2'
+    assert predictions.label == "2"
     predictions = FiftyOneLabels(labels, store_logits=True).serialize(example_output)
-    assert predictions.label == 'class_3'
+    assert predictions.label == "class_3"
 
     predictions = FiftyOneLabels(store_logits=True, multi_label=True).serialize(example_output)
     assert torch.allclose(torch.tensor(predictions.logits), logits)
-    assert [c.label for c in predictions.classifications] == ['1', '2']
+    assert [c.label for c in predictions.classifications] == ["1", "2"]
     predictions = FiftyOneLabels(labels, multi_label=True).serialize(example_output)
-    assert [c.label for c in predictions.classifications] == ['class_2', 'class_3']
+    assert [c.label for c in predictions.classifications] == ["class_2", "class_3"]

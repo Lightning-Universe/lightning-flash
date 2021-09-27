@@ -42,7 +42,7 @@ class TestGraphClassificationData:
         assert dm is not None
 
     def test_from_datasets(self, tmpdir):
-        tudataset = TUDataset(root=tmpdir, name='KKI')
+        tudataset = TUDataset(root=tmpdir, name="KKI")
         train_dataset = tudataset
         val_dataset = tudataset
         test_dataset = tudataset
@@ -58,7 +58,7 @@ class TestGraphClassificationData:
             val_transform=None,
             test_transform=None,
             predict_transform=None,
-            batch_size=2
+            batch_size=2,
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -81,7 +81,7 @@ class TestGraphClassificationData:
         assert list(data.y.size()) == [2]
 
     def test_transforms(self, tmpdir):
-        tudataset = TUDataset(root=tmpdir, name='KKI')
+        tudataset = TUDataset(root=tmpdir, name="KKI")
         train_dataset = tudataset
         val_dataset = tudataset
         test_dataset = tudataset

@@ -24,7 +24,7 @@ import torch
 from torch import tensor
 from torchmetrics import Metric
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.seq2seq.core.utils import add_newline_to_end_of_each_sentence
 
 if _TEXT_AVAILABLE:
@@ -49,15 +49,14 @@ def _count_ngram(ngram_input_list: List[str], n_gram: int) -> Counter:
 
     for i in range(1, n_gram + 1):
         for j in range(len(ngram_input_list) - i + 1):
-            ngram_key = tuple(ngram_input_list[j:(i + j)])
+            ngram_key = tuple(ngram_input_list[j : (i + j)])
             ngram_counter[ngram_key] += 1
 
     return ngram_counter
 
 
 class BLEUScore(Metric):
-    """
-    Calculate BLEU score of machine translated text with one or more references.
+    """Calculate BLEU score of machine translated text with one or more references.
 
     Example:
         >>> translate_corpus = ['the cat is on the mat'.split()]
@@ -95,12 +94,11 @@ class BLEUScore(Metric):
         else:
             precision_scores = self.numerator / self.denominator
 
-        log_precision_scores = tensor([1.0 / self.n_gram] * self.n_gram,
-                                      device=self.r.device) * torch.log(precision_scores)
-        geometric_mean = torch.exp(torch.sum(log_precision_scores))
-        brevity_penalty = (
-            tensor(1.0, device=self.r.device) if self.c > self.r else torch.exp(1 - (ref_len / trans_len))
+        log_precision_scores = tensor([1.0 / self.n_gram] * self.n_gram, device=self.r.device) * torch.log(
+            precision_scores
         )
+        geometric_mean = torch.exp(torch.sum(log_precision_scores))
+        brevity_penalty = tensor(1.0, device=self.r.device) if self.c > self.r else torch.exp(1 - (ref_len / trans_len))
         bleu = brevity_penalty * geometric_mean
         return bleu
 
@@ -132,8 +130,7 @@ class BLEUScore(Metric):
 
 
 class RougeMetric(Metric):
-    """
-    Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
+    """Metric used for automatic summarization. https://www.aclweb.org/anthology/W04-1013/
 
     Example:
 
@@ -156,7 +153,7 @@ class RougeMetric(Metric):
          'rougeLsum_recall': 0.25}
     """
 
-    @requires_extras("text")
+    @requires("text")
     def __init__(
         self,
         rouge_newline_sep: bool = False,
@@ -206,13 +203,11 @@ class RougeMetric(Metric):
 
 
 class RougeBatchAggregator(BootstrapAggregator):
-    """
-    Aggregates rouge scores and provides confidence intervals.
-    """
+    """Aggregates rouge scores and provides confidence intervals."""
 
     def aggregate(self):
-        """
-        Override function to wrap the final results in `Score` objects.
+        """Override function to wrap the final results in `Score` objects.
+
         This is due to the scores being replaced with a list of torch tensors.
         """
         result = {}
@@ -222,7 +217,7 @@ class RougeBatchAggregator(BootstrapAggregator):
             # Percentiles are returned as (interval, measure).
             percentiles = self._bootstrap_resample(score_matrix)
             # Extract the three intervals (low, mid, high).
-            intervals = tuple((Score(*percentiles[j, :]) for j in range(3)))
+            intervals = tuple(Score(*percentiles[j, :]) for j in range(3))
             result[score_type] = AggregateScore(low=intervals[0], mid=intervals[1], high=intervals[2])
         return result
 

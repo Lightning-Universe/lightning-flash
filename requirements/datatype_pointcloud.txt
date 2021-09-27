@@ -1,4 +1,4 @@
-open3d
+open3d==0.13
 torch==1.7.1
 torchvision
 tensorboard

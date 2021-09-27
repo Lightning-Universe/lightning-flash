@@ -12,6 +12,7 @@ else:
 
 try:
     from typing import ForwardRef
+
     RequestModel = ForwardRef("RequestModel")
     ResponseModel = ForwardRef("ResponseModel")
 except ImportError:
@@ -26,39 +27,37 @@ class Alive(BaseModel):
 
 
 class EndpointProtocol:
-    """Records the model classes used to define an endpoints request/response body
+    """Records the model classes used to define an endpoints request/response body.
 
-    The request / response body schemas are generated dynamically depending
-    on the endpoint + components passed into the class initializer. Component
-    inputs & outputs (as defined in `@expose` object decorations) dtype
-    method (`serialize` and `deserialize`) type hints are inspected in order to
-    constuct a specification unique to the endpoint, they are returned as
-    subclasses of pydantic ``BaseModel``.
+    The request / response body schemas are generated dynamically depending on the endpoint + components passed into the
+    class initializer. Component inputs & outputs (as defined in `@expose` object decorations) dtype method (`serialize`
+    and `deserialize`) type hints are inspected in order to constuct a specification unique to the endpoint, they are
+    returned as subclasses of pydantic ``BaseModel``.
     """
 
-    def __init__(self, name: str, endpoint: 'Endpoint', components: Dict[str, 'ModelComponent']):
+    def __init__(self, name: str, endpoint: "Endpoint", components: Dict[str, "ModelComponent"]):
         self._name = name
         self._endpoint = endpoint
         self._component = components
 
     @property
     def name(self) -> str:
-        """Name assigned to the endpoint definition in the composition"""
+        """Name assigned to the endpoint definition in the composition."""
         return self._name
 
     @property
     def route(self) -> str:
-        """Endpoint HTTP route"""
+        """Endpoint HTTP route."""
         return self._endpoint.route
 
     @property
     def dsk_input_key_map(self) -> Dict[str, str]:
-        """Map of payload key name -> key to insert in dsk before execution"""
+        """Map of payload key name -> key to insert in dsk before execution."""
         return self._endpoint.inputs
 
     @property
     def dsk_output_key_map(self):
-        """Map output key names -> dsk output key names"""
+        """Map output key names -> dsk output key names."""
         return self._endpoint.outputs
 
     @property
@@ -121,10 +120,7 @@ class EndpointProtocol:
         RequestModel = create_model(
             f"{self.name.title()}_RequestModel",
             __module__=self.__class__.__module__,
-            **{
-                "session": (Optional[str], None),
-                "payload": (payload_model, ...)
-            },
+            **{"session": (Optional[str], None), "payload": (payload_model, ...)},
         )
         RequestModel.update_forward_refs()
         return RequestModel
@@ -182,10 +178,7 @@ class EndpointProtocol:
         ResponseModel = create_model(
             f"{self.name.title()}_Response",
             __module__=self.__class__.__module__,
-            **{
-                "session": (Optional[str], None),
-                "result": (results_model, ...)
-            },
+            **{"session": (Optional[str], None), "result": (results_model, ...)},
         )
         ResponseModel.update_forward_refs()
         return ResponseModel

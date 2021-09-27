@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
+import torch
 from sklearn import datasets
 
 import flash
@@ -27,15 +28,17 @@ datamodule = TemplateData.from_sklearn(
 model = TemplateSKLearnClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and train the model
-trainer = flash.Trainer(max_epochs=3)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Classify a few examples
-predictions = model.predict([
-    np.array([4.9, 3.0, 1.4, 0.2]),
-    np.array([6.9, 3.2, 5.7, 2.3]),
-    np.array([7.2, 3.0, 5.8, 1.6]),
-])
+predictions = model.predict(
+    [
+        np.array([4.9, 3.0, 1.4, 0.2]),
+        np.array([6.9, 3.2, 5.7, 2.3]),
+        np.array([7.2, 3.0, 5.8, 1.6]),
+    ]
+)
 print(predictions)
 
 # 5. Save the model!

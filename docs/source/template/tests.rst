@@ -24,15 +24,11 @@ Here's how those lines look for our ``template.py`` examples:
 .. code-block:: python
 
     pytest.param(
-        "finetuning",
-        "template.py",
-        marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+        "finetuning", "template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
     ),
     ...
     pytest.param(
-        "predict",
-        "template.py",
-        marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+        "predict", "template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
     ),
 
 test_data.py

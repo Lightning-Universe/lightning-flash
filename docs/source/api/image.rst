@@ -31,8 +31,8 @@ ______________
     classification.transforms.default_transforms
     classification.transforms.train_default_transforms
 
-Detection
-_________
+Object Detection
+________________
 
 .. autosummary::
     :toctree: generated/
@@ -42,21 +42,36 @@ _________
     ~detection.model.ObjectDetector
     ~detection.data.ObjectDetectionData
 
-    detection.data.COCODataSource
+    detection.data.FiftyOneParser
     detection.data.ObjectDetectionFiftyOneDataSource
     detection.data.ObjectDetectionPreprocess
-    detection.finetuning.ObjectDetectionFineTuning
-    detection.model.ObjectDetector
-    detection.serialization.DetectionLabels
     detection.serialization.FiftyOneDetectionLabels
+
+Keypoint Detection
+__________________
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-    :template:
+    :template: classtemplate.rst
 
-    detection.transforms.collate
-    detection.transforms.default_transforms
+    ~keypoint_detection.model.KeypointDetector
+    ~keypoint_detection.data.KeypointDetectionData
+
+    keypoint_detection.data.KeypointDetectionPreprocess
+
+Instance Segmentation
+_____________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~instance_segmentation.model.InstanceSegmentation
+    ~instance_segmentation.data.InstanceSegmentationData
+
+    instance_segmentation.data.InstanceSegmentationPreprocess
 
 Embedding
 _________
@@ -129,16 +144,3 @@ ________________
     ~data.ImageNumpyDataSource
     ~data.ImagePathsDataSource
     ~data.ImageTensorDataSource
-
-flash.image.backbones
-_____________________
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    ~backbones.catch_url_error
-    ~backbones.dino_deits16
-    ~backbones.dino_deits8
-    ~backbones.dino_vitb16
-    ~backbones.dino_vitb8

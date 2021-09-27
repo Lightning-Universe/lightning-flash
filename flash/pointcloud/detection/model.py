@@ -20,11 +20,11 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 
-import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
+from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
@@ -37,7 +37,7 @@ class PointCloudObjectDetectorSerializer(Serializer):
     pass
 
 
-class PointCloudObjectDetector(flash.Task):
+class PointCloudObjectDetector(Task):
     """The ``PointCloudObjectDetector`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
     pointcloud data.
 
@@ -79,9 +79,9 @@ class PointCloudObjectDetector(flash.Task):
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudObjectDetectorSerializer(),
-        lambda_loss_cls: float = 1.,
-        lambda_loss_bbox: float = 1.,
-        lambda_loss_dir: float = 1.,
+        lambda_loss_cls: float = 1.0,
+        lambda_loss_bbox: float = 1.0,
+        lambda_loss_dir: float = 1.0,
     ):
 
         super().__init__(
@@ -120,8 +120,9 @@ class PointCloudObjectDetector(flash.Task):
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         losses = losses["loss"]
         return (
-            self.hparams.lambda_loss_cls * losses["loss_cls"] + self.hparams.lambda_loss_bbox * losses["loss_bbox"] +
-            self.hparams.lambda_loss_dir * losses["loss_dir"]
+            self.hparams.lambda_loss_cls * losses["loss_cls"]
+            + self.hparams.lambda_loss_bbox * losses["loss_bbox"]
+            + self.hparams.lambda_loss_dir * losses["loss_dir"]
         )
 
     def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
@@ -143,7 +144,7 @@ class PointCloudObjectDetector(flash.Task):
         return {
             DefaultDataKeys.INPUT: getattr(batch, "point", None),
             DefaultDataKeys.PREDS: boxes,
-            DefaultDataKeys.METADATA: [a["name"] for a in batch.attr]
+            DefaultDataKeys.METADATA: [a["name"] for a in batch.attr],
         }
 
     def forward(self, x) -> torch.Tensor:
@@ -162,8 +163,8 @@ class PointCloudObjectDetector(flash.Task):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
-        convert_to_dataloader: bool = True,
-    ) -> Union[DataLoader, BaseAutoDataset]:
+        **kwargs
+    ) -> DataLoader:
 
         if not _POINTCLOUD_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
@@ -171,17 +172,13 @@ class PointCloudObjectDetector(flash.Task):
         dataset.preprocess_fn = self.model.preprocess
         dataset.transform_fn = self.model.transform
 
-        if convert_to_dataloader:
-            return DataLoader(
-                dataset,
-                batch_size=batch_size,
-                num_workers=num_workers,
-                pin_memory=pin_memory,
-                collate_fn=collate_fn,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                sampler=sampler,
-            )
-
-        else:
-            return dataset
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )

@@ -12,11 +12,7 @@ def test_repeated_deserialize():
 
 def test_repeated_serialize(session_global_datadir):
     repeated = Repeated(dtype=Label(path=str(session_global_datadir / "imagenet_labels.txt")))
-    assert repeated.deserialize(*({
-        "label": "chickadee"
-    }, {
-        "label": "stingray"
-    })) == (
+    assert repeated.deserialize(*({"label": "chickadee"}, {"label": "stingray"})) == (
         torch.tensor(19),
         torch.tensor(6),
     )
@@ -29,11 +25,7 @@ def test_repeated_max_len():
 
     with pytest.raises(ValueError):
         repeated.deserialize(*({"label": "classA"}, {"label": "classA"}, {"label": "classB"}))
-    assert repeated.deserialize(*({
-        "label": "classA"
-    }, {
-        "label": "classB"
-    })) == (
+    assert repeated.deserialize(*({"label": "classA"}, {"label": "classB"})) == (
         torch.tensor(0),
         torch.tensor(1),
     )
@@ -52,7 +44,6 @@ def test_repeated_max_len():
 
 
 def test_repeated_non_serve_dtype():
-
     class NonServeDtype:
         pass
 

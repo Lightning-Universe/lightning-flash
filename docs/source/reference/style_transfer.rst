@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Style Transfer
+   :card_description: Learn about image style transfer with Flash and build an example which transfers style from The Starry Night to images from the COCO data set.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/style_transfer.svg
+   :tags: Image,Style-Transfer
 
 .. _style_transfer:
 
@@ -12,7 +17,7 @@ The Task
 The Neural Style Transfer Task is an optimization method which extract the style from an image and apply it another image while preserving its content.
 The goal is that the output image looks like the content image, but “painted” in the style of the style reference image.
 
-.. image:: https://raw.githubusercontent.com/pystiche/pystiche/master/docs/source/graphics/banner/banner.jpg
+.. image:: https://raw.githubusercontent.com/pystiche/pystiche/main/docs/source/graphics/banner/banner.jpg
     :alt: style_transfer_example
 
 The :class:`~flash.image.style_transfer.model.StyleTransfer` and :class:`~flash.image.style_transfer.data.StyleTransferData` classes internally rely on `pystiche <https://pystiche.org>`_.
@@ -33,3 +38,22 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/style_transfer.py
     :language: python
     :lines: 14-
+
+------
+
+**********
+Flash Zero
+**********
+
+The style transfer task can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash style_transfer
+
+To view configuration options and options for running the style transfer task with your own data, use:
+
+.. code-block:: bash
+
+    flash style_transfer --help

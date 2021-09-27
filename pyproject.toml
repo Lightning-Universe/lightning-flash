@@ -1,2 +1,6 @@
 [tool.autopep8]
 ignore = ["E731"]
+
+
+[tool.black]
+line-length = 120

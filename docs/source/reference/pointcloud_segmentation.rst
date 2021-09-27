@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Point Cloud Segmentation
+   :card_description: Learn to segment objects in point clouds with Flash and build an example network with the KITTI data set.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/point_cloud_segmentation.svg
+   :tags: Point-Cloud,Segmentation
 
 .. _pointcloud_segmentation:
 
@@ -57,9 +62,9 @@ Here's the structure:
 Learn more: http://www.semantic-kitti.org/dataset.html
 
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the :class:`~flash.image.segmentation.data.PointCloudSegmentationData`.
-We select a pre-trained ``randlanet_semantic_kitti`` backbone for our :class:`~flash.image.segmentation.model.PointCloudSegmentation` task.
-We then use the trained :class:`~flash.image.segmentation.model.PointCloudSegmentation` for inference.
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we create the ``PointCloudSegmentationData``.
+We select a pre-trained ``randlanet_semantic_kitti`` backbone for our ``PointCloudSegmentation`` task.
+We then use the trained ``PointCloudSegmentation`` for inference.
 Finally, we save the model.
 Here's the full example:
 
@@ -67,7 +72,24 @@ Here's the full example:
     :language: python
     :lines: 14-
 
-
-
 .. image:: https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/docs/images/getting_started_ml_visualizer.gif
    :width: 100%
+
+------
+
+**********
+Flash Zero
+**********
+
+The point cloud segmentation task can be used directly from the command line with zero code using :ref:`flash_zero`.
+You can run the above example with:
+
+.. code-block:: bash
+
+    flash pointcloud_segmentation
+
+To view configuration options and options for running the point cloud segmentation task with your own data, use:
+
+.. code-block:: bash
+
+    flash pointcloud_segmentation --help

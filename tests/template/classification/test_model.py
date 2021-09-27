@@ -39,7 +39,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: torch.randn(self.num_features),
-            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, (1, ))[0],
+            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, (1,))[0],
         }
 
     def __len__(self) -> int:
@@ -121,7 +121,7 @@ def test_predict_sklearn():
 
 
 @pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 16), ))])
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 16),))])
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 

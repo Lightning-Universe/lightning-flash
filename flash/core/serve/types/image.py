@@ -20,23 +20,25 @@ class Image(BaseType):
 
     Notes
     -----
-    *  The ``modes`` parameter can take on any one of the following values.
+    *  The ``modes`` parameter can take on any one of the following values:
 
        .. code-block:: python
 
-          1: 1,  # (1-bit pixels, black and white, stored with one pixel per byte)
-          "L": 1,  # (8-bit pixels, black and white)
-          "P": 1,  # (8-bit pixels, mapped to any other mode using a color palette)
-          "RGB": 3,  # (3x8-bit pixels, true color)
-          "RGBX": 4,  # RGB with padding
-          "RGBA": 4,  # (4x8-bit pixels, true color with transparency mask)
-          "RGBa": 3,  # (3x8-bit pixels, true color with pre-multiplied alpha)
-          "CMYK": 4,  # (4x8-bit pixels, color separation)
-          "YCbCr": 3,  # (3x8-bit pixels, color video format)
-          "LAB": 3,  # (3x8-bit pixels, the L*a*b color space)
-          "HSV": 3,  # (3x8-bit pixels, Hue, Saturation, Value color space)
-          "I": 1,  # (32-bit signed integer pixels)
-          "F": 1,  # (32-bit floating point pixels)
+        {
+            1: 1,  # (1-bit pixels, black and white, stored with one pixel per byte)
+            "L": 1,  # (8-bit pixels, black and white)
+            "P": 1,  # (8-bit pixels, mapped to any other mode using a color palette)
+            "RGB": 3,  # (3x8-bit pixels, true color)
+            "RGBX": 4,  # RGB with padding
+            "RGBA": 4,  # (4x8-bit pixels, true color with transparency mask)
+            "RGBa": 3,  # (3x8-bit pixels, true color with pre-multiplied alpha)
+            "CMYK": 4,  # (4x8-bit pixels, color separation)
+            "YCbCr": 3,  # (3x8-bit pixels, color video format)
+            "LAB": 3,  # (3x8-bit pixels, the L*a*b color space)
+            "HSV": 3,  # (3x8-bit pixels, Hue, Saturation, Value color space)
+            "I": 1,  # (32-bit signed integer pixels)
+            "F": 1,  # (32-bit floating point pixels)
+        }
     """
 
     height: Optional[int] = None

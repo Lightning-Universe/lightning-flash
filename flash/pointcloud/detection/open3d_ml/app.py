@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-import torch
 from torch.utils.data.dataset import Dataset
 
 import flash
-from flash import DataModule
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
@@ -26,7 +25,6 @@ if _POINTCLOUD_AVAILABLE:
     from open3d.visualization import gui
 
     class Visualizer(Visualizer):
-
         def visualize_dataset(self, dataset, split, indices=None, width=1024, height=768):
             """Visualize a dataset.
 
@@ -125,14 +123,13 @@ if _POINTCLOUD_AVAILABLE:
         def get_attr(self, index):
             return self.dataset[index]["attr"]
 
-        def get_split(self, *_) -> 'VizDataset':
+        def get_split(self, *_) -> "VizDataset":
             return self
 
         def __len__(self) -> int:
             return len(self.dataset)
 
     class App:
-
         def __init__(self, datamodule: DataModule):
             self.datamodule = datamodule
             self._enabled = not flash._IS_TESTING
@@ -145,7 +142,7 @@ if _POINTCLOUD_AVAILABLE:
             if self._enabled:
                 dataset = self.get_dataset("train")
                 viz = Visualizer()
-                viz.visualize_dataset(dataset, 'all', indices=indices)
+                viz.visualize_dataset(dataset, "all", indices=indices)
 
         def show_predictions(self, predictions):
             if self._enabled:
@@ -159,7 +156,7 @@ if _POINTCLOUD_AVAILABLE:
 
                 for pred in predictions:
                     data = {
-                        "points": torch.stack(pred[DefaultDataKeys.INPUT])[:, :3],
+                        "points": pred[DefaultDataKeys.INPUT][:, :3],
                         "name": pred[DefaultDataKeys.METADATA],
                     }
                     bounding_box = pred[DefaultDataKeys.PREDS]
@@ -167,5 +164,5 @@ if _POINTCLOUD_AVAILABLE:
                     viz.visualize([data], bounding_boxes=bounding_box)
 
 
-def launch_app(datamodule: DataModule) -> 'App':
+def launch_app(datamodule: DataModule) -> "App":
     return App(datamodule)

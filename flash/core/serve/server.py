@@ -15,20 +15,17 @@ FLASH_DISABLE_SERVE = os.getenv("FLASH_DISABLE_SERVE", None)
 
 
 class ServerMixin:
-    """Start a server to serve a composition
+    """Start a server to serve a composition.
 
-    debug
-        If the server should be started up in debug mode. By default, False.
-    testing
-        If the server should return the ``app`` instance instead of blocking
-        the process (via running the ``app`` in ``uvicorn``). This is used
-        when taking advantage of a server ``TestClient``. By default, False
+    debug     If the server should be started up in debug mode. By default, False. testing     If the server should
+    return the ``app`` instance instead of blocking     the process (via running the ``app`` in ``uvicorn``). This is
+    used     when taking advantage of a server ``TestClient``. By default, False
     """
 
     DEBUG: bool
     TESTING: bool
 
-    def http_app(self) -> 'FastAPI':
+    def http_app(self) -> "FastAPI":
         return setup_http_app(composition=self, debug=self.DEBUG)
 
     def serve(self, host: str = "127.0.0.1", port: int = 8000):

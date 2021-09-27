@@ -19,6 +19,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.__main__ import main
 from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
@@ -30,11 +31,10 @@ from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
-
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
-            DefaultDataKeys.TARGET: torch.randint(10, size=(1, )).item(),
+            DefaultDataKeys.TARGET: torch.randint(10, size=(1,)).item(),
         }
 
     def __len__(self) -> int:
@@ -42,14 +42,13 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 class DummyMultiLabelDataset(torch.utils.data.Dataset):
-
     def __init__(self, num_classes: int):
         self.num_classes = num_classes
 
     def __getitem__(self, index):
         return {
             DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
-            DefaultDataKeys.TARGET: torch.randint(0, 2, (self.num_classes, )),
+            DefaultDataKeys.TARGET: torch.randint(0, 2, (self.num_classes,)),
         }
 
     def __len__(self) -> int:
@@ -61,17 +60,18 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
-    "backbone",
+    "backbone,metrics",
     [
-        "resnet18",
+        ("resnet18", None),
+        ("resnet18", []),
         # "resnet34",
         # "resnet50",
         # "resnet101",
         # "resnet152",
     ],
 )
-def test_init_train(tmpdir, backbone):
-    model = ImageClassifier(10, backbone=backbone)
+def test_init_train(tmpdir, backbone, metrics):
+    model = ImageClassifier(10, backbone=backbone, metrics=metrics)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
@@ -117,7 +117,7 @@ def test_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32), ))])
+@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32),))])
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")
 
@@ -148,3 +148,13 @@ def test_serve():
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
         ImageClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "image_classification", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

@@ -1,3 +1,10 @@
 matplotlib
-pycocotools>=2.0.2 ; python_version >= "3.7"
 fiftyone
+classy_vision
+vissl>=0.1.5
+icevision>=0.8
+icedata
+effdet
+albumentations
+learn2learn
+baal

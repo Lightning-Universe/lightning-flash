@@ -33,41 +33,43 @@ def test_serializer():
 
     my_serializer = Serializer()
 
-    assert my_serializer.serialize('test') == 'test'
+    assert my_serializer.serialize("test") == "test"
     my_serializer.serialize = Mock()
 
     my_serializer.disable()
-    assert my_serializer('test') == 'test'
+    assert my_serializer("test") == "test"
     my_serializer.serialize.assert_not_called()
 
     my_serializer.enable()
-    my_serializer('test')
+    my_serializer("test")
     my_serializer.serialize.assert_called_once()
 
 
 def test_serializer_mapping():
-    """Tests that ``SerializerMapping`` correctly passes its inputs to the underlying serializers. Also checks that
-    state is retrieved / loaded correctly."""
+    """Tests that ``SerializerMapping`` correctly passes its inputs to the underlying serializers.
+
+    Also checks that state is retrieved / loaded correctly.
+    """
 
     serializer1 = Serializer()
-    serializer1.serialize = Mock(return_value='test1')
+    serializer1.serialize = Mock(return_value="test1")
 
     class Serializer1State(ProcessState):
         pass
 
     serializer2 = Serializer()
-    serializer2.serialize = Mock(return_value='test2')
+    serializer2.serialize = Mock(return_value="test2")
 
     class Serializer2State(ProcessState):
         pass
 
-    serializer_mapping = SerializerMapping({'key1': serializer1, 'key2': serializer2})
-    assert serializer_mapping({'key1': 'serializer1', 'key2': 'serializer2'}) == {'key1': 'test1', 'key2': 'test2'}
-    serializer1.serialize.assert_called_once_with('serializer1')
-    serializer2.serialize.assert_called_once_with('serializer2')
+    serializer_mapping = SerializerMapping({"key1": serializer1, "key2": serializer2})
+    assert serializer_mapping({"key1": "serializer1", "key2": "serializer2"}) == {"key1": "test1", "key2": "test2"}
+    serializer1.serialize.assert_called_once_with("serializer1")
+    serializer2.serialize.assert_called_once_with("serializer2")
 
-    with pytest.raises(ValueError, match='output must be a mapping'):
-        serializer_mapping('not a mapping')
+    with pytest.raises(ValueError, match="output must be a mapping"):
+        serializer_mapping("not a mapping")
 
     serializer1_state = Serializer1State()
     serializer2_state = Serializer2State()
@@ -86,11 +88,9 @@ def test_serializer_mapping():
 
 
 def test_saving_with_serializers(tmpdir):
-
-    checkpoint_file = os.path.join(tmpdir, 'tmp.ckpt')
+    checkpoint_file = os.path.join(tmpdir, "tmp.ckpt")
 
     class CustomModel(Task):
-
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
@@ -110,7 +110,6 @@ def test_saving_with_serializers(tmpdir):
 
 
 class CustomPreprocess(DefaultPreprocess):
-
     def __init__(self):
         super().__init__(
             data_sources={
@@ -122,7 +121,6 @@ class CustomPreprocess(DefaultPreprocess):
 
 
 def test_data_source_of_name():
-
     preprocess = CustomPreprocess()
 
     assert preprocess.data_source_of_name("test")() == "test"
@@ -135,7 +133,6 @@ def test_data_source_of_name():
 
 
 def test_available_data_sources():
-
     preprocess = CustomPreprocess()
 
     assert DefaultDataSources.TENSORS in preprocess.available_data_sources()
@@ -147,3 +144,9 @@ def test_available_data_sources():
     assert DefaultDataSources.TENSORS in data_module.available_data_sources()
     assert "test" in data_module.available_data_sources()
     assert len(data_module.available_data_sources()) == 3
+
+
+def test_check_transforms():
+    transform = torch.nn.Identity()
+    DefaultPreprocess(train_transform=transform)
+    DefaultPreprocess(train_transform=[transform])

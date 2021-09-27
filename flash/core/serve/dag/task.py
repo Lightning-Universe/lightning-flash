@@ -41,12 +41,10 @@ def preorder_traversal(task):
 
     for item in task:
         if istask(item):
-            for i in preorder_traversal(item):
-                yield i
+            yield from preorder_traversal(item)
         elif isinstance(item, list):
             yield list
-            for i in preorder_traversal(item):
-                yield i
+            yield from preorder_traversal(item)
         else:
             yield item
 
@@ -58,7 +56,7 @@ def lists_to_tuples(res, keys):
 
 
 def _execute_task(arg, cache):
-    """Do the actual work of collecting data and executing a function
+    """Do the actual work of collecting data and executing a function.
 
     Examples
     --------
@@ -134,7 +132,7 @@ def get(dsk: dict, out: Sequence[str], cache: dict = None, sortkeys: List[str] =
 
 
 def get_dependencies(dsk, key=None, task=no_default, as_list=False):
-    """Get the immediate tasks on which this task depends
+    """Get the immediate tasks on which this task depends.
 
     Examples
     --------
@@ -188,7 +186,7 @@ def get_dependencies(dsk, key=None, task=no_default, as_list=False):
 
 
 def get_deps(dsk):
-    """Get dependencies and dependents from task graph
+    """Get dependencies and dependents from task graph.
 
     Examples
     --------
@@ -222,8 +220,7 @@ def flatten(seq, container=list):
     else:
         for item in seq:
             if isinstance(item, container):
-                for item2 in flatten(item, container=container):
-                    yield item2
+                yield from flatten(item, container=container)
             else:
                 yield item
 
@@ -246,7 +243,7 @@ def reverse_dict(d):
 
 
 def subs(task, key, val):
-    """Perform a substitution on a task
+    """Perform a substitution on a task.
 
     Examples
     --------
@@ -289,8 +286,7 @@ def subs(task, key, val):
 def _toposort(dsk, keys=None, returncycle=False, dependencies=None):
     """Stack-based depth-first search traversal.
 
-    This is based on Tarjan's method for topological sorting
-    (see wikipedia for pseudocode).
+    This is based on Tarjan's method for topological sorting (see wikipedia for pseudocode).
     """
     if keys is None:
         keys = dsk
@@ -363,8 +359,7 @@ def toposort(dsk, dependencies=None):
 
 
 def getcycle(d, keys):
-    """Return a list of nodes that form a cycle if graph is not a DAG.
-    Returns an empty list if no cycle is found.
+    """Return a list of nodes that form a cycle if graph is not a DAG. Returns an empty list if no cycle is found.
     ``keys`` may be a single key or list of keys.
 
     Examples
@@ -381,8 +376,8 @@ def getcycle(d, keys):
 
 
 def isdag(d, keys):
-    """Does graph form a directed acyclic graph when calculating keys?
-    ``keys`` may be a single key or list of keys.
+    """Does graph form a directed acyclic graph when calculating keys? ``keys`` may be a single key or list of
+    keys.
 
     Examples
     --------
@@ -399,9 +394,9 @@ def isdag(d, keys):
 
 
 class literal:
-    """A small serializable object to wrap literal values without copying"""
+    """A small serializable object to wrap literal values without copying."""
 
-    __slots__ = ("data", )
+    __slots__ = ("data",)
 
     def __init__(self, data):
         self.data = data
@@ -410,16 +405,15 @@ class literal:
         return "literal<type=%s>" % type(self.data).__name__
 
     def __reduce__(self):
-        return (literal, (self.data, ))
+        return (literal, (self.data,))
 
     def __call__(self):
         return self.data
 
 
 def quote(x):
-    """Ensure that this value remains this value in a task graph
-    Some values in task graph take on special meaning. Sometimes we want to
-    ensure that our data is not interpreted but remains literal.
+    """Ensure that this value remains this value in a task graph Some values in task graph take on special meaning.
+    Sometimes we want to ensure that our data is not interpreted but remains literal.
 
     Examples
     --------
@@ -427,5 +421,5 @@ def quote(x):
     (literal<type=tuple>,)
     """
     if istask(x) or type(x) is list or type(x) is dict:
-        return (literal(x), )
+        return (literal(x),)
     return x

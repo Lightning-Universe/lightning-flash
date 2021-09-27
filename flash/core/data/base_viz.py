@@ -22,8 +22,8 @@ from flash.core.utilities.apply_func import _is_overriden
 
 
 class BaseVisualization(BaseDataFetcher):
-    """
-    This Base Class is used to create visualization tool on top of :class:`~flash.core.data.process.Preprocess` hooks.
+    """This Base Class is used to create visualization tool on top of :class:`~flash.core.data.process.Preprocess`
+    hooks.
 
     Override any of the ``show_{preprocess_hook_name}`` to receive the associated data and visualize them.
 
@@ -105,16 +105,13 @@ class BaseVisualization(BaseDataFetcher):
         As the :class:`~flash.core.data.process.Preprocess` hooks are injected within
         the threaded workers of the DataLoader,
         the data won't be accessible when using ``num_workers > 0``.
-
     """
 
     def _show(self, running_stage: RunningStage, func_names_list: List[str]) -> None:
         self.show(self.batches[running_stage], running_stage, func_names_list)
 
     def show(self, batch: Dict[str, Any], running_stage: RunningStage, func_names_list: List[str]) -> None:
-        """
-        Override this function when you want to visualize a composition.
-        """
+        """Override this function when you want to visualize a composition."""
         # filter out the functions to visualise
         func_names_set: Set[str] = set(func_names_list) & set(_CALLBACK_FUNCS)
         if len(func_names_set) == 0:

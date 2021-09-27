@@ -11,17 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Mapping, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.nn import Linear
+from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.classification import ClassificationTask
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
     MessagePassing = None
@@ -29,7 +30,6 @@ else:
 
 
 class GraphBlock(nn.Module):
-
     def __init__(self, nc_input, nc_output, conv_cls, act=nn.ReLU(), **conv_kwargs):
         super().__init__()
         self.conv = conv_cls(nc_input, nc_output, **conv_kwargs)
@@ -43,7 +43,6 @@ class GraphBlock(nn.Module):
 
 
 class BaseGraphModel(nn.Module):
-
     def __init__(
         self,
         num_features: int,
@@ -93,6 +92,9 @@ class GraphClassifier(ClassificationTask):
         hidden_channels: Hidden dimension sizes.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         model: GraphNN used, defaults to BaseGraphModel.
@@ -108,6 +110,9 @@ class GraphClassifier(ClassificationTask):
         hidden_channels: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         model: torch.nn.Module = None,
@@ -127,6 +132,9 @@ class GraphClassifier(ClassificationTask):
             model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
         )

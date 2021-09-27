@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from os.path import basename, dirname, exists, isdir, isfile, join
-from posix import listdir
 from typing import Any, Dict, List, Optional, Union
 
 import yaml
@@ -36,7 +36,6 @@ class BasePointCloudObjectDetectorLoader:
 
 
 class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
-
     def __init__(
         self,
         image_size: tuple = (375, 1242),
@@ -56,7 +55,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         if not exists(meta_file):
             raise MisconfigurationException(f"The {root_dir} should contain a `meta.yaml` file about the classes.")
 
-        with open(meta_file, 'r') as f:
+        with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
 
         if "label_to_names" not in self.meta:
@@ -69,7 +68,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         dataset.color_map = self.meta["color_map"]
 
     def load_data(self, folder: str, dataset: Optional[BaseAutoDataset]):
-        sub_directories = listdir(folder)
+        sub_directories = os.listdir(folder)
         if len(sub_directories) != 3:
             raise MisconfigurationException(
                 f"Using KITTI Format, the {folder} should contains 3 directories "
@@ -84,9 +83,9 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         labels_dir = join(folder, self.labels_folder_name)
         calibrations_dir = join(folder, self.calibrations_folder_name)
 
-        scan_paths = [join(scans_dir, f) for f in listdir(scans_dir)]
-        label_paths = [join(labels_dir, f) for f in listdir(labels_dir)]
-        calibration_paths = [join(calibrations_dir, f) for f in listdir(calibrations_dir)]
+        scan_paths = [join(scans_dir, f) for f in os.listdir(scans_dir)]
+        label_paths = [join(labels_dir, f) for f in os.listdir(labels_dir)]
+        calibration_paths = [join(calibrations_dir, f) for f in os.listdir(calibrations_dir)]
 
         assert len(scan_paths) == len(label_paths) == len(calibration_paths)
 
@@ -94,11 +93,10 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
 
         dataset.path_list = scan_paths
 
-        return [{
-            "scan_path": scan_path,
-            "label_path": label_path,
-            "calibration_path": calibration_path
-        } for scan_path, label_path, calibration_path, in zip(scan_paths, label_paths, calibration_paths)]
+        return [
+            {"scan_path": scan_path, "label_path": label_path, "calibration_path": calibration_path}
+            for scan_path, label_path, calibration_path, in zip(scan_paths, label_paths, calibration_paths)
+        ]
 
     def load_sample(
         self, sample: Dict[str, str], dataset: Optional[BaseAutoDataset] = None, has_label: bool = True
@@ -109,7 +107,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         if has_label:
             label = KITTI.read_label(sample["label_path"], calib)
 
-        reduced_pc = DataProcessing.remove_outside_points(pc, calib['world_cam'], calib['cam_img'], self.image_size)
+        reduced_pc = DataProcessing.remove_outside_points(pc, calib["world_cam"], calib["cam_img"], self.image_size)
 
         attr = {
             "name": basename(sample["scan_path"]),
@@ -120,12 +118,12 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         }
 
         data = {
-            'point': reduced_pc,
-            'full_point': pc,
-            'feat': None,
-            'calib': calib,
-            'bounding_boxes': label if has_label else None,
-            'attr': attr
+            "point": reduced_pc,
+            "full_point": pc,
+            "feat": None,
+            "calib": calib,
+            "bounding_boxes": label if has_label else None,
+            "attr": attr,
         }
         return data, attr
 
@@ -143,7 +141,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
     def predict_load_data(self, data, dataset: Optional[BaseAutoDataset] = None):
         if (isinstance(data, str) and isfile(data)) or (isinstance(data, list) and all(isfile(p) for p in data)):
             return self.load_files(data, dataset)
-        elif isinstance(data, str) and isdir(data):
+        if isinstance(data, str) and isdir(data):
             raise NotImplementedError
 
     def predict_load_sample(self, data, dataset: Optional[BaseAutoDataset] = None):
@@ -154,7 +152,6 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
 
 
 class PointCloudObjectDetectorFoldersDataSource(DataSource):
-
     def __init__(
         self,
         data_format: Optional[BaseDataFormat] = None,
@@ -170,7 +167,7 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
         }
 
         self.data_format = data_format or PointCloudObjectDetectionDataFormat.KITTI
-        self.loader = self.loaders[data_format]
+        self.loader = self.loaders[self.data_format]
 
     def _validate_data(self, folder: str) -> None:
         msg = f"The provided dataset for stage {self._running_stage} should be a folder. Found {folder}."

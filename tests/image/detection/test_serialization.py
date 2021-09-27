@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 
@@ -9,7 +10,6 @@ from flash.image.detection.serialization import FiftyOneDetectionLabels
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 class TestFiftyOneDetectionLabels:
-
     @staticmethod
     def test_smoke():
         serial = FiftyOneDetectionLabels()
@@ -17,21 +17,25 @@ class TestFiftyOneDetectionLabels:
 
     @staticmethod
     def test_serialize_fiftyone():
-        labels = ['class_1', 'class_2', 'class_3']
+        labels = ["class_1", "class_2", "class_3"]
         serial = FiftyOneDetectionLabels()
         filepath_serial = FiftyOneDetectionLabels(return_filepath=True)
         threshold_serial = FiftyOneDetectionLabels(threshold=0.9)
         labels_serial = FiftyOneDetectionLabels(labels=labels)
 
         sample = {
-            DefaultDataKeys.PREDS: [
-                {
-                    "boxes": [torch.tensor(20), torch.tensor(30),
-                              torch.tensor(40), torch.tensor(50)],
-                    "labels": torch.tensor(0),
-                    "scores": torch.tensor(0.5),
-                },
-            ],
+            DefaultDataKeys.PREDS: {
+                "bboxes": [
+                    {
+                        "xmin": torch.tensor(20),
+                        "ymin": torch.tensor(30),
+                        "width": torch.tensor(20),
+                        "height": torch.tensor(20),
+                    }
+                ],
+                "labels": [torch.tensor(0)],
+                "scores": [torch.tensor(0.5)],
+            },
             DefaultDataKeys.METADATA: {
                 "filepath": "something",
                 "size": (100, 100),
@@ -40,13 +44,13 @@ class TestFiftyOneDetectionLabels:
 
         detections = serial.serialize(sample)
         assert len(detections.detections) == 1
-        assert detections.detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5
         assert detections.detections[0].label == "0"
 
         detections = filepath_serial.serialize(sample)
         assert len(detections["predictions"].detections) == 1
-        assert detections["predictions"].detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        np.testing.assert_array_almost_equal(detections["predictions"].detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections["predictions"].detections[0].confidence == 0.5
         assert detections["filepath"] == "something"
 
@@ -55,6 +59,6 @@ class TestFiftyOneDetectionLabels:
 
         detections = labels_serial.serialize(sample)
         assert len(detections.detections) == 1
-        assert detections.detections[0].bounding_box == [0.2, 0.3, 0.2, 0.2]
+        np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5
         assert detections.detections[0].label == "class_1"

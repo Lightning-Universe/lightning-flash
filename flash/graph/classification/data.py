@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, Optional
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.data import GraphDatasetDataSource
 
 if _GRAPH_AVAILABLE:
@@ -25,8 +25,6 @@ if _GRAPH_AVAILABLE:
 
 
 class GraphClassificationPreprocess(Preprocess):
-
-    @requires_extras("graph")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -40,9 +38,9 @@ class GraphClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASET: GraphDatasetDataSource(),
+                DefaultDataSources.DATASETS: GraphDatasetDataSource(),
             },
-            default_data_source=DefaultDataSources.DATASET,
+            default_data_source=DefaultDataSources.DATASETS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

@@ -25,13 +25,11 @@ from flash.core.model import Task
 
 
 class CustomModel(Task):
-
     def __init__(self):
         super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
 
 class CustomPreprocess(DefaultPreprocess):
-
     @classmethod
     def load_data(cls, data):
         return data
@@ -40,8 +38,8 @@ class CustomPreprocess(DefaultPreprocess):
 def test_serialization_data_pipeline(tmpdir):
     model = CustomModel()
 
-    checkpoint_file = os.path.join(tmpdir, 'tmp.ckpt')
-    checkpoint = ModelCheckpoint(tmpdir, 'test.ckpt')
+    checkpoint_file = os.path.join(tmpdir, "tmp.ckpt")
+    checkpoint = ModelCheckpoint(tmpdir, "test.ckpt")
     trainer = Trainer(callbacks=[checkpoint], max_epochs=1)
     dummy_data = DataLoader(list(zip(torch.arange(10, dtype=torch.float), torch.arange(10, dtype=torch.float))))
     trainer.fit(model, dummy_data)
@@ -69,5 +67,5 @@ def test_serialization_data_pipeline(tmpdir):
     assert loaded_model.data_pipeline
     assert isinstance(loaded_model.preprocess, CustomPreprocess)
     for file in os.listdir(tmpdir):
-        if file.endswith('.ckpt'):
+        if file.endswith(".ckpt"):
             os.remove(os.path.join(tmpdir, file))

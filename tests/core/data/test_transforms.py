@@ -23,40 +23,21 @@ from flash.core.data.utils import convert_to_modules
 
 
 class TestApplyToKeys:
-
     @pytest.mark.parametrize(
-        "sample, keys, expected", [
-            ({
-                DefaultDataKeys.INPUT: "test"
-            }, DefaultDataKeys.INPUT, "test"),
+        "sample, keys, expected",
+        [
+            ({DefaultDataKeys.INPUT: "test"}, DefaultDataKeys.INPUT, "test"),
             (
-                {
-                    DefaultDataKeys.INPUT: "test_a",
-                    DefaultDataKeys.TARGET: "test_b"
-                },
+                {DefaultDataKeys.INPUT: "test_a", DefaultDataKeys.TARGET: "test_b"},
                 [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
                 ["test_a", "test_b"],
             ),
-            ({
-                "input": "test"
-            }, "input", "test"),
-            ({
-                "input": "test_a",
-                "target": "test_b"
-            }, ["input", "target"], ["test_a", "test_b"]),
-            ({
-                "input": "test_a",
-                "target": "test_b",
-                "extra": "..."
-            }, ["input", "target"], ["test_a", "test_b"]),
-            ({
-                "input": "test_a",
-                "target": "test_b"
-            }, ["input", "target", "extra"], ["test_a", "test_b"]),
-            ({
-                "target": "..."
-            }, "input", None),
-        ]
+            ({"input": "test"}, "input", "test"),
+            ({"input": "test_a", "target": "test_b"}, ["input", "target"], ["test_a", "test_b"]),
+            ({"input": "test_a", "target": "test_b", "extra": "..."}, ["input", "target"], ["test_a", "test_b"]),
+            ({"input": "test_a", "target": "test_b"}, ["input", "target", "extra"], ["test_a", "test_b"]),
+            ({"target": "..."}, "input", None),
+        ],
     )
     def test_forward(self, sample, keys, expected):
         transform = Mock(return_value=["out"] * len(keys))
@@ -67,7 +48,8 @@ class TestApplyToKeys:
             transform.assert_not_called()
 
     @pytest.mark.parametrize(
-        "transform, expected", [
+        "transform, expected",
+        [
             (
                 ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.ReLU()),
                 "ApplyToKeys(keys=<DefaultDataKeys.INPUT: 'input'>, transform=ReLU())",
@@ -82,7 +64,7 @@ class TestApplyToKeys:
                 ApplyToKeys(["input", "target"], torch.nn.ReLU()),
                 "ApplyToKeys(keys=['input', 'target'], transform=ReLU())",
             ),
-        ]
+        ],
     )
     def test_repr(self, transform, expected):
         assert repr(transform) == expected
@@ -118,18 +100,9 @@ def test_kornia_parallel_transforms(with_params):
 
 def test_kornia_collate():
     samples = [
-        {
-            DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10),
-            DefaultDataKeys.TARGET: 1
-        },
-        {
-            DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10),
-            DefaultDataKeys.TARGET: 2
-        },
-        {
-            DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10),
-            DefaultDataKeys.TARGET: 3
-        },
+        {DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10), DefaultDataKeys.TARGET: 1},
+        {DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10), DefaultDataKeys.TARGET: 2},
+        {DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10), DefaultDataKeys.TARGET: 3},
     ]
 
     result = kornia_collate(samples)
@@ -145,24 +118,13 @@ _MOCK_TRANSFORM = Mock()
     "base_transforms, additional_transforms, expected_result",
     [
         (
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM
-            },
-            {
-                "post_tensor_transform": _MOCK_TRANSFORM
-            },
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM,
-                "post_tensor_transform": _MOCK_TRANSFORM
-            },
+            {"to_tensor_transform": _MOCK_TRANSFORM},
+            {"post_tensor_transform": _MOCK_TRANSFORM},
+            {"to_tensor_transform": _MOCK_TRANSFORM, "post_tensor_transform": _MOCK_TRANSFORM},
         ),
         (
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM
-            },
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM
-            },
+            {"to_tensor_transform": _MOCK_TRANSFORM},
+            {"to_tensor_transform": _MOCK_TRANSFORM},
             {
                 "to_tensor_transform": nn.Sequential(
                     convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
@@ -170,33 +132,23 @@ _MOCK_TRANSFORM = Mock()
             },
         ),
         (
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM
-            },
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM,
-                "post_tensor_transform": _MOCK_TRANSFORM
-            },
+            {"to_tensor_transform": _MOCK_TRANSFORM},
+            {"to_tensor_transform": _MOCK_TRANSFORM, "post_tensor_transform": _MOCK_TRANSFORM},
             {
                 "to_tensor_transform": nn.Sequential(
                     convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
                 ),
-                "post_tensor_transform": _MOCK_TRANSFORM
+                "post_tensor_transform": _MOCK_TRANSFORM,
             },
         ),
         (
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM,
-                "post_tensor_transform": _MOCK_TRANSFORM
-            },
-            {
-                "to_tensor_transform": _MOCK_TRANSFORM
-            },
+            {"to_tensor_transform": _MOCK_TRANSFORM, "post_tensor_transform": _MOCK_TRANSFORM},
+            {"to_tensor_transform": _MOCK_TRANSFORM},
             {
                 "to_tensor_transform": nn.Sequential(
                     convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
                 ),
-                "post_tensor_transform": _MOCK_TRANSFORM
+                "post_tensor_transform": _MOCK_TRANSFORM,
             },
         ),
     ],

@@ -21,4 +21,4 @@ from tests.helpers.utils import _POINTCLOUD_TESTING
 def test_backbones():
 
     backbones = PointCloudObjectDetector.available_backbones()
-    assert backbones == ['pointpillars', 'pointpillars_kitti']
+    assert backbones == ["pointpillars", "pointpillars_kitti"]

@@ -14,6 +14,7 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
+from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
 from flash.text.seq2seq.core.metrics import BLEUScore
@@ -35,6 +36,9 @@ class TranslationTask(Seq2SeqTask):
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
+        scheduler: The scheduler or scheduler class to use.
+        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the BLEU metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `1e-5`
@@ -42,6 +46,7 @@ class TranslationTask(Seq2SeqTask):
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         n_gram: Maximum n_grams to use in metric calculation. Defaults to `4`
         smooth: Apply smoothing in BLEU calculation. Defaults to `True`
+        enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
     def __init__(
@@ -49,22 +54,30 @@ class TranslationTask(Seq2SeqTask):
         backbone: str = "t5-small",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
+        scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-5,
         val_target_max_length: Optional[int] = 128,
         num_beams: Optional[int] = 4,
         n_gram: bool = 4,
         smooth: bool = True,
+        enable_ort: bool = False,
     ):
         self.save_hyperparameters()
         super().__init__(
             backbone=backbone,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            scheduler=scheduler,
+            scheduler_kwargs=scheduler_kwargs,
             metrics=metrics,
             learning_rate=learning_rate,
             val_target_max_length=val_target_max_length,
             num_beams=num_beams,
+            enable_ort=enable_ort,
         )
         self.bleu = BLEUScore(
             n_gram=n_gram,
@@ -84,7 +97,5 @@ class TranslationTask(Seq2SeqTask):
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """
-        This function is used only for debugging usage with CI
-        """
+        """This function is used only for debugging usage with CI."""
         assert history[-1]["val_bleu_score"] > 0.6

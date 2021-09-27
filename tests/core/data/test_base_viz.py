@@ -37,7 +37,6 @@ def _rand_image():
 
 
 class CustomBaseVisualization(BaseVisualization):
-
     def __init__(self):
         super().__init__()
 
@@ -77,7 +76,6 @@ class CustomBaseVisualization(BaseVisualization):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestBaseViz:
-
     def test_base_viz(self, tmpdir):
 
         seed_everything(42)
@@ -89,7 +87,6 @@ class TestBaseViz:
         _rand_image().save(train_images[1])
 
         class CustomImageClassificationData(ImageClassificationData):
-
             @staticmethod
             def configure_data_fetcher(*args, **kwargs) -> CustomBaseVisualization:
                 return CustomBaseVisualization(*args, **kwargs)
@@ -154,7 +151,7 @@ class TestBaseViz:
 
             if not is_predict:
                 res = _get_result("per_batch_transform")
-                assert res[0][DefaultDataKeys.TARGET].shape == (B, )
+                assert res[0][DefaultDataKeys.TARGET].shape == (B,)
 
             assert dm.data_fetcher.show_load_sample_called
             assert dm.data_fetcher.show_pre_tensor_transform_called
@@ -165,12 +162,13 @@ class TestBaseViz:
             dm.data_fetcher.check_reset()
 
     @pytest.mark.parametrize(
-        "func_names, valid", [
+        "func_names, valid",
+        [
             (["load_sample"], True),
             (["not_a_hook"], False),
             (["load_sample", "pre_tensor_transform"], True),
             (["load_sample", "not_a_hook"], True),
-        ]
+        ],
     )
     def test_show(self, func_names, valid):
         base_viz = CustomBaseVisualization()

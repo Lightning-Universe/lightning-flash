@@ -79,7 +79,6 @@ class CachedCostItemWithSlots:
 # noinspection PyStatementEffect
 @pytest.mark.skipif(sys.version_info >= (3, 8), reason="Python 3.8+ uses standard library implementation.")
 class TestCachedProperty:
-
     @staticmethod
     def test_cached():
         item = CachedCostItem()
@@ -125,7 +124,6 @@ class TestCachedProperty:
 
     @staticmethod
     def test_immutable_dict():
-
         class MyMeta(type):
             """Test metaclass."""
 
@@ -214,7 +212,6 @@ class TestCachedProperty:
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Validate, that python 3.8 uses standard implementation")
 class TestPy38Plus:
-
     @staticmethod
     def test_is():
         import functools

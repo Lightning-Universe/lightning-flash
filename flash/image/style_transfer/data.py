@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 
 from torch import nn
 
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
@@ -31,9 +32,9 @@ if _TORCHVISION_AVAILABLE:
 __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
-def _apply_to_input(default_transforms_fn, keys: Union[Sequence[DefaultDataKeys],
-                                                       DefaultDataKeys]) -> Callable[..., Dict[str, ApplyToKeys]]:
-
+def _apply_to_input(
+    default_transforms_fn, keys: Union[Sequence[DefaultDataKeys], DefaultDataKeys]
+) -> Callable[..., Dict[str, ApplyToKeys]]:
     @functools.wraps(default_transforms_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Optional[Dict[str, ApplyToKeys]]:
         default_transforms = default_transforms_fn(*args, **kwargs)
@@ -46,7 +47,6 @@ def _apply_to_input(default_transforms_fn, keys: Union[Sequence[DefaultDataKeys]
 
 
 class StyleTransferPreprocess(Preprocess):
-
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
@@ -118,12 +118,12 @@ class StyleTransferData(ImageClassificationData):
         predict_transform: Optional[Union[str, Dict]] = None,
         preprocess: Optional[Preprocess] = None,
         **kwargs: Any,
-    ) -> "StyleTransferData":
+    ) -> "DataModule":
 
-        if any(param in kwargs for param in ("val_folder", "val_transform")):
+        if any(param in kwargs and kwargs[param] is not None for param in ("val_folder", "val_transform")):
             raise_not_supported("validation")
 
-        if any(param in kwargs for param in ("test_folder", "test_transform")):
+        if any(param in kwargs and kwargs[param] is not None for param in ("test_folder", "test_transform")):
             raise_not_supported("test")
 
         preprocess = preprocess or cls.preprocess_cls(

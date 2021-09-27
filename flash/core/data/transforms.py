@@ -21,9 +21,9 @@ from flash.core.data.utils import _PREPROCESS_FUNCS, convert_to_modules
 
 
 class ApplyToKeys(nn.Sequential):
-    """The ``ApplyToKeys`` class is an ``nn.Sequential`` which applies the given transforms to the given keys from the
-    input. When a single key is given, a single value will be passed to the transforms. When multiple keys are given,
-    the corresponding values will be passed to the transforms as a list.
+    """The ``ApplyToKeys`` class is an ``nn.Sequential`` which applies the given transforms to the given keys from
+    the input. When a single key is given, a single value will be passed to the transforms. When multiple keys are
+    given, the corresponding values will be passed to the transforms as a list.
 
     Args:
         keys: The key (``str``) or sequence of keys (``Sequence[str]``) to extract and forward to the transforms.
@@ -31,7 +31,7 @@ class ApplyToKeys(nn.Sequential):
     """
 
     def __init__(self, keys: Union[str, Sequence[str]], *args):
-        super().__init__(*[convert_to_modules(arg) for arg in args])
+        super().__init__(*(convert_to_modules(arg) for arg in args))
         if isinstance(keys, str):
             keys = [keys]
         self.keys = keys
@@ -39,19 +39,26 @@ class ApplyToKeys(nn.Sequential):
     def forward(self, x: Mapping[str, Any]) -> Mapping[str, Any]:
         keys = list(filter(lambda key: key in x, self.keys))
         inputs = [x[key] for key in keys]
-        if len(inputs) > 0:
-            if len(inputs) == 1:
-                inputs = inputs[0]
-            outputs = super().forward(inputs)
-            if not isinstance(outputs, Sequence):
-                outputs = (outputs, )
 
-            result = {}
-            result.update(x)
+        result = {}
+        result.update(x)
+
+        if len(inputs) == 1:
+            result[keys[0]] = super().forward(inputs[0])
+        elif len(inputs) > 1:
+            try:
+                outputs = super().forward(inputs)
+            except TypeError as e:
+                raise Exception(
+                    "Failed to apply transforms to multiple keys at the same time,"
+                    " try using KorniaParallelTransforms."
+                ) from e
+
             for i, key in enumerate(keys):
                 result[key] = outputs[i]
-            return result
-        return x
+
+        # result is simply returned if len(inputs) == 0
+        return result
 
     def __repr__(self):
         transform = list(self.children())
@@ -72,7 +79,7 @@ class KorniaParallelTransforms(nn.Sequential):
     """
 
     def __init__(self, *args):
-        super().__init__(*[convert_to_modules(arg) for arg in args])
+        super().__init__(*(convert_to_modules(arg) for arg in args))
 
     def forward(self, inputs: Any):
         result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
@@ -99,11 +106,16 @@ class KorniaParallelTransforms(nn.Sequential):
 
 
 def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    """Kornia transforms add batch dimension which need to be removed. This function removes that dimension and then
-    applies ``torch.utils.data._utils.collate.default_collate``."""
+    """Kornia transforms add batch dimension which need to be removed.
+
+    This function removes that dimension and then
+    applies ``torch.utils.data._utils.collate.default_collate``.
+    """
+    if len(samples) == 1 and isinstance(samples[0], list):
+        samples = samples[0]
     for sample in samples:
         for key in sample.keys():
-            if torch.is_tensor(sample[key]):
+            if torch.is_tensor(sample[key]) and sample[key].ndim == 4:
                 sample[key] = sample[key].squeeze(0)
     return default_collate(samples)
 
@@ -112,8 +124,8 @@ def merge_transforms(
     base_transforms: Dict[str, Callable],
     additional_transforms: Dict[str, Callable],
 ) -> Dict[str, Callable]:
-    """Utility function to merge two transform dictionaries. For each hook, the ``additional_transforms`` will be be
-    called after the ``base_transforms``.
+    """Utility function to merge two transform dictionaries. For each hook, the ``additional_transforms`` will be
+    be called after the ``base_transforms``.
 
     Args:
         base_transforms: The base transforms dictionary.

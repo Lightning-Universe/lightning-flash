@@ -22,8 +22,8 @@ if _FIFTYONE_AVAILABLE:
 
 def build_checkboard(n, m, k=8):
     x = np.zeros((n, m))
-    x[k::k * 2, ::k] = 1
-    x[::k * 2, k::k * 2] = 1
+    x[k :: k * 2, ::k] = 1
+    x[:: k * 2, k :: k * 2] = 1
     return x
 
 
@@ -48,7 +48,6 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
 
 
 class TestSemanticSegmentationPreprocess:
-
     @staticmethod
     @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     def test_smoke():
@@ -57,7 +56,6 @@ class TestSemanticSegmentationPreprocess:
 
 
 class TestSemanticSegmentationData:
-
     @staticmethod
     @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_smoke():
@@ -203,7 +201,7 @@ class TestSemanticSegmentationData:
             test_targets=targets,
             batch_size=2,
             num_workers=0,
-            num_classes=num_classes
+            num_classes=num_classes,
         )
         assert dm is not None
         assert dm.train_dataloader() is not None
@@ -259,7 +257,7 @@ class TestSemanticSegmentationData:
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],
                 batch_size=2,
                 num_workers=0,
-                num_classes=num_classes
+                num_classes=num_classes,
             )
 
     @staticmethod
@@ -370,7 +368,7 @@ class TestSemanticSegmentationData:
             val_targets=targets,
             batch_size=2,
             num_workers=0,
-            num_classes=num_classes
+            num_classes=num_classes,
         )
         assert dm is not None
         assert dm.train_dataloader() is not None

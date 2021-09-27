@@ -10,7 +10,6 @@ from flash.core.serve.types.base import BaseType
 
 
 class FlashInputs(BaseType):
-
     def __init__(
         self,
         deserializer: Callable,
@@ -25,7 +24,6 @@ class FlashInputs(BaseType):
 
 
 class FlashOutputs(BaseType):
-
     def __init__(
         self,
         serializer: Callable,
@@ -53,7 +51,6 @@ def build_flash_serve_model_component(model):
     data_pipeline = model.build_data_pipeline()
 
     class FlashServeModelComponent(ModelComponent):
-
         def __init__(self, model):
             self.model = model
             self.model.eval()

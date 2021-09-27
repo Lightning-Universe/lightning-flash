@@ -13,29 +13,68 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, Optional, Tuple
 
+import numpy as np
+
 from flash.audio.classification.transforms import default_transforms, train_default_transforms
-from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.data_source import (
+    DefaultDataKeys,
+    DefaultDataSources,
+    has_file_allowed_extension,
+    LoaderDataFrameDataSource,
+    NumpyDataSource,
+    PathsDataSource,
+)
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import requires_extras
-from flash.image.classification.data import MatplotlibVisualization
-from flash.image.data import ImageDeserializer, ImagePathsDataSource
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.image.classification.data import ImageClassificationData
+from flash.image.data import ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.datasets.folder import default_loader
+
+
+def spectrogram_loader(filepath: str):
+    if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
+        img = default_loader(filepath)
+        data = np.array(img)
+    else:
+        data = np.load(filepath)
+    return data
+
+
+class AudioClassificationNumpyDataSource(NumpyDataSource):
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        sample[DefaultDataKeys.INPUT] = np.transpose(sample[DefaultDataKeys.INPUT], (1, 2, 0))
+        return sample
+
+
+class AudioClassificationTensorDataSource(AudioClassificationNumpyDataSource):
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        sample[DefaultDataKeys.INPUT] = sample[DefaultDataKeys.INPUT].numpy()
+        return super().load_sample(sample, dataset=dataset)
+
+
+class AudioClassificationPathsDataSource(PathsDataSource):
+    def __init__(self):
+        super().__init__(loader=spectrogram_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+
+
+class AudioClassificationDataFrameDataSource(LoaderDataFrameDataSource):
+    def __init__(self):
+        super().__init__(spectrogram_loader)
 
 
 class AudioClassificationPreprocess(Preprocess):
-
-    @requires_extras(["audio", "image"])
     def __init__(
         self,
-        train_transform: Optional[Dict[str, Callable]],
-        val_transform: Optional[Dict[str, Callable]],
-        test_transform: Optional[Dict[str, Callable]],
-        predict_transform: Optional[Dict[str, Callable]],
-        spectrogram_size: Tuple[int, int] = (196, 196),
-        time_mask_param: int = 80,
-        freq_mask_param: int = 80,
-        deserializer: Optional['Deserializer'] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        spectrogram_size: Tuple[int, int] = (128, 128),
+        time_mask_param: Optional[int] = None,
+        freq_mask_param: Optional[int] = None,
+        deserializer: Optional["Deserializer"] = None,
     ):
         self.spectrogram_size = spectrogram_size
         self.time_mask_param = time_mask_param
@@ -47,8 +86,12 @@ class AudioClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource()
+                DefaultDataSources.FILES: AudioClassificationPathsDataSource(),
+                DefaultDataSources.FOLDERS: AudioClassificationPathsDataSource(),
+                "data_frame": AudioClassificationDataFrameDataSource(),
+                DefaultDataSources.CSV: AudioClassificationDataFrameDataSource(),
+                DefaultDataSources.NUMPY: AudioClassificationNumpyDataSource(),
+                DefaultDataSources.TENSORS: AudioClassificationTensorDataSource(),
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,
@@ -73,15 +116,7 @@ class AudioClassificationPreprocess(Preprocess):
         return train_default_transforms(self.spectrogram_size, self.time_mask_param, self.freq_mask_param)
 
 
-class AudioClassificationData(DataModule):
+class AudioClassificationData(ImageClassificationData):
     """Data module for audio classification."""
 
     preprocess_cls = AudioClassificationPreprocess
-
-    def set_block_viz_window(self, value: bool) -> None:
-        """Setter method to switch on/off matplotlib to pop up windows."""
-        self.data_fetcher.block_viz_window = value
-
-    @staticmethod
-    def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        return MatplotlibVisualization(*args, **kwargs)

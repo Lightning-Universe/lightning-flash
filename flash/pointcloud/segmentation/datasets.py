@@ -34,7 +34,9 @@ def lyft(dataset_path):
     name = "Lyft"
     executor(
         "https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/scripts/download_datasets/download_lyft.sh",
-        "https://github.com/intel-isl/Open3D-ML/blob/master/scripts/preprocess_lyft.py", dataset_path, name
+        "https://github.com/intel-isl/Open3D-ML/blob/master/scripts/preprocess_lyft.py",
+        dataset_path,
+        name,
     )
     return Lyft(os.path.join(dataset_path, name))
 
@@ -51,7 +53,7 @@ def semantickitti(dataset_path, download, **kwargs):
             "https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/scripts/download_datasets/download_semantickitti.sh",  # noqa E501
             None,
             dataset_path,
-            name
+            name,
         )
     return SemanticKITTI(os.path.join(dataset_path, name), **kwargs)
 

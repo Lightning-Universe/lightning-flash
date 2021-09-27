@@ -62,7 +62,15 @@ def json_data_with_field(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = TranslationData.from_csv("input", "target", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
+    dm = TranslationData.from_csv(
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=csv_path,
+        batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
@@ -79,7 +87,9 @@ def test_from_files(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
-        batch_size=1
+        batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
     )
     batch = next(iter(dm.val_dataloader()))
     assert "labels" in batch
@@ -94,7 +104,15 @@ def test_from_files(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
-    dm = TranslationData.from_json("input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
+    dm = TranslationData.from_json(
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
@@ -105,7 +123,14 @@ def test_from_json(tmpdir):
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir)
     dm = TranslationData.from_json(
-        "input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, field="data"
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1,
+        field="data",
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
     )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch

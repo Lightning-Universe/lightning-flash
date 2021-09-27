@@ -28,14 +28,6 @@ else:
     fo = None
 
 
-class DetectionLabels(Serializer):
-    """A :class:`.Serializer` which extracts predictions from sample dict."""
-
-    def serialize(self, sample: Any) -> Dict[str, Any]:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        return sample
-
-
 class FiftyOneDetectionLabels(Serializer):
     """A :class:`.Serializer` which converts model outputs to FiftyOne detection format.
 
@@ -81,31 +73,35 @@ class FiftyOneDetectionLabels(Serializer):
 
         detections = []
 
-        for det in sample[DefaultDataKeys.PREDS]:
-            confidence = det["scores"].tolist()
+        preds = sample[DefaultDataKeys.PREDS]
+
+        for bbox, label, score in zip(preds["bboxes"], preds["labels"], preds["scores"]):
+            confidence = score.tolist()
 
             if self.threshold is not None and confidence < self.threshold:
                 continue
 
-            xmin, ymin, xmax, ymax = [c.tolist() for c in det["boxes"]]
+            xmin, ymin, box_width, box_height = bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"]
             box = [
-                xmin / width,
-                ymin / height,
-                (xmax - xmin) / width,
-                (ymax - ymin) / height,
+                (xmin / width).item(),
+                (ymin / height).item(),
+                (box_width / width).item(),
+                (box_height / height).item(),
             ]
 
-            label = det["labels"].tolist()
+            label = label.item()
             if labels is not None:
                 label = labels[label]
             else:
                 label = str(int(label))
 
-            detections.append(fo.Detection(
-                label=label,
-                bounding_box=box,
-                confidence=confidence,
-            ))
+            detections.append(
+                fo.Detection(
+                    label=label,
+                    bounding_box=box,
+                    confidence=confidence,
+                )
+            )
         fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]

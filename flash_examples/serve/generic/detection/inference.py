@@ -18,16 +18,12 @@ from flash.core.serve.types import BBox, Image, Label, Repeated
 
 
 class ObjectDetection(ModelComponent):
-
     def __init__(self, model):
         self.model = model
 
     @expose(
         inputs={"img": Image()},
-        outputs={
-            "boxes": Repeated(BBox()),
-            "labels": Repeated(Label("classes.txt"))
-        },
+        outputs={"boxes": Repeated(BBox()), "labels": Repeated(Label("classes.txt"))},
     )
     def detect(self, img):
         img = img.permute(0, 3, 2, 1).float() / 255
