@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
 import flash
-from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.core.utilities.imports import example_requires
 from flash.image import FaceDetectionData, FaceDetector
 
-if _FASTFACE_AVAILABLE:
-    import fastface as ff
-else:
-    raise ModuleNotFoundError("Please, pip install --upgrade 'lightning-flash[image_extras]'")
+example_requires("fastface")
+
+import fastface as ff  # noqa: F401
 
 # # 1. Create the DataModule
 train_dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="train")
@@ -30,7 +31,7 @@ datamodule = FaceDetectionData.from_datasets(train_dataset=train_dataset, val_da
 model = FaceDetector(model="lffd_slim")
 
 # # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3, limit_train_batches=0.1, limit_val_batches=0.1)
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect faces in a few images!

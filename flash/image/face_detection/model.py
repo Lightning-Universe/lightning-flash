@@ -23,6 +23,7 @@ from flash.core.data.process import Preprocess, Serializer
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 from flash.image.face_detection.data import FaceDetectionPreprocess
 
 if _FASTFACE_AVAILABLE:
@@ -41,8 +42,7 @@ class DetectionLabels(Serializer):
     """A :class:`.Serializer` which extracts predictions from sample dict."""
 
     def serialize(self, sample: Any) -> Dict[str, Any]:
-        sample = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
-        return sample
+        return sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
 
 
 class FaceDetector(Task):
@@ -84,7 +84,7 @@ class FaceDetector(Task):
         super().__init__(
             model=model,
             loss_fn=loss,
-            metrics=metrics or {"AP": ff.metric.AveragePrecision()},
+            metrics=metrics or {"AP": ff.metric.AveragePrecision()},  # TODO: replace with torch metrics MAP
             learning_rate=learning_rate,
             optimizer=optimizer,
             serializer=serializer or DetectionLabels(),
@@ -97,17 +97,9 @@ class FaceDetector(Task):
         pretrained,
         **kwargs,
     ):
+        model, pl_model = FACE_DETECTION_BACKBONES.get(model_name)(pretrained=pretrained, **kwargs)
 
-        if pretrained:
-            pl_model = ff.FaceDetector.from_pretrained(model_name, **kwargs)
-        else:
-            arch, config = model_name.split("_")
-            pl_model = ff.FaceDetector.build(arch, config, **kwargs)
-
-        # following steps are required since `get_model` needsreturns `torch.nn.Module`
-        # get torch.nn.Module
-        model = getattr(pl_model, "arch")
-
+        # following steps are required since `get_model` needs to return `torch.nn.Module`
         # moving some required parameters from `fastface.FaceDetector` to `torch.nn.Module`
         # set preprocess params
         model.register_buffer("normalizer", getattr(pl_model, "normalizer"))
@@ -116,6 +108,8 @@ class FaceDetector(Task):
 
         # copy pasting `_postprocess` function from `fastface.FaceDetector` to `torch.nn.Module`
         # set postprocess function
+        # this is called from FaceDetector lightning module form fastface itself
+        # https://github.com/borhanMorphy/fastface/blob/master/fastface/module.py#L200
         setattr(model, "_postprocess", getattr(pl_model, "_postprocess"))
 
         return model
@@ -136,11 +130,11 @@ class FaceDetector(Task):
         return batch
 
     def _compute_metrics(self, logits, targets):
-        preds = self.model.logits_to_preds(logits)
         # preds: torch.Tensor(B, N, 5)
+        preds = self.model.logits_to_preds(logits)
 
-        preds = self.model._postprocess(preds)
         # preds: torch.Tensor(N, 6) as x1,y1,x2,y2,score,batch_idx
+        preds = self.model._postprocess(preds)
 
         target_boxes = [target["target_boxes"] for target in targets]
         pred_boxes = [preds[preds[:, 5] == batch_idx, :5] for batch_idx in range(len(targets))]
@@ -148,29 +142,24 @@ class FaceDetector(Task):
         for metric in self.val_metrics.values():
             metric.update(pred_boxes, target_boxes)
 
-    def shared_step(self, batch, train=False) -> Any:
+    def __shared_step(self, batch, train=False) -> Any:
         images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
         images = self._prepare_batch(images)
         logits = self.model(images)
         loss = self.model.compute_loss(logits, targets)
 
-        if not train:
-            self._compute_metrics(logits, targets)
+        self._compute_metrics(logits, targets)
 
-        return loss, logits
+        return loss
 
     def training_step(self, batch, batch_idx) -> Any:
-        loss, _ = self.shared_step(batch)
+        loss, _ = self.__shared_step(batch)
 
         self.log_dict({f"train_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
-    def on_validation_epoch_start(self) -> None:
-        for metric in self.val_metrics.values():
-            metric.reset()
-
     def validation_step(self, batch, batch_idx):
-        loss, logits = self.shared_step(batch)
+        loss = self.__shared_step(batch)
 
         self.log_dict({f"val_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
@@ -179,12 +168,8 @@ class FaceDetector(Task):
         metric_results = {name: metric.compute() for name, metric in self.val_metrics.items()}
         self.log_dict({f"val_{k}": v for k, v in metric_results.items()}, on_epoch=True)
 
-    def on_test_epoch_start(self) -> None:
-        for metric in self.val_metrics.values():
-            metric.reset()
-
     def test_step(self, batch, batch_idx):
-        loss, logits = self.shared_step(batch)
+        loss = self.__shared_step(batch)
 
         self.log_dict({f"test_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
