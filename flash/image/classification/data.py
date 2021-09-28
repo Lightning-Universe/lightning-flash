@@ -128,7 +128,7 @@ class ImageClassificationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -225,7 +225,7 @@ class ImageClassificationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":

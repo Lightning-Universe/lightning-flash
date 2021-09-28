@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import platform
 from typing import (
     Any,
     Callable,
@@ -98,7 +97,7 @@ class DataModule(pl.LightningDataModule):
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
     ) -> None:
 
@@ -138,13 +137,10 @@ class DataModule(pl.LightningDataModule):
 
         self.batch_size = batch_size
 
-        # TODO: figure out best solution for setting num_workers
         if num_workers is None:
-            if platform.system() in ("Darwin", "Windows"):
-                num_workers = 0
-            else:
-                num_workers = os.cpu_count()
+            num_workers = 0
         self.num_workers = num_workers
+
         self.sampler = sampler
 
         self.set_running_stages()
@@ -302,6 +298,7 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_train_dataset(
                 train_ds,
+                trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
@@ -330,6 +327,7 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_val_dataset(
                 val_ds,
+                trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
@@ -352,6 +350,7 @@ class DataModule(pl.LightningDataModule):
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_test_dataset(
                 test_ds,
+                trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
@@ -368,6 +367,7 @@ class DataModule(pl.LightningDataModule):
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+
         if isinstance(predict_ds, IterableAutoDataset):
             batch_size = self.batch_size
         else:
@@ -468,7 +468,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -569,7 +569,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -643,7 +643,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -720,7 +720,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -807,7 +807,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -893,7 +893,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         field: Optional[str] = None,
         **preprocess_kwargs: Any,
@@ -1003,7 +1003,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -1087,7 +1087,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -1168,7 +1168,7 @@ class DataModule(pl.LightningDataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object

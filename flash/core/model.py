@@ -26,6 +26,7 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
@@ -68,7 +69,7 @@ class ModuleWrapperBase:
         self._children = []
 
         # TODO: create enum values to define what are the exact states
-        self._data_pipeline_state: Optional[DataPipelineState] = None
+        self._data_pipeline_state: DataPipelineState = DataPipelineState()
 
         # model own internal state shared with the data pipeline.
         self._state: Dict[Type[ProcessState], ProcessState] = {}
@@ -118,6 +119,7 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = True,
     ) -> DataLoader:
         return DataLoader(
             dataset,
@@ -128,11 +130,13 @@ class DatasetProcessor:
             drop_last=drop_last,
             sampler=sampler,
             collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -150,11 +154,13 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=num_workers > 0,
         )
 
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -172,11 +178,13 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=num_workers > 0,
         )
 
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -194,6 +202,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=num_workers > 0,
         )
 
     def process_predict_dataset(
@@ -216,6 +225,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=False,
         )
 
 
@@ -265,6 +275,19 @@ class CheckDependenciesMeta(ABCMeta):
                     requires(result.required_extras)(result.load_from_checkpoint.__func__)
                 )
         return result
+
+
+class OutputKeys(LightningEnum):
+    """The ``OutputKeys`` enum contains the keys that are used internally by the ``Task`` when handling outputs."""
+
+    OUTPUT = "y_hat"
+    TARGET = "y"
+    LOGS = "logs"
+    LOSS = "loss"
+
+    # TODO: Create a FlashEnum class???
+    def __hash__(self) -> int:
+        return hash(self.value)
 
 
 class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=CheckDependenciesMeta):
@@ -331,11 +354,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         x, y = batch
         y_hat = self(x)
         y, y_hat = self.apply_filtering(y, y_hat)
-        output = {"y_hat": y_hat}
-        y_hat = self.to_loss_format(output["y_hat"])
+        output = {OutputKeys.OUTPUT: y_hat}
+        y_hat = self.to_loss_format(output[OutputKeys.OUTPUT])
         losses = {name: l_fn(y_hat, y) for name, l_fn in self.loss_fn.items()}
 
-        y_hat = self.to_metrics_format(output["y_hat"])
+        y_hat = self.to_metrics_format(output[OutputKeys.OUTPUT])
 
         logs = {}
 
@@ -350,9 +373,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             logs["total_loss"] = sum(losses.values())
             return logs["total_loss"], logs
 
-        output["loss"] = self.compute_loss(losses)
-        output["logs"] = self.compute_logs(logs, losses)
-        output["y"] = y
+        output[OutputKeys.LOSS] = self.compute_loss(losses)
+        output[OutputKeys.LOGS] = self.compute_logs(logs, losses)
+        output[OutputKeys.TARGET] = y
         return output
 
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
@@ -380,16 +403,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
-        self.log_dict({f"train_{k}": v for k, v in output["logs"].items()}, on_step=True, on_epoch=True, prog_bar=True)
-        return output["loss"]
+        self.log_dict(
+            {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+        )
+        return output[OutputKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"val_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        self.log_dict({f"test_{k}": v for k, v in output["logs"].items()}, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(
+            {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     @predict_context
     def predict(
@@ -422,6 +460,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         else:
             x = self.transfer_batch_to_device(x, self.device)
         x = data_pipeline.device_preprocessor(running_stage)(x)
+        x = x[0] if isinstance(x, list) else x
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.postprocessor(running_stage)(predictions)
         return predictions

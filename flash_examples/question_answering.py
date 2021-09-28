@@ -16,12 +16,11 @@ from flash.core.data.utils import download_data
 from flash.text import QuestionAnsweringData, QuestionAnsweringTask
 
 # 1. Create the DataModule
-download_data("https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json", "./data/")
-download_data("https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json", "./data/")
+download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
 
 datamodule = QuestionAnsweringData.from_squad_v2(
-    train_file="./data/train-v2.0.json",
-    val_file="./data/dev-v2.0.json",
+    train_file="./data/squad_tiny/train.json",
+    val_file="./data/squad_tiny/val.json",
 )
 
 # 2. Build the task

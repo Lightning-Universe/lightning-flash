@@ -90,7 +90,7 @@ class KeypointDetectionData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.keypoint_detection.data.KeypointDetectionData` object from the given data

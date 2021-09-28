@@ -3,18 +3,14 @@
 <img src="docs/source/_static/images/logo.svg" width="400px">
 
 
-**Collection of tasks for fast prototyping, baselining, finetuning and solving problems with deep learning**
+**Your PyTorch AI Factory**
 
 ---
 
 <p align="center">
-  <a href="#installation">Installation</a> •
+  <a href="#getting-started">Installation</a> •
+  <a href="#flash-in-3-steps">Flash in 3 Steps</a> •
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
-  <a href="#what-is-flash">About</a> •
-  <a href="#predictions">Prediction</a> •
-  <a href="#finetuning">Finetuning</a> •
-  <a href="#tasks">Tasks</a> •
-  <a href="#a-general-task">General Task</a> •
   <a href="#contribute">Contribute</a> •
   <a href="#community">Community</a> •
   <a href="https://www.pytorchlightning.ai/">Website</a> •
@@ -25,28 +21,233 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/lightning-flash)](https://pypi.org/project/lightning-flash/)
 [![PyPI Status](https://badge.fury.io/py/lightning-flash.svg)](https://badge.fury.io/py/lightning-flash)
 [![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)
-[![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fforums.pytorchlightning.ai)](https://forums.pytorchlightning.ai/)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PytorchLightning/pytorch-lightning/blob/master/LICENSE)
-
 [![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=latest)](https://lightning-flash.readthedocs.io/en/stable/?badge=stable)
 ![CI testing](https://github.com/PyTorchLightning/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)
 [![codecov](https://codecov.io/gh/PyTorchLightning/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/PyTorchLightning/lightning-flash)
-
-<!--
-[![PyPI Status](https://pepy.tech/badge/lightning-flash)](https://pepy.tech/project/lightning-flash)
-![Check Docs](https://github.com/PyTorchLightning/lightning-flash/workflows/Check%20Docs/badge.svg?branch=master&event=push)
--->
 
 </div>
 
 ---
 
-__Note:__ Flash is currently being tested on real-world use cases and is in active development. Please [open an issue](https://github.com/PyTorchLightning/lightning-flash/issues/new/choose) if you find anything that isn't working as expected.
+<div align="center">
+  Flash enables you to easily configure and run complex AI recipes for over 15 tasks across 7 data domains
+  <a href="https://lightning-flash.readthedocs.io/en/stable">
+    <img src="https://pl-flash-data.s3.amazonaws.com/assets/banner.gif">
+  </a>
+</div>
+
+## Getting Started
+
+From PyPI:
+
+```bash
+pip install lightning-flash
+```
+
+See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
+
+## Flash in 3 Steps
+
+### Step 1. Load your data
+
+All data loading in Flash is performed via a `from_*` classmethod on a `DataModule`.
+Which `DataModule` to use and which `from_*` methods are available depends on the task you want to perform.
+For example, for image segmentation where your data is stored in folders, you would use the [`from_folders` method of the `SemanticSegmentationData` class](https://lightning-flash.readthedocs.io/en/latest/reference/semantic_segmentation.html#from-folders):
+
+```py
+from flash.image import SemanticSegmentationData
+
+dm = SemanticSegmentationData.from_folders(
+    train_folder="data/CameraRGB",
+    train_target_folder="data/CameraSeg",
+    val_split=0.1,
+    image_size=(256, 256),
+    num_classes=21,
+)
+
+```
+
+### Step 2: Configure your model
+
+Our tasks come loaded with pre-trained backbones and (where applicable) heads.
+You can view the available backbones to use with your task using [`available_backbones`](https://lightning-flash.readthedocs.io/en/latest/general/backbones.html).
+Once you've chosen, create the model:
+
+```py
+from flash.image import SemanticSegmentation
+
+print(SemanticSegmentation.available_heads())
+# ['deeplabv3', 'deeplabv3plus', 'fpn', ..., 'unetplusplus']
+
+print(SemanticSegmentation.available_backbones('fpn'))
+# ['densenet121', ..., 'xception'] # + 113 models
+
+print(SemanticSegmentation.available_pretrained_weights('efficientnet-b0'))
+# ['imagenet', 'advprop']
+
+model = SemanticSegmentation(
+  head="fpn", backbone='efficientnet-b0', pretrained="advprop", num_classes=dm.num_classes)
+```
+
+### Step 3: Finetune!
+
+```py
+from flash import Trainer
+
+trainer = Trainer(max_epochs=3)
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+trainer.save_checkpoint("semantic_segmentation_model.pt")
+```
+
+---
+
+## PyTorch Recipes
+
+### Make predictions with Flash!
+
+Serve in just 2 lines.
+
+```py
+from flash.image import SemanticSegmentation
+
+model = SemanticSegmentation.load_from_checkpoint("semantic_segmentation_model.pt")
+model.serve()
+```
+
+or make predictions from raw data directly.
+
+```py
+predictions = model.predict(["data/CameraRGB/F61-1.png", "data/CameraRGB/F62-1.png"])
+```
+
+or make predictions with 2 GPUs.
+
+```py
+trainer = Trainer(accelerator='ddp', gpus=2)
+dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
+predictions = trainer.predict(model, dm)
+```
+
+### Flash Training Strategies
+
+Training strategies are PyTorch SOTA Training Recipes which can be utilized with a given task.
+
+
+Check out this [example](https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/integrations/learn2learn/image_classification_imagenette_mini.py) where the `ImageClassifier` supports 4 [Meta Learning Algorithms](https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html) from [Learn2Learn](https://github.com/learnables/learn2learn).
+This is particularly useful if you use this model in production and want to make sure the model adapts quickly to its new environment with minimal labelled data.
+
+```py
+model = ImageClassifier(
+    backbone="resnet18",
+    optimizer=torch.optim.Adam,
+    optimizer_kwargs={"lr": 0.001},
+    training_strategy="prototypicalnetworks",
+    training_strategy_kwargs={
+        "epoch_length": 10 * 16,
+        "meta_batch_size": 4,
+        "num_tasks": 200,
+        "test_num_tasks": 2000,
+        "ways": datamodule.num_classes,
+        "shots": 1,
+        "test_ways": 5,
+        "test_shots": 1,
+        "test_queries": 15,
+    },
+)
+```
+
+In detail, the following methods are currently implemented:
+
+* **[prototypicalnetworks](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_protonet.py)** : from Snell *et al.* 2017, [Prototypical Networks for Few-shot Learning](https://arxiv.org/abs/1703.05175)
+* **[maml](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_maml.py)** : from Finn *et al.* 2017, [Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks](https://arxiv.org/abs/1703.03400)
+* **[metaoptnet](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_metaoptnet.py)** : from Lee *et al.* 2019, [Meta-Learning with Differentiable Convex Optimization](https://arxiv.org/abs/1904.03758)
+* **[anil](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_anil.py)** : from Raghu *et al.* 2020, [Rapid Learning or Feature Reuse? Towards Understanding the Effectiveness of MAML](https://arxiv.org/abs/1909.09157)
+
+### Flash Transforms
+
+
+Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your own augmentation recipe.
+To this end, Flash supports custom transformations backed by our powerful data pipeline.
+The transform requires to be passed as a dictionary of transforms where the keys are the [hook's name](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.process.Preprocess.html?highlight=Preprocess).
+This enable transforms to be applied per sample or per batch either on or off device.
+It is important to note that data are being processed as a dictionary for all tasks (typically containing `input`, `target`, and `metadata`),
+Therefore, you can use [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility to apply the transform to a specific key.
+Complex transforms (like MixUp) can then be implemented with ease.
+
+The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our custom augmentations with the default transforms for images (which handle resizing and converting to a tensor).
+
+
+```py
+import torch
+from typing import Any
+import numpy as np
+import albumentations
+from torchvision import transforms as T
+from flash.core.data.transforms import ApplyToKeys, merge_transforms
+from flash.image import ImageClassificationData
+from flash.image.classification.transforms import default_transforms, AlbumentationsAdapter
+
+def mixup(batch, alpha=1.0):
+    images = batch["input"]
+    targets = batch["target"].float().unsqueeze(1)
+
+    lam = np.random.beta(alpha, alpha)
+    perm = torch.randperm(images.size(0))
+
+    batch["input"] = images * lam + images[perm] * (1 - lam)
+    batch["target"] = targets * lam + targets[perm] * (1 - lam)
+    return batch
+
+train_transform = {
+    # applied only on images as ApplyToKeys is used with `input`
+    "post_tensor_transform": ApplyToKeys(
+        "input", AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))),
+
+    # applied to the entire dictionary as `ApplyToKeys` isn't used.
+    # this would be applied on GPUS !
+    "per_batch_transform_on_device": mixup,
+
+    # this would be applied on CPUS within the DataLoader workers !
+    # "per_batch_transform": mixup
+}
+# merge the default transform for this task with new one.
+train_transform = merge_transforms(default_transforms((256, 256)), train_transform)
+
+datamodule = ImageClassificationData.from_folders(
+    train_folder = "data/train",
+    train_transform=train_transform,
+)
+
+```
+
+## Flash Zero - PyTorch Recipes from the Command Line!
+
+<div align="center">
+<img src="/docs/source/_static/images/flash_zero.gif?raw=true" width="75%">
+</div>
+
+Flash Zero is a zero-code machine learning platform built
+directly into lightning-flash
+using the [`Lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html).
+
+To get started and view the available tasks, run:
+
+```py
+  flash --help
+```
+
+For example, to train an image classifier for 10 epochs with a `resnet50` backbone on 2 GPUs using your own data, you can do:
+
+```py
+  flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 from_folders --train_folder {PATH_TO_DATA}
+```
 
 ---
 
 ## News
 
+- Sept 9: [Lightning Flash 0.5](https://devblog.pytorchlightning.ai/flash-0-5-your-pytorch-ai-factory-81b172ff0d76)
 - Jul 12: Flash Task-a-thon community sprint with 25+ community members
 - Jul 1: [Lightning Flash 0.4](https://devblog.pytorchlightning.ai/lightning-flash-0-4-flash-serve-fiftyone-multi-label-text-classification-and-jit-support-97428276c06f)
 - Jun 22: [Ushering in the New Age of Video Understanding with PyTorch](https://medium.com/pytorch/ushering-in-the-new-age-of-video-understanding-with-pytorch-1d85078e8015)
@@ -54,568 +255,30 @@ __Note:__ Flash is currently being tested on real-world use cases and is in acti
 - May 20: [Video Understanding with PyTorch](https://towardsdatascience.com/video-understanding-made-simple-with-pytorch-video-and-lightning-flash-c7d65583c37e)
 - Feb 2: [Read our launch blogpost](https://pytorch-lightning.medium.com/introducing-lightning-flash-the-fastest-way-to-get-started-with-deep-learning-202f196b3b98)
 
----
-
-## Installation
-
-Pip / conda
-
-```bash
-pip install lightning-flash
-```
-
-<details>
-  <summary>Other installations</summary>
-
-Pip from source
-
-```bash
-# with git
-pip install git+https://github.com/PytorchLightning/lightning-flash.git@master
-
-# OR from an archive
-pip install https://github.com/PyTorchLightning/lightning-flash/archive/master.zip
-```
-
-From source using `setuptools`
-``` bash
-# clone flash repository locally
-git clone https://github.com/PyTorchLightning/lightning-flash.git
-cd lightning-flash
-# install in editable mode
-pip install -e .
-```
-
-In case you want to use the extra packages from a specific domain (image, video, text, ...)
-```bash
-pip install "lightning-flash[image]"
-```
-See [Installation](https://lightning-flash.readthedocs.io/en/latest/installation.html) for more options.
-</details>
+__Note:__ Flash is currently being tested on real-world use cases and is in active development. Please [open an issue](https://github.com/PyTorchLightning/lightning-flash/issues/new/choose) if you find anything that isn't working as expected.
 
 ---
-
-## What is Flash
-Flash is a framework of tasks for fast prototyping, baselining, finetuning and solving business and scientific problems with deep learning. It is focused on:
-
-- Predictions
-- Finetuning
-- Task-based training
-
-It is built for data scientists, machine learning practitioners, and applied researchers.
-
-
-## Scalability
-Flash is built on top of [PyTorch Lightning](https://github.com/PyTorchLightning/pytorch-lightning) (by the Lightning team), which is a thin organizational layer on top of PyTorch. If you know PyTorch, you know PyTorch Lightning and Flash already!
-
-As a result, Flash can scale up across any hardware (GPUs, TPUS) with zero changes to your code. It also has the best practices
-in AI research embedded into each task so you don't have to be a deep learning PhD to leverage its power :)
-
-### Predictions
-
-```python
-from flash.text import TranslationTask
-
-# 1. Load finetuned task
-model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
-
-# 2. Translate a few sentences!
-predictions = model.predict(
-    [
-        "BBC News went to meet one of the project's first graduates.",
-        "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
-    ]
-)
-print(predictions)
-```
-
-### Serving
-
-`Serve` is a framework agnostic serving engine ! [Learn more](https://lightning-flash.readthedocs.io/en/latest/general/serve.html#) and [check out our examples](flash_examples/serve).
-
-```python
-from flash.text import TextClassifier
-
-model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
-model.serve()
-```
-
-Credits to [@rlizzo](https://github.com/rlizzo), [@hhsecond](https://github.com/hhsecond), [@lantiga](https://github.com/lantiga), [@luiscape](https://github.com/luiscape) for building Flash Serve Engine.
-
-### Finetuning
-
-First, finetune:
-
-```python
-import flash
-from flash.core.data.utils import download_data
-from flash.image import ImageClassificationData, ImageClassifier
-
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
-
-# 2. Load the data
-datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    val_folder="data/hymenoptera_data/val/",
-    test_folder="data/hymenoptera_data/test/",
-)
-
-# 3. Build the model
-model = ImageClassifier(num_classes=datamodule.num_classes, backbone="resnet18")
-
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1)
-
-# 5. Finetune the model
-trainer.finetune(model, datamodule=datamodule, strategy="freeze")
-
-# 6. Save it!
-trainer.save_checkpoint("image_classification_model.pt")
-```
-
-Then use the finetuned model:
-
-```python
-from flash.image import ImageClassifier
-
-# load the finetuned model
-classifier = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
-
-# predict!
-predictions = classifier.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
-print(predictions)
-```
-
----
-
-## Tasks
-Flash is built as a collection of community-built tasks. A task is highly opinionated and laser-focused on solving a single problem well, using state-of-the-art methods.
-
-### Example 1: Image embedding
-Flash has an [Image Embedder task](https://lightning-flash.readthedocs.io/en/latest/reference/image_embedder.html) to encode an image into a vector of image features which can be used for anything like clustering, similarity search or classification.
-
-<details>
-  <summary>View example</summary>
-
-```python
-from flash.core.data.utils import download_data
-from flash.image import ImageEmbedder
-
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
-
-# 2. Create an ImageEmbedder with resnet50 trained on imagenet.
-embedder = ImageEmbedder(backbone="resnet50")
-
-# 3. Generate an embedding from an image path.
-embeddings = embedder.predict("data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg")
-
-# 4. Print embeddings shape
-print(embeddings[0].shape)
-```
-
-</details>
-
-### Example 2: Text Summarization
-Flash has a [Summarization task](https://lightning-flash.readthedocs.io/en/latest/reference/summarization.html) to sum up text from a larger article into a short description.
-
-<details>
-  <summary>View example</summary>
-
-```python
-import flash
-import torch
-from flash.core.data.utils import download_data
-from flash.text import SummarizationData, SummarizationTask
-
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "data/")
-
-# 2. Load the data
-datamodule = SummarizationData.from_csv(
-    "input",
-    "target",
-    train_file="data/xsum/train.csv",
-    val_file="data/xsum/valid.csv",
-    test_file="data/xsum/test.csv",
-)
-
-# 3. Build the model
-model = SummarizationTask()
-
-# 4. Create the trainer. Run once on data
-trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), precision=16)
-
-# 5. Fine-tune the model
-trainer.finetune(model, datamodule=datamodule)
-
-# 6. Test model
-trainer.test()
-```
-To run the example:
-```bash
-python flash_examples/finetuning/summarization.py
-```
-
-</details>
-
-### Example 3: Tabular Classification
-
-Flash has a [Tabular Classification task](https://lightning-flash.readthedocs.io/en/latest/reference/tabular_classification.html) to tackle any tabular classification problem.
-
-<details>
-  <summary>View example</summary>
-
-To illustrate, say we want to build a model to predict if a passenger survived on the Titanic.
-
-```python
-from torchmetrics.classification import Accuracy, Precision, Recall
-import flash
-from flash.core.data.utils import download_data
-from flash.tabular import TabularClassifier, TabularClassificationData
-
-# 1. Download the data
-download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
-
-# 2. Load the data
-datamodule = TabularClassificationData.from_csv(
-    ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-    "Fare",
-    target_fields="Survived",
-    train_file="./data/titanic/titanic.csv",
-    test_file="./data/titanic/test.csv",
-    val_split=0.25,
-)
-
-# 3. Build the model
-model = TabularClassifier.from_data(datamodule, metrics=[Accuracy(), Precision(), Recall()])
-
-# 4. Create the trainer. Run 10 times on data
-trainer = flash.Trainer(max_epochs=10)
-
-# 5. Train the model
-trainer.fit(model, datamodule=datamodule)
-
-# 6. Test model
-trainer.test()
-
-# 7. Predict!
-predictions = model.predict("data/titanic/titanic.csv")
-print(predictions)
-```
-To run the example:
-```bash
-python flash_examples/finetuning/tabular_data.py
-```
-
-</details>
-
-### Example 4: Object Detection
-
-Flash has an [Object Detection task](https://lightning-flash.readthedocs.io/en/latest/reference/object_detection.html) to identify and locate objects in images.
-
-<details>
-  <summary>View example</summary>
-
-To illustrate, say we want to build a model on a tiny coco dataset.
-
-```python
-import flash
-from flash.core.data.utils import download_data
-from flash.image import ObjectDetectionData, ObjectDetector
-
-# 1. Download the data
-# Dataset Credit: https://www.kaggle.com/ultralytics/coco128
-download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
-
-# 2. Load the Data
-datamodule = ObjectDetectionData.from_coco(
-    train_folder="data/coco128/images/train2017/",
-    train_ann_file="data/coco128/annotations/instances_train2017.json",
-    batch_size=2,
-)
-
-# 3. Build the model
-model = ObjectDetector(num_classes=datamodule.num_classes)
-
-# 4. Create the trainer. Run twice on data
-trainer = flash.Trainer(max_epochs=3)
-
-# 5. Finetune the model
-trainer.fit(model, datamodule=datamodule)
-
-# 6. Save it!
-trainer.save_checkpoint("object_detection_model.pt")
-```
-To run the example:
-```bash
-python flash_examples/finetuning/object_detection.py
-```
-
-</details>
-
-### Example 5: Video Classification with PyTorchVideo
-
-Flash has a [Video Classification task](https://lightning-flash.readthedocs.io/en/latest/reference/video_classification.html) to classify videos using [PyTorchVideo](https://pytorchvideo.org/).
-
-<details>
-  <summary>View example</summary>
-
-To illustrate, say we want to build a model to classify the kinetics data set.
-
-```python
-import os
-from torch.utils.data.sampler import RandomSampler
-import flash
-from flash.core.data.utils import download_data
-from flash.video import VideoClassificationData, VideoClassifier
-
-# 1. Download a video clip dataset. Find more datasets at https://pytorchvideo.readthedocs.io/en/latest/data.html
-download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip")
-
-# 2. Load the Data
-datamodule = VideoClassificationData.from_folders(
-    train_folder=os.path.join(flash.PROJECT_ROOT, "data/kinetics/train"),
-    val_folder=os.path.join(flash.PROJECT_ROOT, "data/kinetics/val"),
-    predict_folder=os.path.join(flash.PROJECT_ROOT, "data/kinetics/predict"),
-    batch_size=8,
-    clip_sampler="uniform",
-    clip_duration=1,
-    video_sampler=RandomSampler,
-    decode_audio=False,
-    num_workers=8,
-)
-
-# 3. Build the model
-model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
-
-# 4. Create the trainer
-trainer = flash.Trainer(max_epochs=3)
-
-# 5. Finetune the model
-trainer.finetune(model, datamodule=datamodule)
-
-# 6. Save it!
-trainer.save_checkpoint("video_classification.pt")
-```
-To run the example:
-```bash
-python flash_examples/finetuning/video_classification.py
-```
-
-</details>
-
-### Example 6: Semantic Segmentation
-
-Flash has a [Semantic Segmentation task](https://lightning-flash.readthedocs.io/en/latest/reference/semantic_segmentation.html) for segmentation of images.
-
-<details>
-  <summary>View example</summary>
-
-To illustrate, say we want to finetune a model on [this data from the Lyft Udacity Challenge](https://www.kaggle.com/kumaresanmanickavelu/lyft-udacity-challenge).
-
-```python
-import flash
-from flash.core.data.utils import download_data
-from flash.image import SemanticSegmentation, SemanticSegmentationData
-
-# 1. Download the Data
-download_data(
-    "https://github.com/ongchinkiat/LyftPerceptionChallenge/releases/download/v0.1/carla-capture-20180513A.zip", "data/"
-)
-
-# 2. Load the Data
-datamodule = SemanticSegmentationData.from_folders(
-    train_folder="data/CameraRGB",
-    train_target_folder="data/CameraSeg",
-    batch_size=4,
-    val_split=0.3,
-    image_size=(200, 200),
-    num_classes=21,
-)
-
-# 3. Build the model
-model = SemanticSegmentation(
-    backbone="torchvision/fcn_resnet50",
-    num_classes=datamodule.num_classes,
-)
-
-# 4. Create the trainer
-trainer = flash.Trainer(max_epochs=3)
-
-# 5. Finetune the model
-trainer.finetune(model, datamodule=datamodule)
-
-# 6. Save it!
-trainer.save_checkpoint("semantic_segmentation_model.pt")
-```
-To run the example:
-```bash
-python flash_examples/finetuning/semantic_segmentation.py
-```
-
-</details>
-
-### Example 7: Style Transfer with pystiche
-
-Flash has a [Style Transfer task](https://lightning-flash.readthedocs.io/en/latest/reference/style_transfer.html) for Neural Style Transfer (NST) with [pystiche](https://pystiche.org).
-
-<details>
-  <summary>View example</summary>
-
-To illustrate, say we want to train an NST model to transfer the style from the paint demo image to the COCO data set.
-
-```python
-import pystiche.demo
-import flash
-from flash.core.data.utils import download_data
-from flash.image.style_transfer import StyleTransfer, StyleTransferData
-
-# 1. Download the Data
-download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
-
-# 2. Load the Data
-datamodule = StyleTransferData.from_folders(train_folder="data/coco128/images", batch_size=4)
-
-# 3. Load the style image
-style_image = pystiche.demo.images()["paint"].read(size=256)
-
-# 4. Build the model
-model = StyleTransfer(style_image)
-
-# 5. Create the trainer
-trainer = flash.Trainer(max_epochs=2)
-
-# 6. Train the model
-trainer.fit(model, datamodule=datamodule)
-
-# 7. Save it!
-trainer.save_checkpoint("style_transfer_model.pt")
-```
-To run the example:
-```bash
-python flash_examples/finetuning/style_transfer.py
-```
-
-</details>
-
-## A general task
-Flash comes prebuilt with a task to handle a huge portion of deep learning problems.
-
-```python
-import flash
-from torch import nn, optim
-from torch.utils.data import DataLoader, random_split
-from torchvision import transforms, datasets
-
-# model
-model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 128), nn.ReLU(), nn.Linear(128, 10))
-
-# data
-dataset = datasets.MNIST("./data_folder", download=True, transform=transforms.ToTensor())
-train, val = random_split(dataset, [55000, 5000])
-
-# task
-classifier = flash.Task(model, loss_fn=nn.functional.cross_entropy, optimizer=optim.Adam)
-
-# train
-flash.Trainer().fit(classifier, DataLoader(train), DataLoader(val))
-```
-
-## Infinitely customizable
-
-Tasks can be built in just a few minutes because Flash is built on top of PyTorch Lightning LightningModules, which
-are infinitely extensible and let you train across GPUs, TPUs etc without doing any code changes.
-
-```python
-import torch
-import torch.nn.functional as F
-from torchmetrics import Accuracy
-from typing import Callable, Mapping, Sequence, Type, Union
-from flash.core.classification import ClassificationTask
-
-
-class LinearClassifier(ClassificationTask):
-    def __init__(
-        self,
-        num_inputs,
-        num_classes,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Callable, Mapping, Sequence, None] = [Accuracy()],
-        learning_rate: float = 1e-3,
-    ):
-        super().__init__(
-            model=None,
-            loss_fn=loss_fn,
-            optimizer=optimizer,
-            metrics=metrics,
-            learning_rate=learning_rate,
-        )
-        self.save_hyperparameters()
-
-        self.linear = torch.nn.Linear(num_inputs, num_classes)
-
-    def forward(self, x):
-        return self.linear(x)
-
-
-classifier = LinearClassifier(128, 10)
-...
-```
-
-When you reach the limits of the flexibility provided by Flash, then seamlessly transition to PyTorch Lightning which
-gives you the most flexibility because it is simply organized PyTorch.
-
-## Visualization
-
-Predictions from image and video tasks can be visualized through an [integration with FiftyOne](https://lightning-flash.readthedocs.io/en/latest/integrations/fiftyone.html), allowing you to better understand and analyze how your model is performing.
-
-```python
-from flash.core.data.utils import download_data
-from flash.core.integrations.fiftyone import visualize
-from flash.image import ObjectDetector
-from flash.image.detection.serialization import FiftyOneDetectionLabels
-
-# 1. Download the data
-# Dataset Credit: https://www.kaggle.com/ultralytics/coco128
-download_data(
-    "https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip",
-    "data/",
-)
-
-# 2. Load the model from a checkpoint and use the FiftyOne serializer
-model = ObjectDetector.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/object_detection_model.pt")
-model.serializer = FiftyOneDetectionLabels()
-
-# 3. Detect the object on the images
-filepaths = [
-    "data/coco128/images/train2017/000000000025.jpg",
-    "data/coco128/images/train2017/000000000520.jpg",
-    "data/coco128/images/train2017/000000000532.jpg",
-]
-predictions = model.predict(filepaths)
-
-# 4. Visualize predictions in FiftyOne App
-session = visualize(predictions, filepaths=filepaths)
-```
 
 ## Contribute!
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases. But we're looking for incredible contributors like you to submit new tasks!
 
 Join our [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ) and/or read our [CONTRIBUTING](https://github.com/PyTorchLightning/lightning-flash/blob/master/.github/CONTRIBUTING.md) guidelines to get help becoming a contributor!
 
+---
+
 ## Community
 Flash is maintained by our [core contributors](https://lightning-flash.readthedocs.io/en/latest/governance.html).
 
 For help or questions, join our huge community on [Slack](https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ)!
 
-## Citations
-We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and fast.ai. When/if a paper is written about this, we’ll be happy to cite these frameworks and the corresponding authors.
+---
 
-Flash leverages models from [torchvision](https://pytorch.org/vision/stable/index.html), [huggingface/transformers](https://huggingface.co/transformers/), [timm](https://github.com/rwightman/pytorch-image-models), [open3d-ml](https://github.com/intel-isl/Open3D-ML) for pointcloud, [pytorch-tabnet](https://dreamquark-ai.github.io/tabnet/), and [asteroid](https://github.com/asteroid-team/asteroid) for the `vision`, `text`, `tabular`, and `audio` tasks respectively. Also supports self-supervised backbones from [bolts](https://github.com/PyTorchLightning/lightning-bolts).
+## Citations
+We’re excited to continue the strong legacy of opensource software and have been inspired over the years by Caffe, Theano, Keras, PyTorch, torchbearer, and [fast.ai](https://arxiv.org/abs/2002.04688). When/if additional papers are written about this, we’ll be happy to cite these frameworks and the corresponding authors.
+
+Flash leverages models from many different frameworks in order to cover such a wide range of domains and tasks. The full list of providers can be found in [our documentation](https://lightning-flash.readthedocs.io/en/latest/integrations/providers.html).
+
+---
 
 ## License
-Please observe the Apache 2.0 license that is listed in this repository. In addition
-the Lightning framework is Patent Pending.
+Please observe the Apache 2.0 license that is listed in this repository.

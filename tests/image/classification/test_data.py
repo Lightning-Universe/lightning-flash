@@ -21,8 +21,9 @@ import torch
 import torch.nn as nn
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import (
+    _ALBUMENTATIONS_AVAILABLE,
     _FIFTYONE_AVAILABLE,
     _IMAGE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
@@ -30,6 +31,7 @@ from flash.core.utilities.imports import (
     _TORCHVISION_AVAILABLE,
 )
 from flash.image import ImageClassificationData
+from flash.image.classification.transforms import AlbumentationsAdapter, default_transforms
 from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:
@@ -41,6 +43,9 @@ if _PIL_AVAILABLE:
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
+
+if _ALBUMENTATIONS_AVAILABLE:
+    import albumentations
 
 
 def _dummy_image_loader(_):
@@ -569,3 +574,40 @@ def test_from_bad_csv_no_image(bad_csv_no_image):
             num_workers=0,
         )
         _ = next(iter(img_data.train_dataloader()))
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ALBUMENTATIONS_AVAILABLE, reason="albumentations isn't installed.")
+def test_albumentations_mixup(single_target_csv):
+    def mixup(batch, alpha=1.0):
+        images = batch["input"]
+        targets = batch["target"].float().unsqueeze(1)
+
+        lam = np.random.beta(alpha, alpha)
+        perm = torch.randperm(images.size(0))
+
+        batch["input"] = images * lam + images[perm] * (1 - lam)
+        batch["target"] = targets * lam + targets[perm] * (1 - lam)
+        for e in batch["metadata"]:
+            e.update({"lam": lam})
+        return batch
+
+    train_transform = {
+        # applied only on images as ApplyToKeys is used with `input`
+        "post_tensor_transform": ApplyToKeys("input", AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))),
+        "per_batch_transform": mixup,
+    }
+    # merge the default transform for this task with new one.
+    train_transform = merge_transforms(default_transforms((256, 256)), train_transform)
+
+    img_data = ImageClassificationData.from_csv(
+        "image",
+        "target",
+        train_file=single_target_csv,
+        batch_size=2,
+        num_workers=0,
+        train_transform=train_transform,
+    )
+
+    batch = next(iter(img_data.train_dataloader()))
+    assert "lam" in batch["metadata"][0]

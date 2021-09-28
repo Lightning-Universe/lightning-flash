@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import base64
+from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -69,6 +70,16 @@ class ImageDeserializer(Deserializer):
     def example_input(self) -> str:
         with (Path(flash.ASSETS_ROOT) / "fish.jpg").open("rb") as f:
             return base64.b64encode(f.read()).decode("UTF-8")
+
+
+def _labels_to_indices(data):
+    out = defaultdict(list)
+    for idx, sample in enumerate(data):
+        label = sample[DefaultDataKeys.TARGET]
+        if torch.is_tensor(label):
+            label = label.item()
+        out[label].append(idx)
+    return out
 
 
 class ImagePathsDataSource(PathsDataSource):
