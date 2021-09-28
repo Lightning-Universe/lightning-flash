@@ -152,7 +152,7 @@ def test_datasource_labelstudio():
     val_sample = val[0]
     assert train_sample
     assert val_sample
-    assert not test
+    assert test
     assert not predict
     ds_no_split = LabelStudioDataSource()
     data = {
