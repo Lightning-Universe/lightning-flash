@@ -359,7 +359,6 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
                 collate_fn=collate_fn,
-                persistent_workers=persistent_workers,
             )
 
         return DataLoader(
@@ -390,7 +389,6 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
                 collate_fn=collate_fn,
-                persistent_workers=persistent_workers,
             )
 
         return DataLoader(
