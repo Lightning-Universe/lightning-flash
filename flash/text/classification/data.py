@@ -38,7 +38,7 @@ class TextDeserializer(Deserializer):
         super().__init__()
         self.backbone = backbone
         self.backbone_kwargs = backbone_kwargs
-        self.tokenizer, self.vocab = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
 
     def deserialize(self, text: Union[str, List[str]]) -> Tensor:
         return self.tokenizer(text)
@@ -64,7 +64,7 @@ class TextDataSource(DataSource):
 
         self.backbone = backbone
         self.backbone_kwargs = backbone_kwargs
-        self.tokenizer, self.vocab = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
+        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
 
     def _tokenize_fn(
         self,
