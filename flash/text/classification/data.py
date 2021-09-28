@@ -382,7 +382,7 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.SENTENCES: TextSentencesDataSource(self.backbone, max_length=max_length),
             },
-            default_data_source="sentences",
+            default_data_source=DefaultDataSources.SENTENCES,
             deserializer=TextDeserializer(backbone, max_length),
         )
 
