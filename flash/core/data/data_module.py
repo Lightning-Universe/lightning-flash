@@ -288,6 +288,7 @@ class DataModule(pl.LightningDataModule):
         else:
             drop_last = len(train_ds) > self.batch_size
         pin_memory = True
+        persistent_workers = True
 
         if self.sampler is None:
             sampler = None
@@ -323,6 +324,7 @@ class DataModule(pl.LightningDataModule):
         val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
         collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
         pin_memory = True
+        persistent_workers = True
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_val_dataset(
@@ -340,12 +342,14 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=pin_memory,
             collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     def _test_dataloader(self) -> DataLoader:
         test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
         collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
         pin_memory = True
+        persistent_workers = False
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_test_dataset(
@@ -355,6 +359,7 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=persistent_workers,
             )
 
         return DataLoader(
@@ -363,6 +368,7 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=pin_memory,
             collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     def _predict_dataloader(self) -> DataLoader:
@@ -375,6 +381,7 @@ class DataModule(pl.LightningDataModule):
 
         collate_fn = self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
         pin_memory = True
+        persistent_workers = False
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_predict_dataset(
@@ -383,10 +390,15 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=persistent_workers,
             )
 
         return DataLoader(
-            predict_ds, batch_size=batch_size, num_workers=self.num_workers, pin_memory=True, collate_fn=collate_fn
+            predict_ds, batch_size=batch_size, 
+            num_workers=self.num_workers, 
+            pin_memory=True, 
+            collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     @property
