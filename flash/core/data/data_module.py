@@ -394,9 +394,10 @@ class DataModule(pl.LightningDataModule):
             )
 
         return DataLoader(
-            predict_ds, batch_size=batch_size, 
-            num_workers=self.num_workers, 
-            pin_memory=True, 
+            predict_ds,
+            batch_size=batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
             collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
