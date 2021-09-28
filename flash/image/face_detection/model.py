@@ -104,14 +104,17 @@ class FaceDetector(Task):
             arch, config = model_name.split("_")
             pl_model = ff.FaceDetector.build(arch, config, **kwargs)
 
+        # following steps are required since `get_model` needsreturns `torch.nn.Module`
         # get torch.nn.Module
         model = getattr(pl_model, "arch")
 
+        # moving some required parameters from `fastface.FaceDetector` to `torch.nn.Module`
         # set preprocess params
         model.register_buffer("normalizer", getattr(pl_model, "normalizer"))
         model.register_buffer("mean", getattr(pl_model, "mean"))
         model.register_buffer("std", getattr(pl_model, "std"))
 
+        # copy pasting `_postprocess` function from `fastface.FaceDetector` to `torch.nn.Module`
         # set postprocess function
         setattr(model, "_postprocess", getattr(pl_model, "_postprocess"))
 

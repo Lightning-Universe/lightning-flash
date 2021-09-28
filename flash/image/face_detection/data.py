@@ -68,6 +68,7 @@ class FastFaceDataSource(DatasetDataSource):
                         img_file_path,
                         dict(
                             boxes=targets["target_boxes"],
+                            # label `1` indicates positive sample
                             labels=[1 for _ in range(targets["target_boxes"].shape[0])],
                         ),
                     )
