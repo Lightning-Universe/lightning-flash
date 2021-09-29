@@ -160,6 +160,7 @@ class DefaultDataSources(LightningEnum):
     JSON = "json"
     DATASETS = "datasets"
     FIFTYONE = "fiftyone"
+    LABELSTUDIO = "labelstudio"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
