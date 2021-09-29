@@ -25,6 +25,7 @@ from flash.text.classification.data import (
     TextDataSource,
     TextFileDataSource,
     TextJSONDataSource,
+    TextListDataSource,
     TextSentencesDataSource,
 )
 from tests.helpers.utils import _TEXT_TESTING
@@ -54,8 +55,17 @@ TEST_JSON_DATA_FIELD = """{"data": [
 
 
 TEST_DATA_FRAME_DATA = pd.DataFrame(
-    {"sentence": ["this is a sentence one", "this is a sentence two", "this is a sentence three"], "lab": [0, 1, 0]},
+    {
+        "sentence": ["this is a sentence one", "this is a sentence two", "this is a sentence three"],
+        "lab1": [0, 1, 0],
+        "lab2": [1, 0, 1],
+    },
 )
+
+
+TEST_LIST_DATA = ["this is a sentence one", "this is a sentence two", "this is a sentence three"]
+TEST_LIST_TARGETS = [0, 1, 0]
+TEST_LIST_TARGETS_MULTILABEL = [[0, 1], [1, 0], [0, 1]]
 
 
 def csv_data(tmpdir):
@@ -134,10 +144,43 @@ def test_from_json_with_field(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_data_frame():
     dm = TextClassificationData.from_data_frame(
-        "sentence", "lab", backbone=TEST_BACKBONE, train_data_frame=TEST_DATA_FRAME_DATA, batch_size=1
+        "sentence", "lab1", backbone=TEST_BACKBONE, train_data_frame=TEST_DATA_FRAME_DATA, batch_size=1
     )
     batch = next(iter(dm.train_dataloader()))
     assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_data_frame_multilabel():
+    dm = TextClassificationData.from_data_frame(
+        "sentence", ["lab1", "lab2"], backbone=TEST_BACKBONE, train_data_frame=TEST_DATA_FRAME_DATA, batch_size=1
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert all([label in [0, 1] for label in batch["labels"][0]])
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_lists():
+    dm = TextClassificationData.from_lists(
+        backbone=TEST_BACKBONE, train_data=TEST_LIST_DATA, train_targets=TEST_LIST_TARGETS, batch_size=1
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert batch["labels"].item() in [0, 1]
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_lists_multilabel():
+    dm = TextClassificationData.from_lists(
+        backbone=TEST_BACKBONE, train_data=TEST_LIST_DATA, train_targets=TEST_LIST_TARGETS_MULTILABEL, batch_size=1
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert all([label in [0, 1] for label in batch["labels"][0]])
     assert "input_ids" in batch
 
 
@@ -157,6 +200,7 @@ def test_text_module_not_found_error():
         (TextCSVDataSource, {}),
         (TextJSONDataSource, {}),
         (TextDataFrameDataSource, {}),
+        (TextListDataSource, {}),
         (TextSentencesDataSource, {}),
     ],
 )
