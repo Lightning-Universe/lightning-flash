@@ -160,7 +160,7 @@ class DefaultDataSources(LightningEnum):
     JSON = "json"
     DATASETS = "datasets"
     FIFTYONE = "fiftyone"
-    DATAFRAME = "data_frame"
+    DATAFRAME = "dataframe"
     LISTS = "lists"
     SENTENCES = "sentences"
     LABELSTUDIO = "labelstudio"
@@ -350,6 +350,52 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
                 dataset = IterableAutoDataset(data, self, running_stage)
             dataset.__dict__.update(mock_dataset.metadata)
             return dataset
+
+
+class DataSourceCollection(dict):
+    def __init__(self, data_sources: Dict[str, DataSource], default_data_source: str):
+        super().__init__(**data_sources)
+        self.default_data_source = default_data_source
+
+        for key, data_source in self.items():
+            func_name = f"from_{key.name.lower()}"
+            setattr(self, func_name, getattr(data_source, func_name, None))
+
+    def from_folders(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_files(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_numpy(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_tensors(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_csv(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_json(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_datasets(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_fiftyone(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_dataframe(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_lists(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_sentences(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def from_labelstudio(self, *args, **kwargs):
+        raise NotImplementedError
 
 
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")

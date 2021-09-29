@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import csv
+import os
 from pathlib import Path
 from typing import Any, List, Tuple
 
@@ -20,6 +21,7 @@ import pytest
 import torch
 import torch.nn as nn
 
+import flash
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import (
@@ -30,7 +32,8 @@ from flash.core.utilities.imports import (
     _PIL_AVAILABLE,
     _TORCHVISION_AVAILABLE,
 )
-from flash.image import ImageClassificationData
+from flash.image import ImageClassificationData, ImageClassifier
+from flash.image.classification.data import ImageClassificationDataSourceCollection, ImageClassificationDataV2
 from flash.image.classification.transforms import AlbumentationsAdapter, default_transforms
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -611,3 +614,42 @@ def test_albumentations_mixup(single_target_csv):
 
     batch = next(iter(img_data.train_dataloader()))
     assert "lam" in batch["metadata"][0]
+
+
+def test_data_source_collection(single_target_csv, tmpdir):
+
+    data_source = ImageClassificationDataSourceCollection()
+
+    train_ds, val_ds, test_ds, predict_ds = data_source.from_csv(
+        "image",
+        "target",
+        train_file=single_target_csv,
+    )
+
+    assert train_ds
+    assert not val_ds
+    assert not test_ds
+    assert not predict_ds
+
+    dm = ImageClassificationDataV2.from_csv(
+        "image",
+        "target",
+        train_file=single_target_csv,
+        predict_file=single_target_csv,
+        batch_size=2,
+        num_workers=0,
+        train_transform=default_transforms((256, 256)),
+        predict_transform=default_transforms((256, 256)),
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert batch
+
+    model = ImageClassifier(2, multi_label=False)
+
+    trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.finetune(model, dm, strategy="freeze_unfreeze")
+
+    path = os.path.join(os.path.dirname(single_target_csv), "image_1.png")
+    assert model.predict([path])
+    assert trainer.predict(model, dm)

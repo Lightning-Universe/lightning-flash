@@ -22,7 +22,12 @@ from torch.utils.data.sampler import Sampler
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
+from flash.core.data.data_source import (
+    DataSourceCollection,
+    DefaultDataKeys,
+    DefaultDataSources,
+    LoaderDataFrameDataSource,
+)
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
@@ -52,6 +57,65 @@ class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH
         sample[DefaultDataKeys.METADATA]["size"] = (h, w)
         return sample
+
+    @classmethod
+    def from_csv(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[str] = None,
+        train_images_root: Optional[str] = None,
+        train_resolver: Optional[Callable[[str, str], str]] = None,
+        val_file: Optional[str] = None,
+        val_images_root: Optional[str] = None,
+        val_resolver: Optional[Callable[[str, str], str]] = None,
+        test_file: Optional[str] = None,
+        test_images_root: Optional[str] = None,
+        test_resolver: Optional[Callable[[str, str], str]] = None,
+        predict_file: Optional[str] = None,
+        predict_images_root: Optional[str] = None,
+        predict_resolver: Optional[Callable[[str, str], str]] = None,
+        **data_source_kwargs: Any,
+    ) -> Any:
+        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
+        files using the :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
+        :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            input_field: The field (column) in the CSV file to use for the input.
+            target_fields: The field or fields (columns) in the CSV file to use for the target.
+            train_file: The CSV file containing the training data.
+            train_images_root: The directory containing the train images. If ``None``, the directory containing the
+                ``train_file`` will be used.
+            train_resolver: The function to use to resolve filenames given the ``train_images_root`` and IDs from the
+                ``input_field`` column.
+            val_file: The CSV file containing the validation data.
+            val_images_root: The directory containing the validation images. If ``None``, the directory containing the
+                ``val_file`` will be used.
+            val_resolver: The function to use to resolve filenames given the ``val_images_root`` and IDs from the
+                ``input_field`` column.
+            test_file: The CSV file containing the testing data.
+            test_images_root: The directory containing the test images. If ``None``, the directory containing the
+                ``test_file`` will be used.
+            test_resolver: The function to use to resolve filenames given the ``test_images_root`` and IDs from the
+                ``input_field`` column.
+            predict_file: The CSV file containing the data to use when predicting.
+            predict_images_root: The directory containing the predict images. If ``None``, the directory containing the
+                ``predict_file`` will be used.
+            predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
+                the ``input_field`` column.
+            data_source_kwargs: Additional keyword arguments to use when constructing the data source.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls(**data_source_kwargs).to_datasets(
+            (train_file, input_field, target_fields, train_images_root, train_resolver),
+            (val_file, input_field, target_fields, val_images_root, val_resolver),
+            (test_file, input_field, target_fields, test_images_root, test_resolver),
+            (predict_file, input_field, target_fields, predict_images_root, predict_resolver),
+        )
 
 
 class ImageClassificationPreprocess(Preprocess):
@@ -380,3 +444,236 @@ class MatplotlibVisualization(BaseVisualization):
     def show_per_batch_transform(self, batch: List[Any], running_stage):
         win_title: str = f"{running_stage} - show_per_batch_transform"
         self._show_images_and_labels(batch[0], batch[0][DefaultDataKeys.INPUT].shape[0], win_title)
+
+
+class ImageClassificationDataSourceCollection(DataSourceCollection):
+    def __init__(self, **data_source_kwargs):
+        super().__init__(
+            data_sources={
+                DefaultDataSources.FIFTYONE: ImageFiftyOneDataSource(**data_source_kwargs),
+                DefaultDataSources.FILES: ImagePathsDataSource(),
+                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
+                DefaultDataSources.NUMPY: ImageNumpyDataSource(),
+                DefaultDataSources.TENSORS: ImageTensorDataSource(),
+                DefaultDataSources.DATAFRAME: ImageClassificationDataFrameDataSource(),
+                DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
+                DefaultDataSources.LABELSTUDIO: LabelStudioImageClassificationDataSource(),
+            },
+            default_data_source=DefaultDataSources.FILES,
+        )
+
+
+class ImageClassificationDataV2(DataModule):
+
+    preprocess_cls = ImageClassificationPreprocess
+    data_source_collection_cls = ImageClassificationDataSourceCollection
+
+    @classmethod
+    def from_data_source(
+        cls,
+        data_source,
+        train_dataset: Any = None,
+        val_dataset: Any = None,
+        test_dataset: Any = None,
+        predict_dataset: Any = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **preprocess_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given inputs to
+        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        ``predict_data``). The data source will be resolved from the instantiated
+        :class:`~flash.core.data.process.Preprocess`
+        using :meth:`~flash.core.data.process.Preprocess.data_source_of_name`.
+
+        Args:
+            data_source: The name of the data source to use for the
+                :meth:`~flash.core.data.data_source.DataSource.load_data`.
+            train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+                the train dataset.
+            val_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+                the validation dataset.
+            test_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+                the test dataset.
+            predict_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+                the predict dataset.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be
+                constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_data_source(
+                DefaultDataSources.FOLDERS,
+                train_data="train_folder",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+            )
+        """
+
+        preprocess = preprocess or cls.preprocess_cls(
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
+            **preprocess_kwargs,
+        )
+
+        return cls(
+            train_dataset,
+            val_dataset,
+            test_dataset,
+            predict_dataset,
+            data_source=data_source,
+            preprocess=preprocess,
+            data_fetcher=data_fetcher,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[str] = None,
+        train_images_root: Optional[str] = None,
+        train_resolver: Optional[Callable[[str, str], str]] = None,
+        val_file: Optional[str] = None,
+        val_images_root: Optional[str] = None,
+        val_resolver: Optional[Callable[[str, str], str]] = None,
+        test_file: Optional[str] = None,
+        test_images_root: Optional[str] = None,
+        test_resolver: Optional[Callable[[str, str], str]] = None,
+        predict_file: Optional[str] = None,
+        predict_images_root: Optional[str] = None,
+        predict_resolver: Optional[Callable[[str, str], str]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **preprocess_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
+        files using the :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
+        :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            input_field: The field (column) in the CSV file to use for the input.
+            target_fields: The field or fields (columns) in the CSV file to use for the target.
+            train_file: The CSV file containing the training data.
+            train_images_root: The directory containing the train images. If ``None``, the directory containing the
+                ``train_file`` will be used.
+            train_resolver: The function to use to resolve filenames given the ``train_images_root`` and IDs from the
+                ``input_field`` column.
+            val_file: The CSV file containing the validation data.
+            val_images_root: The directory containing the validation images. If ``None``, the directory containing the
+                ``val_file`` will be used.
+            val_resolver: The function to use to resolve filenames given the ``val_images_root`` and IDs from the
+                ``input_field`` column.
+            test_file: The CSV file containing the testing data.
+            test_images_root: The directory containing the test images. If ``None``, the directory containing the
+                ``test_file`` will be used.
+            test_resolver: The function to use to resolve filenames given the ``test_images_root`` and IDs from the
+                ``input_field`` column.
+            predict_file: The CSV file containing the data to use when predicting.
+            predict_images_root: The directory containing the predict images. If ``None``, the directory containing the
+                ``predict_file`` will be used.
+            predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
+                the ``input_field`` column.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+        """
+        data_source_collection = cls.data_source_collection_cls(**preprocess_kwargs)
+        train_ds, val_test, test_ds, predict_ds = data_source_collection.from_csv(
+            input_field=input_field,
+            target_fields=target_fields,
+            train_file=train_file,
+            train_images_root=train_images_root,
+            train_resolver=train_resolver,
+            val_file=val_file,
+            val_images_root=val_images_root,
+            val_resolver=val_resolver,
+            test_file=test_file,
+            test_images_root=test_images_root,
+            test_resolver=test_resolver,
+            predict_file=predict_file,
+            predict_images_root=predict_images_root,
+            predict_resolver=predict_resolver,
+        )
+
+        return cls.from_data_source(
+            data_source_collection[DefaultDataSources.CSV],
+            train_ds,
+            val_test,
+            test_ds,
+            predict_ds,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
+        )
