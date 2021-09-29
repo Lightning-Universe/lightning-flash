@@ -153,7 +153,7 @@ class FaceDetector(Task):
         return loss
 
     def training_step(self, batch, batch_idx) -> Any:
-        loss, _ = self.__shared_step(batch)
+        loss = self.__shared_step(batch)
 
         self.log_dict({f"train_{k}": v for k, v in loss.items()}, on_step=True, on_epoch=True, prog_bar=True)
         return loss
