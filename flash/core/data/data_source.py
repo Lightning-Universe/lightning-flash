@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 import os
+from types import ClassMethodDescriptorType
 import typing
 import warnings
 from dataclasses import dataclass
@@ -21,6 +23,7 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
+    Type,
     cast,
     Dict,
     Generic,
@@ -48,6 +51,7 @@ from tqdm import tqdm
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
@@ -58,6 +62,7 @@ if _FIFTYONE_AVAILABLE:
 else:
     fol = None
 
+_DATASOURCE_REGISTRY = FlashRegistry("datasource")
 
 # Credit to the PyTorchVision Team:
 # https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L10
@@ -218,6 +223,22 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
     sets from the hooks.
     """
+    def __init__(self):
+        self._register_datasource(self.__class__)
+
+    def get_registry_key(self):
+        cname = self.__class__.__name__
+        return f"{cname.removesuffix('DataSource').lower() or '__basic__'}"
+
+    def _register_datasource(self: DataSource, cls: Type[DATA_TYPE@DataSource]):
+        cname = cls.__name__
+        if not cname.endswith('DataSource'):
+            raise BaseException(f"Class name must end in DataSource {cname}")
+        _key = self.get_registry_key()
+        if len(_key) == 0:
+            raise SyntaxError(f"Data source class name must be of the form xxxDataSource {cname}")
+
+        _DATASOURCE_REGISTRY(cls, name=_key, override=True)
 
     @staticmethod
     def load_data(
