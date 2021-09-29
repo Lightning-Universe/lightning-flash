@@ -329,12 +329,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer = optimizer
-        if isinstance(self.optimizer, Tuple):
-            assert isinstance(self.optimizer[0], str) or isinstance(self.optimizer[0], Callable)
-
         self.lr_scheduler = lr_scheduler
-        if isinstance(self.lr_scheduler, Tuple):
-            assert isinstance(self.lr_scheduler[0], str) or isinstance(self.lr_scheduler[0], Callable)
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
@@ -480,6 +475,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         if isinstance(self.optimizer, str):
+            if self.optimizer.lower() not in self.available_optimizers():
+                raise KeyError(
+                    f"""Please provide a valid optimizer name and make sure it is registerd with the Optimizer registry.
+                    Use `{self.__class__.__name__}.available_optimizers`."""
+                )
             optimizer_fn = self.optimizers.get(self.optimizer.lower())
             _optimizers_kwargs: Dict[str, Any] = {}
         elif isinstance(self.optimizer, Callable):
@@ -490,17 +490,16 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             optimizer_key: str = self.optimizer[0]
 
             if not isinstance(optimizer_key, str):
-                raise MisconfigurationException(
-                    f"Please provide a key from the available optimizers. \
-                    Refer to {self.__class__.__name__}.available_optimizers"
+                raise TypeError(
+                    f"PThe first value in scheduler argument tuple should be a string but got {type(optimizer_key)}."
                 )
 
             optimizer_fn = self.optimizers.get(optimizer_key.lower())
             _optimizers_kwargs: Dict[str, Any] = self.optimizer[1]
         else:
             raise TypeError(
-                f"Optimizer should be of type string or callable or tuple(string, dictionary) \
-                    but got {type(self.optimizer)}."
+                f"""Optimizer should be of type string or callable or tuple(string, dictionary)
+                but got {type(self.optimizer)}."""
             )
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
@@ -852,10 +851,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def _instantiate_lr_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
         if isinstance(self.lr_scheduler, str) or isinstance(self.lr_scheduler, Callable):
+            if isinstance(self.lr_scheduler, str) and self.lr_scheduler.lower() not in self.available_lr_schedulers():
+                raise KeyError(
+                    f"""Please provide a valid key and make sure it is registerd with the Scheduler registry.
+                    Use `{self.__class__.__name__}.available_schedulers`."""
+                )
 
             # Get values based in type.
             if isinstance(self.lr_scheduler, str):
-                _lr_scheduler = self.lr_schedulers.get(self.lr_scheduler, with_metadata=True)
+                _lr_scheduler = self.lr_schedulers.get(self.lr_scheduler.lower(), with_metadata=True)
                 lr_scheduler_fn: Callable = _lr_scheduler["fn"]
                 lr_scheduler_metadata: Dict[str, Any] = _lr_scheduler["metadata"]
             else:
@@ -889,12 +893,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         if not isinstance(self.lr_scheduler[0], str):
             raise TypeError(
-                f"The first value in scheduler argument tuple should be either a string or a callable \
-                    but got {type(self.lr_scheduler[0])}."
+                f"""The first value in scheduler argument tuple should be a string but got
+                {type(self.lr_scheduler[0])}."""
             )
 
         # Separate the key and the kwargs.
-        lr_scheduler_key_or_fn: Union[str, Callable] = self.lr_scheduler[0]
+        lr_scheduler_key: str = self.lr_scheduler[0]
         lr_scheduler_kwargs_and_config: Dict[str, Any] = self.lr_scheduler[1]
 
         # Get the default scheduler config.
@@ -910,7 +914,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         assert all(config_key not in lr_scheduler_kwargs.keys() for config_key in lr_scheduler_config.keys())
 
         # Retreive the scheduler callable with metadata from the registry.
-        _lr_scheduler = self.lr_schedulers.get(lr_scheduler_key_or_fn.lower(), with_metadata=True)
+        _lr_scheduler = self.lr_schedulers.get(lr_scheduler_key.lower(), with_metadata=True)
         lr_scheduler_fn: Callable = _lr_scheduler["fn"]
         lr_scheduler_metadata: Dict[str, Any] = _lr_scheduler["metadata"]
 

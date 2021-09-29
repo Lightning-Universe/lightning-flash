@@ -25,6 +25,7 @@ import pytorch_lightning as pl
 import torch
 import torchmetrics
 from pytorch_lightning.callbacks import Callback
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -33,7 +34,7 @@ import flash
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TEXT_AVAILABLE, Image
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TEXT_AVAILABLE, _TORCH_OPTIMIZER_AVAILABLE, Image
 from flash.image import ImageClassificationData, ImageClassifier
 from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
 
@@ -345,6 +346,22 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
     trainer.fit(task, train_dl)
 
 
+@pytest.mark.skipif(not _TORCH_OPTIMIZER_AVAILABLE, reason="torch_optimizer isn't installed.")
+@pytest.mark.parametrize("optim", ["Yogi"])
+def test_external_optimizers_torch_optimizer(tmpdir, optim):
+
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+    task = ClassificationTask(model, optimizer=optim, lr_scheduler=None, loss_fn=F.nll_loss)
+    trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
+    ds = DummyDataset()
+    trainer.fit(task, train_dataloader=DataLoader(ds))
+
+    from torch_optimizer import Yogi
+
+    optimizer = task.configure_optimizers()
+    assert isinstance(optimizer, Yogi)
+
+
 @pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 @pytest.mark.parametrize("optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5)])
 @pytest.mark.parametrize(
@@ -370,6 +387,52 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
     optimizer, scheduler = task.configure_optimizers()
     assert isinstance(optimizer[0], torch.optim.Adadelta)
     assert isinstance(scheduler[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
+
+
+def test_errors_and_exceptions_optimizers_and_schedulers():
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+
+    with pytest.raises(TypeError):
+        task = ClassificationTask(model, optimizer=[1, 2, 3, 4], lr_scheduler=None)
+        task.configure_optimizers()
+
+    with pytest.raises(KeyError):
+        task = ClassificationTask(model, optimizer="not_a_valid_key", lr_scheduler=None)
+        task.configure_optimizers()
+
+    with pytest.raises(TypeError):
+        task = ClassificationTask(
+            model, optimizer=(["not", "a", "valid", "type"], {"random_kwarg": 10}), lr_scheduler=None
+        )
+        task.configure_optimizers()
+
+    with pytest.raises(KeyError):
+        task = ClassificationTask(model, optimizer="Adam", lr_scheduler="not_a_valid_key")
+        task.configure_optimizers()
+
+    @ClassificationTask.lr_schedulers
+    def i_will_create_a_misconfiguration_exception(optimizer):
+        return "Done. Created."
+
+    with pytest.raises(MisconfigurationException):
+        task = ClassificationTask(model, optimizer="Adam", lr_scheduler="i_will_create_a_misconfiguration_exception")
+        task.configure_optimizers()
+
+    with pytest.raises(MisconfigurationException):
+        task = ClassificationTask(model, optimizer="Adam", lr_scheduler=i_will_create_a_misconfiguration_exception)
+        task.configure_optimizers()
+
+    with pytest.raises(TypeError):
+        task = ClassificationTask(model, optimizer="Adam", lr_scheduler=["not", "a", "valid", "type"])
+        task.configure_optimizers()
+
+    with pytest.raises(TypeError):
+        task = ClassificationTask(
+            model, optimizer="Adam", lr_scheduler=(["not", "a", "valid", "type"], {"random_kwarg": 10})
+        )
+        task.configure_optimizers()
+
+    pass
 
 
 def test_classification_task_metrics():
