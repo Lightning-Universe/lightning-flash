@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import annotations
-
 import os
+from types import ClassMethodDescriptorType
 import typing
 import warnings
 from dataclasses import dataclass
 from functools import partial
 from inspect import signature
 from pathlib import Path
-from types import ClassMethodDescriptorType
 from typing import (
     Any,
     Callable,
+    Type,
     cast,
     Dict,
     Generic,
@@ -34,7 +34,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     TYPE_CHECKING,
     TypeVar,
     Union,
@@ -67,7 +66,7 @@ _DATASOURCE_REGISTRY = FlashRegistry("datasource")
 
 # Credit to the PyTorchVision Team:
 # https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L10
-def has_file_allowed_extension(filename: str, extensions: tuple[str, ...]) -> bool:
+def has_file_allowed_extension(filename: str, extensions: Tuple[str, ...]) -> bool:
     """Checks if a file is an allowed extension.
 
     Args:
@@ -84,10 +83,10 @@ def has_file_allowed_extension(filename: str, extensions: tuple[str, ...]) -> bo
 # https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L48
 def make_dataset(
     directory: str,
-    class_to_idx: dict[str, int],
-    extensions: tuple[str, ...] | None = None,
-    is_valid_file: Callable[[str], bool] | None = None,
-) -> list[tuple[str, int]]:
+    class_to_idx: Dict[str, int],
+    extensions: Optional[Tuple[str, ...]] = None,
+    is_valid_file: Optional[Callable[[str], bool]] = None,
+) -> List[Tuple[str, int]]:
     """Generates a list of samples of a form (path_to_sample, class).
 
     Args:
@@ -132,7 +131,7 @@ def make_dataset(
     return instances
 
 
-def has_len(data: Sequence[Any] | Iterable[Any]) -> bool:
+def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
     try:
         len(data)
         return True
@@ -145,13 +144,13 @@ class LabelsState(ProcessState):
     """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
     label."""
 
-    labels: Sequence[str] | None
+    labels: Optional[Sequence[str]]
 
 
 @dataclass(unsafe_hash=True, frozen=True)
 class ImageLabelsMap(ProcessState):
 
-    labels_map: dict[int, tuple[int, int, int]] | None
+    labels_map: Optional[Dict[int, Tuple[int, int, int]]]
 
 
 class DefaultDataSources(LightningEnum):
@@ -216,6 +215,12 @@ class MockDataset:
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
+# this doesn't belong in this file but it's just a proof of concept
+# https://stackoverflow.com/questions/66683630/removesuffix-returns-error-str-object-has-no-attribute-removesuffix
+def remove_suffix(input_string, suffix):
+    if suffix and input_string.endswith(suffix):
+        return input_string[:-len(suffix)]
+    return input_string
 
 class DataSource(Generic[DATA_TYPE], Properties, Module):
     """The ``DataSource`` class encapsulates two hooks: ``load_data`` and ``load_sample``.
@@ -224,18 +229,19 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
     sets from the hooks.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._register_datasource()
 
     def _get_registry_key(self):
         cname = self.__class__.__name__
-        return f"{cname.removesuffix('DataSource').lower() or '__basic__'}"
+        return f"{remove_suffix(cname, 'DataSource').lower() or '__basic__'}"
 
-    def _register_datasource(self):
+    def _register_datasource(
+        self
+    ):
         cname = self.__class__.__name__
-        if not cname.endswith("DataSource"):
+        if not cname.endswith('DataSource'):
             raise BaseException(f"Class name must end in DataSource {cname}")
         _key = self._get_registry_key()
         if len(_key) == 0:
@@ -246,8 +252,8 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     @staticmethod
     def load_data(
         data: DATA_TYPE,
-        dataset: Any | None = None,
-    ) -> Sequence[Mapping[str, Any]] | Iterable[Mapping[str, Any]]:
+        dataset: Optional[Any] = None,
+    ) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
         """Given the ``data`` argument, the ``load_data`` hook produces a sequence or iterable of samples or
         sample metadata. The ``data`` argument can be anything, but this method should return a sequence or iterable of
         mappings from string (e.g. "input", "target", "bbox", etc.) to data (e.g. a target value) or metadata (e.g. a
@@ -275,7 +281,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
         return data
 
     @staticmethod
-    def load_sample(sample: Mapping[str, Any], dataset: Any | None = None) -> Any:
+    def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
         """Given an element from the output of a call to
         :meth:`~flash.core.data.data_source.DataSource.load_data`, this hook
         should load a single data sample. The keys and values in the ``sample`` argument will be same as the keys and
@@ -303,11 +309,11 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
     def to_datasets(
         self,
-        train_data: DATA_TYPE | None = None,
-        val_data: DATA_TYPE | None = None,
-        test_data: DATA_TYPE | None = None,
-        predict_data: DATA_TYPE | None = None,
-    ) -> tuple[BaseAutoDataset | None, ...]:
+        train_data: Optional[DATA_TYPE] = None,
+        val_data: Optional[DATA_TYPE] = None,
+        test_data: Optional[DATA_TYPE] = None,
+        predict_data: Optional[DATA_TYPE] = None,
+    ) -> Tuple[Optional[BaseAutoDataset], ...]:
         """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data
         source by calling :meth:`~flash.core.data.data_source.DataSource.load_data` with each of the ``*_data``
         arguments. If an argument is given as ``None`` then no dataset will be created for that stage (``train``,
@@ -335,9 +341,9 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
 
     def generate_dataset(
         self,
-        data: DATA_TYPE | None,
+        data: Optional[DATA_TYPE],
         running_stage: RunningStage,
-    ) -> AutoDataset | IterableAutoDataset | None:
+    ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
         """Generate a single dataset with the given input to
         :meth:`~flash.core.data.data_source.DataSource.load_data` for the given ``running_stage``.
 
@@ -361,7 +367,7 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
                 resolved_func_name = DataPipeline._resolve_function_hierarchy(
                     "load_data", self, running_stage, DataSource
                 )
-                load_data: Callable[[DATA_TYPE, Any | None], Any] = getattr(self, resolved_func_name)
+                load_data: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(self, resolved_func_name)
                 parameters = signature(load_data).parameters
                 if len(parameters) > 1 and "dataset" in parameters:  # TODO: This was DATASET_KEY before
                     data = load_data(data, mock_dataset)
@@ -388,7 +394,7 @@ class DatasetDataSource(DataSource[Dataset]):
             :class:`~flash.core.data.data_source.LabelsState`.
     """
 
-    def load_sample(self, sample: Any, dataset: Any | None = None) -> Mapping[str, Any]:
+    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
         if isinstance(sample, tuple) and len(sample) == 2:
             return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
         return {DefaultDataKeys.INPUT: sample}
@@ -407,7 +413,7 @@ class SequenceDataSource(
             :class:`~flash.core.data.data_source.LabelsState`.
     """
 
-    def __init__(self, labels: Sequence[str] | None = None):
+    def __init__(self, labels: Optional[Sequence[str]] = None):
         super().__init__()
 
         self.labels = labels
@@ -417,8 +423,8 @@ class SequenceDataSource(
 
     def load_data(
         self,
-        data: tuple[Sequence[SEQUENCE_DATA_TYPE], Sequence | None],
-        dataset: Any | None = None,
+        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
+        dataset: Optional[Any] = None,
     ) -> Sequence[Mapping[str, Any]]:
         # TODO: Bring back the code to work out how many classes there are
         inputs, targets = data
@@ -446,9 +452,9 @@ class PathsDataSource(SequenceDataSource):
 
     def __init__(
         self,
-        extensions: tuple[str, ...] | None = None,
-        loader: Callable[[str], Any] | None = None,
-        labels: Sequence[str] | None = None,
+        extensions: Optional[Tuple[str, ...]] = None,
+        loader: Optional[Callable[[str], Any]] = None,
+        labels: Optional[Sequence[str]] = None,
     ):
         super().__init__(labels=labels)
 
@@ -456,7 +462,7 @@ class PathsDataSource(SequenceDataSource):
         self.loader = loader
 
     @staticmethod
-    def find_classes(dir: str) -> tuple[list[str], dict[str, int]]:
+    def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
         """Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
 
         Args:
@@ -471,7 +477,7 @@ class PathsDataSource(SequenceDataSource):
         return classes, class_to_idx
 
     @staticmethod
-    def isdir(data: str | tuple[list[str], list[Any]]) -> bool:
+    def isdir(data: Union[str, Tuple[List[str], List[Any]]]) -> bool:
         try:
             return os.path.isdir(data)
         except TypeError:
@@ -479,7 +485,7 @@ class PathsDataSource(SequenceDataSource):
             return False
 
     def load_data(
-        self, data: str | tuple[list[str], list[Any]], dataset: Any | None = None
+        self, data: Union[str, Tuple[List[str], List[Any]]], dataset: Optional[Any] = None
     ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             classes, class_to_idx = self.find_classes(data)
@@ -502,7 +508,9 @@ class PathsDataSource(SequenceDataSource):
             )
         )
 
-    def predict_load_data(self, data: str | list[str], dataset: Any | None = None) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(
+        self, data: Union[str, List[str]], dataset: Optional[Any] = None
+    ) -> Sequence[Mapping[str, Any]]:
         if self.isdir(data):
             data = [os.path.join(data, file) for file in os.listdir(data)]
 
@@ -518,7 +526,7 @@ class PathsDataSource(SequenceDataSource):
             )
         )
 
-    def load_sample(self, sample: dict[str, Any], dataset: Any | None = None) -> dict[str, Any]:
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         path = sample[DefaultDataKeys.INPUT]
 
         if self.loader is not None:
@@ -565,19 +573,19 @@ class LoaderDataFrameDataSource(
         return row
 
     @staticmethod
-    def _resolve_target(label_to_class: dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
+    def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
         row[target_key] = label_to_class[row[target_key]]
         return row
 
     @staticmethod
-    def _resolve_multi_target(target_keys: list[str], row: pd.Series) -> pd.Series:
+    def _resolve_multi_target(target_keys: List[str], row: pd.Series) -> pd.Series:
         row[target_keys[0]] = [row[target_key] for target_key in target_keys]
         return row
 
     def load_data(
         self,
-        data: tuple[pd.DataFrame, str, str | list[str], str | None, str | None],
-        dataset: Any | None = None,
+        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]],
+        dataset: Optional[Any] = None,
     ) -> Sequence[Mapping[str, Any]]:
         data, input_key, target_keys, root, resolver = data
 
@@ -634,7 +642,7 @@ class LoaderDataFrameDataSource(
             for _, row in data_frame.iterrows()
         ]
 
-    def load_sample(self, sample: dict[str, Any], dataset: Any | None = None) -> dict[str, Any]:
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         # TODO: simplify this duplicated code from PathsDataSource
         path = sample[DefaultDataKeys.INPUT]
 
@@ -653,8 +661,8 @@ class TensorDataSource(SequenceDataSource[torch.Tensor]):
 
     def load_data(
         self,
-        data: tuple[Sequence[SEQUENCE_DATA_TYPE], Sequence | None],
-        dataset: Any | None = None,
+        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
+        dataset: Optional[Any] = None,
     ) -> Sequence[Mapping[str, Any]]:
         # TODO: Bring back the code to work out how many classes there are
         if len(data) == 2:
@@ -681,7 +689,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
         return fol.Label
 
     @requires("fiftyone")
-    def load_data(self, data: SampleCollection, dataset: Any | None = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         self._validate(data)
 
         label_path = data._get_label_field_path(self.label_field, "label")[1]
@@ -716,7 +724,7 @@ class FiftyOneDataSource(DataSource[SampleCollection]):
 
     @staticmethod
     @requires("fiftyone")
-    def predict_load_data(data: SampleCollection, dataset: Any | None = None) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def _validate(self, data):
