@@ -25,6 +25,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
@@ -381,6 +382,9 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.SENTENCES: TextSentencesDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
+                    backbone=self.backbone, max_length=max_length
+                ),
             },
             default_data_source=DefaultDataSources.SENTENCES,
             deserializer=TextDeserializer(backbone, max_length),
