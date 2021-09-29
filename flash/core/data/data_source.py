@@ -223,7 +223,8 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     :meth:`~flash.core.data.data_source.DataSource.to_datasets` method can then be used to automatically construct data
     sets from the hooks.
     """
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._register_datasource(self.__class__)
 
     def get_registry_key(self):

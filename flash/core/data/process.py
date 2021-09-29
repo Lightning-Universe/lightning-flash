@@ -25,7 +25,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources, _DATASOURCE_REGISTRY
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
@@ -436,6 +436,7 @@ class Preprocess(BasePreprocess, Properties):
             MisconfigurationException: If the requested data source is not configured by this
                 :class:`~flash.core.data.process.Preprocess`.
         """
+        _DATASOURCE_REGISTRY.get(data_source_name)
         if data_source_name == "default":
             data_source_name = self._default_data_source
         data_sources = self._data_sources
