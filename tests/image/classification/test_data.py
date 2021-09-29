@@ -629,7 +629,7 @@ def test_data_source_collection(single_target_csv, tmpdir):
         predict_transform=default_transforms((256, 256)),
     )
 
-    loader.load_from_csv(
+    loader.from_csv(
         "image",
         "target",
         train_file=single_target_csv,
