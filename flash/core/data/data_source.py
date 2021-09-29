@@ -225,21 +225,23 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._register_datasource(self.__class__)
+        self._register_datasource()
 
-    def get_registry_key(self):
+    def _get_registry_key(self):
         cname = self.__class__.__name__
         return f"{cname.removesuffix('DataSource').lower() or '__basic__'}"
 
-    def _register_datasource(self: DataSource, cls: Type[DATA_TYPE@DataSource]):
-        cname = cls.__name__
+    def _register_datasource(
+        self
+    ):
+        cname = self.__class__.__name__
         if not cname.endswith('DataSource'):
             raise BaseException(f"Class name must end in DataSource {cname}")
-        _key = self.get_registry_key()
+        _key = self._get_registry_key()
         if len(_key) == 0:
             raise SyntaxError(f"Data source class name must be of the form xxxDataSource {cname}")
 
-        _DATASOURCE_REGISTRY(cls, name=_key, override=True)
+        _DATASOURCE_REGISTRY(self, name=_key, override=True)
 
     @staticmethod
     def load_data(
