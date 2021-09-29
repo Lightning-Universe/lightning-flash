@@ -359,47 +359,56 @@ class DataSourceCollection(dict):
         self[None] = self[default_data_source]
         self["default"] = self[default_data_source]
 
+        self._train_ds: Optional[BaseAutoDataset] = None
+        self._val_ds: Optional[BaseAutoDataset] = None
+        self._test_ds: Optional[BaseAutoDataset] = None
+        self._predict_ds: Optional[BaseAutoDataset] = None
+
+        self._data_source: Optional[DataSource] = None
+
     def _execute(self, data_source_enum: DefaultDataSources, *args, **kwargs):
         if data_source_enum in self:
             func_name = f"from_{data_source_enum.name.lower()}"
-            return getattr(self[data_source_enum], func_name)(*args, **kwargs)
+            self._data_source = getattr(self[data_source_enum], func_name)
+            self._train_ds, self._val_ds, self._test_ds, self._predict_ds = self._data_source(*args, **kwargs)
+            return
         raise NotImplementedError
 
     def from_folders(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.FOLDERS, *args, **kwargs)
+        self._execute(DefaultDataSources.FOLDERS, *args, **kwargs)
 
     def from_files(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.FILES, *args, **kwargs)
+        self._execute(DefaultDataSources.FILES, *args, **kwargs)
 
     def from_numpy(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.NUMPY, *args, **kwargs)
+        self._execute(DefaultDataSources.NUMPY, *args, **kwargs)
 
     def from_tensors(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.TENSORS, *args, **kwargs)
+        self._execute(DefaultDataSources.TENSORS, *args, **kwargs)
 
     def from_csv(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.CSV, *args, **kwargs)
+        self._execute(DefaultDataSources.CSV, *args, **kwargs)
 
     def from_json(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.JSON, *args, **kwargs)
+        self._execute(DefaultDataSources.JSON, *args, **kwargs)
 
     def from_datasets(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.DATASETS, *args, **kwargs)
+        self._execute(DefaultDataSources.DATASETS, *args, **kwargs)
 
     def from_fiftyone(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.FIFTYONE, *args, **kwargs)
+        self._execute(DefaultDataSources.FIFTYONE, *args, **kwargs)
 
     def from_dataframe(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.DATAFRAME, *args, **kwargs)
+        self._execute(DefaultDataSources.DATAFRAME, *args, **kwargs)
 
     def from_lists(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.LISTS, *args, **kwargs)
+        self._execute(DefaultDataSources.LISTS, *args, **kwargs)
 
     def from_sentences(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.SENTENCES, *args, **kwargs)
+        self._execute(DefaultDataSources.SENTENCES, *args, **kwargs)
 
     def from_labelstudio(self, *args, **kwargs):
-        return self._execute(DefaultDataSources.LABELSTUDIO, *args, **kwargs)
+        self._execute(DefaultDataSources.LABELSTUDIO, *args, **kwargs)
 
 
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")

@@ -33,7 +33,11 @@ from flash.core.utilities.imports import (
     _TORCHVISION_AVAILABLE,
 )
 from flash.image import ImageClassificationData, ImageClassifier
-from flash.image.classification.data import ImageClassificationDataSourceCollection, ImageClassificationDataV2
+from flash.image.classification.data import (
+    ImageClassificationDataModule,
+    ImageClassificationLoader,
+    ImageClassificationPreprocessV2,
+)
 from flash.image.classification.transforms import AlbumentationsAdapter, default_transforms
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -618,28 +622,28 @@ def test_albumentations_mixup(single_target_csv):
 
 def test_data_source_collection(single_target_csv, tmpdir):
 
-    loader = ImageClassificationDataSourceCollection()
+    loader = ImageClassificationLoader()
 
-    train_ds, val_ds, test_ds, predict_ds = loader.from_csv(
-        "image",
-        "target",
-        train_file=single_target_csv,
+    preprocess = ImageClassificationPreprocessV2(
+        train_transform=default_transforms((256, 256)),
+        predict_transform=default_transforms((256, 256)),
     )
 
-    assert train_ds
-    assert not val_ds
-    assert not test_ds
-    assert not predict_ds
-
-    dm = ImageClassificationDataV2.from_csv(
+    loader.load_from_csv(
         "image",
         "target",
         train_file=single_target_csv,
         predict_file=single_target_csv,
-        batch_size=2,
-        num_workers=0,
-        train_transform=default_transforms((256, 256)),
-        predict_transform=default_transforms((256, 256)),
+    )
+
+    assert loader._train_ds
+    assert not loader._val_ds
+    assert not loader._test_ds
+    assert loader._predict_ds
+
+    dm = ImageClassificationDataModule.from_components(
+        loader=loader,
+        preprocess=preprocess,
     )
 
     batch = next(iter(dm.train_dataloader()))

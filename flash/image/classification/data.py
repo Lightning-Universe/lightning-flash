@@ -30,6 +30,7 @@ from flash.core.data.data_source import (
 )
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
@@ -478,27 +479,35 @@ class ImageClassificationPreprocessV2(Preprocess):
         return train_default_transforms(self.image_size)
 
 
-class ImageClassificationDataSourceCollection(DataSourceCollection):
+ImageClassificationDataSourceRegistry = FlashRegistry("data_source")
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.FILES, fn=ImagePathsDataSource)
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.FIFTYONE, fn=ImageFiftyOneDataSource)
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.FOLDERS, fn=ImagePathsDataSource)
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.NUMPY, fn=ImageNumpyDataSource)
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.TENSORS, fn=ImageTensorDataSource)
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.DATAFRAME, fn=ImageClassificationDataFrameDataSource)
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.CSV, fn=ImageClassificationDataFrameDataSource)
+ImageClassificationDataSourceRegistry(name=DefaultDataSources.LABELSTUDIO, fn=LabelStudioImageClassificationDataSource)
+
+
+class ImageClassificationLoader(DataSourceCollection):
     def __init__(self, **data_source_kwargs):
+
+        data_sources = {
+            key: ImageClassificationDataSourceRegistry.get(key)(**data_source_kwargs)
+            for key in ImageClassificationDataSourceRegistry.available_keys()
+        }
+
         super().__init__(
-            data_sources={
-                DefaultDataSources.FIFTYONE: ImageFiftyOneDataSource(**data_source_kwargs),
-                DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
-                DefaultDataSources.NUMPY: ImageNumpyDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
-                DefaultDataSources.DATAFRAME: ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.LABELSTUDIO: LabelStudioImageClassificationDataSource(),
-            },
+            data_sources=data_sources,
             default_data_source=DefaultDataSources.FILES,
         )
 
 
-class ImageClassificationDataV2(DataModule):
+class ImageClassificationDataModule(DataModule):
 
     preprocess_cls = ImageClassificationPreprocessV2
-    data_source_collection_cls = ImageClassificationDataSourceCollection
+    data_sources = ImageClassificationDataSourceRegistry
     deserializer_cls = ImageDeserializer
 
     @classmethod
@@ -676,8 +685,7 @@ class ImageClassificationDataV2(DataModule):
         Returns:
             The constructed data module.
         """
-        data_source_collection = cls.data_source_collection_cls(**preprocess_kwargs)
-        data_source: ImageClassificationDataFrameDataSource = data_source_collection[DefaultDataSources.CSV]
+        data_source: ImageClassificationDataFrameDataSource = cls.data_sources.get(DefaultDataSources.CSV)()
         train_ds, val_test, test_ds, predict_ds = data_source.from_csv(
             input_field=input_field,
             target_fields=target_fields,
@@ -697,7 +705,6 @@ class ImageClassificationDataV2(DataModule):
 
         return cls.from_data_source(
             data_source,
-            data_source_collection,
             train_ds,
             val_test,
             test_ds,
@@ -713,4 +720,16 @@ class ImageClassificationDataV2(DataModule):
             num_workers=num_workers,
             sampler=sampler,
             **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_components(cls, loader: DataSourceCollection, preprocess: Preprocess):
+        return cls.from_data_source(
+            loader._data_source,
+            loader,
+            loader._train_ds,
+            loader._val_ds,
+            loader._test_ds,
+            loader._predict_ds,
+            preprocess=preprocess,
         )
