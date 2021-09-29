@@ -8,21 +8,28 @@ from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE
 
 _OPTIMIZERS_REGISTRY = FlashRegistry("optimizer")
 
-_optimizers: List[Callable] = [getattr(optim, n) for n in dir(optim) if ("_" not in n)]
+_optimizers: List[Callable] = []
+for n in dir(optim):
+    _optimizer = getattr(optim, n)
+
+    if isclass(_optimizer) and _optimizer != optim.Optimizer and issubclass(_optimizer, optim.Optimizer):
+        _optimizers.append(_optimizer)
 
 for fn in _optimizers:
     _OPTIMIZERS_REGISTRY(fn, name=fn.__name__.lower())
 
+
 if _TORCH_OPTIMIZER_AVAILABLE:
     import torch_optimizer
 
-    _optimizers: List[Callable] = [
-        getattr(torch_optimizer, n)
-        for n in dir(torch_optimizer)
-        if ("_" not in n) and isclass(getattr(torch_optimizer, n))
-    ]
+    _torch_optimizers: List[Callable] = []
+    for n in dir(torch_optimizer):
+        _optimizer = getattr(torch_optimizer, n)
 
-    for fn in _optimizers:
+        if isclass(_optimizer) and issubclass(_optimizer, optim.Optimizer):
+            _torch_optimizers.append(_optimizer)
+
+    for fn in _torch_optimizers:
         name = fn.__name__.lower()
         if name not in _OPTIMIZERS_REGISTRY:
             _OPTIMIZERS_REGISTRY(fn, name=name)
