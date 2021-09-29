@@ -650,6 +650,10 @@ def test_data_source_collection(single_target_csv, tmpdir):
     trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, dm, strategy="freeze_unfreeze")
 
+    checkpoint_path = str(tmpdir / "model.pt")
+    trainer.save_checkpoint(checkpoint_path)
+    model = ImageClassifier.load_from_checkpoint(checkpoint_path)
+
     path = os.path.join(os.path.dirname(single_target_csv), "image_1.png")
     assert model.predict([path])
     assert trainer.predict(model, dm)
