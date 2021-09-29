@@ -286,12 +286,12 @@ def test_available_backbones():
     assert Foo.available_backbones() == {}
 
 
-@ClassificationTask.schedulers
+@ClassificationTask.lr_schedulers
 def custom_steplr_configuration_return_as_instance(optimizer):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
 
 
-@ClassificationTask.schedulers
+@ClassificationTask.lr_schedulers
 def custom_steplr_configuration_return_as_dict(optimizer):
     return {
         "scheduler": torch.optim.lr_scheduler.StepLR(optimizer, step_size=10),
@@ -322,7 +322,7 @@ def custom_steplr_configuration_return_as_dict(optimizer):
 def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
 
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
-    task = ClassificationTask(model, optimizer=optim, scheduler=sched)
+    task = ClassificationTask(model, optimizer=optim, lr_scheduler=sched)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
 
     if sched is None:
@@ -362,7 +362,7 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
     #         optimizer, scheduler = task.configure_optimizers()
 
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
-    task = ClassificationTask(model, optimizer=optim, scheduler=sched, loss_fn=F.nll_loss)
+    task = ClassificationTask(model, optimizer=optim, lr_scheduler=sched, loss_fn=F.nll_loss)
     trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
     ds = DummyDataset()
     trainer.fit(task, train_dataloader=DataLoader(ds))

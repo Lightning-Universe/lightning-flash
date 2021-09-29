@@ -299,6 +299,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         model: Model to use for the task.
         loss_fn: Loss function for training
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
+        lr_scheduler: The scheduler or scheduler class to use.
         metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to ``5e-5``.
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
@@ -306,7 +307,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     """
 
     optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
-    schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+    lr_schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
 
     required_extras: Optional[Union[str, List[str]]] = None
 
@@ -316,9 +317,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         learning_rate: float = 5e-5,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
-        # scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
         preprocess: Optional[Preprocess] = None,
@@ -333,9 +332,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if isinstance(self.optimizer, Tuple):
             assert isinstance(self.optimizer[0], str) or isinstance(self.optimizer[0], Callable)
 
-        self.scheduler = scheduler
-        if isinstance(self.scheduler, Tuple):
-            assert isinstance(self.scheduler[0], str) or isinstance(self.scheduler[0], Callable)
+        self.lr_scheduler = lr_scheduler
+        if isinstance(self.lr_scheduler, Tuple):
+            assert isinstance(self.lr_scheduler[0], str) or isinstance(self.lr_scheduler[0], Callable)
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
@@ -506,11 +505,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         optimizer: Optimizer = optimizer_fn(model_parameters, lr=self.learning_rate, **_optimizers_kwargs)
-        # if not isinstance(self.optimizer, Optimizer):
-        #     self.optimizer_kwargs["lr"] = self.learning_rate
-        #     optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), **self.optimizer_kwargs)
-        if self.scheduler is not None:
-            return [optimizer], [self._instantiate_scheduler(optimizer)]
+        if self.lr_scheduler is not None:
+            return [optimizer], [self._instantiate_lr_scheduler(optimizer)]
         return optimizer
 
     @staticmethod
@@ -813,8 +809,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return registry.available_keys()
 
     @classmethod
-    def available_schedulers(cls) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "schedulers", None)
+    def available_lr_schedulers(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers", None)
         if registry is None:
             return []
         return registry.available_keys()
@@ -854,31 +850,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             num_warmup_steps *= num_training_steps
         return round(num_warmup_steps)
 
-    def _instantiate_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
-        if isinstance(self.scheduler, str) or isinstance(self.scheduler, Callable):
+    def _instantiate_lr_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
+        if isinstance(self.lr_scheduler, str) or isinstance(self.lr_scheduler, Callable):
 
             # Get values based in type.
-            if isinstance(self.scheduler, str):
-                _scheduler = self.schedulers.get(self.scheduler, with_metadata=True)
-                scheduler_fn: Callable = _scheduler["fn"]
-                scheduler_metadata: Dict[str, Any] = _scheduler["metadata"]
+            if isinstance(self.lr_scheduler, str):
+                _lr_scheduler = self.lr_schedulers.get(self.lr_scheduler, with_metadata=True)
+                lr_scheduler_fn: Callable = _lr_scheduler["fn"]
+                lr_scheduler_metadata: Dict[str, Any] = _lr_scheduler["metadata"]
             else:
-                scheduler_fn: Callable = self.scheduler
+                lr_scheduler_fn: Callable = self.lr_scheduler
 
-            # Generate the output: could be a scheduler object or a scheduler config.
-            sched_output: Union[_LRScheduler, Dict[str, Any]] = scheduler_fn(optimizer)
+            # Generate the output: could be a lr_scheduler object or a lr_scheduler config.
+            sched_output: Union[_LRScheduler, Dict[str, Any]] = lr_scheduler_fn(optimizer)
 
-            # Create and/or update a scheduler configuration
-            scheduler_config = _get_default_scheduler_config()
+            # Create and/or update a lr_scheduler configuration
+            lr_scheduler_config = _get_default_scheduler_config()
             if isinstance(sched_output, _LRScheduler):
-                scheduler_config["scheduler"] = sched_output
-                if isinstance(self.scheduler, str) and "interval" in scheduler_metadata.keys():
-                    scheduler_config["interval"] = scheduler_metadata["interval"]
+                lr_scheduler_config["scheduler"] = sched_output
+                if isinstance(self.lr_scheduler, str) and "interval" in lr_scheduler_metadata.keys():
+                    lr_scheduler_config["interval"] = lr_scheduler_metadata["interval"]
             elif isinstance(sched_output, dict):
                 for key, value in sched_output.items():
-                    scheduler_config[key] = value
+                    lr_scheduler_config[key] = value
             else:
-                if isinstance(self.scheduler, str):
+                if isinstance(self.lr_scheduler, str):
                     message = "register a custom callable"
                 else:
                     message = "provide a callable"
@@ -886,56 +882,56 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
                     f"Please {message} that outputs either an LR Scheduler or a scheduler condifguration."
                 )
 
-            return scheduler_config
+            return lr_scheduler_config
 
-        if not isinstance(self.scheduler, Tuple):
+        if not isinstance(self.lr_scheduler, Tuple):
             raise TypeError("The scheduler arguments should be provided as a tuple.")
 
-        if not isinstance(self.scheduler[0], str):
+        if not isinstance(self.lr_scheduler[0], str):
             raise TypeError(
                 f"The first value in scheduler argument tuple should be either a string or a callable \
-                    but got {type(self.scheduler[0])}."
+                    but got {type(self.lr_scheduler[0])}."
             )
 
         # Separate the key and the kwargs.
-        scheduler_key_or_fn: Union[str, Callable] = self.scheduler[0]
-        scheduler_kwargs_and_config: Dict[str, Any] = self.scheduler[1]
+        lr_scheduler_key_or_fn: Union[str, Callable] = self.lr_scheduler[0]
+        lr_scheduler_kwargs_and_config: Dict[str, Any] = self.lr_scheduler[1]
 
         # Get the default scheduler config.
-        scheduler_config: Dict[str, Any] = _get_default_scheduler_config()
-        scheduler_config["interval"] = None
+        lr_scheduler_config: Dict[str, Any] = _get_default_scheduler_config()
+        lr_scheduler_config["interval"] = None
 
         # Update scheduler config from the kwargs and pop the keys from the kwargs at the same time.
-        for config_key, config_value in scheduler_config.items():
-            scheduler_config[config_key] = scheduler_kwargs_and_config.pop(config_key, None) or config_value
+        for config_key, config_value in lr_scheduler_config.items():
+            lr_scheduler_config[config_key] = lr_scheduler_kwargs_and_config.pop(config_key, None) or config_value
 
         # Create a new copy of the kwargs.
-        scheduler_kwargs = deepcopy(scheduler_kwargs_and_config)
-        assert all(config_key not in scheduler_kwargs.keys() for config_key in scheduler_config.keys())
+        lr_scheduler_kwargs = deepcopy(lr_scheduler_kwargs_and_config)
+        assert all(config_key not in lr_scheduler_kwargs.keys() for config_key in lr_scheduler_config.keys())
 
         # Retreive the scheduler callable with metadata from the registry.
-        _scheduler = self.schedulers.get(scheduler_key_or_fn.lower(), with_metadata=True)
-        scheduler_fn: Callable = _scheduler["fn"]
-        scheduler_metadata: Dict[str, Any] = _scheduler["metadata"]
+        _lr_scheduler = self.lr_schedulers.get(lr_scheduler_key_or_fn.lower(), with_metadata=True)
+        lr_scheduler_fn: Callable = _lr_scheduler["fn"]
+        lr_scheduler_metadata: Dict[str, Any] = _lr_scheduler["metadata"]
 
         # Make necessary adjustment to the kwargs based on the provider of the scheduler.
-        if "providers" in scheduler_metadata.keys():
-            if scheduler_metadata["providers"] == providers._HUGGINGFACE:
+        if "providers" in lr_scheduler_metadata.keys():
+            if lr_scheduler_metadata["providers"] == providers._HUGGINGFACE:
                 num_training_steps: int = self.get_num_training_steps()
                 num_warmup_steps: int = self._compute_warmup(
                     num_training_steps=num_training_steps,
-                    num_warmup_steps=scheduler_kwargs["num_warmup_steps"],
+                    num_warmup_steps=lr_scheduler_kwargs["num_warmup_steps"],
                 )
-                scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
-                scheduler_kwargs["num_training_steps"] = num_training_steps
+                lr_scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
+                lr_scheduler_kwargs["num_training_steps"] = num_training_steps
 
         # Set the scheduler in the config.
-        scheduler_config["scheduler"] = scheduler_fn(optimizer, **scheduler_kwargs)
+        lr_scheduler_config["scheduler"] = lr_scheduler_fn(optimizer, **lr_scheduler_kwargs)
 
         # Update the interval in sched config just in case it has NoneType.
-        if "interval" in scheduler_metadata.keys():
-            scheduler_config["interval"] = scheduler_config["interval"] or scheduler_metadata["interval"]
-        return scheduler_config
+        if "interval" in lr_scheduler_metadata.keys():
+            lr_scheduler_config["interval"] = lr_scheduler_config["interval"] or lr_scheduler_metadata["interval"]
+        return lr_scheduler_config
 
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
