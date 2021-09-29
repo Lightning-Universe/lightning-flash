@@ -25,7 +25,13 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources, _DATASOURCE_REGISTRY
+from flash.core.data.data_source import (
+    _DATASOURCE_REGISTRY,
+    DatasetDataSource,
+    DataSource,
+    DefaultDataKeys,
+    DefaultDataSources,
+)
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
