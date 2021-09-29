@@ -160,6 +160,9 @@ class DefaultDataSources(LightningEnum):
     JSON = "json"
     DATASETS = "datasets"
     FIFTYONE = "fiftyone"
+    DATAFRAME = "data_frame"
+    LISTS = "lists"
+    SENTENCES = "sentences"
     LABELSTUDIO = "labelstudio"
 
     # TODO: Create a FlashEnum class???
