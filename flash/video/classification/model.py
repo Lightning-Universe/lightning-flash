@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 from pytorch_lightning import LightningModule
@@ -22,7 +22,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy, Metric
 
@@ -82,9 +81,9 @@ class VideoClassifier(ClassificationTask):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+
+        lr_scheduler: The scheduler or scheduler class to use.
+
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -103,10 +102,8 @@ class VideoClassifier(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "SGD",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "SGD",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
@@ -117,8 +114,7 @@ class VideoClassifier(ClassificationTask):
             loss_fn=loss_fn,
             optimizer=optimizer,
             # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             serializer=serializer or Labels(),

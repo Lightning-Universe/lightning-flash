@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Type, Union
-
-import torch
-from torch.optim.lr_scheduler import _LRScheduler
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys
@@ -55,9 +52,7 @@ class ImageEmbedder(AdapterTask):
         backbone: VISSL backbone, defaults to ``resnet``.
         pretrained: Use a pretrained backbone, defaults to ``False``.
         optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        lr_scheduler: The scheduler or scheduler class to use.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         backbone_kwargs: arguments to be passed to VISSL backbones, i.e. ``vision_transformer`` and ``resnet``.
         training_strategy_kwargs: arguments passed to VISSL loss function, projection head and training hooks.
@@ -77,10 +72,8 @@ class ImageEmbedder(AdapterTask):
         pretraining_transform: str,
         backbone: str = "resnet",
         pretrained: bool = False,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "SGD",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         learning_rate: float = 1e-3,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
@@ -110,9 +103,7 @@ class ImageEmbedder(AdapterTask):
         super().__init__(
             adapter=adapter,
             optimizer=optimizer,
-            # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
         )
 

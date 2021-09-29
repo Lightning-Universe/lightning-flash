@@ -11,10 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Type, Union
-
-import torch
-from torch.optim.lr_scheduler import _LRScheduler
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.process import Serializer
@@ -41,9 +38,7 @@ class ObjectDetector(AdapterTask):
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
         optimizer: The optimizer to use for training. Can either be the actual class or the class name.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        lr_scheduler: The scheduler or scheduler class to use.
         pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
             Has no effect for custom models.
         learning_rate: The learning rate to use for training
@@ -60,10 +55,8 @@ class ObjectDetector(AdapterTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "retinanet",
         pretrained: bool = True,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         learning_rate: float = 5e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs: Any,
@@ -84,9 +77,7 @@ class ObjectDetector(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             serializer=serializer or Preds(),
         )
 

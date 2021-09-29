@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sys
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 import torchmetrics
 from torch import nn
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 
 from flash.core.data.auto_dataset import BaseAutoDataset
@@ -49,9 +48,7 @@ class PointCloudObjectDetector(Task):
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         optimizer: The optimizer or optimizer class to use.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        lr_scheduler: The scheduler or scheduler class to use.
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
@@ -72,10 +69,8 @@ class PointCloudObjectDetector(Task):
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
         loss_fn: Optional[Callable] = None,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudObjectDetectorSerializer(),
@@ -89,8 +84,7 @@ class PointCloudObjectDetector(Task):
             loss_fn=loss_fn,
             optimizer=optimizer,
             # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             serializer=serializer,

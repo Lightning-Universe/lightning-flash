@@ -19,14 +19,13 @@
 import collections
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
-from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
 from flash.core.data.data_source import DefaultDataKeys
@@ -69,9 +68,9 @@ class QuestionAnsweringTask(Task):
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+
+        lr_scheduler: The scheduler or scheduler class to use.
+
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the ROUGE metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `3e-4`
@@ -95,10 +94,8 @@ class QuestionAnsweringTask(Task):
         self,
         backbone: str = "distilbert-base-uncased",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
         enable_ort: bool = False,
@@ -118,8 +115,7 @@ class QuestionAnsweringTask(Task):
             loss_fn=loss_fn,
             optimizer=optimizer,
             # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
         )

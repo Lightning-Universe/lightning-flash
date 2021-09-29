@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import IoU, Metric
 
 from flash.core.classification import ClassificationTask
@@ -54,9 +53,7 @@ class SemanticSegmentation(ClassificationTask):
         pretrained: Use a pretrained backbone.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        lr_scheduler: The scheduler or scheduler class to use.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -83,10 +80,8 @@ class SemanticSegmentation(ClassificationTask):
         head_kwargs: Optional[Dict] = None,
         pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
@@ -108,8 +103,7 @@ class SemanticSegmentation(ClassificationTask):
             loss_fn=loss_fn,
             optimizer=optimizer,
             # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             serializer=serializer or SegmentationLabels(),

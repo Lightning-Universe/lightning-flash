@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 import torchmetrics
@@ -19,7 +19,6 @@ from pytorch_lightning import Callback, LightningModule
 from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
@@ -80,9 +79,9 @@ class PointCloudSegmentation(ClassificationTask):
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         optimizer: The optimizer or optimizer class to use.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+
+        lr_scheduler: The scheduler or scheduler class to use.
+
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
@@ -101,10 +100,8 @@ class PointCloudSegmentation(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
         loss_fn: Optional[Callable] = torch.nn.functional.cross_entropy,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
@@ -120,8 +117,7 @@ class PointCloudSegmentation(ClassificationTask):
             loss_fn=loss_fn,
             optimizer=optimizer,
             # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,

@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
-from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationAdapterTask, Labels
@@ -56,9 +54,7 @@ class ImageClassifier(ClassificationAdapterTask):
             which loads the default supervised pretrained weights.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        lr_scheduler: The scheduler or scheduler class to use.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -81,10 +77,8 @@ class ImageClassifier(ClassificationAdapterTask):
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: Union[bool, str] = True,
         loss_fn: Optional[Callable] = None,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
@@ -138,9 +132,7 @@ class ImageClassifier(ClassificationAdapterTask):
             metrics=metrics,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             multi_label=multi_label,
             serializer=serializer or Labels(multi_label=multi_label),
         )

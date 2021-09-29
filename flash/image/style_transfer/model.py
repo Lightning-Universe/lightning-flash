@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, cast, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, cast, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple, Union
 
 import torch
 from torch import nn
-from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
@@ -59,9 +58,7 @@ class StyleTransfer(Task):
         content_weight: The weight associated with the content loss. A lower value will lose content over style.
         style_layers: Layers from the backbone to derive the style loss from.
         optimizer: Optimizer to use for training the model.
-        optimizer_kwargs: Optimizer keywords arguments.
-        scheduler: Scheduler to use for training the model.
-        scheduler_kwargs: Scheduler keywords arguments.
+        lr_scheduler: Scheduler to use for training the model.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
@@ -79,10 +76,8 @@ class StyleTransfer(Task):
         content_weight: float = 1e5,
         style_layers: Union[Sequence[str], str] = ["relu1_2", "relu2_2", "relu3_3", "relu4_3"],
         style_weight: float = 1e10,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
-        # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         learning_rate: float = 1e-3,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):
@@ -113,8 +108,7 @@ class StyleTransfer(Task):
             loss_fn=perceptual_loss,
             optimizer=optimizer,
             # optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
             serializer=serializer,
         )
