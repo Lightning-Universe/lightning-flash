@@ -446,6 +446,38 @@ class MatplotlibVisualization(BaseVisualization):
         self._show_images_and_labels(batch[0], batch[0][DefaultDataKeys.INPUT].shape[0], win_title)
 
 
+class ImageClassificationPreprocessV2(Preprocess):
+    def __init__(
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+    ):
+        self.image_size = image_size
+
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+        )
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        return {**self.transforms, "image_size": self.image_size}
+
+    @classmethod
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
+        return cls(**state_dict)
+
+    def default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return default_transforms(self.image_size)
+
+    def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
+        return train_default_transforms(self.image_size)
+
+
 class ImageClassificationDataSourceCollection(DataSourceCollection):
     def __init__(self, **data_source_kwargs):
         super().__init__(
@@ -465,13 +497,15 @@ class ImageClassificationDataSourceCollection(DataSourceCollection):
 
 class ImageClassificationDataV2(DataModule):
 
-    preprocess_cls = ImageClassificationPreprocess
+    preprocess_cls = ImageClassificationPreprocessV2
     data_source_collection_cls = ImageClassificationDataSourceCollection
+    deserializer_cls = ImageDeserializer
 
     @classmethod
     def from_data_source(
         cls,
         data_source,
+        data_source_collection,
         train_dataset: Any = None,
         val_dataset: Any = None,
         test_dataset: Any = None,
@@ -553,6 +587,7 @@ class ImageClassificationDataV2(DataModule):
             test_dataset,
             predict_dataset,
             data_source=data_source,
+            data_source_collection=data_source_collection,
             preprocess=preprocess,
             data_fetcher=data_fetcher,
             val_split=val_split,
@@ -642,7 +677,8 @@ class ImageClassificationDataV2(DataModule):
             The constructed data module.
         """
         data_source_collection = cls.data_source_collection_cls(**preprocess_kwargs)
-        train_ds, val_test, test_ds, predict_ds = data_source_collection.from_csv(
+        data_source: ImageClassificationDataFrameDataSource = data_source_collection[DefaultDataSources.CSV]
+        train_ds, val_test, test_ds, predict_ds = data_source.from_csv(
             input_field=input_field,
             target_fields=target_fields,
             train_file=train_file,
@@ -660,7 +696,8 @@ class ImageClassificationDataV2(DataModule):
         )
 
         return cls.from_data_source(
-            data_source_collection[DefaultDataSources.CSV],
+            data_source,
+            data_source_collection,
             train_ds,
             val_test,
             test_ds,

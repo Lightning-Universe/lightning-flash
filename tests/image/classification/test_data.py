@@ -618,9 +618,9 @@ def test_albumentations_mixup(single_target_csv):
 
 def test_data_source_collection(single_target_csv, tmpdir):
 
-    data_source = ImageClassificationDataSourceCollection()
+    loader = ImageClassificationDataSourceCollection()
 
-    train_ds, val_ds, test_ds, predict_ds = data_source.from_csv(
+    train_ds, val_ds, test_ds, predict_ds = loader.from_csv(
         "image",
         "target",
         train_file=single_target_csv,

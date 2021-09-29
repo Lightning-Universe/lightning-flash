@@ -41,7 +41,8 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_source import DataSource, DataSourceCollection, DefaultDataSources
+from flash.core.data.process import Deserializer
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
@@ -84,6 +85,8 @@ class DataModule(pl.LightningDataModule):
 
     preprocess_cls = DefaultPreprocess
     postprocess_cls = Postprocess
+    data_source_collection_cls = DataSourceCollection
+    deserializer_cls = Deserializer
 
     def __init__(
         self,
@@ -92,6 +95,8 @@ class DataModule(pl.LightningDataModule):
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
         data_source: Optional[DataSource] = None,
+        data_source_collection: Optional[DataSourceCollection] = None,
+        deserializer: Optional[Deserializer] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
@@ -107,6 +112,8 @@ class DataModule(pl.LightningDataModule):
             batch_size = 16
 
         self._data_source: DataSource = data_source
+        self._data_source_collection = data_source_collection
+        self._deserializer = deserializer
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._viz: Optional[BaseVisualization] = None
@@ -428,8 +435,21 @@ class DataModule(pl.LightningDataModule):
         return self._postprocess or self.postprocess_cls()
 
     @property
+    def data_source_collection(self) -> Optional[DataSourceCollection]:
+        return self._data_source_collection
+
+    def deserializer(self) -> Optional[Deserializer]:
+        return self._deserializer or self.deserializer_cls()
+
+    @property
     def data_pipeline(self) -> DataPipeline:
-        return DataPipeline(self.data_source, self.preprocess, self.postprocess)
+        return DataPipeline(
+            data_source=self.data_source,
+            data_source_collection=self.data_source_collection,
+            preprocess=self.preprocess,
+            postprocess=self.postprocess,
+            deserializer=self.deserializer,
+        )
 
     def available_data_sources(self) -> Sequence[str]:
         """Get the list of available data source names for use with this

@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader, IterableDataset
 
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential, _SerializeProcessor
-from flash.core.data.data_source import DataSource
+from flash.core.data.data_source import DataSource, DataSourceCollection
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
@@ -94,13 +94,15 @@ class DataPipeline:
     def __init__(
         self,
         data_source: Optional[DataSource] = None,
+        data_source_collection: Optional[DataSourceCollection] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         deserializer: Optional[Deserializer] = None,
         serializer: Optional[Serializer] = None,
     ) -> None:
-        self.data_source = data_source
 
+        self._data_source = data_source
+        self._data_source_collection = data_source_collection
         self._preprocess_pipeline = preprocess or DefaultPreprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
         self._serializer = serializer or Serializer()
@@ -113,8 +115,8 @@ class DataPipeline:
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         data_pipeline_state._initialized = False
-        if self.data_source is not None:
-            self.data_source.attach_data_pipeline_state(data_pipeline_state)
+        if self._data_source is not None:
+            self._data_source.attach_data_pipeline_state(data_pipeline_state)
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._serializer.attach_data_pipeline_state(data_pipeline_state)
@@ -559,7 +561,7 @@ class DataPipeline:
             model.predict_step = model.predict_step._original
 
     def __str__(self) -> str:
-        data_source: DataSource = self.data_source
+        data_source: DataSource = self._data_source
         preprocess: Preprocess = self._preprocess_pipeline
         postprocess: Postprocess = self._postprocess_pipeline
         serializer: Serializer = self._serializer

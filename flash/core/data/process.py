@@ -25,7 +25,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
@@ -182,9 +182,6 @@ class Preprocess(BasePreprocess, Properties):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        data_sources: Optional[Dict[str, "DataSource"]] = None,
-        deserializer: Optional["Deserializer"] = None,
-        default_data_source: Optional[str] = None,
     ):
         super().__init__()
 
@@ -211,18 +208,8 @@ class Preprocess(BasePreprocess, Properties):
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
 
-        if DefaultDataSources.DATASETS not in data_sources:
-            data_sources[DefaultDataSources.DATASETS] = DatasetDataSource()
-
-        self._data_sources = data_sources
-        self._deserializer = deserializer
-        self._default_data_source = default_data_source
         self._callbacks: List[FlashCallback] = []
         self._default_collate: Callable = default_collate
-
-    @property
-    def deserializer(self) -> Optional["Deserializer"]:
-        return self._deserializer
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
@@ -412,15 +399,6 @@ class Preprocess(BasePreprocess, Properties):
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
         return self.current_transform(batch)
-
-    def available_data_sources(self) -> Sequence[str]:
-        """Get the list of available data source names for use with this
-        :class:`~flash.core.data.process.Preprocess`.
-
-        Returns:
-            The list of data source names.
-        """
-        return list(self._data_sources.keys())
 
     def data_source_of_name(self, data_source_name: str) -> DataSource:
         """Get the :class:`~flash.core.data.data_source.DataSource` of the given name from the

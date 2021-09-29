@@ -36,7 +36,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource
+from flash.core.data.data_source import DataSourceCollection
 from flash.core.data.process import (
     Deserializer,
     DeserializerMapping,
@@ -341,6 +341,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
+        self._data_source_collection: Optional[DataSourceCollection] = None
 
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
@@ -450,7 +451,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
+        dataset = data_pipeline._data_source.generate_dataset(x, running_stage)
         dataloader = self.process_predict_dataset(dataset)
         x = list(dataloader.dataset)
         x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
@@ -545,6 +546,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @property
+    def data_source_collection(self) -> Optional[DataSourceCollection]:
+        return self._data_source_collection
+
+    @data_source_collection.setter
+    def data_source_collection(self, data_source_collection: DataSourceCollection):
+        self._data_source_collection = data_source_collection
+
+    @torch.jit.unused
+    @property
     def serializer(self) -> Optional[Serializer]:
         """The current :class:`.Serializer` associated with this model.
 
@@ -586,10 +596,21 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         # Datamodule
         datamodule = None
+
         if self.trainer is not None and hasattr(self.trainer, "datamodule"):
             datamodule = self.trainer.datamodule
+
         elif getattr(self, "datamodule", None) is not None:
             datamodule = self.datamodule
+
+        if not self._data_source_collection:
+            data_source_collection = getattr(datamodule, "data_source_collection", None)
+        else:
+            data_source_collection = self._data_source_collection
+
+        if data_source_collection:
+            self._data_source_collection = data_source_collection
+            data_source = data_source_collection[data_source]
 
         if getattr(datamodule, "data_pipeline", None) is not None:
             old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
@@ -625,16 +646,17 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         data_source = data_source or old_data_source
 
-        if isinstance(data_source, str):
-            if preprocess is None:
-                data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
-            else:
-                data_source = preprocess.data_source_of_name(data_source)
-
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
+        data_pipeline = DataPipeline(
+            data_source=data_source,
+            data_source_collection=data_source_collection,
+            preprocess=preprocess,
+            postprocess=postprocess,
+            deserializer=deserializer,
+            serializer=serializer,
+        )
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
@@ -669,6 +691,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             getattr(data_pipeline, "_serializer", None),
         )
 
+        self._data_source_collection = getattr(data_pipeline, "_data_source_collection", None)
+
         # self._preprocess.state_dict()
         if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
@@ -677,6 +701,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     @property
     def preprocess(self) -> Preprocess:
         return getattr(self.data_pipeline, "_preprocess_pipeline", None)
+
+    @torch.jit.unused
+    @property
+    def data_source_collection(self) -> DataSourceCollection:
+        return getattr(self.data_pipeline, "_data_source_collection", None)
 
     @torch.jit.unused
     @property

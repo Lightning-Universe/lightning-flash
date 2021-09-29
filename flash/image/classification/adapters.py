@@ -141,7 +141,7 @@ class Learn2LearnAdapter(Adapter):
 
         super().__init__()
 
-        self._task = NoModule(task)
+        self.__dict__["_task"] = task
         self.backbone = backbone
         self.head = head
         self.algorithm_cls = algorithm_cls
@@ -327,7 +327,7 @@ class Learn2LearnAdapter(Adapter):
             warning_cache.warn(
                 "When using a meta-learning training_strategy, the batch_size should be set to 1. "
                 "HINT: You can modify the `meta_batch_size` to 100 for example by doing "
-                f"{type(self._task.task)}" + "(training_strategies_kwargs={'meta_batch_size': 100})"
+                "(training_strategies_kwargs={'meta_batch_size': 100})"
             )
         return 1
 
@@ -479,7 +479,7 @@ class DefaultAdapter(Adapter):
     def __init__(self, task: AdapterTask, backbone: torch.nn.Module, head: torch.nn.Module):
         super().__init__()
 
-        self._task = NoModule(task)
+        self.__dict__["_task"] = task
         self.backbone = backbone
         self.head = head
 
@@ -497,19 +497,19 @@ class DefaultAdapter(Adapter):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return Task.training_step(self._task.task, batch, batch_idx)
+        return Task.training_step(self.__dict__["_task"], batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return Task.validation_step(self._task.task, batch, batch_idx)
+        return Task.validation_step(self.__dict__["_task"], batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return Task.test_step(self._task.task, batch, batch_idx)
+        return Task.test_step(self.__dict__["_task"], batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DefaultDataKeys.PREDS] = Task.predict_step(
-            self._task.task, (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+            self.__dict__["_task"], (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
         )
         return batch
 
