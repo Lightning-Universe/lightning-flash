@@ -25,8 +25,6 @@ import pytorch_lightning as pl
 import torch
 import torchmetrics
 from pytorch_lightning.callbacks import Callback
-
-# from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -35,7 +33,7 @@ import flash
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, Image  # , _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TEXT_AVAILABLE, Image
 from flash.image import ImageClassificationData, ImageClassifier
 from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
 
@@ -289,28 +287,39 @@ def test_available_backbones():
 
 
 @ClassificationTask.schedulers
-def custom_steplr_configuration(optimizer):
-    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
+def custom_steplr_configuration_return_as_instance(optimizer):
+    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
 
 
-@pytest.mark.parametrize("optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5)])
+@ClassificationTask.schedulers
+def custom_steplr_configuration_return_as_dict(optimizer):
+    return {
+        "scheduler": torch.optim.lr_scheduler.StepLR(optimizer, step_size=10),
+        "name": "A_Really_Cool_Name",
+        "interval": "step",
+        "frequency": 1,
+        "reduce_on_plateau": False,
+        "monitor": None,
+        "strict": True,
+        "opt_idx": None,
+    }
+
+
 @pytest.mark.parametrize(
-    "sched",
+    "optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5), ("Adadelta", {"eps": 0.5})]
+)
+@pytest.mark.parametrize(
+    "sched, interval",
     [
-        None,
-        "custom_steplr_configuration",
-        functools.partial(torch.optim.lr_scheduler.StepLR, step_size=1),
-        ("StepLR", (1,)),
-        (
-            {
-                "scheduler": "StepLR",
-                "interval": None,  # after epoch is over
-            },
-            (1,),
-        ),
+        (None, "epoch"),
+        ("custom_steplr_configuration_return_as_instance", "epoch"),
+        ("custom_steplr_configuration_return_as_dict", "step"),
+        (functools.partial(torch.optim.lr_scheduler.StepLR, step_size=10), "epoch"),
+        (("StepLR", {"step_size": 10}), "step"),
+        (("StepLR", {"step_size": 10, "interval": None}), "step"),
     ],
 )
-def test_optimizers_and_schedulers(tmpdir, optim, sched):
+def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
 
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     task = ClassificationTask(model, optimizer=optim, scheduler=sched)
@@ -322,12 +331,10 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched):
     else:
         optimizer, scheduler = task.configure_optimizers()
         assert isinstance(optimizer[0], torch.optim.Adadelta)
+
         scheduler = scheduler[0]
-        if isinstance(scheduler, dict):
-            assert isinstance(scheduler["scheduler"], torch.optim.lr_scheduler.StepLR)
-            assert scheduler["interval"] == "step"
-        else:
-            assert isinstance(scheduler, torch.optim.lr_scheduler.StepLR)
+        assert isinstance(scheduler["scheduler"], torch.optim.lr_scheduler.StepLR)
+        assert scheduler["interval"] == interval
 
     # generate a checkpoint
     trainer = flash.Trainer(
@@ -338,13 +345,14 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched):
     trainer.fit(task, train_dl)
 
 
+@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
 @pytest.mark.parametrize("optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5)])
 @pytest.mark.parametrize(
     "sched",
     [
         "constant_schedule",
-        ("cosine_schedule_with_warmup", (0.1,)),
-        ("cosine_with_hard_restarts_schedule_with_warmup", (0.1, 3)),
+        ("cosine_schedule_with_warmup", {"num_warmup_steps": 0.1}),
+        ("cosine_with_hard_restarts_schedule_with_warmup", {"num_warmup_steps": 0.1, "num_cycles": 3}),
     ],
 )
 def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
@@ -361,7 +369,7 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
 
     optimizer, scheduler = task.configure_optimizers()
     assert isinstance(optimizer[0], torch.optim.Adadelta)
-    assert isinstance(scheduler[0], torch.optim.lr_scheduler.LambdaLR)
+    assert isinstance(scheduler[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
 
 def test_classification_task_metrics():

@@ -315,11 +315,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         model: Optional[nn.Module] = None,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         learning_rate: float = 5e-5,
-        optimizer: Union[Callable[..., torch.optim.Optimizer], str] = "Adam",
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
         # optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[
-            Union[Union[str, Dict[str, Any]], Callable, Tuple[Union[str, Dict[str, Any]], Tuple[Any, ...]]]
-        ] = None,
+        scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         # scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
@@ -332,9 +330,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer = optimizer
+        if isinstance(self.optimizer, Tuple):
+            assert isinstance(self.optimizer[0], str) or isinstance(self.optimizer[0], Callable)
+
         self.scheduler = scheduler
         if isinstance(self.scheduler, Tuple):
-            assert isinstance(self.scheduler[0], (str, dict))
+            assert isinstance(self.scheduler[0], str) or isinstance(self.scheduler[0], Callable)
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
@@ -480,10 +481,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         if isinstance(self.optimizer, str):
-            self.optimizer = self.optimizers.get(self.optimizer.lower())
+            optimizer_fn = self.optimizers.get(self.optimizer.lower())
+            _optimizers_kwargs: Dict[str, Any] = {}
+        elif isinstance(self.optimizer, Callable):
+            optimizer_fn = self.optimizer
+            _optimizers_kwargs: Dict[str, Any] = {}
+        elif isinstance(self.optimizer, Tuple):
+            optimizer_fn: Callable = None
+            optimizer_key: str = self.optimizer[0]
+
+            if not isinstance(optimizer_key, str):
+                raise MisconfigurationException(
+                    f"Please provide a key from the available optimizers. \
+                    Refer to {self.__class__.__name__}.available_optimizers"
+                )
+
+            optimizer_fn = self.optimizers.get(optimizer_key.lower())
+            _optimizers_kwargs: Dict[str, Any] = self.optimizer[1]
+        else:
+            raise TypeError(
+                f"Optimizer should be of type string or callable or tuple(string, dictionary) \
+                    but got {type(self.optimizer)}."
+            )
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-        optimizer: Optimizer = self.optimizer(model_parameters, lr=self.learning_rate)
+        optimizer: Optimizer = optimizer_fn(model_parameters, lr=self.learning_rate, **_optimizers_kwargs)
         # if not isinstance(self.optimizer, Optimizer):
         #     self.optimizer_kwargs["lr"] = self.learning_rate
         #     optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), **self.optimizer_kwargs)
@@ -833,46 +855,86 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return round(num_warmup_steps)
 
     def _instantiate_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
-        if isinstance(self.scheduler, Callable):
-            return self.scheduler(optimizer)
+        if isinstance(self.scheduler, str) or isinstance(self.scheduler, Callable):
 
-        if isinstance(self.scheduler, str):
-            return self.schedulers.get(self.scheduler)(optimizer)
+            # Get values based in type.
+            if isinstance(self.scheduler, str):
+                _scheduler = self.schedulers.get(self.scheduler, with_metadata=True)
+                scheduler_fn: Callable = _scheduler["fn"]
+                scheduler_metadata: Dict[str, Any] = _scheduler["metadata"]
+            else:
+                scheduler_fn: Callable = self.scheduler
+
+            # Generate the output: could be a scheduler object or a scheduler config.
+            sched_output: Union[_LRScheduler, Dict[str, Any]] = scheduler_fn(optimizer)
+
+            # Create and/or update a scheduler configuration
+            scheduler_config = _get_default_scheduler_config()
+            if isinstance(sched_output, _LRScheduler):
+                scheduler_config["scheduler"] = sched_output
+                if isinstance(self.scheduler, str) and "interval" in scheduler_metadata.keys():
+                    scheduler_config["interval"] = scheduler_metadata["interval"]
+            elif isinstance(sched_output, dict):
+                for key, value in sched_output.items():
+                    scheduler_config[key] = value
+            else:
+                if isinstance(self.scheduler, str):
+                    message = "register a custom callable"
+                else:
+                    message = "provide a callable"
+                raise MisconfigurationException(
+                    f"Please {message} that outputs either an LR Scheduler or a scheduler condifguration."
+                )
+
+            return scheduler_config
 
         if not isinstance(self.scheduler, Tuple):
             raise TypeError("The scheduler arguments should be provided as a tuple.")
 
-        scheduler_key_or_config = self.scheduler[0]
-        scheduler_args = self.scheduler[1]
+        if not isinstance(self.scheduler[0], str):
+            raise TypeError(
+                f"The first value in scheduler argument tuple should be either a string or a callable \
+                    but got {type(self.scheduler[0])}."
+            )
 
-        if isinstance(scheduler_key_or_config, dict):
-            scheduler_key = scheduler_key_or_config["scheduler"]
-            scheduler_config = scheduler_key_or_config
-        else:
-            scheduler_key = scheduler_key_or_config
-            scheduler_config = _get_default_scheduler_config()
-            scheduler_config["interval"] = None
+        # Separate the key and the kwargs.
+        scheduler_key_or_fn: Union[str, Callable] = self.scheduler[0]
+        scheduler_kwargs_and_config: Dict[str, Any] = self.scheduler[1]
 
-        scheduler_config = deepcopy(scheduler_config)
+        # Get the default scheduler config.
+        scheduler_config: Dict[str, Any] = _get_default_scheduler_config()
+        scheduler_config["interval"] = None
 
-        scheduler = self.schedulers.get(scheduler_key.lower(), with_metadata=True)
-        scheduler_fn = scheduler["fn"]
-        scheduler_metadata = scheduler["metadata"]
+        # Update scheduler config from the kwargs and pop the keys from the kwargs at the same time.
+        for config_key, config_value in scheduler_config.items():
+            scheduler_config[config_key] = scheduler_kwargs_and_config.pop(config_key, None) or config_value
 
+        # Create a new copy of the kwargs.
+        scheduler_kwargs = deepcopy(scheduler_kwargs_and_config)
+        assert all(config_key not in scheduler_kwargs.keys() for config_key in scheduler_config.keys())
+
+        # Retreive the scheduler callable with metadata from the registry.
+        _scheduler = self.schedulers.get(scheduler_key_or_fn.lower(), with_metadata=True)
+        scheduler_fn: Callable = _scheduler["fn"]
+        scheduler_metadata: Dict[str, Any] = _scheduler["metadata"]
+
+        # Make necessary adjustment to the kwargs based on the provider of the scheduler.
         if "providers" in scheduler_metadata.keys():
             if scheduler_metadata["providers"] == providers._HUGGINGFACE:
                 num_training_steps: int = self.get_num_training_steps()
                 num_warmup_steps: int = self._compute_warmup(
                     num_training_steps=num_training_steps,
-                    num_warmup_steps=scheduler_args[0],  # num_warmup_steps is the first arg in all schedulers
+                    num_warmup_steps=scheduler_kwargs["num_warmup_steps"],
                 )
-                if scheduler["name"] == "constant_schedule_with_warmup":
-                    scheduler_args = (num_warmup_steps, *scheduler_args[1:])
-                else:
-                    scheduler_args = (num_warmup_steps, num_training_steps, *scheduler_args[1:])
+                scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
+                scheduler_kwargs["num_training_steps"] = num_training_steps
 
-        scheduler_config["scheduler"] = scheduler_fn(optimizer, *scheduler_args)
-        scheduler_config["interval"] = scheduler_config["interval"] or scheduler_metadata["interval"]
+        # Set the scheduler in the config.
+        scheduler_config["scheduler"] = scheduler_fn(optimizer, **scheduler_kwargs)
+
+        # Update the interval in sched config just in case it has NoneType.
+        if "interval" in scheduler_metadata.keys():
+            scheduler_config["interval"] = scheduler_config["interval"] or scheduler_metadata["interval"]
         return scheduler_config
 
     def _load_from_state_dict(
