@@ -436,9 +436,16 @@ class Preprocess(BasePreprocess, Properties):
             MisconfigurationException: If the requested data source is not configured by this
                 :class:`~flash.core.data.process.Preprocess`.
         """
-        _DATASOURCE_REGISTRY.get(data_source_name)
         if data_source_name == "default":
             data_source_name = self._default_data_source
+
+        # FUTURE DEPRECATION
+        __datasource_class_keys = {
+            str(ds): str(source._get_registry_key()) for ds, source in self._data_sources.items()
+        }
+        # print(__datasource_class_keys, data_source_name)
+        return _DATASOURCE_REGISTRY.get(__datasource_class_keys[str(data_source_name)])
+
         data_sources = self._data_sources
         if data_source_name in data_sources:
             return data_sources[data_source_name]
