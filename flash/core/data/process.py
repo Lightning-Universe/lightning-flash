@@ -182,7 +182,9 @@ class Preprocess(BasePreprocess, Properties):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        data_sources: Optional[Dict[str, "DataSource"]] = None,
         deserializer: Optional["Deserializer"] = None,
+        default_data_source: Optional[str] = None,
     ):
         super().__init__()
 
@@ -209,7 +211,12 @@ class Preprocess(BasePreprocess, Properties):
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
 
+        if DefaultDataSources.DATASETS not in data_sources:
+            data_sources[DefaultDataSources.DATASETS] = DatasetDataSource()
+
+        self._data_sources = data_sources
         self._deserializer = deserializer
+        self._default_data_source = default_data_source
         self._callbacks: List[FlashCallback] = []
         self._default_collate: Callable = default_collate
 
@@ -406,6 +413,39 @@ class Preprocess(BasePreprocess, Properties):
         """
         return self.current_transform(batch)
 
+    def available_data_sources(self) -> Sequence[str]:
+        """Get the list of available data source names for use with this
+        :class:`~flash.core.data.process.Preprocess`.
+
+        Returns:
+            The list of data source names.
+        """
+        return list(self._data_sources.keys())
+
+    def data_source_of_name(self, data_source_name: str) -> DataSource:
+        """Get the :class:`~flash.core.data.data_source.DataSource` of the given name from the
+        :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            data_source_name: The name of the data source to look up.
+
+        Returns:
+            The :class:`~flash.core.data.data_source.DataSource` of the given name.
+
+        Raises:
+            MisconfigurationException: If the requested data source is not configured by this
+                :class:`~flash.core.data.process.Preprocess`.
+        """
+        if data_source_name == "default":
+            data_source_name = self._default_data_source
+        data_sources = self._data_sources
+        if data_source_name in data_sources:
+            return data_sources[data_source_name]
+        raise MisconfigurationException(
+            f"No '{data_source_name}' data source is available for use with the {type(self)}. The available data "
+            f"sources are: {', '.join(self.available_data_sources())}."
+        )
+
 
 class DefaultPreprocess(Preprocess):
     def __init__(
@@ -414,12 +454,16 @@ class DefaultPreprocess(Preprocess):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        data_sources: Optional[Dict[str, "DataSource"]] = None,
+        default_data_source: Optional[str] = None,
     ):
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
+            data_sources=data_sources or {"default": DataSource()},
+            default_data_source=default_data_source or "default",
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
