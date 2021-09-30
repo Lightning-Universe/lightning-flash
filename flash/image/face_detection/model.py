@@ -79,7 +79,7 @@ class FaceDetector(Task):
         if model in ff.list_pretrained_models():
             model = FaceDetector.get_model(model, pretrained, **kwargs)
         else:
-            ValueError(model + " is not supported yet, please select one from {}".format(ff.list_pretrained_models()))
+            ValueError(model + f" is not supported yet, please select one from {ff.list_pretrained_models()}")
 
         super().__init__(
             model=model,
