@@ -180,7 +180,35 @@ ImageClassifier.available_schedulers()
 Once you've chosen, create the model:
 
 ```py
-model = ImageClassifier(backbone="resnet18", optimizer='yogi', scheduler="cosine_with_hard_restarts_schedule_with_warmup", num_classes=2)
+#### The optimizer of choice can be passed as a
+# - String value
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=None)
+
+# - Callable
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=functools.partial(torch.optim.AdaDelta, eps=0.5), lr_scheduler=None)
+
+# - Tuple[string, dict]: (The dict takes in the optimizer kwargs)
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=("AdaDelta", {"epa": 0.5}), lr_scheduler=None)
+
+#### The scheduler of choice can be passed as a
+# - String value
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler="constant_schedule")
+
+# - Callable
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=functools.partial(CyclicLR, step_size_up=1500, mode='exp_range', gamma=0.5))
+
+# - Tuple[string, dict]: (The dict takes in the scheduler kwargs)
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=("StepLR", {"step_size": 10]))
+```
+
+You can also register you own custom scheduler recipes beforeahand and use them shown as above:
+
+```py
+@ImageClassifier.lr_schedulers
+def my_steplr_recipe(optimizer):
+    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
+
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler="my_steplr_recipe")
 ```
 
 ### Flash Transforms
