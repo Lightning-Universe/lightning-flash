@@ -34,7 +34,7 @@ import flash
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TEXT_AVAILABLE, _TORCH_OPTIMIZER_AVAILABLE, Image
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
 from flash.image import ImageClassificationData, ImageClassifier
 from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
 
@@ -362,7 +362,7 @@ def test_external_optimizers_torch_optimizer(tmpdir, optim):
     assert isinstance(optimizer, Yogi)
 
 
-@pytest.mark.skipif(not _TEXT_AVAILABLE, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TRANSFORMERS_AVAILABLE, reason="transformers library isn't installed.")
 @pytest.mark.parametrize("optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5)])
 @pytest.mark.parametrize(
     "sched",
@@ -373,11 +373,6 @@ def test_external_optimizers_torch_optimizer(tmpdir, optim):
     ],
 )
 def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
-
-    #     with pytest.raises(MisconfigurationException, match="The LightningModule isn't attached to the trainer yet."):
-    #         task = ClassificationTask(model, optimizer=optim, scheduler="linear_schedule_with_warmup")
-    #         optimizer, scheduler = task.configure_optimizers()
-
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     task = ClassificationTask(model, optimizer=optim, lr_scheduler=sched, loss_fn=F.nll_loss)
     trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
