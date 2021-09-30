@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-
 import torch
-import flash
 
+import flash
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.image import FaceDetectionData, FaceDetector
