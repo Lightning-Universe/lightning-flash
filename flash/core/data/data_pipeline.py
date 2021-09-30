@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader, IterableDataset
 
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential, _SerializeProcessor
-from flash.core.data.data_source import DataSource, DataSourceCollection
+from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
@@ -94,7 +94,7 @@ class DataPipeline:
     def __init__(
         self,
         data_source: Optional[DataSource] = None,
-        data_source_collection: Optional[DataSourceCollection] = None,
+        data_source_collection: Optional[Any] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         deserializer: Optional[Deserializer] = None,

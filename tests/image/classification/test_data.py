@@ -20,9 +20,11 @@ import numpy as np
 import pytest
 import torch
 import torch.nn as nn
+from pytorch_lightning.utilities.enums import LightningEnum
 
 import flash
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import (
     _ALBUMENTATIONS_AVAILABLE,
@@ -33,11 +35,7 @@ from flash.core.utilities.imports import (
     _TORCHVISION_AVAILABLE,
 )
 from flash.image import ImageClassificationData, ImageClassifier
-from flash.image.classification.data import (
-    ImageClassificationDataModule,
-    ImageClassificationLoader,
-    ImageClassificationPreprocessV2,
-)
+from flash.image.classification.data import ImageClassificationDataModule, ImageClassificationLoader
 from flash.image.classification.transforms import AlbumentationsAdapter, default_transforms
 from tests.helpers.utils import _IMAGE_TESTING
 
@@ -622,28 +620,13 @@ def test_albumentations_mixup(single_target_csv):
 
 def test_data_source_collection(single_target_csv, tmpdir):
 
-    loader = ImageClassificationLoader()
-
-    preprocess = ImageClassificationPreprocessV2(
-        train_transform=default_transforms((256, 256)),
-        predict_transform=default_transforms((256, 256)),
-    )
-
-    loader.from_csv(
-        "image",
-        "target",
-        train_file=single_target_csv,
-        predict_file=single_target_csv,
-    )
-
-    assert loader._train_ds
-    assert not loader._val_ds
-    assert not loader._test_ds
-    assert loader._predict_ds
-
-    dm = ImageClassificationDataModule.from_components(
-        loader=loader,
-        preprocess=preprocess,
+    dm = ImageClassificationDataModule(
+        loader=ImageClassificationLoader.from_csv(
+            "image",
+            "target",
+            train_file=single_target_csv,
+            predict_file=single_target_csv,
+        )
     )
 
     batch = next(iter(dm.train_dataloader()))

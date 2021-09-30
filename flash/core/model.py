@@ -36,7 +36,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSourceCollection
+from flash.core.data.data_source import Any
 from flash.core.data.process import (
     Deserializer,
     DeserializerMapping,
@@ -341,7 +341,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._serializer: Optional[Serializer] = None
-        self._data_source_collection: Optional[DataSourceCollection] = None
+        self._data_source_collection: Optional[Any] = None
 
         # Explicitly set the serializer to call the setter
         self.deserializer = deserializer
@@ -546,11 +546,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @property
-    def data_source_collection(self) -> Optional[DataSourceCollection]:
+    def data_source_collection(self) -> Optional[Any]:
         return self._data_source_collection
 
     @data_source_collection.setter
-    def data_source_collection(self, data_source_collection: DataSourceCollection):
+    def data_source_collection(self, data_source_collection: Any):
         self._data_source_collection = data_source_collection
 
     @torch.jit.unused
@@ -610,7 +610,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         if data_source_collection:
             self._data_source_collection = data_source_collection
-            data_source = data_source_collection[data_source]
+            data_source = data_source_collection.get(data_source)
 
         if getattr(datamodule, "data_pipeline", None) is not None:
             old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
@@ -704,7 +704,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @property
-    def data_source_collection(self) -> DataSourceCollection:
+    def data_source_collection(self) -> Any:
         return getattr(self.data_pipeline, "_data_source_collection", None)
 
     @torch.jit.unused

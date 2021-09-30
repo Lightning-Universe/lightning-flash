@@ -41,7 +41,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DataSourceCollection, DefaultDataSources
+from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.process import Deserializer
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
@@ -85,7 +85,7 @@ class DataModule(pl.LightningDataModule):
 
     preprocess_cls = DefaultPreprocess
     postprocess_cls = Postprocess
-    data_source_collection_cls = DataSourceCollection
+    data_source_collection_cls = Any
     deserializer_cls = Deserializer
 
     def __init__(
@@ -95,7 +95,7 @@ class DataModule(pl.LightningDataModule):
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
         data_source: Optional[DataSource] = None,
-        data_source_collection: Optional[DataSourceCollection] = None,
+        data_source_collection: Optional[Any] = None,
         deserializer: Optional[Deserializer] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
@@ -435,7 +435,7 @@ class DataModule(pl.LightningDataModule):
         return self._postprocess or self.postprocess_cls()
 
     @property
-    def data_source_collection(self) -> Optional[DataSourceCollection]:
+    def data_source_collection(self) -> Optional[Any]:
         return self._data_source_collection
 
     def deserializer(self) -> Optional[Deserializer]:

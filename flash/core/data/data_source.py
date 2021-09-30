@@ -14,6 +14,7 @@
 import os
 import typing
 import warnings
+from collections import OrderedDict
 from dataclasses import dataclass
 from functools import partial
 from inspect import signature
@@ -30,6 +31,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
     Tuple,
     TYPE_CHECKING,
     TypeVar,
@@ -41,6 +43,7 @@ import pandas as pd
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
@@ -48,6 +51,7 @@ from tqdm import tqdm
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
@@ -352,68 +356,6 @@ class DataSource(Generic[DATA_TYPE], Properties, Module):
             return dataset
 
 
-class DataSourceCollection(dict):
-    def __init__(self, data_sources: Dict[str, DataSource], default_data_source: str):
-        super().__init__(**data_sources)
-        self.default_data_source = default_data_source
-        self[None] = self[default_data_source]
-        self["default"] = self[default_data_source]
-
-        self._train_ds: Optional[BaseAutoDataset] = None
-        self._val_ds: Optional[BaseAutoDataset] = None
-        self._test_ds: Optional[BaseAutoDataset] = None
-        self._predict_ds: Optional[BaseAutoDataset] = None
-
-        self._data_source: Optional[DataSource] = None
-
-    def _execute(self, data_source_enum: DefaultDataSources, *args, **kwargs):
-        if data_source_enum in self:
-            func_name = f"from_{data_source_enum.name.lower()}"
-            self._data_source = getattr(self[data_source_enum], func_name)
-            self._train_ds, self._val_ds, self._test_ds, self._predict_ds = self._data_source(*args, **kwargs)
-            return
-        raise NotImplementedError
-
-    def from_folders(self, *args, **kwargs):
-        self._execute(DefaultDataSources.FOLDERS, *args, **kwargs)
-
-    def from_files(self, *args, **kwargs):
-        self._execute(DefaultDataSources.FILES, *args, **kwargs)
-
-    def from_numpy(self, *args, **kwargs):
-        self._execute(DefaultDataSources.NUMPY, *args, **kwargs)
-
-    def from_tensors(self, *args, **kwargs):
-        self._execute(DefaultDataSources.TENSORS, *args, **kwargs)
-
-    def from_csv(self, *args, **kwargs):
-        self._execute(DefaultDataSources.CSV, *args, **kwargs)
-
-    def from_json(self, *args, **kwargs):
-        self._execute(DefaultDataSources.JSON, *args, **kwargs)
-
-    def from_datasets(self, *args, **kwargs):
-        self._execute(DefaultDataSources.DATASETS, *args, **kwargs)
-
-    def from_fiftyone(self, *args, **kwargs):
-        self._execute(DefaultDataSources.FIFTYONE, *args, **kwargs)
-
-    def from_dataframe(self, *args, **kwargs):
-        self._execute(DefaultDataSources.DATAFRAME, *args, **kwargs)
-
-    def from_lists(self, *args, **kwargs):
-        self._execute(DefaultDataSources.LISTS, *args, **kwargs)
-
-    def from_sentences(self, *args, **kwargs):
-        self._execute(DefaultDataSources.SENTENCES, *args, **kwargs)
-
-    def from_labelstudio(self, *args, **kwargs):
-        self._execute(DefaultDataSources.LABELSTUDIO, *args, **kwargs)
-
-
-SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
-
-
 class DatasetDataSource(DataSource[Dataset]):
     """The ``DatasetDataSource`` implements default behaviours for data sources which expect the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
@@ -427,6 +369,47 @@ class DatasetDataSource(DataSource[Dataset]):
         if isinstance(sample, tuple) and len(sample) == 2:
             return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
         return {DefaultDataKeys.INPUT: sample}
+
+
+class _DataSourceLoaderMeta(type):
+    @staticmethod
+    def available_constructors(cls: Any = None) -> List[str]:
+        return [name for name in dir(cls) if name.startswith("from_")]
+
+    def __new__(metacls, class_name: str, class_bases: tuple, class_attrs: OrderedDict):
+
+        data_sources_registry: FlashRegistry = class_attrs.get("data_sources_registry", None)
+        if not isinstance(data_sources_registry, FlashRegistry):
+            raise MisconfigurationException(
+                "A `data_sources_registry` attribute of type FlashRegistry should be defined."
+            )
+
+        default_data_source = class_attrs.get("default_data_source", None)
+        if not isinstance(default_data_source, DefaultDataSources):
+            raise MisconfigurationException(
+                "A `default_data_source` attribute of type DefaultDataSources should be defined."
+            )
+
+        if DefaultDataSources.DATASETS not in data_sources_registry.available_keys():
+            data_sources_registry(name=DefaultDataSources.DATASETS, fn=DatasetDataSource)
+
+        available_func_names: Set[str] = {f"from_{key.name.lower()}" for key in data_sources_registry.available_keys()}
+
+        func_names = {func_name for func_name in class_attrs.keys() if func_name.startswith("from_")}
+        func_names.update(func_name for func_name in dir(class_bases[0]) if func_name.startswith("from_"))
+
+        for func_name in func_names:
+            if func_name not in available_func_names and func_name != "from_data_source":
+                class_attrs[func_name] = None
+
+        cls = type.__new__(metacls, class_name, class_bases, class_attrs)
+
+        cls.available_constructors = partial(cls.available_constructors, cls)
+        return cls
+
+
+DataSourceCollection = object()
+SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
 
 class SequenceDataSource(

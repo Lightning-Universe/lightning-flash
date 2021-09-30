@@ -19,6 +19,7 @@ from torch.utils.data import Dataset, IterableDataset
 
 import flash
 from flash.core.data.utils import CurrentRunningStageFuncContext
+from flash.core.registry import FlashRegistry
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
