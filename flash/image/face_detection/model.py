@@ -79,7 +79,7 @@ class FaceDetector(Task):
         if model in ff.list_pretrained_models():
             model = FaceDetector.get_model(model, pretrained, **kwargs)
         else:
-            ValueError(f"{model} is not supported yet.")
+            ValueError(model + " is not supported yet, please select one from {}".format(ff.list_pretrained_models()))
 
         super().__init__(
             model=model,
@@ -93,8 +93,8 @@ class FaceDetector(Task):
 
     @staticmethod
     def get_model(
-        model_name,
-        pretrained,
+        model_name: str,
+        pretrained: bool,
         **kwargs,
     ):
         model, pl_model = FACE_DETECTION_BACKBONES.get(model_name)(pretrained=pretrained, **kwargs)

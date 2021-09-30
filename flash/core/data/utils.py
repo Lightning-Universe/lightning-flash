@@ -156,7 +156,7 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
                     try:
                         tar_ref.extract(member, path=extract_path, set_attrs=False)
                     except PermissionError:
-                        pass
+                        raise PermissionError("Could not extract tar file {}".format(file_path))
 
     if ".zip" in local_filename:
         if os.path.exists(local_filename):

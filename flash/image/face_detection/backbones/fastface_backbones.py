@@ -24,7 +24,7 @@ else:
     _MODEL_NAMES = []
 
 
-def fastface_backbone(model_name, pretrained, **kwargs):
+def fastface_backbone(model_name: str, pretrained: bool, **kwargs):
     if pretrained:
         pl_model = ff.FaceDetector.from_pretrained(model_name, **kwargs)
     else:
