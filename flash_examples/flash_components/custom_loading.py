@@ -143,10 +143,11 @@ loader = ImageClassificationLoader.from_multiple_folders(
 )
 
 assert isinstance(loader.train_dataset, AutoDataset)
-# the ``num_classes`` value was set line 75.
+# the ``num_classes`` value was set line 76.
 assert loader.train_dataset.num_classes == 2
 
-# the value was set only for training, so it doesn't exist for the predict_dataset
+# the ``num_classes`` value was set only for training as `self.training` was used,
+# so it doesn't exist for the predict_dataset
 with suppress(AttributeError):
     loader.predict_dataset.num_classes
 
