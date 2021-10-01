@@ -27,9 +27,10 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 
 #############################################################################################
 # Imagine you have some images and they are already sorted by classes in their own folder.  #
-# You would like to create your own loading mechanism people can re-use                     #
-# where people can load only a list of classes they are interested in.                      #
-# Importantly, the folders can be independent and not located at the same place.            #
+# You would like to create your own loading mechanism that people can re-use                #
+# Your loader would take a list of individual class folder and load the images from them    #
+# The folder paths are independent and when loading the order of folder.                    #
+# would determine the classification label.                                                 #
 # Note: This is simple enough to show you the flexibility of the Flash API.                 #
 #############################################################################################
 
