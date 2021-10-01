@@ -45,11 +45,11 @@ class AutoDatasetContainer:
             The constructed data module.
         """
 
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
+        self.test_dataset = test_dataset
+        self.predict_dataset = predict_dataset
         self._data_source = data_source
-        self._train_dataset = train_dataset
-        self._val_dataset = val_dataset
-        self._test_dataset = test_dataset
-        self._predict_dataset = predict_dataset
         self._data_source_kwargs = data_source_kwargs
 
     @classmethod
@@ -80,7 +80,7 @@ class AutoDatasetContainer:
         Returns:
             The constructed auto dataset container.
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.FOLDERS,
             train_folder,
             val_folder,
@@ -119,7 +119,7 @@ class AutoDatasetContainer:
         Returns:
             The constructed auto dataset container.
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.FILES,
             (train_files, train_targets),
             (val_files, val_targets),
@@ -158,7 +158,7 @@ class AutoDatasetContainer:
         Returns:
             The constructed auto dataset container.
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.TENSORS,
             (train_data, train_targets),
             (val_data, val_targets),
@@ -207,7 +207,7 @@ class AutoDatasetContainer:
                 },
             )
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.NUMPY,
             (train_data, train_targets),
             (val_data, val_targets),
@@ -276,7 +276,7 @@ class AutoDatasetContainer:
                 field="data"
             )
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.JSON,
             (train_file, input_fields, target_fields, field),
             (val_file, input_fields, target_fields, field),
@@ -321,7 +321,7 @@ class AutoDatasetContainer:
                 train_file="train_data.csv",
             )
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.CSV,
             (train_file, input_fields, target_fields),
             (val_file, input_fields, target_fields),
@@ -360,7 +360,7 @@ class AutoDatasetContainer:
                 train_dataset=train_dataset,
             )
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.DATASETS,
             train_dataset,
             val_dataset,
@@ -404,7 +404,7 @@ class AutoDatasetContainer:
                 train_data = train_dataset,
             )
         """
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.FIFTYONE,
             train_dataset,
             val_dataset,
@@ -493,7 +493,7 @@ class AutoDatasetContainer:
                 "export_json": predict_export_json,
                 "multi_label": data_source_kwargs.get("multi_label", False),
             }
-        return cls._from_data_source(
+        return cls.from_data_source(
             DefaultDataSources.LABELSTUDIO,
             train_data=train_data if train_data else data,
             val_data=val_data,
@@ -503,7 +503,7 @@ class AutoDatasetContainer:
         )
 
     @classmethod
-    def _from_data_source(
+    def from_data_source(
         cls,
         enum: LightningEnum,
         train_data: Optional[Any] = None,

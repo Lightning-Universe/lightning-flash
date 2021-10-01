@@ -56,12 +56,12 @@ def test_auto_dataset_container():
     with pytest.raises(MisconfigurationException, match="from_base"):
         _ = TestLoader2.from_datasets(train_dataset=range(10))
 
-    container = TestLoader2._from_data_source(
+    container = TestLoader2.from_data_source(
         TestEnum.BASE, train_data=range(10), predict_data=range(10), something="something"
     )
     assert isinstance(container._data_source, CustomDataSource)
-    assert container._train_dataset
-    assert not container._val_dataset
-    assert not container._test_dataset
-    assert container._predict_dataset
+    assert container.train_dataset
+    assert not container.val_dataset
+    assert not container.test_dataset
+    assert container.predict_dataset
     assert container._data_source_kwargs == dict(something="something")
