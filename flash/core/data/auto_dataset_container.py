@@ -34,15 +34,12 @@ class AutoDatasetContainer:
         """Container for AutoDataset.
 
         Args:
-            data_source: Current datasource used to create the datasets.
+            data_source: Current data source used to create the datasets.
             train_dataset: The train dataset generated from the data_source.
             val_dataset: The val dataset generated from the data_source.
             test_dataset: The test dataset generated from the data_source.
             predict_dataset: The predict dataset generated from the data_source
             data_source_kwargs: Kwargs used to generate the data source.
-
-        Returns:
-            The constructed data module.
         """
 
         self.train_dataset = train_dataset
