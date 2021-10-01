@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
 from torch import nn
-from torch.optim import Optimizer
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Preprocess, Serializer
@@ -57,6 +56,7 @@ class FaceDetector(Task):
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
         optimizer: The optimizer to use for training. Can either be the actual class or the class name.
+        lr_scheduler: The scheduler or scheduler class to use.
         learning_rate: The learning rate to use for training
     """
 
@@ -68,7 +68,8 @@ class FaceDetector(Task):
         pretrained: bool = True,
         loss=None,
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
-        optimizer: Type[Optimizer] = torch.optim.AdamW,
+        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
+        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
         learning_rate: float = 1e-4,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         preprocess: Optional[Preprocess] = None,
@@ -87,6 +88,7 @@ class FaceDetector(Task):
             metrics=metrics or {"AP": ff.metric.AveragePrecision()},  # TODO: replace with torch metrics MAP
             learning_rate=learning_rate,
             optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
             serializer=serializer or DetectionLabels(),
             preprocess=preprocess or FaceDetectionPreprocess(),
         )
