@@ -39,10 +39,6 @@ root = Path(__file__).parent.parent.parent
             "image_classification_active_learning.py",
             marks=pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="baal library isn't installed"),
         ),
-        pytest.param(
-            "flash_components",
-            "custom_loading.py",
-        ),
     ],
 )
 def test_integrations(tmpdir, folder, file):

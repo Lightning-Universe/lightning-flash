@@ -31,7 +31,7 @@ Imagine you have some images and they are already sorted by classes in their own
 You would like to create your own loading mechanism people can re-use
 where people can load only a list of classes they are interested in.
 Importantly, the folders can be independent and not located at the same place.
-Note: This is simple enough to shows you the flexibility of the Flash API.
+Note: This is simple enough to show you the flexibility of the Flash API.
 """
 
 # Step 1: Create an enum to describe your new loading mechanism
