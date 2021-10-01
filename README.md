@@ -34,9 +34,6 @@
   Flash makes complex AI recipes for over 15 tasks across 7 data domains accessible to all.
   <br / >
   In a nutshell, Flash is the production grade research framework you always dreamed of but didn't have time to build.
-  <a href="https://lightning-flash.readthedocs.io/en/stable">
-    <img src="https://pl-flash-data.s3.amazonaws.com/assets/banner.gif">
-  </a>
 </div>
 
 
