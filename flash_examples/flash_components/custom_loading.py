@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from contextlib import suppress
 from typing import List, Optional
 
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -142,8 +143,18 @@ loader = ImageClassificationLoader.from_multiple_folders(
 )
 
 assert isinstance(loader.train_dataset, AutoDataset)
-# the ``num_classes`` value was set line 64.
+# the ``num_classes`` value was set line 75.
 assert loader.train_dataset.num_classes == 2
+
+# the value was set only for training, so it doesn't exist for the predict_dataset
+with suppress(AttributeError):
+    loader.predict_dataset.num_classes
+
+# the val and test dataset are none as no val_data or test_data were provided.
+assert not loader.val_dataset
+assert not loader.val_dataset
+
+
 print(loader.train_dataset[0])
 # out:
 # {
