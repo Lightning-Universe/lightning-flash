@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -30,7 +31,8 @@ from tests.image.classification.test_data import _rand_image
 
 
 @pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
-def test_active_learning_training(tmpdir):
+@pytest.mark.parametrize('initial_num_labels, query_size', [(0, 5), (5, 5)])
+def test_active_learning_training(tmpdir, initial_num_labels, query_size):
     seed_everything(42)
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -59,15 +61,24 @@ def test_active_learning_training(tmpdir):
         image_size=image_size,
     )
 
-    active_learning_dm = ActiveLearningDataModule(
-        dm,
-        val_split=0.5,
-    )
+    with warnings.catch_warnings(record=True) as w:
+        active_learning_dm = ActiveLearningDataModule(
+            dm,
+            initial_num_labels=initial_num_labels,
+            query_size=query_size,
+            val_split=0.5,
+        )
+        if initial_num_labels == 0:
+            assert len(w) == 1
+            assert "No labels provided for the initial step" in str(w[-1].message)
+        else:
+            assert len(w) == 0
 
     head = nn.Sequential(
         nn.Dropout(p=0.1),
         nn.Linear(512, active_learning_dm.num_classes),
     )
+
     model = ImageClassifier(
         backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, serializer=Probabilities()
     )
@@ -78,8 +89,20 @@ def test_active_learning_training(tmpdir):
     trainer.fit_loop = active_learning_loop
 
     trainer.finetune(model, datamodule=active_learning_dm, strategy="freeze")
-    assert len(active_learning_dm._dataset) == 15
+    if initial_num_labels == 0:
+        assert len(active_learning_dm._dataset) == 15
+    else:
+        # the last batch is 4 samples!
+        assert len(active_learning_dm._dataset) == 19
     assert active_learning_loop.progress.total.completed == 3
     labelled = active_learning_loop.state_dict()["state_dict"]["datamodule_state_dict"]["labelled"]
     assert isinstance(labelled, np.ndarray)
-    assert len(active_learning_dm.val_dataloader()) == 4
+
+    if initial_num_labels == 0:
+        assert len(active_learning_dm.val_dataloader()) == 4
+    else:
+        # in the second scenario we have more labelled data!
+        assert len(active_learning_dm.val_dataloader()) == 5
+
+
+
