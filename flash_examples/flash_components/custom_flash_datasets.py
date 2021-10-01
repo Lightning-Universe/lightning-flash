@@ -15,11 +15,12 @@ import os
 from contextlib import suppress
 from typing import List, Optional
 
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 
-from flash.core.data.auto_dataset import AutoDataset
-from flash.core.data.auto_dataset_container import FlashDatasetContainer
-from flash.core.data.data_source import DataSource, DefaultDataKeys
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.flash_dataset_container import FlashDatasetContainer
+from flash.core.data.flash_datasets import FlashDataset
 from flash.core.data.utils import download_data
 from flash.core.registry import FlashRegistry
 
@@ -46,25 +47,29 @@ class CustomDataFormat(LightningEnum):
 
 
 #############################################################################################
-#                          Step 2 / 5: Implement a DataSource.                              #
+#                         Step 2 / 5: Implement a FlashDataset                              #
 #                                                                                           #
-# A DataSource is a state-aware (c.f training, validating, testing and predicting) dataset  #
+# A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)        #
+# dataset.                                                                                 #
 # and with specialized hooks (c.f load_data, load_sample) for each of those stages.         #
 # The hook resolution for the function is done in the following way.                        #
 # If {state}_load_data is implemented then it would be used exclusively for that stage.     #
 # Otherwise, it would use the load_data function.                                           #
-# `DataSource` can transform themselves into their PyTorch IterableDataset / Dataset        #
-# counterpart which is an AutoDataset/AutoIterableDataset in Flash.                         #
 #                                                                                           #
 #############################################################################################
 
+FOLDER_PATH = "./data/hymenoptera_data/train"
+TRAIN_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")]
+VAL_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")]
+PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
-class MultipleFoldersImage(DataSource):
-    def __init__(self, **data_source_kwargs):
+
+class MultipleFoldersImageDataset(FlashDataset):
+    def __init__(self, **dataset_kwargs):
         super().__init__()
-        self.data_source_kwargs = data_source_kwargs
+        self.dataset_kwargs = dataset_kwargs
 
-    def load_data(self, folders: Optional[List[str]], dataset: AutoDataset):
+    def load_data(self, folders: List[str]):
         data = []
         for class_idx, folder in enumerate(folders):
             data.extend(
@@ -74,7 +79,7 @@ class MultipleFoldersImage(DataSource):
                 ]
             )
         if self.training:
-            dataset.num_classes = len(folders)
+            self.num_classes = len(folders)
         return data
 
     def load_sample(self, sample):
@@ -82,6 +87,11 @@ class MultipleFoldersImage(DataSource):
 
     def predict_load_data(self, predict_folder: Optional[str]):
         return [{DefaultDataKeys.INPUT: os.path.join(predict_folder, p)} for p in os.listdir(predict_folder)]
+
+
+train_dataset = MultipleFoldersImageDataset.from_data(TRAIN_FOLDERS, RunningStage.TRAINING)
+val_dataset = MultipleFoldersImageDataset.from_data(VAL_FOLDERS, RunningStage.VALIDATING)
+predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, RunningStage.PREDICTING)
 
 
 #############################################################################################
@@ -95,7 +105,7 @@ class MultipleFoldersImage(DataSource):
 
 
 registry = FlashRegistry("image_classification_loader")
-registry(fn=MultipleFoldersImage, name=CustomDataFormat.MULTIPLE_FOLDERS)
+registry(fn=MultipleFoldersImageDataset, name=CustomDataFormat.MULTIPLE_FOLDERS)
 
 
 #############################################################################################
@@ -114,7 +124,7 @@ registry(fn=MultipleFoldersImage, name=CustomDataFormat.MULTIPLE_FOLDERS)
 #############################################################################################
 
 
-class ImageClassificationLoader(FlashDatasetContainer):
+class ImageClassificationContainer(FlashDatasetContainer):
 
     data_sources_registry = registry
     default_data_source = CustomDataFormat.MULTIPLE_FOLDERS
@@ -138,36 +148,36 @@ class ImageClassificationLoader(FlashDatasetContainer):
 
 FOLDER_PATH = "./data/hymenoptera_data/train"
 
-loader = ImageClassificationLoader.from_multiple_folders(
+container = ImageClassificationContainer.from_multiple_folders(
     train_folders=[os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")],
     val_folders=[os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")],
     predict_folder=os.path.join(FOLDER_PATH, "ants"),
 )
 
-assert isinstance(loader.train_dataset, AutoDataset)
-assert isinstance(loader.predict_dataset, AutoDataset)
+assert isinstance(container.train_dataset, FlashDataset)
+assert isinstance(container.predict_dataset, FlashDataset)
 
 # The ``num_classes`` value was set line 76.
-assert loader.train_dataset.num_classes == 2
+assert container.train_dataset.num_classes == 2
 
 # The ``num_classes`` value was set only for training as `self.training` was used,
 # so it doesn't exist for the predict_dataset
 with suppress(AttributeError):
-    loader.val_dataset.num_classes
+    container.val_dataset.num_classes
 
 # As test_data weren't provided, the test dataset is None.
-assert not loader.test_dataset
+assert not container.test_dataset
 
 
-print(loader.train_dataset[0])
+print(container.train_dataset[0])
 # out:
 # {
 #   <DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg',
 #   <DefaultDataKeys.TARGET: 'target'>: 0
 # }
 
-assert isinstance(loader.predict_dataset, AutoDataset)
-print(loader.predict_dataset[0])
+assert isinstance(container.predict_dataset, FlashDataset)
+print(container.predict_dataset[0])
 # out:
 # {
 #   {<DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg'}

@@ -2,12 +2,13 @@ from typing import Any, Collection, List, Optional, Sequence, Type, TYPE_CHECKIN
 
 import numpy as np
 import torch
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
-from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.flash_datasets import BaseDataset
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
 
@@ -17,19 +18,18 @@ else:
     SampleCollection = None
 
 
-class AutoDatasetContainer:
+class FlashDatasetContainer:
 
     data_sources_registry: Optional[FlashRegistry] = None
     default_data_source: Optional[LightningEnum] = None
 
     def __init__(
         self,
-        data_source: DataSource,
-        train_dataset: Optional[AutoDataset] = None,
-        val_dataset: Optional[AutoDataset] = None,
-        test_dataset: Optional[AutoDataset] = None,
-        predict_dataset: Optional[AutoDataset] = None,
-        **data_source_kwargs: Any,
+        train_dataset: Optional[BaseDataset] = None,
+        val_dataset: Optional[BaseDataset] = None,
+        test_dataset: Optional[BaseDataset] = None,
+        predict_dataset: Optional[BaseDataset] = None,
+        **flash_dataset_kwargs: Any,
     ):
         """Container for AutoDataset.
 
@@ -39,15 +39,14 @@ class AutoDatasetContainer:
             val_dataset: The val dataset generated from the data_source.
             test_dataset: The test dataset generated from the data_source.
             predict_dataset: The predict dataset generated from the data_source
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_dataset_kwargs: Kwargs used to generate the data source.
         """
 
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset
         self.test_dataset = test_dataset
         self.predict_dataset = predict_dataset
-        self._data_source = data_source
-        self._data_source_kwargs = data_source_kwargs
+        self._flash_dataset_kwargs = flash_dataset_kwargs
 
     @classmethod
     def available_constructors(cls) -> List[str]:
@@ -60,11 +59,11 @@ class AutoDatasetContainer:
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        **data_source_kwargs,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -72,7 +71,7 @@ class AutoDatasetContainer:
             val_folder: The folder containing the validation data.
             test_folder: The folder containing the test data.
             predict_folder: The folder containing the predict data.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -83,7 +82,7 @@ class AutoDatasetContainer:
             val_folder,
             test_folder,
             predict_folder,
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -96,11 +95,11 @@ class AutoDatasetContainer:
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        **data_source_kwargs,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -111,7 +110,7 @@ class AutoDatasetContainer:
             test_files: A sequence of files to use as the test inputs.
             test_targets: A sequence of targets (one per test file) to use as the test targets.
             predict_files: A sequence of files to use when predicting.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -122,7 +121,7 @@ class AutoDatasetContainer:
             (val_files, val_targets),
             (test_files, test_targets),
             predict_files,
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -135,11 +134,11 @@ class AutoDatasetContainer:
         test_data: Optional[Collection[torch.Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        **data_source_kwargs: Any,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs: Any,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -150,7 +149,7 @@ class AutoDatasetContainer:
             test_data: A tensor or collection of tensors to use as the test inputs.
             test_targets: A sequence of targets (one per test input) to use as the test targets.
             predict_data: A tensor or collection of tensors to use when predicting.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -161,7 +160,7 @@ class AutoDatasetContainer:
             (val_data, val_targets),
             (test_data, test_targets),
             predict_data,
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -174,11 +173,11 @@ class AutoDatasetContainer:
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        **data_source_kwargs: Any,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs: Any,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -189,7 +188,7 @@ class AutoDatasetContainer:
             test_data: A numpy array to use as the test inputs.
             test_targets: A sequence of targets (one per test input) to use as the test targets.
             predict_data: A numpy array to use when predicting.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -210,7 +209,7 @@ class AutoDatasetContainer:
             (val_data, val_targets),
             (test_data, test_targets),
             predict_data,
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -223,11 +222,11 @@ class AutoDatasetContainer:
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
-        **data_source_kwargs: Any,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs: Any,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -238,7 +237,7 @@ class AutoDatasetContainer:
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the data to use when predicting.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -279,7 +278,7 @@ class AutoDatasetContainer:
             (val_file, input_fields, target_fields, field),
             (test_file, input_fields, target_fields, field),
             (predict_file, input_fields, target_fields, field),
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -291,11 +290,11 @@ class AutoDatasetContainer:
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
-        **data_source_kwargs: Any,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs: Any,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -305,7 +304,7 @@ class AutoDatasetContainer:
             val_file: The CSV file containing the validation data.
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -324,7 +323,7 @@ class AutoDatasetContainer:
             (val_file, input_fields, target_fields),
             (test_file, input_fields, target_fields),
             (predict_file, input_fields, target_fields),
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -334,11 +333,11 @@ class AutoDatasetContainer:
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        **data_source_kwargs: Any,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs: Any,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -346,7 +345,7 @@ class AutoDatasetContainer:
             val_dataset: Dataset used during validating.
             test_dataset: Dataset used during testing.
             predict_dataset: Dataset used during predicting.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -363,7 +362,7 @@ class AutoDatasetContainer:
             val_dataset,
             test_dataset,
             predict_dataset,
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -374,11 +373,11 @@ class AutoDatasetContainer:
         val_dataset: Optional[SampleCollection] = None,
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
-        **data_source_kwargs: Any,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs: Any,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -386,7 +385,7 @@ class AutoDatasetContainer:
             val_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the validation data.
             test_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the test data.
             predict_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the predict data.
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -407,7 +406,7 @@ class AutoDatasetContainer:
             val_dataset,
             test_dataset,
             predict_dataset,
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -424,11 +423,11 @@ class AutoDatasetContainer:
         val_data_folder: str = None,
         test_data_folder: str = None,
         predict_data_folder: str = None,
-        **data_source_kwargs: Any,
-    ) -> "AutoDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.AutoDatasetContainer` object containing
+        **flash_data_kwargs: Any,
+    ) -> "FlashDatasetContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
         datasets generated from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
 
         Args:
@@ -444,7 +443,7 @@ class AutoDatasetContainer:
             val_data_folder: path to label studio data folder for validation data
             test_data_folder: path to label studio data folder for test data
             predict_data_folder: path to label studio data folder for predict data
-            data_source_kwargs: Kwargs used to generate the data source.
+            flash_data_kwargs: Kwargs used to generate the data source.
 
         Returns:
             The constructed auto dataset container.
@@ -459,8 +458,8 @@ class AutoDatasetContainer:
         data = {
             "data_folder": data_folder,
             "export_json": export_json,
-            "split": data_source_kwargs.get("val_split", 0.0),
-            "multi_label": data_source_kwargs.get("multi_label", False),
+            "split": flash_data_kwargs.get("val_split", 0.0),
+            "multi_label": flash_data_kwargs.get("multi_label", False),
         }
         train_data = None
         val_data = None
@@ -470,25 +469,25 @@ class AutoDatasetContainer:
             train_data = {
                 "data_folder": train_data_folder or data_folder,
                 "export_json": train_export_json,
-                "multi_label": data_source_kwargs.get("multi_label", False),
+                "multi_label": flash_data_kwargs.get("multi_label", False),
             }
         if (val_data_folder or data_folder) and val_export_json:
             val_data = {
                 "data_folder": val_data_folder or data_folder,
                 "export_json": val_export_json,
-                "multi_label": data_source_kwargs.get("multi_label", False),
+                "multi_label": flash_data_kwargs.get("multi_label", False),
             }
         if (test_data_folder or data_folder) and test_export_json:
             test_data = {
                 "data_folder": test_data_folder or data_folder,
                 "export_json": test_export_json,
-                "multi_label": data_source_kwargs.get("multi_label", False),
+                "multi_label": flash_data_kwargs.get("multi_label", False),
             }
         if (predict_data_folder or data_folder) and predict_export_json:
             predict_data = {
                 "data_folder": predict_data_folder or data_folder,
                 "export_json": predict_export_json,
-                "multi_label": data_source_kwargs.get("multi_label", False),
+                "multi_label": flash_data_kwargs.get("multi_label", False),
             }
         return cls.from_data_source(
             DefaultDataSources.LABELSTUDIO,
@@ -496,7 +495,7 @@ class AutoDatasetContainer:
             val_data=val_data,
             test_data=test_data,
             predict_data=predict_data,
-            **data_source_kwargs,
+            **flash_data_kwargs,
         )
 
     @classmethod
@@ -507,18 +506,23 @@ class AutoDatasetContainer:
         val_data: Optional[Any] = None,
         test_data: Optional[Any] = None,
         predict_data: Optional[Any] = None,
-        **data_source_kwargs,
-    ) -> "AutoDatasetContainer":
+        **flash_dataset_kwargs,
+    ) -> "FlashDatasetContainer":
         cls._verify_container(enum)
-        data_source_cls: Type[DataSource] = cls.data_sources_registry.get(enum)
-        data_source = data_source_cls(**data_source_kwargs)
-        datasets = data_source.to_datasets(
-            train_data,
-            val_data,
-            test_data,
-            predict_data,
+        flash_dataset_cls: BaseDataset = cls.data_sources_registry.get(enum)
+        return cls(
+            cls._flash_dataset_creation(flash_dataset_cls, train_data, RunningStage.TRAINING, **flash_dataset_kwargs),
+            cls._flash_dataset_creation(flash_dataset_cls, val_data, RunningStage.VALIDATING, **flash_dataset_kwargs),
+            cls._flash_dataset_creation(flash_dataset_cls, test_data, RunningStage.TESTING, **flash_dataset_kwargs),
+            cls._flash_dataset_creation(
+                flash_dataset_cls, predict_data, RunningStage.PREDICTING, **flash_dataset_kwargs
+            ),
         )
-        return cls(data_source, *datasets, **data_source_kwargs)
+
+    @staticmethod
+    def _flash_dataset_creation(flash_dataset_cls, data, running_state, **kwargs) -> Optional[BaseDataset]:
+        if data is not None:
+            return flash_dataset_cls.from_data(data, running_state, **kwargs)
 
     @classmethod
     def _verify_container(cls, enum: LightningEnum) -> None:

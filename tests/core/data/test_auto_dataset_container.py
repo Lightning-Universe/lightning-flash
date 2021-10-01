@@ -15,7 +15,7 @@ import pytest
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.auto_dataset_container import AutoDatasetContainer
+from flash.core.data.auto_dataset_container import FlashDatasetContainer
 from flash.core.data.data_source import DataSource
 from flash.core.registry import FlashRegistry
 
@@ -23,11 +23,11 @@ from flash.core.registry import FlashRegistry
 def test_auto_dataset_container():
 
     with pytest.raises(MisconfigurationException, match="should have ``data_sources_registry``"):
-        _ = AutoDatasetContainer.from_datasets(train_dataset=range(10))
+        _ = FlashDatasetContainer.from_datasets(train_dataset=range(10))
 
     registry = FlashRegistry("test")
 
-    class TestLoader(AutoDatasetContainer):
+    class TestLoader(FlashDatasetContainer):
 
         data_sources_registry = registry
 
@@ -39,7 +39,7 @@ def test_auto_dataset_container():
         DATASETS = "dataset"
         BASE = "base"
 
-    class TestLoader2(AutoDatasetContainer):
+    class TestLoader2(FlashDatasetContainer):
 
         data_sources_registry = registry
         default_data_source = TestEnum.DATASETS
