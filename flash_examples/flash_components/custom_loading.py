@@ -139,21 +139,23 @@ FOLDER_PATH = "./data/hymenoptera_data/train"
 
 loader = ImageClassificationLoader.from_multiple_folders(
     train_folders=[os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")],
+    val_folders=[os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")],
     predict_folder=os.path.join(FOLDER_PATH, "ants"),
 )
 
 assert isinstance(loader.train_dataset, AutoDataset)
-# the ``num_classes`` value was set line 76.
+assert isinstance(loader.predict_dataset, AutoDataset)
+
+# The ``num_classes`` value was set line 76.
 assert loader.train_dataset.num_classes == 2
 
-# the ``num_classes`` value was set only for training as `self.training` was used,
+# The ``num_classes`` value was set only for training as `self.training` was used,
 # so it doesn't exist for the predict_dataset
 with suppress(AttributeError):
-    loader.predict_dataset.num_classes
+    loader.val_dataset.num_classes
 
-# the val and test dataset are none as no val_data or test_data were provided.
-assert not loader.val_dataset
-assert not loader.val_dataset
+# As test_data weren't provided, the test dataset is None.
+assert not loader.test_dataset
 
 
 print(loader.train_dataset[0])
