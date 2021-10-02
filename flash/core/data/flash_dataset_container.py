@@ -18,7 +18,7 @@ else:
     SampleCollection = None
 
 
-class FlashDatasetContainer:
+class FlashDatasetsContainer:
 
     data_sources_registry: Optional[FlashRegistry] = None
     default_data_source: Optional[LightningEnum] = None
@@ -60,8 +60,8 @@ class FlashDatasetContainer:
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
         **flash_data_kwargs,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -96,8 +96,8 @@ class FlashDatasetContainer:
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
         **flash_data_kwargs,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -135,8 +135,8 @@ class FlashDatasetContainer:
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
         **flash_data_kwargs: Any,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -174,8 +174,8 @@ class FlashDatasetContainer:
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
         **flash_data_kwargs: Any,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -223,8 +223,8 @@ class FlashDatasetContainer:
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
         **flash_data_kwargs: Any,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -291,8 +291,8 @@ class FlashDatasetContainer:
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
         **flash_data_kwargs: Any,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -334,8 +334,8 @@ class FlashDatasetContainer:
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
         **flash_data_kwargs: Any,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -374,8 +374,8 @@ class FlashDatasetContainer:
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
         **flash_data_kwargs: Any,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -424,8 +424,8 @@ class FlashDatasetContainer:
         test_data_folder: str = None,
         predict_data_folder: str = None,
         **flash_data_kwargs: Any,
-    ) -> "FlashDatasetContainer":
-        """Creates a :class:`~flash.core.data.loader.FlashDatasetContainer` object containing
+    ) -> "FlashDatasetsContainer":
+        """Creates a :class:`~flash.core.data.loader.FlashDatasetsContainer` object containing
         datasets generated from the given inputs to
         :meth:`~flash.core.data.flash_datasets.BaseDataset.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``).
@@ -507,7 +507,7 @@ class FlashDatasetContainer:
         test_data: Optional[Any] = None,
         predict_data: Optional[Any] = None,
         **flash_dataset_kwargs,
-    ) -> "FlashDatasetContainer":
+    ) -> "FlashDatasetsContainer":
         cls._verify_container(enum)
         flash_dataset_cls: BaseDataset = cls.data_sources_registry.get(enum)
         return cls(

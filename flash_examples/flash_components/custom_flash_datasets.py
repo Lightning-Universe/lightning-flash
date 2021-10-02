@@ -13,14 +13,19 @@
 # limitations under the License.
 import os
 from contextlib import suppress
-from typing import List, Optional
+from typing import Callable, Dict, List, Optional
 
+import torchvision.transforms as T
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
+from torch.utils.data._utils.collate import default_collate
+from torchvision.io import read_image
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.flash_dataset_container import FlashDatasetContainer
+from flash.core.data.flash_dataset_container import FlashDatasetsContainer
 from flash.core.data.flash_datasets import FlashDataset
+from flash.core.data.flash_transform import FlashTransform, TransformPlacement
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 from flash.core.registry import FlashRegistry
 
@@ -37,8 +42,14 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 
 
 #############################################################################################
-#            Step 1 / 5: Create an enum to describe your new loading mechanism              #
+#            Step 1 / 6: Create an enum to describe your new loading mechanism              #
 #############################################################################################
+
+
+class CustomDataTransform(LightningEnum):
+
+    BASE = "base"
+    RANDOM_ROTATION = "random_rotation"
 
 
 class CustomDataFormat(LightningEnum):
@@ -47,10 +58,10 @@ class CustomDataFormat(LightningEnum):
 
 
 #############################################################################################
-#                         Step 2 / 5: Implement a FlashDataset                              #
+#                         Step 2 / 6: Implement a FlashDataset                              #
 #                                                                                           #
-# A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)        #
-# dataset.                                                                                 #
+# A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)      #
+# dataset.                                                                                  #
 # and with specialized hooks (c.f load_data, load_sample) for each of those stages.         #
 # The hook resolution for the function is done in the following way.                        #
 # If {state}_load_data is implemented then it would be used exclusively for that stage.     #
@@ -65,6 +76,9 @@ PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 
 class MultipleFoldersImageDataset(FlashDataset):
+
+    transform_registry = FlashRegistry("image_classification_transform")
+
     def __init__(self, **dataset_kwargs):
         super().__init__()
         self.dataset_kwargs = dataset_kwargs
@@ -83,6 +97,8 @@ class MultipleFoldersImageDataset(FlashDataset):
         return data
 
     def load_sample(self, sample):
+        sample[DefaultDataKeys.INPUT] = image = read_image(sample[DefaultDataKeys.INPUT])
+        sample[DefaultDataKeys.METADATA] = image.size
         return sample
 
     def predict_load_data(self, predict_folder: Optional[str]):
@@ -93,6 +109,44 @@ train_dataset = MultipleFoldersImageDataset.from_data(TRAIN_FOLDERS, RunningStag
 val_dataset = MultipleFoldersImageDataset.from_data(VAL_FOLDERS, RunningStage.VALIDATING)
 predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, RunningStage.PREDICTING)
 
+
+#############################################################################################
+#                         Step 3 / 6: Implement a FlashTransfom                             #
+#                                                                                           #
+# A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)      #
+# dataset.                                                                                  #
+# and with specialized hooks (c.f load_data, load_sample) for each of those stages.         #
+# The hook resolution for the function is done in the following way.                        #
+# If {state}_load_data is implemented then it would be used exclusively for that stage.     #
+# Otherwise, it would use the load_data function.                                           #
+#                                                                                           #
+#############################################################################################
+
+
+class FlashRandomRotationTransform(FlashTransform):
+    def train_configure_transforms(self, rotation: float) -> Dict[TransformPlacement, Callable]:
+        per_sample_transform = ApplyToKeys("input", T.Compose([T.ToTensor(), T.RandomRotation(rotation)]))
+        return {
+            TransformPlacement.PER_SAMPLE_TRANSFORM: per_sample_transform,
+            TransformPlacement.COLLATE: default_collate,
+        }
+
+    def configure_transforms(self, **kwargs) -> Dict[TransformPlacement, Callable]:
+        return {
+            TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys("input", T.ToTensor()),
+            TransformPlacement.COLLATE: default_collate,
+        }
+
+
+MultipleFoldersImageDataset.register_transform(FlashRandomRotationTransform, CustomDataTransform.RANDOM_ROTATION)
+
+train_dataset = MultipleFoldersImageDataset.from_data(
+    TRAIN_FOLDERS, RunningStage.TRAINING, transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45})
+)
+
+print(train_dataset[0])
+
+breakpoint()
 
 #############################################################################################
 #                             Step 3 / 5: Create a Registry                                 #
@@ -109,11 +163,11 @@ registry(fn=MultipleFoldersImageDataset, name=CustomDataFormat.MULTIPLE_FOLDERS)
 
 
 #############################################################################################
-#                        Step 4 / 5: Create an FlashDatasetContainer                         #
+#                        Step 4 / 5: Create an FlashDatasetsContainer                         #
 #                                                                                           #
-# The `FlashDatasetContainer` class is a collection of DataSource which can be built out     #
+# The `FlashDatasetsContainer` class is a collection of DataSource which can be built out     #
 # with `class_method` constructors.                                                         #
-# The `FlashDatasetContainer` requires a FlashRegistry `data_sources_registry`               #
+# The `FlashDatasetsContainer` requires a FlashRegistry `data_sources_registry`               #
 # class attributes. By creating a `from_multiple_folders`, we can easily create a           #
 # constructor taking the folders paths and by using the `cls.from_data_source`              #
 # with `CustomDataFormat.MULTIPLE_FOLDERS`, it would indicate the parent class the          #
@@ -124,7 +178,7 @@ registry(fn=MultipleFoldersImageDataset, name=CustomDataFormat.MULTIPLE_FOLDERS)
 #############################################################################################
 
 
-class ImageClassificationContainer(FlashDatasetContainer):
+class ImageClassificationContainer(FlashDatasetsContainer):
 
     data_sources_registry = registry
     default_data_source = CustomDataFormat.MULTIPLE_FOLDERS

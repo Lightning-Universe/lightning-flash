@@ -11,18 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Generic, Iterable, Optional, Sequence, Type, TypeVar
+from typing import Any, Callable, Generic, Iterable, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.enums import LightningEnum
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
+from flash.core.data.flash_transform import FlashTransform, TransformPlacement
 from flash.core.data.properties import Properties
+from flash.core.registry import FlashRegistry
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class BaseDataset(Generic[DATA_TYPE], Properties):
+
     DATASET_KEY = "dataset"
+
+    transform_registry: Optional[FlashRegistry] = None
 
     def load_data(self, data: Any) -> Any:
         return data
@@ -30,29 +37,25 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def load_sample(self, data: Any) -> Any:
         return data
 
-    DATASET_KEY = "dataset"
-
     def __init__(
         self,
     ) -> None:
-
-        """The ``BaseDataset`` class wraps the output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`
-        and a :class:`~fash.data.data_source.DataSource` and provides the ``_call_load_sample`` method to call
-        :meth:`~flash.core.data.data_source.DataSource.load_sample` with the correct
-        :class:`~flash.core.data.utils.CurrentRunningStageFuncContext` for the current ``running_stage``.
-        Inheriting classes are responsible for extracting samples from ``data`` to be given to ``_call_load_sample``.
-
-        Args:
-            data: The output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`.
-            data_source: The :class:`~flash.core.data.data_source.DataSource` which has the ``load_sample`` method.
-            running_stage: The current running stage.
-        """
-
         super().__init__()
 
-    def setup(self, data: Any, running_stage: RunningStage) -> None:
+        self._transform: Optional[FlashTransform] = None
+
+    def setup(
+        self,
+        data: Any,
+        running_stage: RunningStage,
+        transform: Optional[Union[FlashTransform, Callable, Tuple[LightningEnum, Any]]] = None,
+    ) -> None:
         self.running_stage = running_stage
         self.data = self._load_data(data)
+        if transform or self.transform_registry:
+            self._transform = FlashTransform.from_transform(
+                transform, running_stage, transform_registry=self.transform_registry
+            )
 
     @property
     def running_stage(self) -> RunningStage:
@@ -82,16 +85,32 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
             if isinstance(sample, dict):
                 sample = dict(**sample)
                 sample = self._load_sample(sample)
+                if self._transform:
+                    sample = self._transform[TransformPlacement.PER_SAMPLE_TRANSFORM](sample)
         return sample
 
     @classmethod
-    def from_data(cls, data: Any, running_stage: RunningStage, **kwargs: Any) -> "BaseDataset":
+    def from_data(
+        cls,
+        data: Any,
+        running_stage: RunningStage,
+        transform: Optional[Union[FlashTransform, Callable, Tuple[LightningEnum, Any]]] = None,
+        **kwargs: Any,
+    ) -> "BaseDataset":
         flash_dataset = cls(**kwargs)
-        flash_dataset.setup(data, running_stage)
+        flash_dataset.setup(data, running_stage, transform=transform)
         return flash_dataset
 
     def resolve_functions(self):
         raise NotImplementedError
+
+    @classmethod
+    def register_transform(cls, fn: Type[FlashTransform], enum: LightningEnum) -> None:
+        if cls.transform_registry is None:
+            raise MisconfigurationException(
+                "The class attribute `transform_registry` should be set as a class attribute. "
+            )
+        cls.transform_registry(fn=fn, name=enum)
 
     _load_data = load_data
     _load_sample = load_sample

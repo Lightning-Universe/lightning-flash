@@ -18,7 +18,7 @@ from typing import List, Optional
 from pytorch_lightning.utilities.enums import LightningEnum
 
 from flash.core.data.auto_dataset import AutoDataset
-from flash.core.data.auto_dataset_container import FlashDatasetContainer
+from flash.core.data.auto_dataset_container import FlashDatasetsContainer
 from flash.core.data.data_source import DataSource, DefaultDataKeys
 from flash.core.data.utils import download_data
 from flash.core.registry import FlashRegistry
@@ -99,11 +99,11 @@ registry(fn=MultipleFoldersImage, name=CustomDataFormat.MULTIPLE_FOLDERS)
 
 
 #############################################################################################
-#                        Step 4 / 5: Create an FlashDatasetContainer                         #
+#                        Step 4 / 5: Create an FlashDatasetsContainer                         #
 #                                                                                           #
-# The `FlashDatasetContainer` class is a collection of DataSource which can be built out     #
+# The `FlashDatasetsContainer` class is a collection of DataSource which can be built out     #
 # with `class_method` constructors.                                                         #
-# The `FlashDatasetContainer` requires a FlashRegistry `data_sources_registry`               #
+# The `FlashDatasetsContainer` requires a FlashRegistry `data_sources_registry`               #
 # class attributes. By creating a `from_multiple_folders`, we can easily create a           #
 # constructor taking the folders paths and by using the `cls.from_data_source`              #
 # with `CustomDataFormat.MULTIPLE_FOLDERS`, it would indicate the parent class the          #
@@ -114,7 +114,7 @@ registry(fn=MultipleFoldersImage, name=CustomDataFormat.MULTIPLE_FOLDERS)
 #############################################################################################
 
 
-class ImageClassificationLoader(FlashDatasetContainer):
+class ImageClassificationLoader(FlashDatasetsContainer):
 
     data_sources_registry = registry
     default_data_source = CustomDataFormat.MULTIPLE_FOLDERS
