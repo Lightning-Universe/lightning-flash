@@ -219,7 +219,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
                     break
                 splits = line.split()
                 fname = splits[0]
-                label = random.randint(0, len(labels))
+                label = label_names[random.randint(0, len(labels))]
                 files.append(fname)
                 labels.append(label)
 

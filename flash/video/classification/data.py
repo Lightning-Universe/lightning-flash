@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -173,13 +173,13 @@ class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource
 
     def _to_multi_hot(self, label_list: List[int]) -> torch.Tensor:
         v = torch.zeros(len(self.labels_set))
-        for l in label_list:
-            v[l] = 1
+        for label in label_list:
+            v[label] = 1
         return v
 
     def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
         [paths, str_labels] = data
-        self.is_multilabel = any(isinstance(l, list) for l in str_labels)
+        self.is_multilabel = any(isinstance(label, list) for label in str_labels)
         if self.is_multilabel:
             self.labels_set = set(label for label_list in str_labels for label in label_list)
             self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
