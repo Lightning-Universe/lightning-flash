@@ -45,6 +45,7 @@ class FlashTransform(Properties):
     ):
         super().__init__()
         # used to keep track of provided transforms
+        self._running_state = running_state
         self._collate_in_worker_from_transform: Optional[bool] = None
 
         self._tranform_kwargs = tranform_kwargs

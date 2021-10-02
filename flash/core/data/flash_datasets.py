@@ -42,7 +42,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     ) -> None:
         super().__init__()
 
-        self._transform: Optional[FlashTransform] = None
+        self.transform: Optional[FlashTransform] = None
 
     def setup(
         self,
@@ -53,7 +53,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         self.running_stage = running_stage
         self.data = self._load_data(data)
         if transform or self.transform_registry:
-            self._transform = FlashTransform.from_transform(
+            self.transform = FlashTransform.from_transform(
                 transform, running_stage, transform_registry=self.transform_registry
             )
 
@@ -85,8 +85,8 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
             if isinstance(sample, dict):
                 sample = dict(**sample)
                 sample = self._load_sample(sample)
-                if self._transform:
-                    sample = self._transform[TransformPlacement.PER_SAMPLE_TRANSFORM](sample)
+                if self.transform:
+                    sample = self.transform[TransformPlacement.PER_SAMPLE_TRANSFORM](sample)
         return sample
 
     @classmethod

@@ -42,7 +42,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 
 
 #############################################################################################
-#            Step 1 / 6: Create an enum to describe your new loading mechanism              #
+#            Step 1 / 5: Create an enum to describe your new loading mechanism              #
 #############################################################################################
 
 
@@ -58,7 +58,7 @@ class CustomDataFormat(LightningEnum):
 
 
 #############################################################################################
-#                         Step 2 / 6: Implement a FlashDataset                              #
+#                         Step 2 / 5: Implement a FlashDataset                              #
 #                                                                                           #
 # A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)      #
 # dataset.                                                                                  #
@@ -111,56 +111,45 @@ predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, RunningS
 
 
 #############################################################################################
-#                         Step 3 / 6: Implement a FlashTransfom                             #
+#                   Step 3 / 5: [optional] Implement a FlashTransform                       #
 #                                                                                           #
-# A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)      #
-# dataset.                                                                                  #
-# and with specialized hooks (c.f load_data, load_sample) for each of those stages.         #
-# The hook resolution for the function is done in the following way.                        #
-# If {state}_load_data is implemented then it would be used exclusively for that stage.     #
-# Otherwise, it would use the load_data function.                                           #
+# A `FlashTransform` is a state-aware (c.f training, validating, testing and predicting)    #
+# transform. You would have to implement a `configure_transforms` hook with your transform  #
 #                                                                                           #
 #############################################################################################
 
 
 class FlashRandomRotationTransform(FlashTransform):
-    def train_configure_transforms(self, rotation: float) -> Dict[TransformPlacement, Callable]:
-        per_sample_transform = ApplyToKeys("input", T.Compose([T.ToTensor(), T.RandomRotation(rotation)]))
+    def configure_transforms(self, rotation: float = 10) -> Dict[TransformPlacement, Callable]:
+        transform = T.Compose([T.ToTensor(), T.RandomRotation(rotation)]) if self.training else T.ToTensor()
+        per_sample_transform = ApplyToKeys("input", transform)
         return {
             TransformPlacement.PER_SAMPLE_TRANSFORM: per_sample_transform,
             TransformPlacement.COLLATE: default_collate,
         }
 
-    def configure_transforms(self, **kwargs) -> Dict[TransformPlacement, Callable]:
-        return {
-            TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys("input", T.ToTensor()),
-            TransformPlacement.COLLATE: default_collate,
-        }
 
-
+# Register your transform within the Flash Dataset registry
+# Note: Registries can be shared by multiple dataset.
 MultipleFoldersImageDataset.register_transform(FlashRandomRotationTransform, CustomDataTransform.RANDOM_ROTATION)
 
 train_dataset = MultipleFoldersImageDataset.from_data(
     TRAIN_FOLDERS, RunningStage.TRAINING, transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45})
 )
 
+print(train_dataset.transform)
+# Out:
+# FlashRandomRotationTransform(
+#    running_stage=RunningStage.TRAINING,
+#    transform={
+#        TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
+#        TransformPlacement.COLLATE: default_collate,
+#    },
+# )
+
 print(train_dataset[0])
 
 breakpoint()
-
-#############################################################################################
-#                             Step 3 / 5: Create a Registry                                 #
-#                                                                                           #
-# A registry is just a smart dictionary. Here is the key is `name` and the value `fn`.      #
-# We would be registering the newly created `MultipleFoldersImage`                          #
-# with the value `CustomDataFormat.MULTIPLE_FOLDERS`                                        #
-#                                                                                           #
-#############################################################################################
-
-
-registry = FlashRegistry("image_classification_loader")
-registry(fn=MultipleFoldersImageDataset, name=CustomDataFormat.MULTIPLE_FOLDERS)
-
 
 #############################################################################################
 #                        Step 4 / 5: Create an FlashDatasetsContainer                         #
@@ -180,7 +169,7 @@ registry(fn=MultipleFoldersImageDataset, name=CustomDataFormat.MULTIPLE_FOLDERS)
 
 class ImageClassificationContainer(FlashDatasetsContainer):
 
-    data_sources_registry = registry
+    data_sources_registry = FlashRegistry("image_classification_loader")
     default_data_source = CustomDataFormat.MULTIPLE_FOLDERS
 
     @classmethod
@@ -194,6 +183,11 @@ class ImageClassificationContainer(FlashDatasetsContainer):
         return cls.from_data_source(
             CustomDataFormat.MULTIPLE_FOLDERS, train_folders, val_folders, test_folders, predict_folder
         )
+
+
+ImageClassificationContainer.register_data_source(
+    fn=MultipleFoldersImageDataset, name=CustomDataFormat.MULTIPLE_FOLDERS
+)
 
 
 #############################################################################################
