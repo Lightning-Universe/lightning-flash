@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from contextlib import suppress
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import torchvision.transforms as T
 from PIL import Image
@@ -74,9 +74,6 @@ TRAIN_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "b
 VAL_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")]
 PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
-LOAD_DATA_SAMPLE_TYPE = Dict[DefaultDataKeys, Union[str, float]]
-LOAD_SAMPLE_OUTPUT_TYPE = Dict[DefaultDataKeys, Union[str, float, Image.Image, Tuple[int, int]]]
-
 
 class MultipleFoldersImageDataset(FlashDataset):
 
@@ -86,7 +83,7 @@ class MultipleFoldersImageDataset(FlashDataset):
         super().__init__()
         self.dataset_kwargs = dataset_kwargs
 
-    def load_data(self, folders: List[str]) -> List[LOAD_DATA_SAMPLE_TYPE]:
+    def load_data(self, folders: List[str]) -> List[Dict[DefaultDataKeys, Any]]:
         if self.training:
             self.num_classes = len(folders)
         return [
@@ -95,12 +92,12 @@ class MultipleFoldersImageDataset(FlashDataset):
             for p in os.listdir(folder)
         ]
 
-    def load_sample(self, sample: LOAD_DATA_SAMPLE_TYPE) -> LOAD_SAMPLE_OUTPUT_TYPE:
+    def load_sample(self, sample: Dict[DefaultDataKeys, Any]) -> Dict[DefaultDataKeys, Any]:
         sample[DefaultDataKeys.INPUT] = image = Image.open(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.METADATA] = image.size
         return sample
 
-    def predict_load_data(self, predict_folder: Optional[str]):
+    def predict_load_data(self, predict_folder: Optional[str]) -> List[Dict[DefaultDataKeys, Any]]:
         return [{DefaultDataKeys.INPUT: os.path.join(predict_folder, p)} for p in os.listdir(predict_folder)]
 
 
