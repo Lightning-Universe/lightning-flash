@@ -217,7 +217,7 @@ class FlashTransform(Properties):
         transform: _TRANSFORM_TYPE,
         running_stage: RunningStage,
         transform_registry: Optional[FlashRegistry],
-    ) -> "FlashTransform":
+    ) -> Optional["FlashTransform"]:
 
         if isinstance(transform, FlashTransform):
             transform.running_stage = running_stage
@@ -230,6 +230,9 @@ class FlashTransform(Properties):
             enum, transform_kwargs = cls._sanetize_registry_transform(transform, transform_registry)
             transform_cls = transform_registry.get(enum)
             return transform_cls(running_stage, transform=None, **transform_kwargs)
+
+        if not transform:
+            return None
 
         raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
 

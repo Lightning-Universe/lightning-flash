@@ -175,11 +175,11 @@ print(train_dataset[0])
 # }
 
 #############################################################################################
-#                        Step 4 / 5: Create an FlashDatasetsContainer                         #
+#                        Step 4 / 5: Create an FlashDatasetsContainer                       #
 #                                                                                           #
-# The `FlashDatasetsContainer` class is a collection of DataSource which can be built out     #
+# The `FlashDatasetsContainer` class is a collection of DataSource which can be built out   #
 # with `class_method` constructors.                                                         #
-# The `FlashDatasetsContainer` requires a FlashRegistry `data_sources_registry`               #
+# The `FlashDatasetsContainer` requires a FlashRegistry `data_sources_registry`             #
 # class attributes. By creating a `from_multiple_folders`, we can easily create a           #
 # constructor taking the folders paths and by using the `cls.from_data_source`              #
 # with `CustomDataFormat.MULTIPLE_FOLDERS`, it would indicate the parent class the          #
@@ -208,9 +208,7 @@ class ImageClassificationContainer(FlashDatasetsContainer):
         )
 
 
-ImageClassificationContainer.register_data_source(
-    fn=MultipleFoldersImageDataset, name=CustomDataFormat.MULTIPLE_FOLDERS
-)
+ImageClassificationContainer.register_data_source(MultipleFoldersImageDataset, CustomDataFormat.MULTIPLE_FOLDERS)
 
 
 #############################################################################################
