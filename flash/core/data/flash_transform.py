@@ -26,6 +26,8 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
+_TRANSFORM_TYPE = Optional[Union["FlashTransform", Callable, Tuple[LightningEnum, Dict[str, Any]], LightningEnum]]
+
 
 class TransformPlacement(LightningEnum):
 
@@ -39,19 +41,19 @@ class TransformPlacement(LightningEnum):
 class FlashTransform(Properties):
     def __init__(
         self,
-        running_state: RunningStage,
+        running_stage: RunningStage,
         transform: Union[Callable, List, Dict[str, Callable]] = None,
         **tranform_kwargs,
     ):
         super().__init__()
         # used to keep track of provided transforms
-        self._running_state = running_state
+        self._running_stage = running_stage
         self._collate_in_worker_from_transform: Optional[bool] = None
 
         self._tranform_kwargs = tranform_kwargs
 
-        transform = transform or self._resolve_transforms(running_state)
-        self.transform = self._check_transforms(transform, running_state)
+        transform = transform or self._resolve_transforms(running_stage)
+        self.transform = self._check_transforms(transform, running_stage)
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
@@ -212,7 +214,7 @@ class FlashTransform(Properties):
     @classmethod
     def from_transform(
         cls,
-        transform: Optional[Union["FlashTransform", Callable, Tuple[LightningEnum, Any]]],
+        transform: _TRANSFORM_TYPE,
         running_stage: RunningStage,
         transform_registry: Optional[FlashRegistry],
     ) -> "FlashTransform":
@@ -224,29 +226,33 @@ class FlashTransform(Properties):
         if isinstance(transform, Callable):
             return cls(running_stage, {TransformPlacement.PER_SAMPLE_TRANSFORM: transform})
 
-        if isinstance(transform, tuple):
-            cls._validate_transform_requested_from_registry(transform, transform_registry)
-            enum, transform_kwargs = transform
+        if isinstance(transform, tuple) or isinstance(transform, LightningEnum):
+            enum, transform_kwargs = cls._sanetize_registry_transform(transform, transform_registry)
             transform_cls = transform_registry.get(enum)
             return transform_cls(running_stage, transform=None, **transform_kwargs)
 
         raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
 
     @classmethod
-    def _validate_transform_requested_from_registry(
+    def _sanetize_registry_transform(
         cls, transform: Tuple[LightningEnum, Any], transform_registry: Optional[FlashRegistry]
-    ) -> None:
+    ) -> Tuple[LightningEnum, Dict]:
         msg = "The transform should be provided as a tuple with the following types (LightningEnum, Dict[str, Any]) "
         msg += "when requesting transform from the registry."
         if not transform_registry:
             raise MisconfigurationException("You requested a transform from the registry, but it is empty.")
-        if len(transform) != 2:
+        if isinstance(transform, tuple) and len(transform) > 2:
             raise MisconfigurationException(msg)
-        enum, transform_kwargs = transform
+        if isinstance(transform, LightningEnum):
+            enum = transform
+            transform_kwargs = {}
+        else:
+            enum, transform_kwargs = transform
         if not isinstance(enum, LightningEnum):
             raise MisconfigurationException(msg)
         if not isinstance(transform_kwargs, Dict):
             raise MisconfigurationException(msg)
+        return enum, transform_kwargs
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(running_stage={self.running_stage}, transform={self.transform})"

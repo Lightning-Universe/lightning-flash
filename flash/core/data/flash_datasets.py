@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Generic, Iterable, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Generic, Iterable, Optional, Sequence, Type, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
-from flash.core.data.flash_transform import FlashTransform, TransformPlacement
+from flash.core.data.flash_transform import _TRANSFORM_TYPE, FlashTransform, TransformPlacement
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 
@@ -48,7 +48,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         self,
         data: Any,
         running_stage: RunningStage,
-        transform: Optional[Union[FlashTransform, Callable, Tuple[LightningEnum, Any]]] = None,
+        transform: _TRANSFORM_TYPE = None,
     ) -> None:
         self.running_stage = running_stage
         self.data = self._load_data(data)
@@ -94,7 +94,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         cls,
         data: Any,
         running_stage: RunningStage,
-        transform: Optional[Union[FlashTransform, Callable, Tuple[LightningEnum, Any]]] = None,
+        transform: _TRANSFORM_TYPE = None,
         **kwargs: Any,
     ) -> "BaseDataset":
         flash_dataset = cls(**kwargs)

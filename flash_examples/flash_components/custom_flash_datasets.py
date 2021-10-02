@@ -16,10 +16,10 @@ from contextlib import suppress
 from typing import Callable, Dict, List, Optional
 
 import torchvision.transforms as T
+from PIL import Image
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
-from torchvision.io import read_image
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.flash_dataset_container import FlashDatasetsContainer
@@ -97,7 +97,7 @@ class MultipleFoldersImageDataset(FlashDataset):
         return data
 
     def load_sample(self, sample):
-        sample[DefaultDataKeys.INPUT] = image = read_image(sample[DefaultDataKeys.INPUT])
+        sample[DefaultDataKeys.INPUT] = image = Image.open(sample[DefaultDataKeys.INPUT])
         sample[DefaultDataKeys.METADATA] = image.size
         return sample
 
@@ -140,7 +140,26 @@ train_dataset = MultipleFoldersImageDataset.from_data(
 print(train_dataset.transform)
 # Out:
 # FlashRandomRotationTransform(
-#    running_stage=RunningStage.TRAINING,
+#    running_stage=train,
+#    transform={
+#        TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#           keys="input",
+#           transform=Compose(
+#                ToTensor()
+#                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0)),
+#        TransformPlacement.COLLATE: default_collate,
+#    },
+# )
+
+
+validation_dataset = MultipleFoldersImageDataset.from_data(
+    VAL_FOLDERS, RunningStage.VALIDATING, transform=CustomDataTransform.RANDOM_ROTATION
+)
+
+print(validation_dataset.transform)
+# Out:
+# FlashRandomRotationTransform(
+#    running_stage=validate,
 #    transform={
 #        TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
 #        TransformPlacement.COLLATE: default_collate,
@@ -148,8 +167,12 @@ print(train_dataset.transform)
 # )
 
 print(train_dataset[0])
-
-breakpoint()
+# Out:
+# {
+#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
+#   <DefaultDataKeys.TARGET: 'target'>: 0,
+#   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
+# }
 
 #############################################################################################
 #                        Step 4 / 5: Create an FlashDatasetsContainer                         #
