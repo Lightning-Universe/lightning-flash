@@ -84,17 +84,13 @@ class MultipleFoldersImageDataset(FlashDataset):
         self.dataset_kwargs = dataset_kwargs
 
     def load_data(self, folders: List[str]):
-        data = []
-        for class_idx, folder in enumerate(folders):
-            data.extend(
-                [
-                    {DefaultDataKeys.INPUT: os.path.join(folder, p), DefaultDataKeys.TARGET: class_idx}
-                    for p in os.listdir(folder)
-                ]
-            )
         if self.training:
             self.num_classes = len(folders)
-        return data
+        return [
+            {DefaultDataKeys.INPUT: os.path.join(folder, p), DefaultDataKeys.TARGET: class_idx}
+            for class_idx, folder in enumerate(folders)
+            for p in os.listdir(folder)
+        ]
 
     def load_sample(self, sample):
         sample[DefaultDataKeys.INPUT] = image = Image.open(sample[DefaultDataKeys.INPUT])
