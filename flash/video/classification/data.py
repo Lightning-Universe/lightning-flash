@@ -181,7 +181,7 @@ class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource
         [paths, str_labels] = data
         self.is_multilabel = any(isinstance(label, list) for label in str_labels)
         if self.is_multilabel:
-            self.labels_set = set(label for label_list in str_labels for label in label_list)
+            self.labels_set = {label for label_list in str_labels for label in label_list}
             self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
             self.id_to_label = {i: label for label, i in self.label_to_id.items()}
 

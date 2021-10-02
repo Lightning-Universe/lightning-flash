@@ -213,7 +213,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
 
         files = []
         labels = []
-        with open(mock_csv, "r") as fin:
+        with open(mock_csv) as fin:
             for line in fin:
                 if not line:
                     break
