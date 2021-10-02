@@ -171,11 +171,38 @@ class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource
             extensions=("mp4", "avi"),
         )
 
+    def _to_multi_hot(self, label_list: List[int]) -> torch.Tensor:
+        v = torch.zeros(len(self.labels_set))
+        for l in label_list:
+            v[l] = 1
+        return v
+
     def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
         [paths, str_labels] = data
-        labels_set = set(str_labels)
-        label_to_id = {label: i for i, label in enumerate(sorted(labels_set))}
-        data = list(zip(paths, [label_to_id[classname] for classname in str_labels]))  # List[Lists] -> List[Tuples]
+        self.is_multilabel = any(isinstance(l, list) for l in str_labels)
+        if self.is_multilabel:
+            self.labels_set = set(label for label_list in str_labels for label in label_list)
+            self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
+            self.id_to_label = {i: label for label, i in self.label_to_id.items()}
+
+            encoded_labels = [
+                self._to_multi_hot([self.label_to_id[classname] for classname in label_list])
+                for label_list in str_labels
+            ]
+
+            data = list(
+                zip(
+                    paths,
+                    encoded_labels,
+                )
+            )
+        else:
+            self.labels_set = set(str_labels)
+            self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
+            self.id_to_label = {i: label for label, i in self.label_to_id.items()}
+            data = list(
+                zip(paths, [self.label_to_id[classname] for classname in str_labels])
+            )  # List[Lists] -> List[Tuples]
         labeled_video_paths = LabeledVideoPaths(data)
         ds = LabeledVideoDataset(
             labeled_video_paths,
@@ -190,10 +217,8 @@ class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource
         ds = self._make_encoded_video_dataset(data)
 
         if self.training:
-            labels_set = set(item[1] for item in ds._labeled_videos._paths_and_labels)
-            label_to_class_mapping = {i: label for i, label in enumerate(sorted(labels_set))}
-            self.set_state(LabelsState(label_to_class_mapping))
-            dataset.num_classes = len(labels_set)
+            self.set_state(LabelsState(self.id_to_label))
+            dataset.num_classes = len(self.labels_set)
         return ds
 
 
