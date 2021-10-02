@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -53,6 +53,8 @@ else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 _PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
+
+Label = Union[int, List[int]]
 
 
 class BaseVideoClassification:
@@ -150,6 +152,51 @@ class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSourc
         return ds
 
 
+class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource):
+    def __init__(
+        self,
+        clip_sampler: "ClipSampler",
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        decode_audio: bool = True,
+        decoder: str = "pyav",
+    ):
+        super().__init__(
+            clip_sampler,
+            video_sampler=video_sampler,
+            decode_audio=decode_audio,
+            decoder=decoder,
+        )
+        PathsDataSource.__init__(
+            self,
+            extensions=("mp4", "avi"),
+        )
+
+    def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
+        [paths, str_labels] = data
+        labels_set = set(str_labels)
+        label_to_id = {label: i for i, label in enumerate(sorted(labels_set))}
+        data = list(zip(paths, [label_to_id[classname] for classname in str_labels]))  # List[Lists] -> List[Tuples]
+        labeled_video_paths = LabeledVideoPaths(data)
+        ds = LabeledVideoDataset(
+            labeled_video_paths,
+            self.clip_sampler,
+            video_sampler=self.video_sampler,
+            decode_audio=self.decode_audio,
+            decoder=self.decoder,
+        )
+        return ds
+
+    def load_data(self, data: str, dataset: Optional[Any] = None) -> "LabeledVideoDataset":
+        ds = self._make_encoded_video_dataset(data)
+
+        if self.training:
+            labels_set = set(item[1] for item in ds._labeled_videos._paths_and_labels)
+            label_to_class_mapping = {i: label for i, label in enumerate(sorted(labels_set))}
+            self.set_state(LabelsState(label_to_class_mapping))
+            dataset.num_classes = len(labels_set)
+        return ds
+
+
 class VideoClassificationFiftyOneDataSource(
     BaseVideoClassification,
     FiftyOneDataSource,
@@ -238,7 +285,7 @@ class VideoClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FILES: VideoClassificationPathsDataSource(
+                DefaultDataSources.FILES: VideoClassificationListDataSource(
                     clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
