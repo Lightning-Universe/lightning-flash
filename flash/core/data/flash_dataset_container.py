@@ -499,7 +499,7 @@ class FlashDatasetsContainer:
         )
 
     @classmethod
-    def from_data_source(
+    def create_flash_datasets(
         cls,
         enum: LightningEnum,
         train_data: Optional[Any] = None,
@@ -511,16 +511,14 @@ class FlashDatasetsContainer:
         cls._verify_container(enum)
         flash_dataset_cls: BaseDataset = cls.data_sources_registry.get(enum)
         return cls(
-            cls._flash_dataset_creation(flash_dataset_cls, train_data, RunningStage.TRAINING, **flash_dataset_kwargs),
-            cls._flash_dataset_creation(flash_dataset_cls, val_data, RunningStage.VALIDATING, **flash_dataset_kwargs),
-            cls._flash_dataset_creation(flash_dataset_cls, test_data, RunningStage.TESTING, **flash_dataset_kwargs),
-            cls._flash_dataset_creation(
-                flash_dataset_cls, predict_data, RunningStage.PREDICTING, **flash_dataset_kwargs
-            ),
+            cls._create_flash_dataset(flash_dataset_cls, train_data, RunningStage.TRAINING, **flash_dataset_kwargs),
+            cls._create_flash_dataset(flash_dataset_cls, val_data, RunningStage.VALIDATING, **flash_dataset_kwargs),
+            cls._create_flash_dataset(flash_dataset_cls, test_data, RunningStage.TESTING, **flash_dataset_kwargs),
+            cls._create_flash_dataset(flash_dataset_cls, predict_data, RunningStage.PREDICTING, **flash_dataset_kwargs),
         )
 
     @staticmethod
-    def _flash_dataset_creation(flash_dataset_cls, data, running_state, **kwargs) -> Optional[BaseDataset]:
+    def _create_flash_dataset(flash_dataset_cls, data, running_state, **kwargs) -> Optional[BaseDataset]:
         if data is not None:
             return flash_dataset_cls.from_data(data, running_state, **kwargs)
 

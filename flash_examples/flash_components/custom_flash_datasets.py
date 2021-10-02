@@ -203,7 +203,7 @@ class ImageClassificationContainer(FlashDatasetsContainer):
         test_folders: Optional[List[str]] = None,
         predict_folder: Optional[str] = None,
     ):
-        return cls.from_data_source(
+        return cls.create_flash_datasets(
             CustomDataFormat.MULTIPLE_FOLDERS, train_folders, val_folders, test_folders, predict_folder
         )
 
