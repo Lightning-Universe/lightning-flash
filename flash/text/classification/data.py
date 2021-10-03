@@ -23,13 +23,12 @@ from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from pytorch_lightning.trainer.states import RunningStage
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.process import Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 
 if _TEXT_AVAILABLE:
     from datasets import DatasetDict, load_dataset, Dataset
-    from transformers.modeling_outputs import SequenceClassifierOutput
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 
@@ -49,14 +48,15 @@ class TextDeserializer(Deserializer):
     def example_input(self) -> str:
         return "An example input"
 
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
 
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
+class TextSerializer(Serializer):
+    @requires("text")
+    def __init__(self, tokenizer):
+        super().__init__()
+        self.tokenizer = tokenizer
+    
+    def serialize(self, token_ids: Union[int, List[int]]) -> str:
+        return self.tokenizer.decode(token_ids)
 
 
 class TextDataSource(DataSource):
@@ -105,6 +105,7 @@ class TextDataSource(DataSource):
         if running_stage == RunningStage.TRAINING and not self.tokenizer._is_fit:
             batch_iterator = self.tokenizer._batch_iterator(dataset)
             self.tokenizer.fit(batch_iterator)  # TODO: save state to disk
+            print(f"Tokenizer fit with `vocab_size={self.tokenizer.vocab_size}`, `max_length={self.tokenizer.max_length}`, `batch_size={self.tokenizer.batch_size}`")
         
         return dataset
 
@@ -247,12 +248,7 @@ class TextSentencesDataSource(TextDataSource):
 
         if isinstance(data, str):
             data = [data]
-        return [
-            self._tokenize_fn(
-                s,
-            )
-            for s in data
-        ]
+        return data
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -273,7 +269,7 @@ class TextClassificationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         backbone: Union[str, Tuple[BaseTokenizer, int]] = "prajjwal1/bert-tiny",
-        **backbone_kwargs,
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
     ):
 
         if isinstance(backbone, tuple):
@@ -301,6 +297,7 @@ class TextClassificationPreprocess(Preprocess):
         return {
             **self.transforms,
             "backbone": self.backbone,
+            "tokenizer": self.tokenizer,
         }
 
     @classmethod
@@ -328,10 +325,7 @@ class TextClassificationPreprocess(Preprocess):
 
 
 class TextClassificationPostprocess(Postprocess):
-    def per_batch_transform(self, batch: Any) -> Any:
-        if isinstance(batch, SequenceClassifierOutput):
-            batch = batch.logits
-        return super().per_batch_transform(batch)
+    pass
 
 
 class TextClassificationData(DataModule):
