@@ -17,7 +17,7 @@
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
 from typing import Generator, List, Optional, Tuple, Union
-from flash.text.classification.tokenizers import BaseTokenizer
+from flash.text.classification.tokenizers.base import BaseTokenizer
 import datasets
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException

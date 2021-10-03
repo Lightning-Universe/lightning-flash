@@ -24,6 +24,7 @@ from transformers.modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
     BaseModelOutputWithPoolingAndCrossAttentions,
 )
+from typing import Dict, Tuple
 
 from flash.core.registry import FlashRegistry
 
@@ -66,7 +67,8 @@ class Transformer(nn.Module):
         super().__init__()
         self.model_name = model_name
         self.strategy = strategy
-        self.config = AutoConfig.from_pretrained("prajjwal1/bert-tiny")
+        self.config = AutoConfig.from_pretrained(model_name)
+        self.vocab_size = self.config.vocab_size
 
         if pretrained:
             self.model = AutoModel.from_pretrained(self.model_name)
@@ -75,7 +77,7 @@ class Transformer(nn.Module):
 
         self._sentence_representation = AVAILABLE_STRATEGIES.get(strategy)
 
-    def forward(self, x):
+    def forward(self, x: Dict[int, torch.Tensor]) -> torch.Tensor:
         x = self.model(x["input_ids"], x["attention_mask"])
         return self._sentence_representation(x)
 
@@ -84,7 +86,7 @@ def _trasformer(
     model_name: str = "prajjwal1/bert-tiny",
     pretrained: bool = True,
     strategy: str = "cls_token",
-):
+) -> Tuple[nn.Module, int]:
     # disable HF thousand warnings when loading model
     transformers.logging.set_verbosity_error()
 

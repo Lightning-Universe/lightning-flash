@@ -39,6 +39,7 @@ class TextClassifier(ClassificationAdapterTask):
     def __init__(
         self,
         num_classes: Optional[int] = None,
+        vocab_size: Optional[int] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "prajjwal1/bert-medium",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
@@ -51,12 +52,15 @@ class TextClassifier(ClassificationAdapterTask):
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
+        enable_ort: bool = False,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         training_strategy: Optional[str] = "default",
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
     ):
 
         self.save_hyperparameters()
+
+        self.enable_ort = enable_ort
 
         if not backbone_kwargs:
             backbone_kwargs = {}
@@ -67,6 +71,7 @@ class TextClassifier(ClassificationAdapterTask):
         if training_strategy == "default":
             if not num_classes:
                 raise MisconfigurationException("`num_classes` should be provided.")
+            
         else:
             num_classes = training_strategy_kwargs.get("ways", None)
             if not num_classes:
@@ -76,6 +81,9 @@ class TextClassifier(ClassificationAdapterTask):
             backbone, num_features = backbone
         else:
             backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+
+        if backbone.vocab_size != vocab_size:
+            raise MisconfigurationException("Model and tokenizer have different `vocab_size`.")
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
         head = head or nn.Sequential(
@@ -111,25 +119,3 @@ class TextClassifier(ClassificationAdapterTask):
         if self.enable_ort:
             callbacks.append(ORTCallback())
         return callbacks
-
-
-# if __name__ == "__main__":
-#     from flash.core.data.data_source import DefaultDataKeys
-
-#     batch = {
-#         DefaultDataKeys.INPUT: {
-#             "input_ids": torch.tensor([[1, 2, 3]]),
-#             "attention_mask": torch.tensor([[0, 0, 0]]),
-#         },
-#         DefaultDataKeys.TARGET: None,
-#     }
-
-#     model = TextClassifier(
-#         num_classes=2,
-#         backbone="prajjwal1/bert-tiny",
-#         backbone_kwargs={"strategy": "avg"},
-#         pretrained=True,
-#     )
-#     outputs = model(batch[DefaultDataKeys.INPUT])
-#     print(outputs)
-#     print(model.backbone.strategy)

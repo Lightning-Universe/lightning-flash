@@ -1,0 +1,2 @@
+class BaseTokenizer:
+    pass

@@ -18,7 +18,7 @@ import torch
 from torch import Tensor
 import os
 import flash
-from flash.text.classification.tokenizers import BaseTokenizer
+from flash.text.classification.tokenizers.base import BaseTokenizer
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from pytorch_lightning.trainer.states import RunningStage
 from flash.core.data.data_module import DataModule
