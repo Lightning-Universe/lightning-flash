@@ -11,11 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-# ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
-# as the official torchvision implementation does not support wide resnet architecture
-# found in self-supervised learning model weights
 import torch
 import transformers
 from torch import nn

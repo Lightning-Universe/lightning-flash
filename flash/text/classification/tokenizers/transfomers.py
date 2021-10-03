@@ -11,12 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-# ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
-# as the official torchvision implementation does not support wide resnet architecture
-# found in self-supervised learning model weights
 from typing import Generator, List, Optional, Tuple, Union
+from flash.core.data.data_source import DefaultDataKeys
 from flash.text.classification.tokenizers.base import BaseTokenizer
 import datasets
 import torch
@@ -39,13 +35,13 @@ class TrasformerTokenizer(BaseTokenizer):
         self.max_length = self.config.max_position_embeddings
         self.vocab_size = self.config.vocab_size
         self._is_fit = pretrained
-
+        
         # Allow the user to specify this otherwise fallback to original
         if not pretrained:
 
             self.vocab_size = kwargs.get("vocab_size", self.config.vocab_size)
-
-            max_length = kwargs.get("max_length")
+            self.batch_size = kwargs.get("batch_size", 1000)
+            max_length = kwargs.get("max_length", self.max_length)
             if max_length > self.max_length:
                 raise MisconfigurationException(
                     f"`max_length` must be less or equal to {self.max_length}, which is the maximum supported by {model_name}"
@@ -72,15 +68,9 @@ class TrasformerTokenizer(BaseTokenizer):
             return_tensors=return_tensors,
         )
 
-    def decode(self, token_ids: Union[int, List[int]]) -> str:
-        return self.tokenizer.decode(token_ids)
-
-    @staticmethod
-    def _batch_iterator(
-        dataset: datasets.Dataset, input_fields: str, batch_size: int = 1000
-    ) -> Generator[List[str], None, None]:
-        for i in range(0, len(dataset), batch_size):
-            yield dataset[i : i + batch_size][input_fields]
+    def _batch_iterator(self, dataset: datasets.Dataset) -> Generator[List[str], None, None]:
+        for i in range(0, len(dataset), self.batch_size):
+            yield dataset[i : i + self.batch_size][DefaultDataKeys.INPUT]
 
 
 def _trasformer_tokenizer(
